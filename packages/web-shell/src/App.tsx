@@ -1,3 +1,9 @@
+import { useGameStore } from './stores/gameStore';
+import { LobbyPage } from './pages/LobbyPage';
+import { GamePage } from './pages/GamePage';
+
 export function App() {
-  return <div>Grid Line Defense - Loading...</div>;
+  const screen = useGameStore((s) => s.screen);
+
+  return screen === 'lobby' ? <LobbyPage /> : <GamePage />;
 }

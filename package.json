@@ -1,0 +1,16 @@
+{
+  "name": "grid-line-defense-pvp",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter web-shell dev",
+    "build:web": "pnpm --filter web-shell build",
+    "test": "pnpm -r test",
+    "test:shared": "pnpm --filter @gld/shared test",
+    "test:web": "pnpm --filter web-shell test",
+    "lint": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

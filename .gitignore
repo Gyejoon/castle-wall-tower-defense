@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+*.tgz
+
+# Unity
+packages/unity-game/Library/
+packages/unity-game/Temp/
+packages/unity-game/Obj/
+packages/unity-game/Build/
+packages/unity-game/Builds/
+packages/unity-game/Logs/
+packages/unity-game/UserSettings/
+packages/unity-game/MemoryCaptures/
+packages/unity-game/Recordings/
+packages/unity-game/Assets/Plugins/Editor/JetBrains*
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.unityproj
+
+# WebGL build in web-shell (빌드 산출물)
+packages/web-shell/public/unity-build/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,8 @@
+{
+  "name": "EditModeTests",
+  "rootNamespace": "GLD.Tests",
+  "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "GLD.Core"],
+  "includePlatforms": ["Editor"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": false
+}

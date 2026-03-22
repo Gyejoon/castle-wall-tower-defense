@@ -1,0 +1,8 @@
+{
+  "name": "GLD.Core",
+  "rootNamespace": "GLD.Core",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "autoReferenced": true
+}

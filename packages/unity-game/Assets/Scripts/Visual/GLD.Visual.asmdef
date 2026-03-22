@@ -1,0 +1,8 @@
+{
+  "name": "GLD.Visual",
+  "rootNamespace": "GLD.Visual",
+  "references": ["GLD.Core"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "autoReferenced": true
+}

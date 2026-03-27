@@ -44,8 +44,9 @@ class TypedEventBus {
   off<K extends keyof GameEventMap>(
     event: K,
     fn: GameEventMap[K] extends undefined ? () => void : (data: GameEventMap[K]) => void,
+    context?: unknown,
   ): void {
-    this.emitter.off(event, fn as (...args: unknown[]) => void);
+    this.emitter.off(event, fn as (...args: unknown[]) => void, context);
   }
 
   removeAllListeners(): void {

@@ -28,7 +28,27 @@ export class UnitSystem {
   }
 
   setPath(path: Position[]): void {
+    const oldPath = this.currentPath;
     this.currentPath = path;
+
+    // Remap in-flight units to nearest cell on the new path
+    if (oldPath.length > 0 && path.length > 0) {
+      for (const unit of this.units.values()) {
+        const unitGrid = unit.data.position;
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < path.length; i++) {
+          const dx = path[i].x - unitGrid.x;
+          const dy = path[i].y - unitGrid.y;
+          const d = dx * dx + dy * dy;
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = i;
+          }
+        }
+        unit.data.pathIndex = Math.min(bestIdx, path.length - 2);
+      }
+    }
   }
 
   queueUnits(unitDefId: string, count: number): void {
@@ -201,13 +221,6 @@ export class UnitSystem {
     const dt = delta / 1000;
 
     for (const [id, unit] of this.units) {
-      if (unit.data.hp <= 0) {
-        killed.push(id);
-        unit.graphics.destroy();
-        this.units.delete(id);
-        continue;
-      }
-
       const pathIdx = unit.data.pathIndex;
       if (pathIdx >= this.currentPath.length - 1) {
         // Reached exit

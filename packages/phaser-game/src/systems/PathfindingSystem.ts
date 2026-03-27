@@ -114,15 +114,19 @@ function reconstructPath(node: PathNode): Position[] {
  */
 export class PathfindingSystem {
   private cachedPath: Position[] | null = null;
+  private cacheKey = '';
 
   findPath(grid: number[][], start: Position, end: Position): Position[] | null {
-    if (this.cachedPath) return this.cachedPath;
+    const key = `${start.x},${start.y}-${end.x},${end.y}`;
+    if (this.cachedPath && this.cacheKey === key) return this.cachedPath;
     this.cachedPath = findPath(grid, start, end);
+    this.cacheKey = key;
     return this.cachedPath;
   }
 
   invalidateCache(): void {
     this.cachedPath = null;
+    this.cacheKey = '';
   }
 
   getCachedPath(): Position[] | null {

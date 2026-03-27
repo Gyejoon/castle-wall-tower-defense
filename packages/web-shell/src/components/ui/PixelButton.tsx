@@ -2,11 +2,12 @@ import type { ButtonHTMLAttributes } from 'react';
 import { colors } from '../../styles/tokens';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'danger' | 'gold';
+  variant?: 'primary' | 'secondary' | 'danger' | 'gold';
 }
 
 const variantColors = {
   primary: colors.accent,
+  secondary: colors.textSecondary,
   danger: colors.danger,
   gold: colors.gold,
 } as const;

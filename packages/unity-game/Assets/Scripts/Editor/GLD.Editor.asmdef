@@ -1,8 +1,0 @@
-{
-  "name": "GLD.Editor",
-  "rootNamespace": "GLD.Editor",
-  "references": ["GLD.Core", "GLD.Visual", "GLD.Bridge"],
-  "includePlatforms": ["Editor"],
-  "excludePlatforms": [],
-  "autoReferenced": true
-}

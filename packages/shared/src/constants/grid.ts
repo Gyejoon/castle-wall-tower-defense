@@ -10,3 +10,7 @@ export const DEFAULT_GRID_CONFIG: GridConfig = {
   spawnPoint: { x: 0, y: 10 },
   exitPoint: { x: 19, y: 10 },
 };
+
+export const INITIAL_PLAYER_HP = 20;
+export const INITIAL_GOLD = 200;
+export const UNIT_SEND_COUNT = 3;

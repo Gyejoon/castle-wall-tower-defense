@@ -1,17 +1,32 @@
 import { create } from 'zustand';
+import { INITIAL_GOLD, INITIAL_PLAYER_HP } from '@gld/shared';
 
 type Screen = 'lobby' | 'game';
 
 interface GameStoreState {
   screen: Screen;
-  unityLoaded: boolean;
+  gameReady: boolean;
+  gold: number;
+  lives: number;
+  selectedTowerId: string | null;
+
   setScreen: (screen: Screen) => void;
-  setUnityLoaded: (loaded: boolean) => void;
+  setGameReady: (ready: boolean) => void;
+  setGold: (gold: number) => void;
+  setLives: (lives: number) => void;
+  setSelectedTower: (towerId: string | null) => void;
 }
 
 export const useGameStore = create<GameStoreState>()((set) => ({
   screen: 'lobby',
-  unityLoaded: false,
+  gameReady: false,
+  gold: INITIAL_GOLD,
+  lives: INITIAL_PLAYER_HP,
+  selectedTowerId: null,
+
   setScreen: (screen) => set({ screen }),
-  setUnityLoaded: (loaded) => set({ unityLoaded: loaded }),
+  setGameReady: (ready) => set({ gameReady: ready }),
+  setGold: (gold) => set({ gold }),
+  setLives: (lives) => set({ lives }),
+  setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 }));

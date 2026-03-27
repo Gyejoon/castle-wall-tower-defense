@@ -1,8 +1,0 @@
-{
-  "name": "GLD.Bridge",
-  "rootNamespace": "GLD.Bridge",
-  "references": ["GLD.Core"],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "autoReferenced": true
-}

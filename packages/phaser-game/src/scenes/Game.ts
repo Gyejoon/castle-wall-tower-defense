@@ -31,6 +31,8 @@ export class GameScene extends Phaser.Scene {
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
 
+    this.events.on('shutdown', this.cleanup, this);
+
     // Draw grid
     this.gridGraphics = this.add.graphics();
     this.gridManager.render(this.gridGraphics);
@@ -204,7 +206,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  shutdown() {
+  private cleanup() {
     EventBus.off('request-place-tower', this.onPlaceTower);
     EventBus.off('request-send-unit', this.onSendUnit);
     this.towerSystem.destroy();

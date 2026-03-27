@@ -170,12 +170,12 @@ export class TowerSystem {
     g.strokePath();
   }
 
+  private damageEventsBuffer: Array<{ unitId: string; damage: number }> = [];
+
   /**
    * Update towers: find targets and attack.
    * Returns damage events to apply to units.
    */
-  private damageEventsBuffer: Array<{ unitId: string; damage: number }> = [];
-
   update(
     time: number,
     delta: number,

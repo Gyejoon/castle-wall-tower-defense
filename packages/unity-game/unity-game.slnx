@@ -1,7 +1,0 @@
-﻿<Solution>
-  <Project Path="GLD.Core.csproj" />
-  <Project Path="GLD.Editor.csproj" />
-  <Project Path="GLD.Visual.csproj" />
-  <Project Path="EditModeTests.csproj" />
-  <Project Path="GLD.Bridge.csproj" />
-</Solution>

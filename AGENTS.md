@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-Grid Line Defense PvP — 20x20 그리드 기반 타워 디펜스 PvP 게임. Unity 6 WebGL + React 프론트엔드를 bun 모노레포로 구성. 현재 Phase 1 (프로토타입) 진행 중.
+Grid Line Defense PvP — 20x20 그리드 기반 타워 디펜스 PvP 게임. Phaser.js + React 프론트엔드를 bun 모노레포로 구성. 현재 Phase 1 (프로토타입) 진행 중.
 
 ## Commands
 
@@ -13,16 +13,15 @@ Grid Line Defense PvP — 20x20 그리드 기반 타워 디펜스 PvP 게임. Un
 bun dev:web          # Vite dev server (port 3000)
 bun build:web        # TypeScript + Vite production build
 
-# Testing (Vitest, jsdom)
+# Testing (Vitest)
 bun test             # Run all tests
 bun test:shared      # @gld/shared tests only
 bun test:web         # web-shell tests only
 
 # Single test file
 cd packages/shared && bunx vitest run tests/types.test.ts
+cd packages/phaser-game && bunx vitest run tests/GridManager.test.ts
 cd packages/web-shell && bunx vitest run tests/gameStore.test.ts
-
-# Unity tests — Unity Editor Test Runner (EditMode)
 ```
 
 Node >=22 required (.nvmrc). bun으로 패키지 관리.
@@ -31,44 +30,49 @@ Node >=22 required (.nvmrc). bun으로 패키지 관리.
 
 ```
 packages/
-├── shared/       (@gld/shared) — TypeScript 타입 + 상수. 다른 패키지가 의존.
-├── web-shell/    — React 18 + Vite SPA. Unity WebGL을 임베드.
-└── unity-game/   — Unity 6 C# 프로젝트. WebGL로 빌드하여 web-shell에 포함.
+├── shared/         (@gld/shared) — TypeScript 타입 + 상수. 다른 패키지가 의존.
+├── phaser-game/    (@gld/phaser-game) — Phaser 3 게임 엔진. 그리드, 타워, 유닛, 렌더링.
+└── web-shell/      — React 18 + Vite SPA. Phaser 게임을 임베드.
 ```
 
-### Unity↔React Bridge Protocol
+### React↔Phaser EventBus
 
-양방향 JSON 메시지 브릿지. 계약은 `shared/src/types/bridge.ts`에 정의.
+양방향 typed EventBus 패턴. React와 Phaser가 같은 JS 런타임에서 직접 통신.
 
-**메시지 흐름:**
+**이벤트 흐름:**
 ```
-React → window.unityInstance.SendMessage('WebBridge', 'ReceiveFromReact', json)
-     → WebBridge.cs (C# singleton) processes message
-     → WebBridge.EmitToReact() → WebBridge.jslib (DllImport)
-     → window.dispatchUnityMessage(msg) → useUnityBridge hook → React
+React → EventBus.emit('request-place-tower', { col, row, towerDefId })
+     → GameScene listens and executes
+     → EventBus.emit('tower-placed', { col, row, towerId, success })
+     → React useEffect listener → Zustand store update
 ```
 
 **핵심 파일 (수정 시 반드시 함께 확인):**
-- `shared/src/types/bridge.ts` — 메시지 타입 계약
-- `web-shell/src/bridge/useUnityBridge.ts` — React 측 훅
-- `unity-game/Assets/Scripts/Bridge/WebBridge.cs` — Unity 측 싱글턴
-- `unity-game/Assets/Scripts/Bridge/Plugins/WebBridge.jslib` — JS interop 플러그인
+- `shared/src/types/events.ts` — 이벤트 타입 계약
+- `phaser-game/src/EventBus.ts` — typed EventEmitter (GameEventMap)
+- `web-shell/src/game/PhaserGame.tsx` — React 측 마운트 컴포넌트
+- `phaser-game/src/scenes/Game.ts` — 메인 게임 씬
 
-메시지 타입을 추가/변경하면 위 4개 파일을 모두 동기화해야 함.
+이벤트 타입을 추가/변경하면 EventBus.ts의 GameEventMap을 업데이트해야 함.
 
-### Unity C# Namespaces
+### Phaser Game Systems
 
-- `GLD.Core` — GridManager, Pathfinding (A*), Tower, Unit, TowerPlacer, UnitSpawner
-- `GLD.Bridge` — WebBridge (React 통신)
-- `GLD.Visual` — GridVisualizer, TowerVisualizer (도형 기반 렌더링)
-- `GLD.Editor` — SceneSetup (에디터 자동화)
+- `systems/GridManager.ts` — 20x20 그리드 관리, 타일 점유, 좌표 변환, 렌더링
+- `systems/PathfindingSystem.ts` — A* 경로탐색, 패스 캐싱
+- `systems/TowerSystem.ts` — 타워 배치, 범위 공격, 데미지 계산
+- `systems/UnitSystem.ts` — 유닛 스폰, 경로 이동, HP/아머 관리
+
+### Phaser Scenes
+
+- `Boot` → `Preloader` → `Game` 씬 체인
+- `Game` 씬이 모든 시스템을 초기화하고 게임 루프를 실행
 
 ### Web-Shell
 
-- **상태관리:** Zustand (gameStore — screen: 'lobby'|'game', unityLoaded)
+- **상태관리:** Zustand (gameStore — screen, gameReady, gold, lives, wave, selectedTower)
 - **UI:** Inline styles + `styles/tokens.ts` 컬러 팔레트. Press Start 2P 픽셀 폰트.
-- **Unity 로딩:** `UnityCanvas.tsx`가 `/unity-build/Build/`에서 WebGL 빌드 로드
-- **디버그:** `window.debugSendToUnity(type, payload)` 로 브라우저 콘솔에서 테스트 가능
+- **Phaser 마운트:** `PhaserGame.tsx`가 useRef/useEffect로 Phaser.Game 인스턴스 관리
+- **GamePage:** Phaser 캔버스 + 사이드 패널 (타워 선택, 유닛 전송)
 
 ### Game Constants
 
@@ -77,13 +81,9 @@ React → window.unityInstance.SendMessage('WebBridge', 'ReceiveFromReact', json
 - 유닛: 5종(scout_drone, battle_robot, heavy_walker, stealth_drone, titan)
 - 상수 정의: `shared/src/constants/`
 
-## Unity WebGL Build
-
-Unity 빌드 산출물은 `packages/web-shell/public/unity-build/`에 배치 (gitignored). 빌드는 Unity Editor에서 수동으로 수행.
-
 ## Phase Roadmap
 
-- **Phase 1** (현재): 프로토타입 — 그리드, 타워, 유닛, 브릿지
+- **Phase 1** (현재): 프로토타입 — 그리드, 타워, 유닛, EventBus
 - Phase 2: 네트워킹 (WebSocket, 실시간 동기화)
 - Phase 3: 토스 연동 (인증, 결제)
 - Phase 4: 게임 완성 (밸런싱, 매치메이킹)

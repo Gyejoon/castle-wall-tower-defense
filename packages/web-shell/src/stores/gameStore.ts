@@ -4,14 +4,32 @@ type Screen = 'lobby' | 'game';
 
 interface GameStoreState {
   screen: Screen;
-  unityLoaded: boolean;
+  gameReady: boolean;
+  gold: number;
+  lives: number;
+  wave: number;
+  selectedTowerId: string | null;
+
   setScreen: (screen: Screen) => void;
-  setUnityLoaded: (loaded: boolean) => void;
+  setGameReady: (ready: boolean) => void;
+  setGold: (gold: number) => void;
+  setLives: (lives: number) => void;
+  setWave: (wave: number) => void;
+  setSelectedTower: (towerId: string | null) => void;
 }
 
 export const useGameStore = create<GameStoreState>()((set) => ({
   screen: 'lobby',
-  unityLoaded: false,
+  gameReady: false,
+  gold: 200,
+  lives: 20,
+  wave: 0,
+  selectedTowerId: null,
+
   setScreen: (screen) => set({ screen }),
-  setUnityLoaded: (loaded) => set({ unityLoaded: loaded }),
+  setGameReady: (ready) => set({ gameReady: ready }),
+  setGold: (gold) => set({ gold }),
+  setLives: (lives) => set({ lives }),
+  setWave: (wave) => set({ wave }),
+  setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 }));

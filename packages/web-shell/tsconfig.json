@@ -3,9 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "./dist",
-    "rootDir": "./src",
-    "types": ["vitest/globals"]
+    "rootDir": "./src"
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "references": [{ "path": "../shared" }]
+  "include": ["src/**/*"],
+  "references": [{ "path": "../shared" }, { "path": "../phaser-game" }]
 }

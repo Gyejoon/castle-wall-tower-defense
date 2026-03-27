@@ -4,28 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Grid Line Defense PvP — 20x20 그리드 기반 타워 디펜스 PvP 게임. Unity 6 WebGL + React 프론트엔드를 pnpm 모노레포로 구성. 현재 Phase 1 (프로토타입) 진행 중.
+Grid Line Defense PvP — 20x20 그리드 기반 타워 디펜스 PvP 게임. Unity 6 WebGL + React 프론트엔드를 bun 모노레포로 구성. 현재 Phase 1 (프로토타입) 진행 중.
 
 ## Commands
 
 ```bash
 # Development
-pnpm dev:web          # Vite dev server (port 3000)
-pnpm build:web        # TypeScript + Vite production build
+bun dev:web          # Vite dev server (port 3000)
+bun build:web        # TypeScript + Vite production build
 
 # Testing (Vitest, jsdom)
-pnpm test             # Run all tests
-pnpm test:shared      # @gld/shared tests only
-pnpm test:web         # web-shell tests only
+bun test             # Run all tests
+bun test:shared      # @gld/shared tests only
+bun test:web         # web-shell tests only
 
 # Single test file
-cd packages/shared && npx vitest run tests/types.test.ts
-cd packages/web-shell && npx vitest run tests/gameStore.test.ts
+cd packages/shared && bunx vitest run tests/types.test.ts
+cd packages/web-shell && bunx vitest run tests/gameStore.test.ts
 
 # Unity tests — Unity Editor Test Runner (EditMode)
 ```
 
-Node >=22 required (.nvmrc). pnpm@9.15.0.
+Node >=22 required (.nvmrc). bun으로 패키지 관리.
 
 ## Architecture
 

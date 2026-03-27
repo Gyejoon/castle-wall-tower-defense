@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useGameStore } from '../src/stores/gameStore';
+import { INITIAL_GOLD, INITIAL_PLAYER_HP } from '@gld/shared';
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -22,13 +23,13 @@ describe('gameStore', () => {
   });
 
   it('tracks gold', () => {
-    expect(useGameStore.getState().gold).toBe(200);
+    expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
     useGameStore.getState().setGold(150);
     expect(useGameStore.getState().gold).toBe(150);
   });
 
   it('tracks lives', () => {
-    expect(useGameStore.getState().lives).toBe(20);
+    expect(useGameStore.getState().lives).toBe(INITIAL_PLAYER_HP);
     useGameStore.getState().setLives(15);
     expect(useGameStore.getState().lives).toBe(15);
   });

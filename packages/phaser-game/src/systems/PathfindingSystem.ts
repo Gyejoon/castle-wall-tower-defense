@@ -101,9 +101,10 @@ function reconstructPath(node: PathNode): Position[] {
   const path: Position[] = [];
   let current: PathNode | null = node;
   while (current) {
-    path.unshift({ x: current.x, y: current.y });
+    path.push({ x: current.x, y: current.y });
     current = current.parent;
   }
+  path.reverse();
   return path;
 }
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ALL_TOWERS, UNITS, TILE_SIZE } from '@gld/shared';
+import { ALL_TOWERS, UNITS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
@@ -14,11 +14,12 @@ export class GameScene extends Phaser.Scene {
   private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
-  private playerHp = 20;
-  private gold = 200;
-  private wave = 0;
+  private playerHp = INITIAL_PLAYER_HP;
+  private gold = INITIAL_GOLD;
   private selectedTowerId: string | null = null;
   private gameOver = false;
+  private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
+  private onSendUnit!: (data: { unitDefId: string; count: number }) => void;
 
   constructor() {
     super('Game');
@@ -72,31 +73,33 @@ export class GameScene extends Phaser.Scene {
       this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
     });
 
-    // Listen for React events
-    EventBus.on('request-place-tower', (data) => {
+    this.onPlaceTower = (data) => {
       if (data.col < 0 || data.row < 0) {
-        // Tower selection only (from sidebar button)
         this.selectedTowerId = data.towerDefId;
         return;
       }
       this.handlePlaceTower(data.col, data.row, data.towerDefId);
-    });
+    };
 
-    EventBus.on('request-send-unit', (data) => {
+    this.onSendUnit = (data) => {
       const unitDef = UNITS.find((u) => u.id === data.unitDefId);
       if (!unitDef) return;
-      // Send as many as we can afford
       const affordable = Math.min(data.count, Math.floor(this.gold / unitDef.sendCost));
       if (affordable <= 0) return;
       this.spendGold(unitDef.sendCost * affordable);
       this.unitSystem.queueUnits(data.unitDefId, affordable);
-    });
+    };
+
+    EventBus.on('request-place-tower', this.onPlaceTower);
+    EventBus.on('request-send-unit', this.onSendUnit);
 
     // Keyboard tower selection (1-4)
-    this.input.keyboard?.on('keydown-ONE', () => { this.selectedTowerId = 'laser'; });
-    this.input.keyboard?.on('keydown-TWO', () => { this.selectedTowerId = 'plasma'; });
-    this.input.keyboard?.on('keydown-THREE', () => { this.selectedTowerId = 'emp'; });
-    this.input.keyboard?.on('keydown-FOUR', () => { this.selectedTowerId = 'shield'; });
+    const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
+    keyNames.forEach((key, i) => {
+      if (BASE_TOWERS[i]) {
+        this.input.keyboard?.on(`keydown-${key}`, () => { this.selectedTowerId = BASE_TOWERS[i].id; });
+      }
+    });
 
     // Notify React
     EventBus.emit('game-ready');
@@ -119,14 +122,8 @@ export class GameScene extends Phaser.Scene {
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
     if (placed) {
       this.spendGold(towerDef.cost);
-
-      // Update path visualization
-      const walkGrid = this.gridManager.getWalkabilityGrid();
-      const path = this.pathfinding.findPath(
-        walkGrid,
-        this.gridManager.spawnPoint,
-        this.gridManager.exitPoint,
-      );
+      // TowerSystem already recomputed and cached the path
+      const path = this.pathfinding.getCachedPath();
       if (path) {
         this.unitSystem.setPath(path);
         this.renderPath(path);
@@ -179,7 +176,7 @@ export class GameScene extends Phaser.Scene {
 
     // Update towers — get damage events
     const unitPositions = this.unitSystem.getUnitPositions();
-    const damageEvents = this.towerSystem.update(time, unitPositions);
+    const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
     // Apply damage to units
     for (const evt of damageEvents) {
@@ -208,6 +205,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   shutdown() {
+    EventBus.off('request-place-tower', this.onPlaceTower);
+    EventBus.off('request-send-unit', this.onSendUnit);
     this.towerSystem.destroy();
     this.unitSystem.destroy();
   }

@@ -4,9 +4,7 @@ import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 import { EventBus } from '@gld/phaser-game';
-import { BASE_TOWERS, UNITS } from '@gld/shared';
-
-type TowerVariant = 'primary' | 'secondary' | 'danger' | 'gold';
+import { BASE_TOWERS, UNITS, UNIT_SEND_COUNT } from '@gld/shared';
 
 export function GamePage() {
   const setScreen = useGameStore((s) => s.setScreen);
@@ -41,7 +39,7 @@ export function GamePage() {
   };
 
   const sendUnit = (unitDefId: string) => {
-    EventBus.emit('request-send-unit', { unitDefId, count: 3 });
+    EventBus.emit('request-send-unit', { unitDefId, count: UNIT_SEND_COUNT });
   };
 
   return (

@@ -174,42 +174,45 @@ export class TowerSystem {
    * Update towers: find targets and attack.
    * Returns damage events to apply to units.
    */
+  private damageEventsBuffer: Array<{ unitId: string; damage: number }> = [];
+
   update(
     time: number,
+    delta: number,
     unitPositions: Array<{ instanceId: string; x: number; y: number; hp: number }>,
   ): Array<{ unitId: string; damage: number }> {
-    const damageEvents: Array<{ unitId: string; damage: number }> = [];
+    this.damageEventsBuffer.length = 0;
 
     for (const tower of this.towers.values()) {
       const { def, data } = tower;
-      if (def.stats.attackSpeed <= 0) continue; // Shield/support towers don't attack
+      if (def.stats.attackSpeed <= 0) continue;
 
       const attackInterval = 1000 / def.stats.attackSpeed;
       if (time - tower.lastAttackTime < attackInterval) continue;
 
       const towerWorld = this.gridManager.gridToWorld(data.position.x, data.position.y);
-      const rangePixels = def.stats.range * TILE_SIZE;
+      const rangeSq = (def.stats.range * TILE_SIZE) ** 2;
 
-      // Find closest unit in range
       let closestUnit: (typeof unitPositions)[0] | null = null;
-      let closestDist = Infinity;
+      let closestDistSq = Infinity;
 
       for (const unit of unitPositions) {
         if (unit.hp <= 0) continue;
-        const dist = Phaser.Math.Distance.Between(towerWorld.x, towerWorld.y, unit.x, unit.y);
-        if (dist <= rangePixels && dist < closestDist) {
-          closestDist = dist;
+        const dx = towerWorld.x - unit.x;
+        const dy = towerWorld.y - unit.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq <= rangeSq && distSq < closestDistSq) {
+          closestDistSq = distSq;
           closestUnit = unit;
         }
       }
 
       if (closestUnit) {
         tower.lastAttackTime = time;
-        damageEvents.push({
+        this.damageEventsBuffer.push({
           unitId: closestUnit.instanceId,
           damage: def.stats.damage,
         });
-        // Visual: attack line
         const color = parseInt(def.color.replace('#', ''), 16);
         this.attackLines.push({
           x1: towerWorld.x, y1: towerWorld.y,
@@ -219,33 +222,33 @@ export class TowerSystem {
       }
     }
 
-    // Render attack lines (fade out)
+    // Render attack lines with in-place compaction
     this.attackGraphics.clear();
-    this.attackLines = this.attackLines.filter((line) => {
-      line.ttl -= 16;
-      if (line.ttl <= 0) return false;
+    let write = 0;
+    for (let i = 0; i < this.attackLines.length; i++) {
+      const line = this.attackLines[i];
+      line.ttl -= delta;
+      if (line.ttl <= 0) continue;
       const alpha = line.ttl / 80;
-      // Beam core
       this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
       this.attackGraphics.beginPath();
       this.attackGraphics.moveTo(line.x1, line.y1);
       this.attackGraphics.lineTo(line.x2, line.y2);
       this.attackGraphics.strokePath();
-      // Beam glow
       this.attackGraphics.lineStyle(4, line.color, alpha * 0.2);
       this.attackGraphics.beginPath();
       this.attackGraphics.moveTo(line.x1, line.y1);
       this.attackGraphics.lineTo(line.x2, line.y2);
       this.attackGraphics.strokePath();
-      // Hit flash
       if (line.ttl > 50) {
         this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
         this.attackGraphics.fillCircle(line.x2, line.y2, 4);
       }
-      return true;
-    });
+      this.attackLines[write++] = line;
+    }
+    this.attackLines.length = write;
 
-    return damageEvents;
+    return this.damageEventsBuffer;
   }
 
   getTowers(): PlacedTower[] {

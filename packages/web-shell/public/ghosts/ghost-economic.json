@@ -1,0 +1,55 @@
+{
+  "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+  "playerName": "GOLD_HOARDER",
+  "timestamp": 1711700200000,
+  "totalWaves": 5,
+  "waves": [
+    {
+      "waveNumber": 1,
+      "pressure": "invest",
+      "towersPlaced": [
+        { "col": 5, "row": 10, "towerDefId": "laser" }
+      ],
+      "goldSpent": 50
+    },
+    {
+      "waveNumber": 2,
+      "pressure": "invest",
+      "towersPlaced": [
+        { "col": 8, "row": 9, "towerDefId": "plasma" }
+      ],
+      "goldSpent": 60
+    },
+    {
+      "waveNumber": 3,
+      "pressure": "defend",
+      "towersPlaced": [
+        { "col": 8, "row": 11, "towerDefId": "laser" },
+        { "col": 11, "row": 9, "towerDefId": "plasma" }
+      ],
+      "goldSpent": 50
+    },
+    {
+      "waveNumber": 4,
+      "pressure": "defend",
+      "towersPlaced": [
+        { "col": 11, "row": 11, "towerDefId": "laser" },
+        { "col": 14, "row": 10, "towerDefId": "plasma" }
+      ],
+      "goldSpent": 50
+    },
+    {
+      "waveNumber": 5,
+      "pressure": "defend",
+      "towersPlaced": [
+        { "col": 17, "row": 9, "towerDefId": "laser" }
+      ],
+      "goldSpent": 20
+    }
+  ],
+  "result": {
+    "wavesCompleted": 5,
+    "goldRemaining": 200,
+    "score": 700
+  }
+}

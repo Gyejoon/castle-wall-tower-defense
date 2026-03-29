@@ -1,8 +1,16 @@
-import { useEffect } from 'react';
-import { BASE_TOWERS, TOTAL_WAVES, type PlacementFailureReason } from '@gld/shared';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  BASE_TOWERS,
+  TOTAL_WAVES,
+  GHOST_BATTLE_WAVES,
+  type PlacementFailureReason,
+  type PressureChoice,
+} from '@gld/shared';
 import { EventBus } from '@gld/phaser-game';
 import { uiMobileArt } from '../assets/uiMobileArt';
 import { PixelButton } from '../components/ui/PixelButton';
+import { PressurePanel } from '../components/PressurePanel';
+import { MatchSummary } from '../components/MatchSummary';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
@@ -15,8 +23,14 @@ const feedbackCopy: Record<PlacementFailureReason, string> = {
   out_of_bounds: 'Tap inside the battlefield grid.',
 };
 
-function formatWaveLabel(wave: number) {
-  return Math.min(TOTAL_WAVES, Math.max(1, wave || 1));
+const PRESSURE_WARNING_COPY: Record<PressureChoice, string> = {
+  attack: 'GHOST ATTACKING! +3 scout drones incoming!',
+  defend: 'Ghost is fortifying defenses.',
+  invest: 'Ghost is investing in bounties.',
+};
+
+function formatWaveLabel(wave: number, totalWaves: number) {
+  return Math.min(totalWaves, Math.max(1, wave || 1));
 }
 
 export function GamePage() {
@@ -40,11 +54,57 @@ export function GamePage() {
   const resetRun = useGameStore((s) => s.resetRun);
   const enterLobby = useGameStore((s) => s.enterLobby);
 
+  // Ghost battle selectors
+  const ghostBattleActive = useGameStore((s) => s.ghostBattleActive);
+  const currentGhost = useGameStore((s) => s.currentGhost);
+  const matchResult = useGameStore((s) => s.matchResult);
+  const setMatchResult = useGameStore((s) => s.setMatchResult);
+  const setGhostPressureWarning = useGameStore((s) => s.setGhostPressureWarning);
+  const ghostPressureWarning = useGameStore((s) => s.ghostPressureWarning);
+
+  const [warningFlash, setWarningFlash] = useState(false);
+
+  const totalWaves = ghostBattleActive ? GHOST_BATTLE_WAVES : TOTAL_WAVES;
+
+  const computeMatchResult = useCallback(
+    (winnerId: string) => {
+      if (!ghostBattleActive || !currentGhost) return;
+
+      const playerWon = winnerId === 'local';
+      const playerWaves = playerWon ? totalWaves : wave;
+      const ghostResult = currentGhost.result;
+
+      let outcome: 'victory' | 'defeat' | 'draw';
+      if (playerWaves > ghostResult.wavesCompleted) {
+        outcome = 'victory';
+      } else if (playerWaves < ghostResult.wavesCompleted) {
+        outcome = 'defeat';
+      } else if (gold > ghostResult.goldRemaining) {
+        outcome = 'victory';
+      } else if (gold < ghostResult.goldRemaining) {
+        outcome = 'defeat';
+      } else {
+        outcome = 'draw';
+      }
+
+      setMatchResult({
+        playerWavesCompleted: playerWaves,
+        playerGoldRemaining: gold,
+        ghostWavesCompleted: ghostResult.wavesCompleted,
+        ghostGoldRemaining: ghostResult.goldRemaining,
+        outcome,
+        ghostName: currentGhost.playerName,
+      });
+    },
+    [ghostBattleActive, currentGhost, totalWaves, wave, gold, setMatchResult],
+  );
+
   useEffect(() => {
     const onDamaged = (data: { remainingHp: number }) => setLives(data.remainingHp);
     const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
     const onGameOver = (data: { winnerId: string }) => {
       setRunStatus(data.winnerId === 'local' ? 'victory' : 'defeat');
+      computeMatchResult(data.winnerId);
     };
     const onWaveStarted = (data: { wave: number }) => {
       setWave(data.wave);
@@ -62,6 +122,15 @@ export function GamePage() {
     const onTowerPlaced = (data: { success: boolean; reason?: PlacementFailureReason }) => {
       setPlacementFeedback(data.success ? null : data.reason ?? 'occupied');
     };
+    const onGhostPressure = (data: { pressure: PressureChoice }) => {
+      const msg = PRESSURE_WARNING_COPY[data.pressure];
+      setGhostPressureWarning(msg);
+      setWarningFlash(true);
+      setTimeout(() => {
+        setWarningFlash(false);
+        setGhostPressureWarning(null);
+      }, 2500);
+    };
 
     EventBus.on('player-damaged', onDamaged);
     EventBus.on('gold-changed', onGoldChanged);
@@ -70,6 +139,7 @@ export function GamePage() {
     EventBus.on('building-phase-started', onBuildingPhase);
     EventBus.on('countdown-tick', onCountdownTick);
     EventBus.on('tower-placed', onTowerPlaced);
+    EventBus.on('ghost-pressure-applied', onGhostPressure);
 
     return () => {
       EventBus.off('player-damaged', onDamaged);
@@ -79,16 +149,26 @@ export function GamePage() {
       EventBus.off('building-phase-started', onBuildingPhase);
       EventBus.off('countdown-tick', onCountdownTick);
       EventBus.off('tower-placed', onTowerPlaced);
+      EventBus.off('ghost-pressure-applied', onGhostPressure);
     };
   }, [
+    computeMatchResult,
     setCountdown,
     setGold,
+    setGhostPressureWarning,
     setLives,
     setPlacementFeedback,
     setRunStatus,
     setWave,
     setWavePhase,
   ]);
+
+  // Notify Phaser game scene about ghost battle when game is ready
+  useEffect(() => {
+    if (!ghostBattleActive || !currentGhost || !gameReady) return;
+
+    EventBus.emit('start-ghost-battle', { ghost: currentGhost });
+  }, [ghostBattleActive, currentGhost, gameReady]);
 
   const selectTower = (towerId: string) => {
     if (selectedTowerId === towerId) {
@@ -146,8 +226,13 @@ export function GamePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ color: colors.accent, fontSize: '8px' }}>GRID LINE DEFENSE</span>
               <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
-                WAVE {formatWaveLabel(wave)}/{TOTAL_WAVES}
+                WAVE {formatWaveLabel(wave, totalWaves)}/{totalWaves}
               </span>
+              {ghostBattleActive && currentGhost && (
+                <span style={{ color: colors.danger, fontSize: '7px' }}>
+                  vs {currentGhost.playerName}
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <div
@@ -230,53 +315,81 @@ export function GamePage() {
               </div>
             )}
 
-            {(runStatus === 'victory' || runStatus === 'defeat') && (
+            {/* Ghost pressure warning flash */}
+            {warningFlash && ghostPressureWarning && (
               <div
                 style={{
                   position: 'absolute',
-                  inset: 0,
-                  zIndex: 3,
-                  background: 'rgba(6, 8, 16, 0.82)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '20px',
+                  top: '8px',
+                  left: '8px',
+                  right: '8px',
+                  zIndex: 4,
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: 'rgba(229, 49, 112, 0.25)',
+                  border: `1px solid ${colors.danger}`,
+                  color: colors.danger,
+                  fontSize: '7px',
+                  textAlign: 'center',
+                  animation: 'fadeIn 0.2s ease-out',
+                  pointerEvents: 'none',
                 }}
               >
+                {ghostPressureWarning}
+              </div>
+            )}
+
+            {(runStatus === 'victory' || runStatus === 'defeat') && (
+              ghostBattleActive && matchResult ? (
+                <MatchSummary />
+              ) : (
                 <div
                   style={{
-                    width: '100%',
-                    padding: '20px',
-                    borderRadius: '20px',
-                    background: 'rgba(12, 15, 26, 0.96)',
-                    border: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 3,
+                    background: 'rgba(6, 8, 16, 0.82)',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '14px',
-                    textAlign: 'center',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
                   }}
                 >
-                  <h2
+                  <div
                     style={{
-                      color: runStatus === 'victory' ? colors.success : colors.danger,
-                      fontSize: '12px',
+                      width: '100%',
+                      padding: '20px',
+                      borderRadius: '20px',
+                      background: 'rgba(12, 15, 26, 0.96)',
+                      border: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      textAlign: 'center',
                     }}
                   >
-                    {resultTitle}
-                  </h2>
-                  <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
-                    {runStatus === 'victory'
-                      ? 'You survived the full 10-wave pressure cycle.'
-                      : 'The corridor broke before the run could stabilize.'}
-                  </p>
-                  <PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
-                    RESTART RUN
-                  </PixelButton>
-                  <PixelButton variant="secondary" style={{ width: '100%' }} onClick={enterLobby}>
-                    BACK TO LOBBY
-                  </PixelButton>
+                    <h2
+                      style={{
+                        color: runStatus === 'victory' ? colors.success : colors.danger,
+                        fontSize: '12px',
+                      }}
+                    >
+                      {resultTitle}
+                    </h2>
+                    <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
+                      {runStatus === 'victory'
+                        ? 'You survived the full 10-wave pressure cycle.'
+                        : 'The corridor broke before the run could stabilize.'}
+                    </p>
+                    <PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
+                      RESTART RUN
+                    </PixelButton>
+                    <PixelButton variant="secondary" style={{ width: '100%' }} onClick={enterLobby}>
+                      BACK TO LOBBY
+                    </PixelButton>
+                  </div>
                 </div>
-              </div>
+              )
             )}
           </div>
 
@@ -305,6 +418,7 @@ export function GamePage() {
               }}
             />
             <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {ghostBattleActive && runStatus === 'building' && <PressurePanel />}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <span style={{ color: colors.text, fontSize: '8px' }}>TACTICAL DOCK</span>

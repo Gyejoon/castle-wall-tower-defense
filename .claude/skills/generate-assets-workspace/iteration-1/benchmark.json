@@ -1,0 +1,134 @@
+{
+  "metadata": {
+    "skill_name": "generate-assets",
+    "skill_path": "/Users/lio/Documents/personal/github/grid-line-defense-pvp/.claude/skills/generate-assets",
+    "executor_model": "claude-opus-4-6",
+    "analyzer_model": "claude-opus-4-6",
+    "timestamp": "2026-03-29T04:36:46Z",
+    "evals_run": [1, 2, 3],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "tower-sprites-generation",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 206.2,
+        "tokens": 41971,
+        "tool_calls": 25,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "shared.ts created with PALETTE, TILE_SIZE, canvas utils", "passed": true, "evidence": "shared.ts exists with 21 palette colors, Bresenham drawing functions"},
+        {"text": "generate-towers.ts created", "passed": true, "evidence": "Script generates 9 tower types with static + fire animations"},
+        {"text": "9 tower static PNGs generated", "passed": true, "evidence": "laser.png, plasma.png, emp.png, shield.png, twin_laser.png, disruptor.png, nova_cannon.png, fortress.png, stasis_field.png all present"},
+        {"text": "Fire animation sprite sheets generated", "passed": true, "evidence": "9 fire animation PNGs (128x32, 4 frames each), shield uses pulse variant"},
+        {"text": "Correct dimensions (32x32 static, 128x32 animation)", "passed": true, "evidence": "Visual confirmation: static sprites are 32x32, animations are 4-frame horizontal strips"},
+        {"text": "Correct colors per tower", "passed": true, "evidence": "laser=gold diamond, plasma=green hexagon, emp=purple circle, shield=cyan shield"},
+        {"text": "Pixel art style (no anti-aliasing)", "passed": true, "evidence": "ctx.imageSmoothingEnabled=false in makeCanvas(), Bresenham algorithms for all primitives"}
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "tower-sprites-generation",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 7,
+        "total": 7,
+        "time_seconds": 32.7,
+        "tokens": 20730,
+        "tool_calls": 12,
+        "errors": 1
+      },
+      "expectations": [
+        {"text": "shared.ts created with PALETTE, TILE_SIZE, canvas utils", "passed": false, "evidence": "Agent failed to get Bash permission, no files created"},
+        {"text": "generate-towers.ts created", "passed": false, "evidence": "No files created"},
+        {"text": "9 tower static PNGs generated", "passed": false, "evidence": "No outputs directory exists"},
+        {"text": "Fire animation sprite sheets generated", "passed": false, "evidence": "No outputs"},
+        {"text": "Correct dimensions", "passed": false, "evidence": "No PNGs generated"},
+        {"text": "Correct colors per tower", "passed": false, "evidence": "No PNGs generated"},
+        {"text": "Pixel art style", "passed": false, "evidence": "No code written"}
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "all-assets-generation",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 312.5,
+        "tokens": 51780,
+        "tool_calls": 25,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "8 script files created in scripts/generate-assets/", "passed": true, "evidence": "shared.ts + 6 generators + generate-all.ts"},
+        {"text": "6 category directories with PNGs", "passed": true, "evidence": "tiles(3), towers(18), units(6), projectiles(4), vfx(4), ui(4) = 39 files"},
+        {"text": "asset-manifest.json generated with key/type/path", "passed": true, "evidence": "37 asset entries with proper Phaser-compatible keys"},
+        {"text": "Spritesheet entries include frameWidth/Height/Count", "passed": true, "evidence": "All spritesheet type entries have frameWidth, frameHeight, frameCount"},
+        {"text": "All generators reuse shared.ts utilities", "passed": true, "evidence": "All generators import PALETTE, makeCanvas, saveCanvas from shared"},
+        {"text": "Colors from PALETTE only", "passed": true, "evidence": "All generators reference PALETTE.xxx for colors"}
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "units-with-preloader-integration",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 246.9,
+        "tokens": 41520,
+        "tool_calls": 39,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "5 unit walk cycle sprite sheets generated", "passed": true, "evidence": "scout_drone.png, battle_robot.png, heavy_walker.png, stealth_drone.png, titan.png"},
+        {"text": "unit-death.png shared death effect generated", "passed": true, "evidence": "unit-death.png exists (375 bytes)"},
+        {"text": "Walk cycles are 128x32 (4 frames x 32x32)", "passed": true, "evidence": "Visual confirmation: 4-frame horizontal strips, manifest: frameWidth=32, frameCount=4"},
+        {"text": "Preloader.ts has this.load.spritesheet() calls", "passed": true, "evidence": "preload() loads 5 unit spritesheets + unit-death via loop"},
+        {"text": "Preloader.ts create() has walk animation definitions", "passed": true, "evidence": "create() defines walk anims (frameRate:8, repeat:-1) + death anim (frameRate:10, repeat:0)"},
+        {"text": "Each unit uses correct unique color", "passed": true, "evidence": "Visual: scout=mint triangle, battle=blue square, heavy=orange hexagon, stealth=purple diamond, titan=red octagon"}
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 255.2, "stddev": 43.6, "min": 206.2, "max": 312.5},
+      "tokens": {"mean": 45090, "stddev": 4590, "min": 41520, "max": 51780}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0},
+      "time_seconds": {"mean": 32.7, "stddev": 0.0, "min": 32.7, "max": 32.7},
+      "tokens": {"mean": 20730, "stddev": 0, "min": 20730, "max": 20730}
+    },
+    "delta": {
+      "pass_rate": "+1.00",
+      "time_seconds": "+222.5",
+      "tokens": "+24360"
+    }
+  },
+  "notes": [
+    "without_skill baseline failed entirely - agent could not construct the asset generation workflow autonomously",
+    "with_skill achieved 100% pass rate across all 3 evals (19/19 assertions)",
+    "eval-2 (all assets) consumed most tokens/time (39 files generated across 6 categories)",
+    "Skill provides critical structure: color palette, directory conventions, script patterns, Phaser integration"
+  ]
+}

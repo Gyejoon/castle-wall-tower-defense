@@ -1,0 +1,37 @@
+{
+  "eval_id": 3,
+  "eval_name": "units-with-preloader-integration",
+  "prompt": "유닛 스프라이트 생성하고 Preloader에 연동해줘",
+  "assertions": [
+    {
+      "id": "unit-sprites-generated",
+      "text": "5개 유닛 walk cycle sprite sheet PNG가 생성됨 (scout_drone, battle_robot, heavy_walker, stealth_drone, titan)",
+      "type": "output_check"
+    },
+    {
+      "id": "death-effect-generated",
+      "text": "unit-death.png 공유 death effect sprite sheet가 생성됨",
+      "type": "output_check"
+    },
+    {
+      "id": "walk-cycle-dimensions",
+      "text": "walk cycle은 128x32 (4프레임 x 32x32)",
+      "type": "output_check"
+    },
+    {
+      "id": "preloader-load-calls",
+      "text": "Preloader.ts에 this.load.spritesheet() 호출이 추가됨",
+      "type": "code_check"
+    },
+    {
+      "id": "preloader-animations",
+      "text": "Preloader.ts의 create()에 walk animation 정의 (this.anims.create)가 추가됨",
+      "type": "code_check"
+    },
+    {
+      "id": "unit-colors-correct",
+      "text": "각 유닛이 고유 색상을 사용함 (scout=#72f1b8, battle=#5b8cff, heavy=#ff8c42, stealth=#b388ff, titan=#ff4757)",
+      "type": "code_check"
+    }
+  ]
+}

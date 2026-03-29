@@ -10,9 +10,15 @@ export class WaveSystem {
   private lastTickSecond = -1;
   private combatStartedThisFrame = false;
   private unitSystem: UnitSystem;
+  private maxWaves: number;
 
-  constructor(unitSystem: UnitSystem) {
+  constructor(unitSystem: UnitSystem, maxWaves?: number) {
     this.unitSystem = unitSystem;
+    this.maxWaves = maxWaves ?? TOTAL_WAVES;
+  }
+
+  setMaxWaves(count: number): void {
+    this.maxWaves = count;
   }
 
   start(): void {
@@ -69,7 +75,7 @@ export class WaveSystem {
 
     this.phase = 'combat';
     this.combatStartedThisFrame = true;
-    EventBus.emit('wave-started', { wave: this.currentWave, totalWaves: TOTAL_WAVES });
+    EventBus.emit('wave-started', { wave: this.currentWave, totalWaves: this.maxWaves });
   }
 
   private updateCombat(): void {
@@ -83,9 +89,9 @@ export class WaveSystem {
     }
 
     // Wave cleared
-    EventBus.emit('wave-completed', { wave: this.currentWave, totalWaves: TOTAL_WAVES });
+    EventBus.emit('wave-completed', { wave: this.currentWave, totalWaves: this.maxWaves });
 
-    if (this.currentWave >= TOTAL_WAVES) {
+    if (this.currentWave >= this.maxWaves) {
       this.phase = 'ended';
       EventBus.emit('game-won');
       return;

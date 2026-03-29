@@ -1,0 +1,37 @@
+{
+  "eval_id": 2,
+  "eval_name": "all-assets-generation",
+  "prompt": "모든 게임 에셋을 만들어줘",
+  "assertions": [
+    {
+      "id": "all-scripts-created",
+      "text": "scripts/generate-assets/ 에 shared.ts + 6개 generator + generate-all.ts 총 8개 파일 생성",
+      "type": "file_exists"
+    },
+    {
+      "id": "all-categories-output",
+      "text": "tiles, towers, units, projectiles, vfx, ui 6개 카테고리 디렉토리가 모두 생성되고 PNG 파일이 존재",
+      "type": "output_check"
+    },
+    {
+      "id": "asset-manifest",
+      "text": "asset-manifest.json이 생성되고 모든 에셋 항목이 key, type, path 필드를 포함",
+      "type": "output_check"
+    },
+    {
+      "id": "manifest-spritesheet-format",
+      "text": "sprite sheet 에셋은 manifest에 frameWidth, frameHeight, frameCount가 포함됨",
+      "type": "output_check"
+    },
+    {
+      "id": "scripts-reusable",
+      "text": "shared.ts의 유틸리티를 모든 generator가 import하여 재사용",
+      "type": "code_check"
+    },
+    {
+      "id": "palette-compliance",
+      "text": "생성 코드에서 사용하는 색상이 PALETTE 상수에서만 가져옴",
+      "type": "code_check"
+    }
+  ]
+}

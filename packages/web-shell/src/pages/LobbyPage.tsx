@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import type { GhostRecord } from '@gld/shared';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PixelPanel } from '../components/ui/PixelPanel';
 import { uiMobileArt } from '../assets/uiMobileArt';
@@ -10,8 +12,29 @@ const featureCopy = [
   'Mobile-first vertical battlefield shell',
 ];
 
+const GHOST_FILES = ['ghost-aggressive.json', 'ghost-defensive.json', 'ghost-economic.json'];
+
+async function fetchRandomGhost(): Promise<GhostRecord> {
+  const pick = GHOST_FILES[Math.floor(Math.random() * GHOST_FILES.length)];
+  const response = await fetch(`/ghosts/${pick}`);
+  return response.json() as Promise<GhostRecord>;
+}
+
 export function LobbyPage() {
   const resetRun = useGameStore((s) => s.resetRun);
+  const startGhostBattle = useGameStore((s) => s.startGhostBattle);
+  const [loadingGhost, setLoadingGhost] = useState(false);
+
+  const handleGhostBattle = () => {
+    setLoadingGhost(true);
+    fetchRandomGhost()
+      .then((ghost) => {
+        startGhostBattle(ghost);
+      })
+      .finally(() => {
+        setLoadingGhost(false);
+      });
+  };
 
   return (
     <div
@@ -187,8 +210,21 @@ export function LobbyPage() {
               >
                 START RUN
               </PixelButton>
+              <PixelButton
+                variant="danger"
+                style={{
+                  width: '100%',
+                  padding: '16px 18px',
+                  fontSize: '10px',
+                  boxShadow: `0 0 0 1px rgba(229,49,112,0.28), 0 18px 30px rgba(229,49,112,0.14)`,
+                }}
+                onClick={handleGhostBattle}
+                disabled={loadingGhost}
+              >
+                {loadingGhost ? 'LOADING...' : 'GHOST BATTLE'}
+              </PixelButton>
               <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
-                Desktop mirrors this vertical frame so the same play surface remains visible everywhere.
+                Ghost Battle: 5-wave PvP against recorded ghost opponents.
               </p>
             </div>
           </div>

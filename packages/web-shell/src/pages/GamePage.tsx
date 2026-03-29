@@ -86,7 +86,9 @@ export function GamePage() {
       if (!activeGhostBattle || !activeGhost) return;
 
       const playerWon = winnerId === 'local';
-      const playerWaves = playerWon ? GHOST_BATTLE_WAVES : currentWave;
+      // On defeat, currentWave is the wave the player is dying on (not yet completed).
+      // Completed waves = currentWave - 1.
+      const playerWaves = playerWon ? GHOST_BATTLE_WAVES : Math.max(0, currentWave - 1);
       const ghostResult = activeGhost.result;
 
       let outcome: 'victory' | 'defeat' | 'draw';

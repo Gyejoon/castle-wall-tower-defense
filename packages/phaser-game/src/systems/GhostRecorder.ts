@@ -20,7 +20,9 @@ export class GhostRecorder {
     if (!this.recording) return;
     this.currentWaveTowers = [];
     this.currentWaveGoldSpent = 0;
-    this.currentWavePressure = 'defend';
+    // Don't reset currentWavePressure here — it was already set during
+    // the building phase via recordPressure(). Resetting would overwrite
+    // the player's actual choice with 'defend'.
   }
 
   recordTowerPlacement(col: number, row: number, towerDefId: string): void {
@@ -49,6 +51,9 @@ export class GhostRecorder {
     };
 
     this.waveActions.push(action);
+
+    // Reset pressure for the next wave's building phase
+    this.currentWavePressure = 'defend';
   }
 
   finalize(wavesCompleted: number, goldRemaining: number): GhostRecord {

@@ -1,0 +1,263 @@
+{
+  "generated": "2026-03-28T04:23:22.121Z",
+  "assets": [
+    {
+      "key": "grid-floor",
+      "type": "image",
+      "path": "assets/tiles/grid-floor.png"
+    },
+    {
+      "key": "spawn-tile",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile.png"
+    },
+    {
+      "key": "exit-tile",
+      "type": "image",
+      "path": "assets/tiles/exit-tile.png"
+    },
+    {
+      "key": "tower-laser",
+      "type": "image",
+      "path": "assets/towers/laser.png"
+    },
+    {
+      "key": "tower-laser-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/laser-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-plasma",
+      "type": "image",
+      "path": "assets/towers/plasma.png"
+    },
+    {
+      "key": "tower-plasma-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/plasma-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-emp",
+      "type": "image",
+      "path": "assets/towers/emp.png"
+    },
+    {
+      "key": "tower-emp-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/emp-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-shield",
+      "type": "image",
+      "path": "assets/towers/shield.png"
+    },
+    {
+      "key": "tower-shield-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/shield-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-twin_laser",
+      "type": "image",
+      "path": "assets/towers/twin_laser.png"
+    },
+    {
+      "key": "tower-twin_laser-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/twin_laser-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-disruptor",
+      "type": "image",
+      "path": "assets/towers/disruptor.png"
+    },
+    {
+      "key": "tower-disruptor-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/disruptor-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-nova_cannon",
+      "type": "image",
+      "path": "assets/towers/nova_cannon.png"
+    },
+    {
+      "key": "tower-nova_cannon-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/nova_cannon-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-fortress",
+      "type": "image",
+      "path": "assets/towers/fortress.png"
+    },
+    {
+      "key": "tower-fortress-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/fortress-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-stasis_field",
+      "type": "image",
+      "path": "assets/towers/stasis_field.png"
+    },
+    {
+      "key": "tower-stasis_field-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/stasis_field-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-scout_drone",
+      "type": "spritesheet",
+      "path": "assets/units/scout_drone.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-battle_robot",
+      "type": "spritesheet",
+      "path": "assets/units/battle_robot.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-heavy_walker",
+      "type": "spritesheet",
+      "path": "assets/units/heavy_walker.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-stealth_drone",
+      "type": "spritesheet",
+      "path": "assets/units/stealth_drone.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-titan",
+      "type": "spritesheet",
+      "path": "assets/units/titan.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "unit-death",
+      "type": "spritesheet",
+      "path": "assets/units/unit-death.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "projectile-laser-beam",
+      "type": "image",
+      "path": "assets/projectiles/laser-beam.png"
+    },
+    {
+      "key": "projectile-plasma-bolt",
+      "type": "image",
+      "path": "assets/projectiles/plasma-bolt.png"
+    },
+    {
+      "key": "projectile-emp-pulse",
+      "type": "image",
+      "path": "assets/projectiles/emp-pulse.png"
+    },
+    {
+      "key": "projectile-hit-flash",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4
+    },
+    {
+      "key": "vfx-explosion-sm",
+      "type": "spritesheet",
+      "path": "assets/vfx/explosion-sm.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "vfx-explosion-lg",
+      "type": "spritesheet",
+      "path": "assets/vfx/explosion-lg.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4
+    },
+    {
+      "key": "vfx-shield-bubble",
+      "type": "image",
+      "path": "assets/vfx/shield-bubble.png"
+    },
+    {
+      "key": "vfx-spawn-portal",
+      "type": "spritesheet",
+      "path": "assets/vfx/spawn-portal.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "ui-tower-icons",
+      "type": "spritesheet",
+      "path": "assets/ui/tower-icons.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "ui-unit-icons",
+      "type": "spritesheet",
+      "path": "assets/ui/unit-icons.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 5
+    },
+    {
+      "key": "ui-hp-bar",
+      "type": "image",
+      "path": "assets/ui/hp-bar.png"
+    },
+    {
+      "key": "ui-cursor-place",
+      "type": "image",
+      "path": "assets/ui/cursor-place.png"
+    }
+  ]
+}

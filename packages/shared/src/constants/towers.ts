@@ -3,7 +3,7 @@ import type { TowerDef } from '../types/tower';
 export const BASE_TOWERS: TowerDef[] = [
   {
     id: 'laser',
-    name: 'Laser Turret',
+    name: '레이저 터렛',
     type: 'laser',
     tier: 1,
     stats: { damage: 10, range: 3, attackSpeed: 1.5 },
@@ -14,7 +14,7 @@ export const BASE_TOWERS: TowerDef[] = [
   },
   {
     id: 'plasma',
-    name: 'Plasma Cannon',
+    name: '플라즈마 캐논',
     type: 'plasma',
     tier: 1,
     stats: { damage: 25, range: 2, attackSpeed: 0.8, special: 'splash' },
@@ -25,7 +25,7 @@ export const BASE_TOWERS: TowerDef[] = [
   },
   {
     id: 'emp',
-    name: 'EMP Discharger',
+    name: 'EMP 방전기',
     type: 'emp',
     tier: 1,
     stats: { damage: 5, range: 4, attackSpeed: 1.0, special: 'slow_30%' },
@@ -36,7 +36,7 @@ export const BASE_TOWERS: TowerDef[] = [
   },
   {
     id: 'shield',
-    name: 'Shield Generator',
+    name: '쉴드 생성기',
     type: 'shield',
     tier: 1,
     stats: { damage: 0, range: 2, attackSpeed: 0, special: 'boost_adjacent_20%' },
@@ -50,7 +50,7 @@ export const BASE_TOWERS: TowerDef[] = [
 export const FUSION_TOWERS: TowerDef[] = [
   {
     id: 'twin_laser',
-    name: 'Twin Laser',
+    name: '트윈 레이저',
     type: 'twin_laser',
     tier: 2,
     stats: { damage: 25, range: 4, attackSpeed: 2.0 },
@@ -62,7 +62,7 @@ export const FUSION_TOWERS: TowerDef[] = [
   },
   {
     id: 'disruptor',
-    name: 'Disruptor',
+    name: '디스럽터',
     type: 'disruptor',
     tier: 2,
     stats: { damage: 15, range: 5, attackSpeed: 1.2, special: 'slow_50%_splash' },
@@ -74,7 +74,7 @@ export const FUSION_TOWERS: TowerDef[] = [
   },
   {
     id: 'nova_cannon',
-    name: 'Nova Cannon',
+    name: '노바 캐논',
     type: 'nova_cannon',
     tier: 2,
     stats: { damage: 60, range: 3, attackSpeed: 0.4, special: 'aoe_2tile' },
@@ -86,7 +86,7 @@ export const FUSION_TOWERS: TowerDef[] = [
   },
   {
     id: 'fortress',
-    name: 'Fortress',
+    name: '포트리스',
     type: 'fortress',
     tier: 2,
     stats: { damage: 15, range: 3, attackSpeed: 1.0, special: 'boost_adjacent_40%' },
@@ -98,7 +98,7 @@ export const FUSION_TOWERS: TowerDef[] = [
   },
   {
     id: 'stasis_field',
-    name: 'Stasis Field',
+    name: '정체장',
     type: 'stasis_field',
     tier: 2,
     stats: { damage: 0, range: 3, attackSpeed: 0, special: 'freeze_2s_cooldown_8s' },

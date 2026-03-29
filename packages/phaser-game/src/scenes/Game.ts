@@ -1,12 +1,25 @@
 import Phaser from 'phaser';
-import { ALL_TOWERS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS } from '@gld/shared';
+import {
+  ALL_TOWERS,
+  TILE_SIZE,
+  INITIAL_PLAYER_HP,
+  INITIAL_GOLD,
+  BASE_TOWERS,
+  GHOST_BATTLE_WAVES,
+  type GhostRecord,
+  type PressureChoice,
+} from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { PressureSystem } from '../systems/PressureSystem';
+import { GhostRecorder } from '../systems/GhostRecorder';
+import { GhostPlayer } from '../systems/GhostPlayer';
 import { EventBus } from '../EventBus';
 import { getPlacementGuardFailure } from '../placementRules';
+import { soundGenerator } from '../audio/SoundGenerator';
 
 export class GameScene extends Phaser.Scene {
   private gridManager!: GridManager;
@@ -14,6 +27,9 @@ export class GameScene extends Phaser.Scene {
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
   private waveSystem!: WaveSystem;
+  private pressureSystem!: PressureSystem;
+  private ghostRecorder!: GhostRecorder;
+  private ghostPlayer!: GhostPlayer;
   private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
@@ -21,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private gold = INITIAL_GOLD;
   private selectedTowerId: string | null = null;
   private gameOver = false;
+  private ghostBattleActive = false;
   private boardBackground?: Phaser.GameObjects.TileSprite;
   private spawnMarker?: Phaser.GameObjects.Image;
   private exitMarker?: Phaser.GameObjects.Image;
@@ -29,6 +46,10 @@ export class GameScene extends Phaser.Scene {
   private onClearTowerSelection!: () => void;
   private onStartWave!: () => void;
   private onGameWon!: () => void;
+  private onStartGhostBattle!: (data: { ghost: GhostRecord }) => void;
+  private onPressureChoice!: (data: { choice: PressureChoice }) => void;
+  private onWaveStartedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
+  private onWaveCompletedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
 
   constructor() {
     super('Game');
@@ -40,6 +61,10 @@ export class GameScene extends Phaser.Scene {
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
     this.waveSystem = new WaveSystem(this.unitSystem);
+    this.pressureSystem = new PressureSystem();
+    this.ghostRecorder = new GhostRecorder();
+    this.ghostPlayer = new GhostPlayer();
+    this.ghostBattleActive = false;
 
     this.events.on('shutdown', this.cleanup, this);
 
@@ -127,11 +152,26 @@ export class GameScene extends Phaser.Scene {
       this.endGame('local');
     };
 
+    this.onStartGhostBattle = (data) => {
+      this.ghostBattleActive = true;
+      this.ghostPlayer.loadGhost(data.ghost);
+      this.pressureSystem.setGhostPressures(data.ghost.waves);
+      this.ghostRecorder.startRecording('Player');
+      this.waveSystem.setMaxWaves(GHOST_BATTLE_WAVES);
+    };
+
+    this.onPressureChoice = (data) => {
+      this.pressureSystem.setChoice(data.choice);
+      this.ghostRecorder.recordPressure(data.choice);
+    };
+
     EventBus.on('request-select-tower', this.onSelectTower);
     EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.on('request-place-tower', this.onPlaceTower);
     EventBus.on('request-start-wave', this.onStartWave);
     EventBus.on('game-won', this.onGameWon);
+    EventBus.on('start-ghost-battle', this.onStartGhostBattle);
+    EventBus.on('request-pressure-choice', this.onPressureChoice);
 
     // Keyboard tower selection (1-4)
     const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
@@ -140,6 +180,43 @@ export class GameScene extends Phaser.Scene {
         this.input.keyboard?.on(`keydown-${key}`, () => { this.selectedTowerId = BASE_TOWERS[i].id; });
       }
     });
+
+    this.onWaveStartedLifecycle = (data) => {
+      soundGenerator.playWaveStart();
+
+      if (!this.ghostBattleActive) return;
+
+      const waveNum = data.wave;
+
+      // Apply player pressure (gold delta)
+      const goldDelta = this.pressureSystem.applyPlayerPressure(waveNum, this.gold);
+      if (goldDelta > 0) {
+        this.earnGold(goldDelta);
+      } else if (goldDelta < 0) {
+        this.spendGold(Math.abs(goldDelta));
+      }
+
+      // Apply ghost pressure (may spawn extra units)
+      this.pressureSystem.applyGhostPressure(waveNum, this.unitSystem);
+      const ghostPressure = this.ghostPlayer.getWavePressure(waveNum);
+      if (ghostPressure === 'attack') {
+        soundGenerator.playPressureAttackSend();
+      }
+
+      // Record wave start
+      this.ghostRecorder.startWave(waveNum);
+    };
+
+    this.onWaveCompletedLifecycle = (data) => {
+      if (!this.ghostBattleActive) return;
+      this.ghostRecorder.endWave(data.wave);
+      // Consume bounty multiplier after wave
+      this.pressureSystem.consumeBountyMultiplier();
+    };
+
+    // Ghost battle wave lifecycle hooks
+    EventBus.on('wave-started', this.onWaveStartedLifecycle);
+    EventBus.on('wave-completed', this.onWaveCompletedLifecycle);
 
     // Notify React
     EventBus.emit('game-ready');
@@ -165,6 +242,16 @@ export class GameScene extends Phaser.Scene {
   private endGame(winnerId: string): void {
     if (this.gameOver) return;
     this.gameOver = true;
+
+    if (this.ghostBattleActive) {
+      const wavesCompleted = winnerId === 'local'
+        ? this.waveSystem.getCurrentWave()
+        : Math.max(0, this.waveSystem.getCurrentWave() - 1);
+      const playerRecord = this.ghostRecorder.finalize(wavesCompleted, this.gold);
+      this.ghostRecorder.saveToLocalStorage(playerRecord);
+      EventBus.emit('ghost-battle-result', { playerRecord });
+    }
+
     EventBus.emit('game-over', { winnerId });
   }
 
@@ -202,6 +289,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.spendGold(towerDef.cost);
+
+    if (this.ghostBattleActive) {
+      this.ghostRecorder.recordTowerPlacement(gridX, gridY, towerDefId);
+      this.ghostRecorder.recordGoldSpent(towerDef.cost);
+    }
+
     EventBus.emit('tower-placed', {
       col: gridX,
       row: gridY,
@@ -268,16 +361,20 @@ export class GameScene extends Phaser.Scene {
     const unitPositions = this.unitSystem.getUnitPositions();
     const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
-    // Apply damage to units — handle bounty
+    // Apply damage to units — handle bounty (with pressure multiplier)
     let bountyTotal = 0;
     for (const evt of damageEvents) {
       const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
       if (result?.killed) {
         bountyTotal += result.bounty;
+        soundGenerator.playUnitDeath();
       }
     }
     if (bountyTotal > 0) {
-      this.earnGold(bountyTotal);
+      const multiplier = this.ghostBattleActive
+        ? this.pressureSystem.getBountyMultiplier()
+        : 1;
+      this.earnGold(Math.round(bountyTotal * multiplier));
     }
 
     // Update units — move along path
@@ -305,11 +402,18 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-place-tower', this.onPlaceTower);
     EventBus.off('request-start-wave', this.onStartWave);
     EventBus.off('game-won', this.onGameWon);
+    EventBus.off('start-ghost-battle', this.onStartGhostBattle);
+    EventBus.off('request-pressure-choice', this.onPressureChoice);
+    EventBus.off('wave-started', this.onWaveStartedLifecycle);
+    EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
     this.boardBackground?.destroy();
     this.spawnMarker?.destroy();
     this.exitMarker?.destroy();
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();
+    this.pressureSystem.resetForNewGame();
+    this.ghostRecorder.reset();
+    this.ghostPlayer.reset();
   }
 }

@@ -5,6 +5,8 @@ import { generate as generateUnits } from './generate-units';
 import { generate as generateProjectiles } from './generate-projectiles';
 import { generate as generateVfx } from './generate-vfx';
 import { generate as generateUi } from './generate-ui';
+import { generate as generatePressureUi } from './generate-pressure-ui';
+import { generate as generateMatchUi } from './generate-match-ui';
 
 async function main() {
   console.log('=== Generating all assets ===\n');
@@ -27,6 +29,12 @@ async function main() {
   console.log('\n[ui]');
   const ui = await generateUi();
 
+  console.log('\n[pressure-ui]');
+  const pressureUi = await generatePressureUi();
+
+  console.log('\n[match-ui]');
+  const matchUi = await generateMatchUi();
+
   const allEntries = [
     ...tiles,
     ...towers,
@@ -34,6 +42,8 @@ async function main() {
     ...projectiles,
     ...vfx,
     ...ui,
+    ...pressureUi,
+    ...matchUi,
   ];
 
   const manifest = {

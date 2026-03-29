@@ -76,3 +76,5 @@ export const WAVE_DEFS: WaveDef[] = [
 ];
 
 export const TOTAL_WAVES = WAVE_DEFS.length;
+
+export const GHOST_BATTLE_WAVES = 5;

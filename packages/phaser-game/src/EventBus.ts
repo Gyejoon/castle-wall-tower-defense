@@ -1,5 +1,11 @@
 import { Events } from 'phaser';
-import type { PlacementFailureReason, Position, UnitType } from '@gld/shared';
+import type {
+  PlacementFailureReason,
+  Position,
+  UnitType,
+  PressureChoice,
+  GhostRecord,
+} from '@gld/shared';
 
 export interface GameEventMap {
   // Game → React
@@ -21,6 +27,9 @@ export interface GameEventMap {
   'building-phase-started': { nextWave: number; countdown: number };
   'countdown-tick': { secondsLeft: number };
   'game-won': undefined;
+  'pressure-choice-made': { choice: PressureChoice };
+  'ghost-pressure-applied': { wave: number; pressure: PressureChoice };
+  'ghost-battle-result': { playerRecord: GhostRecord };
 
   // React → Game
   'request-select-tower': { towerDefId: string };
@@ -30,6 +39,8 @@ export interface GameEventMap {
   'request-start-game': undefined;
   'request-pause': undefined;
   'request-resume': undefined;
+  'request-pressure-choice': { choice: PressureChoice };
+  'start-ghost-battle': { ghost: GhostRecord };
 
   // Internal
   'current-scene-ready': Phaser.Scene;

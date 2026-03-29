@@ -1,17 +1,36 @@
+import { useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PixelPanel } from '../components/ui/PixelPanel';
 import { uiMobileArt } from '../assets/uiMobileArt';
+import { fetchRandomGhost, GHOST_FETCH_ERROR_MESSAGE } from '../game/fetchRandomGhost';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
 const featureCopy = [
-  '10-wave single-lane survival run',
-  '4 tactical towers with phase-based building',
-  'Mobile-first vertical battlefield shell',
+  '10웨이브 단일 경로 생존 모드',
+  '4종 전술 타워, 페이즈 기반 건설',
+  '모바일 최적화 수직 전장',
 ];
 
 export function LobbyPage() {
   const resetRun = useGameStore((s) => s.resetRun);
+  const startGhostBattle = useGameStore((s) => s.startGhostBattle);
+  const [loadingGhost, setLoadingGhost] = useState(false);
+  const [ghostLoadError, setGhostLoadError] = useState<string | null>(null);
+
+  const handleGhostBattle = async () => {
+    setLoadingGhost(true);
+    setGhostLoadError(null);
+
+    try {
+      const ghost = await fetchRandomGhost();
+      startGhostBattle(ghost);
+    } catch {
+      setGhostLoadError(GHOST_FETCH_ERROR_MESSAGE);
+    } finally {
+      setLoadingGhost(false);
+    }
+  };
 
   return (
     <div
@@ -62,8 +81,8 @@ export function LobbyPage() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: colors.info, fontSize: '8px' }}>MOBILE VERTICAL SLICE</span>
-            <span style={{ color: colors.textSecondary, fontSize: '8px' }}>PHASE 1</span>
+            <span style={{ color: colors.info, fontSize: '8px' }}>모바일 버티컬 슬라이스</span>
+            <span style={{ color: colors.textSecondary, fontSize: '8px' }}>페이즈 1</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -75,12 +94,12 @@ export function LobbyPage() {
                 textShadow: `0 0 14px rgba(127, 90, 240, 0.45)`,
               }}
             >
-              GRID LINE
+              그리드 라인
               <br />
-              DEFENSE
+              디펜스
             </h1>
             <p style={{ color: colors.textSecondary, fontSize: '9px', lineHeight: 1.9 }}>
-              Hold the corridor, build only between waves, and survive the full 10-wave escalation.
+              회랑을 사수하고, 웨이브 사이에만 건설하며, 10웨이브를 끝까지 생존하세요.
             </p>
           </div>
 
@@ -108,15 +127,15 @@ export function LobbyPage() {
               }}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <span style={{ color: colors.gold, fontSize: '8px' }}>TACTICAL LOOP</span>
+              <span style={{ color: colors.gold, fontSize: '8px' }}>전술 루프</span>
               <p style={{ color: colors.text, fontSize: '9px', lineHeight: 1.8 }}>
-                Build.
+                건설.
                 <br />
-                Hold.
+                방어.
                 <br />
-                Reposition mentally.
+                전략 재구성.
                 <br />
-                Repeat.
+                반복.
               </p>
             </div>
           </div>
@@ -185,11 +204,32 @@ export function LobbyPage() {
                 }}
                 onClick={resetRun}
               >
-                START RUN
+                게임 시작
+              </PixelButton>
+              <PixelButton
+                variant="danger"
+                style={{
+                  width: '100%',
+                  padding: '16px 18px',
+                  fontSize: '10px',
+                  boxShadow: `0 0 0 1px rgba(229,49,112,0.28), 0 18px 30px rgba(229,49,112,0.14)`,
+                }}
+                onClick={handleGhostBattle}
+                disabled={loadingGhost}
+              >
+                {loadingGhost ? '로딩 중...' : '고스트 배틀'}
               </PixelButton>
               <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
-                Desktop mirrors this vertical frame so the same play surface remains visible everywhere.
+                고스트 배틀: 기록된 상대와 5웨이브 비동기 PvP 대전.
               </p>
+              {ghostLoadError ? (
+                <p
+                  role="alert"
+                  style={{ color: colors.danger, fontSize: '7px', lineHeight: 1.8, margin: 0 }}
+                >
+                  {ghostLoadError}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

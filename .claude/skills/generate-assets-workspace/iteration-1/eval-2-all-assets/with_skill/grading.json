@@ -1,0 +1,36 @@
+{
+  "eval_id": 2,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "scripts/generate-assets/ 에 shared.ts + 6개 generator + generate-all.ts 총 8개 파일 생성",
+      "passed": true,
+      "evidence": "shared.ts, generate-tiles.ts, generate-towers.ts, generate-units.ts, generate-projectiles.ts, generate-vfx.ts, generate-ui.ts, generate-all.ts 8개 파일 모두 생성"
+    },
+    {
+      "text": "tiles, towers, units, projectiles, vfx, ui 6개 카테고리 디렉토리가 모두 생성되고 PNG 파일이 존재",
+      "passed": true,
+      "evidence": "outputs에 tiles/(3), towers/(18), units/(6), projectiles/(4), vfx/(4), ui/(4) 모두 존재, 총 39개 PNG"
+    },
+    {
+      "text": "asset-manifest.json이 생성되고 모든 에셋 항목이 key, type, path 필드를 포함",
+      "passed": true,
+      "evidence": "asset-manifest.json에 37개 에셋 항목이 key, type, path 필드와 함께 정의됨"
+    },
+    {
+      "text": "sprite sheet 에셋은 manifest에 frameWidth, frameHeight, frameCount가 포함됨",
+      "passed": true,
+      "evidence": "type=spritesheet인 항목들이 frameWidth(32/16/64), frameHeight(32/16/64), frameCount(4/5) 포함"
+    },
+    {
+      "text": "shared.ts의 유틸리티를 모든 generator가 import하여 재사용",
+      "passed": true,
+      "evidence": "모든 generator가 shared.ts에서 PALETTE, makeCanvas, saveCanvas 등을 import하여 사용"
+    },
+    {
+      "text": "생성 코드에서 사용하는 색상이 PALETTE 상수에서만 가져옴",
+      "passed": true,
+      "evidence": "PALETTE 객체에 모든 색상이 정의되어 있고, generator들이 PALETTE.xxx 형태로 참조"
+    }
+  ]
+}

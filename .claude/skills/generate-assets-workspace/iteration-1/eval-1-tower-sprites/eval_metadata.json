@@ -1,0 +1,42 @@
+{
+  "eval_id": 1,
+  "eval_name": "tower-sprites-generation",
+  "prompt": "게임 타워 스프라이트를 생성해줘",
+  "assertions": [
+    {
+      "id": "shared-utils-created",
+      "text": "scripts/generate-assets/shared.ts가 생성되었고 PALETTE, TILE_SIZE, canvas 유틸리티를 export한다",
+      "type": "file_exists"
+    },
+    {
+      "id": "tower-script-created",
+      "text": "scripts/generate-assets/generate-towers.ts가 생성되었다",
+      "type": "file_exists"
+    },
+    {
+      "id": "tower-static-pngs",
+      "text": "packages/web-shell/public/assets/towers/ 에 9개 타워의 static PNG가 모두 생성됨 (laser, plasma, emp, shield, twin_laser, disruptor, nova_cannon, fortress, stasis_field)",
+      "type": "output_check"
+    },
+    {
+      "id": "tower-fire-animations",
+      "text": "fire/pulse animation sprite sheet PNG가 생성됨 (최소 4개 base tower)",
+      "type": "output_check"
+    },
+    {
+      "id": "correct-dimensions",
+      "text": "static tower PNG는 32x32, animation sprite sheet는 128x32 크기",
+      "type": "output_check"
+    },
+    {
+      "id": "correct-colors",
+      "text": "각 타워가 올바른 색상을 사용함 (laser=gold, plasma=green, emp=purple, shield=cyan)",
+      "type": "output_check"
+    },
+    {
+      "id": "pixel-art-style",
+      "text": "anti-aliasing 없는 pixel art 스타일로 생성됨 (imageSmoothingEnabled = false)",
+      "type": "code_check"
+    }
+  ]
+}

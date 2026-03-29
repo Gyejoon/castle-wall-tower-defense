@@ -3,6 +3,7 @@ import type { PlacementFailureReason, TowerDef, PlacedTower, Position } from '@g
 import { ALL_TOWERS, TILE_SIZE } from '@gld/shared';
 import { GridManager } from './GridManager';
 import { PathfindingSystem } from './PathfindingSystem';
+import { soundGenerator } from '../audio/SoundGenerator';
 
 interface TowerInstance {
   data: PlacedTower;
@@ -18,6 +19,8 @@ export type TowerPlacementResult =
 
 export class TowerSystem {
   private towers: Map<string, TowerInstance> = new Map();
+  private lastSoundTime: Map<string, number> = new Map(); // throttle per tower type
+  private static readonly SOUND_THROTTLE_MS = 200;
   private scene: Phaser.Scene;
   private gridManager: GridManager;
   private pathfinding: PathfindingSystem;
@@ -168,6 +171,13 @@ export class TowerSystem {
           x2: closestUnit.x, y2: closestUnit.y,
           color, ttl: 80,
         });
+
+        // Play tower attack sound (throttled per tower type)
+        const lastSound = this.lastSoundTime.get(def.type) ?? 0;
+        if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
+          soundGenerator.playTowerAttack(def.type);
+          this.lastSoundTime.set(def.type, time);
+        }
       }
     }
 

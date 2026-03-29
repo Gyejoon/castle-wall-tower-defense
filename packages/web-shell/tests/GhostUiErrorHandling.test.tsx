@@ -57,15 +57,15 @@ describe('ghost fetch error handling', () => {
     );
 
     const view = render(<LobbyPage />);
-    fireEvent.click(view.getByRole('button', { name: /ghost battle/i }));
+    fireEvent.click(view.getByRole('button', { name: /고스트 배틀/i }));
 
     await waitFor(() => {
-      expect(view.getByText(/unable to load ghost/i)).toBeTruthy();
+      expect(view.getByText(/고스트 데이터를 불러올 수 없습니다/i)).toBeTruthy();
     });
 
     expect(useGameStore.getState().runStatus).toBe('lobby');
     expect(useGameStore.getState().ghostBattleActive).toBe(false);
-    expect(view.getByRole('button', { name: /ghost battle/i })).toBeTruthy();
+    expect(view.getByRole('button', { name: /고스트 배틀/i })).toBeTruthy();
   });
 
   it('keeps the summary open when play again cannot load a ghost', async () => {
@@ -86,14 +86,14 @@ describe('ghost fetch error handling', () => {
     });
 
     const view = render(<MatchSummary />);
-    fireEvent.click(view.getByRole('button', { name: /play again/i }));
+    fireEvent.click(view.getByRole('button', { name: /다시 하기/i }));
 
     await waitFor(() => {
-      expect(view.getByText(/unable to load ghost/i)).toBeTruthy();
+      expect(view.getByText(/고스트 데이터를 불러올 수 없습니다/i)).toBeTruthy();
     });
 
     expect(useGameStore.getState().runStatus).toBe('victory');
     expect(useGameStore.getState().matchResult).toEqual(sampleMatchResult);
-    expect(view.getByRole('button', { name: /play again/i })).toBeTruthy();
+    expect(view.getByRole('button', { name: /다시 하기/i })).toBeTruthy();
   });
 });

@@ -92,7 +92,7 @@ describe('GamePage', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
-    const laserButton = view.getByRole('button', { name: /laser turret/i });
+    const laserButton = view.getByRole('button', { name: /레이저 터렛/i });
     fireEvent.click(laserButton);
     expect(emitSpy).toHaveBeenCalledWith('request-select-tower', { towerDefId: 'laser' });
     expect(useGameStore.getState().selectedTowerId).toBe('laser');
@@ -117,7 +117,7 @@ describe('GamePage', () => {
     });
 
     expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
-    expect(view.getByText(/build phase only/i)).toBeTruthy();
+    expect(view.getByText(/건설 페이즈 전용/i)).toBeTruthy();
   });
 
   it('shows victory state when local player wins', () => {
@@ -129,7 +129,7 @@ describe('GamePage', () => {
     });
 
     expect(useGameStore.getState().runStatus).toBe('victory');
-    expect(view.getByRole('button', { name: /restart run/i })).toBeTruthy();
+    expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
   });
 
   it('keeps the latest ghost pressure warning visible until its own timer expires', () => {
@@ -141,19 +141,19 @@ describe('GamePage', () => {
       emitSpy('ghost-pressure-applied', { wave: 1, pressure: 'attack' });
     });
     expect(useGameStore.getState().ghostPressureWarning).toBe(
-      'GHOST ATTACKING! +3 scout drones incoming!',
+      '고스트 공격! 정찰 드론 3기 출격!',
     );
 
     act(() => {
       vi.advanceTimersByTime(2000);
       emitSpy('ghost-pressure-applied', { wave: 2, pressure: 'defend' });
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('Ghost is fortifying defenses.');
+    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
 
     act(() => {
       vi.advanceTimersByTime(600);
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('Ghost is fortifying defenses.');
+    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
 
     act(() => {
       vi.advanceTimersByTime(1900);

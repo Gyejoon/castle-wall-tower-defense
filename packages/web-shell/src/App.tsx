@@ -17,7 +17,7 @@ function LoadingScreen() {
         letterSpacing: '0.12em',
       }}
     >
-      LOADING GRID...
+      그리드 로딩 중...
     </div>
   );
 }

@@ -16,17 +16,17 @@ import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
 const feedbackCopy: Record<PlacementFailureReason, string> = {
-  combat_phase: 'Build phase only. Wait for the next prep window.',
-  insufficient_gold: 'Insufficient gold for that tower.',
-  occupied: 'That tile is blocked. Pick another slot.',
-  blocked_path: 'That placement would cut off the enemy path.',
-  out_of_bounds: 'Tap inside the battlefield grid.',
+  combat_phase: '건설 페이즈 전용입니다. 다음 준비 시간을 기다려주세요.',
+  insufficient_gold: '골드가 부족합니다.',
+  occupied: '해당 타일이 막혀있습니다. 다른 위치를 선택하세요.',
+  blocked_path: '해당 배치는 적의 경로를 차단합니다.',
+  out_of_bounds: '전장 그리드 안을 탭하세요.',
 };
 
 const PRESSURE_WARNING_COPY: Record<PressureChoice, string> = {
-  attack: 'GHOST ATTACKING! +3 scout drones incoming!',
-  defend: 'Ghost is fortifying defenses.',
-  invest: 'Ghost is investing in bounties.',
+  attack: '고스트 공격! 정찰 드론 3기 출격!',
+  defend: '고스트가 방어를 강화합니다.',
+  invest: '고스트가 경제에 투자합니다.',
 };
 
 function formatWaveLabel(wave: number, totalWaves: number) {
@@ -199,7 +199,7 @@ export function GamePage() {
   };
 
   const feedbackText = placementFeedback ? feedbackCopy[placementFeedback] : null;
-  const resultTitle = runStatus === 'victory' ? 'SECTOR HELD' : 'DEFENSE LOST';
+  const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 
   return (
     <div
@@ -239,9 +239,9 @@ export function GamePage() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ color: colors.accent, fontSize: '8px' }}>GRID LINE DEFENSE</span>
+              <span style={{ color: colors.accent, fontSize: '8px' }}>그리드 라인 디펜스</span>
               <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
-                WAVE {formatWaveLabel(wave, totalWaves)}/{totalWaves}
+                웨이브 {formatWaveLabel(wave, totalWaves)}/{totalWaves}
               </span>
               {ghostBattleActive && currentGhost && (
                 <span style={{ color: colors.danger, fontSize: '7px' }}>
@@ -270,7 +270,7 @@ export function GamePage() {
                   fontSize: '8px',
                 }}
               >
-                GOLD {gold}
+                골드 {gold}
               </div>
               <div
                 style={{
@@ -281,10 +281,10 @@ export function GamePage() {
                   fontSize: '8px',
                 }}
               >
-                {runStatus === 'building' && `BUILD ${countdown}s`}
-                {runStatus === 'combat' && 'COMBAT'}
-                {runStatus === 'victory' && 'VICTORY'}
-                {runStatus === 'defeat' && 'DEFEAT'}
+                {runStatus === 'building' && `건설 ${countdown}s`}
+                {runStatus === 'combat' && '전투'}
+                {runStatus === 'victory' && '승리'}
+                {runStatus === 'defeat' && '패배'}
               </div>
             </div>
           </div>
@@ -294,7 +294,7 @@ export function GamePage() {
             style={{ fontSize: '8px', padding: '8px 12px', minWidth: 'auto' }}
             onClick={enterLobby}
           >
-            EXIT
+            나가기
           </PixelButton>
         </div>
 
@@ -326,7 +326,7 @@ export function GamePage() {
                   zIndex: 2,
                 }}
               >
-                BOOTING GRID...
+                그리드 부팅 중...
               </div>
             )}
 
@@ -393,14 +393,14 @@ export function GamePage() {
                     </h2>
                     <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
                       {runStatus === 'victory'
-                        ? 'You survived the full 10-wave pressure cycle.'
-                        : 'The corridor broke before the run could stabilize.'}
+                        ? '10웨이브 전 과정을 생존했습니다.'
+                        : '회랑이 안정되기 전에 무너졌습니다.'}
                     </p>
                     <PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
-                      RESTART RUN
+                      다시 시작
                     </PixelButton>
                     <PixelButton variant="secondary" style={{ width: '100%' }} onClick={enterLobby}>
-                      BACK TO LOBBY
+                      로비로 돌아가기
                     </PixelButton>
                   </div>
                 </div>
@@ -436,9 +436,9 @@ export function GamePage() {
             {ghostBattleActive && runStatus === 'building' && <PressurePanel />}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ color: colors.text, fontSize: '8px' }}>TACTICAL DOCK</span>
+                <span style={{ color: colors.text, fontSize: '8px' }}>전술 독</span>
                 <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
-                  Select a tower, then tap the grid during build phase.
+                  타워를 선택한 후, 건설 페이즈 중 그리드를 탭하세요.
                 </span>
               </div>
               <PixelButton
@@ -450,7 +450,7 @@ export function GamePage() {
                   EventBus.emit('request-clear-tower-selection');
                 }}
               >
-                CLEAR
+                해제
               </PixelButton>
             </div>
 
@@ -516,7 +516,7 @@ export function GamePage() {
                     />
                     <span style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
                       <span style={{ fontSize: '8px', color: colors.text }}>{tower.name}</span>
-                      <span style={{ fontSize: '8px', color: colors.textSecondary }}>{tower.cost} gold</span>
+                      <span style={{ fontSize: '8px', color: colors.textSecondary }}>{tower.cost} 골드</span>
                     </span>
                   </button>
                 );
@@ -551,14 +551,14 @@ export function GamePage() {
                 onClick={() => EventBus.emit('request-start-wave')}
                 disabled={runStatus !== 'building'}
               >
-                {runStatus === 'building' ? 'START WAVE' : 'WAVE LOCKED'}
+                {runStatus === 'building' ? '웨이브 시작' : '웨이브 대기'}
               </PixelButton>
               <PixelButton
                 variant="secondary"
                 style={{ flex: 1, padding: '14px 16px', fontSize: '9px', position: 'relative', zIndex: 1 }}
                 onClick={resetRun}
               >
-                RESET
+                초기화
               </PixelButton>
             </div>
             </div>

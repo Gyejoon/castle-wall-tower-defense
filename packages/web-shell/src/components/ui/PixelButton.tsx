@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { colors } from '../../styles/tokens';
+import { colors, fonts } from '../../styles/tokens';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'gold';
@@ -19,7 +19,7 @@ export function PixelButton({ variant = 'primary', style, children, ...props }: 
   return (
     <button
       style={{
-        fontFamily: "'Press Start 2P', cursive",
+        fontFamily: fonts.pixel,
         fontSize: '10px',
         padding: '12px 24px',
         background: colors.panel,

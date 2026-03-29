@@ -18,27 +18,27 @@ const PRESSURE_OPTIONS: PressureOption[] = [
   {
     id: 'defend',
     icon: '\u{1F6E1}',
-    label: 'DEFEND',
-    cost: 'FREE',
-    effect: '+20 gold',
+    label: '방어',
+    cost: '무료',
+    effect: '+20 골드',
     color: colors.info,
     disabledCheck: () => false,
   },
   {
     id: 'attack',
     icon: '\u{2694}',
-    label: 'ATTACK',
-    cost: '-50g',
-    effect: 'Send 3 drones',
+    label: '공격',
+    cost: '-50골드',
+    effect: '드론 3기 전송',
     color: colors.danger,
     disabledCheck: (gold) => gold < 50,
   },
   {
     id: 'invest',
     icon: '\u{1F4B0}',
-    label: 'INVEST',
-    cost: '-30g',
-    effect: '1.5x bounty',
+    label: '투자',
+    cost: '-30골드',
+    effect: '1.5배 현상금',
     color: colors.gold,
     disabledCheck: (gold) => gold < 30,
   },
@@ -77,7 +77,7 @@ export function PressurePanel() {
           letterSpacing: '0.1em',
         }}
       >
-        CHOOSE YOUR STRATEGY
+        전략을 선택하세요
       </span>
 
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -137,7 +137,7 @@ export function PressurePanel() {
           transition: 'background 0.15s',
         }}
       >
-        START WAVE
+        웨이브 시작
       </button>
     </div>
   );

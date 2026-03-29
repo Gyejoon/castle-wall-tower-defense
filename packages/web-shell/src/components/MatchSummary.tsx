@@ -10,9 +10,9 @@ const SURVEY_URL =
   'https://docs.google.com/forms/d/e/PLACEHOLDER/viewform?embedded=true';
 
 const outcomeConfig = {
-  victory: { title: '\u{2694} VICTORY! \u{2694}', color: colors.gold },
-  defeat: { title: 'DEFEAT', color: colors.danger },
-  draw: { title: 'DRAW', color: colors.textSecondary },
+  victory: { title: '\u{2694} 승리! \u{2694}', color: colors.gold },
+  defeat: { title: '패배', color: colors.danger },
+  draw: { title: '무승부', color: colors.textSecondary },
 } as const;
 
 export function MatchSummary() {
@@ -81,7 +81,7 @@ export function MatchSummary() {
         <h2 style={{ color: config.color, fontSize: '14px', margin: 0 }}>{config.title}</h2>
 
         <p style={{ color: colors.textSecondary, fontSize: '8px', margin: 0 }}>
-          vs {matchResult.ghostName} (Ghost)
+          vs {matchResult.ghostName} (고스트)
         </p>
 
         <div
@@ -95,13 +95,13 @@ export function MatchSummary() {
           }}
         >
           <StatColumn
-            label="YOU"
+            label="나"
             waves={matchResult.playerWavesCompleted}
             gold={matchResult.playerGoldRemaining}
             color={colors.info}
           />
           <StatColumn
-            label="GHOST"
+            label="고스트"
             waves={matchResult.ghostWavesCompleted}
             gold={matchResult.ghostGoldRemaining}
             color={colors.danger}
@@ -115,14 +115,14 @@ export function MatchSummary() {
             disabled={retrying}
             onClick={handlePlayAgain}
           >
-            {retrying ? 'LOADING...' : 'PLAY AGAIN'}
+            {retrying ? '로딩 중...' : '다시 하기'}
           </PixelButton>
           <PixelButton
             variant="secondary"
             style={{ flex: 1, fontSize: '8px', padding: '12px 8px' }}
             onClick={enterLobby}
           >
-            LOBBY
+            로비
           </PixelButton>
         </div>
 
@@ -140,11 +140,11 @@ export function MatchSummary() {
           }}
         >
           <p style={{ color: colors.textSecondary, fontSize: '7px', margin: '8px 0 4px' }}>
-            Quick Survey
+            간단 설문
           </p>
           <iframe
             src={SURVEY_URL}
-            title="Quick Survey"
+            title="간단 설문"
             style={{
               width: '100%',
               height: '200px',
@@ -167,8 +167,8 @@ function StatColumn(props: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <span style={{ color: props.color, fontSize: '8px', fontWeight: 'bold' }}>{props.label}</span>
-      <span style={{ color: colors.text, fontSize: '7px' }}>Waves: {props.waves}</span>
-      <span style={{ color: colors.text, fontSize: '7px' }}>Gold: {props.gold}</span>
+      <span style={{ color: colors.text, fontSize: '7px' }}>웨이브: {props.waves}</span>
+      <span style={{ color: colors.text, fontSize: '7px' }}>골드: {props.gold}</span>
     </div>
   );
 }

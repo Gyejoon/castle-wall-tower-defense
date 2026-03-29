@@ -36,6 +36,7 @@ export function GamePage() {
       setWavePhase('combat');
     };
     const onBuildingPhase = (data: { nextWave: number; countdown: number }) => {
+      setWave(data.nextWave);
       setWavePhase('building');
       setCountdown(data.countdown);
     };

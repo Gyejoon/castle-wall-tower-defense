@@ -1,10 +1,16 @@
 import { Events } from 'phaser';
-import type { Position, TowerType, UnitType } from '@gld/shared';
+import type { PlacementFailureReason, Position, UnitType } from '@gld/shared';
 
 export interface GameEventMap {
   // Game → React
   'game-ready': undefined;
-  'tower-placed': { col: number; row: number; towerId: string; success: boolean };
+  'tower-placed': {
+    col: number;
+    row: number;
+    towerId: string;
+    success: boolean;
+    reason?: PlacementFailureReason;
+  };
   'unit-spawned': { unitType: UnitType; count: number };
   'player-damaged': { playerId: string; damage: number; remainingHp: number };
   'path-updated': { path: Position[] };
@@ -17,6 +23,8 @@ export interface GameEventMap {
   'game-won': undefined;
 
   // React → Game
+  'request-select-tower': { towerDefId: string };
+  'request-clear-tower-selection': undefined;
   'request-place-tower': { col: number; row: number; towerDefId: string };
   'request-start-wave': undefined;
   'request-start-game': undefined;

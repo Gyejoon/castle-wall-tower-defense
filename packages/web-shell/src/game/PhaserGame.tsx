@@ -19,7 +19,6 @@ export function PhaserGame() {
     return () => {
       EventBus.off('game-ready', onReady);
       gameRef.current?.destroy(true);
-      EventBus.removeAllListeners();
       gameRef.current = null;
       setGameReady(false);
     };
@@ -29,7 +28,7 @@ export function PhaserGame() {
     <div
       ref={containerRef}
       id="game-container"
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: '100%', touchAction: 'none' }}
     />
   );
 }

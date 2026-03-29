@@ -1,16 +1,20 @@
 import Phaser from 'phaser';
-import type { TowerDef, PlacedTower, Position } from '@gld/shared';
+import type { PlacementFailureReason, TowerDef, PlacedTower, Position } from '@gld/shared';
 import { ALL_TOWERS, TILE_SIZE } from '@gld/shared';
 import { GridManager } from './GridManager';
 import { PathfindingSystem } from './PathfindingSystem';
-import { EventBus } from '../EventBus';
 
 interface TowerInstance {
   data: PlacedTower;
   def: TowerDef;
-  graphics: Phaser.GameObjects.Graphics;
+  base: Phaser.GameObjects.Graphics;
+  sprite: Phaser.GameObjects.Image;
   lastAttackTime: number;
 }
+
+export type TowerPlacementResult =
+  | { success: true; tower: PlacedTower }
+  | { success: false; reason: PlacementFailureReason };
 
 export class TowerSystem {
   private towers: Map<string, TowerInstance> = new Map();
@@ -29,13 +33,21 @@ export class TowerSystem {
     this.attackGraphics.setDepth(10);
   }
 
-  placeTower(gridX: number, gridY: number, towerDefId: string): PlacedTower | null {
+  placeTower(gridX: number, gridY: number, towerDefId: string): TowerPlacementResult {
     const def = ALL_TOWERS.find((t) => t.id === towerDefId);
-    if (!def) return null;
+    if (!def) return { success: false, reason: 'out_of_bounds' };
+
+    if (!this.gridManager.isInBounds(gridX, gridY)) {
+      return { success: false, reason: 'out_of_bounds' };
+    }
+
+    if (!this.gridManager.isWalkable(gridX, gridY)) {
+      return { success: false, reason: 'occupied' };
+    }
 
     // Check if placement would block the path
     const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
-    if (!placed) return null;
+    if (!placed) return { success: false, reason: 'occupied' };
 
     // Verify path still exists
     this.pathfinding.invalidateCache();
@@ -50,8 +62,7 @@ export class TowerSystem {
       // Revert placement — would block all paths
       this.gridManager.removeTower(gridX, gridY);
       this.pathfinding.invalidateCache();
-      EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false });
-      return null;
+      return { success: false, reason: 'blocked_path' };
     }
 
     const instanceId = `tower_${this.nextId++}`;
@@ -64,25 +75,25 @@ export class TowerSystem {
       level: 1,
     };
 
-    const graphics = this.scene.add.graphics();
-    this.renderTower(graphics, worldPos, def);
+    const base = this.scene.add.graphics();
+    const sprite = this.scene.add.image(worldPos.x, worldPos.y, `tower-${towerDefId}`);
+    sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
+    sprite.setDepth(7);
+    this.renderTowerBase(base, worldPos, def);
 
     this.towers.set(instanceId, {
       data: towerData,
       def,
-      graphics,
+      base,
+      sprite,
       lastAttackTime: 0,
     });
 
-    EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
-    EventBus.emit('path-updated', { path });
-
-    return towerData;
+    return { success: true, tower: towerData };
   }
 
-  private renderTower(graphics: Phaser.GameObjects.Graphics, pos: Position, def: TowerDef): void {
+  private renderTowerBase(graphics: Phaser.GameObjects.Graphics, pos: Position, def: TowerDef): void {
     const color = parseInt(def.color.replace('#', ''), 16);
-    const size = TILE_SIZE * 0.35;
 
     graphics.clear();
 
@@ -96,42 +107,6 @@ export class TowerSystem {
     graphics.fillStyle(color, 0.08);
     graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.6);
 
-    // Tower shape with outline
-    graphics.fillStyle(color, 0.9);
-
-    switch (def.shape) {
-      case 'diamond':
-        this.drawShape(graphics, pos, size, 4, -Math.PI / 4);
-        break;
-      case 'circle':
-        graphics.fillCircle(pos.x, pos.y, size * 0.8);
-        graphics.lineStyle(2, color, 1);
-        graphics.strokeCircle(pos.x, pos.y, size * 0.8);
-        // Inner ring
-        graphics.lineStyle(1, 0xffffff, 0.3);
-        graphics.strokeCircle(pos.x, pos.y, size * 0.4);
-        break;
-      case 'hexagon':
-        this.drawShape(graphics, pos, size, 6, -Math.PI / 6);
-        break;
-      case 'shield':
-        // Shield: rounded rectangle with chevron
-        graphics.fillRoundedRect(pos.x - size * 0.65, pos.y - size * 0.85, size * 1.3, size * 1.7, 3);
-        graphics.lineStyle(2, color, 1);
-        graphics.strokeRoundedRect(pos.x - size * 0.65, pos.y - size * 0.85, size * 1.3, size * 1.7, 3);
-        // Chevron mark
-        graphics.lineStyle(2, 0xffffff, 0.4);
-        graphics.beginPath();
-        graphics.moveTo(pos.x - 3, pos.y - 2);
-        graphics.lineTo(pos.x, pos.y + 3);
-        graphics.lineTo(pos.x + 3, pos.y - 2);
-        graphics.strokePath();
-        break;
-      case 'star':
-        this.drawShape(graphics, pos, size, 5, -Math.PI / 2, true);
-        break;
-    }
-
     // Range indicator (dashed circle feel via dots)
     const rangePx = def.stats.range * TILE_SIZE;
     if (rangePx > 0) {
@@ -142,32 +117,6 @@ export class TowerSystem {
         graphics.fillCircle(pos.x + rangePx * Math.cos(a), pos.y + rangePx * Math.sin(a), 1);
       }
     }
-  }
-
-  private drawShape(
-    g: Phaser.GameObjects.Graphics,
-    pos: Position,
-    size: number,
-    sides: number,
-    startAngle: number,
-    star = false,
-  ): void {
-    const color = g.defaultFillColor;
-    const count = star ? sides * 2 : sides;
-    const points: Phaser.Geom.Point[] = [];
-    for (let i = 0; i < count; i++) {
-      const angle = startAngle + (Math.PI * 2 / count) * i;
-      const r = star && i % 2 === 1 ? size * 0.45 : size;
-      points.push(new Phaser.Geom.Point(pos.x + r * Math.cos(angle), pos.y + r * Math.sin(angle)));
-    }
-    g.fillPoints(points, true);
-    // Outline
-    g.lineStyle(1.5, 0xffffff, 0.25);
-    g.beginPath();
-    g.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) g.lineTo(points[i].x, points[i].y);
-    g.closePath();
-    g.strokePath();
   }
 
   private damageEventsBuffer: Array<{ unitId: string; damage: number }> = [];
@@ -257,7 +206,8 @@ export class TowerSystem {
 
   destroy(): void {
     for (const tower of this.towers.values()) {
-      tower.graphics.destroy();
+      tower.base.destroy();
+      tower.sprite.destroy();
     }
     this.towers.clear();
     if (this.attackGraphics) {

@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { INITIAL_GOLD, INITIAL_PLAYER_HP } from '@gld/shared';
-import type { WavePhase } from '@gld/shared';
+import { INITIAL_GOLD, INITIAL_PLAYER_HP, type PlacementFailureReason, type WavePhase } from '@gld/shared';
 
-type Screen = 'lobby' | 'game';
+export type RunStatus = 'lobby' | 'building' | 'combat' | 'victory' | 'defeat';
 
 interface GameStoreState {
-  screen: Screen;
+  runId: number;
+  runStatus: RunStatus;
   gameReady: boolean;
   gold: number;
   lives: number;
@@ -13,8 +13,9 @@ interface GameStoreState {
   wave: number;
   wavePhase: WavePhase;
   countdown: number;
+  placementFeedback: PlacementFailureReason | null;
 
-  setScreen: (screen: Screen) => void;
+  setRunStatus: (status: RunStatus) => void;
   setGameReady: (ready: boolean) => void;
   setGold: (gold: number) => void;
   setLives: (lives: number) => void;
@@ -22,19 +23,28 @@ interface GameStoreState {
   setWave: (wave: number) => void;
   setWavePhase: (phase: WavePhase) => void;
   setCountdown: (seconds: number) => void;
+  setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
+  resetRun: () => void;
+  enterLobby: () => void;
 }
 
-export const useGameStore = create<GameStoreState>()((set) => ({
-  screen: 'lobby',
+const createRunState = () => ({
   gameReady: false,
   gold: INITIAL_GOLD,
   lives: INITIAL_PLAYER_HP,
   selectedTowerId: null,
   wave: 0,
-  wavePhase: 'building',
+  wavePhase: 'building' as WavePhase,
   countdown: 0,
+  placementFeedback: null,
+});
 
-  setScreen: (screen) => set({ screen }),
+export const useGameStore = create<GameStoreState>()((set) => ({
+  runId: 0,
+  runStatus: 'lobby',
+  ...createRunState(),
+
+  setRunStatus: (status) => set({ runStatus: status }),
   setGameReady: (ready) => set({ gameReady: ready }),
   setGold: (gold) => set({ gold }),
   setLives: (lives) => set({ lives }),
@@ -42,4 +52,19 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setWave: (wave) => set({ wave }),
   setWavePhase: (phase) => set({ wavePhase: phase }),
   setCountdown: (seconds) => set({ countdown: seconds }),
+  setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
+
+  resetRun: () =>
+    set((state) => ({
+      runId: state.runId + 1,
+      runStatus: 'building',
+      ...createRunState(),
+    })),
+
+  enterLobby: () =>
+    set((state) => ({
+      runId: state.runId + 1,
+      runStatus: 'lobby',
+      ...createRunState(),
+    })),
 }));

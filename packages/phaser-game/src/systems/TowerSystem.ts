@@ -260,7 +260,10 @@ export class TowerSystem {
       tower.graphics.destroy();
     }
     this.towers.clear();
-    this.attackGraphics.destroy();
+    if (this.attackGraphics) {
+      this.attackGraphics.destroy();
+      this.attackGraphics = null!;
+    }
     this.attackLines = [];
   }
 }

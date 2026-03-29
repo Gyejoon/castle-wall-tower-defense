@@ -4,7 +4,7 @@ import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 import { EventBus } from '@gld/phaser-game';
-import { BASE_TOWERS, UNITS, UNIT_SEND_COUNT } from '@gld/shared';
+import { BASE_TOWERS, TOTAL_WAVES } from '@gld/shared';
 
 export function GamePage() {
   const setScreen = useGameStore((s) => s.setScreen);
@@ -14,32 +14,53 @@ export function GamePage() {
   const setGold = useGameStore((s) => s.setGold);
   const selectedTowerId = useGameStore((s) => s.selectedTowerId);
   const setSelectedTower = useGameStore((s) => s.setSelectedTower);
+  const wave = useGameStore((s) => s.wave);
+  const wavePhase = useGameStore((s) => s.wavePhase);
+  const countdown = useGameStore((s) => s.countdown);
+  const setWave = useGameStore((s) => s.setWave);
+  const setWavePhase = useGameStore((s) => s.setWavePhase);
+  const setCountdown = useGameStore((s) => s.setCountdown);
 
   useEffect(() => {
     const onDamaged = (data: { remainingHp: number }) => setLives(data.remainingHp);
     const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
-    const onGameOver = () => setScreen('lobby');
+    const onGameOver = (data: { winnerId: string }) => {
+      if (data.winnerId === 'local') {
+        setWavePhase('ended');
+      } else {
+        setScreen('lobby');
+      }
+    };
+    const onWaveStarted = (data: { wave: number }) => {
+      setWave(data.wave);
+      setWavePhase('combat');
+    };
+    const onBuildingPhase = (data: { nextWave: number; countdown: number }) => {
+      setWavePhase('building');
+      setCountdown(data.countdown);
+    };
+    const onCountdownTick = (data: { secondsLeft: number }) => setCountdown(data.secondsLeft);
 
     EventBus.on('player-damaged', onDamaged);
     EventBus.on('gold-changed', onGoldChanged);
     EventBus.on('game-over', onGameOver);
+    EventBus.on('wave-started', onWaveStarted);
+    EventBus.on('building-phase-started', onBuildingPhase);
+    EventBus.on('countdown-tick', onCountdownTick);
 
     return () => {
       EventBus.off('player-damaged', onDamaged);
       EventBus.off('gold-changed', onGoldChanged);
       EventBus.off('game-over', onGameOver);
+      EventBus.off('wave-started', onWaveStarted);
+      EventBus.off('building-phase-started', onBuildingPhase);
+      EventBus.off('countdown-tick', onCountdownTick);
     };
-  }, [setLives, setGold, setScreen]);
+  }, [setLives, setGold, setScreen, setWave, setWavePhase, setCountdown]);
 
   const selectTower = (towerId: string) => {
     setSelectedTower(towerId);
-    // Also update Phaser-side selection via keyboard simulation isn't needed;
-    // we emit an event that Game scene can listen to
     EventBus.emit('request-place-tower', { col: -1, row: -1, towerDefId: towerId });
-  };
-
-  const sendUnit = (unitDefId: string) => {
-    EventBus.emit('request-send-unit', { unitDefId, count: UNIT_SEND_COUNT });
   };
 
   return (
@@ -107,20 +128,41 @@ export function GamePage() {
             </PixelButton>
           ))}
 
-          {/* Unit sending */}
+          {/* Wave control */}
           <p style={{ fontSize: '8px', color: colors.textSecondary, margin: '8px 0 0 0' }}>
-            SEND UNITS
+            WAVE {wave}/{TOTAL_WAVES}
           </p>
-          {UNITS.map((unit) => (
-            <PixelButton
-              key={unit.id}
-              variant="secondary"
-              style={{ fontSize: '7px', padding: '6px 8px', textAlign: 'left' }}
-              onClick={() => sendUnit(unit.id)}
-            >
-              {unit.name} ({unit.sendCost}g)
-            </PixelButton>
-          ))}
+          {wavePhase === 'building' && (
+            <>
+              <p style={{ fontSize: '9px', color: colors.gold, margin: '4px 0' }}>
+                Next wave in: {countdown}s
+              </p>
+              <PixelButton
+                style={{ fontSize: '7px', padding: '8px' }}
+                onClick={() => EventBus.emit('request-start-wave')}
+              >
+                START WAVE
+              </PixelButton>
+            </>
+          )}
+          {wavePhase === 'combat' && (
+            <p style={{ fontSize: '8px', color: colors.danger, margin: '4px 0' }}>
+              COMBAT IN PROGRESS
+            </p>
+          )}
+          {wavePhase === 'ended' && (
+            <>
+              <p style={{ fontSize: '8px', color: colors.accent, margin: '4px 0' }}>
+                VICTORY!
+              </p>
+              <PixelButton
+                style={{ fontSize: '7px', padding: '8px' }}
+                onClick={() => setScreen('lobby')}
+              >
+                BACK TO LOBBY
+              </PixelButton>
+            </>
+          )}
         </div>
       </div>
     </div>

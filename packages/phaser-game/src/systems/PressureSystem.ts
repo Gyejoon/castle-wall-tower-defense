@@ -48,7 +48,9 @@ export class PressureSystem {
         if (currentGold >= ATTACK_COST) {
           goldDelta = -ATTACK_COST;
         } else {
-          // Not enough gold — fall back to defend
+          // Not enough gold — fall back to defend and sync the choice
+          this.currentChoice = 'defend';
+          EventBus.emit('pressure-choice-made', { choice: 'defend' });
           goldDelta = DEFEND_BONUS_GOLD;
         }
         break;
@@ -59,7 +61,9 @@ export class PressureSystem {
           // Bounty multiplier applies to the next wave, or current wave if wave 5
           this.bountyMultiplier = INVEST_BOUNTY_MULTIPLIER;
         } else {
-          // Not enough gold — fall back to defend
+          // Not enough gold — fall back to defend and sync the choice
+          this.currentChoice = 'defend';
+          EventBus.emit('pressure-choice-made', { choice: 'defend' });
           goldDelta = DEFEND_BONUS_GOLD;
         }
         break;

@@ -6,6 +6,7 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 import { EventBus } from '../EventBus';
+import { getPlacementGuardFailure } from '../placementRules';
 
 export class GameScene extends Phaser.Scene {
   private gridManager!: GridManager;
@@ -20,7 +21,12 @@ export class GameScene extends Phaser.Scene {
   private gold = INITIAL_GOLD;
   private selectedTowerId: string | null = null;
   private gameOver = false;
+  private boardBackground?: Phaser.GameObjects.TileSprite;
+  private spawnMarker?: Phaser.GameObjects.Image;
+  private exitMarker?: Phaser.GameObjects.Image;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
+  private onSelectTower!: (data: { towerDefId: string }) => void;
+  private onClearTowerSelection!: () => void;
   private onStartWave!: () => void;
   private onGameWon!: () => void;
 
@@ -38,8 +44,32 @@ export class GameScene extends Phaser.Scene {
     this.events.on('shutdown', this.cleanup, this);
 
     // Draw grid
+    this.boardBackground = this.add.tileSprite(
+      (this.gridManager.width * TILE_SIZE) / 2,
+      (this.gridManager.height * TILE_SIZE) / 2,
+      this.gridManager.width * TILE_SIZE,
+      this.gridManager.height * TILE_SIZE,
+      'grid-floor',
+    );
+    this.boardBackground.setAlpha(0.22);
     this.gridGraphics = this.add.graphics();
     this.gridManager.render(this.gridGraphics);
+
+    const spawnWorld = this.gridManager.gridToWorld(
+      this.gridManager.spawnPoint.x,
+      this.gridManager.spawnPoint.y,
+    );
+    this.spawnMarker = this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile');
+    this.spawnMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
+    this.spawnMarker.setAlpha(0.9);
+
+    const exitWorld = this.gridManager.gridToWorld(
+      this.gridManager.exitPoint.x,
+      this.gridManager.exitPoint.y,
+    );
+    this.exitMarker = this.add.image(exitWorld.x, exitWorld.y, 'exit-tile');
+    this.exitMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
+    this.exitMarker.setAlpha(0.9);
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
@@ -80,11 +110,13 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.onPlaceTower = (data) => {
-      if (data.col < 0 || data.row < 0) {
-        this.selectedTowerId = data.towerDefId;
-        return;
-      }
       this.handlePlaceTower(data.col, data.row, data.towerDefId);
+    };
+    this.onSelectTower = (data) => {
+      this.selectedTowerId = data.towerDefId;
+    };
+    this.onClearTowerSelection = () => {
+      this.selectedTowerId = null;
     };
 
     this.onStartWave = () => {
@@ -95,6 +127,8 @@ export class GameScene extends Phaser.Scene {
       this.endGame('local');
     };
 
+    EventBus.on('request-select-tower', this.onSelectTower);
+    EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.on('request-place-tower', this.onPlaceTower);
     EventBus.on('request-start-wave', this.onStartWave);
     EventBus.on('game-won', this.onGameWon);
@@ -137,17 +171,50 @@ export class GameScene extends Phaser.Scene {
   private handlePlaceTower(gridX: number, gridY: number, towerDefId: string): void {
     const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
     if (!towerDef) return;
-    if (this.gold < towerDef.cost) return;
+
+    const guardFailure = getPlacementGuardFailure({
+      phase: this.waveSystem.getPhase(),
+      gold: this.gold,
+      towerCost: towerDef.cost,
+    });
+
+    if (guardFailure) {
+      EventBus.emit('tower-placed', {
+        col: gridX,
+        row: gridY,
+        towerId: towerDefId,
+        success: false,
+        reason: guardFailure,
+      });
+      return;
+    }
 
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
-    if (placed) {
-      this.spendGold(towerDef.cost);
-      // TowerSystem already recomputed and cached the path
-      const path = this.pathfinding.getCachedPath();
-      if (path) {
-        this.unitSystem.setPath(path);
-        this.renderPath(path);
-      }
+    if (!placed.success) {
+      EventBus.emit('tower-placed', {
+        col: gridX,
+        row: gridY,
+        towerId: towerDefId,
+        success: false,
+        reason: placed.reason,
+      });
+      return;
+    }
+
+    this.spendGold(towerDef.cost);
+    EventBus.emit('tower-placed', {
+      col: gridX,
+      row: gridY,
+      towerId: towerDefId,
+      success: true,
+    });
+
+    // TowerSystem already recomputed and cached the path
+    const path = this.pathfinding.getCachedPath();
+    if (path) {
+      this.unitSystem.setPath(path);
+      this.renderPath(path);
+      EventBus.emit('path-updated', { path });
     }
   }
 
@@ -233,9 +300,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private cleanup() {
+    EventBus.off('request-select-tower', this.onSelectTower);
+    EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.off('request-place-tower', this.onPlaceTower);
     EventBus.off('request-start-wave', this.onStartWave);
     EventBus.off('game-won', this.onGameWon);
+    this.boardBackground?.destroy();
+    this.spawnMarker?.destroy();
+    this.exitMarker?.destroy();
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();

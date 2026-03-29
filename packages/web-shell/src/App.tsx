@@ -1,9 +1,37 @@
-import { useGameStore } from './stores/gameStore';
+import { Suspense, lazy } from 'react';
 import { LobbyPage } from './pages/LobbyPage';
-import { GamePage } from './pages/GamePage';
+import { useGameStore } from './stores/gameStore';
+import { colors } from './styles/tokens';
+
+const GamePage = lazy(async () => import('./pages/GamePage').then((module) => ({ default: module.GamePage })));
+
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: colors.textSecondary,
+        letterSpacing: '0.12em',
+      }}
+    >
+      LOADING GRID...
+    </div>
+  );
+}
 
 export function App() {
-  const screen = useGameStore((s) => s.screen);
+  const runStatus = useGameStore((s) => s.runStatus);
 
-  return screen === 'lobby' ? <LobbyPage /> : <GamePage />;
+  if (runStatus === 'lobby') {
+    return <LobbyPage />;
+  }
+
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <GamePage />
+    </Suspense>
+  );
 }

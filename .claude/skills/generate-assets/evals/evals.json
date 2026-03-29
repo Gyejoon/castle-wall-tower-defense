@@ -1,0 +1,23 @@
+{
+  "skill_name": "generate-assets",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "게임 타워 스프라이트를 생성해줘",
+      "expected_output": "scripts/generate-assets/shared.ts와 generate-towers.ts를 작성하고 실행하여 packages/web-shell/public/assets/towers/ 에 9개 타워 static PNG + 9개 fire animation PNG를 생성",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "모든 게임 에셋을 만들어줘",
+      "expected_output": "scripts/generate-assets/ 전체 스크립트를 작성하고 generate-all.ts를 실행하여 tiles, towers, units, projectiles, vfx, ui 전체 카테고리 PNG + asset-manifest.json 생성",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "유닛 스프라이트 생성하고 Preloader에 연동해줘",
+      "expected_output": "unit sprite 생성 스크립트 작성/실행 + Preloader.ts에 spritesheet 로드 코드와 walk animation 정의 추가",
+      "files": []
+    }
+  ]
+}

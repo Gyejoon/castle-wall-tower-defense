@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { ALL_TOWERS, UNITS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS } from '@gld/shared';
+import { ALL_TOWERS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
+import { WaveSystem } from '../systems/WaveSystem';
 import { EventBus } from '../EventBus';
 
 export class GameScene extends Phaser.Scene {
@@ -11,6 +12,7 @@ export class GameScene extends Phaser.Scene {
   private pathfinding!: PathfindingSystem;
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
+  private waveSystem!: WaveSystem;
   private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
@@ -19,7 +21,8 @@ export class GameScene extends Phaser.Scene {
   private selectedTowerId: string | null = null;
   private gameOver = false;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
-  private onSendUnit!: (data: { unitDefId: string; count: number }) => void;
+  private onStartWave!: () => void;
+  private onGameWon!: () => void;
 
   constructor() {
     super('Game');
@@ -30,6 +33,7 @@ export class GameScene extends Phaser.Scene {
     this.pathfinding = new PathfindingSystem();
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
+    this.waveSystem = new WaveSystem(this.unitSystem);
 
     this.events.on('shutdown', this.cleanup, this);
 
@@ -83,17 +87,17 @@ export class GameScene extends Phaser.Scene {
       this.handlePlaceTower(data.col, data.row, data.towerDefId);
     };
 
-    this.onSendUnit = (data) => {
-      const unitDef = UNITS.find((u) => u.id === data.unitDefId);
-      if (!unitDef) return;
-      const affordable = Math.min(data.count, Math.floor(this.gold / unitDef.sendCost));
-      if (affordable <= 0) return;
-      this.spendGold(unitDef.sendCost * affordable);
-      this.unitSystem.queueUnits(data.unitDefId, affordable);
+    this.onStartWave = () => {
+      this.waveSystem.skipCountdown();
+    };
+
+    this.onGameWon = () => {
+      this.endGame('local');
     };
 
     EventBus.on('request-place-tower', this.onPlaceTower);
-    EventBus.on('request-send-unit', this.onSendUnit);
+    EventBus.on('request-start-wave', this.onStartWave);
+    EventBus.on('game-won', this.onGameWon);
 
     // Keyboard tower selection (1-4)
     const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
@@ -107,6 +111,9 @@ export class GameScene extends Phaser.Scene {
     EventBus.emit('game-ready');
     EventBus.emit('gold-changed', { gold: this.gold });
     EventBus.emit('current-scene-ready', this);
+
+    // Start the wave system (first building phase)
+    this.waveSystem.start();
   }
 
   private spendGold(amount: number): boolean {
@@ -114,6 +121,17 @@ export class GameScene extends Phaser.Scene {
     this.gold -= amount;
     EventBus.emit('gold-changed', { gold: this.gold });
     return true;
+  }
+
+  private earnGold(amount: number): void {
+    this.gold += amount;
+    EventBus.emit('gold-changed', { gold: this.gold });
+  }
+
+  private endGame(winnerId: string): void {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    EventBus.emit('game-over', { winnerId });
   }
 
   private handlePlaceTower(gridX: number, gridY: number, towerDefId: string): void {
@@ -176,13 +194,23 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number) {
     if (this.gameOver) return;
 
+    // Update wave system (countdown / wave-clear detection)
+    this.waveSystem.update(delta);
+
     // Update towers — get damage events
     const unitPositions = this.unitSystem.getUnitPositions();
     const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
-    // Apply damage to units
+    // Apply damage to units — handle bounty
+    let bountyTotal = 0;
     for (const evt of damageEvents) {
-      this.unitSystem.applyDamage(evt.unitId, evt.damage);
+      const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
+      if (result?.killed) {
+        bountyTotal += result.bounty;
+      }
+    }
+    if (bountyTotal > 0) {
+      this.earnGold(bountyTotal);
     }
 
     // Update units — move along path
@@ -198,9 +226,7 @@ export class GameScene extends Phaser.Scene {
       });
 
       if (this.playerHp <= 0) {
-        this.gameOver = true;
-        this.unitSystem.destroy();
-        EventBus.emit('game-over', { winnerId: 'opponent' });
+        this.endGame('opponent');
         return;
       }
     }
@@ -208,8 +234,10 @@ export class GameScene extends Phaser.Scene {
 
   private cleanup() {
     EventBus.off('request-place-tower', this.onPlaceTower);
-    EventBus.off('request-send-unit', this.onSendUnit);
+    EventBus.off('request-start-wave', this.onStartWave);
+    EventBus.off('game-won', this.onGameWon);
     this.towerSystem.destroy();
     this.unitSystem.destroy();
+    this.waveSystem.destroy();
   }
 }

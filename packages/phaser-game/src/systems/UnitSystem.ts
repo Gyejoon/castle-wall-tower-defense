@@ -187,9 +187,9 @@ export class UnitSystem {
     g.strokePath();
   }
 
-  applyDamage(unitId: string, rawDamage: number): void {
+  applyDamage(unitId: string, rawDamage: number): { killed: boolean; bounty: number } | null {
     const unit = this.units.get(unitId);
-    if (!unit) return;
+    if (!unit) return null;
 
     const armor = unit.def.stats.armor;
     const damage = Math.max(1, rawDamage - armor);
@@ -198,12 +198,21 @@ export class UnitSystem {
     if (unit.data.hp <= 0) {
       unit.graphics.destroy();
       this.units.delete(unitId);
+      return { killed: true, bounty: unit.def.bounty };
     }
+    return { killed: false, bounty: 0 };
   }
 
-  update(time: number, delta: number): { reachedExit: string[]; killed: string[] } {
+  hasActiveUnits(): boolean {
+    return this.units.size > 0;
+  }
+
+  hasQueuedUnits(): boolean {
+    return this.spawnQueue.length > 0;
+  }
+
+  update(time: number, delta: number): { reachedExit: string[] } {
     const reachedExit: string[] = [];
-    const killed: string[] = [];
 
     // Process spawn queue
     this.spawnTimer += delta;
@@ -254,7 +263,7 @@ export class UnitSystem {
       this.renderUnit(unit.graphics, unit.worldX, unit.worldY, unit.def, unit.data.hp);
     }
 
-    return { reachedExit, killed };
+    return { reachedExit };
   }
 
   getUnitPositions(): Array<{ instanceId: string; x: number; y: number; hp: number }> {

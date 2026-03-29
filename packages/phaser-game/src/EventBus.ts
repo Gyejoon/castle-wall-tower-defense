@@ -10,11 +10,15 @@ export interface GameEventMap {
   'path-updated': { path: Position[] };
   'game-over': { winnerId: string };
   'gold-changed': { gold: number };
-  'wave-changed': { wave: number };
+  'wave-started': { wave: number; totalWaves: number };
+  'wave-completed': { wave: number; totalWaves: number };
+  'building-phase-started': { nextWave: number; countdown: number };
+  'countdown-tick': { secondsLeft: number };
+  'game-won': undefined;
 
   // React → Game
   'request-place-tower': { col: number; row: number; towerDefId: string };
-  'request-send-unit': { unitDefId: string; count: number };
+  'request-start-wave': undefined;
   'request-start-game': undefined;
   'request-pause': undefined;
   'request-resume': undefined;

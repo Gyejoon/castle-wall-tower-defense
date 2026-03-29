@@ -3,7 +3,7 @@ import type { UnitDef } from '../types/unit';
 export const UNITS: UnitDef[] = [
   {
     id: 'scout_drone',
-    name: 'Scout Drone',
+    name: '고블린 정찰병',
     type: 'scout_drone',
     stats: { hp: 30, speed: 3.0, armor: 0 },
     sendCost: 20,
@@ -12,7 +12,7 @@ export const UNITS: UnitDef[] = [
   },
   {
     id: 'battle_robot',
-    name: 'Battle Robot',
+    name: '오크 전사',
     type: 'battle_robot',
     stats: { hp: 80, speed: 1.5, armor: 2 },
     sendCost: 50,
@@ -21,7 +21,7 @@ export const UNITS: UnitDef[] = [
   },
   {
     id: 'heavy_walker',
-    name: 'Heavy Walker',
+    name: '돌 트롤',
     type: 'heavy_walker',
     stats: { hp: 200, speed: 0.8, armor: 5 },
     sendCost: 100,
@@ -30,7 +30,7 @@ export const UNITS: UnitDef[] = [
   },
   {
     id: 'stealth_drone',
-    name: 'Stealth Drone',
+    name: '그림자 암살자',
     type: 'stealth_drone',
     stats: { hp: 50, speed: 2.5, armor: 0, special: 'invisible_until_attacked' },
     sendCost: 70,
@@ -39,7 +39,7 @@ export const UNITS: UnitDef[] = [
   },
   {
     id: 'titan',
-    name: 'Titan',
+    name: '고대 드래곤',
     type: 'titan',
     stats: { hp: 500, speed: 0.5, armor: 10, special: 'boss_regen_2hp_s' },
     sendCost: 250,

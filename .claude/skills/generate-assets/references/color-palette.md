@@ -43,6 +43,13 @@ Strict color palette for Grid Line Defense PvP assets. Only use these colors (pl
 | stealth_drone | `#b388ff` | Light purple |
 | titan | `#ff4757` | Red |
 
+## VFX Colors (used in fire/explosion effects)
+
+| Name | Hex | Usage |
+|------|-----|-------|
+| orange | `#ff8c42` | Fire mid-tone, explosion ring |
+| red | `#ff4757` | Explosion edges, damage flash |
+
 ## Utility Colors (derived, for effects only)
 
 | Purpose | Hex | Usage |

@@ -83,8 +83,12 @@ export class GhostRecorder {
       if (key && key.startsWith(STORAGE_PREFIX)) {
         const raw = localStorage.getItem(key);
         if (raw) {
-          const parsed = JSON.parse(raw) as GhostRecord;
-          records.push(parsed);
+          try {
+            const parsed = JSON.parse(raw) as GhostRecord;
+            records.push(parsed);
+          } catch {
+            continue;
+          }
         }
       }
     }

@@ -48,6 +48,8 @@ export class GameScene extends Phaser.Scene {
   private onGameWon!: () => void;
   private onStartGhostBattle!: (data: { ghost: GhostRecord }) => void;
   private onPressureChoice!: (data: { choice: PressureChoice }) => void;
+  private onWaveStartedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
+  private onWaveCompletedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
 
   constructor() {
     super('Game');
@@ -179,8 +181,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Ghost battle wave lifecycle hooks
-    EventBus.on('wave-started', (data: { wave: number }) => {
+    this.onWaveStartedLifecycle = (data) => {
       soundGenerator.playWaveStart();
 
       if (!this.ghostBattleActive) return;
@@ -204,14 +205,18 @@ export class GameScene extends Phaser.Scene {
 
       // Record wave start
       this.ghostRecorder.startWave(waveNum);
-    });
+    };
 
-    EventBus.on('wave-completed', (data: { wave: number }) => {
+    this.onWaveCompletedLifecycle = (data) => {
       if (!this.ghostBattleActive) return;
       this.ghostRecorder.endWave(data.wave);
       // Consume bounty multiplier after wave
       this.pressureSystem.consumeBountyMultiplier();
-    });
+    };
+
+    // Ghost battle wave lifecycle hooks
+    EventBus.on('wave-started', this.onWaveStartedLifecycle);
+    EventBus.on('wave-completed', this.onWaveCompletedLifecycle);
 
     // Notify React
     EventBus.emit('game-ready');
@@ -399,6 +404,8 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('game-won', this.onGameWon);
     EventBus.off('start-ghost-battle', this.onStartGhostBattle);
     EventBus.off('request-pressure-choice', this.onPressureChoice);
+    EventBus.off('wave-started', this.onWaveStartedLifecycle);
+    EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
     this.boardBackground?.destroy();
     this.spawnMarker?.destroy();
     this.exitMarker?.destroy();

@@ -2,7 +2,7 @@ import { EventBus } from '@gld/phaser-game';
 import { soundGenerator } from '@gld/phaser-game/src/audio/SoundGenerator';
 import type { PressureChoice } from '@gld/shared';
 import { useGameStore } from '../stores/gameStore';
-import { colors } from '../styles/tokens';
+import { colors, fonts } from '../styles/tokens';
 
 interface PressureOption {
   id: PressureChoice;
@@ -104,7 +104,7 @@ export function PressurePanel() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '6px',
-                fontFamily: "'Press Start 2P', cursive",
+                fontFamily: fonts.pixel,
                 transition: 'border-color 0.15s, background 0.15s',
               }}
               aria-pressed={selected}
@@ -130,7 +130,7 @@ export function PressurePanel() {
           border: `2px solid ${colors.gold}`,
           background: `${colors.gold}22`,
           color: colors.gold,
-          fontFamily: "'Press Start 2P', cursive",
+          fontFamily: fonts.pixel,
           fontSize: '9px',
           cursor: 'pointer',
           letterSpacing: '0.05em',

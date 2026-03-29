@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import { useGameStore } from '../src/stores/gameStore';
@@ -84,6 +84,10 @@ describe('GamePage', () => {
     useGameStore.getState().resetRun();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('selects and clears a tower through explicit events', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
@@ -126,5 +130,34 @@ describe('GamePage', () => {
 
     expect(useGameStore.getState().runStatus).toBe('victory');
     expect(view.getByRole('button', { name: /restart run/i })).toBeTruthy();
+  });
+
+  it('keeps the latest ghost pressure warning visible until its own timer expires', () => {
+    vi.useFakeTimers();
+    const { emitSpy } = getEventBusHarness();
+    render(<GamePage />);
+
+    act(() => {
+      emitSpy('ghost-pressure-applied', { wave: 1, pressure: 'attack' });
+    });
+    expect(useGameStore.getState().ghostPressureWarning).toBe(
+      'GHOST ATTACKING! +3 scout drones incoming!',
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+      emitSpy('ghost-pressure-applied', { wave: 2, pressure: 'defend' });
+    });
+    expect(useGameStore.getState().ghostPressureWarning).toBe('Ghost is fortifying defenses.');
+
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(useGameStore.getState().ghostPressureWarning).toBe('Ghost is fortifying defenses.');
+
+    act(() => {
+      vi.advanceTimersByTime(1900);
+    });
+    expect(useGameStore.getState().ghostPressureWarning).toBeNull();
   });
 });

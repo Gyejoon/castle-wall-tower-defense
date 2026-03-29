@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import type { GhostRecord, MatchResult } from '@gld/shared';
+import { useEffect, useState } from 'react';
+import type { MatchResult } from '@gld/shared';
 import { soundGenerator } from '@gld/phaser-game/src/audio/SoundGenerator';
 import { PixelButton } from './ui/PixelButton';
+import { fetchRandomGhost, GHOST_FETCH_ERROR_MESSAGE } from '../game/fetchRandomGhost';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
@@ -14,18 +15,13 @@ const outcomeConfig = {
   draw: { title: 'DRAW', color: colors.textSecondary },
 } as const;
 
-function fetchRandomGhost(): Promise<GhostRecord> {
-  const ghostFiles = ['ghost-aggressive.json', 'ghost-defensive.json', 'ghost-economic.json'];
-  const pick = ghostFiles[Math.floor(Math.random() * ghostFiles.length)];
-  return fetch(`/ghosts/${pick}`).then((r) => r.json() as Promise<GhostRecord>);
-}
-
 export function MatchSummary() {
   const matchResult = useGameStore((s) => s.matchResult);
   const startGhostBattle = useGameStore((s) => s.startGhostBattle);
   const enterLobby = useGameStore((s) => s.enterLobby);
-
   const soundEnabled = useGameStore((s) => s.soundEnabled);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!matchResult || !soundEnabled) return;
@@ -40,10 +36,18 @@ export function MatchSummary() {
 
   const config = outcomeConfig[matchResult.outcome];
 
-  const handlePlayAgain = () => {
-    fetchRandomGhost().then((ghost) => {
+  const handlePlayAgain = async () => {
+    setRetrying(true);
+    setRetryError(null);
+
+    try {
+      const ghost = await fetchRandomGhost();
       startGhostBattle(ghost);
-    });
+    } catch {
+      setRetryError(GHOST_FETCH_ERROR_MESSAGE);
+    } finally {
+      setRetrying(false);
+    }
   };
 
   return (
@@ -108,9 +112,10 @@ export function MatchSummary() {
           <PixelButton
             variant="gold"
             style={{ flex: 1, fontSize: '8px', padding: '12px 8px' }}
+            disabled={retrying}
             onClick={handlePlayAgain}
           >
-            PLAY AGAIN
+            {retrying ? 'LOADING...' : 'PLAY AGAIN'}
           </PixelButton>
           <PixelButton
             variant="secondary"
@@ -120,6 +125,12 @@ export function MatchSummary() {
             LOBBY
           </PixelButton>
         </div>
+
+        {retryError ? (
+          <p role="alert" style={{ color: colors.danger, fontSize: '7px', margin: 0 }}>
+            {retryError}
+          </p>
+        ) : null}
 
         <div
           style={{

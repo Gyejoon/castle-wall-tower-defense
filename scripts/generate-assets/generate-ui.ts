@@ -7,15 +7,20 @@ export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const entries: ManifestEntry[] = [];
 
-  // tower-icons.png (128x32, 4 icons at 32x32)
+  // tower-icons.png (288x32, 9 icons at 32x32)
   {
-    const { canvas, ctx } = makeCanvas(128, 32);
     const towerDefs = [
       { color: PALETTE.laser, shape: 'diamond' as const },
       { color: PALETTE.plasma, shape: 'hexagon' as const },
       { color: PALETTE.emp, shape: 'circle' as const },
       { color: PALETTE.shield, shape: 'shield' as const },
+      { color: PALETTE.laser, shape: 'star' as const },
+      { color: PALETTE.emp, shape: 'star' as const },
+      { color: PALETTE.plasma, shape: 'star' as const },
+      { color: PALETTE.cyan, shape: 'star' as const },
+      { color: PALETTE.stasis, shape: 'star' as const },
     ];
+    const { canvas, ctx } = makeCanvas(towerDefs.length * 32, 32);
 
     towerDefs.forEach((t, i) => {
       const ox = i * 32;
@@ -43,6 +48,9 @@ export async function generate(): Promise<ManifestEntry[]> {
           drawLine(ctx, cx - 8, cy + 2, cx, cy + 9, t.color);
           drawLine(ctx, cx + 8, cy + 2, cx, cy + 9, t.color);
           break;
+        case 'star':
+          drawStar(ctx, cx, cy, 9, 4, 5, t.color);
+          break;
       }
     });
 
@@ -53,7 +61,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       path: 'assets/ui/tower-icons.png',
       frameWidth: 32,
       frameHeight: 32,
-      frameCount: 4,
+      frameCount: towerDefs.length,
     });
   }
 

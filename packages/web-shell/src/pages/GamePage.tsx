@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BASE_TOWERS,
   TOTAL_WAVES,
@@ -63,25 +63,40 @@ export function GamePage() {
   const ghostPressureWarning = useGameStore((s) => s.ghostPressureWarning);
 
   const [warningFlash, setWarningFlash] = useState(false);
+  const pressureWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const totalWaves = ghostBattleActive ? GHOST_BATTLE_WAVES : TOTAL_WAVES;
 
-  const computeMatchResult = useCallback(
-    (winnerId: string) => {
-      if (!ghostBattleActive || !currentGhost) return;
+  useEffect(() => {
+    const clearPressureWarningTimeout = () => {
+      if (pressureWarningTimeoutRef.current !== null) {
+        clearTimeout(pressureWarningTimeoutRef.current);
+        pressureWarningTimeoutRef.current = null;
+      }
+    };
+
+    const computeMatchResult = (winnerId: string) => {
+      const {
+        ghostBattleActive: activeGhostBattle,
+        currentGhost: activeGhost,
+        gold: currentGold,
+        wave: currentWave,
+      } = useGameStore.getState();
+
+      if (!activeGhostBattle || !activeGhost) return;
 
       const playerWon = winnerId === 'local';
-      const playerWaves = playerWon ? totalWaves : wave;
-      const ghostResult = currentGhost.result;
+      const playerWaves = playerWon ? GHOST_BATTLE_WAVES : currentWave;
+      const ghostResult = activeGhost.result;
 
       let outcome: 'victory' | 'defeat' | 'draw';
       if (playerWaves > ghostResult.wavesCompleted) {
         outcome = 'victory';
       } else if (playerWaves < ghostResult.wavesCompleted) {
         outcome = 'defeat';
-      } else if (gold > ghostResult.goldRemaining) {
+      } else if (currentGold > ghostResult.goldRemaining) {
         outcome = 'victory';
-      } else if (gold < ghostResult.goldRemaining) {
+      } else if (currentGold < ghostResult.goldRemaining) {
         outcome = 'defeat';
       } else {
         outcome = 'draw';
@@ -89,17 +104,14 @@ export function GamePage() {
 
       setMatchResult({
         playerWavesCompleted: playerWaves,
-        playerGoldRemaining: gold,
+        playerGoldRemaining: currentGold,
         ghostWavesCompleted: ghostResult.wavesCompleted,
         ghostGoldRemaining: ghostResult.goldRemaining,
         outcome,
-        ghostName: currentGhost.playerName,
+        ghostName: activeGhost.playerName,
       });
-    },
-    [ghostBattleActive, currentGhost, totalWaves, wave, gold, setMatchResult],
-  );
+    };
 
-  useEffect(() => {
     const onDamaged = (data: { remainingHp: number }) => setLives(data.remainingHp);
     const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
     const onGameOver = (data: { winnerId: string }) => {
@@ -123,12 +135,14 @@ export function GamePage() {
       setPlacementFeedback(data.success ? null : data.reason ?? 'occupied');
     };
     const onGhostPressure = (data: { pressure: PressureChoice }) => {
+      clearPressureWarningTimeout();
       const msg = PRESSURE_WARNING_COPY[data.pressure];
       setGhostPressureWarning(msg);
       setWarningFlash(true);
-      setTimeout(() => {
+      pressureWarningTimeoutRef.current = setTimeout(() => {
         setWarningFlash(false);
         setGhostPressureWarning(null);
+        pressureWarningTimeoutRef.current = null;
       }, 2500);
     };
 
@@ -150,9 +164,9 @@ export function GamePage() {
       EventBus.off('countdown-tick', onCountdownTick);
       EventBus.off('tower-placed', onTowerPlaced);
       EventBus.off('ghost-pressure-applied', onGhostPressure);
+      clearPressureWarningTimeout();
     };
   }, [
-    computeMatchResult,
     setCountdown,
     setGold,
     setGhostPressureWarning,
@@ -161,6 +175,7 @@ export function GamePage() {
     setRunStatus,
     setWave,
     setWavePhase,
+    setMatchResult,
   ]);
 
   // Notify Phaser game scene about ghost battle when game is ready

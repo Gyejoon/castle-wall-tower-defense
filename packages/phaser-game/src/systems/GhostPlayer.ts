@@ -1,8 +1,4 @@
 import type { GhostRecord, GhostWaveAction, PressureChoice } from '@gld/shared';
-import type { UnitSystem } from './UnitSystem';
-
-const GHOST_ATTACK_UNIT_ID = 'scout_drone';
-const GHOST_ATTACK_UNIT_COUNT = 3;
 
 export class GhostPlayer {
   private ghost: GhostRecord | null = null;
@@ -27,17 +23,6 @@ export class GhostPlayer {
       wavesCompleted: this.ghost.result.wavesCompleted,
       goldRemaining: this.ghost.result.goldRemaining,
     };
-  }
-
-  applyWaveAction(waveNumber: number, unitSystem: UnitSystem): void {
-    if (!this.ghost || !this.active) return;
-
-    const action = this.findWaveAction(waveNumber);
-    if (!action) return;
-
-    if (action.pressure === 'attack') {
-      unitSystem.queueUnits(GHOST_ATTACK_UNIT_ID, GHOST_ATTACK_UNIT_COUNT);
-    }
   }
 
   getWavePressure(waveNumber: number): PressureChoice | null {

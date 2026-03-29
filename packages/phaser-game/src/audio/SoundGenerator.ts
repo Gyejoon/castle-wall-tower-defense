@@ -37,6 +37,12 @@ export class SoundGenerator {
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
 
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+      oscillator.onended = null;
+    };
+
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + recipe.duration / 1000);
   }

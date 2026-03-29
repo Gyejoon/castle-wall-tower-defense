@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { GhostRecord } from '@gld/shared';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PixelPanel } from '../components/ui/PixelPanel';
 import { uiMobileArt } from '../assets/uiMobileArt';
+import { fetchRandomGhost, GHOST_FETCH_ERROR_MESSAGE } from '../game/fetchRandomGhost';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
@@ -12,28 +12,24 @@ const featureCopy = [
   'Mobile-first vertical battlefield shell',
 ];
 
-const GHOST_FILES = ['ghost-aggressive.json', 'ghost-defensive.json', 'ghost-economic.json'];
-
-async function fetchRandomGhost(): Promise<GhostRecord> {
-  const pick = GHOST_FILES[Math.floor(Math.random() * GHOST_FILES.length)];
-  const response = await fetch(`/ghosts/${pick}`);
-  return response.json() as Promise<GhostRecord>;
-}
-
 export function LobbyPage() {
   const resetRun = useGameStore((s) => s.resetRun);
   const startGhostBattle = useGameStore((s) => s.startGhostBattle);
   const [loadingGhost, setLoadingGhost] = useState(false);
+  const [ghostLoadError, setGhostLoadError] = useState<string | null>(null);
 
-  const handleGhostBattle = () => {
+  const handleGhostBattle = async () => {
     setLoadingGhost(true);
-    fetchRandomGhost()
-      .then((ghost) => {
-        startGhostBattle(ghost);
-      })
-      .finally(() => {
-        setLoadingGhost(false);
-      });
+    setGhostLoadError(null);
+
+    try {
+      const ghost = await fetchRandomGhost();
+      startGhostBattle(ghost);
+    } catch {
+      setGhostLoadError(GHOST_FETCH_ERROR_MESSAGE);
+    } finally {
+      setLoadingGhost(false);
+    }
   };
 
   return (
@@ -226,6 +222,14 @@ export function LobbyPage() {
               <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
                 Ghost Battle: 5-wave PvP against recorded ghost opponents.
               </p>
+              {ghostLoadError ? (
+                <p
+                  role="alert"
+                  style={{ color: colors.danger, fontSize: '7px', lineHeight: 1.8, margin: 0 }}
+                >
+                  {ghostLoadError}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

@@ -14,11 +14,11 @@ export class WaveSystem {
 
   constructor(unitSystem: UnitSystem, maxWaves?: number) {
     this.unitSystem = unitSystem;
-    this.maxWaves = maxWaves ?? TOTAL_WAVES;
+    this.maxWaves = this.clampMaxWaves(maxWaves ?? TOTAL_WAVES);
   }
 
   setMaxWaves(count: number): void {
-    this.maxWaves = count;
+    this.maxWaves = this.clampMaxWaves(count);
   }
 
   start(): void {
@@ -110,5 +110,9 @@ export class WaveSystem {
 
   destroy(): void {
     this.phase = 'ended';
+  }
+
+  private clampMaxWaves(count: number): number {
+    return Math.max(1, Math.min(count, WAVE_DEFS.length));
   }
 }

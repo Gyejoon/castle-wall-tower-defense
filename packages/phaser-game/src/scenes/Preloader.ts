@@ -14,6 +14,10 @@ export class Preloader extends Phaser.Scene {
   }
 
   preload() {
+    // Tileset and tilemap
+    this.load.image('tileset-forest', 'assets/tileset.png');
+    this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');
+
     // Unit walk-cycle sprite sheets (128x32, 4 frames at 32x32)
     for (const id of UNIT_IDS) {
       this.load.spritesheet(`unit-${id}`, `assets/units/${id}.png`, {

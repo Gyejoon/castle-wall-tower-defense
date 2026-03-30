@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import type { TowerDef, PlacedTower, Position } from '@gld/shared';
 import { ALL_TOWERS, TILE_SIZE } from '@gld/shared';
 import { GridManager } from './GridManager';
-import { PathfindingSystem } from './PathfindingSystem';
 import { EventBus } from '../EventBus';
 
 interface TowerInstance {
@@ -16,15 +15,13 @@ export class TowerSystem {
   private towers: Map<string, TowerInstance> = new Map();
   private scene: Phaser.Scene;
   private gridManager: GridManager;
-  private pathfinding: PathfindingSystem;
   private nextId = 0;
   private attackGraphics: Phaser.GameObjects.Graphics;
   private attackLines: Array<{ x1: number; y1: number; x2: number; y2: number; color: number; ttl: number }> = [];
 
-  constructor(scene: Phaser.Scene, gridManager: GridManager, pathfinding: PathfindingSystem) {
+  constructor(scene: Phaser.Scene, gridManager: GridManager) {
     this.scene = scene;
     this.gridManager = gridManager;
-    this.pathfinding = pathfinding;
     this.attackGraphics = scene.add.graphics();
     this.attackGraphics.setDepth(10);
   }
@@ -33,28 +30,13 @@ export class TowerSystem {
     const def = ALL_TOWERS.find((t) => t.id === towerDefId);
     if (!def) return null;
 
-    // Check if placement would block the path
-    const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
-    if (!placed) return null;
-
-    // Verify path still exists
-    this.pathfinding.invalidateCache();
-    const walkGrid = this.gridManager.getWalkabilityGrid();
-    const path = this.pathfinding.findPath(
-      walkGrid,
-      this.gridManager.spawnPoint,
-      this.gridManager.exitPoint,
-    );
-
-    if (!path) {
-      // Revert placement — would block all paths
-      this.gridManager.removeTower(gridX, gridY);
-      this.pathfinding.invalidateCache();
+    if (!this.gridManager.isPlacementPointEmpty(gridX, gridY)) {
       EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false });
       return null;
     }
 
     const instanceId = `tower_${this.nextId++}`;
+    this.gridManager.occupyPlacementPoint(gridX, gridY, instanceId);
     const worldPos = this.gridManager.gridToWorld(gridX, gridY);
 
     const towerData: PlacedTower = {
@@ -75,7 +57,6 @@ export class TowerSystem {
     });
 
     EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
-    EventBus.emit('path-updated', { path });
 
     return towerData;
   }

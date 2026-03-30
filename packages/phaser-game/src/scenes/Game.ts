@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ALL_TOWERS, UNITS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS } from '@gld/shared';
+import { ALL_TOWERS, UNITS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS, FOREST_GATE_MAP } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
@@ -11,8 +11,8 @@ export class GameScene extends Phaser.Scene {
   private pathfinding!: PathfindingSystem;
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
-  private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
+  private placementGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
   private gold = INITIAL_GOLD;
@@ -26,39 +26,45 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gridManager = new GridManager();
+    this.gridManager = new GridManager(FOREST_GATE_MAP);
     this.pathfinding = new PathfindingSystem();
-    this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
+    this.pathfinding.setFixedPath(FOREST_GATE_MAP.path);
+    this.towerSystem = new TowerSystem(this, this.gridManager);
     this.unitSystem = new UnitSystem(this, this.gridManager);
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Draw grid
-    this.gridGraphics = this.add.graphics();
-    this.gridManager.render(this.gridGraphics);
+    // Load and render tilemap
+    const map = this.make.tilemap({ key: 'tilemap-forest-gate' });
+    const tileset = map.addTilesetImage('tileset', 'tileset-forest');
+    if (tileset) {
+      map.createLayer('ground', tileset);
+      map.createLayer('path', tileset);
+      map.createLayer('decoration', tileset);
+    }
+
+    // Render placement points (gold circles on empty points)
+    this.placementGraphics = this.add.graphics();
+    this.placementGraphics.setDepth(1);
+    for (const pp of FOREST_GATE_MAP.placementPoints) {
+      const world = this.gridManager.gridToWorld(pp.x, pp.y);
+      this.placementGraphics.fillStyle(0xe2b714, 0.25);
+      this.placementGraphics.fillCircle(world.x, world.y, TILE_SIZE * 0.4);
+      this.placementGraphics.lineStyle(1, 0xe2b714, 0.5);
+      this.placementGraphics.strokeCircle(world.x, world.y, TILE_SIZE * 0.4);
+    }
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
 
-    // Compute initial path
-    const walkGrid = this.gridManager.getWalkabilityGrid();
-    const path = this.pathfinding.findPath(
-      walkGrid,
-      this.gridManager.spawnPoint,
-      this.gridManager.exitPoint,
-    );
-    if (path) {
-      this.unitSystem.setPath(path);
-      this.renderPath(path);
-    }
-
-    // Input: hover highlight
+    // Input: hover highlight — only on placement points
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.hoverGraphics.clear();
-      if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
-        const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
-        this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
+      if (this.gridManager.isValidPlacementPoint(gridPos.x, gridPos.y)) {
+        const isEmpty = this.gridManager.isPlacementPointEmpty(gridPos.x, gridPos.y);
+        this.hoverGraphics.fillStyle(isEmpty ? 0x7f5af0 : 0xe53170, 0.25);
         this.hoverGraphics.fillRect(
           gridPos.x * TILE_SIZE,
           gridPos.y * TILE_SIZE,
@@ -120,57 +126,10 @@ export class GameScene extends Phaser.Scene {
     const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
     if (!towerDef) return;
     if (this.gold < towerDef.cost) return;
-
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
     if (placed) {
       this.spendGold(towerDef.cost);
-      // TowerSystem already recomputed and cached the path
-      const path = this.pathfinding.getCachedPath();
-      if (path) {
-        this.unitSystem.setPath(path);
-        this.renderPath(path);
-      }
     }
-  }
-
-  private pathGraphics?: Phaser.GameObjects.Graphics;
-
-  private renderPath(path: { x: number; y: number }[]): void {
-    if (!this.pathGraphics) {
-      this.pathGraphics = this.add.graphics();
-    }
-    this.pathGraphics.clear();
-
-    if (path.length < 2) return;
-
-    // Glow layer
-    this.pathGraphics.lineStyle(6, 0x7f5af0, 0.06);
-    this.pathGraphics.beginPath();
-    const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
-    this.pathGraphics.moveTo(first.x, first.y);
-    for (let i = 1; i < path.length; i++) {
-      const pt = this.gridManager.gridToWorld(path[i].x, path[i].y);
-      this.pathGraphics.lineTo(pt.x, pt.y);
-    }
-    this.pathGraphics.strokePath();
-
-    // Dotted path
-    this.pathGraphics.fillStyle(0x7f5af0, 0.35);
-    for (let i = 0; i < path.length - 1; i++) {
-      const a = this.gridManager.gridToWorld(path[i].x, path[i].y);
-      const b = this.gridManager.gridToWorld(path[i + 1].x, path[i + 1].y);
-      const steps = 4;
-      for (let s = 0; s < steps; s++) {
-        if (s % 2 === 1) continue; // skip every other for dashes
-        const t = s / steps;
-        const dx = a.x + (b.x - a.x) * t;
-        const dy = a.y + (b.y - a.y) * t;
-        this.pathGraphics.fillCircle(dx, dy, 1.5);
-      }
-    }
-    // End dot
-    const last = this.gridManager.gridToWorld(path[path.length - 1].x, path[path.length - 1].y);
-    this.pathGraphics.fillCircle(last.x, last.y, 1.5);
   }
 
   update(time: number, delta: number) {

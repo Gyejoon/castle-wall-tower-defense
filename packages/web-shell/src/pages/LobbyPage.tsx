@@ -61,16 +61,17 @@ export function LobbyPage() {
           style={{
             position: 'relative',
             zIndex: 1,
-            padding: '40px 48px',
+            padding: 'clamp(20px, 4vw, 40px) clamp(20px, 4vw, 48px)',
             display: 'flex',
             flexDirection: 'row',
-            gap: '48px',
+            flexWrap: 'wrap',
+            gap: 'clamp(24px, 4vw, 48px)',
             minHeight: '100%',
             alignItems: 'center',
           }}
         >
           {/* Left: Title + Features */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <span style={{ color: colors.info, fontSize: '8px', letterSpacing: '2px' }}>
               PALACE RANDOM TD
             </span>
@@ -140,7 +141,7 @@ export function LobbyPage() {
           </div>
 
           {/* Right: Key Art + CTA */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div
               style={{
                 minHeight: '240px',

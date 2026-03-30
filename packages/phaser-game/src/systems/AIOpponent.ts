@@ -214,21 +214,24 @@ export class AIOpponent {
       }
     }
 
-    // Remove dead units, collect bounty
-    this.units = this.units.filter((unit) => {
+    // Remove dead units (in-place compaction), collect bounty
+    let writeIdx = 0;
+    for (let i = 0; i < this.units.length; i++) {
+      const unit = this.units[i];
       if (unit.hp <= 0) {
         this.gold += unit.bounty;
         killedUnits.push(unit.defId);
-        return false;
+        continue;
       }
-      return true;
-    });
+      this.units[writeIdx++] = unit;
+    }
+    this.units.length = writeIdx;
 
-    // Move units
-    const toRemove: string[] = [];
-    for (const unit of this.units) {
+    // Move units, track exits (in-place removal)
+    writeIdx = 0;
+    for (let i = 0; i < this.units.length; i++) {
+      const unit = this.units[i];
       if (unit.pathIndex >= path.length - 1) {
-        toRemove.push(unit.id);
         reachedExit++;
         continue;
       }
@@ -248,12 +251,13 @@ export class AIOpponent {
         unit.worldX += (dx / dist) * speed * dt;
         unit.worldY += (dy / dist) * speed * dt;
       }
+      this.units[writeIdx++] = unit;
     }
+    this.units.length = writeIdx;
 
-    // Handle exit
+    // Handle exit damage
     if (reachedExit > 0) {
       this.hp = Math.max(0, this.hp - reachedExit);
-      this.units = this.units.filter((u) => !toRemove.includes(u.id));
     }
 
     this.emitState();

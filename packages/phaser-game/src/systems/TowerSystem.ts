@@ -288,6 +288,38 @@ export class TowerSystem {
     return false;
   }
 
+  getTowerAt(gridX: number, gridY: number): { data: PlacedTower; def: TowerDef } | null {
+    for (const tower of this.towers.values()) {
+      if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
+        return { data: tower.data, def: tower.def };
+      }
+    }
+    return null;
+  }
+
+  removeTowerAt(gridX: number, gridY: number): boolean {
+    let targetKey: string | null = null;
+    let targetInstance: TowerInstance | null = null;
+
+    for (const [key, tower] of this.towers) {
+      if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
+        targetKey = key;
+        targetInstance = tower;
+        break;
+      }
+    }
+
+    if (!targetKey || !targetInstance) return false;
+
+    targetInstance.base.destroy();
+    targetInstance.sprite.destroy();
+    this.towers.delete(targetKey);
+    this.gridManager.removeTower(gridX, gridY);
+    this.pathfinding.invalidateCache();
+
+    return true;
+  }
+
   getTowers(): PlacedTower[] {
     return Array.from(this.towers.values()).map((t) => t.data);
   }

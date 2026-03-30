@@ -13,6 +13,7 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 import { RandomTowerSystem } from '../systems/RandomTowerSystem';
+import { MergeSystem } from '../systems/MergeSystem';
 import { EventBus } from '../EventBus';
 import { getPlacementGuardFailure } from '../placementRules';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -24,12 +25,20 @@ export class GameScene extends Phaser.Scene {
   private unitSystem!: UnitSystem;
   private waveSystem!: WaveSystem;
   private randomTowerSystem!: RandomTowerSystem;
+  private mergeSystem!: MergeSystem;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
   private gold = INITIAL_GOLD;
   private selectedTowerId: string | null = null;
   private gameOver = false;
+
+  // Drag state for merge
+  private isDragging = false;
+  private dragFrom: { x: number; y: number } | null = null;
+  private dragGhost: Phaser.GameObjects.Graphics | null = null;
+  private mergeHighlights: Phaser.GameObjects.Graphics | null = null;
+
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
   private onSellTower!: (data: { col: number; row: number }) => void;
   private onSelectTower!: (data: { towerDefId: string }) => void;
@@ -50,6 +59,7 @@ export class GameScene extends Phaser.Scene {
     this.unitSystem = new UnitSystem(this, this.gridManager);
     this.waveSystem = new WaveSystem(this.unitSystem);
     this.randomTowerSystem = new RandomTowerSystem();
+    this.mergeSystem = new MergeSystem(this.towerSystem);
 
     this.events.on('shutdown', this.cleanup, this);
 
@@ -68,6 +78,10 @@ export class GameScene extends Phaser.Scene {
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
+    this.dragGhost = this.add.graphics();
+    this.dragGhost.setDepth(20);
+    this.mergeHighlights = this.add.graphics();
+    this.mergeHighlights.setDepth(15);
 
     // Use fixed path from map data
     this.unitSystem.setPath(FOREST_GATE_MAP.path);
@@ -77,6 +91,23 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.hoverGraphics.clear();
+
+      if (this.isDragging && this.dragGhost) {
+        // Draw ghost tower following pointer
+        this.dragGhost.clear();
+        this.dragGhost.fillStyle(0xffffff, 0.3);
+        this.dragGhost.fillRect(
+          pointer.worldX - TILE_SIZE / 2,
+          pointer.worldY - TILE_SIZE / 2,
+          TILE_SIZE,
+          TILE_SIZE,
+        );
+
+        // Highlight valid merge targets
+        this.renderMergeHighlights(gridPos);
+        return;
+      }
+
       if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
         const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
         this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
@@ -89,11 +120,58 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Input: place tower on click
+    // Input: pointerdown — start drag or place tower
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (!this.selectedTowerId) return;
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
-      this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
+
+      // If we have a selected tower (from random roll), place it
+      if (this.selectedTowerId) {
+        this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
+        return;
+      }
+
+      // Check if clicking on a tower to start drag (only during building phase)
+      if (this.waveSystem.getPhase() === 'building' && this.towerSystem.hasTowerAt(gridPos.x, gridPos.y)) {
+        this.isDragging = true;
+        this.dragFrom = { x: gridPos.x, y: gridPos.y };
+      }
+    });
+
+    // Input: pointerup — end drag (merge or cancel)
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (!this.isDragging || !this.dragFrom) {
+        return;
+      }
+
+      const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
+
+      // Try merge
+      if (gridPos.x !== this.dragFrom.x || gridPos.y !== this.dragFrom.y) {
+        if (this.mergeSystem.canMerge(this.dragFrom, gridPos)) {
+          const fromPos = { ...this.dragFrom };
+          const result = this.mergeSystem.merge(fromPos, gridPos);
+          if (result) {
+            EventBus.emit('tower-merged', {
+              fromPos,
+              toPos: gridPos,
+              newTowerId: result.id,
+              newTowerDef: result,
+            });
+            // Recalculate path after merge
+            this.unitSystem.setPath(FOREST_GATE_MAP.path);
+            this.renderPath(FOREST_GATE_MAP.path);
+            EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+          }
+        } else {
+          EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
+        }
+      }
+
+      // Reset drag state
+      this.isDragging = false;
+      this.dragFrom = null;
+      this.dragGhost?.clear();
+      this.mergeHighlights?.clear();
     });
 
     this.onPlaceTower = (data) => {
@@ -159,6 +237,30 @@ export class GameScene extends Phaser.Scene {
     this.waveSystem.start();
   }
 
+  private renderMergeHighlights(currentGridPos: { x: number; y: number }): void {
+    if (!this.mergeHighlights || !this.dragFrom) return;
+    this.mergeHighlights.clear();
+
+    const towers = this.towerSystem.getTowers();
+    const dragTower = this.towerSystem.getTowerAt(this.dragFrom.x, this.dragFrom.y);
+    if (!dragTower) return;
+
+    for (const tower of towers) {
+      if (tower.position.x === this.dragFrom.x && tower.position.y === this.dragFrom.y) continue;
+      const canMerge = this.mergeSystem.canMerge(this.dragFrom, tower.position);
+      if (canMerge) {
+        const isHover = tower.position.x === currentGridPos.x && tower.position.y === currentGridPos.y;
+        this.mergeHighlights.fillStyle(0x2cb67d, isHover ? 0.4 : 0.15);
+        this.mergeHighlights.fillRect(
+          tower.position.x * TILE_SIZE,
+          tower.position.y * TILE_SIZE,
+          TILE_SIZE,
+          TILE_SIZE,
+        );
+      }
+    }
+  }
+
   private spendGold(amount: number): boolean {
     if (this.gold < amount) return false;
     this.gold -= amount;
@@ -181,12 +283,10 @@ export class GameScene extends Phaser.Scene {
     const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
     if (!towerDef) return;
 
-    // For random tower system, the cost was already paid on roll
-    // So placement guard should check with cost 0
     const guardFailure = getPlacementGuardFailure({
       phase: this.waveSystem.getPhase(),
       gold: this.gold,
-      towerCost: 0, // cost paid at roll time
+      towerCost: 0,
     });
 
     if (guardFailure) {
@@ -212,7 +312,6 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Clear selected tower after placement
     this.selectedTowerId = null;
 
     EventBus.emit('tower-placed', {
@@ -237,7 +336,6 @@ export class GameScene extends Phaser.Scene {
 
     if (path.length < 2) return;
 
-    // Glow layer (dirt path color)
     this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
     this.pathGraphics.beginPath();
     const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
@@ -248,21 +346,19 @@ export class GameScene extends Phaser.Scene {
     }
     this.pathGraphics.strokePath();
 
-    // Dotted path (dirt color)
     this.pathGraphics.fillStyle(0xb8956a, 0.4);
     for (let i = 0; i < path.length - 1; i++) {
       const a = this.gridManager.gridToWorld(path[i].x, path[i].y);
       const b = this.gridManager.gridToWorld(path[i + 1].x, path[i + 1].y);
       const steps = 4;
       for (let s = 0; s < steps; s++) {
-        if (s % 2 === 1) continue; // skip every other for dashes
+        if (s % 2 === 1) continue;
         const t = s / steps;
         const dx = a.x + (b.x - a.x) * t;
         const dy = a.y + (b.y - a.y) * t;
         this.pathGraphics.fillCircle(dx, dy, 1.5);
       }
     }
-    // End dot
     const last = this.gridManager.gridToWorld(path[path.length - 1].x, path[path.length - 1].y);
     this.pathGraphics.fillCircle(last.x, last.y, 1.5);
   }
@@ -270,14 +366,11 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number) {
     if (this.gameOver) return;
 
-    // Update wave system (countdown / wave-clear detection)
     this.waveSystem.update(delta);
 
-    // Update towers — get damage events
     const unitPositions = this.unitSystem.getUnitPositions();
     const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
-    // Apply damage to units — handle bounty
     let bountyTotal = 0;
     for (const evt of damageEvents) {
       const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
@@ -285,7 +378,6 @@ export class GameScene extends Phaser.Scene {
         bountyTotal += result.bounty;
         soundGenerator.playUnitDeath();
       }
-      // Apply slow effect from frost towers
       if (evt.slow) {
         this.unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
       }
@@ -294,10 +386,8 @@ export class GameScene extends Phaser.Scene {
       this.earnGold(bountyTotal);
     }
 
-    // Update units — move along path
     const { reachedExit } = this.unitSystem.update(time, delta);
 
-    // Units reaching exit damage the player
     for (const _unitId of reachedExit) {
       this.playerHp = Math.max(0, this.playerHp - 1);
       EventBus.emit('player-damaged', {

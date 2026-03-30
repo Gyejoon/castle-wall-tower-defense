@@ -36,6 +36,10 @@ export interface GameEventMap {
   // Random tower system
   'random-tower-rolled': { towerId: string; towerDef: TowerDef };
 
+  // Merge system
+  'tower-merged': { fromPos: Position; toPos: Position; newTowerId: string; newTowerDef: TowerDef };
+  'tower-merge-failed': { reason: string };
+
   // React → Game
   'request-buy-random-tower': undefined;
   'request-select-tower': { towerDefId: string };

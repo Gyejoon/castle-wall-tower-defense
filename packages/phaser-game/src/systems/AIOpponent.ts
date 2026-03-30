@@ -6,6 +6,7 @@ import {
   FOREST_GATE_MAP,
   TILE_SIZE,
   UNITS,
+  EMOTES,
   getTowersByTier,
 } from '@gld/shared';
 import { GridManager } from './GridManager';
@@ -46,7 +47,6 @@ export class AIOpponent {
   private nextUnitId = 0;
   private emoteTimer = 0;
   private readonly EMOTE_INTERVAL = 15000; // 15 seconds between possible emotes
-  private readonly EMOTE_IDS = ['nice', 'oh_no', 'gg', 'lol', 'wait', 'wow'];
 
   hp = INITIAL_PLAYER_HP;
   gold = INITIAL_GOLD;
@@ -268,8 +268,8 @@ export class AIOpponent {
     if (this.emoteTimer >= this.EMOTE_INTERVAL) {
       this.emoteTimer = 0;
       if (Math.random() < 0.3) {
-        const emoteId = this.EMOTE_IDS[Math.floor(Math.random() * this.EMOTE_IDS.length)];
-        EventBus.emit('emote-received', { emoteId, playerId: 'opponent' });
+        const emote = EMOTES[Math.floor(Math.random() * EMOTES.length)];
+        EventBus.emit('emote-received', { emoteId: emote.id, playerId: 'opponent' });
       }
     }
 

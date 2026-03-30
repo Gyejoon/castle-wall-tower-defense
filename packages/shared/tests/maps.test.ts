@@ -23,6 +23,14 @@ describe('FOREST_GATE_MAP', () => {
     expect(exitPoint).toEqual(path[path.length - 1]);
   });
 
+  it('spec 6.2에 맞게 경로가 (0,4)에서 (11,4)까지 직선이어야 한다', () => {
+    expect(FOREST_GATE_MAP.spawnPoint).toEqual({ x: 0, y: 4 });
+    expect(FOREST_GATE_MAP.exitPoint).toEqual({ x: 11, y: 4 });
+    expect(FOREST_GATE_MAP.path).toEqual(
+      Array.from({ length: 12 }, (_, x) => ({ x, y: 4 })),
+    );
+  });
+
   it('배치 포인트가 경로와 겹치지 않아야 한다', () => {
     const { path, placementPoints } = FOREST_GATE_MAP;
     const pathSet = new Set(path.map((p) => `${p.x},${p.y}`));

@@ -11,6 +11,8 @@ interface UnitInstance {
   hpBar: Phaser.GameObjects.Graphics;
   worldX: number;
   worldY: number;
+  slowFactor: number;       // 1.0 = normal, 0.7 = 30% slow
+  slowRemaining: number;    // ms remaining
 }
 
 export class UnitSystem {
@@ -89,6 +91,8 @@ export class UnitSystem {
       hpBar,
       worldX: startWorld.x,
       worldY: startWorld.y,
+      slowFactor: 1.0,
+      slowRemaining: 0,
     });
   }
 
@@ -112,6 +116,14 @@ export class UnitSystem {
     const barColor = hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
     graphics.fillStyle(barColor, 1);
     graphics.fillRect(x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
+  }
+
+  applySlow(unitId: string, factor: number, durationMs: number): void {
+    const unit = this.units.get(unitId);
+    if (!unit) return;
+    unit.slowFactor = factor;
+    unit.slowRemaining = durationMs;
+    unit.sprite.setTint(0x88ccff); // blue tint for slow
   }
 
   applyDamage(unitId: string, rawDamage: number): { killed: boolean; bounty: number } | null {
@@ -174,10 +186,20 @@ export class UnitSystem {
         continue;
       }
 
+      // Decay slow effect
+      if (unit.slowRemaining > 0) {
+        unit.slowRemaining -= delta;
+        if (unit.slowRemaining <= 0) {
+          unit.slowFactor = 1.0;
+          unit.slowRemaining = 0;
+          unit.sprite.clearTint();
+        }
+      }
+
       // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
       const targetWorld = this.gridManager.gridToWorld(nextGrid.x, nextGrid.y);
-      const speed = unit.def.stats.speed * TILE_SIZE; // pixels per second
+      const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;
       const dy = targetWorld.y - unit.worldY;

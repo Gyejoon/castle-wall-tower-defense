@@ -31,10 +31,17 @@ export interface GameEventMap {
   'ghost-pressure-applied': { wave: number; pressure: PressureChoice };
   'ghost-battle-result': { playerRecord: GhostRecord };
 
+  // Tower sell
+  'tower-sold': { col: number; row: number; refund: number };
+
+  // Wave preview (sent during building phase)
+  'wave-preview': { wave: number; groups: Array<{ unitId: string; unitName: string; count: number }> };
+
   // React → Game
   'request-select-tower': { towerDefId: string };
   'request-clear-tower-selection': undefined;
   'request-place-tower': { col: number; row: number; towerDefId: string };
+  'request-sell-tower': { col: number; row: number };
   'request-start-wave': undefined;
   'request-start-game': undefined;
   'request-pause': undefined;

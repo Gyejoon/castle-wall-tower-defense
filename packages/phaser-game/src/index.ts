@@ -11,6 +11,8 @@ export { PathfindingSystem, findPath } from './systems/PathfindingSystem';
 export { WaveSystem } from './systems/WaveSystem';
 export { RandomTowerSystem } from './systems/RandomTowerSystem';
 export { MergeSystem } from './systems/MergeSystem';
+export { AIOpponent } from './systems/AIOpponent';
+export { KillTransferSystem } from './systems/KillTransferSystem';
 export { getPlacementGuardFailure } from './placementRules';
 
 export function startGame(parentElement?: string | HTMLElement): Phaser.Game {

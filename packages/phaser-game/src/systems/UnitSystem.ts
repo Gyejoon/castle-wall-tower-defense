@@ -63,6 +63,17 @@ export class UnitSystem {
     EventBus.emit('unit-spawned', { unitType: def.type, count });
   }
 
+  /** Queue units from kill transfer — they spawn with 50% HP */
+  queueTransferUnits(unitDefId: string, count: number): void {
+    const def = UNITS.find((u) => u.id === unitDefId);
+    if (!def) return;
+    const transferDef = {
+      ...def,
+      stats: { ...def.stats, hp: Math.floor(def.stats.hp * 0.5) },
+    };
+    this.spawnQueue.push({ def: transferDef, remaining: count });
+  }
+
   private spawnUnit(def: UnitDef): void {
     if (this.currentPath.length === 0) return;
 
@@ -125,6 +136,11 @@ export class UnitSystem {
     unit.slowFactor = factor;
     unit.slowRemaining = durationMs;
     unit.sprite.setTint(0x88ccff); // blue tint for slow
+  }
+
+  getUnitDefId(unitId: string): string | null {
+    const unit = this.units.get(unitId);
+    return unit ? unit.data.defId : null;
   }
 
   applyDamage(unitId: string, rawDamage: number): { killed: boolean; bounty: number } | null {

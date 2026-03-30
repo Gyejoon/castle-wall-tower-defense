@@ -40,6 +40,11 @@ export interface GameEventMap {
   'tower-merged': { fromPos: Position; toPos: Position; newTowerId: string; newTowerDef: TowerDef };
   'tower-merge-failed': { reason: string };
 
+  // Opponent / Kill transfer
+  'opponent-damaged': { damage: number; remainingHp: number };
+  'opponent-state': { gold: number; hp: number; towerCount: number };
+  'kill-transfer': { unitType: string; count: number };
+
   // React → Game
   'request-buy-random-tower': undefined;
   'request-select-tower': { towerDefId: string };

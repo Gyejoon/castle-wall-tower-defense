@@ -8,6 +8,7 @@ import {
 } from '@gld/shared';
 
 export type RunStatus = 'lobby' | 'building' | 'combat' | 'victory' | 'defeat';
+export type FieldTab = 'player' | 'opponent';
 
 interface GameStoreState {
   runId: number;
@@ -23,6 +24,10 @@ interface GameStoreState {
   placementFeedback: PlacementFailureReason | null;
   wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
   soundEnabled: boolean;
+  activeTab: FieldTab;
+  opponentHp: number;
+  opponentGold: number;
+  opponentTowerCount: number;
 
   setRunStatus: (status: RunStatus) => void;
   setGameReady: (ready: boolean) => void;
@@ -35,6 +40,8 @@ interface GameStoreState {
   setCountdown: (seconds: number) => void;
   setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
   setWavePreview: (preview: Array<{ unitId: string; unitName: string; count: number }> | null) => void;
+  setActiveTab: (tab: FieldTab) => void;
+  setOpponentState: (state: { hp: number; gold: number; towerCount: number }) => void;
   resetRun: () => void;
   enterLobby: () => void;
   toggleSound: () => void;
@@ -51,6 +58,10 @@ const createRunState = () => ({
   countdown: 0,
   placementFeedback: null,
   wavePreview: null,
+  activeTab: 'player' as FieldTab,
+  opponentHp: INITIAL_PLAYER_HP,
+  opponentGold: INITIAL_GOLD,
+  opponentTowerCount: 0,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -70,6 +81,12 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setCountdown: (seconds) => set({ countdown: seconds }),
   setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
   setWavePreview: (preview) => set({ wavePreview: preview }),
+  setActiveTab: (tab) => set({ activeTab: tab }),
+  setOpponentState: (state) => set({
+    opponentHp: state.hp,
+    opponentGold: state.gold,
+    opponentTowerCount: state.towerCount,
+  }),
 
   resetRun: () =>
     set((state) => ({

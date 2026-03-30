@@ -6,6 +6,7 @@ import {
   INITIAL_GOLD,
   RANDOM_TOWER_COST,
   FOREST_GATE_MAP,
+  WAVE_DEFS,
 } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
@@ -14,6 +15,7 @@ import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 import { RandomTowerSystem } from '../systems/RandomTowerSystem';
 import { MergeSystem } from '../systems/MergeSystem';
+import { AIOpponent } from '../systems/AIOpponent';
 import { EventBus } from '../EventBus';
 import { getPlacementGuardFailure } from '../placementRules';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -26,6 +28,7 @@ export class GameScene extends Phaser.Scene {
   private waveSystem!: WaveSystem;
   private randomTowerSystem!: RandomTowerSystem;
   private mergeSystem!: MergeSystem;
+  private aiOpponent!: AIOpponent;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
@@ -60,10 +63,11 @@ export class GameScene extends Phaser.Scene {
     this.waveSystem = new WaveSystem(this.unitSystem);
     this.randomTowerSystem = new RandomTowerSystem();
     this.mergeSystem = new MergeSystem(this.towerSystem);
+    this.aiOpponent = new AIOpponent();
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Tilemap rendering (graceful fallback if tilemap not yet generated)
+    // Tilemap rendering
     try {
       const map = this.make.tilemap({ key: FOREST_GATE_MAP.tilemapKey });
       const tileset = map.addTilesetImage('tileset', FOREST_GATE_MAP.tilesetKey);
@@ -73,27 +77,25 @@ export class GameScene extends Phaser.Scene {
         map.createLayer('decoration', tileset);
       }
     } catch {
-      // Tilemap not loaded — proceed without it
+      // Tilemap not loaded
     }
 
-    // Hover highlight
+    // Graphics
     this.hoverGraphics = this.add.graphics();
     this.dragGhost = this.add.graphics();
     this.dragGhost.setDepth(20);
     this.mergeHighlights = this.add.graphics();
     this.mergeHighlights.setDepth(15);
 
-    // Use fixed path from map data
     this.unitSystem.setPath(FOREST_GATE_MAP.path);
     this.renderPath(FOREST_GATE_MAP.path);
 
-    // Input: hover highlight
+    // Input: hover
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.hoverGraphics.clear();
 
       if (this.isDragging && this.dragGhost) {
-        // Draw ghost tower following pointer
         this.dragGhost.clear();
         this.dragGhost.fillStyle(0xffffff, 0.3);
         this.dragGhost.fillRect(
@@ -102,8 +104,6 @@ export class GameScene extends Phaser.Scene {
           TILE_SIZE,
           TILE_SIZE,
         );
-
-        // Highlight valid merge targets
         this.renderMergeHighlights(gridPos);
         return;
       }
@@ -111,53 +111,37 @@ export class GameScene extends Phaser.Scene {
       if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
         const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
         this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
-        this.hoverGraphics.fillRect(
-          gridPos.x * TILE_SIZE,
-          gridPos.y * TILE_SIZE,
-          TILE_SIZE,
-          TILE_SIZE,
-        );
+        this.hoverGraphics.fillRect(gridPos.x * TILE_SIZE, gridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     });
 
-    // Input: pointerdown — start drag or place tower
+    // Input: pointerdown
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
 
-      // If we have a selected tower (from random roll), place it
       if (this.selectedTowerId) {
         this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
         return;
       }
 
-      // Check if clicking on a tower to start drag (only during building phase)
       if (this.waveSystem.getPhase() === 'building' && this.towerSystem.hasTowerAt(gridPos.x, gridPos.y)) {
         this.isDragging = true;
         this.dragFrom = { x: gridPos.x, y: gridPos.y };
       }
     });
 
-    // Input: pointerup — end drag (merge or cancel)
+    // Input: pointerup (merge)
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      if (!this.isDragging || !this.dragFrom) {
-        return;
-      }
+      if (!this.isDragging || !this.dragFrom) return;
 
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
 
-      // Try merge
       if (gridPos.x !== this.dragFrom.x || gridPos.y !== this.dragFrom.y) {
         if (this.mergeSystem.canMerge(this.dragFrom, gridPos)) {
           const fromPos = { ...this.dragFrom };
           const result = this.mergeSystem.merge(fromPos, gridPos);
           if (result) {
-            EventBus.emit('tower-merged', {
-              fromPos,
-              toPos: gridPos,
-              newTowerId: result.id,
-              newTowerDef: result,
-            });
-            // Recalculate path after merge
+            EventBus.emit('tower-merged', { fromPos, toPos: gridPos, newTowerId: result.id, newTowerDef: result });
             this.unitSystem.setPath(FOREST_GATE_MAP.path);
             this.renderPath(FOREST_GATE_MAP.path);
             EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
@@ -167,40 +151,28 @@ export class GameScene extends Phaser.Scene {
         }
       }
 
-      // Reset drag state
       this.isDragging = false;
       this.dragFrom = null;
       this.dragGhost?.clear();
       this.mergeHighlights?.clear();
     });
 
-    this.onPlaceTower = (data) => {
-      this.handlePlaceTower(data.col, data.row, data.towerDefId);
-    };
-    this.onSelectTower = (data) => {
-      this.selectedTowerId = data.towerDefId;
-    };
-    this.onClearTowerSelection = () => {
-      this.selectedTowerId = null;
-    };
+    // Event handlers
+    this.onPlaceTower = (data) => this.handlePlaceTower(data.col, data.row, data.towerDefId);
+    this.onSelectTower = (data) => { this.selectedTowerId = data.towerDefId; };
+    this.onClearTowerSelection = () => { this.selectedTowerId = null; };
 
     this.onBuyRandomTower = () => {
       if (this.gold < RANDOM_TOWER_COST) return;
       if (this.waveSystem.getPhase() !== 'building') return;
-
       const rolledTower = this.randomTowerSystem.rollRandomTower();
       this.selectedTowerId = rolledTower.id;
       this.spendGold(RANDOM_TOWER_COST);
       EventBus.emit('random-tower-rolled', { towerId: rolledTower.id, towerDef: rolledTower });
     };
 
-    this.onStartWave = () => {
-      this.waveSystem.skipCountdown();
-    };
-
-    this.onGameWon = () => {
-      this.endGame('local');
-    };
+    this.onStartWave = () => { this.waveSystem.skipCountdown(); };
+    this.onGameWon = () => { this.endGame('local'); };
 
     this.onSellTower = (data) => {
       if (this.waveSystem.getPhase() !== 'building') return;
@@ -222,18 +194,25 @@ export class GameScene extends Phaser.Scene {
     EventBus.on('request-start-wave', this.onStartWave);
     EventBus.on('game-won', this.onGameWon);
 
-    this.onWaveStartedLifecycle = () => {
+    this.onWaveStartedLifecycle = (data) => {
       soundGenerator.playWaveStart();
+      // Queue same wave units for AI opponent
+      const waveDef = WAVE_DEFS[data.wave - 1];
+      if (waveDef) {
+        for (const group of waveDef.groups) {
+          this.aiOpponent.queueUnits(group.unitId, group.count);
+        }
+      }
+      // AI builds during wave start
+      this.aiOpponent.buildPhase();
     };
 
     EventBus.on('wave-started', this.onWaveStartedLifecycle);
 
-    // Notify React
     EventBus.emit('game-ready');
     EventBus.emit('gold-changed', { gold: this.gold });
     EventBus.emit('current-scene-ready', this);
 
-    // Start the wave system (first building phase)
     this.waveSystem.start();
   }
 
@@ -242,21 +221,13 @@ export class GameScene extends Phaser.Scene {
     this.mergeHighlights.clear();
 
     const towers = this.towerSystem.getTowers();
-    const dragTower = this.towerSystem.getTowerAt(this.dragFrom.x, this.dragFrom.y);
-    if (!dragTower) return;
-
     for (const tower of towers) {
       if (tower.position.x === this.dragFrom.x && tower.position.y === this.dragFrom.y) continue;
       const canMerge = this.mergeSystem.canMerge(this.dragFrom, tower.position);
       if (canMerge) {
         const isHover = tower.position.x === currentGridPos.x && tower.position.y === currentGridPos.y;
         this.mergeHighlights.fillStyle(0x2cb67d, isHover ? 0.4 : 0.15);
-        this.mergeHighlights.fillRect(
-          tower.position.x * TILE_SIZE,
-          tower.position.y * TILE_SIZE,
-          TILE_SIZE,
-          TILE_SIZE,
-        );
+        this.mergeHighlights.fillRect(tower.position.x * TILE_SIZE, tower.position.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
   }
@@ -290,37 +261,18 @@ export class GameScene extends Phaser.Scene {
     });
 
     if (guardFailure) {
-      EventBus.emit('tower-placed', {
-        col: gridX,
-        row: gridY,
-        towerId: towerDefId,
-        success: false,
-        reason: guardFailure,
-      });
+      EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false, reason: guardFailure });
       return;
     }
 
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
     if (!placed.success) {
-      EventBus.emit('tower-placed', {
-        col: gridX,
-        row: gridY,
-        towerId: towerDefId,
-        success: false,
-        reason: placed.reason,
-      });
+      EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false, reason: placed.reason });
       return;
     }
 
     this.selectedTowerId = null;
-
-    EventBus.emit('tower-placed', {
-      col: gridX,
-      row: gridY,
-      towerId: towerDefId,
-      success: true,
-    });
-
+    EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
     this.unitSystem.setPath(FOREST_GATE_MAP.path);
     this.renderPath(FOREST_GATE_MAP.path);
     EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
@@ -333,7 +285,6 @@ export class GameScene extends Phaser.Scene {
       this.pathGraphics = this.add.graphics();
     }
     this.pathGraphics.clear();
-
     if (path.length < 2) return;
 
     this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
@@ -368,15 +319,23 @@ export class GameScene extends Phaser.Scene {
 
     this.waveSystem.update(delta);
 
+    // Player towers attack
     const unitPositions = this.unitSystem.getUnitPositions();
     const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
     let bountyTotal = 0;
     for (const evt of damageEvents) {
+      // Get defId before damage (unit may be removed on kill)
+      const unitDefId = this.unitSystem.getUnitDefId(evt.unitId);
       const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
       if (result?.killed) {
         bountyTotal += result.bounty;
         soundGenerator.playUnitDeath();
+        // Kill transfer: send same unit to opponent
+        if (unitDefId) {
+          this.aiOpponent.queueTransferUnits(unitDefId, 1);
+          EventBus.emit('kill-transfer', { unitType: unitDefId, count: 1 });
+        }
       }
       if (evt.slow) {
         this.unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
@@ -386,19 +345,39 @@ export class GameScene extends Phaser.Scene {
       this.earnGold(bountyTotal);
     }
 
+    // Player units move
     const { reachedExit } = this.unitSystem.update(time, delta);
-
     for (const _unitId of reachedExit) {
       this.playerHp = Math.max(0, this.playerHp - 1);
-      EventBus.emit('player-damaged', {
-        playerId: 'local',
-        damage: 1,
-        remainingHp: this.playerHp,
-      });
-
+      EventBus.emit('player-damaged', { playerId: 'local', damage: 1, remainingHp: this.playerHp });
       if (this.playerHp <= 0) {
         this.endGame('opponent');
         return;
+      }
+    }
+
+    // AI opponent update
+    const aiResult = this.aiOpponent.update(time, delta);
+    // Transfer killed units from AI to player
+    for (const killedDefId of aiResult.killedUnits) {
+      this.unitSystem.queueTransferUnits(killedDefId, 1);
+    }
+    // Check AI death
+    if (this.aiOpponent.hp <= 0) {
+      this.endGame('local');
+      return;
+    }
+
+    // Check win condition: all 20 waves cleared for both sides
+    if (this.waveSystem.getPhase() === 'ended' && !this.aiOpponent.hasActiveUnits() && !this.unitSystem.hasActiveUnits() && !this.unitSystem.hasQueuedUnits()) {
+      // Both survived — higher HP wins
+      if (this.playerHp > this.aiOpponent.hp) {
+        this.endGame('local');
+      } else if (this.aiOpponent.hp > this.playerHp) {
+        this.endGame('opponent');
+      } else {
+        // Tiebreak: gold
+        this.endGame(this.gold >= this.aiOpponent.gold ? 'local' : 'opponent');
       }
     }
   }
@@ -415,5 +394,6 @@ export class GameScene extends Phaser.Scene {
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();
+    this.aiOpponent.destroy();
   }
 }

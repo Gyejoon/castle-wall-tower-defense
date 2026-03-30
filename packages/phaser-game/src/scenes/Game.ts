@@ -31,7 +31,6 @@ export class GameScene extends Phaser.Scene {
   private pressureSystem!: PressureSystem;
   private ghostRecorder!: GhostRecorder;
   private ghostPlayer!: GhostPlayer;
-  private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
@@ -55,12 +54,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gridManager = new GridManager({
-      width: FOREST_GATE_MAP.width,
-      height: FOREST_GATE_MAP.height,
-      spawnPoint: FOREST_GATE_MAP.spawnPoint,
-      exitPoint: FOREST_GATE_MAP.exitPoint,
-    });
+    this.gridManager = new GridManager(FOREST_GATE_MAP);
     this.pathfinding = new PathfindingSystem();
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
@@ -80,8 +74,6 @@ export class GameScene extends Phaser.Scene {
       map.createLayer('path', tileset);
       map.createLayer('decoration', tileset);
     }
-
-    this.gridGraphics = this.add.graphics();
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();

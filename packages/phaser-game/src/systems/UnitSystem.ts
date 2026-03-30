@@ -32,11 +32,11 @@ export class UnitSystem {
   }
 
   setPath(path: Position[]): void {
+    if (path === this.currentPath) return;
     const oldPath = this.currentPath;
     this.currentPath = path;
     this.currentPathWorld = path.map(p => this.gridManager.gridToWorld(p.x, p.y));
 
-    // Remap in-flight units to nearest cell on the new path
     if (oldPath.length > 0 && path.length > 0) {
       for (const unit of this.units.values()) {
         const unitGrid = unit.data.position;
@@ -68,7 +68,7 @@ export class UnitSystem {
 
     const instanceId = `unit_${this.nextId++}`;
     const startGrid = this.currentPath[0];
-    const startWorld = this.gridManager.gridToWorld(startGrid.x, startGrid.y);
+    const startWorld = this.currentPathWorld[0];
 
     const unitData: ActiveUnit = {
       instanceId,
@@ -197,7 +197,7 @@ export class UnitSystem {
 
       // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
-      const targetWorld = this.gridManager.gridToWorld(nextGrid.x, nextGrid.y);
+      const targetWorld = this.currentPathWorld[pathIdx + 1];
       const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;

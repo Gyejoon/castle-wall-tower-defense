@@ -16,10 +16,6 @@ export class Preloader extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('grid-floor', 'assets/tiles/grid-floor.png');
-    this.load.image('spawn-tile', 'assets/tiles/spawn-tile.png');
-    this.load.image('exit-tile', 'assets/tiles/exit-tile.png');
-
     // Tilemap
     this.load.image('tileset-forest', 'assets/tileset.png');
     this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');

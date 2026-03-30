@@ -129,6 +129,19 @@ export class GameScene extends Phaser.Scene {
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
     if (placed) {
       this.spendGold(towerDef.cost);
+      this.redrawPlacementPoints();
+    }
+  }
+
+  private redrawPlacementPoints(): void {
+    this.placementGraphics.clear();
+    for (const pp of FOREST_GATE_MAP.placementPoints) {
+      if (!this.gridManager.isPlacementPointEmpty(pp.x, pp.y)) continue;
+      const world = this.gridManager.gridToWorld(pp.x, pp.y);
+      this.placementGraphics.fillStyle(0xe2b714, 0.25);
+      this.placementGraphics.fillCircle(world.x, world.y, TILE_SIZE * 0.4);
+      this.placementGraphics.lineStyle(1, 0xe2b714, 0.5);
+      this.placementGraphics.strokeCircle(world.x, world.y, TILE_SIZE * 0.4);
     }
   }
 

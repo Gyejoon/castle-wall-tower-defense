@@ -7,7 +7,6 @@ export interface GameEventMap {
   'tower-placed': { col: number; row: number; towerId: string; success: boolean };
   'unit-spawned': { unitType: UnitType; count: number };
   'player-damaged': { playerId: string; damage: number; remainingHp: number };
-  'path-updated': { path: Position[] };
   'game-over': { winnerId: string };
   'gold-changed': { gold: number };
   'wave-changed': { wave: number };

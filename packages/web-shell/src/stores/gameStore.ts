@@ -3,6 +3,7 @@ import {
   INITIAL_GOLD,
   INITIAL_PLAYER_HP,
   type PlacementFailureReason,
+  type TowerDef,
   type WavePhase,
 } from '@gld/shared';
 
@@ -15,6 +16,7 @@ interface GameStoreState {
   gold: number;
   lives: number;
   selectedTowerId: string | null;
+  rolledTower: TowerDef | null;
   wave: number;
   wavePhase: WavePhase;
   countdown: number;
@@ -27,6 +29,7 @@ interface GameStoreState {
   setGold: (gold: number) => void;
   setLives: (lives: number) => void;
   setSelectedTower: (towerId: string | null) => void;
+  setRolledTower: (tower: TowerDef | null) => void;
   setWave: (wave: number) => void;
   setWavePhase: (phase: WavePhase) => void;
   setCountdown: (seconds: number) => void;
@@ -42,6 +45,7 @@ const createRunState = () => ({
   gold: INITIAL_GOLD,
   lives: INITIAL_PLAYER_HP,
   selectedTowerId: null,
+  rolledTower: null,
   wave: 0,
   wavePhase: 'building' as WavePhase,
   countdown: 0,
@@ -60,6 +64,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setGold: (gold) => set({ gold }),
   setLives: (lives) => set({ lives }),
   setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
+  setRolledTower: (tower) => set({ rolledTower: tower }),
   setWave: (wave) => set({ wave }),
   setWavePhase: (phase) => set({ wavePhase: phase }),
   setCountdown: (seconds) => set({ countdown: seconds }),

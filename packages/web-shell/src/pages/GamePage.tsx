@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import {
-  BASE_TOWERS,
   TOTAL_WAVES,
+  RANDOM_TOWER_COST,
+  TIER_NAMES,
   type PlacementFailureReason,
+  type TowerDef,
 } from '@gld/shared';
 import { EventBus } from '@gld/phaser-game';
 import { uiMobileArt } from '../assets/uiMobileArt';
@@ -19,6 +21,14 @@ const feedbackCopy: Record<PlacementFailureReason, string> = {
   out_of_bounds: '전장 그리드 안을 탭하세요.',
 };
 
+const TIER_COLORS: Record<number, string> = {
+  1: '#aaaaaa',
+  2: '#5bc8e8',
+  3: '#c8a04a',
+  4: '#9060e0',
+  5: '#ffe870',
+};
+
 function formatWaveLabel(wave: number, totalWaves: number) {
   return Math.min(totalWaves, Math.max(1, wave || 1));
 }
@@ -29,18 +39,18 @@ export function GamePage() {
   const gameReady = useGameStore((s) => s.gameReady);
   const lives = useGameStore((s) => s.lives);
   const gold = useGameStore((s) => s.gold);
-  const selectedTowerId = useGameStore((s) => s.selectedTowerId);
   const wave = useGameStore((s) => s.wave);
   const countdown = useGameStore((s) => s.countdown);
   const placementFeedback = useGameStore((s) => s.placementFeedback);
+  const rolledTower = useGameStore((s) => s.rolledTower);
   const setRunStatus = useGameStore((s) => s.setRunStatus);
   const setLives = useGameStore((s) => s.setLives);
   const setGold = useGameStore((s) => s.setGold);
-  const setSelectedTower = useGameStore((s) => s.setSelectedTower);
   const setWave = useGameStore((s) => s.setWave);
   const setWavePhase = useGameStore((s) => s.setWavePhase);
   const setCountdown = useGameStore((s) => s.setCountdown);
   const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
+  const setRolledTower = useGameStore((s) => s.setRolledTower);
   const resetRun = useGameStore((s) => s.resetRun);
   const enterLobby = useGameStore((s) => s.enterLobby);
 
@@ -67,6 +77,9 @@ export function GamePage() {
     const onCountdownTick = (data: { secondsLeft: number }) => setCountdown(data.secondsLeft);
     const onTowerPlaced = (data: { success: boolean; reason?: PlacementFailureReason }) => {
       setPlacementFeedback(data.success ? null : data.reason ?? 'occupied');
+      if (data.success) {
+        setRolledTower(null);
+      }
     };
 
     const setWavePreview = useGameStore.getState().setWavePreview;
@@ -75,6 +88,10 @@ export function GamePage() {
     };
     const onWaveStartedClearPreview = () => {
       setWavePreview(null);
+    };
+
+    const onRandomTowerRolled = (data: { towerId: string; towerDef: TowerDef }) => {
+      setRolledTower(data.towerDef);
     };
 
     EventBus.on('player-damaged', onDamaged);
@@ -86,6 +103,7 @@ export function GamePage() {
     EventBus.on('tower-placed', onTowerPlaced);
     EventBus.on('wave-preview', onWavePreview);
     EventBus.on('wave-started', onWaveStartedClearPreview);
+    EventBus.on('random-tower-rolled', onRandomTowerRolled);
 
     return () => {
       EventBus.off('player-damaged', onDamaged);
@@ -97,29 +115,18 @@ export function GamePage() {
       EventBus.off('tower-placed', onTowerPlaced);
       EventBus.off('wave-preview', onWavePreview);
       EventBus.off('wave-started', onWaveStartedClearPreview);
+      EventBus.off('random-tower-rolled', onRandomTowerRolled);
     };
   }, [
     setCountdown,
     setGold,
     setLives,
     setPlacementFeedback,
+    setRolledTower,
     setRunStatus,
     setWave,
     setWavePhase,
   ]);
-
-  const selectTower = (towerId: string) => {
-    if (selectedTowerId === towerId) {
-      setSelectedTower(null);
-      setPlacementFeedback(null);
-      EventBus.emit('request-clear-tower-selection');
-      return;
-    }
-
-    setSelectedTower(towerId);
-    setPlacementFeedback(null);
-    EventBus.emit('request-select-tower', { towerDefId: towerId });
-  };
 
   const feedbackText = placementFeedback ? feedbackCopy[placementFeedback] : null;
   const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
@@ -327,20 +334,9 @@ export function GamePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <span style={{ color: colors.text, fontSize: '8px' }}>전술 독</span>
                 <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
-                  타워를 선택한 후, 건설 페이즈 중 그리드를 탭하세요.
+                  타워를 구매한 후 그리드를 탭하여 배치하세요.
                 </span>
               </div>
-              <PixelButton
-                variant="secondary"
-                style={{ padding: '8px 12px', fontSize: '8px' }}
-                onClick={() => {
-                  setSelectedTower(null);
-                  setPlacementFeedback(null);
-                  EventBus.emit('request-clear-tower-selection');
-                }}
-              >
-                해제
-              </PixelButton>
             </div>
 
             {feedbackText && (
@@ -355,6 +351,45 @@ export function GamePage() {
                 }}
               >
                 {feedbackText}
+              </div>
+            )}
+
+            {/* Rolled Tower Display */}
+            {rolledTower && (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '14px',
+                  background: `${TIER_COLORS[rolledTower.tier] ?? '#aaa'}18`,
+                  border: `1px solid ${TIER_COLORS[rolledTower.tier] ?? '#aaa'}44`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '10px',
+                    border: `1px solid ${TIER_COLORS[rolledTower.tier] ?? '#aaa'}`,
+                    backgroundImage: `url(/assets/towers/${rolledTower.id}.png)`,
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '24px 24px',
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '8px', color: TIER_COLORS[rolledTower.tier] ?? '#aaa' }}>
+                    [{TIER_NAMES[rolledTower.tier]?.toUpperCase()}]
+                  </span>
+                  <span style={{ fontSize: '9px', color: colors.text }}>{rolledTower.name}</span>
+                  <span style={{ fontSize: '7px', color: colors.textSecondary }}>
+                    DMG {rolledTower.stats.damage} | RNG {rolledTower.stats.range} | SPD {rolledTower.stats.attackSpeed}
+                    {rolledTower.stats.special ? ` | ${rolledTower.stats.special}` : ''}
+                  </span>
+                </span>
               </div>
             )}
 
@@ -381,59 +416,15 @@ export function GamePage() {
               </div>
             )}
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '10px',
-              }}
+            {/* Buy Random Tower Button */}
+            <PixelButton
+              variant="gold"
+              style={{ width: '100%', padding: '14px 16px', fontSize: '9px' }}
+              onClick={() => EventBus.emit('request-buy-random-tower')}
+              disabled={runStatus !== 'building' || gold < RANDOM_TOWER_COST || rolledTower !== null}
             >
-              {BASE_TOWERS.map((tower) => {
-                const selected = selectedTowerId === tower.id;
-                const disabled = gold < tower.cost;
-
-                return (
-                  <button
-                    key={tower.id}
-                    type="button"
-                    onClick={() => selectTower(tower.id)}
-                    disabled={disabled}
-                    style={{
-                      borderRadius: '18px',
-                      border: `1px solid ${selected ? tower.color : 'rgba(148, 161, 178, 0.2)'}`,
-                      background: selected ? `${tower.color}22` : 'rgba(255,255,255,0.02)',
-                      color: colors.text,
-                      padding: '12px',
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'center',
-                      opacity: disabled ? 0.42 : 1,
-                      cursor: disabled ? 'not-allowed' : 'pointer',
-                    }}
-                    aria-pressed={selected}
-                  >
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '10px',
-                        border: `1px solid rgba(255,255,255,0.08)`,
-                        backgroundImage: `url(/assets/towers/${tower.id}.png)`,
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '24px 24px',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
-                      <span style={{ fontSize: '8px', color: colors.text }}>{tower.name}</span>
-                      <span style={{ fontSize: '8px', color: colors.textSecondary }}>{tower.cost} 골드</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              {rolledTower ? '배치 대기 중...' : `타워 구매 ${RANDOM_TOWER_COST}G`}
+            </PixelButton>
 
             <div
               style={{

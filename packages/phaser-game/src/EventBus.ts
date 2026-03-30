@@ -2,6 +2,7 @@ import { Events } from 'phaser';
 import type {
   PlacementFailureReason,
   Position,
+  TowerDef,
   UnitType,
 } from '@gld/shared';
 
@@ -32,7 +33,11 @@ export interface GameEventMap {
   // Wave preview (sent during building phase)
   'wave-preview': { wave: number; groups: Array<{ unitId: string; unitName: string; count: number }> };
 
+  // Random tower system
+  'random-tower-rolled': { towerId: string; towerDef: TowerDef };
+
   // React → Game
+  'request-buy-random-tower': undefined;
   'request-select-tower': { towerDefId: string };
   'request-clear-tower-selection': undefined;
   'request-place-tower': { col: number; row: number; towerDefId: string };

@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   BASE_TOWERS,
-  FUSION_TOWERS,
+  RARE_TOWERS,
+  HEROIC_TOWERS,
+  LEGENDARY_TOWERS,
+  GOD_TOWERS,
   ALL_TOWERS,
   UNITS,
   GRID_WIDTH,
@@ -25,32 +28,41 @@ describe('Grid constants', () => {
 });
 
 describe('Tower definitions', () => {
-  it('has 4 base towers', () => {
+  it('has 4 base towers (T1)', () => {
     expect(BASE_TOWERS).toHaveLength(4);
   });
 
-  it('base towers have unique ids', () => {
-    const ids = BASE_TOWERS.map((t) => t.id);
+  it('has 5 rare towers (T2)', () => {
+    expect(RARE_TOWERS).toHaveLength(5);
+  });
+
+  it('has 4 heroic towers (T3)', () => {
+    expect(HEROIC_TOWERS).toHaveLength(4);
+  });
+
+  it('has 3 legendary towers (T4)', () => {
+    expect(LEGENDARY_TOWERS).toHaveLength(3);
+  });
+
+  it('has 2 god towers (T5)', () => {
+    expect(GOD_TOWERS).toHaveLength(2);
+  });
+
+  it('all towers have unique ids', () => {
+    const ids = ALL_TOWERS.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('base towers are tier 1, fusion towers are tier 2', () => {
+  it('towers have correct tier assignments', () => {
     BASE_TOWERS.forEach((t) => expect(t.tier).toBe(1));
-    FUSION_TOWERS.forEach((t) => expect(t.tier).toBe(2));
+    RARE_TOWERS.forEach((t) => expect(t.tier).toBe(2));
+    HEROIC_TOWERS.forEach((t) => expect(t.tier).toBe(3));
+    LEGENDARY_TOWERS.forEach((t) => expect(t.tier).toBe(4));
+    GOD_TOWERS.forEach((t) => expect(t.tier).toBe(5));
   });
 
-  it('fusion towers have valid recipes referencing base tower types', () => {
-    const baseTypes = new Set(BASE_TOWERS.map((t) => t.type));
-    FUSION_TOWERS.forEach((t) => {
-      expect(t.fusionRecipe).toBeDefined();
-      t.fusionRecipe!.forEach((ingredient) => {
-        expect(baseTypes.has(ingredient)).toBe(true);
-      });
-    });
-  });
-
-  it('ALL_TOWERS contains all base + fusion', () => {
-    expect(ALL_TOWERS).toHaveLength(BASE_TOWERS.length + FUSION_TOWERS.length);
+  it('ALL_TOWERS contains all 18 towers', () => {
+    expect(ALL_TOWERS).toHaveLength(18);
   });
 });
 

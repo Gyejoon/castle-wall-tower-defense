@@ -88,18 +88,13 @@ describe('GamePage', () => {
     vi.useRealTimers();
   });
 
-  it('selects and clears a tower through explicit events', () => {
+  it('emits buy-random-tower event when buy button clicked', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
-    const laserButton = view.getByRole('button', { name: /궁수 탑/i });
-    fireEvent.click(laserButton);
-    expect(emitSpy).toHaveBeenCalledWith('request-select-tower', { towerDefId: 'laser' });
-    expect(useGameStore.getState().selectedTowerId).toBe('laser');
-
-    fireEvent.click(laserButton);
-    expect(emitSpy).toHaveBeenCalledWith('request-clear-tower-selection');
-    expect(useGameStore.getState().selectedTowerId).toBeNull();
+    const buyButton = view.getByRole('button', { name: /타워 구매/i });
+    fireEvent.click(buyButton);
+    expect(emitSpy).toHaveBeenCalledWith('request-buy-random-tower');
   });
 
   it('stores placement feedback from failed placement events', () => {

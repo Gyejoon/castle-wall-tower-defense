@@ -4,7 +4,7 @@ import {
   TILE_SIZE,
   INITIAL_PLAYER_HP,
   INITIAL_GOLD,
-  BASE_TOWERS,
+  RANDOM_TOWER_COST,
   FOREST_GATE_MAP,
 } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
@@ -12,6 +12,7 @@ import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { RandomTowerSystem } from '../systems/RandomTowerSystem';
 import { EventBus } from '../EventBus';
 import { getPlacementGuardFailure } from '../placementRules';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -22,6 +23,7 @@ export class GameScene extends Phaser.Scene {
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
   private waveSystem!: WaveSystem;
+  private randomTowerSystem!: RandomTowerSystem;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
@@ -32,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private onSellTower!: (data: { col: number; row: number }) => void;
   private onSelectTower!: (data: { towerDefId: string }) => void;
   private onClearTowerSelection!: () => void;
+  private onBuyRandomTower!: () => void;
   private onStartWave!: () => void;
   private onGameWon!: () => void;
   private onWaveStartedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
@@ -46,6 +49,7 @@ export class GameScene extends Phaser.Scene {
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
     this.waveSystem = new WaveSystem(this.unitSystem);
+    this.randomTowerSystem = new RandomTowerSystem();
 
     this.events.on('shutdown', this.cleanup, this);
 
@@ -102,6 +106,16 @@ export class GameScene extends Phaser.Scene {
       this.selectedTowerId = null;
     };
 
+    this.onBuyRandomTower = () => {
+      if (this.gold < RANDOM_TOWER_COST) return;
+      if (this.waveSystem.getPhase() !== 'building') return;
+
+      const rolledTower = this.randomTowerSystem.rollRandomTower();
+      this.selectedTowerId = rolledTower.id;
+      this.spendGold(RANDOM_TOWER_COST);
+      EventBus.emit('random-tower-rolled', { towerId: rolledTower.id, towerDef: rolledTower });
+    };
+
     this.onStartWave = () => {
       this.waveSystem.skipCountdown();
     };
@@ -126,16 +140,9 @@ export class GameScene extends Phaser.Scene {
     EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.on('request-place-tower', this.onPlaceTower);
     EventBus.on('request-sell-tower', this.onSellTower);
+    EventBus.on('request-buy-random-tower', this.onBuyRandomTower);
     EventBus.on('request-start-wave', this.onStartWave);
     EventBus.on('game-won', this.onGameWon);
-
-    // Keyboard tower selection (1-4)
-    const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
-    keyNames.forEach((key, i) => {
-      if (BASE_TOWERS[i]) {
-        this.input.keyboard?.on(`keydown-${key}`, () => { this.selectedTowerId = BASE_TOWERS[i].id; });
-      }
-    });
 
     this.onWaveStartedLifecycle = () => {
       soundGenerator.playWaveStart();
@@ -174,10 +181,12 @@ export class GameScene extends Phaser.Scene {
     const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
     if (!towerDef) return;
 
+    // For random tower system, the cost was already paid on roll
+    // So placement guard should check with cost 0
     const guardFailure = getPlacementGuardFailure({
       phase: this.waveSystem.getPhase(),
       gold: this.gold,
-      towerCost: towerDef.cost,
+      towerCost: 0, // cost paid at roll time
     });
 
     if (guardFailure) {
@@ -203,7 +212,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.spendGold(towerDef.cost);
+    // Clear selected tower after placement
+    this.selectedTowerId = null;
 
     EventBus.emit('tower-placed', {
       col: gridX,
@@ -308,6 +318,7 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.off('request-place-tower', this.onPlaceTower);
     EventBus.off('request-sell-tower', this.onSellTower);
+    EventBus.off('request-buy-random-tower', this.onBuyRandomTower);
     EventBus.off('request-start-wave', this.onStartWave);
     EventBus.off('game-won', this.onGameWon);
     EventBus.off('wave-started', this.onWaveStartedLifecycle);

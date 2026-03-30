@@ -9,6 +9,7 @@ export { gameConfig } from './config';
 export { GridManager } from './systems/GridManager';
 export { PathfindingSystem, findPath } from './systems/PathfindingSystem';
 export { WaveSystem } from './systems/WaveSystem';
+export { RandomTowerSystem } from './systems/RandomTowerSystem';
 export { getPlacementGuardFailure } from './placementRules';
 
 export function startGame(parentElement?: string | HTMLElement): Phaser.Game {

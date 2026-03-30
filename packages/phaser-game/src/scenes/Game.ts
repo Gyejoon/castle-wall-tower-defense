@@ -6,6 +6,7 @@ import {
   INITIAL_GOLD,
   BASE_TOWERS,
   GHOST_BATTLE_WAVES,
+  FOREST_GATE_MAP,
   type GhostRecord,
   type PressureChoice,
 } from '@gld/shared';
@@ -30,7 +31,6 @@ export class GameScene extends Phaser.Scene {
   private pressureSystem!: PressureSystem;
   private ghostRecorder!: GhostRecorder;
   private ghostPlayer!: GhostPlayer;
-  private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
@@ -38,9 +38,6 @@ export class GameScene extends Phaser.Scene {
   private selectedTowerId: string | null = null;
   private gameOver = false;
   private ghostBattleActive = false;
-  private boardBackground?: Phaser.GameObjects.TileSprite;
-  private spawnMarker?: Phaser.GameObjects.Image;
-  private exitMarker?: Phaser.GameObjects.Image;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
   private onSellTower!: (data: { col: number; row: number }) => void;
   private onSelectTower!: (data: { towerDefId: string }) => void;
@@ -57,7 +54,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gridManager = new GridManager();
+    this.gridManager = new GridManager(FOREST_GATE_MAP);
     this.pathfinding = new PathfindingSystem();
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
@@ -69,48 +66,21 @@ export class GameScene extends Phaser.Scene {
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Draw grid
-    this.boardBackground = this.add.tileSprite(
-      (this.gridManager.width * TILE_SIZE) / 2,
-      (this.gridManager.height * TILE_SIZE) / 2,
-      this.gridManager.width * TILE_SIZE,
-      this.gridManager.height * TILE_SIZE,
-      'grid-floor',
-    );
-    this.boardBackground.setAlpha(0.22);
-    this.gridGraphics = this.add.graphics();
-    this.gridManager.render(this.gridGraphics);
-
-    const spawnWorld = this.gridManager.gridToWorld(
-      this.gridManager.spawnPoint.x,
-      this.gridManager.spawnPoint.y,
-    );
-    this.spawnMarker = this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile');
-    this.spawnMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
-    this.spawnMarker.setAlpha(0.9);
-
-    const exitWorld = this.gridManager.gridToWorld(
-      this.gridManager.exitPoint.x,
-      this.gridManager.exitPoint.y,
-    );
-    this.exitMarker = this.add.image(exitWorld.x, exitWorld.y, 'exit-tile');
-    this.exitMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
-    this.exitMarker.setAlpha(0.9);
+    // Tilemap rendering
+    const map = this.make.tilemap({ key: 'tilemap-forest-gate' });
+    const tileset = map.addTilesetImage('tileset', 'tileset-forest');
+    if (tileset) {
+      map.createLayer('ground', tileset);
+      map.createLayer('path', tileset);
+      map.createLayer('decoration', tileset);
+    }
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
 
-    // Compute initial path
-    const walkGrid = this.gridManager.getWalkabilityGrid();
-    const path = this.pathfinding.findPath(
-      walkGrid,
-      this.gridManager.spawnPoint,
-      this.gridManager.exitPoint,
-    );
-    if (path) {
-      this.unitSystem.setPath(path);
-      this.renderPath(path);
-    }
+    // Use fixed path from map data
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
 
     // Input: hover highlight
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -171,14 +141,9 @@ export class GameScene extends Phaser.Scene {
       const result = this.towerSystem.sellTower(data.col, data.row);
       if (result.success) {
         this.earnGold(result.refund);
-        // Recalculate and update path
-        const walkGrid = this.gridManager.getWalkabilityGrid();
-        const path = this.pathfinding.findPath(walkGrid, this.gridManager.spawnPoint, this.gridManager.exitPoint);
-        if (path) {
-          this.unitSystem.setPath(path);
-          this.drawPath(path);
-          EventBus.emit('path-updated', { path });
-        }
+        this.unitSystem.setPath(FOREST_GATE_MAP.path);
+        this.renderPath(FOREST_GATE_MAP.path);
+        EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
         EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
       }
     };
@@ -321,13 +286,9 @@ export class GameScene extends Phaser.Scene {
       success: true,
     });
 
-    // TowerSystem already recomputed and cached the path
-    const path = this.pathfinding.getCachedPath();
-    if (path) {
-      this.unitSystem.setPath(path);
-      this.renderPath(path);
-      EventBus.emit('path-updated', { path });
-    }
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
+    EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
   }
 
   private pathGraphics?: Phaser.GameObjects.Graphics;
@@ -430,9 +391,6 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-pressure-choice', this.onPressureChoice);
     EventBus.off('wave-started', this.onWaveStartedLifecycle);
     EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
-    this.boardBackground?.destroy();
-    this.spawnMarker?.destroy();
-    this.exitMarker?.destroy();
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();

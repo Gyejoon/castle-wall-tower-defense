@@ -20,6 +20,7 @@ export class UnitSystem {
   private scene: Phaser.Scene;
   private gridManager: GridManager;
   private currentPath: Position[] = [];
+  private currentPathWorld: Position[] = [];
   private nextId = 0;
   private spawnQueue: Array<{ def: UnitDef; remaining: number }> = [];
   private spawnTimer = 0;
@@ -31,10 +32,11 @@ export class UnitSystem {
   }
 
   setPath(path: Position[]): void {
+    if (path === this.currentPath) return;
     const oldPath = this.currentPath;
     this.currentPath = path;
+    this.currentPathWorld = path.map(p => this.gridManager.gridToWorld(p.x, p.y));
 
-    // Remap in-flight units to nearest cell on the new path
     if (oldPath.length > 0 && path.length > 0) {
       for (const unit of this.units.values()) {
         const unitGrid = unit.data.position;
@@ -66,7 +68,7 @@ export class UnitSystem {
 
     const instanceId = `unit_${this.nextId++}`;
     const startGrid = this.currentPath[0];
-    const startWorld = this.gridManager.gridToWorld(startGrid.x, startGrid.y);
+    const startWorld = this.currentPathWorld[0];
 
     const unitData: ActiveUnit = {
       instanceId,
@@ -111,7 +113,6 @@ export class UnitSystem {
     // BG
     graphics.fillStyle(0x0a0a14, 0.8);
     graphics.fillRect(x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
-    // Fill
     const hpRatio = Math.max(0, hp / def.stats.hp);
     const barColor = hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
     graphics.fillStyle(barColor, 1);
@@ -160,7 +161,6 @@ export class UnitSystem {
   update(time: number, delta: number): { reachedExit: string[] } {
     const reachedExit: string[] = [];
 
-    // Process spawn queue
     this.spawnTimer += delta;
     if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
       this.spawnTimer = 0;
@@ -172,7 +172,6 @@ export class UnitSystem {
       }
     }
 
-    // Move units along path
     const dt = delta / 1000;
 
     for (const [id, unit] of this.units) {
@@ -198,7 +197,7 @@ export class UnitSystem {
 
       // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
-      const targetWorld = this.gridManager.gridToWorld(nextGrid.x, nextGrid.y);
+      const targetWorld = this.currentPathWorld[pathIdx + 1];
       const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;
@@ -224,13 +223,19 @@ export class UnitSystem {
     return { reachedExit };
   }
 
+  private unitPositionsBuffer: Array<{ instanceId: string; x: number; y: number; hp: number }> = [];
+
   getUnitPositions(): Array<{ instanceId: string; x: number; y: number; hp: number }> {
-    return Array.from(this.units.values()).map((u) => ({
-      instanceId: u.data.instanceId,
-      x: u.worldX,
-      y: u.worldY,
-      hp: u.data.hp,
-    }));
+    this.unitPositionsBuffer.length = 0;
+    for (const u of this.units.values()) {
+      this.unitPositionsBuffer.push({
+        instanceId: u.data.instanceId,
+        x: u.worldX,
+        y: u.worldY,
+        hp: u.data.hp,
+      });
+    }
+    return this.unitPositionsBuffer;
   }
 
   getActiveUnits(): ActiveUnit[] {

@@ -92,7 +92,7 @@ describe('GamePage', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
-    const laserButton = view.getByRole('button', { name: /레이저 터렛/i });
+    const laserButton = view.getByRole('button', { name: /궁수 탑/i });
     fireEvent.click(laserButton);
     expect(emitSpy).toHaveBeenCalledWith('request-select-tower', { towerDefId: 'laser' });
     expect(useGameStore.getState().selectedTowerId).toBe('laser');

@@ -158,7 +158,7 @@ export function addGlow(ctx: SKRSContext2D, cx: number, cy: number, radius: numb
 // === Manifest ===
 export interface ManifestEntry {
   key: string;
-  type: 'image' | 'spritesheet';
+  type: 'image' | 'spritesheet' | 'tilemapTiledJSON';
   path: string;
   frameWidth?: number;
   frameHeight?: number;

@@ -181,10 +181,10 @@ export async function generateMap(): Promise<ManifestEntry[]> {
         case 'east-north':  gid = GID.PATH_CORNER_NE; break;
         case 'west-south':  gid = GID.PATH_CORNER_SW; break;
         case 'west-north':  gid = GID.PATH_CORNER_NW; break;
-        case 'south-east':  gid = GID.PATH_CORNER_SE; break;
-        case 'south-west':  gid = GID.PATH_CORNER_SW; break;
-        case 'north-east':  gid = GID.PATH_CORNER_NE; break;
-        case 'north-west':  gid = GID.PATH_CORNER_NW; break;
+        case 'south-east':  gid = GID.PATH_CORNER_NE; break;  // was SE
+        case 'south-west':  gid = GID.PATH_CORNER_NW; break;  // was SW
+        case 'north-east':  gid = GID.PATH_CORNER_SE; break;  // was NE
+        case 'north-west':  gid = GID.PATH_CORNER_SW; break;  // was NW
         default:            gid = GID.PATH_H;
       }
     }
@@ -219,7 +219,7 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   }
 
   // Pick every Nth candidate deterministically
-  const step = Math.floor(candidates.length / maxDecorations);
+  const step = Math.max(1, Math.floor(candidates.length / maxDecorations));
   for (let i = 0; i < candidates.length && count < maxDecorations; i += step) {
     const c = candidates[i];
     const decorIdx = count % decorOptions.length;
@@ -314,7 +314,7 @@ export async function generateMap(): Promise<ManifestEntry[]> {
 
   return [{
     key: 'tilemap-forest-gate',
-    type: 'image',
+    type: 'tilemapTiledJSON',
     path: 'assets/maps/forest-gate.json',
   }];
 }

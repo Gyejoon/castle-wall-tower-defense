@@ -130,26 +130,41 @@ function drawPathCorner(
   const pathStart = 8;
 
   if (variant === 'ne') {
-    // Comes from west (horizontal), exits north (vertical)
-    drawRect(ctx, ox, oy + pathStart, TILE, pathW, C.dirt); // horizontal strip
+    // Path opens toward North and East: arrives from west, exits north
+    // Dirt: right half horizontal strip + vertical top strip on right side
+    drawRect(ctx, ox + pathStart, oy + pathStart, TILE - pathStart, pathW, C.dirt); // right horizontal
     drawRect(ctx, ox + pathStart, oy, pathW, pathStart, C.dirt); // vertical top
-    // Grass corners
-    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark);
-    drawRect(ctx, ox + pathStart + pathW, oy, pathStart, pathStart, C.grassDark);
+    // Grass: left portion of horizontal + bottom-left corner
+    drawRect(ctx, ox, oy + pathStart, pathStart, pathW, C.grassDark);
+    drawRect(ctx, ox, oy, pathStart, pathStart + pathW, C.grassDark); // left+bottom-left
+    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark); // right remainder (east edge)
   } else if (variant === 'nw') {
-    // Comes from east, exits north
-    drawRect(ctx, ox, oy + pathStart, TILE, pathW, C.dirt);
-    drawRect(ctx, ox + pathStart, oy, pathW, pathStart, C.dirt);
-    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark);
-    drawRect(ctx, ox + pathStart + pathW, oy, pathStart, pathStart, C.grassDark);
+    // Path opens toward North and West: arrives from east, exits north
+    // Dirt: left half horizontal strip + vertical top strip on left side
+    drawRect(ctx, ox, oy + pathStart, TILE - pathStart, pathW, C.dirt); // left horizontal
+    drawRect(ctx, ox + pathStart, oy, pathW, pathStart, C.dirt); // vertical top
+    // Grass: right portion of horizontal + bottom-right corner
+    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark);
+    drawRect(ctx, ox + pathStart + pathW, oy, pathStart, pathStart + pathW, C.grassDark); // right+bottom-right
+    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark); // top-left corner
   } else if (variant === 'se') {
-    // Comes from west, exits south
-    drawRect(ctx, ox, oy + pathStart, TILE, pathW, C.dirt);
-    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt);
+    // Path opens toward South and East: arrives from west, exits south
+    // Dirt: right half horizontal strip + vertical bottom strip on right side
+    drawRect(ctx, ox + pathStart, oy + pathStart, TILE - pathStart, pathW, C.dirt); // right horizontal
+    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt); // vertical bottom
+    // Grass: left portion + top-left corner
+    drawRect(ctx, ox, oy + pathStart, pathStart, pathW, C.grassDark);
+    drawRect(ctx, ox, oy + pathStart + pathW, pathStart, pathStart, C.grassDark); // bottom-left
+    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark); // right remainder
   } else {
-    // sw: Comes from east, exits south
-    drawRect(ctx, ox, oy + pathStart, TILE, pathW, C.dirt);
-    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt);
+    // sw: Path opens toward South and West: arrives from east, exits south
+    // Dirt: left half horizontal strip + vertical bottom strip on left side
+    drawRect(ctx, ox, oy + pathStart, TILE - pathStart, pathW, C.dirt); // left horizontal
+    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt); // vertical bottom
+    // Grass: right portion + top-right corner
+    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark);
+    drawRect(ctx, ox + pathStart + pathW, oy + pathStart + pathW, pathStart, pathStart, C.grassDark); // bottom-right
+    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark); // top-left corner (grass)
   }
 
   addDirtTexture(ctx, ox, oy);
@@ -414,7 +429,6 @@ function drawEdgeW(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: nu
   drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
   addGrassTexture(ctx, ox, oy, C.grassLight);
   // Right half is dirt
-  drawRect(ctx, ox, oy + 0, TILE / 2, TILE, C.grassLight);
   drawRect(ctx, ox + TILE / 2, oy, TILE / 2, TILE, C.dirt);
   addDirtTexture(ctx, ox + TILE / 2, oy);
   // Transition

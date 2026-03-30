@@ -7,7 +7,6 @@ export { gameConfig } from './config';
 
 // Re-export systems for testing
 export { GridManager } from './systems/GridManager';
-export { PathfindingSystem } from './systems/PathfindingSystem';
 
 export function startGame(parentElement?: string | HTMLElement): Phaser.Game {
   const config: Phaser.Types.Core.GameConfig = {

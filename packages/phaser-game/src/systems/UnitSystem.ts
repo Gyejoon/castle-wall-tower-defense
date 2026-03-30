@@ -201,9 +201,8 @@ export class UnitSystem {
     }
   }
 
-  update(time: number, delta: number): { reachedExit: string[]; killed: string[] } {
+  update(time: number, delta: number): { reachedExit: string[] } {
     const reachedExit: string[] = [];
-    const killed: string[] = [];
 
     // Process spawn queue
     this.spawnTimer += delta;
@@ -254,7 +253,7 @@ export class UnitSystem {
       this.renderUnit(unit.graphics, unit.worldX, unit.worldY, unit.def, unit.data.hp);
     }
 
-    return { reachedExit, killed };
+    return { reachedExit };
   }
 
   getUnitPositions(): Array<{ instanceId: string; x: number; y: number; hp: number }> {

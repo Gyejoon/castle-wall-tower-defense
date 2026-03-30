@@ -1,8 +1,8 @@
 import { makeCanvas, saveCanvas, hexToRgba, drawRect, setPixel, fillCircle, type ManifestEntry } from './shared';
 
-const TILESET_COLS = 8;
-const TILESET_ROWS = 3;
-const TILE = 32;
+export const TILESET_COLS = 8;
+export const TILESET_ROWS = 3;
+export const TILE = 32;
 const OUTPUT_PATH = 'packages/web-shell/public/assets/tileset.png';
 
 // Medieval fantasy palette (grass/terrain focused)

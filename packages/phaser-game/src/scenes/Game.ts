@@ -27,7 +27,7 @@ export class GameScene extends Phaser.Scene {
     this.gridManager = new GridManager(FOREST_GATE_MAP);
     this.towerSystem = new TowerSystem(this, this.gridManager);
     this.unitSystem = new UnitSystem(this, this.gridManager);
-    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.unitSystem.setPath(this.gridManager.getPath());
 
     this.events.on('shutdown', this.cleanup, this);
 
@@ -125,7 +125,7 @@ export class GameScene extends Phaser.Scene {
 
   private redrawPlacementPoints(): void {
     this.placementGraphics.clear();
-    for (const pp of FOREST_GATE_MAP.placementPoints) {
+    for (const pp of this.gridManager.getPlacementPoints()) {
       if (!this.gridManager.isPlacementPointEmpty(pp.x, pp.y)) continue;
       const world = this.gridManager.gridToWorld(pp.x, pp.y);
       this.placementGraphics.fillStyle(0xe2b714, 0.25);

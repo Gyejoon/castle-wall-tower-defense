@@ -9,6 +9,8 @@ interface TowerInstance {
   def: TowerDef;
   graphics: Phaser.GameObjects.Graphics;
   lastAttackTime: number;
+  colorNum: number;
+  worldPos: Position;
 }
 
 export class TowerSystem {
@@ -38,6 +40,7 @@ export class TowerSystem {
     const instanceId = `tower_${this.nextId++}`;
     this.gridManager.occupyPlacementPoint(gridX, gridY, instanceId);
     const worldPos = this.gridManager.gridToWorld(gridX, gridY);
+    const colorNum = parseInt(def.color.replace('#', ''), 16);
 
     const towerData: PlacedTower = {
       instanceId,
@@ -54,6 +57,8 @@ export class TowerSystem {
       def,
       graphics,
       lastAttackTime: 0,
+      colorNum,
+      worldPos,
     });
 
     EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
@@ -170,7 +175,7 @@ export class TowerSystem {
       const attackInterval = 1000 / def.stats.attackSpeed;
       if (time - tower.lastAttackTime < attackInterval) continue;
 
-      const towerWorld = this.gridManager.gridToWorld(data.position.x, data.position.y);
+      const towerWorld = tower.worldPos;
       const rangeSq = (def.stats.range * TILE_SIZE) ** 2;
 
       let closestUnit: (typeof unitPositions)[0] | null = null;
@@ -193,11 +198,10 @@ export class TowerSystem {
           unitId: closestUnit.instanceId,
           damage: def.stats.damage,
         });
-        const color = parseInt(def.color.replace('#', ''), 16);
         this.attackLines.push({
           x1: towerWorld.x, y1: towerWorld.y,
           x2: closestUnit.x, y2: closestUnit.y,
-          color, ttl: 80,
+          color: tower.colorNum, ttl: 80,
         });
       }
     }

@@ -14,5 +14,4 @@ export type GameToReactEvent =
   | { type: 'TOWER_PLACED'; towerId: string; position: Position; success: boolean }
   | { type: 'UNIT_SPAWNED'; unitId: string; count: number }
   | { type: 'PLAYER_DAMAGED'; playerId: string; damage: number; remainingHp: number }
-  | { type: 'PATH_UPDATED'; path: Position[] }
   | { type: 'GAME_OVER'; winnerId: string };

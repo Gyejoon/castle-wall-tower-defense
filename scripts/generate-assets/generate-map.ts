@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { FOREST_GATE_MAP } from '../../packages/shared/src/index';
 import type { ManifestEntry } from './shared';
+import { TILESET_COLS, TILESET_ROWS, TILE as TILESET_TILE } from './generate-tileset';
 
 const OUTPUT_PATH = 'packages/web-shell/public/assets/maps/forest-gate.json';
 
@@ -252,12 +253,12 @@ export async function generateMap(): Promise<ManifestEntry[]> {
       firstgid: 1,
       name: 'tileset',
       image: '../tileset.png',
-      imagewidth: 256,
-      imageheight: 96,
+      imagewidth: TILESET_COLS * TILESET_TILE,
+      imageheight: TILESET_ROWS * TILESET_TILE,
       tilewidth: tileSize,
       tileheight: tileSize,
-      tilecount: 24,
-      columns: 8,
+      tilecount: TILESET_COLS * TILESET_ROWS,
+      columns: TILESET_COLS,
       margin: 0,
       spacing: 0,
     }],

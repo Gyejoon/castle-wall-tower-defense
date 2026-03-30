@@ -1,6 +1,7 @@
 import { PixelButton } from '../components/ui/PixelButton';
 import { PixelPanel } from '../components/ui/PixelPanel';
 import { uiMobileArt } from '../assets/uiMobileArt';
+import { useEmoteStore } from '../stores/emoteStore';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
@@ -12,6 +13,12 @@ const featureCopy = [
 
 export function LobbyPage() {
   const resetRun = useGameStore((s) => s.resetRun);
+  const resetEmotes = useEmoteStore((s) => s.reset);
+
+  const handleStartGame = () => {
+    resetEmotes();
+    resetRun();
+  };
 
   return (
     <div
@@ -181,7 +188,7 @@ export function LobbyPage() {
                 fontSize: '12px',
                 boxShadow: `0 0 0 1px rgba(240,208,96,0.28), 0 18px 30px rgba(240,208,96,0.14)`,
               }}
-              onClick={resetRun}
+              onClick={handleStartGame}
             >
               게임 시작
             </PixelButton>

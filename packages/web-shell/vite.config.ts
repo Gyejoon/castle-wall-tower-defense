@@ -28,10 +28,10 @@ export default defineConfig({
     createNonPhaserChunkBudgetWarning(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['assets/**/*.png', 'assets/**/*.json', 'manifest.json'],
+      includeAssets: ['assets/**/*.png', 'assets/**/*.webp', 'assets/**/*.json', 'manifest.json'],
       manifest: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,json,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,webp,json,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

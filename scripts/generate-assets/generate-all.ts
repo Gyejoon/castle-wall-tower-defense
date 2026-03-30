@@ -1,6 +1,8 @@
 import { writeFileSync } from 'fs';
 import { convertToWebP } from './convert-webp';
+import { generateMap } from './generate-map';
 import { generate as generateTiles } from './generate-tiles';
+import { generate as generateTileset } from './generate-tileset';
 import { generate as generateTowers } from './generate-towers';
 import { generate as generateUnits } from './generate-units';
 import { generate as generateProjectiles } from './generate-projectiles';
@@ -13,7 +15,10 @@ import { generate as generateIcons } from './generate-icons';
 async function main() {
   console.log('=== Generating all assets ===\n');
 
-  console.log('[tiles]');
+  console.log('[tileset]');
+  const tileset = await generateTileset();
+
+  console.log('\n[tiles]');
   const tiles = await generateTiles();
 
   console.log('\n[towers]');
@@ -40,7 +45,11 @@ async function main() {
   console.log('\n[icons]');
   const icons = await generateIcons();
 
+  console.log('\n[map]');
+  const map = await generateMap();
+
   const allEntries = [
+    ...tileset,
     ...tiles,
     ...towers,
     ...units,
@@ -50,6 +59,7 @@ async function main() {
     ...pressureUi,
     ...matchUi,
     ...icons,
+    ...map,
   ];
 
   const manifest = {

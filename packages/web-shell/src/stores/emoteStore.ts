@@ -9,6 +9,7 @@ interface EmoteState {
   toggleEmotePanel: () => void;
   clearMyEmote: () => void;
   clearOpponentEmote: () => void;
+  reset: () => void;
 }
 
 export const useEmoteStore = create<EmoteState>()((set) => ({
@@ -32,4 +33,10 @@ export const useEmoteStore = create<EmoteState>()((set) => ({
 
   clearMyEmote: () => set({ myEmote: null }),
   clearOpponentEmote: () => set({ opponentEmote: null }),
+  reset: () =>
+    set({
+      myEmote: null,
+      opponentEmote: null,
+      showEmotePanel: false,
+    }),
 }));

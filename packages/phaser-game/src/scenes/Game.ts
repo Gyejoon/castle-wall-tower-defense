@@ -38,9 +38,6 @@ export class GameScene extends Phaser.Scene {
   private selectedTowerId: string | null = null;
   private gameOver = false;
   private ghostBattleActive = false;
-  private boardBackground?: Phaser.GameObjects.TileSprite;
-  private spawnMarker?: Phaser.GameObjects.Image;
-  private exitMarker?: Phaser.GameObjects.Image;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
   private onSellTower!: (data: { col: number; row: number }) => void;
   private onSelectTower!: (data: { towerDefId: string }) => void;
@@ -69,33 +66,16 @@ export class GameScene extends Phaser.Scene {
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Draw grid
-    this.boardBackground = this.add.tileSprite(
-      (this.gridManager.width * TILE_SIZE) / 2,
-      (this.gridManager.height * TILE_SIZE) / 2,
-      this.gridManager.width * TILE_SIZE,
-      this.gridManager.height * TILE_SIZE,
-      'grid-floor',
-    );
-    this.boardBackground.setAlpha(0.22);
+    // Tilemap rendering
+    const map = this.make.tilemap({ key: 'tilemap-forest-gate' });
+    const tileset = map.addTilesetImage('tileset', 'tileset-forest');
+    if (tileset) {
+      map.createLayer('ground', tileset);
+      map.createLayer('path', tileset);
+      map.createLayer('decoration', tileset);
+    }
+
     this.gridGraphics = this.add.graphics();
-    this.gridManager.render(this.gridGraphics);
-
-    const spawnWorld = this.gridManager.gridToWorld(
-      this.gridManager.spawnPoint.x,
-      this.gridManager.spawnPoint.y,
-    );
-    this.spawnMarker = this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile');
-    this.spawnMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
-    this.spawnMarker.setAlpha(0.9);
-
-    const exitWorld = this.gridManager.gridToWorld(
-      this.gridManager.exitPoint.x,
-      this.gridManager.exitPoint.y,
-    );
-    this.exitMarker = this.add.image(exitWorld.x, exitWorld.y, 'exit-tile');
-    this.exitMarker.setDisplaySize(TILE_SIZE, TILE_SIZE);
-    this.exitMarker.setAlpha(0.9);
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
@@ -430,9 +410,6 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-pressure-choice', this.onPressureChoice);
     EventBus.off('wave-started', this.onWaveStartedLifecycle);
     EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
-    this.boardBackground?.destroy();
-    this.spawnMarker?.destroy();
-    this.exitMarker?.destroy();
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();

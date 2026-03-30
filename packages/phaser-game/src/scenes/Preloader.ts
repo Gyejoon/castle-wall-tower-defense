@@ -20,6 +20,10 @@ export class Preloader extends Phaser.Scene {
     this.load.image('spawn-tile', 'assets/tiles/spawn-tile.png');
     this.load.image('exit-tile', 'assets/tiles/exit-tile.png');
 
+    // Tilemap
+    this.load.image('tileset-forest', 'assets/tileset.png');
+    this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');
+
     for (const id of BASE_TOWER_IDS) {
       this.load.image(`tower-${id}`, `assets/towers/${id}.png`);
     }

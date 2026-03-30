@@ -218,9 +218,6 @@ export const GOD_TOWERS: TowerDef[] = [
   },
 ];
 
-// Keep FUSION_TOWERS as alias for T2 for backward compat
-export const FUSION_TOWERS: TowerDef[] = RARE_TOWERS;
-
 export const ALL_TOWERS: TowerDef[] = [
   ...BASE_TOWERS,
   ...RARE_TOWERS,

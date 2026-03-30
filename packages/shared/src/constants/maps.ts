@@ -39,5 +39,3 @@ export const FOREST_GATE_MAP: MapLayout = {
   tilemapKey: 'tilemap-palace',
   tilesetKey: 'tileset-palace',
 };
-
-export const DEFAULT_MAP = FOREST_GATE_MAP;

@@ -58,12 +58,12 @@ describe('FOREST_GATE_MAP', () => {
     }
   });
 
-  it('배치 포인트가 정확히 17개여야 한다', () => {
-    expect(FOREST_GATE_MAP.placementPoints).toHaveLength(17);
+  it('배치 포인트가 15개여야 한다', () => {
+    expect(FOREST_GATE_MAP.placementPoints).toHaveLength(15);
   });
 
-  it('맵 크기가 20x20이어야 한다', () => {
-    expect(FOREST_GATE_MAP.width).toBe(20);
-    expect(FOREST_GATE_MAP.height).toBe(20);
+  it('맵 크기가 12x8이어야 한다', () => {
+    expect(FOREST_GATE_MAP.width).toBe(12);
+    expect(FOREST_GATE_MAP.height).toBe(8);
   });
 });

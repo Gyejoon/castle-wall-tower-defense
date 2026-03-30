@@ -49,13 +49,17 @@ export class GameScene extends Phaser.Scene {
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Tilemap rendering
-    const map = this.make.tilemap({ key: 'tilemap-forest-gate' });
-    const tileset = map.addTilesetImage('tileset', 'tileset-forest');
-    if (tileset) {
-      map.createLayer('ground', tileset);
-      map.createLayer('path', tileset);
-      map.createLayer('decoration', tileset);
+    // Tilemap rendering (graceful fallback if tilemap not yet generated)
+    try {
+      const map = this.make.tilemap({ key: FOREST_GATE_MAP.tilemapKey });
+      const tileset = map.addTilesetImage('tileset', FOREST_GATE_MAP.tilesetKey);
+      if (tileset) {
+        map.createLayer('ground', tileset);
+        map.createLayer('path', tileset);
+        map.createLayer('decoration', tileset);
+      }
+    } catch {
+      // Tilemap not loaded — proceed without it
     }
 
     // Hover highlight

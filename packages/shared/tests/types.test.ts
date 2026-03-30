@@ -11,8 +11,8 @@ import {
 
 describe('Grid constants', () => {
   it('has valid grid dimensions', () => {
-    expect(GRID_WIDTH).toBe(20);
-    expect(GRID_HEIGHT).toBe(20);
+    expect(GRID_WIDTH).toBe(12);
+    expect(GRID_HEIGHT).toBe(8);
   });
 
   it('has spawn and exit within grid bounds', () => {

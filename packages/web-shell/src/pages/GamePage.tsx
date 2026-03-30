@@ -221,7 +221,7 @@ export function GamePage() {
             style={{
               position: 'relative',
               width: '100%',
-              aspectRatio: '1 / 1',
+              aspectRatio: '3 / 2',
               borderRadius: '24px',
               overflow: 'hidden',
               border: `1px solid rgba(127, 90, 240, 0.22)`,
@@ -284,8 +284,8 @@ export function GamePage() {
                   </h2>
                   <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
                     {runStatus === 'victory'
-                      ? '10웨이브 전 과정을 생존했습니다.'
-                      : '회랑이 안정되기 전에 무너졌습니다.'}
+                      ? '모든 웨이브를 생존했습니다.'
+                      : '방어선이 무너졌습니다.'}
                   </p>
                   <PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
                     다시 시작

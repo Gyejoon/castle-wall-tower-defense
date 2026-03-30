@@ -3,13 +3,12 @@ import {
   INITIAL_GOLD,
   INITIAL_PLAYER_HP,
   type PlacementFailureReason,
+  type TowerDef,
   type WavePhase,
-  type GhostRecord,
-  type MatchResult,
-  type PressureChoice,
 } from '@gld/shared';
 
 export type RunStatus = 'lobby' | 'building' | 'combat' | 'victory' | 'defeat';
+export type FieldTab = 'player' | 'opponent';
 
 interface GameStoreState {
   runId: number;
@@ -18,38 +17,33 @@ interface GameStoreState {
   gold: number;
   lives: number;
   selectedTowerId: string | null;
+  rolledTower: TowerDef | null;
   wave: number;
   wavePhase: WavePhase;
   countdown: number;
   placementFeedback: PlacementFailureReason | null;
   wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
-
-  // Ghost battle state
-  ghostBattleActive: boolean;
-  currentGhost: GhostRecord | null;
-  matchResult: MatchResult | null;
-  pressureChoice: PressureChoice;
-  ghostPressureWarning: string | null;
   soundEnabled: boolean;
+  activeTab: FieldTab;
+  opponentHp: number;
+  opponentGold: number;
+  opponentTowerCount: number;
 
   setRunStatus: (status: RunStatus) => void;
   setGameReady: (ready: boolean) => void;
   setGold: (gold: number) => void;
   setLives: (lives: number) => void;
   setSelectedTower: (towerId: string | null) => void;
+  setRolledTower: (tower: TowerDef | null) => void;
   setWave: (wave: number) => void;
   setWavePhase: (phase: WavePhase) => void;
   setCountdown: (seconds: number) => void;
   setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
   setWavePreview: (preview: Array<{ unitId: string; unitName: string; count: number }> | null) => void;
+  setActiveTab: (tab: FieldTab) => void;
+  setOpponentState: (state: { hp: number; gold: number; towerCount: number }) => void;
   resetRun: () => void;
   enterLobby: () => void;
-
-  // Ghost battle actions
-  startGhostBattle: (ghost: GhostRecord) => void;
-  setPressureChoice: (choice: PressureChoice) => void;
-  setMatchResult: (result: MatchResult) => void;
-  setGhostPressureWarning: (warning: string | null) => void;
   toggleSound: () => void;
 }
 
@@ -58,19 +52,16 @@ const createRunState = () => ({
   gold: INITIAL_GOLD,
   lives: INITIAL_PLAYER_HP,
   selectedTowerId: null,
+  rolledTower: null,
   wave: 0,
   wavePhase: 'building' as WavePhase,
   countdown: 0,
   placementFeedback: null,
   wavePreview: null,
-});
-
-const createGhostBattleState = () => ({
-  ghostBattleActive: false,
-  currentGhost: null as GhostRecord | null,
-  matchResult: null as MatchResult | null,
-  pressureChoice: 'defend' as PressureChoice,
-  ghostPressureWarning: null as string | null,
+  activeTab: 'player' as FieldTab,
+  opponentHp: INITIAL_PLAYER_HP,
+  opponentGold: INITIAL_GOLD,
+  opponentTowerCount: 0,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -78,28 +69,30 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   runStatus: 'lobby',
   soundEnabled: true,
   ...createRunState(),
-  ...createGhostBattleState(),
 
   setRunStatus: (status) => set({ runStatus: status }),
   setGameReady: (ready) => set({ gameReady: ready }),
   setGold: (gold) => set({ gold }),
   setLives: (lives) => set({ lives }),
   setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
+  setRolledTower: (tower) => set({ rolledTower: tower }),
   setWave: (wave) => set({ wave }),
   setWavePhase: (phase) => set({ wavePhase: phase }),
   setCountdown: (seconds) => set({ countdown: seconds }),
   setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
   setWavePreview: (preview) => set({ wavePreview: preview }),
+  setActiveTab: (tab) => set({ activeTab: tab }),
+  setOpponentState: (state) => set({
+    opponentHp: state.hp,
+    opponentGold: state.gold,
+    opponentTowerCount: state.towerCount,
+  }),
 
   resetRun: () =>
     set((state) => ({
       runId: state.runId + 1,
       runStatus: 'building',
       ...createRunState(),
-      ...createGhostBattleState(),
-      // Preserve ghost if restarting a ghost battle
-      ghostBattleActive: state.ghostBattleActive,
-      currentGhost: state.currentGhost,
     })),
 
   enterLobby: () =>
@@ -107,21 +100,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
       runId: state.runId + 1,
       runStatus: 'lobby',
       ...createRunState(),
-      ...createGhostBattleState(),
     })),
 
-  startGhostBattle: (ghost) =>
-    set((state) => ({
-      runId: state.runId + 1,
-      runStatus: 'building',
-      ...createRunState(),
-      ...createGhostBattleState(),
-      ghostBattleActive: true,
-      currentGhost: ghost,
-    })),
-
-  setPressureChoice: (choice) => set({ pressureChoice: choice }),
-  setMatchResult: (result) => set({ matchResult: result }),
-  setGhostPressureWarning: (warning) => set({ ghostPressureWarning: warning }),
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
 }));

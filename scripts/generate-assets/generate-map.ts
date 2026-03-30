@@ -252,7 +252,7 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     tilesets: [{
       firstgid: 1,
       name: 'tileset',
-      image: '../tileset.png',
+      image: '../tiles/tileset.png',
       imagewidth: TILESET_COLS * TILESET_TILE,
       imageheight: TILESET_ROWS * TILESET_TILE,
       tilewidth: tileSize,

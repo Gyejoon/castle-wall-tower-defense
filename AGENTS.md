@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-왕국의 방어선 (Grid Line Defense PvP) — 20x20 그리드 기반 중세 판타지 타워 디펜스 PvP 게임. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성. Phase 1 완료.
+팔라스 개인랜덤타워디펜스 (Palace 개랜타디) — 1:1 개인 랜덤 타워디펜스 게임. 랜덤 타워 구매 + 합성 + 킬 트랜스퍼. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성.
 
 ## Theme
 
@@ -77,13 +77,14 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 
 ### Phaser Game Systems
 
-- `systems/GridManager.ts` — 20x20 그리드 관리, 타일 점유, 좌표 변환, 경로 시각화
+- `systems/GridManager.ts` — 12×8 그리드 관리, 타일 점유, 좌표 변환, 경로 시각화
 - `systems/PathfindingSystem.ts` — A* 경로탐색, 패스 캐싱
 - `systems/TowerSystem.ts` — 타워 배치/판매, 범위 공격, Slow/Splash/Boost 특수효과
+- `systems/MergeSystem.ts` — 동일 타워 합성 (같은 defId + tier < 5 → 다음 티어 랜덤 타워)
 - `systems/UnitSystem.ts` — 유닛 스폰, 경로 이동, HP/아머/슬로우 상태 관리
-- `systems/WaveSystem.ts` — 10웨이브 시스템, 빌드/전투 페이즈 전환, 웨이브 미리보기
-- `systems/PressureSystem.ts` — Ghost Battle 압력 시스템
-- `systems/GhostRecorder.ts` / `GhostPlayer.ts` — 비동기 PvP 기록/재생
+- `systems/WaveSystem.ts` — 20웨이브 시스템, 빌드/전투 페이즈 전환, 웨이브 미리보기
+- `systems/AIOpponent.ts` — AI 상대 시뮬레이션 (타워 배치, 유닛 이동, 킬 트랜스퍼)
+- `systems/RandomTowerSystem.ts` — 랜덤 타워 롤 시스템
 
 ### Tower Special Effects
 
@@ -105,7 +106,7 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 - **상태관리:** Zustand (gameStore — runStatus, gold, lives, wave, selectedTower, wavePreview)
 - **UI:** Inline styles + `styles/tokens.ts` 중세 색상 팔레트 (갈색/금빛/초록)
 - **Phaser 마운트:** `PhaserGame.tsx`가 useRef/useEffect로 Phaser.Game 인스턴스 관리
-- **LobbyPage:** "왕국의 방어선" 타이틀, 한글 UI, 중세 판타지 배경
+- **LobbyPage:** "Palace 개랜타디" 타이틀, 한글 UI, 중세 판타지 배경
 - **GamePage:** Phaser 캔버스 + 타워 선택 패널 + 웨이브 미리보기 + 타워 판매
 
 ### Asset Pipeline
@@ -116,12 +117,15 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 scripts/generate-assets/
 ├── shared.ts           # 중세 자연 팔레트, 픽셀 유틸리티
 ├── generate-tiles.ts   # 잔디 그리드, 동굴 스폰, 성문 출구, 흙길
+├── generate-tileset.ts # Tiled 호환 타일셋
 ├── generate-towers.ts  # 궁수 탑, 투석기, 서리 마탑, 성기사 제단 (2.5D)
 ├── generate-units.ts   # 고블린, 오크, 트롤, 암살자, 드래곤 (3/4뷰)
 ├── generate-projectiles.ts  # 화살, 돌 투사체, 얼음 결정, 황금빛
 ├── generate-vfx.ts     # 착탄, 얼음 파동, 황금 오라, 동굴 이펙트
 ├── generate-ui.ts      # 타워/유닛 아이콘, HP바, 배치 커서
 ├── generate-ui-mobile.ts    # 로비 키아트, CTA 아트
+├── generate-map.ts     # Tiled JSON 맵 생성
+├── generate-icons.ts   # PWA 아이콘 생성
 └── generate-all.ts     # 전체 에셋 오케스트레이터
 ```
 
@@ -129,15 +133,17 @@ scripts/generate-assets/
 
 ### Game Constants
 
-- 그리드: 20x20, 타일 32px, 스폰(0,10) 동굴, 출구(19,10) 성문
-- 타워: 4 기본(궁수 탑, 투석기, 서리 마탑, 성기사 제단) + 5 합성
+- 그리드: 12×8, 타일 32px, 스폰(0,4), 출구(11,4)
+- 타워: 18종 (5티어: base → rare → heroic → legendary → god)
 - 유닛: 5종(고블린 정찰병, 오크 전사, 돌 트롤, 그림자 암살자, 고대 드래곤)
+- 웨이브: 20웨이브 (Easy → Medium → Hard → Very Hard)
 - 상수 정의: `shared/src/constants/`
 - 색상 토큰: `web-shell/src/styles/tokens.ts`
 
 ## Phase Roadmap
 
-- **Phase 1** (완료): 프로토타입 — 그리드, 타워(특수효과), 유닛, 10웨이브, Ghost Battle, 모바일, 중세 테마
+- **Phase 1** (완료): 프로토타입 — 그리드, 타워(특수효과), 유닛, 20웨이브, AI 대전, 모바일, 중세 테마
+- **Phase 1.5** (진행): 프로덕션 준비 — PWA, CI/CD, 에셋 파이프라인, 코드 품질
 - Phase 2: 네트워킹 (WebSocket, 실시간 동기화)
 - Phase 3: 토스 연동 (인증, 결제)
 - Phase 4: 게임 완성 (밸런싱, 매치메이킹)

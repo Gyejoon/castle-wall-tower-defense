@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
+import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 
 type EventHandler = (payload?: unknown) => void;
@@ -82,24 +83,24 @@ describe('GamePage', () => {
     listeners.clear();
     useGameStore.setState(useGameStore.getInitialState());
     useGameStore.getState().resetRun();
+    useEmoteStore.setState({
+      myEmote: null,
+      opponentEmote: null,
+      showEmotePanel: false,
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('selects and clears a tower through explicit events', () => {
+  it('emits buy-random-tower event when buy button clicked', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
-    const laserButton = view.getByRole('button', { name: /궁수 탑/i });
-    fireEvent.click(laserButton);
-    expect(emitSpy).toHaveBeenCalledWith('request-select-tower', { towerDefId: 'laser' });
-    expect(useGameStore.getState().selectedTowerId).toBe('laser');
-
-    fireEvent.click(laserButton);
-    expect(emitSpy).toHaveBeenCalledWith('request-clear-tower-selection');
-    expect(useGameStore.getState().selectedTowerId).toBeNull();
+    const buyButton = view.getByRole('button', { name: /타워 구매/i });
+    fireEvent.click(buyButton);
+    expect(emitSpy).toHaveBeenCalledWith('request-buy-random-tower');
   });
 
   it('stores placement feedback from failed placement events', () => {
@@ -132,32 +133,59 @@ describe('GamePage', () => {
     expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
   });
 
-  it('keeps the latest ghost pressure warning visible until its own timer expires', () => {
-    vi.useFakeTimers();
+  it('stores opponent emotes only when the event includes opponent playerId', () => {
     const { emitSpy } = getEventBusHarness();
     render(<GamePage />);
 
     act(() => {
-      emitSpy('ghost-pressure-applied', { wave: 1, pressure: 'attack' });
+      emitSpy('emote-received', { emoteId: 'gg', playerId: 'local' });
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBe(
-      '고스트 공격! 정찰 드론 3기 출격!',
-    );
+
+    expect(useEmoteStore.getState().opponentEmote).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(2000);
-      emitSpy('ghost-pressure-applied', { wave: 2, pressure: 'defend' });
+      emitSpy('emote-received', { emoteId: 'gg', playerId: 'opponent' });
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
+
+    expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
+  });
+
+  it('emits send-emote after local emote selection (AI response handled by AIOpponent)', () => {
+    const { emitSpy } = getEventBusHarness();
+    const view = render(<GamePage />);
+
+    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
+    fireEvent.click(view.getByTestId('emote-gg'));
+
+    expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+  });
+
+  it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {
+    vi.useFakeTimers();
+    const view = render(<GamePage />);
+
+    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
+    fireEvent.click(view.getByTestId('emote-gg'));
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
 
     act(() => {
-      vi.advanceTimersByTime(600);
+      vi.advanceTimersByTime(4000);
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
 
     act(() => {
-      vi.advanceTimersByTime(1900);
+      vi.advanceTimersByTime(599);
     });
-    expect(useGameStore.getState().ghostPressureWarning).toBeNull();
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(view.queryByText(/GG/i)).toBeNull();
   });
 });

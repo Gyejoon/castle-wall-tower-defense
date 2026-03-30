@@ -46,6 +46,36 @@ describe('gameStore', () => {
     expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
   });
 
+  it('setOpponentState updates opponent fields', () => {
+    useGameStore.getState().setOpponentState({ hp: 5, gold: 200, towerCount: 3 });
+    const s = useGameStore.getState();
+    expect(s.opponentHp).toBe(5);
+    expect(s.opponentGold).toBe(200);
+    expect(s.opponentTowerCount).toBe(3);
+  });
+
+  it('enterLobby resets to lobby status', () => {
+    useGameStore.getState().resetRun();
+    useGameStore.getState().setGold(999);
+    useGameStore.getState().enterLobby();
+    expect(useGameStore.getState().runStatus).toBe('lobby');
+    expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
+  });
+
+  it('toggleSound flips soundEnabled', () => {
+    expect(useGameStore.getState().soundEnabled).toBe(true);
+    useGameStore.getState().toggleSound();
+    expect(useGameStore.getState().soundEnabled).toBe(false);
+    useGameStore.getState().toggleSound();
+    expect(useGameStore.getState().soundEnabled).toBe(true);
+  });
+
+  it('setActiveTab switches tab', () => {
+    expect(useGameStore.getState().activeTab).toBe('player');
+    useGameStore.getState().setActiveTab('opponent');
+    expect(useGameStore.getState().activeTab).toBe('opponent');
+  });
+
   it('resets a run to default combat resources and clears transient state', () => {
     const initialRunId = useGameStore.getState().runId;
 

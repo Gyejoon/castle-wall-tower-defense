@@ -2,9 +2,8 @@ import { Events } from 'phaser';
 import type {
   PlacementFailureReason,
   Position,
+  TowerDef,
   UnitType,
-  PressureChoice,
-  GhostRecord,
 } from '@gld/shared';
 
 export interface GameEventMap {
@@ -27,9 +26,6 @@ export interface GameEventMap {
   'building-phase-started': { nextWave: number; countdown: number };
   'countdown-tick': { secondsLeft: number };
   'game-won': undefined;
-  'pressure-choice-made': { choice: PressureChoice };
-  'ghost-pressure-applied': { wave: number; pressure: PressureChoice };
-  'ghost-battle-result': { playerRecord: GhostRecord };
 
   // Tower sell
   'tower-sold': { col: number; row: number; refund: number };
@@ -37,7 +33,24 @@ export interface GameEventMap {
   // Wave preview (sent during building phase)
   'wave-preview': { wave: number; groups: Array<{ unitId: string; unitName: string; count: number }> };
 
+  // Random tower system
+  'random-tower-rolled': { towerId: string; towerDef: TowerDef };
+
+  // Merge system
+  'tower-merged': { fromPos: Position; toPos: Position; newTowerId: string; newTowerDef: TowerDef };
+  'tower-merge-failed': { reason: string };
+
+  // Opponent / Kill transfer
+  'opponent-damaged': { damage: number; remainingHp: number };
+  'opponent-state': { gold: number; hp: number; towerCount: number };
+  'kill-transfer': { unitType: string; count: number };
+
+  // Emotes
+  'send-emote': { emoteId: string };
+  'emote-received': { emoteId: string; playerId: string };
+
   // React → Game
+  'request-buy-random-tower': undefined;
   'request-select-tower': { towerDefId: string };
   'request-clear-tower-selection': undefined;
   'request-place-tower': { col: number; row: number; towerDefId: string };
@@ -46,8 +59,6 @@ export interface GameEventMap {
   'request-start-game': undefined;
   'request-pause': undefined;
   'request-resume': undefined;
-  'request-pressure-choice': { choice: PressureChoice };
-  'start-ghost-battle': { ghost: GhostRecord };
 
   // Internal
   'current-scene-ready': Phaser.Scene;

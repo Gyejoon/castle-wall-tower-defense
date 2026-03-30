@@ -1,532 +1,417 @@
-import {
-	ALL_TOWERS,
-	BASE_TOWERS,
-	FOREST_GATE_MAP,
-	GHOST_BATTLE_WAVES,
-	type GhostRecord,
-	INITIAL_GOLD,
-	INITIAL_PLAYER_HP,
-	type PressureChoice,
-	TILE_SIZE,
-	type UnitType,
-} from '@gld/shared';
 import Phaser from 'phaser';
-import { soundGenerator } from '../audio/SoundGenerator';
-import { EventBus } from '../EventBus';
-import { getPlacementGuardFailure } from '../placementRules';
-import { GhostPlayer } from '../systems/GhostPlayer';
-import { GhostRecorder } from '../systems/GhostRecorder';
+import {
+  ALL_TOWERS,
+  TILE_SIZE,
+  INITIAL_PLAYER_HP,
+  INITIAL_GOLD,
+  RANDOM_TOWER_COST,
+  FOREST_GATE_MAP,
+  WAVE_DEFS,
+} from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
-import { PressureSystem } from '../systems/PressureSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
-
-type GoldChangeReason = 'bounty' | 'refund' | 'pressure';
+import { RandomTowerSystem } from '../systems/RandomTowerSystem';
+import { MergeSystem } from '../systems/MergeSystem';
+import { AIOpponent } from '../systems/AIOpponent';
+import { EventBus } from '../EventBus';
+import { getPlacementGuardFailure } from '../placementRules';
+import { soundGenerator } from '../audio/SoundGenerator';
 
 export class GameScene extends Phaser.Scene {
-	private gridManager!: GridManager;
-	private pathfinding!: PathfindingSystem;
-	private towerSystem!: TowerSystem;
-	private unitSystem!: UnitSystem;
-	private waveSystem!: WaveSystem;
-	private pressureSystem!: PressureSystem;
-	private ghostRecorder!: GhostRecorder;
-	private ghostPlayer!: GhostPlayer;
-	private hoverGraphics!: Phaser.GameObjects.Graphics;
+  private gridManager!: GridManager;
+  private pathfinding!: PathfindingSystem;
+  private towerSystem!: TowerSystem;
+  private unitSystem!: UnitSystem;
+  private waveSystem!: WaveSystem;
+  private randomTowerSystem!: RandomTowerSystem;
+  private mergeSystem!: MergeSystem;
+  private aiOpponent!: AIOpponent;
+  private hoverGraphics!: Phaser.GameObjects.Graphics;
 
-	private playerHp = INITIAL_PLAYER_HP;
-	private gold = INITIAL_GOLD;
-	private selectedTowerId: string | null = null;
-	private gameOver = false;
-	private ghostBattleActive = false;
-	private onPlaceTower!: (data: {
-		col: number;
-		row: number;
-		towerDefId: string;
-	}) => void;
-	private onSellTower!: (data: { col: number; row: number }) => void;
-	private onSelectTower!: (data: { towerDefId: string }) => void;
-	private onClearTowerSelection!: () => void;
-	private onStartWave!: () => void;
-	private onGameWon!: () => void;
-	private onStartGhostBattle!: (data: { ghost: GhostRecord }) => void;
-	private onPressureChoice!: (data: { choice: PressureChoice }) => void;
-	private onWaveStartedLifecycle!: (data: {
-		wave: number;
-		totalWaves: number;
-	}) => void;
-	private onWaveCompletedLifecycle!: (data: {
-		wave: number;
-		totalWaves: number;
-	}) => void;
-	private onBuildingPhaseStarted!: (data: {
-		nextWave: number;
-		countdown: number;
-	}) => void;
-	private onCountdownTick!: (data: { secondsLeft: number }) => void;
-	private onUnitSpawned!: (data: { unitType: UnitType; count: number }) => void;
-	private onPressureChoiceMade!: (data: { choice: PressureChoice }) => void;
-	private onGhostPressureApplied!: (data: {
-		wave: number;
-		pressure: PressureChoice;
-	}) => void;
+  private playerHp = INITIAL_PLAYER_HP;
+  private gold = INITIAL_GOLD;
+  private selectedTowerId: string | null = null;
+  private gameOver = false;
 
-	constructor() {
-		super('Game');
-	}
+  // Drag state for merge
+  private isDragging = false;
+  private dragFrom: { x: number; y: number } | null = null;
+  private dragGhost: Phaser.GameObjects.Graphics | null = null;
+  private mergeHighlights: Phaser.GameObjects.Graphics | null = null;
 
-	create() {
-		this.gridManager = new GridManager(FOREST_GATE_MAP);
-		this.pathfinding = new PathfindingSystem();
-		this.towerSystem = new TowerSystem(
-			this,
-			this.gridManager,
-			this.pathfinding,
-		);
-		this.unitSystem = new UnitSystem(this, this.gridManager);
-		this.waveSystem = new WaveSystem(this.unitSystem);
-		this.pressureSystem = new PressureSystem();
-		this.ghostRecorder = new GhostRecorder();
-		this.ghostPlayer = new GhostPlayer();
-		this.ghostBattleActive = false;
+  private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
+  private onSellTower!: (data: { col: number; row: number }) => void;
+  private onSelectTower!: (data: { towerDefId: string }) => void;
+  private onClearTowerSelection!: () => void;
+  private onBuyRandomTower!: () => void;
+  private onStartWave!: () => void;
+  private onGameWon!: () => void;
+  private onWaveStartedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
 
-		this.events.on('shutdown', this.cleanup, this);
+  constructor() {
+    super('Game');
+  }
 
-		// Tilemap rendering
-		const map = this.make.tilemap({ key: 'tilemap-forest-gate' });
-		const tileset = map.addTilesetImage('tileset', 'tileset-forest');
-		if (tileset) {
-			map.createLayer('ground', tileset);
-			map.createLayer('path', tileset);
-			map.createLayer('decoration', tileset);
-		}
+  create() {
+    this.gridManager = new GridManager(FOREST_GATE_MAP);
+    this.pathfinding = new PathfindingSystem();
+    this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
+    this.unitSystem = new UnitSystem(this, this.gridManager);
+    this.waveSystem = new WaveSystem(this.unitSystem);
+    this.randomTowerSystem = new RandomTowerSystem();
+    this.mergeSystem = new MergeSystem(this.towerSystem);
+    this.aiOpponent = new AIOpponent();
 
-		// Hover highlight
-		this.hoverGraphics = this.add.graphics();
+    this.events.on('shutdown', this.cleanup, this);
 
-		// Use fixed path from map data
-		this.unitSystem.setPath(FOREST_GATE_MAP.path);
-		this.renderPath(FOREST_GATE_MAP.path);
+    this.renderField();
 
-		// Input: hover highlight
-		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.gridManager.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-			this.hoverGraphics.clear();
-			if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
-				soundGenerator.playUIHover();
-				const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
-				this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
-				this.hoverGraphics.fillRect(
-					gridPos.x * TILE_SIZE,
-					gridPos.y * TILE_SIZE,
-					TILE_SIZE,
-					TILE_SIZE,
-				);
-			}
-		});
+    // Graphics
+    this.hoverGraphics = this.add.graphics();
+    this.dragGhost = this.add.graphics();
+    this.dragGhost.setDepth(20);
+    this.mergeHighlights = this.add.graphics();
+    this.mergeHighlights.setDepth(15);
 
-		// Input: place tower on click
-		this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-			this.unlockAudio();
-			if (!this.selectedTowerId) return;
-			const gridPos = this.gridManager.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-			this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
-		});
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
 
-		this.onPlaceTower = (data) => {
-			this.handlePlaceTower(data.col, data.row, data.towerDefId);
-		};
-		this.onSelectTower = (data) => {
-			this.unlockAudio();
-			this.selectedTowerId = data.towerDefId;
-		};
-		this.onClearTowerSelection = () => {
-			this.selectedTowerId = null;
-		};
+    // Input: hover
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
+      this.hoverGraphics.clear();
 
-		this.onStartWave = () => {
-			this.waveSystem.skipCountdown();
-		};
+      if (this.isDragging && this.dragGhost) {
+        this.dragGhost.clear();
+        this.dragGhost.fillStyle(0xffffff, 0.3);
+        this.dragGhost.fillRect(
+          pointer.worldX - TILE_SIZE / 2,
+          pointer.worldY - TILE_SIZE / 2,
+          TILE_SIZE,
+          TILE_SIZE,
+        );
+        this.renderMergeHighlights(gridPos);
+        return;
+      }
 
-		this.onGameWon = () => {
-			this.endGame('local');
-		};
+      if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
+        const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
+        this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
+        this.hoverGraphics.fillRect(gridPos.x * TILE_SIZE, gridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    });
 
-		this.onStartGhostBattle = (data) => {
-			this.ghostBattleActive = true;
-			this.ghostPlayer.loadGhost(data.ghost);
-			this.pressureSystem.setGhostPressures(data.ghost.waves);
-			this.ghostRecorder.startRecording('Player');
-			this.waveSystem.setMaxWaves(GHOST_BATTLE_WAVES);
-		};
+    // Input: pointerdown
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
 
-		this.onPressureChoice = (data) => {
-			this.unlockAudio();
-			this.pressureSystem.setChoice(data.choice);
-			this.ghostRecorder.recordPressure(data.choice);
-		};
+      if (this.selectedTowerId) {
+        this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
+        return;
+      }
 
-		this.onSellTower = (data) => {
-			if (this.waveSystem.getPhase() !== 'building') return;
-			const result = this.towerSystem.sellTower(data.col, data.row);
-			if (result.success) {
-				this.earnGold(result.refund, 'refund');
-				this.unitSystem.setPath(FOREST_GATE_MAP.path);
-				this.renderPath(FOREST_GATE_MAP.path);
-				EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
-				EventBus.emit('tower-sold', {
-					col: data.col,
-					row: data.row,
-					refund: result.refund,
-				});
-				soundGenerator.playTowerSold();
-			}
-		};
+      if (this.waveSystem.getPhase() === 'building' && this.towerSystem.hasTowerAt(gridPos.x, gridPos.y)) {
+        this.isDragging = true;
+        this.dragFrom = { x: gridPos.x, y: gridPos.y };
+      }
+    });
 
-		EventBus.on('request-select-tower', this.onSelectTower);
-		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
-		EventBus.on('request-place-tower', this.onPlaceTower);
-		EventBus.on('request-sell-tower', this.onSellTower);
-		EventBus.on('request-start-wave', this.onStartWave);
-		EventBus.on('game-won', this.onGameWon);
-		EventBus.on('start-ghost-battle', this.onStartGhostBattle);
-		EventBus.on('request-pressure-choice', this.onPressureChoice);
+    // Input: pointerup (merge)
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (!this.isDragging || !this.dragFrom) return;
 
-		// Keyboard tower selection (1-4)
-		const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
-		keyNames.forEach((key, i) => {
-			if (BASE_TOWERS[i]) {
-				this.input.keyboard?.on(`keydown-${key}`, () => {
-					this.unlockAudio();
-					this.selectedTowerId = BASE_TOWERS[i].id;
-					soundGenerator.playUIClick();
-				});
-			}
-		});
+      const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
 
-		this.onWaveStartedLifecycle = (data) => {
-			this.handleWaveStartedLifecycle(data);
-		};
+      if (gridPos.x !== this.dragFrom.x || gridPos.y !== this.dragFrom.y) {
+        if (this.mergeSystem.canMerge(this.dragFrom, gridPos)) {
+          const fromPos = { ...this.dragFrom };
+          const result = this.mergeSystem.merge(fromPos, gridPos);
+          if (result) {
+            EventBus.emit('tower-merged', { fromPos, toPos: gridPos, newTowerId: result.id, newTowerDef: result });
+            this.unitSystem.setPath(FOREST_GATE_MAP.path);
+            this.renderPath(FOREST_GATE_MAP.path);
+            EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+          }
+        } else {
+          EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
+        }
+      }
 
-		this.onWaveCompletedLifecycle = (data) => {
-			soundGenerator.playWaveComplete();
+      this.isDragging = false;
+      this.dragFrom = null;
+      this.dragGhost?.clear();
+      this.mergeHighlights?.clear();
+    });
 
-			if (!this.ghostBattleActive) return;
-			this.ghostRecorder.endWave(data.wave);
-			this.pressureSystem.consumeBountyMultiplier();
-		};
+    // Event handlers
+    this.onPlaceTower = (data) => this.handlePlaceTower(data.col, data.row, data.towerDefId);
+    this.onSelectTower = (data) => { this.selectedTowerId = data.towerDefId; };
+    this.onClearTowerSelection = () => { this.selectedTowerId = null; };
 
-		// Ghost battle wave lifecycle hooks
-		EventBus.on('wave-started', this.onWaveStartedLifecycle);
-		EventBus.on('wave-completed', this.onWaveCompletedLifecycle);
+    this.onBuyRandomTower = () => {
+      if (this.gold < RANDOM_TOWER_COST) return;
+      if (this.waveSystem.getPhase() !== 'building') return;
+      const rolledTower = this.randomTowerSystem.rollRandomTower();
+      this.selectedTowerId = rolledTower.id;
+      this.spendGold(RANDOM_TOWER_COST);
+      EventBus.emit('random-tower-rolled', { towerId: rolledTower.id, towerDef: rolledTower });
+    };
 
-		// Sound-only event listeners
-		this.onBuildingPhaseStarted = () => {
-			soundGenerator.playBuildPhaseStart();
-		};
+    this.onStartWave = () => { this.waveSystem.skipCountdown(); };
+    this.onGameWon = () => { this.endGame('local'); };
 
-		this.onCountdownTick = (data) => {
-			if (data.secondsLeft <= 3 && data.secondsLeft > 0) {
-				soundGenerator.playCountdownTick();
-			}
-		};
+    this.onSellTower = (data) => {
+      if (this.waveSystem.getPhase() !== 'building') return;
+      const result = this.towerSystem.sellTower(data.col, data.row);
+      if (result.success) {
+        this.earnGold(result.refund);
+        this.unitSystem.setPath(FOREST_GATE_MAP.path);
+        this.renderPath(FOREST_GATE_MAP.path);
+        EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+        EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
+      }
+    };
 
-		this.onUnitSpawned = () => {
-			soundGenerator.playUnitSpawned();
-		};
+    EventBus.on('request-select-tower', this.onSelectTower);
+    EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
+    EventBus.on('request-place-tower', this.onPlaceTower);
+    EventBus.on('request-sell-tower', this.onSellTower);
+    EventBus.on('request-buy-random-tower', this.onBuyRandomTower);
+    EventBus.on('request-start-wave', this.onStartWave);
+    EventBus.on('game-won', this.onGameWon);
 
-		this.onPressureChoiceMade = (data) => {
-			if (data.choice === 'defend') {
-				soundGenerator.playPressureDefense();
-			} else if (data.choice === 'invest') {
-				soundGenerator.playPressureInvest();
-			} else {
-				soundGenerator.playPressureSelect();
-			}
-		};
+    this.onWaveStartedLifecycle = (data) => {
+      soundGenerator.playWaveStart();
+      // Queue same wave units for AI opponent
+      const waveDef = WAVE_DEFS[data.wave - 1];
+      if (waveDef) {
+        for (const group of waveDef.groups) {
+          this.aiOpponent.queueUnits(group.unitId, group.count);
+        }
+      }
+      // AI builds during wave start
+      this.aiOpponent.buildPhase();
+    };
 
-		this.onGhostPressureApplied = (data) => {
-			if (data.pressure === 'attack') {
-				soundGenerator.playPressureGhostApplied();
-			}
-		};
+    EventBus.on('wave-started', this.onWaveStartedLifecycle);
 
-		EventBus.on('building-phase-started', this.onBuildingPhaseStarted);
-		EventBus.on('countdown-tick', this.onCountdownTick);
-		EventBus.on('unit-spawned', this.onUnitSpawned);
-		EventBus.on('pressure-choice-made', this.onPressureChoiceMade);
-		EventBus.on('ghost-pressure-applied', this.onGhostPressureApplied);
+    EventBus.emit('game-ready');
+    EventBus.emit('gold-changed', { gold: this.gold });
+    EventBus.emit('current-scene-ready', this);
 
-		// Notify React
-		EventBus.emit('game-ready');
-		EventBus.emit('gold-changed', { gold: this.gold });
-		EventBus.emit('current-scene-ready', this);
+    this.waveSystem.start();
+  }
 
-		// Start the wave system (first building phase)
-		this.waveSystem.start();
-	}
+  private renderField(): void {
+    for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
+      for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+        const world = this.gridManager.gridToWorld(x, y);
+        const frameX = (x + y) % 2 === 0 ? world.x - TILE_SIZE : world.x;
+        this.add.sprite(frameX, world.y - TILE_SIZE / 2, 'grid-floor').setDepth(0);
+      }
+    }
 
-	private spendGold(amount: number): boolean {
-		if (this.gold < amount) return false;
-		this.gold -= amount;
-		soundGenerator.playGoldSpent();
-		EventBus.emit('gold-changed', { gold: this.gold });
-		return true;
-	}
+    for (const point of FOREST_GATE_MAP.path) {
+      const world = this.gridManager.gridToWorld(point.x, point.y);
+      this.add.image(world.x, world.y, 'path-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1);
+    }
 
-	private earnGold(amount: number, reason: GoldChangeReason = 'bounty'): void {
-		this.gold += amount;
-		if (reason === 'bounty') {
-			soundGenerator.playGoldEarned();
-		}
-		EventBus.emit('gold-changed', { gold: this.gold });
-	}
+    const spawnWorld = this.gridManager.gridToWorld(
+      FOREST_GATE_MAP.spawnPoint.x,
+      FOREST_GATE_MAP.spawnPoint.y,
+    );
+    this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
 
-	private unlockAudio(): void {
-		soundGenerator.unlock();
-	}
+    const exitWorld = this.gridManager.gridToWorld(
+      FOREST_GATE_MAP.exitPoint.x,
+      FOREST_GATE_MAP.exitPoint.y,
+    );
+    this.add.image(exitWorld.x, exitWorld.y, 'exit-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
+  }
 
-	private handleWaveStartedLifecycle(data: {
-		wave: number;
-		totalWaves: number;
-	}): void {
-		soundGenerator.playWaveStart();
+  private renderMergeHighlights(currentGridPos: { x: number; y: number }): void {
+    if (!this.mergeHighlights || !this.dragFrom) return;
+    this.mergeHighlights.clear();
 
-		if (!this.ghostBattleActive) return;
+    const towers = this.towerSystem.getTowers();
+    for (const tower of towers) {
+      if (tower.position.x === this.dragFrom.x && tower.position.y === this.dragFrom.y) continue;
+      const canMerge = this.mergeSystem.canMerge(this.dragFrom, tower.position);
+      if (canMerge) {
+        const isHover = tower.position.x === currentGridPos.x && tower.position.y === currentGridPos.y;
+        this.mergeHighlights.fillStyle(0x2cb67d, isHover ? 0.4 : 0.15);
+        this.mergeHighlights.fillRect(tower.position.x * TILE_SIZE, tower.position.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
 
-		const waveNum = data.wave;
-		const goldDelta = this.pressureSystem.applyPlayerPressure(
-			waveNum,
-			this.gold,
-		);
-		const playerChoice = this.pressureSystem.getChoice();
-		if (goldDelta > 0) {
-			this.earnGold(goldDelta, 'pressure');
-		} else if (goldDelta < 0) {
-			this.spendGold(Math.abs(goldDelta));
-		}
+  private spendGold(amount: number): boolean {
+    if (this.gold < amount) return false;
+    this.gold -= amount;
+    EventBus.emit('gold-changed', { gold: this.gold });
+    return true;
+  }
 
-		this.pressureSystem.applyGhostPressure(waveNum, this.unitSystem);
-		if (playerChoice === 'attack') {
-			soundGenerator.playPressureAttackSend();
-		}
+  private earnGold(amount: number): void {
+    this.gold += amount;
+    EventBus.emit('gold-changed', { gold: this.gold });
+  }
 
-		this.ghostRecorder.startWave(waveNum);
-	}
+  private endGame(winnerId: string): void {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    EventBus.emit('game-over', { winnerId });
+  }
 
-	private endGame(winnerId: string): void {
-		if (this.gameOver) return;
-		this.gameOver = true;
+  private handlePlaceTower(gridX: number, gridY: number, towerDefId: string): void {
+    const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
+    if (!towerDef) return;
 
-		if (this.ghostBattleActive) {
-			const wavesCompleted =
-				winnerId === 'local'
-					? this.waveSystem.getCurrentWave()
-					: Math.max(0, this.waveSystem.getCurrentWave() - 1);
-			const playerRecord = this.ghostRecorder.finalize(
-				wavesCompleted,
-				this.gold,
-			);
-			this.ghostRecorder.saveToLocalStorage(playerRecord);
-			EventBus.emit('ghost-battle-result', { playerRecord });
-		}
+    const guardFailure = getPlacementGuardFailure({
+      phase: this.waveSystem.getPhase(),
+      gold: this.gold,
+      towerCost: 0,
+    });
 
-		EventBus.emit('game-over', { winnerId });
+    if (guardFailure) {
+      EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false, reason: guardFailure });
+      return;
+    }
 
-		if (winnerId === 'local') {
-			soundGenerator.playMatchVictory();
-		} else {
-			soundGenerator.playMatchDefeat();
-		}
-	}
+    const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
+    if (!placed.success) {
+      EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: false, reason: placed.reason });
+      return;
+    }
 
-	private handlePlaceTower(
-		gridX: number,
-		gridY: number,
-		towerDefId: string,
-	): void {
-		const towerDef = ALL_TOWERS.find((t) => t.id === towerDefId);
-		if (!towerDef) return;
+    this.selectedTowerId = null;
+    EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
+    EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+  }
 
-		const guardFailure = getPlacementGuardFailure({
-			phase: this.waveSystem.getPhase(),
-			gold: this.gold,
-			towerCost: towerDef.cost,
-		});
+  private pathGraphics?: Phaser.GameObjects.Graphics;
 
-		if (guardFailure) {
-			soundGenerator.playUIError();
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: guardFailure,
-			});
-			return;
-		}
+  private renderPath(path: { x: number; y: number }[]): void {
+    if (!this.pathGraphics) {
+      this.pathGraphics = this.add.graphics();
+    }
+    this.pathGraphics.clear();
+    if (path.length < 2) return;
 
-		const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
-		if (!placed.success) {
-			soundGenerator.playUIError();
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: placed.reason,
-			});
-			return;
-		}
+    this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
+    this.pathGraphics.beginPath();
+    const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
+    this.pathGraphics.moveTo(first.x, first.y);
+    for (let i = 1; i < path.length; i++) {
+      const pt = this.gridManager.gridToWorld(path[i].x, path[i].y);
+      this.pathGraphics.lineTo(pt.x, pt.y);
+    }
+    this.pathGraphics.strokePath();
 
-		this.spendGold(towerDef.cost);
+    this.pathGraphics.fillStyle(0xb8956a, 0.4);
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = this.gridManager.gridToWorld(path[i].x, path[i].y);
+      const b = this.gridManager.gridToWorld(path[i + 1].x, path[i + 1].y);
+      const steps = 4;
+      for (let s = 0; s < steps; s++) {
+        if (s % 2 === 1) continue;
+        const t = s / steps;
+        const dx = a.x + (b.x - a.x) * t;
+        const dy = a.y + (b.y - a.y) * t;
+        this.pathGraphics.fillCircle(dx, dy, 1.5);
+      }
+    }
+    const last = this.gridManager.gridToWorld(path[path.length - 1].x, path[path.length - 1].y);
+    this.pathGraphics.fillCircle(last.x, last.y, 1.5);
+  }
 
-		if (this.ghostBattleActive) {
-			this.ghostRecorder.recordTowerPlacement(gridX, gridY, towerDefId);
-			this.ghostRecorder.recordGoldSpent(towerDef.cost);
-		}
+  update(time: number, delta: number) {
+    if (this.gameOver) return;
 
-		EventBus.emit('tower-placed', {
-			col: gridX,
-			row: gridY,
-			towerId: towerDefId,
-			success: true,
-		});
-		soundGenerator.playTowerPlaced();
+    this.waveSystem.update(delta);
 
-		this.unitSystem.setPath(FOREST_GATE_MAP.path);
-		this.renderPath(FOREST_GATE_MAP.path);
-		EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
-	}
+    // Player towers attack
+    const unitPositions = this.unitSystem.getUnitPositions();
+    const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
-	private pathGraphics?: Phaser.GameObjects.Graphics;
+    let bountyTotal = 0;
+    for (const evt of damageEvents) {
+      // Get defId before damage (unit may be removed on kill)
+      const unitDefId = this.unitSystem.getUnitDefId(evt.unitId);
+      const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
+      if (result?.killed) {
+        bountyTotal += result.bounty;
+        soundGenerator.playUnitDeath();
+        // Kill transfer: send same unit to opponent
+        if (unitDefId) {
+          this.aiOpponent.queueTransferUnits(unitDefId, 1);
+          EventBus.emit('kill-transfer', { unitType: unitDefId, count: 1 });
+        }
+      }
+      if (evt.slow) {
+        this.unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+      }
+    }
+    if (bountyTotal > 0) {
+      this.earnGold(bountyTotal);
+    }
 
-	private renderPath(path: { x: number; y: number }[]): void {
-		if (!this.pathGraphics) {
-			this.pathGraphics = this.add.graphics();
-		}
-		this.pathGraphics.clear();
+    // Player units move
+    const { reachedExit } = this.unitSystem.update(time, delta);
+    for (const _unitId of reachedExit) {
+      this.playerHp = Math.max(0, this.playerHp - 1);
+      EventBus.emit('player-damaged', { playerId: 'local', damage: 1, remainingHp: this.playerHp });
+      if (this.playerHp <= 0) {
+        this.endGame('opponent');
+        return;
+      }
+    }
 
-		if (path.length < 2) return;
+    // AI opponent update
+    const aiResult = this.aiOpponent.update(time, delta);
+    // Transfer killed units from AI to player
+    for (const killedDefId of aiResult.killedUnits) {
+      this.unitSystem.queueTransferUnits(killedDefId, 1);
+    }
+    // Check AI death
+    if (this.aiOpponent.hp <= 0) {
+      this.endGame('local');
+      return;
+    }
 
-		// Glow layer (dirt path color)
-		this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
-		this.pathGraphics.beginPath();
-		const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
-		this.pathGraphics.moveTo(first.x, first.y);
-		for (let i = 1; i < path.length; i++) {
-			const pt = this.gridManager.gridToWorld(path[i].x, path[i].y);
-			this.pathGraphics.lineTo(pt.x, pt.y);
-		}
-		this.pathGraphics.strokePath();
+    // Check win condition: all 20 waves cleared for both sides
+    if (this.waveSystem.getPhase() === 'ended' && !this.aiOpponent.hasActiveUnits() && !this.unitSystem.hasActiveUnits() && !this.unitSystem.hasQueuedUnits()) {
+      // Both survived — higher HP wins
+      if (this.playerHp > this.aiOpponent.hp) {
+        this.endGame('local');
+      } else if (this.aiOpponent.hp > this.playerHp) {
+        this.endGame('opponent');
+      } else {
+        // Tiebreak: gold
+        this.endGame(this.gold >= this.aiOpponent.gold ? 'local' : 'opponent');
+      }
+    }
+  }
 
-		// Dotted path (dirt color)
-		this.pathGraphics.fillStyle(0xb8956a, 0.4);
-		for (let i = 0; i < path.length - 1; i++) {
-			const a = this.gridManager.gridToWorld(path[i].x, path[i].y);
-			const b = this.gridManager.gridToWorld(path[i + 1].x, path[i + 1].y);
-			const steps = 4;
-			for (let s = 0; s < steps; s++) {
-				if (s % 2 === 1) continue; // skip every other for dashes
-				const t = s / steps;
-				const dx = a.x + (b.x - a.x) * t;
-				const dy = a.y + (b.y - a.y) * t;
-				this.pathGraphics.fillCircle(dx, dy, 1.5);
-			}
-		}
-		// End dot
-		const last = this.gridManager.gridToWorld(
-			path[path.length - 1].x,
-			path[path.length - 1].y,
-		);
-		this.pathGraphics.fillCircle(last.x, last.y, 1.5);
-	}
-
-	update(time: number, delta: number) {
-		if (this.gameOver) return;
-
-		// Update wave system (countdown / wave-clear detection)
-		this.waveSystem.update(delta);
-
-		// Update towers — get damage events
-		const unitPositions = this.unitSystem.getUnitPositions();
-		const damageEvents = this.towerSystem.update(time, delta, unitPositions);
-
-		// Apply damage to units — handle bounty (with pressure multiplier)
-		let bountyTotal = 0;
-		for (const evt of damageEvents) {
-			const result = this.unitSystem.applyDamage(evt.unitId, evt.damage);
-			if (result?.killed) {
-				bountyTotal += result.bounty;
-				soundGenerator.playUnitDeath();
-			}
-			// Apply slow effect from frost towers
-			if (evt.slow) {
-				this.unitSystem.applySlow(
-					evt.unitId,
-					evt.slow.factor,
-					evt.slow.duration,
-				);
-			}
-		}
-		if (bountyTotal > 0) {
-			const multiplier = this.ghostBattleActive
-				? this.pressureSystem.getBountyMultiplier()
-				: 1;
-			this.earnGold(Math.round(bountyTotal * multiplier));
-		}
-
-		// Update units — move along path
-		const { reachedExit } = this.unitSystem.update(time, delta);
-
-		// Units reaching exit damage the player
-		for (const _unitId of reachedExit) {
-			soundGenerator.playBreach();
-			soundGenerator.playHPLoss();
-			this.playerHp = Math.max(0, this.playerHp - 1);
-			EventBus.emit('player-damaged', {
-				playerId: 'local',
-				damage: 1,
-				remainingHp: this.playerHp,
-			});
-
-			if (this.playerHp <= 0) {
-				this.endGame('opponent');
-				return;
-			}
-		}
-	}
-
-	private cleanup() {
-		EventBus.off('request-select-tower', this.onSelectTower);
-		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
-		EventBus.off('request-place-tower', this.onPlaceTower);
-		EventBus.off('request-sell-tower', this.onSellTower);
-		EventBus.off('request-start-wave', this.onStartWave);
-		EventBus.off('game-won', this.onGameWon);
-		EventBus.off('start-ghost-battle', this.onStartGhostBattle);
-		EventBus.off('request-pressure-choice', this.onPressureChoice);
-		EventBus.off('wave-started', this.onWaveStartedLifecycle);
-		EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
-		EventBus.off('building-phase-started', this.onBuildingPhaseStarted);
-		EventBus.off('countdown-tick', this.onCountdownTick);
-		EventBus.off('unit-spawned', this.onUnitSpawned);
-		EventBus.off('pressure-choice-made', this.onPressureChoiceMade);
-		EventBus.off('ghost-pressure-applied', this.onGhostPressureApplied);
-		this.towerSystem.destroy();
-		this.unitSystem.destroy();
-		this.waveSystem.destroy();
-		this.pressureSystem.resetForNewGame();
-		this.ghostRecorder.reset();
-		this.ghostPlayer.reset();
-		soundGenerator.reset();
-	}
+  private cleanup() {
+    EventBus.off('request-select-tower', this.onSelectTower);
+    EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
+    EventBus.off('request-place-tower', this.onPlaceTower);
+    EventBus.off('request-sell-tower', this.onSellTower);
+    EventBus.off('request-buy-random-tower', this.onBuyRandomTower);
+    EventBus.off('request-start-wave', this.onStartWave);
+    EventBus.off('game-won', this.onGameWon);
+    EventBus.off('wave-started', this.onWaveStartedLifecycle);
+    this.towerSystem.destroy();
+    this.unitSystem.destroy();
+    this.waveSystem.destroy();
+    this.aiOpponent.destroy();
+    this.mergeSystem.destroy();
+    this.randomTowerSystem.reset();
+  }
 }

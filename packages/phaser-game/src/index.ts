@@ -9,9 +9,10 @@ export { gameConfig } from './config';
 export { GridManager } from './systems/GridManager';
 export { PathfindingSystem, findPath } from './systems/PathfindingSystem';
 export { WaveSystem } from './systems/WaveSystem';
-export { PressureSystem } from './systems/PressureSystem';
-export { GhostRecorder } from './systems/GhostRecorder';
-export { GhostPlayer } from './systems/GhostPlayer';
+export { RandomTowerSystem } from './systems/RandomTowerSystem';
+export { MergeSystem } from './systems/MergeSystem';
+export { AIOpponent } from './systems/AIOpponent';
+export { KillTransferSystem } from './systems/KillTransferSystem';
 export { getPlacementGuardFailure } from './placementRules';
 
 export function startGame(parentElement?: string | HTMLElement): Phaser.Game {

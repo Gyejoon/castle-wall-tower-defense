@@ -1,7 +1,6 @@
-import { type GhostRecord, WAVE_DEFS } from '@gld/shared';
+import { WAVE_DEFS } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
-import { GhostRecorder } from '../src/systems/GhostRecorder';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -59,33 +58,6 @@ describe('runtime safety fixes', () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
-	});
-
-	it('skips malformed ghost records in localStorage and keeps valid ones', () => {
-		const validRecord: GhostRecord = {
-			id: 'ghost-1',
-			playerName: 'Tester',
-			timestamp: 1,
-			totalWaves: 1,
-			waves: [
-				{
-					waveNumber: 1,
-					pressure: 'defend',
-					towersPlaced: [],
-					goldSpent: 0,
-				},
-			],
-			result: {
-				wavesCompleted: 1,
-				goldRemaining: 100,
-				score: 200,
-			},
-		};
-
-		localStorage.setItem('gld-ghost-valid', JSON.stringify(validRecord));
-		localStorage.setItem('gld-ghost-bad', '{not-json');
-
-		expect(GhostRecorder.loadFromLocalStorage()).toEqual([validRecord]);
 	});
 
 	it('clamps max waves to the supported wave definitions', () => {

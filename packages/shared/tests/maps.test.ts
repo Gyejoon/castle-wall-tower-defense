@@ -23,6 +23,14 @@ describe('FOREST_GATE_MAP', () => {
     expect(exitPoint).toEqual(path[path.length - 1]);
   });
 
+  it('spec 6.2에 맞게 경로가 (0,4)에서 (11,4)까지 직선이어야 한다', () => {
+    expect(FOREST_GATE_MAP.spawnPoint).toEqual({ x: 0, y: 4 });
+    expect(FOREST_GATE_MAP.exitPoint).toEqual({ x: 11, y: 4 });
+    expect(FOREST_GATE_MAP.path).toEqual(
+      Array.from({ length: 12 }, (_, x) => ({ x, y: 4 })),
+    );
+  });
+
   it('배치 포인트가 경로와 겹치지 않아야 한다', () => {
     const { path, placementPoints } = FOREST_GATE_MAP;
     const pathSet = new Set(path.map((p) => `${p.x},${p.y}`));
@@ -58,12 +66,12 @@ describe('FOREST_GATE_MAP', () => {
     }
   });
 
-  it('배치 포인트가 정확히 17개여야 한다', () => {
-    expect(FOREST_GATE_MAP.placementPoints).toHaveLength(17);
+  it('배치 포인트가 15개여야 한다', () => {
+    expect(FOREST_GATE_MAP.placementPoints).toHaveLength(15);
   });
 
-  it('맵 크기가 20x20이어야 한다', () => {
-    expect(FOREST_GATE_MAP.width).toBe(20);
-    expect(FOREST_GATE_MAP.height).toBe(20);
+  it('맵 크기가 12x8이어야 한다', () => {
+    expect(FOREST_GATE_MAP.width).toBe(12);
+    expect(FOREST_GATE_MAP.height).toBe(8);
   });
 });

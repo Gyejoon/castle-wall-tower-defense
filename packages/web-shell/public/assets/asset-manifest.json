@@ -1,6 +1,11 @@
 {
-  "generated": "2026-03-30T15:43:37.505Z",
+  "generated": "2026-03-30T17:02:12.371Z",
   "assets": [
+    {
+      "key": "tileset",
+      "type": "image",
+      "path": "assets/tiles/tileset.png"
+    },
     {
       "key": "grid-floor",
       "type": "image",
@@ -467,6 +472,11 @@
       "key": "icon-512-maskable",
       "type": "image",
       "path": "assets/icons/icon-512-maskable.png"
+    },
+    {
+      "key": "tilemap-forest-gate",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/forest-gate.json"
     }
   ]
 }

@@ -126,6 +126,16 @@ describe('runtime safety fixes', () => {
       createGain() {
         return gainNode;
       }
+
+      createDynamicsCompressor() {
+        return {
+          threshold: { setValueAtTime: vi.fn() },
+          knee: { setValueAtTime: vi.fn() },
+          ratio: { setValueAtTime: vi.fn() },
+          connect: vi.fn(),
+          disconnect: vi.fn(),
+        };
+      }
     }
 
     vi.stubGlobal('AudioContext', MockAudioContext);

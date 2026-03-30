@@ -1,14 +1,12 @@
 import Phaser from 'phaser';
 import { ALL_TOWERS, UNITS, TILE_SIZE, INITIAL_PLAYER_HP, INITIAL_GOLD, BASE_TOWERS, FOREST_GATE_MAP } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
-import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { EventBus } from '../EventBus';
 
 export class GameScene extends Phaser.Scene {
   private gridManager!: GridManager;
-  private pathfinding!: PathfindingSystem;
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -27,8 +25,6 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.gridManager = new GridManager(FOREST_GATE_MAP);
-    this.pathfinding = new PathfindingSystem();
-    this.pathfinding.setFixedPath(FOREST_GATE_MAP.path);
     this.towerSystem = new TowerSystem(this, this.gridManager);
     this.unitSystem = new UnitSystem(this, this.gridManager);
     this.unitSystem.setPath(FOREST_GATE_MAP.path);
@@ -47,13 +43,7 @@ export class GameScene extends Phaser.Scene {
     // Render placement points (gold circles on empty points)
     this.placementGraphics = this.add.graphics();
     this.placementGraphics.setDepth(1);
-    for (const pp of FOREST_GATE_MAP.placementPoints) {
-      const world = this.gridManager.gridToWorld(pp.x, pp.y);
-      this.placementGraphics.fillStyle(0xe2b714, 0.25);
-      this.placementGraphics.fillCircle(world.x, world.y, TILE_SIZE * 0.4);
-      this.placementGraphics.lineStyle(1, 0xe2b714, 0.5);
-      this.placementGraphics.strokeCircle(world.x, world.y, TILE_SIZE * 0.4);
-    }
+    this.redrawPlacementPoints();
 
     // Hover highlight
     this.hoverGraphics = this.add.graphics();

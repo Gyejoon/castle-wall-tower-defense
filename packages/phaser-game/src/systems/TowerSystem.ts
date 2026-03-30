@@ -133,7 +133,6 @@ export class TowerSystem {
     startAngle: number,
     star = false,
   ): void {
-    const color = g.defaultFillColor;
     const count = star ? sides * 2 : sides;
     const points: Phaser.Geom.Point[] = [];
     for (let i = 0; i < count; i++) {

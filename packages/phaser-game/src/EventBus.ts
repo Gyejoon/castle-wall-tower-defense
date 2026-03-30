@@ -1,5 +1,5 @@
 import { Events } from 'phaser';
-import type { Position, TowerType, UnitType } from '@gld/shared';
+import type { UnitType } from '@gld/shared';
 
 export interface GameEventMap {
   // Game → React

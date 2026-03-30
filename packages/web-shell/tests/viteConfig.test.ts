@@ -1,7 +1,8 @@
 import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 
-const viteConfigSource = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf-8');
+const viteConfigSource = readFileSync(resolve(__dirname, '../vite.config.ts'), 'utf-8');
 
 describe('vite PWA asset coverage', () => {
   it('precache includes webp assets for runtime-preferred art', () => {

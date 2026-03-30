@@ -298,26 +298,8 @@ export class TowerSystem {
   }
 
   removeTowerAt(gridX: number, gridY: number): boolean {
-    let targetKey: string | null = null;
-    let targetInstance: TowerInstance | null = null;
-
-    for (const [key, tower] of this.towers) {
-      if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
-        targetKey = key;
-        targetInstance = tower;
-        break;
-      }
-    }
-
-    if (!targetKey || !targetInstance) return false;
-
-    targetInstance.base.destroy();
-    targetInstance.sprite.destroy();
-    this.towers.delete(targetKey);
-    this.gridManager.removeTower(gridX, gridY);
-    this.pathfinding.invalidateCache();
-
-    return true;
+    const result = this.sellTower(gridX, gridY);
+    return result.success;
   }
 
   getTowers(): PlacedTower[] {

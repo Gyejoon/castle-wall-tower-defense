@@ -34,7 +34,8 @@ export class MergeSystem {
     const rolledTower = nextTierTowers[Math.floor(Math.random() * nextTierTowers.length)];
 
     // Place at pos2
-    this.towerSystem.placeTower(pos2.x, pos2.y, rolledTower.id);
+    const result = this.towerSystem.placeTower(pos2.x, pos2.y, rolledTower.id);
+    if (!result.success) return null;
 
     return rolledTower;
   }

@@ -64,11 +64,11 @@ export class AIOpponent {
     while (this.gold >= RANDOM_TOWER_COST && attempts < 10) {
       attempts++;
       const tower = this.randomTowerSystem.rollRandomTower();
-      this.gold -= RANDOM_TOWER_COST;
 
       // Find a valid placement position
       const pos = this.findRandomPlacement();
       if (pos) {
+        this.gold -= RANDOM_TOWER_COST;
         this.placeTower(pos.x, pos.y, tower);
       }
     }
@@ -110,9 +110,11 @@ export class AIOpponent {
           const nextTierTowers = getTowersByTier(nextTier);
           const rolledTower = nextTierTowers[Math.floor(Math.random() * nextTierTowers.length)];
 
-          // Remove tower i, replace tower j
+          // Remove both towers from grid, then re-place merged tower
           const posJ = this.towers[j].position;
           this.gridManager.removeTower(this.towers[i].position.x, this.towers[i].position.y);
+          this.gridManager.removeTower(posJ.x, posJ.y);
+          this.gridManager.placeTower(posJ.x, posJ.y, rolledTower.id);
 
           this.towers[j] = {
             id: `ai_tower_${this.nextTowerId++}`,
@@ -151,7 +153,7 @@ export class AIOpponent {
     this.spawnQueue.push({
       defId: def.id,
       hp: Math.floor(def.stats.hp * 0.5),
-      maxHp: Math.floor(def.stats.hp * 0.5),
+      maxHp: def.stats.hp,
       speed: def.stats.speed,
       armor: def.stats.armor,
       bounty: def.bounty,

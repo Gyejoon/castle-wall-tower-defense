@@ -58,8 +58,8 @@ describe('AIOpponent', () => {
       result = ai.update(t, 16);
       if (result.reachedExit > 0) break;
     }
-    // Unit should eventually reach exit or be killed
-    expect(result.reachedExit + result.killedUnits.length).toBeGreaterThanOrEqual(0);
+    // Unit should eventually reach exit (no towers to kill it)
+    expect(result.reachedExit).toBeGreaterThan(0);
   });
 
   it('hasActiveUnits returns false with no units', () => {

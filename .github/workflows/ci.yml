@@ -15,7 +15,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.x
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -32,7 +32,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.x
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -69,24 +69,14 @@ jobs:
       contents: read
       deployments: write
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Generate assets
-        run: bun run scripts/generate-assets/generate-all.ts
-
-      - name: Build
-        run: bun build:web
+          name: dist
+          path: dist/
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy packages/web-shell/dist --project-name=gld-pvp
+          command: pages deploy dist --project-name=gld-pvp

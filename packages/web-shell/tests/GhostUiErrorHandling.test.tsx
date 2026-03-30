@@ -47,14 +47,11 @@ describe('ghost fetch error handling', () => {
   });
 
   it('keeps the player in the lobby when ghost loading returns a non-ok response', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        json: vi.fn().mockResolvedValue({}),
-      }),
-    );
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: vi.fn().mockResolvedValue({}),
+    }) as unknown as typeof fetch;
 
     const view = render(<LobbyPage />);
     fireEvent.click(view.getByRole('button', { name: /고스트 배틀/i }));
@@ -69,14 +66,11 @@ describe('ghost fetch error handling', () => {
   });
 
   it('keeps the summary open when play again cannot load a ghost', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: vi.fn().mockResolvedValue({}),
-      }),
-    );
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: vi.fn().mockResolvedValue({}),
+    }) as unknown as typeof fetch;
 
     useGameStore.setState({
       ...useGameStore.getInitialState(),

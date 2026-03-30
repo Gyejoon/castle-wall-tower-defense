@@ -9,6 +9,7 @@ import {
   FOREST_GATE_MAP,
   type GhostRecord,
   type PressureChoice,
+  type UnitType,
 } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
@@ -48,6 +49,12 @@ export class GameScene extends Phaser.Scene {
   private onPressureChoice!: (data: { choice: PressureChoice }) => void;
   private onWaveStartedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
   private onWaveCompletedLifecycle!: (data: { wave: number; totalWaves: number }) => void;
+  private onBuildingPhaseStarted!: (data: { nextWave: number; countdown: number }) => void;
+  private onCountdownTick!: (data: { secondsLeft: number }) => void;
+  private onUnitSpawned!: (data: { unitType: UnitType; count: number }) => void;
+  private onPressureChoiceMade!: (data: { choice: PressureChoice }) => void;
+  private onGhostPressureApplied!: (data: { wave: number; pressure: PressureChoice }) => void;
+
 
   constructor() {
     super('Game');
@@ -87,6 +94,7 @@ export class GameScene extends Phaser.Scene {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.hoverGraphics.clear();
       if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
+        soundGenerator.playThrottled('uiHover', { frequency: 1000, duration: 15, type: 'sine' as OscillatorType, volume: 0.06 }, 150);
         const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
         this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
         this.hoverGraphics.fillRect(
@@ -145,6 +153,7 @@ export class GameScene extends Phaser.Scene {
         this.renderPath(FOREST_GATE_MAP.path);
         EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
         EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
+        soundGenerator.playTowerSold();
       }
     };
 
@@ -161,7 +170,10 @@ export class GameScene extends Phaser.Scene {
     const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'] as const;
     keyNames.forEach((key, i) => {
       if (BASE_TOWERS[i]) {
-        this.input.keyboard?.on(`keydown-${key}`, () => { this.selectedTowerId = BASE_TOWERS[i].id; });
+        this.input.keyboard?.on(`keydown-${key}`, () => {
+          this.selectedTowerId = BASE_TOWERS[i].id;
+          soundGenerator.playUIClick();
+        });
       }
     });
 
@@ -192,15 +204,53 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.onWaveCompletedLifecycle = (data) => {
+      soundGenerator.playWaveComplete();
+
       if (!this.ghostBattleActive) return;
       this.ghostRecorder.endWave(data.wave);
-      // Consume bounty multiplier after wave
       this.pressureSystem.consumeBountyMultiplier();
     };
 
     // Ghost battle wave lifecycle hooks
     EventBus.on('wave-started', this.onWaveStartedLifecycle);
     EventBus.on('wave-completed', this.onWaveCompletedLifecycle);
+
+    // Sound-only event listeners
+    this.onBuildingPhaseStarted = () => {
+      soundGenerator.playBuildPhaseStart();
+    };
+
+    this.onCountdownTick = (data) => {
+      if (data.secondsLeft <= 3 && data.secondsLeft > 0) {
+        soundGenerator.playCountdownTick();
+      }
+    };
+
+    this.onUnitSpawned = () => {
+      soundGenerator.playThrottled('unitSpawn', { frequency: 800, duration: 40, type: 'sine' as OscillatorType, volume: 0.08 }, 500);
+    };
+
+    this.onPressureChoiceMade = (data) => {
+      if (data.choice === 'defend') {
+        soundGenerator.playPressureDefense();
+      } else if (data.choice === 'invest') {
+        soundGenerator.playPressureInvest();
+      } else {
+        soundGenerator.playPressureSelect();
+      }
+    };
+
+    this.onGhostPressureApplied = (data) => {
+      if (data.pressure === 'attack') {
+        soundGenerator.playPressureGhostApplied();
+      }
+    };
+
+    EventBus.on('building-phase-started', this.onBuildingPhaseStarted);
+    EventBus.on('countdown-tick', this.onCountdownTick);
+    EventBus.on('unit-spawned', this.onUnitSpawned);
+    EventBus.on('pressure-choice-made', this.onPressureChoiceMade);
+    EventBus.on('ghost-pressure-applied', this.onGhostPressureApplied);
 
     // Notify React
     EventBus.emit('game-ready');
@@ -214,12 +264,14 @@ export class GameScene extends Phaser.Scene {
   private spendGold(amount: number): boolean {
     if (this.gold < amount) return false;
     this.gold -= amount;
+    soundGenerator.playGoldSpent();
     EventBus.emit('gold-changed', { gold: this.gold });
     return true;
   }
 
   private earnGold(amount: number): void {
     this.gold += amount;
+    soundGenerator.playThrottled('goldEarned', { frequency: 987, duration: 60, type: 'square' as OscillatorType, volume: 0.10 }, 300);
     EventBus.emit('gold-changed', { gold: this.gold });
   }
 
@@ -237,6 +289,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     EventBus.emit('game-over', { winnerId });
+
+    if (winnerId === 'local') {
+      soundGenerator.playMatchVictory();
+    } else {
+      soundGenerator.playMatchDefeat();
+    }
   }
 
   private handlePlaceTower(gridX: number, gridY: number, towerDefId: string): void {
@@ -250,6 +308,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     if (guardFailure) {
+      soundGenerator.playUIError();
       EventBus.emit('tower-placed', {
         col: gridX,
         row: gridY,
@@ -262,6 +321,7 @@ export class GameScene extends Phaser.Scene {
 
     const placed = this.towerSystem.placeTower(gridX, gridY, towerDefId);
     if (!placed.success) {
+      soundGenerator.playUIError();
       EventBus.emit('tower-placed', {
         col: gridX,
         row: gridY,
@@ -285,6 +345,7 @@ export class GameScene extends Phaser.Scene {
       towerId: towerDefId,
       success: true,
     });
+    soundGenerator.playTowerPlaced();
 
     this.unitSystem.setPath(FOREST_GATE_MAP.path);
     this.renderPath(FOREST_GATE_MAP.path);
@@ -366,6 +427,8 @@ export class GameScene extends Phaser.Scene {
 
     // Units reaching exit damage the player
     for (const _unitId of reachedExit) {
+      soundGenerator.playBreach();
+      soundGenerator.playHPLoss();
       this.playerHp = Math.max(0, this.playerHp - 1);
       EventBus.emit('player-damaged', {
         playerId: 'local',
@@ -391,6 +454,11 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-pressure-choice', this.onPressureChoice);
     EventBus.off('wave-started', this.onWaveStartedLifecycle);
     EventBus.off('wave-completed', this.onWaveCompletedLifecycle);
+    EventBus.off('building-phase-started', this.onBuildingPhaseStarted);
+    EventBus.off('countdown-tick', this.onCountdownTick);
+    EventBus.off('unit-spawned', this.onUnitSpawned);
+    EventBus.off('pressure-choice-made', this.onPressureChoiceMade);
+    EventBus.off('ghost-pressure-applied', this.onGhostPressureApplied);
     this.towerSystem.destroy();
     this.unitSystem.destroy();
     this.waveSystem.destroy();

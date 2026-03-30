@@ -1,10 +1,31 @@
+import type { OutputBundle, Plugin as RollupPlugin } from 'rollup';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const NON_PHASER_CHUNK_BUDGET_KB = 500;
+const PHASER_CHUNK_WARNING_LIMIT_KB = 1600;
+
+const createNonPhaserChunkBudgetWarning = (): RollupPlugin => ({
+  name: 'non-phaser-chunk-budget-warning',
+  generateBundle(_, bundle: OutputBundle) {
+    for (const output of Object.values(bundle)) {
+      if (output.type !== 'chunk' || output.name === 'phaser') continue;
+
+      const chunkSizeKB = new TextEncoder().encode(output.code).byteLength / 1024;
+      if (chunkSizeKB > NON_PHASER_CHUNK_BUDGET_KB) {
+        this.warn(
+          `Chunk ${output.fileName} is ${chunkSizeKB.toFixed(1)} kB after minification, exceeding the ${NON_PHASER_CHUNK_BUDGET_KB} kB non-Phaser budget.`,
+        );
+      }
+    }
+  },
+});
+
 export default defineConfig({
   plugins: [
     react(),
+    createNonPhaserChunkBudgetWarning(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['assets/**/*.png', 'assets/**/*.json', 'manifest.json'],
@@ -32,7 +53,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: PHASER_CHUNK_WARNING_LIMIT_KB,
     rollupOptions: {
       output: {
         manualChunks(id) {

@@ -1,4 +1,5 @@
 import { writeFileSync } from 'fs';
+import { convertToWebP } from './convert-webp';
 import { generate as generateTiles } from './generate-tiles';
 import { generate as generateTowers } from './generate-towers';
 import { generate as generateUnits } from './generate-units';
@@ -60,6 +61,10 @@ async function main() {
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   console.log(`\nWrote ${manifestPath}`);
   console.log(`Total assets: ${allEntries.length}`);
+
+  console.log('\n[webp conversion]');
+  const { converted, savedBytes } = await convertToWebP();
+  console.log(`Converted ${converted} PNGs to WebP (saved ${(savedBytes / 1024).toFixed(1)}KB)`);
 }
 
 main().catch(err => {

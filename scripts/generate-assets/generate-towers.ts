@@ -1,26 +1,51 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, drawStar, addGlow, type ManifestEntry } from './shared';
+import {
+  makeCanvas,
+  saveCanvas,
+  PALETTE,
+  hexToRgba,
+  drawRect,
+  fillCircle,
+  drawCircle,
+  setPixel,
+  drawLine,
+  drawStar,
+  addGlow,
+  type ManifestEntry,
+} from './shared';
 import { mkdirSync } from 'fs';
+import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
+import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
 
-interface TowerDef {
+type GeneratedTowerShape = 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
+
+interface TowerAssetDef {
   id: string;
   color: string;
-  shape: 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
-  tier: 1 | 2;
+  shape: GeneratedTowerShape;
 }
 
-const TOWERS: TowerDef[] = [
-  { id: 'laser',        color: PALETTE.laser,   shape: 'archer',   tier: 1 },
-  { id: 'plasma',       color: PALETTE.plasma,  shape: 'catapult', tier: 1 },
-  { id: 'emp',          color: PALETTE.emp,     shape: 'frost',    tier: 1 },
-  { id: 'shield',       color: PALETTE.shield,  shape: 'paladin',  tier: 1 },
-  { id: 'twin_laser',   color: PALETTE.laser,   shape: 'star',     tier: 2 },
-  { id: 'disruptor',    color: PALETTE.emp,     shape: 'star',     tier: 2 },
-  { id: 'nova_cannon',  color: PALETTE.plasma,  shape: 'star',     tier: 2 },
-  { id: 'fortress',     color: PALETTE.shield,  shape: 'star',     tier: 2 },
-  { id: 'stasis_field', color: PALETTE.stasis,  shape: 'star',     tier: 2 },
-];
+function mapTowerShape(shape: SharedTowerDef['shape']): GeneratedTowerShape {
+  switch (shape) {
+    case 'diamond':
+      return 'archer';
+    case 'hexagon':
+      return 'catapult';
+    case 'circle':
+      return 'frost';
+    case 'shield':
+      return 'paladin';
+    case 'star':
+      return 'star';
+  }
+}
+
+const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, color, shape }) => ({
+  id,
+  color,
+  shape: mapTowerShape(shape),
+}));
 
 // 2.5D 그림자: 하단에 어두운 그림자, 상단에 하이라이트
 function drawBase(ctx: any, ox: number) {
@@ -163,7 +188,7 @@ function drawPaladinShrine(ctx: any, ox: number) {
 }
 
 // Tier 2: 별 모양 기반 + 각 tower별 특징
-function drawStarTower(ctx: any, ox: number, tower: TowerDef) {
+function drawStarTower(ctx: any, ox: number, tower: TowerAssetDef) {
   const cx = ox + 16, cy = 14;
   drawBase(ctx, ox);
 
@@ -207,7 +232,7 @@ function drawStarTower(ctx: any, ox: number, tower: TowerDef) {
   }
 }
 
-function drawTowerShape(ctx: any, ox: number, tower: TowerDef) {
+function drawTowerShape(ctx: any, ox: number, tower: TowerAssetDef) {
   switch (tower.shape) {
     case 'archer':   drawArcherTower(ctx, ox); break;
     case 'catapult': drawCatapult(ctx, ox);    break;
@@ -217,7 +242,7 @@ function drawTowerShape(ctx: any, ox: number, tower: TowerDef) {
   }
 }
 
-function drawFireFrame(ctx: any, ox: number, tower: TowerDef, frame: number) {
+function drawFireFrame(ctx: any, ox: number, tower: TowerAssetDef, frame: number) {
   drawTowerShape(ctx, ox, tower);
   const cx = ox + 16;
 

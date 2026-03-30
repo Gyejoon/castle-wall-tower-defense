@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-30T01:42:31.056Z",
+  "generated": "2026-03-30T15:43:37.505Z",
   "assets": [
     {
       "key": "grid-floor",
@@ -134,6 +134,123 @@
       "key": "tower-stasis_field-fire",
       "type": "spritesheet",
       "path": "assets/towers/stasis_field-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-flame_tower",
+      "type": "image",
+      "path": "assets/towers/flame_tower.png"
+    },
+    {
+      "key": "tower-flame_tower-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/flame_tower-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-wind_spire",
+      "type": "image",
+      "path": "assets/towers/wind_spire.png"
+    },
+    {
+      "key": "tower-wind_spire-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/wind_spire-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-earth_golem",
+      "type": "image",
+      "path": "assets/towers/earth_golem.png"
+    },
+    {
+      "key": "tower-earth_golem-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/earth_golem-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-holy_shrine",
+      "type": "image",
+      "path": "assets/towers/holy_shrine.png"
+    },
+    {
+      "key": "tower-holy_shrine-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/holy_shrine-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-dragon_nest",
+      "type": "image",
+      "path": "assets/towers/dragon_nest.png"
+    },
+    {
+      "key": "tower-dragon_nest-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/dragon_nest-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-arcane_spire",
+      "type": "image",
+      "path": "assets/towers/arcane_spire.png"
+    },
+    {
+      "key": "tower-arcane_spire-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/arcane_spire-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-world_tree",
+      "type": "image",
+      "path": "assets/towers/world_tree.png"
+    },
+    {
+      "key": "tower-world_tree-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/world_tree-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-celestial",
+      "type": "image",
+      "path": "assets/towers/celestial.png"
+    },
+    {
+      "key": "tower-celestial-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/celestial-fire.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "tower-divine_throne",
+      "type": "image",
+      "path": "assets/towers/divine_throne.png"
+    },
+    {
+      "key": "tower-divine_throne-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/divine_throne-fire.png",
       "frameWidth": 32,
       "frameHeight": 32,
       "frameCount": 4
@@ -335,6 +452,21 @@
       "frameWidth": 32,
       "frameHeight": 64,
       "frameCount": 4
+    },
+    {
+      "key": "icon-192",
+      "type": "image",
+      "path": "assets/icons/icon-192.png"
+    },
+    {
+      "key": "icon-512",
+      "type": "image",
+      "path": "assets/icons/icon-512.png"
+    },
+    {
+      "key": "icon-512-maskable",
+      "type": "image",
+      "path": "assets/icons/icon-512-maskable.png"
     }
   ]
 }

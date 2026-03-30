@@ -1,0 +1,8 @@
+{"type":"server-started","port":63735,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63735","screen_dir":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content","state_dir":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/state"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/game-layout.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/game-layout-v2.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/game-layout-v3.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/game-layout-v4.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/game-layout-v5.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/17361-1774864280/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

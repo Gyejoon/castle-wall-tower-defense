@@ -1,0 +1,4 @@
+{"type":"server-started","port":53522,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:53522","screen_dir":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/75120-1774866990/content","state_dir":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/75120-1774866990/state"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/75120-1774866990/content/approaches.html"}
+{"type":"screen-added","file":"/Users/lio/Documents/personal/github/grid-line-defense-pvp/.superpowers/brainstorm/75120-1774866990/content/impeccable-context.html"}
+{"type":"server-stopped","reason":"idle timeout"}

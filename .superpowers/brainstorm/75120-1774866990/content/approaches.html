@@ -1,0 +1,80 @@
+<h2>impeccable 게임 UI 커스터마이징 접근법</h2>
+<p class="subtitle">3가지 접근법의 비교 — 추천 옵션을 확인해주세요</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Full Install + Game Overlay (추천)</h3>
+      <p><strong>방식:</strong> impeccable 21개 스킬 전체 설치 + 게임 UI 전용 오버레이 스킬 추가</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>장점</h4>
+          <ul>
+            <li>기존 20개 명령어 (/audit, /polish 등) 즉시 사용 가능</li>
+            <li>게임 전용 .impeccable.md로 컨텍스트 커스터마이징</li>
+            <li>추가 게임 UI 스킬 (game-ui-design)로 Phaser/타워디펜스 가이드</li>
+            <li>업스트림 업데이트 수용 용이</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>단점</h4>
+          <ul>
+            <li>웹 UI 중심 가이드가 일부 게임에 안 맞을 수 있음</li>
+            <li>스킬 파일 ~21개 디렉토리 추가</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Selective Install + Heavy Customization</h3>
+      <p><strong>방식:</strong> 핵심 스킬만 선택 설치 (frontend-design, audit, polish, animate, arrange, teach-impeccable) + 나머지를 게임 전용으로 재작성</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>장점</h4>
+          <ul>
+            <li>게임에 불필요한 스킬 제외</li>
+            <li>게임 UI에 최적화된 가이드</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>단점</h4>
+          <ul>
+            <li>초기 커스터마이징 작업량 큼</li>
+            <li>업스트림 업데이트 반영 어려움</li>
+            <li>유지보수 부담</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Game-Only Custom Skills</h3>
+      <p><strong>방식:</strong> impeccable 설치 없이, 철학과 구조만 참고하여 게임 UI 전용 스킬을 처음부터 작성</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>장점</h4>
+          <ul>
+            <li>100% 게임 UI에 특화</li>
+            <li>불필요한 웹 UI 가이드 없음</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>단점</h4>
+          <ul>
+            <li>impeccable의 검증된 디자인 원칙 활용 못함</li>
+            <li>작업량 가장 큼</li>
+            <li>디자인 품질 가이드가 처음부터 만들어야 함</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

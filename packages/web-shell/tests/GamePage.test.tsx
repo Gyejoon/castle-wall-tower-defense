@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
+import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 
 type EventHandler = (payload?: unknown) => void;
@@ -82,6 +83,11 @@ describe('GamePage', () => {
     listeners.clear();
     useGameStore.setState(useGameStore.getInitialState());
     useGameStore.getState().resetRun();
+    useEmoteStore.setState({
+      myEmote: null,
+      opponentEmote: null,
+      showEmotePanel: false,
+    });
   });
 
   afterEach(() => {
@@ -127,4 +133,67 @@ describe('GamePage', () => {
     expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
   });
 
+  it('stores opponent emotes only when the event includes opponent playerId', () => {
+    const { emitSpy } = getEventBusHarness();
+    render(<GamePage />);
+
+    act(() => {
+      emitSpy('emote-received', { emoteId: 'gg', playerId: 'local' });
+    });
+
+    expect(useEmoteStore.getState().opponentEmote).toBeNull();
+
+    act(() => {
+      emitSpy('emote-received', { emoteId: 'gg', playerId: 'opponent' });
+    });
+
+    expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
+  });
+
+  it('emits send-emote and schedules an opponent AI response after local emote selection', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { emitSpy } = getEventBusHarness();
+    const view = render(<GamePage />);
+
+    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
+    fireEvent.click(view.getByTestId('emote-gg'));
+
+    expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+
+    expect(emitSpy).toHaveBeenCalledWith('emote-received', { emoteId: 'nice', playerId: 'opponent' });
+  });
+
+  it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {
+    vi.useFakeTimers();
+    const view = render(<GamePage />);
+
+    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
+    fireEvent.click(view.getByTestId('emote-gg'));
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(599);
+    });
+
+    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(view.queryByText(/GG/i)).toBeNull();
+  });
 });

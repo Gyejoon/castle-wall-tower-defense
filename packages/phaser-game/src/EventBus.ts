@@ -45,6 +45,10 @@ export interface GameEventMap {
   'opponent-state': { gold: number; hp: number; towerCount: number };
   'kill-transfer': { unitType: string; count: number };
 
+  // Emotes
+  'send-emote': { emoteId: string };
+  'emote-received': { emoteId: string; playerId: string };
+
   // React → Game
   'request-buy-random-tower': undefined;
   'request-select-tower': { towerDefId: string };

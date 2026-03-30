@@ -1,0 +1,68 @@
+<h2>워크플로우: 명령어 사용 시나리오</h2>
+<p class="subtitle">impeccable 명령어가 게임 UI 컨텍스트에서 어떻게 동작하는지</p>
+
+<div class="section">
+  <h3>초기 셋업 (1회)</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.8;">
+      <code>/teach-impeccable</code> → .impeccable.md 생성/업데이트<br>
+      ↳ 이미 작성한 디자인 컨텍스트 기반으로 동작
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>일상 워크플로우</h3>
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <div class="mockup">
+      <div class="mockup-header">UI 품질 점검</div>
+      <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.7;">
+        <code>/audit</code> → 5개 차원 (접근성, 성능, 테마, 반응형, 안티패턴) 점검<br>
+        ↳ .impeccable.md의 "픽셀 미학", "모바일 퍼스트" 맥락에서 평가<br>
+        ↳ game-ui-design reference가 Canvas/DOM 통일감도 체크<br>
+        <br>
+        <strong>예시 출력:</strong> "상태바의 골드 텍스트가 배경 대비 3.2:1 — AA 미달. #f0d060 → #f5d86a로 조정 권장"
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">디자인 일관성 맞추기</div>
+      <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.7;">
+        <code>/normalize</code> → 디자인 시스템 표준에 맞춤<br>
+        ↳ tokens.ts 색상, 간격, 폰트 사이즈가 일관적인지 검사<br>
+        <br>
+        <code>/arrange</code> → 레이아웃, 간격, 구성 수정<br>
+        ↳ 상태바↔캔버스↔독 간 간격 리듬 체크
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">새 UI 기능 추가 시</div>
+      <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.7;">
+        <code>/game-ui-design</code> → 게임 UI 가이드라인 참조하며 작업<br>
+        ↳ React/Phaser 경계, 터치 타겟, HUD 계층 원칙 적용<br>
+        <br>
+        <code>/polish</code> → 작업 완료 후 최종 품질 패스<br>
+        ↳ 정렬, 타이포, 색상 일관성, 인터랙션 상태, 마이크로인터랙션
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">애니메이션 & 모션</div>
+      <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.7;">
+        <code>/animate</code> → 의미 있는 모션 추가<br>
+        ↳ 골드 변경 시 숫자 바운스, 페이즈 전환 슬라이드, 매치 결과 등장 효과<br>
+        ↳ 60fps 게임 루프와 충돌하지 않는 CSS 애니메이션 위주
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">색상 & 타이포</div>
+      <div class="mockup-body" style="text-align:left; font-size:13px; line-height:1.7;">
+        <code>/colorize</code> → 전략적 색상 적용 (tokens.ts 기반)<br>
+        <code>/typeset</code> → 픽셀 폰트 계층, 크기 일관성 수정
+      </div>
+    </div>
+  </div>
+</div>

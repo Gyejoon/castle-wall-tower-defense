@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import {
+  EMOTES,
   TOTAL_WAVES,
   RANDOM_TOWER_COST,
   TIER_NAMES,
@@ -8,8 +9,11 @@ import {
 } from '@gld/shared';
 import { EventBus } from '@gld/phaser-game';
 import { uiMobileArt } from '../assets/uiMobileArt';
+import { EmoteBubble } from '../components/EmoteBubble';
+import { EmotePanel } from '../components/EmotePanel';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
+import { useEmoteStore } from '../stores/emoteStore';
 import { useGameStore } from '../stores/gameStore';
 import type { FieldTab } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
@@ -60,6 +64,11 @@ export function GamePage() {
   const setOpponentState = useGameStore((s) => s.setOpponentState);
   const resetRun = useGameStore((s) => s.resetRun);
   const enterLobby = useGameStore((s) => s.enterLobby);
+  const myEmote = useEmoteStore((s) => s.myEmote);
+  const opponentEmote = useEmoteStore((s) => s.opponentEmote);
+  const receiveEmote = useEmoteStore((s) => s.receiveEmote);
+  const clearMyEmote = useEmoteStore((s) => s.clearMyEmote);
+  const clearOpponentEmote = useEmoteStore((s) => s.clearOpponentEmote);
 
   const totalWaves = TOTAL_WAVES;
 
@@ -104,6 +113,10 @@ export function GamePage() {
     const onOpponentState = (data: { gold: number; hp: number; towerCount: number }) => {
       setOpponentState(data);
     };
+    const onEmoteReceived = (data: { emoteId: string; playerId: string }) => {
+      if (data.playerId !== 'opponent') return;
+      receiveEmote(data.emoteId);
+    };
 
     EventBus.on('player-damaged', onDamaged);
     EventBus.on('gold-changed', onGoldChanged);
@@ -116,6 +129,7 @@ export function GamePage() {
     EventBus.on('wave-started', onWaveStartedClearPreview);
     EventBus.on('random-tower-rolled', onRandomTowerRolled);
     EventBus.on('opponent-state', onOpponentState);
+    EventBus.on('emote-received', onEmoteReceived);
 
     return () => {
       EventBus.off('player-damaged', onDamaged);
@@ -129,6 +143,7 @@ export function GamePage() {
       EventBus.off('wave-started', onWaveStartedClearPreview);
       EventBus.off('random-tower-rolled', onRandomTowerRolled);
       EventBus.off('opponent-state', onOpponentState);
+      EventBus.off('emote-received', onEmoteReceived);
     };
   }, [
     setCountdown,
@@ -136,6 +151,7 @@ export function GamePage() {
     setLives,
     setOpponentState,
     setPlacementFeedback,
+    receiveEmote,
     setRolledTower,
     setRunStatus,
     setWave,
@@ -144,6 +160,18 @@ export function GamePage() {
 
   const feedbackText = placementFeedback ? feedbackCopy[placementFeedback] : null;
   const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
+
+  useEffect(() => {
+    if (!myEmote) return;
+    EventBus.emit('send-emote', { emoteId: myEmote.id });
+
+    const aiResponse = EMOTES[Math.floor(Math.random() * EMOTES.length)];
+    const timer = window.setTimeout(() => {
+      EventBus.emit('emote-received', { emoteId: aiResponse.id, playerId: 'opponent' });
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [myEmote]);
 
   const tabStyle = (tab: FieldTab) => ({
     flex: 1,
@@ -268,6 +296,22 @@ export function GamePage() {
                   </div>
                 )}
 
+                {myEmote && (
+                  <EmoteBubble
+                    emoteId={myEmote.id}
+                    onDone={clearMyEmote}
+                    position="right"
+                  />
+                )}
+
+                {opponentEmote && (
+                  <EmoteBubble
+                    emoteId={opponentEmote.id}
+                    onDone={clearOpponentEmote}
+                    position="left"
+                  />
+                )}
+
                 {(runStatus === 'victory' || runStatus === 'defeat') && (
                   <div
                     style={{
@@ -349,6 +393,9 @@ export function GamePage() {
                       <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
                         타워를 구매한 후 그리드를 탭하여 배치하세요. 같은 타워를 드래그하여 합성!
                       </span>
+                    </div>
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                      <EmotePanel />
                     </div>
                   </div>
 

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palace 개랜타디 — Game UI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; display: flex; flex-direction: column; align-items: center; padding: 20px; font-family: sans-serif; color: #f0e6d0; }
+  h1 { font-family: 'Press Start 2P', cursive; font-size: 13px; color: #d4a843; margin-bottom: 6px; }
+  .sub { color: #8a7a60; font-size: 12px; margin-bottom: 24px; }
+
+  .game-wrapper {
+    width: 100%; max-width: 960px; position: relative;
+    background: #1a1208; border-radius: 4px; overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  }
+
+  /* Tab switcher - game style */
+  .game-tabs {
+    position: absolute; top: 8px; right: 8px; z-index: 20;
+    display: flex; gap: 0;
+  }
+  .game-tab {
+    padding: 5px 12px; cursor: pointer; font-size: 10px; font-family: 'Press Start 2P', cursive;
+    position: relative; user-select: none;
+    /* Wood/stone texture feel */
+    background: linear-gradient(180deg, #3a2a18 0%, #2a1a0e 50%, #1a0e06 100%);
+    border: 2px solid #5a4a30;
+    border-bottom: none;
+    color: #8a7a60;
+    transition: color 0.15s;
+  }
+  .game-tab:first-child { border-radius: 4px 0 0 0; }
+  .game-tab:last-child { border-radius: 0 4px 0 0; }
+  .game-tab:hover { color: #d4a843; }
+  .game-tab.active {
+    background: linear-gradient(180deg, #4a3a22 0%, #3a2a18 50%, #2a1a0e 100%);
+    color: #ffe89a;
+    border-color: #8b6914;
+    border-top: 2px solid #d4a843;
+  }
+  .game-tab .notif {
+    position: absolute; top: -3px; right: -3px;
+    width: 8px; height: 8px; background: #e04040; border-radius: 50%;
+    border: 1px solid #1a0e06;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  canvas { display: block; width: 100%; }
+
+  /* ===== Floating HUD elements — ON the canvas ===== */
+  .hud-float {
+    position: absolute; z-index: 10; pointer-events: none;
+  }
+  .hud-res {
+    display: flex; align-items: center; gap: 3px;
+    /* Text outline via text-shadow */
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.5);
+    font-family: 'Press Start 2P', cursive;
+  }
+  .hud-res img, .hud-res .icon {
+    width: 18px; height: 18px; image-rendering: pixelated;
+  }
+  .hud-res .val { font-size: 11px; }
+
+  /* ===== Bottom Summon Panel — game-textured ===== */
+  .summon-panel {
+    position: relative;
+    /* Dark wood panel */
+    background:
+      linear-gradient(180deg, #3a2a18 0%, #2a1a0e 40%, #1a0e06 100%);
+    border-top: 3px solid #5a4a30;
+    padding: 8px 16px 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  /* Gold trim top edge */
+  .summon-panel::before {
+    content: '';
+    position: absolute; top: -3px; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #5a4210, #d4a843 20%, #ffe89a 50%, #d4a843 80%, #5a4210);
+  }
+  /* Inner bevel shadow */
+  .summon-panel::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(180deg, rgba(255,232,154,0.08), transparent);
+  }
+
+  /* Summon button — big, game-style with bevel */
+  .summon-btn {
+    width: 80px; height: 56px;
+    background: linear-gradient(180deg, #e0c060 0%, #d4a843 30%, #a07830 70%, #7a5820 100%);
+    border: 3px solid #8b6914;
+    border-top-color: #ffe89a;
+    border-left-color: #d4a843;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+    position: relative;
+    box-shadow: 0 3px 0 #5a4210, 0 5px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: transform 0.08s, box-shadow 0.08s;
+    flex-shrink: 0;
+  }
+  .summon-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 #5a4210, 0 2px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .summon-btn .dice { font-size: 18px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+  .summon-btn .cost {
+    font-family: 'Press Start 2P', cursive; font-size: 7px; color: #3a2a10;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+  }
+  /* Glow pulse on button */
+  .summon-btn::after {
+    content: '';
+    position: absolute; inset: -4px; border-radius: 10px;
+    background: radial-gradient(ellipse, rgba(212,168,67,0.15), transparent 70%);
+    animation: btn-glow 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes btn-glow { 0%,100%{opacity:0.5;} 50%{opacity:1;} }
+
+  /* Deck slots — stone/wood carved feel */
+  .deck {
+    display: flex; gap: 6px; flex: 1; justify-content: center;
+  }
+  .deck-slot {
+    width: 44px; height: 44px;
+    background: linear-gradient(180deg, #1a0e06 0%, #0e0804 100%);
+    border: 2px solid #3a2a18;
+    border-top-color: #1a0e06;
+    border-left-color: #2a1a0e;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .deck-slot.filled {
+    border-color: #5a4a30;
+    border-bottom-color: #8b6914;
+    border-right-color: #8b6914;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 6px rgba(212,168,67,0.1);
+  }
+  .deck-slot .tower-icon { font-size: 22px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+  .deck-slot .tier-tag {
+    position: absolute; bottom: 1px; right: 1px;
+    font-family: 'Press Start 2P', cursive; font-size: 5px;
+    padding: 1px 3px; border-radius: 2px;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+  .deck-slot .empty-mark {
+    font-size: 16px; color: #2a1a0e;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  /* Social buttons — stone carved */
+  .social-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .social-btn {
+    width: 36px; height: 36px;
+    background: linear-gradient(180deg, #2a1a0e 0%, #1a0e06 100%);
+    border: 2px solid #3a2a18;
+    border-bottom-color: #5a4a30;
+    border-right-color: #5a4a30;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+    box-shadow: 0 1px 0 #5a4a30, inset 0 1px 2px rgba(0,0,0,0.3);
+    transition: transform 0.08s;
+  }
+  .social-btn:active { transform: translateY(1px); box-shadow: none; }
+
+  /* Opponent view stats */
+  .opp-stats-bar {
+    display: flex; gap: 24px; justify-content: center; padding: 12px 16px;
+    background: linear-gradient(180deg, #1a0e06 0%, #0e0804 100%);
+    border-bottom: 2px solid #3a2a18;
+  }
+  .opp-stat { text-align: center; }
+  .opp-stat .lbl { font-size: 8px; color: #5a4a30; margin-bottom: 4px; font-family: 'Press Start 2P', cursive; }
+  .opp-stat .val {
+    font-family: 'Press Start 2P', cursive; font-size: 13px;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 6px rgba(0,0,0,0.5);
+  }
+
+  /* Emote floating */
+  .emote-float {
+    position: absolute; z-index: 15;
+    background: rgba(26,14,6,0.9); border: 2px solid #5a4a30;
+    border-radius: 12px; padding: 4px 10px; font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    animation: float-up 4s ease-out forwards;
+  }
+  @keyframes float-up { 0%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-20px);} }
+
+  /* Kill transfer notification */
+  .kill-notif {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 15;
+    background: linear-gradient(180deg, #3a1010 0%, #2a0808 100%);
+    border: 2px solid #8a2020;
+    border-radius: 6px; padding: 6px 16px; font-size: 11px;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 12px rgba(224,64,64,0.2);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  /* Merge guide */
+  .merge-panel {
+    padding: 20px;
+    background: linear-gradient(180deg, #1a0e06, #0e0804);
+  }
+  .tier-row {
+    display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;
+  }
+  .tier-card {
+    width: 100px; padding: 10px 8px; text-align: center;
+    background: linear-gradient(180deg, #2a1a0e, #1a0e06);
+    border: 2px solid #3a2a18;
+    border-radius: 6px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .tier-card .name { font-size: 8px; font-family: 'Press Start 2P', cursive; margin-bottom: 6px; }
+  .tier-card .stars { font-size: 16px; margin-bottom: 4px; }
+  .tier-card .tag { font-family: 'Press Start 2P', cursive; font-size: 8px;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+  .merge-formula {
+    text-align: center; padding: 14px;
+    background: linear-gradient(180deg, #2a1a0e, #1a0e06);
+    border: 2px solid #5a4a30;
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+  .merge-formula .big { font-size: 22px; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>🏰 Palace 개랜타디</h1>
+<p class="sub">풀스크린 내 필드 + 탭 전환 — 게임 스타일 UI</p>
+
+<div class="game-wrapper">
+  <!-- Game-style tabs -->
+  <div class="game-tabs">
+    <div class="game-tab active" onclick="switchTab('my')">내 필드</div>
+    <div class="game-tab" onclick="switchTab('opp')">
+      상대
+      <div class="notif"></div>
+    </div>
+    <div class="game-tab" onclick="switchTab('merge')">합성</div>
+  </div>
+
+  <!-- MY FIELD -->
+  <div class="tab-panel active" id="tab-my">
+    <div style="position:relative;">
+      <!-- Floating HUD — directly on canvas -->
+      <div class="hud-float" style="top:10px;left:12px;">
+        <div class="hud-res" style="margin-bottom:4px;">
+          <span class="icon">⚔</span>
+          <span class="val" style="color:#d4a843;">WAVE 7<span style="color:#8a7a60;font-size:8px;">/20</span></span>
+        </div>
+      </div>
+      <div class="hud-float" style="top:10px;left:180px;">
+        <div class="hud-res" style="gap:5px;">
+          <span class="icon" style="font-size:16px;">🪙</span>
+          <span class="val" style="color:#ffe89a;font-size:13px;">350</span>
+        </div>
+      </div>
+      <div class="hud-float" style="top:10px;left:290px;">
+        <div class="hud-res" style="gap:5px;">
+          <span class="icon" style="font-size:16px;">❤️</span>
+          <span class="val" style="color:#e05040;font-size:13px;">18<span style="color:#8a7a60;font-size:9px;">/20</span></span>
+        </div>
+      </div>
+      <!-- Wave preview floating -->
+      <div class="hud-float" style="top:32px;left:12px;">
+        <div style="display:flex;gap:6px;font-size:9px;font-family:'Press Start 2P',cursive;
+          text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;">
+          <span style="color:#5a4a30;">NEXT</span>
+          <span style="color:#8a7a60;">🧟×5</span>
+          <span style="color:#8a7a60;">🛡×3</span>
+          <span style="color:#8a7a60;">🐉×1</span>
+        </div>
+      </div>
+      <!-- Build timer -->
+      <div class="hud-float" style="top:10px;right:120px;">
+        <div class="hud-res">
+          <span class="val" style="color:#7ab648;font-size:12px;">BUILD</span>
+          <span class="val" style="color:#ffe89a;font-size:14px;">0:12</span>
+        </div>
+      </div>
+
+      <!-- Emote -->
+      <div class="emote-float" style="left:42%;top:50px;">ㅋㅋ 👍</div>
+
+      <canvas id="isoMain" width="960" height="420"></canvas>
+    </div>
+
+    <!-- Bottom summon panel -->
+    <div class="summon-panel">
+      <div class="summon-btn" title="랜덤 타워 소환">
+        <span class="dice">🎲</span>
+        <span class="cost">50G</span>
+      </div>
+
+      <div class="deck">
+        <div class="deck-slot filled">
+          <span class="tower-icon">🏹</span>
+          <span class="tier-tag" style="color:#d4a843;">T1</span>
+        </div>
+        <div class="deck-slot filled" style="border-bottom-color:#5bc8e8;border-right-color:#5bc8e8;">
+          <span class="tower-icon">❄️</span>
+          <span class="tier-tag" style="color:#5bc8e8;">T2</span>
+        </div>
+        <div class="deck-slot">
+          <span class="empty-mark">✦</span>
+        </div>
+        <div class="deck-slot">
+          <span class="empty-mark">✦</span>
+        </div>
+        <div class="deck-slot">
+          <span class="empty-mark">✦</span>
+        </div>
+      </div>
+
+      <div class="social-btns">
+        <div class="social-btn" title="채팅">💬</div>
+        <div class="social-btn" title="이모트">😊</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPPONENT FIELD -->
+  <div class="tab-panel" id="tab-opp">
+    <div class="opp-stats-bar">
+      <div class="opp-stat"><div class="lbl">HP</div><div class="val" style="color:#e05040;">15/20</div></div>
+      <div class="opp-stat"><div class="lbl">GOLD</div><div class="val" style="color:#ffe89a;">280</div></div>
+      <div class="opp-stat"><div class="lbl">TOWERS</div><div class="val" style="color:#d4a843;">6</div></div>
+      <div class="opp-stat"><div class="lbl">BEST</div><div class="val" style="color:#c040d0;">★★★</div></div>
+    </div>
+    <div style="position:relative;">
+      <canvas id="isoOpp" width="960" height="420"></canvas>
+      <div class="emote-float" style="right:20px;top:40px;border-color:#8a2020;">GG 😎</div>
+      <div class="kill-notif">
+        <span style="color:#e05040;">⚡</span>
+        <span>킬 트랜스퍼 — 고블린 정찰병 ×2 전송</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MERGE GUIDE -->
+  <div class="tab-panel" id="tab-merge">
+    <div class="merge-panel">
+      <div class="tier-row">
+        <div class="tier-card" style="border-color:#5a4a30;">
+          <div class="name" style="color:#8a7a60;">COMMON</div>
+          <div class="stars">★</div>
+          <div class="tag" style="color:#d4a843;">T1</div>
+        </div>
+        <div class="tier-card" style="border-color:#5bc8e8;">
+          <div class="name" style="color:#5bc8e8;">RARE</div>
+          <div class="stars">★★</div>
+          <div class="tag" style="color:#5bc8e8;">T2</div>
+        </div>
+        <div class="tier-card" style="border-color:#c040d0;">
+          <div class="name" style="color:#c040d0;">HEROIC</div>
+          <div class="stars">★★★</div>
+          <div class="tag" style="color:#c040d0;">T3</div>
+        </div>
+        <div class="tier-card" style="border-color:#e04040;">
+          <div class="name" style="color:#e04040;">LEGENDARY</div>
+          <div class="stars">★★★★</div>
+          <div class="tag" style="color:#e04040;">T4</div>
+        </div>
+        <div class="tier-card" style="border-color:#ffe89a;">
+          <div class="name" style="color:#ffe89a;">GOD</div>
+          <div class="stars">★★★★★</div>
+          <div class="tag" style="color:#ffe89a;">T5</div>
+        </div>
+      </div>
+      <div class="merge-formula">
+        <span class="big">🏹 + 🏹 → 🎲 → ❄️</span>
+        같은 타워 2개 <span style="color:#d4a843;">드래그</span> 합성 → 다음 티어 <span style="color:#e05040;">랜덤</span> 타워
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(id) {
+  const tabs = document.querySelectorAll('.game-tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  const map = ['my','opp','merge'];
+  tabs.forEach((t, i) => t.classList.toggle('active', map[i] === id));
+  panels.forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ===== 2.5D ISOMETRIC ENGINE =====
+const TW = 48, TH = 24, TD = 12;
+const GRASS = ['#4a8c2a','#3e7a24','#448428','#4e9030','#3a7020','#428226','#4c8e2e','#3c7822'];
+const GL = '#2a5a14', GR = '#1e4a0e';
+const DT = '#b8956a', DL = '#8a6a48', DR = '#6a5038';
+
+function iso(c, r, ox, oy) { return { x: ox + (c-r)*(TW/2), y: oy + (c+r)*(TH/2) }; }
+
+function tile(ctx, sx, sy, t, l, r, d) {
+  const hw=TW/2, hh=TH/2;
+  ctx.fillStyle=t; ctx.beginPath(); ctx.moveTo(sx,sy-hh); ctx.lineTo(sx+hw,sy); ctx.lineTo(sx,sy+hh); ctx.lineTo(sx-hw,sy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=l; ctx.beginPath(); ctx.moveTo(sx-hw,sy); ctx.lineTo(sx,sy+hh); ctx.lineTo(sx,sy+hh+d); ctx.lineTo(sx-hw,sy+d); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=r; ctx.beginPath(); ctx.moveTo(sx+hw,sy); ctx.lineTo(sx,sy+hh); ctx.lineTo(sx,sy+hh+d); ctx.lineTo(sx+hw,sy+d); ctx.closePath(); ctx.fill();
+  // Subtle edge
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(sx,sy-hh); ctx.lineTo(sx+hw,sy); ctx.lineTo(sx,sy+hh); ctx.lineTo(sx-hw,sy); ctx.closePath(); ctx.stroke();
+}
+
+function grass(ctx, sx, sy) {
+  ctx.strokeStyle='rgba(90,160,48,0.4)'; ctx.lineWidth=1;
+  [-3,0,3].forEach(dx => { ctx.beginPath(); ctx.moveTo(sx+dx,sy-1); ctx.lineTo(sx+dx-1,sy-5); ctx.stroke(); });
+}
+
+// Decorative tree
+function tree(ctx, sx, sy) {
+  // Trunk
+  ctx.fillStyle='#4a3018'; ctx.fillRect(sx-2,sy-16,4,16);
+  ctx.fillStyle='#3a2010'; ctx.fillRect(sx,sy-16,2,16);
+  // Canopy layers
+  [14,10,6].forEach((w,i) => {
+    const y = sy - 18 - i*8;
+    ctx.fillStyle = ['#2a6a1a','#3a7a22','#4a8a2a'][i];
+    ctx.beginPath(); ctx.moveTo(sx,y-8); ctx.lineTo(sx+w/2,y); ctx.lineTo(sx-w/2,y); ctx.closePath(); ctx.fill();
+  });
+}
+
+function tower(ctx, sx, sy, tier) {
+  const T = [null,
+    {b:'#c8a04a',t:'#e0c060',g:'rgba(200,160,74,',s:'#ffe89a',n:1},
+    {b:'#5bc8e8',t:'#8adaf0',g:'rgba(91,200,232,',s:'#aaeeff',n:2},
+    {b:'#c040d0',t:'#e060f0',g:'rgba(192,64,208,',s:'#f0a0ff',n:3},
+    {b:'#e04040',t:'#ff6060',g:'rgba(224,64,64,',s:'#ff9090',n:4},
+    {b:'#f0d060',t:'#fff0a0',g:'rgba(240,208,96,',s:'#ffffc0',n:5},
+  ][tier]; if(!T)return;
+
+  // Ground glow
+  const gg=ctx.createRadialGradient(sx,sy,0,sx,sy,20+tier*4);
+  gg.addColorStop(0,T.g+'0.15)'); gg.addColorStop(1,'transparent');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.ellipse(sx,sy,24+tier*4,12+tier*2,0,0,Math.PI*2); ctx.fill();
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(sx+2,sy+4,12,5,0,0,Math.PI*2); ctx.fill();
+
+  // Iso base
+  const bw=12,bh=6,bd=6;
+  ctx.fillStyle='#4a3a28'; ctx.beginPath(); ctx.moveTo(sx,sy-bh); ctx.lineTo(sx+bw,sy); ctx.lineTo(sx,sy+bh); ctx.lineTo(sx-bw,sy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#3a2a18'; ctx.beginPath(); ctx.moveTo(sx-bw,sy); ctx.lineTo(sx,sy+bh); ctx.lineTo(sx,sy+bh+bd); ctx.lineTo(sx-bw,sy+bd); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#2a1a0e'; ctx.beginPath(); ctx.moveTo(sx+bw,sy); ctx.lineTo(sx,sy+bh); ctx.lineTo(sx,sy+bh+bd); ctx.lineTo(sx+bw,sy+bd); ctx.closePath(); ctx.fill();
+
+  // Tower body
+  const h=24+tier*5, w=8+tier;
+  ctx.fillStyle=T.b; ctx.fillRect(sx-w/2,sy-h,w,h-5);
+  ctx.fillStyle=T.t; ctx.fillRect(sx-w/2,sy-h,Math.ceil(w/2),h-5);
+  ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(sx+1,sy-h,Math.floor(w/2)-1,h-5);
+  // Stone lines
+  ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1;
+  for(let i=4;i<h-5;i+=6){ ctx.beginPath(); ctx.moveTo(sx-w/2,sy-h+i); ctx.lineTo(sx+w/2,sy-h+i); ctx.stroke(); }
+  // Window
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(sx-1,sy-h+8,3,5);
+  ctx.fillStyle=T.g+'0.3)'; ctx.fillRect(sx-1,sy-h+8,3,5); // window glow
+
+  // Battlements
+  const bWidth=w+6;
+  for(let i=0;i<4;i++){
+    const bx=sx-bWidth/2+i*(bWidth/3);
+    ctx.fillStyle=T.b; ctx.fillRect(bx,sy-h-3,bWidth/5,4);
+  }
+
+  // Roof
+  ctx.fillStyle=T.t;
+  ctx.beginPath(); ctx.moveTo(sx-w/2-3,sy-h-3); ctx.lineTo(sx,sy-h-12-tier*2); ctx.lineTo(sx+w/2+3,sy-h-3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=T.b;
+  ctx.beginPath(); ctx.moveTo(sx,sy-h-12-tier*2); ctx.lineTo(sx+w/2+3,sy-h-3); ctx.lineTo(sx+w/2+3,sy-h); ctx.closePath(); ctx.fill();
+
+  // Flag
+  ctx.strokeStyle=T.s; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(sx,sy-h-12-tier*2); ctx.lineTo(sx,sy-h-20-tier*2); ctx.stroke();
+  ctx.fillStyle=T.s;
+  ctx.beginPath(); ctx.moveTo(sx,sy-h-20-tier*2); ctx.lineTo(sx+7,sy-h-17-tier*2); ctx.lineTo(sx,sy-h-14-tier*2); ctx.closePath(); ctx.fill();
+
+  // Stars above
+  ctx.fillStyle=T.s; ctx.font=`${8+tier}px sans-serif`; ctx.textAlign='center';
+  ctx.shadowColor=T.g+'0.6)'; ctx.shadowBlur=6;
+  ctx.fillText('★'.repeat(T.n),sx,sy-h-22-tier*2);
+  ctx.shadowBlur=0;
+}
+
+function unit(ctx, sx, sy, color, big) {
+  const s=big?6:4;
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(sx+1,sy+2,s+1,s/2+1,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=color; ctx.beginPath(); ctx.ellipse(sx,sy-s/2,s,s,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.ellipse(sx-1,sy-s/2-1,s/2,s/2,0,0,Math.PI*2); ctx.fill();
+  if(big){
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(sx-8,sy-s*2-5,16,3);
+    ctx.fillStyle='#4ae030'; ctx.fillRect(sx-8,sy-s*2-5,12,3);
+    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(sx-8,sy-s*2-5,12,1);
+  }
+}
+
+function render(canvasId, cols, rows, ox, oy, path, towers_, units_, isOpp) {
+  const c=document.getElementById(canvasId); if(!c)return;
+  const ctx=c.getContext('2d'), w=c.width, h=c.height;
+  // BG
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#0c1a06'); bg.addColorStop(0.5,'#0a1404'); bg.addColorStop(1,'#060e03');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+  // Vignette
+  const vig=ctx.createRadialGradient(w/2,h/2,h/3,w/2,h/2,w/1.5);
+  vig.addColorStop(0,'transparent'); vig.addColorStop(1,'rgba(0,0,0,0.3)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,w,h);
+
+  const ps=new Set(path.map(p=>p[0]+','+p[1]));
+
+  // Tiles
+  for(let r=0;r<rows;r++) for(let c_=0;c_<cols;c_++){
+    const {x,y}=iso(c_,r,ox,oy);
+    if(ps.has(c_+','+r)) tile(ctx,x,y,DT,DL,DR,TD);
+    else {
+      tile(ctx,x,y,GRASS[(c_*7+r*13)%GRASS.length],GL,GR,TD);
+      if((c_*3+r*7)%6===0) grass(ctx,x-4,y-2);
+      if((c_*11+r*3)%9===0) grass(ctx,x+5,y);
+    }
+  }
+
+  // Decorative trees on edges
+  if(!isOpp) {
+    [{c:-1,r:1},{c:-1,r:5},{c:12,r:2},{c:12,r:6},{c:1,r:-1},{c:6,r:-1}].forEach(t => {
+      const {x,y}=iso(t.c,t.r,ox,oy);
+      tree(ctx,x,y-6);
+    });
+  }
+
+  // Path dots
+  if(path.length>1){
+    ctx.fillStyle='#b8956a'; ctx.globalAlpha=0.4;
+    for(let i=0;i<path.length-1;i++){
+      const a=iso(path[i][0],path[i][1],ox,oy), b=iso(path[i+1][0],path[i+1][1],ox,oy);
+      for(let s=0;s<6;s++){
+        if(s%2)continue;
+        const t=s/6;
+        ctx.beginPath(); ctx.arc(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,1.5,0,Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // Markers
+  const sp=iso(path[0][0],path[0][1],ox,oy);
+  ctx.fillStyle='rgba(122,182,72,0.3)'; ctx.beginPath(); ctx.ellipse(sp.x,sp.y,14,7,0,0,Math.PI*2); ctx.fill();
+  ctx.font='16px sans-serif'; ctx.textAlign='center'; ctx.fillText('⛺',sp.x,sp.y+5);
+  const ep=iso(path[path.length-1][0],path[path.length-1][1],ox,oy);
+  ctx.fillStyle='rgba(192,48,32,0.3)'; ctx.beginPath(); ctx.ellipse(ep.x,ep.y,14,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillText('🏰',ep.x,ep.y+5);
+
+  // Towers (depth sorted)
+  [...towers_].sort((a,b)=>(a.col+a.row)-(b.col+b.row)).forEach(t=>{
+    const {x,y}=iso(t.col,t.row,ox,oy);
+    if(isOpp){
+      const cs=[null,'#c8a04a','#5bc8e8','#c040d0','#e04040','#f0d060'];
+      ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x,y+2,8,4,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=cs[t.tier]; ctx.fillRect(x-4,y-14,8,14);
+      ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(x-4,y-14,4,14);
+      ctx.beginPath(); ctx.moveTo(x-5,y-14); ctx.lineTo(x,y-20); ctx.lineTo(x+5,y-14); ctx.closePath(); ctx.fillStyle=cs[t.tier]; ctx.fill();
+    } else tower(ctx,x,y,t.tier);
+  });
+
+  // Units
+  units_.forEach(u=>{ const{x,y}=iso(u.col,u.row,ox,oy); unit(ctx,x,y,u.color,!isOpp); });
+}
+
+// Data
+const myPath=[[0,4],[1,4],[2,4],[3,4],[3,3],[4,3],[5,3],[6,3],[6,4],[7,4],[8,4],[8,5],[9,5],[10,5],[10,4],[11,4]];
+const myT=[{col:2,row:3,tier:1},{col:4,row:5,tier:2},{col:7,row:2,tier:3},{col:9,row:3,tier:1},{col:5,row:5,tier:4},{col:10,row:6,tier:2},{col:3,row:6,tier:1},{col:8,row:1,tier:5}];
+const myU=[{col:1.5,row:4,color:'#60e060'},{col:4.2,row:3,color:'#60e060'},{col:6.8,row:3.5,color:'#e06060'},{col:9.3,row:4.8,color:'#60e060'},{col:2.8,row:4,color:'#e0e060'}];
+
+const opPath=[[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4]];
+const opT=[{col:2,row:2,tier:1},{col:5,row:5,tier:2},{col:8,row:3,tier:1},{col:4,row:6,tier:3},{col:10,row:2,tier:1},{col:7,row:6,tier:2}];
+const opU=[{col:3,row:4,color:'#60e060'},{col:7,row:4,color:'#e06060'},{col:5,row:4,color:'#60e060'}];
+
+render('isoMain',12,8,480,30,myPath,myT,myU,false);
+render('isoOpp',12,8,480,30,opPath,opT,opU,true);
+</script>
+</body>
+</html>

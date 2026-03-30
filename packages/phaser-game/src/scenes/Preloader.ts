@@ -1,4 +1,19 @@
 import Phaser from 'phaser';
+import { PRELOAD_TOWER_IDS } from '../constants/preloadAssets';
+
+/** Use WebP if browser supports it, fallback to PNG */
+function assetPath(path: string): string {
+  return supportsWebP ? path.replace(/\.png$/, '.webp') : path;
+}
+
+const supportsWebP = (() => {
+  try {
+    const c = document.createElement('canvas');
+    return c.toDataURL('image/webp').startsWith('data:image/webp');
+  } catch {
+    return false;
+  }
+})();
 
 const UNIT_IDS = [
   'scout_drone',
@@ -8,64 +23,64 @@ const UNIT_IDS = [
   'titan',
 ] as const;
 
-const BASE_TOWER_IDS = ['laser', 'plasma', 'emp', 'shield'] as const;
-
 export class Preloader extends Phaser.Scene {
   constructor() {
     super('Preloader');
   }
 
   preload() {
-    // Tilemap
-    this.load.image('tileset-forest', 'assets/tileset.png');
-    this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');
+    // Field tiles
+    this.load.image('grid-floor', assetPath('assets/tiles/grid-floor.png'));
+    this.load.image('path-tile', assetPath('assets/tiles/path-tile.png'));
+    this.load.image('spawn-tile', assetPath('assets/tiles/spawn-tile.png'));
+    this.load.image('exit-tile', assetPath('assets/tiles/exit-tile.png'));
 
-    for (const id of BASE_TOWER_IDS) {
-      this.load.image(`tower-${id}`, `assets/towers/${id}.png`);
+    for (const id of PRELOAD_TOWER_IDS) {
+      this.load.image(`tower-${id}`, assetPath(`assets/towers/${id}.png`));
     }
 
     // Unit walk-cycle sprite sheets (128x32, 4 frames at 32x32)
     for (const id of UNIT_IDS) {
-      this.load.spritesheet(`unit-${id}`, `assets/units/${id}.png`, {
+      this.load.spritesheet(`unit-${id}`, assetPath(`assets/units/${id}.png`), {
         frameWidth: 32,
         frameHeight: 32,
       });
     }
 
     // Shared unit death effect (128x32, 4 frames at 32x32)
-    this.load.spritesheet('unit-death', 'assets/units/unit-death.png', {
+    this.load.spritesheet('unit-death', assetPath('assets/units/unit-death.png'), {
       frameWidth: 32,
       frameHeight: 32,
     });
 
     // Pressure UI images
-    this.load.image('pressure-defend', 'assets/ui/pressure-defend.png');
-    this.load.image('pressure-attack', 'assets/ui/pressure-attack.png');
-    this.load.image('pressure-invest', 'assets/ui/pressure-invest.png');
-    this.load.image('pressure-panel-bg', 'assets/ui/pressure-panel-bg.png');
+    this.load.image('pressure-defend', assetPath('assets/ui/pressure-defend.png'));
+    this.load.image('pressure-attack', assetPath('assets/ui/pressure-attack.png'));
+    this.load.image('pressure-invest', assetPath('assets/ui/pressure-invest.png'));
+    this.load.image('pressure-panel-bg', assetPath('assets/ui/pressure-panel-bg.png'));
 
     // Match UI images
-    this.load.image('match-victory', 'assets/ui/match-victory.png');
-    this.load.image('match-defeat', 'assets/ui/match-defeat.png');
-    this.load.image('match-draw', 'assets/ui/match-draw.png');
-    this.load.image('ghost-avatar', 'assets/ui/ghost-avatar.png');
+    this.load.image('match-victory', assetPath('assets/ui/match-victory.png'));
+    this.load.image('match-defeat', assetPath('assets/ui/match-defeat.png'));
+    this.load.image('match-draw', assetPath('assets/ui/match-draw.png'));
+    this.load.image('ghost-avatar', assetPath('assets/ui/ghost-avatar.png'));
 
     // Stat icons spritesheet (96x16, 3 icons at 16x16 — but loaded as 32x32 safe fallback)
-    this.load.spritesheet('stat-icons', 'assets/ui/stat-icons.png', {
+    this.load.spritesheet('stat-icons', assetPath('assets/ui/stat-icons.png'), {
       frameWidth: 16,
       frameHeight: 16,
     });
 
     // VFX spritesheets (all in ui/ folder)
-    this.load.spritesheet('pressure-attack-effect', 'assets/ui/pressure-attack-effect.png', {
+    this.load.spritesheet('pressure-attack-effect', assetPath('assets/ui/pressure-attack-effect.png'), {
       frameWidth: 32,
       frameHeight: 32,
     });
-    this.load.spritesheet('ghost-spawn', 'assets/ui/ghost-spawn.png', {
+    this.load.spritesheet('ghost-spawn', assetPath('assets/ui/ghost-spawn.png'), {
       frameWidth: 32,
       frameHeight: 32,
     });
-    this.load.spritesheet('victory-confetti', 'assets/ui/victory-confetti.png', {
+    this.load.spritesheet('victory-confetti', assetPath('assets/ui/victory-confetti.png'), {
       frameWidth: 32,
       frameHeight: 64,
     });

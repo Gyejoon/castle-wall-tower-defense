@@ -67,18 +67,7 @@ export class GameScene extends Phaser.Scene {
 
     this.events.on('shutdown', this.cleanup, this);
 
-    // Tilemap rendering
-    try {
-      const map = this.make.tilemap({ key: FOREST_GATE_MAP.tilemapKey });
-      const tileset = map.addTilesetImage('tileset', FOREST_GATE_MAP.tilesetKey);
-      if (tileset) {
-        map.createLayer('ground', tileset);
-        map.createLayer('path', tileset);
-        map.createLayer('decoration', tileset);
-      }
-    } catch {
-      // Tilemap not loaded
-    }
+    this.renderField();
 
     // Graphics
     this.hoverGraphics = this.add.graphics();
@@ -214,6 +203,33 @@ export class GameScene extends Phaser.Scene {
     EventBus.emit('current-scene-ready', this);
 
     this.waveSystem.start();
+  }
+
+  private renderField(): void {
+    for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
+      for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+        const world = this.gridManager.gridToWorld(x, y);
+        const frameX = (x + y) % 2 === 0 ? world.x - TILE_SIZE : world.x;
+        this.add.sprite(frameX, world.y - TILE_SIZE / 2, 'grid-floor').setDepth(0);
+      }
+    }
+
+    for (const point of FOREST_GATE_MAP.path) {
+      const world = this.gridManager.gridToWorld(point.x, point.y);
+      this.add.image(world.x, world.y, 'path-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1);
+    }
+
+    const spawnWorld = this.gridManager.gridToWorld(
+      FOREST_GATE_MAP.spawnPoint.x,
+      FOREST_GATE_MAP.spawnPoint.y,
+    );
+    this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
+
+    const exitWorld = this.gridManager.gridToWorld(
+      FOREST_GATE_MAP.exitPoint.x,
+      FOREST_GATE_MAP.exitPoint.y,
+    );
+    this.add.image(exitWorld.x, exitWorld.y, 'exit-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
   }
 
   private renderMergeHighlights(currentGridPos: { x: number; y: number }): void {

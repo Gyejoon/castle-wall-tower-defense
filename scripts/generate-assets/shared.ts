@@ -45,6 +45,17 @@ export const PALETTE = {
   // Legacy (일부 스크립트 호환용)
   green:         '#7ab648',
   pink:          '#c03020',
+  // Tier colors
+  tierCommon:    '#c8a04a',  // T1 Common (기존 색상)
+  tierRare:      '#5bc8e8',  // T2 Rare (파란 틴트)
+  tierRareDark:  '#3a90b0',  // T2 Rare 어두운
+  tierHeroic:    '#c040d0',  // T3 Heroic (보라 틴트)
+  tierHeroicDark:'#8020a0',  // T3 Heroic 어두운
+  tierLegendary: '#e04040',  // T4 Legendary (빨강/오렌지)
+  tierLegendaryDark: '#a02020', // T4 Legendary 어두운
+  tierGod:       '#f0d060',  // T5 God (황금)
+  tierGodBright: '#ffe89a',  // T5 God 밝은
+  tierGodDark:   '#c0a030',  // T5 God 어두운
   // Utility
   towerBase:     '#2a1f0a',  // 타워 기단 (어두운 갈색)
 } as const;

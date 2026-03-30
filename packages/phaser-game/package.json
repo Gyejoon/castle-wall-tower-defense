@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "biome check --write ."
   },
   "dependencies": {
     "phaser": "^3.87.0",

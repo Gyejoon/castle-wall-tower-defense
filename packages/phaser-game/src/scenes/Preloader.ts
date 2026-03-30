@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ALL_TOWERS } from '@gld/shared';
 
 const UNIT_IDS = [
   'scout_drone',
@@ -8,7 +9,7 @@ const UNIT_IDS = [
   'titan',
 ] as const;
 
-const BASE_TOWER_IDS = ['laser', 'plasma', 'emp', 'shield'] as const;
+const TOWER_IDS = ALL_TOWERS.map((tower) => tower.id);
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -20,7 +21,7 @@ export class Preloader extends Phaser.Scene {
     this.load.image('tileset-forest', 'assets/tileset.png');
     this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');
 
-    for (const id of BASE_TOWER_IDS) {
+    for (const id of TOWER_IDS) {
       this.load.image(`tower-${id}`, `assets/towers/${id}.png`);
     }
 

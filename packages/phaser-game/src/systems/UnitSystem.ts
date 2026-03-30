@@ -60,7 +60,6 @@ export class UnitSystem {
     const def = UNITS.find((u) => u.id === unitDefId);
     if (!def) return;
     this.spawnQueue.push({ def, remaining: count });
-    EventBus.emit('unit-spawned', { unitType: def.type, count });
   }
 
   private spawnUnit(def: UnitDef): void {
@@ -69,6 +68,8 @@ export class UnitSystem {
     const instanceId = `unit_${this.nextId++}`;
     const startGrid = this.currentPath[0];
     const startWorld = this.currentPathWorld[0];
+
+    EventBus.emit('unit-spawned', { unitType: def.type, count: 1 });
 
     const unitData: ActiveUnit = {
       instanceId,

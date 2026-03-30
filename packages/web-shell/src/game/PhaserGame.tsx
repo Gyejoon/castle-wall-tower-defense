@@ -19,7 +19,6 @@ export function PhaserGame() {
     return () => {
       EventBus.off('game-ready', onReady);
       gameRef.current?.destroy(true);
-      EventBus.removeAllListeners();
       gameRef.current = null;
       setGameReady(false);
     };

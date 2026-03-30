@@ -16,6 +16,7 @@ export class GameScene extends Phaser.Scene {
   private gold = INITIAL_GOLD;
   private selectedTowerId: string | null = null;
   private gameOver = false;
+  private onSelectTower!: (data: { towerDefId: string }) => void;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
   private onSendUnit!: (data: { unitDefId: string; count: number }) => void;
 
@@ -71,11 +72,11 @@ export class GameScene extends Phaser.Scene {
       this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
     });
 
+    this.onSelectTower = (data) => {
+      this.selectedTowerId = data.towerDefId;
+    };
+
     this.onPlaceTower = (data) => {
-      if (data.col < 0 || data.row < 0) {
-        this.selectedTowerId = data.towerDefId;
-        return;
-      }
       this.handlePlaceTower(data.col, data.row, data.towerDefId);
     };
 
@@ -88,6 +89,7 @@ export class GameScene extends Phaser.Scene {
       this.unitSystem.queueUnits(data.unitDefId, affordable);
     };
 
+    EventBus.on('request-select-tower', this.onSelectTower);
     EventBus.on('request-place-tower', this.onPlaceTower);
     EventBus.on('request-send-unit', this.onSendUnit);
 
@@ -99,7 +101,6 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Notify React
     EventBus.emit('game-ready');
     EventBus.emit('gold-changed', { gold: this.gold });
     EventBus.emit('current-scene-ready', this);
@@ -138,19 +139,15 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number) {
     if (this.gameOver) return;
 
-    // Update towers — get damage events
     const unitPositions = this.unitSystem.getUnitPositions();
     const damageEvents = this.towerSystem.update(time, delta, unitPositions);
 
-    // Apply damage to units
     for (const evt of damageEvents) {
       this.unitSystem.applyDamage(evt.unitId, evt.damage);
     }
 
-    // Update units — move along path
     const { reachedExit } = this.unitSystem.update(time, delta);
 
-    // Units reaching exit damage the player
     for (const _unitId of reachedExit) {
       this.playerHp = Math.max(0, this.playerHp - 1);
       EventBus.emit('player-damaged', {
@@ -169,6 +166,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private cleanup() {
+    EventBus.off('request-select-tower', this.onSelectTower);
     EventBus.off('request-place-tower', this.onPlaceTower);
     EventBus.off('request-send-unit', this.onSendUnit);
     this.towerSystem.destroy();

@@ -11,29 +11,16 @@ import { generateMap } from './generate-map';
 async function main() {
   console.log('=== Generating all assets ===\n');
 
-  console.log('[tiles]');
-  const tiles = await generateTiles();
-
-  console.log('\n[towers]');
-  const towers = await generateTowers();
-
-  console.log('\n[units]');
-  const units = await generateUnits();
-
-  console.log('\n[projectiles]');
-  const projectiles = await generateProjectiles();
-
-  console.log('\n[vfx]');
-  const vfx = await generateVfx();
-
-  console.log('\n[ui]');
-  const ui = await generateUi();
-
-  console.log('\n[tileset]');
-  const tileset = await generateTileset();
-
-  console.log('\n[map]');
-  const mapAssets = await generateMap();
+  const [tiles, towers, units, projectiles, vfx, ui, tileset, mapAssets] = await Promise.all([
+    generateTiles().then(r => { console.log('[tiles] done'); return r; }),
+    generateTowers().then(r => { console.log('[towers] done'); return r; }),
+    generateUnits().then(r => { console.log('[units] done'); return r; }),
+    generateProjectiles().then(r => { console.log('[projectiles] done'); return r; }),
+    generateVfx().then(r => { console.log('[vfx] done'); return r; }),
+    generateUi().then(r => { console.log('[ui] done'); return r; }),
+    generateTileset().then(r => { console.log('[tileset] done'); return r; }),
+    generateMap().then(r => { console.log('[map] done'); return r; }),
+  ]);
 
   const allEntries = [
     ...tiles,

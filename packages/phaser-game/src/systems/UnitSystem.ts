@@ -17,6 +17,7 @@ export class UnitSystem {
   private scene: Phaser.Scene;
   private gridManager: GridManager;
   private currentPath: Position[] = [];
+  private currentPathWorld: Position[] = [];
   private nextId = 0;
   private spawnQueue: Array<{ def: UnitDef; remaining: number }> = [];
   private spawnTimer = 0;
@@ -30,6 +31,7 @@ export class UnitSystem {
   setPath(path: Position[]): void {
     const oldPath = this.currentPath;
     this.currentPath = path;
+    this.currentPathWorld = path.map(p => this.gridManager.gridToWorld(p.x, p.y));
 
     // Remap in-flight units to nearest cell on the new path
     if (oldPath.length > 0 && path.length > 0) {
@@ -104,49 +106,39 @@ export class UnitSystem {
     const size = TILE_SIZE * 0.28;
     const color = UnitSystem.UNIT_COLORS[def.type] ?? 0x72f1b8;
 
-    // Shadow
     graphics.fillStyle(0x000000, 0.2);
     graphics.fillEllipse(x, y + size + 2, size * 2, size * 0.6);
 
-    // Body glow
     graphics.fillStyle(color, 0.1);
     graphics.fillCircle(x, y, size * 1.6);
 
-    // Unit body — shape per type
     graphics.fillStyle(color, 0.9);
     switch (def.type) {
       case 'scout_drone':
-        // Small triangle (fast)
         graphics.fillTriangle(x, y - size, x + size, y + size * 0.6, x - size, y + size * 0.6);
         graphics.lineStyle(1, 0xffffff, 0.3);
         graphics.strokeTriangle(x, y - size, x + size, y + size * 0.6, x - size, y + size * 0.6);
         break;
       case 'battle_robot':
-        // Square with notch
         graphics.fillRect(x - size, y - size, size * 2, size * 2);
         graphics.fillStyle(0x0a0a14, 1);
         graphics.fillRect(x - size * 0.3, y - size * 1.1, size * 0.6, size * 0.4);
         break;
       case 'heavy_walker':
-        // Thick hexagon
         this.drawPoly(graphics, x, y, size * 1.1, 6);
         graphics.lineStyle(2, 0xffffff, 0.2);
         this.strokePoly(graphics, x, y, size * 1.1, 6);
         break;
       case 'stealth_drone':
-        // Diamond (stealthy)
         graphics.fillStyle(color, 0.6);
         this.drawPoly(graphics, x, y, size, 4);
-        // Flicker effect via partial alpha
         graphics.lineStyle(1, color, 0.5);
         this.strokePoly(graphics, x, y, size * 1.2, 4);
         break;
       case 'titan':
-        // Large octagon (boss)
         this.drawPoly(graphics, x, y, size * 1.3, 8);
         graphics.lineStyle(2, 0xffffff, 0.3);
         this.strokePoly(graphics, x, y, size * 1.3, 8);
-        // Inner core
         graphics.fillStyle(0xffffff, 0.15);
         graphics.fillCircle(x, y, size * 0.5);
         break;
@@ -154,14 +146,11 @@ export class UnitSystem {
         graphics.fillCircle(x, y, size);
     }
 
-    // HP bar
     const barWidth = TILE_SIZE * 0.7;
     const barHeight = 2;
     const barY = y - size - 7;
-    // BG
     graphics.fillStyle(0x0a0a14, 0.8);
     graphics.fillRect(x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
-    // Fill
     const hpRatio = Math.max(0, hp / def.stats.hp);
     const barColor = hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
     graphics.fillStyle(barColor, 1);
@@ -204,7 +193,6 @@ export class UnitSystem {
   update(time: number, delta: number): { reachedExit: string[] } {
     const reachedExit: string[] = [];
 
-    // Process spawn queue
     this.spawnTimer += delta;
     if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
       this.spawnTimer = 0;
@@ -216,7 +204,6 @@ export class UnitSystem {
       }
     }
 
-    // Move units along path
     const dt = delta / 1000;
 
     for (const [id, unit] of this.units) {
@@ -229,9 +216,8 @@ export class UnitSystem {
         continue;
       }
 
-      // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
-      const targetWorld = this.gridManager.gridToWorld(nextGrid.x, nextGrid.y);
+      const targetWorld = this.currentPathWorld[pathIdx + 1];
       const speed = unit.def.stats.speed * TILE_SIZE; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;
@@ -256,13 +242,19 @@ export class UnitSystem {
     return { reachedExit };
   }
 
+  private unitPositionsBuffer: Array<{ instanceId: string; x: number; y: number; hp: number }> = [];
+
   getUnitPositions(): Array<{ instanceId: string; x: number; y: number; hp: number }> {
-    return Array.from(this.units.values()).map((u) => ({
-      instanceId: u.data.instanceId,
-      x: u.worldX,
-      y: u.worldY,
-      hp: u.data.hp,
-    }));
+    this.unitPositionsBuffer.length = 0;
+    for (const u of this.units.values()) {
+      this.unitPositionsBuffer.push({
+        instanceId: u.data.instanceId,
+        x: u.worldX,
+        y: u.worldY,
+        hp: u.data.hp,
+      });
+    }
+    return this.unitPositionsBuffer;
   }
 
   getActiveUnits(): ActiveUnit[] {

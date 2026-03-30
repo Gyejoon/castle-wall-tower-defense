@@ -33,9 +33,7 @@ export function GamePage() {
 
   const selectTower = (towerId: string) => {
     setSelectedTower(towerId);
-    // Also update Phaser-side selection via keyboard simulation isn't needed;
-    // we emit an event that Game scene can listen to
-    EventBus.emit('request-place-tower', { col: -1, row: -1, towerDefId: towerId });
+    EventBus.emit('request-select-tower', { towerDefId: towerId });
   };
 
   const sendUnit = (unitDefId: string) => {

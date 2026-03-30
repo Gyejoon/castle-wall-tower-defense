@@ -11,6 +11,8 @@ interface TowerInstance {
   lastAttackTime: number;
   colorNum: number;
   worldPos: Position;
+  attackInterval: number;
+  rangeSq: number;
 }
 
 export class TowerSystem {
@@ -50,7 +52,7 @@ export class TowerSystem {
     };
 
     const graphics = this.scene.add.graphics();
-    this.renderTower(graphics, worldPos, def);
+    this.renderTower(graphics, worldPos, def, colorNum);
 
     this.towers.set(instanceId, {
       data: towerData,
@@ -59,6 +61,8 @@ export class TowerSystem {
       lastAttackTime: 0,
       colorNum,
       worldPos,
+      attackInterval: def.stats.attackSpeed > 0 ? 1000 / def.stats.attackSpeed : Infinity,
+      rangeSq: (def.stats.range * TILE_SIZE) ** 2,
     });
 
     EventBus.emit('tower-placed', { col: gridX, row: gridY, towerId: towerDefId, success: true });
@@ -66,23 +70,19 @@ export class TowerSystem {
     return towerData;
   }
 
-  private renderTower(graphics: Phaser.GameObjects.Graphics, pos: Position, def: TowerDef): void {
-    const color = parseInt(def.color.replace('#', ''), 16);
+  private renderTower(graphics: Phaser.GameObjects.Graphics, pos: Position, def: TowerDef, color: number): void {
     const size = TILE_SIZE * 0.35;
 
     graphics.clear();
 
-    // Base platform (dark circle)
     graphics.fillStyle(0x0a0a14, 0.8);
     graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.45);
     graphics.lineStyle(1, color, 0.3);
     graphics.strokeCircle(pos.x, pos.y, TILE_SIZE * 0.45);
 
-    // Glow under tower
     graphics.fillStyle(color, 0.08);
     graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.6);
 
-    // Tower shape with outline
     graphics.fillStyle(color, 0.9);
 
     switch (def.shape) {
@@ -93,7 +93,6 @@ export class TowerSystem {
         graphics.fillCircle(pos.x, pos.y, size * 0.8);
         graphics.lineStyle(2, color, 1);
         graphics.strokeCircle(pos.x, pos.y, size * 0.8);
-        // Inner ring
         graphics.lineStyle(1, 0xffffff, 0.3);
         graphics.strokeCircle(pos.x, pos.y, size * 0.4);
         break;
@@ -101,11 +100,9 @@ export class TowerSystem {
         this.drawShape(graphics, pos, size, 6, -Math.PI / 6);
         break;
       case 'shield':
-        // Shield: rounded rectangle with chevron
         graphics.fillRoundedRect(pos.x - size * 0.65, pos.y - size * 0.85, size * 1.3, size * 1.7, 3);
         graphics.lineStyle(2, color, 1);
         graphics.strokeRoundedRect(pos.x - size * 0.65, pos.y - size * 0.85, size * 1.3, size * 1.7, 3);
-        // Chevron mark
         graphics.lineStyle(2, 0xffffff, 0.4);
         graphics.beginPath();
         graphics.moveTo(pos.x - 3, pos.y - 2);
@@ -118,7 +115,6 @@ export class TowerSystem {
         break;
     }
 
-    // Range indicator (dashed circle feel via dots)
     const rangePx = def.stats.range * TILE_SIZE;
     if (rangePx > 0) {
       const dots = 32;
@@ -146,7 +142,6 @@ export class TowerSystem {
       points.push(new Phaser.Geom.Point(pos.x + r * Math.cos(angle), pos.y + r * Math.sin(angle)));
     }
     g.fillPoints(points, true);
-    // Outline
     g.lineStyle(1.5, 0xffffff, 0.25);
     g.beginPath();
     g.moveTo(points[0].x, points[0].y);
@@ -169,14 +164,10 @@ export class TowerSystem {
     this.damageEventsBuffer.length = 0;
 
     for (const tower of this.towers.values()) {
-      const { def, data } = tower;
-      if (def.stats.attackSpeed <= 0) continue;
-
-      const attackInterval = 1000 / def.stats.attackSpeed;
-      if (time - tower.lastAttackTime < attackInterval) continue;
+      if (time - tower.lastAttackTime < tower.attackInterval) continue;
 
       const towerWorld = tower.worldPos;
-      const rangeSq = (def.stats.range * TILE_SIZE) ** 2;
+      const rangeSq = tower.rangeSq;
 
       let closestUnit: (typeof unitPositions)[0] | null = null;
       let closestDistSq = Infinity;
@@ -196,7 +187,7 @@ export class TowerSystem {
         tower.lastAttackTime = time;
         this.damageEventsBuffer.push({
           unitId: closestUnit.instanceId,
-          damage: def.stats.damage,
+          damage: tower.def.stats.damage,
         });
         this.attackLines.push({
           x1: towerWorld.x, y1: towerWorld.y,
@@ -206,7 +197,6 @@ export class TowerSystem {
       }
     }
 
-    // Render attack lines with in-place compaction
     this.attackGraphics.clear();
     let write = 0;
     for (let i = 0; i < this.attackLines.length; i++) {
@@ -214,16 +204,15 @@ export class TowerSystem {
       line.ttl -= delta;
       if (line.ttl <= 0) continue;
       const alpha = line.ttl / 80;
-      this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
-      this.attackGraphics.beginPath();
-      this.attackGraphics.moveTo(line.x1, line.y1);
-      this.attackGraphics.lineTo(line.x2, line.y2);
-      this.attackGraphics.strokePath();
-      this.attackGraphics.lineStyle(4, line.color, alpha * 0.2);
-      this.attackGraphics.beginPath();
-      this.attackGraphics.moveTo(line.x1, line.y1);
-      this.attackGraphics.lineTo(line.x2, line.y2);
-      this.attackGraphics.strokePath();
+      const g = this.attackGraphics;
+      // Glow layer then core layer
+      for (const [w, a] of [[4, alpha * 0.2], [2, alpha * 0.8]] as const) {
+        g.lineStyle(w, line.color, a);
+        g.beginPath();
+        g.moveTo(line.x1, line.y1);
+        g.lineTo(line.x2, line.y2);
+        g.strokePath();
+      }
       if (line.ttl > 50) {
         this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
         this.attackGraphics.fillCircle(line.x2, line.y2, 4);

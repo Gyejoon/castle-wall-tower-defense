@@ -1,4 +1,5 @@
-import { makeCanvas, saveCanvas, PALETTE, TILE_SIZE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, drawStar, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, drawStar, addGlow, type ManifestEntry } from './shared';
+import type { SKRSContext2D } from '@napi-rs/canvas';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
@@ -22,13 +23,13 @@ const TOWERS: TowerDef[] = [
   { id: 'stasis_field', color: PALETTE.stasis, shape: 'star', tier: 2 },
 ];
 
-function drawTowerBase(ctx: any, ox: number, cy: number) {
+function drawTowerBase(ctx: SKRSContext2D, ox: number, cy: number) {
   // Dark platform circle at bottom
   fillCircle(ctx, ox + 16, cy + 26, 10, PALETTE.towerBase);
   drawCircle(ctx, ox + 16, cy + 26, 10, hexToRgba('#333344', 0.5));
 }
 
-function drawTowerShape(ctx: any, ox: number, oy: number, tower: TowerDef) {
+function drawTowerShape(ctx: SKRSContext2D, ox: number, oy: number, tower: TowerDef) {
   const cx = ox + 16;
   const cy = oy + 14;
 
@@ -97,7 +98,7 @@ function drawTowerShape(ctx: any, ox: number, oy: number, tower: TowerDef) {
   }
 }
 
-function drawFireFrame(ctx: any, ox: number, oy: number, tower: TowerDef, frame: number) {
+function drawFireFrame(ctx: SKRSContext2D, ox: number, oy: number, tower: TowerDef, frame: number) {
   const cx = ox + 16;
   const cy = oy + 14;
 

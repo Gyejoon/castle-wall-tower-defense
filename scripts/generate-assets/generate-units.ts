@@ -1,9 +1,10 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, type ManifestEntry } from './shared';
+import type { SKRSContext2D } from '@napi-rs/canvas';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/units';
 
-function drawShadow(ctx: any, ox: number) {
+function drawShadow(ctx: SKRSContext2D, ox: number) {
   const cx = ox + 16;
   const cy = 28;
   for (let dx = -6; dx <= 6; dx++) {
@@ -15,7 +16,7 @@ function drawShadow(ctx: any, ox: number) {
   }
 }
 
-function drawScoutDrone(ctx: any, ox: number, frame: number) {
+function drawScoutDrone(ctx: SKRSContext2D, ox: number, frame: number) {
   const cx = ox + 16, cy = 16;
   const bobY = frame === 1 ? -1 : frame === 3 ? 1 : 0;
   drawLine(ctx, cx - 5, cy - 4 + bobY, cx + 5, cy + bobY, PALETTE.scoutDrone);
@@ -34,7 +35,7 @@ function drawScoutDrone(ctx: any, ox: number, frame: number) {
   }
 }
 
-function drawBattleRobot(ctx: any, ox: number, frame: number) {
+function drawBattleRobot(ctx: SKRSContext2D, ox: number, frame: number) {
   const cx = ox + 16, cy = 14;
   drawRect(ctx, cx - 6, cy - 5, 12, 10, hexToRgba(PALETTE.battleRobot, 0.7));
   drawLine(ctx, cx - 6, cy - 5, cx + 5, cy - 5, PALETTE.battleRobot);
@@ -50,7 +51,7 @@ function drawBattleRobot(ctx: any, ox: number, frame: number) {
   drawRect(ctx, cx + 1, cy + 5, 3, 5 + rightLegOff, hexToRgba(PALETTE.battleRobot, 0.8));
 }
 
-function drawHeavyWalker(ctx: any, ox: number, frame: number) {
+function drawHeavyWalker(ctx: SKRSContext2D, ox: number, frame: number) {
   const cx = ox + 16, cy = 13;
   const bounceY = (frame === 1 || frame === 3) ? 1 : 0;
   drawPolygon(ctx, cx, cy + bounceY, 10, 6, PALETTE.heavyWalker, Math.PI / 6);
@@ -63,7 +64,7 @@ function drawHeavyWalker(ctx: any, ox: number, frame: number) {
   drawRect(ctx, cx + 2, cy + 10 + bounceY, 4, 4 + rightOff, hexToRgba(PALETTE.heavyWalker, 0.8));
 }
 
-function drawStealthDrone(ctx: any, ox: number, frame: number) {
+function drawStealthDrone(ctx: SKRSContext2D, ox: number, frame: number) {
   const cx = ox + 16, cy = 16;
   const alpha = (frame === 1 || frame === 3) ? 0.5 : 0.8;
   const s = 7;
@@ -80,7 +81,7 @@ function drawStealthDrone(ctx: any, ox: number, frame: number) {
   setPixel(ctx, cx, cy, hexToRgba(PALETTE.white, alpha));
 }
 
-function drawTitan(ctx: any, ox: number, frame: number) {
+function drawTitan(ctx: SKRSContext2D, ox: number, frame: number) {
   const cx = ox + 16, cy = 14;
   drawPolygon(ctx, cx, cy, 12, 8, PALETTE.titan, Math.PI / 8);
   fillCircle(ctx, cx, cy, 9, hexToRgba(PALETTE.titan, 0.4));
@@ -95,7 +96,7 @@ function drawTitan(ctx: any, ox: number, frame: number) {
   drawRect(ctx, cx + 2 - offset, cy + 12, 5, 5, hexToRgba(PALETTE.titan, 0.7));
 }
 
-const DRAW_FNS: Record<string, (ctx: any, ox: number, frame: number) => void> = {
+const DRAW_FNS: Record<string, (ctx: SKRSContext2D, ox: number, frame: number) => void> = {
   scout_drone: drawScoutDrone,
   battle_robot: drawBattleRobot,
   heavy_walker: drawHeavyWalker,

@@ -12,6 +12,7 @@ export interface GameEventMap {
   'wave-changed': { wave: number };
 
   // React → Game
+  'request-select-tower': { towerDefId: string };
   'request-place-tower': { col: number; row: number; towerDefId: string };
   'request-send-unit': { unitDefId: string; count: number };
   'request-start-game': undefined;

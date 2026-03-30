@@ -8,15 +8,21 @@ const UNIT_IDS = [
   'titan',
 ] as const;
 
+const BASE_TOWER_IDS = ['laser', 'plasma', 'emp', 'shield'] as const;
+
 export class Preloader extends Phaser.Scene {
   constructor() {
     super('Preloader');
   }
 
   preload() {
-    // Tileset and tilemap
-    this.load.image('tileset-forest', 'assets/tileset.png');
-    this.load.tilemapTiledJSON('tilemap-forest-gate', 'assets/maps/forest-gate.json');
+    this.load.image('grid-floor', 'assets/tiles/grid-floor.png');
+    this.load.image('spawn-tile', 'assets/tiles/spawn-tile.png');
+    this.load.image('exit-tile', 'assets/tiles/exit-tile.png');
+
+    for (const id of BASE_TOWER_IDS) {
+      this.load.image(`tower-${id}`, `assets/towers/${id}.png`);
+    }
 
     // Unit walk-cycle sprite sheets (128x32, 4 frames at 32x32)
     for (const id of UNIT_IDS) {
@@ -30,6 +36,38 @@ export class Preloader extends Phaser.Scene {
     this.load.spritesheet('unit-death', 'assets/units/unit-death.png', {
       frameWidth: 32,
       frameHeight: 32,
+    });
+
+    // Pressure UI images
+    this.load.image('pressure-defend', 'assets/ui/pressure-defend.png');
+    this.load.image('pressure-attack', 'assets/ui/pressure-attack.png');
+    this.load.image('pressure-invest', 'assets/ui/pressure-invest.png');
+    this.load.image('pressure-panel-bg', 'assets/ui/pressure-panel-bg.png');
+
+    // Match UI images
+    this.load.image('match-victory', 'assets/ui/match-victory.png');
+    this.load.image('match-defeat', 'assets/ui/match-defeat.png');
+    this.load.image('match-draw', 'assets/ui/match-draw.png');
+    this.load.image('ghost-avatar', 'assets/ui/ghost-avatar.png');
+
+    // Stat icons spritesheet (96x16, 3 icons at 16x16 — but loaded as 32x32 safe fallback)
+    this.load.spritesheet('stat-icons', 'assets/ui/stat-icons.png', {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
+
+    // VFX spritesheets (all in ui/ folder)
+    this.load.spritesheet('pressure-attack-effect', 'assets/ui/pressure-attack-effect.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+    this.load.spritesheet('ghost-spawn', 'assets/ui/ghost-spawn.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+    this.load.spritesheet('victory-confetti', 'assets/ui/victory-confetti.png', {
+      frameWidth: 32,
+      frameHeight: 64,
     });
   }
 
@@ -56,6 +94,39 @@ export class Preloader extends Phaser.Scene {
       }),
       frameRate: 10,
       repeat: 0,
+    });
+
+    // Pressure attack VFX animation
+    this.anims.create({
+      key: 'pressure-attack-effect',
+      frames: this.anims.generateFrameNumbers('pressure-attack-effect', {
+        start: 0,
+        end: 3,
+      }),
+      frameRate: 10,
+      repeat: 0,
+    });
+
+    // Ghost spawn VFX animation
+    this.anims.create({
+      key: 'ghost-spawn',
+      frames: this.anims.generateFrameNumbers('ghost-spawn', {
+        start: 0,
+        end: 3,
+      }),
+      frameRate: 8,
+      repeat: 0,
+    });
+
+    // Victory confetti VFX animation
+    this.anims.create({
+      key: 'victory-confetti',
+      frames: this.anims.generateFrameNumbers('victory-confetti', {
+        start: 0,
+        end: 3,
+      }),
+      frameRate: 6,
+      repeat: 2,
     });
 
     this.scene.start('Game');

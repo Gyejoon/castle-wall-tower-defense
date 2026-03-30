@@ -1,6 +1,6 @@
 export type PlacementFailureReason =
-  | 'out_of_bounds'
-  | 'on_path'
+  | 'combat_phase'
+  | 'insufficient_gold'
   | 'occupied'
-  | 'invalid_placement_point'
-  | 'point_occupied';
+  | 'blocked_path'
+  | 'out_of_bounds';

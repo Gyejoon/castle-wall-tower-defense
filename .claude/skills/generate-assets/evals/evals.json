@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "게임 타워 스프라이트를 생성해줘",
-      "expected_output": "scripts/generate-assets/shared.ts와 generate-towers.ts를 작성하고 실행하여 packages/web-shell/public/assets/towers/ 에 9개 타워 static PNG + 8개 fire animation PNG를 생성",
+      "expected_output": "scripts/generate-assets/shared.ts와 generate-towers.ts를 작성하고 실행하여 packages/web-shell/public/assets/towers/ 에 9개 타워 static PNG + 9개 fire animation PNG를 생성",
       "files": []
     },
     {

@@ -1,502 +1,416 @@
-import { makeCanvas, saveCanvas, hexToRgba, drawRect, setPixel, fillCircle, type ManifestEntry } from './shared';
+/**
+ * 2.5D 픽셀 아트 타일셋 생성 — Tiled 호환 스프라이트시트
+ *
+ * 타일 ID 배치 (20열 x 행):
+ *  0: grass_light    1: grass_dark     2: dirt           3: dirt_dark      4: stone_floor
+ *  5: stone_dark_fl  6: water          7: water_edge     8: bridge_h       9: bridge_v
+ * 10: tree_small     11: tree_large    12: rock_small    13: rock_large    14: bush
+ * 15: flower         16: stairs_up     17: stairs_down   18: wall_h        19: wall_v
+ * 20: gate           21: fence_h       22: fence_v       23: torch         24: flag
+ * 25: signpost       26: spawn_cave    27: exit_gate     28: placement_pt  29: placement_occ
+ * 30: grass_path_l   31: grass_path_r  32: path_corner   33: cliff_edge    34: waterfall
+ */
+import { makeCanvas, saveCanvas, PALETTE, TILE_SIZE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, type ManifestEntry } from './shared';
+import { mkdirSync } from 'fs';
 
-export const TILESET_COLS = 8;
-export const TILESET_ROWS = 3;
-export const TILE = 32;
-const OUTPUT_PATH = 'packages/web-shell/public/assets/tileset.png';
+const OUTPUT_DIR = 'packages/web-shell/public/assets/tiles';
+const COLS = 10;
+const TILE = TILE_SIZE; // 32
 
-// Medieval fantasy palette (grass/terrain focused)
-const C = {
-  grassLight:     '#4a7c3f',
-  grassDark:      '#3d6934',
-  grassHighlight: '#5a9c4f',
-  grassShadow:    '#2d5228',
-  dirt:           '#8b6b47',
-  dirtDark:       '#7a5c3a',
-  dirtHighlight:  '#a07c55',
-  dirtShadow:     '#5a3d22',
-  leavesLight:    '#2d5a1e',
-  leavesDark:     '#1e3e14',
-  leavesHighlight:'#3d7a2e',
-  trunk:          '#5a3b1e',
-  trunkDark:      '#3e2710',
-  rockLight:      '#6b6b6b',
-  rockDark:       '#555555',
-  rockHighlight:  '#8a8a8a',
-  flowerPink:     '#e84393',
-  flowerYellow:   '#fdcb6e',
-  waterDeep:      '#2980b9',
-  waterShallow:   '#3498db',
-  waterHighlight: '#5dade2',
-  goldLight:      '#f1c40f',
-  goldDark:       '#e2b714',
-  spawnGreen:     '#2cb67d',
-  exitRed:        '#e53170',
-  bridgeWood:     '#8b6b47',
-  bridgePlank:    '#a07c55',
-  bridgeRail:     '#5a3b1e',
-  shadow:         'rgba(0,0,0,0.25)',
-  shadowDark:     'rgba(0,0,0,0.45)',
-} as const;
+// 2.5D helper: 하단 어둡게, 상단 밝게 음영 그라데이션
+function shade25D(ctx: any, ox: number, oy: number, baseColor: string, darkColor: string, lightColor: string) {
+  // Bottom 1/3 darker
+  drawRect(ctx, ox, oy + TILE * 0.66, TILE, TILE * 0.34, darkColor);
+  // Top highlight strip
+  drawRect(ctx, ox, oy, TILE, 2, hexToRgba(lightColor, 0.3));
+}
 
-// Draw a 2.5D depth shadow on bottom/right edges
-function addDepthShadow(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Bottom shadow strip (2px)
-  for (let x = 0; x < TILE; x++) {
-    setPixel(ctx, ox + x, oy + TILE - 2, 'rgba(0,0,0,0.20)');
-    setPixel(ctx, ox + x, oy + TILE - 1, 'rgba(0,0,0,0.35)');
+// Tile drawing functions
+function drawGrassLight(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  // Grass texture
+  for (let i = 0; i < 12; i++) {
+    const x = ox + ((i * 7 + 3) % 30);
+    const y = oy + ((i * 11 + 5) % 30);
+    setPixel(ctx, x, y, hexToRgba(PALETTE.edgeHighlight, 0.4));
   }
-  // Right shadow strip (1px)
-  for (let y = 0; y < TILE; y++) {
-    setPixel(ctx, ox + TILE - 1, oy + y, 'rgba(0,0,0,0.20)');
+  shade25D(ctx, ox, oy, PALETTE.gridLight, hexToRgba(PALETTE.gridDark, 0.2), PALETTE.edgeHighlight);
+}
+
+function drawGrassDark(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  for (let i = 0; i < 10; i++) {
+    const x = ox + ((i * 9 + 2) % 30);
+    const y = oy + ((i * 13 + 7) % 30);
+    setPixel(ctx, x, y, hexToRgba(PALETTE.gridLine, 0.3));
   }
-  // Top highlight (1px)
-  for (let x = 1; x < TILE - 1; x++) {
-    setPixel(ctx, ox + x, oy + 1, 'rgba(255,255,255,0.10)');
+  shade25D(ctx, ox, oy, PALETTE.gridDark, hexToRgba('#3a6a18', 0.3), PALETTE.gridLight);
+}
+
+function drawDirt(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.dirtPath);
+  // Pebbles
+  const pebbles = [[4,8],[12,5],[22,14],[8,22],[18,26],[26,9]];
+  for (const [px, py] of pebbles) {
+    setPixel(ctx, ox + px, oy + py, PALETTE.stoneDark);
   }
+  shade25D(ctx, ox, oy, PALETTE.dirtPath, hexToRgba(PALETTE.dirtDark, 0.3), PALETTE.woodLight);
 }
 
-// Scatter noise pixels for texture
-function addGrassTexture(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number, baseColor: string): void {
-  const seed = ox * 7 + oy * 13;
-  for (let i = 0; i < 18; i++) {
-    const nx = (seed * (i + 3) * 17) % (TILE - 2) + 1;
-    const ny = (seed * (i + 7) * 11) % (TILE - 2) + 1;
-    const bright = i % 3 === 0;
-    setPixel(ctx, ox + nx, oy + ny, bright ? hexToRgba(C.grassHighlight, 0.4) : hexToRgba(C.grassShadow, 0.25));
-  }
+function drawDirtDark(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.dirtDark);
+  shade25D(ctx, ox, oy, PALETTE.dirtDark, hexToRgba('#5a4a20', 0.3), PALETTE.dirtPath);
 }
 
-function addDirtTexture(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  const seed = ox * 11 + oy * 5;
-  for (let i = 0; i < 14; i++) {
-    const nx = (seed * (i + 2) * 19) % (TILE - 2) + 1;
-    const ny = (seed * (i + 9) * 7) % (TILE - 2) + 1;
-    const bright = i % 4 === 0;
-    setPixel(ctx, ox + nx, oy + ny, bright ? hexToRgba(C.dirtHighlight, 0.5) : hexToRgba(C.dirtShadow, 0.35));
-  }
+function drawStoneFloor(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stone);
+  // Stone block lines
+  drawLine(ctx, ox, oy + 16, ox + 32, oy + 16, hexToRgba(PALETTE.stoneDark, 0.3));
+  drawLine(ctx, ox + 16, oy, ox + 16, oy + 16, hexToRgba(PALETTE.stoneDark, 0.3));
+  drawLine(ctx, ox + 8, oy + 16, ox + 8, oy + 32, hexToRgba(PALETTE.stoneDark, 0.3));
+  drawLine(ctx, ox + 24, oy + 16, ox + 24, oy + 32, hexToRgba(PALETTE.stoneDark, 0.3));
+  shade25D(ctx, ox, oy, PALETTE.stone, hexToRgba(PALETTE.stoneDark, 0.2), PALETTE.stoneLight);
 }
 
-// === Tile drawing functions ===
-
-function drawGrassLight(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  addDepthShadow(ctx, ox, oy);
+function drawStoneDarkFloor(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stoneDark);
+  shade25D(ctx, ox, oy, PALETTE.stoneDark, hexToRgba('#3a3a3a', 0.3), PALETTE.stone);
 }
 
-function drawGrassDark(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassDark);
-  addGrassTexture(ctx, ox, oy, C.grassDark);
-  addDepthShadow(ctx, ox, oy);
+function drawWater(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, '#2060a0');
+  // Wave highlights
+  drawLine(ctx, ox + 4, oy + 8, ox + 12, oy + 8, hexToRgba('#40a0e0', 0.5));
+  drawLine(ctx, ox + 18, oy + 16, ox + 28, oy + 16, hexToRgba('#40a0e0', 0.5));
+  drawLine(ctx, ox + 8, oy + 24, ox + 20, oy + 24, hexToRgba('#40a0e0', 0.4));
 }
 
-function drawPathH(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Grass side strips
-  drawRect(ctx, ox, oy, TILE, 8, C.grassDark);
-  drawRect(ctx, ox, oy + TILE - 8, TILE, 8, C.grassDark);
-  // Dirt path center
-  drawRect(ctx, ox, oy + 8, TILE, TILE - 16, C.dirt);
-  addDirtTexture(ctx, ox, oy + 8);
-  // Path edges (slightly darker)
-  drawRect(ctx, ox, oy + 8, TILE, 1, C.dirtShadow);
-  drawRect(ctx, ox, oy + TILE - 9, TILE, 1, C.dirtShadow);
-  addDepthShadow(ctx, ox, oy);
+function drawWaterEdge(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, 16, PALETTE.dirtPath);
+  drawRect(ctx, ox, oy + 16, TILE, 16, '#2060a0');
+  drawLine(ctx, ox, oy + 16, ox + 32, oy + 16, hexToRgba('#40a0e0', 0.6));
 }
 
-function drawPathV(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Grass side strips
-  drawRect(ctx, ox, oy, 8, TILE, C.grassDark);
-  drawRect(ctx, ox + TILE - 8, oy, 8, TILE, C.grassDark);
-  // Dirt path center
-  drawRect(ctx, ox + 8, oy, TILE - 16, TILE, C.dirt);
-  addDirtTexture(ctx, ox + 8, oy);
-  // Path edges
-  drawRect(ctx, ox + 8, oy, 1, TILE, C.dirtShadow);
-  drawRect(ctx, ox + TILE - 9, oy, 1, TILE, C.dirtShadow);
-  addDepthShadow(ctx, ox, oy);
-}
-
-function drawPathCorner(
-  ctx: ReturnType<typeof makeCanvas>['ctx'],
-  ox: number, oy: number,
-  variant: 'ne' | 'nw' | 'se' | 'sw'
-): void {
-  // Fill all with grass
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassDark);
-
-  // Dirt path region — L-shaped
-  const pathW = TILE - 16; // 16px wide path center
-  const pathStart = 8;
-
-  if (variant === 'ne') {
-    // Path opens toward North and East: arrives from west, exits north
-    // Dirt: right half horizontal strip + vertical top strip on right side
-    drawRect(ctx, ox + pathStart, oy + pathStart, TILE - pathStart, pathW, C.dirt); // right horizontal
-    drawRect(ctx, ox + pathStart, oy, pathW, pathStart, C.dirt); // vertical top
-    // Grass: left portion of horizontal + bottom-left corner
-    drawRect(ctx, ox, oy + pathStart, pathStart, pathW, C.grassDark);
-    drawRect(ctx, ox, oy, pathStart, pathStart + pathW, C.grassDark); // left+bottom-left
-    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark); // right remainder (east edge)
-  } else if (variant === 'nw') {
-    // Path opens toward North and West: arrives from east, exits north
-    // Dirt: left half horizontal strip + vertical top strip on left side
-    drawRect(ctx, ox, oy + pathStart, TILE - pathStart, pathW, C.dirt); // left horizontal
-    drawRect(ctx, ox + pathStart, oy, pathW, pathStart, C.dirt); // vertical top
-    // Grass: right portion of horizontal + bottom-right corner
-    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark);
-    drawRect(ctx, ox + pathStart + pathW, oy, pathStart, pathStart + pathW, C.grassDark); // right+bottom-right
-    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark); // top-left corner
-  } else if (variant === 'se') {
-    // Path opens toward South and East: arrives from west, exits south
-    // Dirt: right half horizontal strip + vertical bottom strip on right side
-    drawRect(ctx, ox + pathStart, oy + pathStart, TILE - pathStart, pathW, C.dirt); // right horizontal
-    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt); // vertical bottom
-    // Grass: left portion + top-left corner
-    drawRect(ctx, ox, oy + pathStart, pathStart, pathW, C.grassDark);
-    drawRect(ctx, ox, oy + pathStart + pathW, pathStart, pathStart, C.grassDark); // bottom-left
-    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark); // right remainder
-  } else {
-    // sw: Path opens toward South and West: arrives from east, exits south
-    // Dirt: left half horizontal strip + vertical bottom strip on left side
-    drawRect(ctx, ox, oy + pathStart, TILE - pathStart, pathW, C.dirt); // left horizontal
-    drawRect(ctx, ox + pathStart, oy + pathStart + pathW, pathW, pathStart, C.dirt); // vertical bottom
-    // Grass: right portion + top-right corner
-    drawRect(ctx, ox + pathStart + pathW, oy + pathStart, pathStart, pathW, C.grassDark);
-    drawRect(ctx, ox + pathStart + pathW, oy + pathStart + pathW, pathStart, pathStart, C.grassDark); // bottom-right
-    drawRect(ctx, ox, oy, pathStart, pathStart, C.grassDark); // top-left corner (grass)
-  }
-
-  addDirtTexture(ctx, ox, oy);
-  addDepthShadow(ctx, ox, oy);
-}
-
-function drawPathSpawn(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Base: horizontal path
-  drawPathH(ctx, ox, oy);
-  // Green glow circle overlay
-  const cx = ox + TILE / 2, cy = oy + TILE / 2;
-  for (let r = 9; r > 0; r--) {
-    const alpha = 0.06 * (10 - r) / 9;
-    fillCircle(ctx, cx, cy, r, hexToRgba(C.spawnGreen, alpha));
-  }
-  fillCircle(ctx, cx, cy, 4, hexToRgba(C.spawnGreen, 0.7));
-  fillCircle(ctx, cx, cy, 2, hexToRgba(C.spawnGreen, 0.9));
-  // Arrow pointing right
-  for (let i = 0; i < 5; i++) {
-    const arrowX = cx - 3 + i;
-    const halfH = Math.round((5 - i) * 0.6);
-    for (let j = -halfH; j <= halfH; j++) {
-      setPixel(ctx, arrowX, cy + j, C.spawnGreen);
-    }
+function drawBridgeH(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, '#2060a0');
+  // Bridge planks
+  drawRect(ctx, ox, oy + 8, TILE, 16, PALETTE.wood);
+  drawRect(ctx, ox, oy + 8, TILE, 2, PALETTE.woodLight);
+  drawRect(ctx, ox, oy + 22, TILE, 2, PALETTE.woodDark);
+  // Railing
+  for (let x = 0; x < 32; x += 8) {
+    drawRect(ctx, ox + x, oy + 6, 2, 4, PALETTE.woodDark);
+    drawRect(ctx, ox + x, oy + 24, 2, 4, PALETTE.woodDark);
   }
 }
 
-function drawPathExit(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Base: horizontal path
-  drawPathH(ctx, ox, oy);
-  // Red glow
-  const cx = ox + TILE / 2, cy = oy + TILE / 2;
-  for (let r = 9; r > 0; r--) {
-    const alpha = 0.06 * (10 - r) / 9;
-    fillCircle(ctx, cx, cy, r, hexToRgba(C.exitRed, alpha));
-  }
-  fillCircle(ctx, cx, cy, 4, hexToRgba(C.exitRed, 0.7));
-  fillCircle(ctx, cx, cy, 2, hexToRgba(C.exitRed, 0.9));
-  // X mark
-  for (let i = -3; i <= 3; i++) {
-    setPixel(ctx, cx + i, cy + i, C.exitRed);
-    setPixel(ctx, cx - i, cy + i, C.exitRed);
+function drawBridgeV(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, '#2060a0');
+  drawRect(ctx, ox + 8, oy, 16, TILE, PALETTE.wood);
+  drawRect(ctx, ox + 8, oy, 2, TILE, PALETTE.woodLight);
+  drawRect(ctx, ox + 22, oy, 2, TILE, PALETTE.woodDark);
+  for (let y = 0; y < 32; y += 8) {
+    drawRect(ctx, ox + 6, oy + y, 4, 2, PALETTE.woodDark);
+    drawRect(ctx, ox + 24, oy + y, 4, 2, PALETTE.woodDark);
   }
 }
 
-function drawTreeSmall(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
+function drawTreeSmall(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark); // bg
   // Trunk
-  drawRect(ctx, ox + 14, oy + 22, 4, 8, C.trunk);
-  drawRect(ctx, ox + 15, oy + 22, 2, 8, C.trunkDark);
-  // Canopy (triangle-ish)
-  for (let row = 0; row < 12; row++) {
-    const halfW = Math.round(row * 0.7) + 1;
-    const shade = row < 4 ? C.leavesHighlight : (row < 9 ? C.leavesLight : C.leavesDark);
-    drawRect(ctx, ox + 16 - halfW, oy + 8 + row, halfW * 2, 1, shade);
+  drawRect(ctx, ox + 14, oy + 18, 4, 10, PALETTE.woodDark);
+  drawRect(ctx, ox + 14, oy + 18, 1, 10, PALETTE.wood);
+  // Canopy (circle, 2.5D: darker bottom)
+  fillCircle(ctx, ox + 16, oy + 14, 8, '#2d6a2d');
+  fillCircle(ctx, ox + 16, oy + 12, 6, '#3a8a3a');
+  setPixel(ctx, ox + 14, oy + 10, hexToRgba(PALETTE.edgeHighlight, 0.5));
+  // Shadow on ground
+  for (let dx = -6; dx <= 6; dx++) {
+    setPixel(ctx, ox + 16 + dx, oy + 28, hexToRgba('#000000', 0.15));
   }
-  // Shadow drop
-  for (let x = 12; x < 20; x++) {
-    setPixel(ctx, ox + x, oy + TILE - 2, 'rgba(0,0,0,0.3)');
-  }
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawTreeLarge(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassDark);
-  addGrassTexture(ctx, ox, oy, C.grassDark);
-  // Trunk (wider)
-  drawRect(ctx, ox + 12, oy + 20, 8, 10, C.trunk);
-  drawRect(ctx, ox + 13, oy + 20, 4, 10, C.trunkDark);
-  // Layered canopy
-  for (let row = 0; row < 18; row++) {
-    const halfW = Math.round(row * 0.75) + 1;
-    const shade = row < 5 ? C.leavesHighlight : (row < 12 ? C.leavesLight : C.leavesDark);
-    drawRect(ctx, ox + 16 - halfW, oy + 2 + row, halfW * 2, 1, shade);
-  }
-  // Dark underside
-  for (let x = 8; x < 24; x++) {
-    setPixel(ctx, ox + x, oy + 20, 'rgba(0,0,0,0.2)');
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawTreeLarge(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  // Thick trunk
+  drawRect(ctx, ox + 12, oy + 16, 8, 14, PALETTE.woodDark);
+  drawRect(ctx, ox + 12, oy + 16, 2, 14, PALETTE.wood);
+  // Large canopy
+  fillCircle(ctx, ox + 16, oy + 10, 12, '#2d6a2d');
+  fillCircle(ctx, ox + 16, oy + 8, 9, '#3a8a3a');
+  fillCircle(ctx, ox + 14, oy + 6, 5, '#4a9a4a');
 }
 
-function drawRockSmall(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Rock shape
-  const cx = ox + 16, cy = oy + 18;
-  fillCircle(ctx, cx, cy, 7, C.rockDark);
-  fillCircle(ctx, cx - 1, cy - 1, 6, C.rockLight);
-  // Highlight
-  fillCircle(ctx, cx - 2, cy - 2, 3, hexToRgba(C.rockHighlight, 0.6));
-  setPixel(ctx, cx - 2, cy - 3, C.rockHighlight);
-  // Shadow at base
-  for (let x = cx - 6; x <= cx + 6; x++) {
-    setPixel(ctx, x, cy + 7, 'rgba(0,0,0,0.35)');
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawRockSmall(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight); // bg
+  fillCircle(ctx, ox + 16, oy + 20, 6, PALETTE.stoneDark);
+  fillCircle(ctx, ox + 16, oy + 18, 5, PALETTE.stone);
+  setPixel(ctx, ox + 14, oy + 16, PALETTE.stoneLight);
 }
 
-function drawRockLarge(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassDark);
-  addGrassTexture(ctx, ox, oy, C.grassDark);
-  const cx = ox + 16, cy = oy + 18;
-  // Two rocks clustered
-  fillCircle(ctx, cx - 3, cy, 8, C.rockDark);
-  fillCircle(ctx, cx - 4, cy - 1, 7, C.rockLight);
-  fillCircle(ctx, cx + 4, cy + 2, 6, C.rockDark);
-  fillCircle(ctx, cx + 3, cy + 1, 5, hexToRgba(C.rockLight, 0.9));
-  // Highlights
-  fillCircle(ctx, cx - 5, cy - 2, 3, hexToRgba(C.rockHighlight, 0.5));
-  fillCircle(ctx, cx + 2, cy, 2, hexToRgba(C.rockHighlight, 0.5));
-  // Shadow
-  for (let x = cx - 9; x <= cx + 9; x++) {
-    setPixel(ctx, x, cy + 8, 'rgba(0,0,0,0.35)');
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawRockLarge(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  // Two overlapping rocks
+  fillCircle(ctx, ox + 12, oy + 20, 8, PALETTE.stoneDark);
+  fillCircle(ctx, ox + 12, oy + 18, 7, PALETTE.stone);
+  fillCircle(ctx, ox + 22, oy + 22, 5, PALETTE.stoneDark);
+  fillCircle(ctx, ox + 22, oy + 20, 4, PALETTE.stone);
+  setPixel(ctx, ox + 10, oy + 14, PALETTE.stoneLight);
 }
 
-function drawBush(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  const cx = ox + 16, cy = oy + 20;
-  // Three overlapping blobs
-  fillCircle(ctx, cx - 5, cy, 6, C.leavesDark);
-  fillCircle(ctx, cx - 4, cy - 1, 5, C.leavesLight);
-  fillCircle(ctx, cx + 4, cy, 6, C.leavesDark);
-  fillCircle(ctx, cx + 3, cy - 1, 5, C.leavesLight);
-  fillCircle(ctx, cx, cy - 4, 5, C.leavesHighlight);
-  // Shadow
-  for (let x = cx - 8; x <= cx + 8; x++) {
-    setPixel(ctx, x, cy + 6, 'rgba(0,0,0,0.25)');
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawBush(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  fillCircle(ctx, ox + 16, oy + 22, 7, '#2d6a2d');
+  fillCircle(ctx, ox + 16, oy + 20, 5, '#3a8a3a');
+  // Berries
+  setPixel(ctx, ox + 12, oy + 20, '#c03020');
+  setPixel(ctx, ox + 20, oy + 18, '#c03020');
 }
 
-function drawFlowers(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Scatter flower dots
-  const positions = [
-    { x: 8, y: 10, c: C.flowerPink }, { x: 14, y: 16, c: C.flowerYellow },
-    { x: 20, y: 10, c: C.flowerPink }, { x: 24, y: 19, c: C.flowerYellow },
-    { x: 6, y: 20, c: C.flowerYellow }, { x: 18, y: 23, c: C.flowerPink },
-    { x: 26, y: 13, c: C.flowerPink },
-  ];
-  for (const p of positions) {
-    fillCircle(ctx, ox + p.x, oy + p.y, 2, p.c);
-    setPixel(ctx, ox + p.x, oy + p.y, '#fff');
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawFlower(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  // Stem
+  drawLine(ctx, ox + 16, oy + 28, ox + 16, oy + 18, '#3a8a3a');
+  // Petals
+  const petalColor = '#e060a0';
+  setPixel(ctx, ox + 16, oy + 16, '#ffe040');
+  setPixel(ctx, ox + 14, oy + 16, petalColor);
+  setPixel(ctx, ox + 18, oy + 16, petalColor);
+  setPixel(ctx, ox + 16, oy + 14, petalColor);
+  setPixel(ctx, ox + 16, oy + 18, petalColor);
 }
 
-function drawPlacementPoint(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  const cx = ox + 16, cy = oy + 16;
-  // Outer gold ring
-  for (let r = 11; r >= 9; r--) {
-    fillCircle(ctx, cx, cy, r, hexToRgba(C.goldDark, 0.25 + (11 - r) * 0.1));
+function drawStairsUp(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stoneDark);
+  // 4 steps going up (bottom to top)
+  for (let i = 0; i < 4; i++) {
+    const stepY = oy + 24 - i * 8;
+    const brightness = 0.6 + i * 0.1;
+    drawRect(ctx, ox + 2, stepY, 28, 6, hexToRgba(PALETTE.stone, brightness));
+    drawRect(ctx, ox + 2, stepY, 28, 1, hexToRgba(PALETTE.stoneLight, brightness));
+    drawRect(ctx, ox + 2, stepY + 5, 28, 1, hexToRgba(PALETTE.stoneDark, 0.5));
   }
-  // Gold circle
-  for (let r = 8; r >= 5; r--) {
-    fillCircle(ctx, cx, cy, r, hexToRgba(C.goldLight, 0.15 * (9 - r)));
-  }
-  fillCircle(ctx, cx, cy, 5, hexToRgba(C.goldDark, 0.6));
-  fillCircle(ctx, cx, cy, 4, hexToRgba(C.goldLight, 0.8));
-  fillCircle(ctx, cx, cy, 2, '#fff');
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawWater(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.waterDeep);
-  // Ripple lines
-  for (let row = 4; row < TILE; row += 6) {
-    for (let x = 2; x < TILE - 2; x += 4) {
-      setPixel(ctx, ox + x, oy + row, hexToRgba(C.waterHighlight, 0.5));
-      setPixel(ctx, ox + x + 1, oy + row, hexToRgba(C.waterHighlight, 0.3));
-    }
+function drawStairsDown(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stoneDark);
+  for (let i = 0; i < 4; i++) {
+    const stepY = oy + i * 8;
+    const brightness = 0.9 - i * 0.1;
+    drawRect(ctx, ox + 2, stepY, 28, 6, hexToRgba(PALETTE.stone, brightness));
+    drawRect(ctx, ox + 2, stepY, 28, 1, hexToRgba(PALETTE.stoneLight, brightness));
+    drawRect(ctx, ox + 2, stepY + 5, 28, 1, hexToRgba(PALETTE.stoneDark, 0.5));
   }
-  // Shallow water top highlight
-  drawRect(ctx, ox, oy, TILE, 3, hexToRgba(C.waterShallow, 0.4));
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawBridgeH(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Water sides
-  drawRect(ctx, ox, oy, TILE, 8, C.waterDeep);
-  drawRect(ctx, ox, oy + TILE - 8, TILE, 8, C.waterDeep);
-  // Bridge planks
-  drawRect(ctx, ox, oy + 8, TILE, TILE - 16, C.bridgeWood);
-  for (let x = 0; x < TILE; x += 4) {
-    drawRect(ctx, ox + x, oy + 8, 3, TILE - 16, C.bridgePlank);
-    drawRect(ctx, ox + x + 1, oy + 9, 1, TILE - 18, hexToRgba('#fff', 0.15));
+function drawWallH(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  // Stone wall (horizontal)
+  drawRect(ctx, ox, oy + 8, TILE, 16, PALETTE.stone);
+  drawRect(ctx, ox, oy + 8, TILE, 2, PALETTE.stoneLight);
+  drawRect(ctx, ox, oy + 22, TILE, 2, PALETTE.stoneDark);
+  // Battlements
+  for (let bx = 0; bx < 32; bx += 10) {
+    drawRect(ctx, ox + bx, oy + 4, 6, 6, PALETTE.stone);
+    drawRect(ctx, ox + bx, oy + 4, 6, 1, PALETTE.stoneLight);
   }
-  // Rails
-  drawRect(ctx, ox, oy + 8, TILE, 2, C.bridgeRail);
-  drawRect(ctx, ox, oy + TILE - 10, TILE, 2, C.bridgeRail);
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawBridgeV(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  // Water sides
-  drawRect(ctx, ox, oy, 8, TILE, C.waterDeep);
-  drawRect(ctx, ox + TILE - 8, oy, 8, TILE, C.waterDeep);
-  // Bridge planks
-  drawRect(ctx, ox + 8, oy, TILE - 16, TILE, C.bridgeWood);
-  for (let y = 0; y < TILE; y += 4) {
-    drawRect(ctx, ox + 8, oy + y, TILE - 16, 3, C.bridgePlank);
-    drawRect(ctx, ox + 9, oy + y + 1, TILE - 18, 1, hexToRgba('#fff', 0.15));
-  }
-  // Rails
-  drawRect(ctx, ox + 8, oy, 2, TILE, C.bridgeRail);
-  drawRect(ctx, ox + TILE - 10, oy, 2, TILE, C.bridgeRail);
-  addDepthShadow(ctx, ox, oy);
+function drawWallV(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  drawRect(ctx, ox + 8, oy, 16, TILE, PALETTE.stone);
+  drawRect(ctx, ox + 8, oy, 2, TILE, PALETTE.stoneLight);
+  drawRect(ctx, ox + 22, oy, 2, TILE, PALETTE.stoneDark);
 }
 
-// Edge tiles — grass meets path
-function drawEdgeN(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Bottom half is dirt
-  drawRect(ctx, ox, oy + TILE / 2, TILE, TILE / 2, C.dirt);
-  addDirtTexture(ctx, ox, oy + TILE / 2);
-  // Transition row with feathering
-  for (let x = 0; x < TILE; x++) {
-    setPixel(ctx, ox + x, oy + TILE / 2 - 1, hexToRgba(C.dirtDark, 0.5));
-    setPixel(ctx, ox + x, oy + TILE / 2, hexToRgba(C.grassShadow, 0.4));
+function drawGate(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stone);
+  drawRect(ctx, ox, oy, TILE, 2, PALETTE.stoneLight);
+  // Gate opening
+  drawRect(ctx, ox + 8, oy + 8, 16, 24, '#1a1208');
+  // Arch top
+  for (let a = 180; a <= 360; a += 20) {
+    const rad = (a * Math.PI) / 180;
+    setPixel(ctx, ox + 16 + Math.round(8 * Math.cos(rad)), oy + 8 + Math.round(6 * Math.sin(rad)), PALETTE.stoneDark);
   }
-  addDepthShadow(ctx, ox, oy);
+  // Portcullis bars
+  for (let x = 10; x <= 22; x += 3) {
+    drawLine(ctx, ox + x, oy + 10, ox + x, oy + 30, hexToRgba(PALETTE.stoneDark, 0.4));
+  }
 }
 
-function drawEdgeS(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Top half is dirt
-  drawRect(ctx, ox, oy, TILE, TILE / 2, C.dirt);
-  addDirtTexture(ctx, ox, oy);
+function drawFenceH(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawLine(ctx, ox, oy + 16, ox + 32, oy + 16, PALETTE.wood);
+  for (let x = 0; x < 32; x += 8) {
+    drawRect(ctx, ox + x + 3, oy + 10, 2, 14, PALETTE.woodDark);
+  }
+}
+
+function drawFenceV(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawLine(ctx, ox + 16, oy, ox + 16, oy + 32, PALETTE.wood);
+  for (let y = 0; y < 32; y += 8) {
+    drawRect(ctx, ox + 10, oy + y + 3, 14, 2, PALETTE.woodDark);
+  }
+}
+
+function drawTorch(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  // Pole
+  drawRect(ctx, ox + 15, oy + 12, 2, 16, PALETTE.woodDark);
+  // Flame
+  setPixel(ctx, ox + 15, oy + 10, PALETTE.fireOrange);
+  setPixel(ctx, ox + 16, oy + 10, PALETTE.fireOrange);
+  setPixel(ctx, ox + 15, oy + 9, PALETTE.gold);
+  setPixel(ctx, ox + 16, oy + 9, PALETTE.gold);
+  setPixel(ctx, ox + 16, oy + 8, hexToRgba(PALETTE.gold, 0.6));
+  addGlow(ctx, ox + 16, oy + 10, 5, PALETTE.fireOrange, 0.2);
+}
+
+function drawFlag(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  // Pole
+  drawRect(ctx, ox + 15, oy + 4, 2, 24, PALETTE.woodDark);
+  // Flag cloth
+  drawRect(ctx, ox + 17, oy + 4, 10, 8, '#c03020');
+  drawRect(ctx, ox + 17, oy + 4, 10, 2, '#e04030');
+  // Flag tip
+  setPixel(ctx, ox + 26, oy + 8, '#c03020');
+}
+
+function drawSignpost(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawRect(ctx, ox + 15, oy + 12, 2, 16, PALETTE.woodDark);
+  drawRect(ctx, ox + 8, oy + 10, 16, 6, PALETTE.wood);
+  drawRect(ctx, ox + 8, oy + 10, 16, 1, PALETTE.woodLight);
+}
+
+function drawSpawnCave(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, '#1a1208');
+  // Stone arch
+  drawRect(ctx, ox + 2, oy + 10, 4, 22, PALETTE.stoneDark);
+  drawRect(ctx, ox + 26, oy + 10, 4, 22, PALETTE.stoneDark);
+  for (let a = 180; a <= 360; a += 15) {
+    const rad = (a * Math.PI) / 180;
+    setPixel(ctx, ox + 16 + Math.round(13 * Math.cos(rad)), oy + 10 + Math.round(8 * Math.sin(rad)), PALETTE.stone);
+  }
+  // Torches
+  setPixel(ctx, ox + 5, oy + 12, PALETTE.fireOrange);
+  setPixel(ctx, ox + 5, oy + 11, PALETTE.gold);
+  setPixel(ctx, ox + 27, oy + 12, PALETTE.fireOrange);
+  setPixel(ctx, ox + 27, oy + 11, PALETTE.gold);
+  addGlow(ctx, ox + 16, oy + 18, 8, PALETTE.fireOrange, 0.12);
+}
+
+function drawExitGate(ctx: any, ox: number, oy: number) {
+  // Castle gate (exit)
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stone);
+  drawRect(ctx, ox, oy, TILE, 2, PALETTE.stoneLight);
+  // Battlements
+  for (let bx = 0; bx < 32; bx += 8) {
+    drawRect(ctx, ox + bx, oy - 2, 5, 4, PALETTE.stone);
+  }
+  // Gate
+  drawRect(ctx, ox + 8, oy + 6, 16, 26, '#1a1208');
+  // Flag
+  drawLine(ctx, ox + 16, oy - 4, ox + 16, oy + 2, PALETTE.wood);
+  setPixel(ctx, ox + 17, oy - 4, '#c03020');
+  setPixel(ctx, ox + 18, oy - 3, '#c03020');
+  addGlow(ctx, ox + 16, oy + 16, 6, PALETTE.gold, 0.15);
+}
+
+function drawPlacementPoint(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  // Golden circle marker
+  drawCircle(ctx, ox + 16, oy + 16, 10, hexToRgba(PALETTE.gold, 0.6));
+  drawCircle(ctx, ox + 16, oy + 16, 9, hexToRgba(PALETTE.gold, 0.3));
+  fillCircle(ctx, ox + 16, oy + 16, 6, hexToRgba(PALETTE.gold, 0.1));
+  // Center dot
+  fillCircle(ctx, ox + 16, oy + 16, 2, hexToRgba(PALETTE.gold, 0.4));
+}
+
+function drawPlacementOccupied(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridDark);
+  // Faded circle (occupied)
+  drawCircle(ctx, ox + 16, oy + 16, 10, hexToRgba(PALETTE.stoneDark, 0.3));
+}
+
+function drawGrassPathL(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawRect(ctx, ox, oy, 16, TILE, PALETTE.dirtPath);
   // Transition
-  for (let x = 0; x < TILE; x++) {
-    setPixel(ctx, ox + x, oy + TILE / 2 - 1, hexToRgba(C.grassShadow, 0.4));
-    setPixel(ctx, ox + x, oy + TILE / 2, hexToRgba(C.dirtDark, 0.5));
+  for (let y = 0; y < 32; y += 3) {
+    setPixel(ctx, ox + 16 + (y % 2), oy + y, hexToRgba(PALETTE.dirtPath, 0.5));
   }
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawEdgeE(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Left half is dirt
-  drawRect(ctx, ox, oy, TILE / 2, TILE, C.dirt);
-  addDirtTexture(ctx, ox, oy);
-  // Transition
-  for (let y = 0; y < TILE; y++) {
-    setPixel(ctx, ox + TILE / 2 - 1, oy + y, hexToRgba(C.grassShadow, 0.4));
-    setPixel(ctx, ox + TILE / 2, oy + y, hexToRgba(C.dirtDark, 0.5));
+function drawGrassPathR(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawRect(ctx, ox + 16, oy, 16, TILE, PALETTE.dirtPath);
+  for (let y = 0; y < 32; y += 3) {
+    setPixel(ctx, ox + 15 - (y % 2), oy + y, hexToRgba(PALETTE.dirtPath, 0.5));
   }
-  addDepthShadow(ctx, ox, oy);
 }
 
-function drawEdgeW(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number): void {
-  drawRect(ctx, ox, oy, TILE, TILE, C.grassLight);
-  addGrassTexture(ctx, ox, oy, C.grassLight);
-  // Right half is dirt
-  drawRect(ctx, ox + TILE / 2, oy, TILE / 2, TILE, C.dirt);
-  addDirtTexture(ctx, ox + TILE / 2, oy);
-  // Transition
-  for (let y = 0; y < TILE; y++) {
-    setPixel(ctx, ox + TILE / 2 - 1, oy + y, hexToRgba(C.dirtDark, 0.5));
-    setPixel(ctx, ox + TILE / 2, oy + y, hexToRgba(C.grassShadow, 0.4));
-  }
-  addDepthShadow(ctx, ox, oy);
+function drawPathCorner(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.gridLight);
+  drawRect(ctx, ox, oy, 16, 16, PALETTE.dirtPath);
+  drawRect(ctx, ox, oy + 16, 16, 16, PALETTE.dirtPath);
+  drawRect(ctx, ox + 16, oy, 16, 16, PALETTE.dirtPath);
 }
 
-// Map index → draw function
-const TILE_DRAWERS: Array<(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, oy: number) => void> = [
-  drawGrassLight,                                    // 0: grass-light
-  drawGrassDark,                                     // 1: grass-dark
-  drawPathH,                                         // 2: path-h
-  drawPathV,                                         // 3: path-v
-  (c, ox, oy) => drawPathCorner(c, ox, oy, 'ne'),   // 4: path-corner-ne
-  (c, ox, oy) => drawPathCorner(c, ox, oy, 'nw'),   // 5: path-corner-nw
-  (c, ox, oy) => drawPathCorner(c, ox, oy, 'se'),   // 6: path-corner-se
-  (c, ox, oy) => drawPathCorner(c, ox, oy, 'sw'),   // 7: path-corner-sw
-  drawPathSpawn,                                     // 8: path-spawn
-  drawPathExit,                                      // 9: path-exit
-  drawTreeSmall,                                     // 10: tree-small
-  drawTreeLarge,                                     // 11: tree-large
-  drawRockSmall,                                     // 12: rock-small
-  drawRockLarge,                                     // 13: rock-large
-  drawBush,                                          // 14: bush
-  drawFlowers,                                       // 15: flowers
-  drawPlacementPoint,                                // 16: placement-point
-  drawWater,                                         // 17: water
-  drawBridgeH,                                       // 18: bridge-h
-  drawBridgeV,                                       // 19: bridge-v
-  drawEdgeN,                                         // 20: edge-n
-  drawEdgeS,                                         // 21: edge-s
-  drawEdgeE,                                         // 22: edge-e
-  drawEdgeW,                                         // 23: edge-w
+function drawCliffEdge(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, 20, PALETTE.gridDark);
+  drawRect(ctx, ox, oy + 20, TILE, 12, PALETTE.stoneDark);
+  drawLine(ctx, ox, oy + 20, ox + 32, oy + 20, PALETTE.stone);
+  drawLine(ctx, ox, oy + 21, ox + 32, oy + 21, PALETTE.stoneDark);
+}
+
+function drawWaterfall(ctx: any, ox: number, oy: number) {
+  drawRect(ctx, ox, oy, TILE, TILE, PALETTE.stoneDark);
+  // Water falling
+  drawRect(ctx, ox + 10, oy, 12, TILE, '#2060a0');
+  drawLine(ctx, ox + 13, oy + 4, ox + 13, oy + 28, hexToRgba('#40a0e0', 0.6));
+  drawLine(ctx, ox + 18, oy + 8, ox + 18, oy + 30, hexToRgba('#40a0e0', 0.5));
+  // Splash at bottom
+  fillCircle(ctx, ox + 16, oy + 30, 3, hexToRgba('#80c0e0', 0.4));
+}
+
+// All tiles in order
+const TILE_DRAWERS: Array<(ctx: any, ox: number, oy: number) => void> = [
+  drawGrassLight, drawGrassDark, drawDirt, drawDirtDark, drawStoneFloor,       // 0-4
+  drawStoneDarkFloor, drawWater, drawWaterEdge, drawBridgeH, drawBridgeV,      // 5-9
+  drawTreeSmall, drawTreeLarge, drawRockSmall, drawRockLarge, drawBush,        // 10-14
+  drawFlower, drawStairsUp, drawStairsDown, drawWallH, drawWallV,             // 15-19
+  drawGate, drawFenceH, drawFenceV, drawTorch, drawFlag,                      // 20-24
+  drawSignpost, drawSpawnCave, drawExitGate, drawPlacementPoint, drawPlacementOccupied, // 25-29
+  drawGrassPathL, drawGrassPathR, drawPathCorner, drawCliffEdge, drawWaterfall, // 30-34
 ];
 
-export async function generateTileset(): Promise<ManifestEntry[]> {
-  const totalTiles = TILESET_COLS * TILESET_ROWS; // 24
-  const canvasW = TILESET_COLS * TILE; // 256
-  const canvasH = TILESET_ROWS * TILE; // 96
+export async function generate(): Promise<ManifestEntry[]> {
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+  const entries: ManifestEntry[] = [];
 
-  const { canvas, ctx } = makeCanvas(canvasW, canvasH);
+  const rows = Math.ceil(TILE_DRAWERS.length / COLS);
+  const { canvas, ctx } = makeCanvas(COLS * TILE, rows * TILE);
 
-  for (let idx = 0; idx < totalTiles; idx++) {
-    const col = idx % TILESET_COLS;
-    const row = Math.floor(idx / TILESET_COLS);
-    const ox = col * TILE;
-    const oy = row * TILE;
-    const drawer = TILE_DRAWERS[idx];
-    if (drawer) {
-      drawer(ctx, ox, oy);
-    }
+  for (let i = 0; i < TILE_DRAWERS.length; i++) {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    TILE_DRAWERS[i](ctx, col * TILE, row * TILE);
   }
 
-  saveCanvas(canvas, OUTPUT_PATH);
-
-  return [{
+  saveCanvas(canvas, `${OUTPUT_DIR}/tileset.png`);
+  entries.push({
     key: 'tileset',
-    type: 'spritesheet',
-    path: 'assets/tileset.png',
-    frameWidth: TILE,
-    frameHeight: TILE,
-    frameCount: totalTiles,
-  }];
+    type: 'image',
+    path: 'assets/tiles/tileset.png',
+  });
+
+  return entries;
 }
 
 if (import.meta.main) {
-  generateTileset().then(e => console.log(JSON.stringify(e, null, 2)));
+  generate().then(e => console.log(JSON.stringify(e, null, 2)));
 }

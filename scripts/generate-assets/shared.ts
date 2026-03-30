@@ -2,35 +2,51 @@ import { createCanvas, type Canvas, type SKRSContext2D } from '@napi-rs/canvas';
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 
-// === Color Palette (strict - only use these) ===
+// === Color Palette (medieval nature theme) ===
 export const PALETTE = {
-  dark:       '#1a1a2e',
-  darkAlt:    '#16161a',
-  gridDark:   '#12121e',
-  gridLight:  '#161625',
-  gridLine:   '#1e1e30',
-  purple:     '#7f5af0',
-  green:      '#2cb67d',
-  pink:       '#e53170',
-  gold:       '#e2b714',
-  cyan:       '#00ccff',
-  white:      '#fffffe',
-  gray:       '#94a1b2',
+  // Grid tiles
+  gridDark:      '#5a8a30',  // 어두운 잔디
+  gridLight:     '#7ab648',  // 밝은 잔디
+  gridLine:      '#4a7a20',  // 잔디 테두리
+  edgeHighlight: '#8ec850',  // 잔디 하이라이트
+  // Nature
+  dirtPath:      '#b8956a',  // 흙길
+  dirtDark:      '#8b6a40',  // 어두운 흙
+  stone:         '#8c8c8c',  // 돌
+  stoneDark:     '#5a5a5a',  // 어두운 돌
+  stoneLight:    '#b0b0b0',  // 밝은 돌
+  wood:          '#8b5e3c',  // 나무
+  woodDark:      '#5a3a1e',  // 어두운 나무
+  woodLight:     '#c8905a',  // 밝은 나무
+  // Magic/Special
+  ice:           '#a8def0',  // 얼음
+  iceGlow:       '#5bc8e8',  // 얼음 빛
+  magicBlue:     '#4060e0',  // 마법 파란
+  magicGold:     '#e0b020',  // 마법 금빛
+  fireOrange:    '#e07020',  // 불꽃 오렌지
+  fireRed:       '#c03020',  // 불꽃 빨강
   // Tower colors
-  laser:      '#e2b714',
-  plasma:     '#2cb67d',
-  emp:        '#7f5af0',
-  shield:     '#00ccff',
-  stasis:     '#94a1b2',
+  laser:         '#c8a04a',  // 궁수 탑 (황금 갈색)
+  plasma:        '#8b4513',  // 투석기 (진한 갈색)
+  emp:           '#5bc8e8',  // 서리 마탑 (아이스 블루)
+  shield:        '#f0e080',  // 성기사 제단 (황금빛)
+  stasis:        '#a8def0',  // 빙하 제단 (옅은 파란)
   // Unit colors
-  scoutDrone:    '#72f1b8',
-  battleRobot:   '#5b8cff',
-  heavyWalker:   '#ff8c42',
-  stealthDrone:  '#b388ff',
-  titan:         '#ff4757',
+  scoutDrone:    '#4a7a2a',  // 고블린 정찰병 (초록 피부)
+  battleRobot:   '#7a7a6a',  // 오크 전사 (회색 피부)
+  heavyWalker:   '#8c8c7a',  // 돌 트롤 (돌 회색)
+  stealthDrone:  '#302040',  // 그림자 암살자 (검보라)
+  titan:         '#c04020',  // 고대 드래곤 (불꽃 빨강)
+  // UI
+  gold:          '#f0d060',  // 황금 장식
+  white:         '#fffffe',  // 흰색
+  gray:          '#94a1b2',  // 회색
+  shadow:        '#2a1f0a',  // 그림자
+  // Legacy (일부 스크립트 호환용)
+  green:         '#7ab648',
+  pink:          '#c03020',
   // Utility
-  towerBase:  '#0a0a14',
-  edgeHighlight: '#252538',
+  towerBase:     '#2a1f0a',  // 타워 기단 (어두운 갈색)
 } as const;
 
 export const TILE_SIZE = 32;
@@ -158,7 +174,7 @@ export function addGlow(ctx: SKRSContext2D, cx: number, cy: number, radius: numb
 // === Manifest ===
 export interface ManifestEntry {
   key: string;
-  type: 'image' | 'spritesheet' | 'tilemapTiledJSON';
+  type: 'image' | 'spritesheet';
   path: string;
   frameWidth?: number;
   frameHeight?: number;

@@ -11,9 +11,11 @@ export interface PlayerState {
   path: Position[];    // current computed path
 }
 
+export type WavePhase = 'building' | 'combat' | 'ended';
+
 export interface GameState {
   tick: number;
-  phase: 'waiting' | 'building' | 'combat' | 'ended';
+  phase: 'waiting' | WavePhase;
   players: [PlayerState, PlayerState];
   winnerId: string | null;
   timeRemaining: number; // seconds

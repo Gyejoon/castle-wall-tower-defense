@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-03-29T07:23:29.784Z",
+  "versionTag": "v20260329",
+  "boardPath": ".logs/artifacts/ui-mobile-variant-board-v20260329.png",
+  "variants": [
+    {
+      "asset": "lobby-keyart",
+      "variant": "a",
+      "prompt": "vertical neon tactical corridor with clean title space, cyan-magenta lane grid, lower defensive towers, top and bottom cores, premium mobile key art",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/lobby-keyart-v20260329-a.png",
+      "publicPath": "assets/ui-mobile/lobby-keyart-v20260329-a.png",
+      "width": 900,
+      "height": 1400
+    },
+    {
+      "asset": "lobby-keyart",
+      "variant": "b",
+      "prompt": "vertical tactical command vista with wider lane, stronger magenta pressure, brighter gold core, cinematic sci-fi defense poster for mobile lobby",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/lobby-keyart-v20260329-b.png",
+      "publicPath": "assets/ui-mobile/lobby-keyart-v20260329-b.png",
+      "width": 900,
+      "height": 1400
+    },
+    {
+      "asset": "lobby-keyart",
+      "variant": "c",
+      "prompt": "clean tactical poster with sharper radar overlays, narrow corridor, colder cyan instrumentation, negative space reserved for logo lockup",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/lobby-keyart-v20260329-c.png",
+      "publicPath": "assets/ui-mobile/lobby-keyart-v20260329-c.png",
+      "width": 900,
+      "height": 1400
+    },
+    {
+      "asset": "tactical-dock-bg",
+      "variant": "a",
+      "prompt": "quiet premium mobile tactical dock with restrained cyan edge light, dark compartment grid, low-noise center area for controls",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/tactical-dock-bg-v20260329-a.png",
+      "publicPath": "assets/ui-mobile/tactical-dock-bg-v20260329-a.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "asset": "tactical-dock-bg",
+      "variant": "b",
+      "prompt": "mobile sci-fi tactics panel with compartment bays, cyan-violet edge accent, subtle radar sweep, premium HUD surface",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/tactical-dock-bg-v20260329-b.png",
+      "publicPath": "assets/ui-mobile/tactical-dock-bg-v20260329-b.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "asset": "tactical-dock-bg",
+      "variant": "c",
+      "prompt": "heavier cyan command console with radar sweep geometry, layered dark glass panels, still readable under overlaid buttons",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/tactical-dock-bg-v20260329-c.png",
+      "publicPath": "assets/ui-mobile/tactical-dock-bg-v20260329-c.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "asset": "cta-point-art",
+      "variant": "a",
+      "prompt": "compact off-center cyan and magenta energy crossfire, transparent-friendly tactical CTA accent with readable center zone",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/cta-point-art-v20260329-a.png",
+      "publicPath": "assets/ui-mobile/cta-point-art-v20260329-a.png",
+      "width": 1280,
+      "height": 560
+    },
+    {
+      "asset": "cta-point-art",
+      "variant": "b",
+      "prompt": "three-node tactical energy flare with gold orbital ring, premium mobile CTA accent, controlled brightness and transparent falloff",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/cta-point-art-v20260329-b.png",
+      "publicPath": "assets/ui-mobile/cta-point-art-v20260329-b.png",
+      "width": 1280,
+      "height": 560
+    },
+    {
+      "asset": "cta-point-art",
+      "variant": "c",
+      "prompt": "magenta-led energy nexus with cyan relay line, low-noise premium start button accent, diagonal motion and transparent edges",
+      "filePath": "packages/web-shell/public/assets/ui-mobile/cta-point-art-v20260329-c.png",
+      "publicPath": "assets/ui-mobile/cta-point-art-v20260329-c.png",
+      "width": 1280,
+      "height": 560
+    }
+  ]
+}

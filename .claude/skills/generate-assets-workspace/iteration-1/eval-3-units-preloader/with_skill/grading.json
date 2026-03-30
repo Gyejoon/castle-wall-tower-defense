@@ -1,0 +1,36 @@
+{
+  "eval_id": 3,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "5개 유닛 walk cycle sprite sheet PNG가 생성됨",
+      "passed": true,
+      "evidence": "scout_drone.png, battle_robot.png, heavy_walker.png, stealth_drone.png, titan.png 5개 모두 생성"
+    },
+    {
+      "text": "unit-death.png 공유 death effect sprite sheet가 생성됨",
+      "passed": true,
+      "evidence": "unit-death.png가 outputs에 존재 (375 bytes)"
+    },
+    {
+      "text": "walk cycle은 128x32 (4프레임 x 32x32)",
+      "passed": true,
+      "evidence": "시각적 확인: 4프레임 가로 배열, manifest에 frameWidth=32, frameHeight=32, frameCount=4로 정의"
+    },
+    {
+      "text": "Preloader.ts에 this.load.spritesheet() 호출이 추가됨",
+      "passed": true,
+      "evidence": "Preloader.ts preload()에서 5개 유닛 + unit-death에 대해 this.load.spritesheet() 호출"
+    },
+    {
+      "text": "Preloader.ts의 create()에 walk animation 정의가 추가됨",
+      "passed": true,
+      "evidence": "create()에서 UNIT_IDS를 순회하며 this.anims.create({key: id-walk, frameRate: 8, repeat: -1}) + unit-death animation 정의"
+    },
+    {
+      "text": "각 유닛이 고유 색상을 사용함",
+      "passed": true,
+      "evidence": "시각적 확인: scout=민트그린 삼각형, battle=파란 사각형, heavy=주황 육각형, stealth=보라 다이아몬드, titan=빨간 팔각형"
+    }
+  ]
+}

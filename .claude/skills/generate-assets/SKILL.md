@@ -91,7 +91,7 @@ export function hexToRgba(hex: string, alpha?: number): string { ... }
 // === Pixel Drawing (no anti-aliasing) ===
 // IMPORTANT: Always set ctx.imageSmoothingEnabled = false
 export function setPixel(ctx: SKRSContext2D, x: number, y: number, color: string): void { ... }
-export function drawRect(ctx: SKRSContext2D, x: number, y: number, w: number, h: number, color: string): void { ... }
+export function drawRect(ctx: SKRSContext2D, x, y, w, h, color): void { ... }
 export function drawCircle(ctx: SKRSContext2D, cx, cy, r, color): void { ... }  // Bresenham
 export function drawLine(ctx: SKRSContext2D, x1, y1, x2, y2, color): void { ... }  // Bresenham
 export function fillCircle(ctx: SKRSContext2D, cx, cy, r, color): void { ... }

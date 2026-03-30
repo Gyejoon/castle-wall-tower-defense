@@ -1,0 +1,53 @@
+{
+  "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "playerName": "RUSH_MASTER",
+  "timestamp": 1711700000000,
+  "totalWaves": 5,
+  "waves": [
+    {
+      "waveNumber": 1,
+      "pressure": "defend",
+      "towersPlaced": [
+        { "col": 5, "row": 9, "towerDefId": "laser" },
+        { "col": 5, "row": 11, "towerDefId": "laser" }
+      ],
+      "goldSpent": 40
+    },
+    {
+      "waveNumber": 2,
+      "pressure": "attack",
+      "towersPlaced": [
+        { "col": 8, "row": 10, "towerDefId": "laser" }
+      ],
+      "goldSpent": 70
+    },
+    {
+      "waveNumber": 3,
+      "pressure": "defend",
+      "towersPlaced": [
+        { "col": 10, "row": 9, "towerDefId": "laser" },
+        { "col": 10, "row": 11, "towerDefId": "laser" }
+      ],
+      "goldSpent": 40
+    },
+    {
+      "waveNumber": 4,
+      "pressure": "attack",
+      "towersPlaced": [
+        { "col": 13, "row": 10, "towerDefId": "laser" }
+      ],
+      "goldSpent": 70
+    },
+    {
+      "waveNumber": 5,
+      "pressure": "defend",
+      "towersPlaced": [],
+      "goldSpent": 0
+    }
+  ],
+  "result": {
+    "wavesCompleted": 4,
+    "goldRemaining": 30,
+    "score": 430
+  }
+}

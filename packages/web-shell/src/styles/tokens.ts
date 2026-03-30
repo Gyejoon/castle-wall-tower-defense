@@ -1,14 +1,14 @@
 export const colors = {
-  bg: '#16161a',
-  panel: '#1a1a24',
-  border: '#2e2e3a',
-  accent: '#7f5af0',
-  success: '#2cb67d',
-  danger: '#e53170',
-  gold: '#e2b714',
-  info: '#00ccff',
-  text: '#fffffe',
-  textSecondary: '#94a1b2',
+  bg: '#1a1208',
+  panel: '#2a2010',
+  border: '#4a3a20',
+  accent: '#c8a04a',
+  success: '#7ab648',
+  danger: '#c03020',
+  gold: '#f0d060',
+  info: '#5bc8e8',
+  text: '#f0e8d8',
+  textSecondary: '#a09070',
 } as const;
 
 export const fonts = {

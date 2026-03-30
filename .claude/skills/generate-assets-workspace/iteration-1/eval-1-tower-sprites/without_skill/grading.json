@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "scripts/generate-assets/shared.ts가 생성되었고 PALETTE, TILE_SIZE, canvas 유틸리티를 export한다",
+      "passed": false,
+      "evidence": "에이전트가 Bash 권한을 얻지 못해 스크립트를 작성/실행하지 못함"
+    },
+    {
+      "text": "scripts/generate-assets/generate-towers.ts가 생성되었다",
+      "passed": false,
+      "evidence": "권한 문제로 아무 파일도 생성하지 못함"
+    },
+    {
+      "text": "9개 타워의 static PNG가 모두 생성됨",
+      "passed": false,
+      "evidence": "outputs 디렉토리가 존재하지 않음"
+    },
+    {
+      "text": "fire/pulse animation sprite sheet PNG가 생성됨",
+      "passed": false,
+      "evidence": "outputs 디렉토리가 존재하지 않음"
+    },
+    {
+      "text": "static tower PNG는 32x32, animation sprite sheet는 128x32 크기",
+      "passed": false,
+      "evidence": "PNG가 생성되지 않음"
+    },
+    {
+      "text": "각 타워가 올바른 색상을 사용함",
+      "passed": false,
+      "evidence": "PNG가 생성되지 않음"
+    },
+    {
+      "text": "pixel art 스타일로 생성됨",
+      "passed": false,
+      "evidence": "코드가 작성되지 않음"
+    }
+  ]
+}

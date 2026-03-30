@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "scripts/generate-assets/shared.ts가 생성되었고 PALETTE, TILE_SIZE, canvas 유틸리티를 export한다",
+      "passed": true,
+      "evidence": "shared.ts가 존재하며 PALETTE(21개 색상), TILE_SIZE=32, makeCanvas, saveCanvas, Bresenham 알고리즘 기반 pixel-drawing 함수들을 export"
+    },
+    {
+      "text": "scripts/generate-assets/generate-towers.ts가 생성되었다",
+      "passed": true,
+      "evidence": "generate-towers.ts가 생성되어 9개 타워의 static + fire animation을 생성하는 코드 포함"
+    },
+    {
+      "text": "9개 타워의 static PNG가 모두 생성됨",
+      "passed": true,
+      "evidence": "laser.png, plasma.png, emp.png, shield.png, twin_laser.png, disruptor.png, nova_cannon.png, fortress.png, stasis_field.png 모두 outputs 디렉토리에 존재"
+    },
+    {
+      "text": "fire/pulse animation sprite sheet PNG가 생성됨",
+      "passed": true,
+      "evidence": "9개 타워 모두 fire animation PNG 생성됨 (laser-fire.png 등), shield는 pulse animation"
+    },
+    {
+      "text": "static tower PNG는 32x32, animation sprite sheet는 128x32 크기",
+      "passed": true,
+      "evidence": "시각적 확인: static은 32x32 사각형, fire animation은 4프레임 가로 배열"
+    },
+    {
+      "text": "각 타워가 올바른 색상을 사용함",
+      "passed": true,
+      "evidence": "laser=금색 다이아몬드, plasma=녹색 육각형, emp=보라색 원, shield=시안 쉴드 형태로 시각 확인됨"
+    },
+    {
+      "text": "pixel art 스타일로 생성됨 (imageSmoothingEnabled = false)",
+      "passed": true,
+      "evidence": "shared.ts의 makeCanvas()에서 ctx.imageSmoothingEnabled = false 설정, Bresenham 알고리즘으로 원/선 그리기"
+    }
+  ]
+}

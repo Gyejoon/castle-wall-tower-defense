@@ -1,10 +1,15 @@
 {
-  "generated": "2026-03-30T07:17:51.560Z",
+  "generated": "2026-03-30T01:42:31.056Z",
   "assets": [
     {
       "key": "grid-floor",
       "type": "image",
       "path": "assets/tiles/grid-floor.png"
+    },
+    {
+      "key": "path-tile",
+      "type": "image",
+      "path": "assets/tiles/path-tile.png"
     },
     {
       "key": "spawn-tile",
@@ -239,7 +244,7 @@
       "path": "assets/ui/tower-icons.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 4
+      "frameCount": 9
     },
     {
       "key": "ui-unit-icons",
@@ -260,17 +265,76 @@
       "path": "assets/ui/cursor-place.png"
     },
     {
-      "key": "tileset",
-      "type": "spritesheet",
-      "path": "assets/tileset.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
-      "frameCount": 24
+      "key": "ui-pressure-defend",
+      "type": "image",
+      "path": "assets/ui/pressure-defend.png"
     },
     {
-      "key": "tilemap-forest-gate",
-      "type": "tilemapTiledJSON",
-      "path": "assets/maps/forest-gate.json"
+      "key": "ui-pressure-attack",
+      "type": "image",
+      "path": "assets/ui/pressure-attack.png"
+    },
+    {
+      "key": "ui-pressure-invest",
+      "type": "image",
+      "path": "assets/ui/pressure-invest.png"
+    },
+    {
+      "key": "ui-pressure-panel-bg",
+      "type": "image",
+      "path": "assets/ui/pressure-panel-bg.png"
+    },
+    {
+      "key": "ui-match-victory",
+      "type": "image",
+      "path": "assets/ui/match-victory.png"
+    },
+    {
+      "key": "ui-match-defeat",
+      "type": "image",
+      "path": "assets/ui/match-defeat.png"
+    },
+    {
+      "key": "ui-match-draw",
+      "type": "image",
+      "path": "assets/ui/match-draw.png"
+    },
+    {
+      "key": "ui-ghost-avatar",
+      "type": "image",
+      "path": "assets/ui/ghost-avatar.png"
+    },
+    {
+      "key": "ui-stat-icons",
+      "type": "spritesheet",
+      "path": "assets/ui/stat-icons.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 3
+    },
+    {
+      "key": "ui-pressure-attack-effect",
+      "type": "spritesheet",
+      "path": "assets/ui/pressure-attack-effect.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "ui-ghost-spawn",
+      "type": "spritesheet",
+      "path": "assets/ui/ghost-spawn.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 4
+    },
+    {
+      "key": "ui-victory-confetti",
+      "type": "spritesheet",
+      "path": "assets/ui/victory-confetti.png",
+      "frameWidth": 32,
+      "frameHeight": 64,
+      "frameCount": 4
     }
   ]
 }

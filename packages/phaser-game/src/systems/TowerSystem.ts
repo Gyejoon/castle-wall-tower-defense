@@ -252,19 +252,19 @@ export class TowerSystem {
     return this.damageEventsBuffer;
   }
 
-  sellTower(gridX: number, gridY: number): { success: boolean; refund: number } {
-    let targetKey: string | null = null;
-    let targetInstance: TowerInstance | null = null;
-
+  private findTowerEntry(gridX: number, gridY: number): { key: string; instance: TowerInstance } | null {
     for (const [key, tower] of this.towers) {
       if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
-        targetKey = key;
-        targetInstance = tower;
-        break;
+        return { key, instance: tower };
       }
     }
+    return null;
+  }
 
-    if (!targetKey || !targetInstance) return { success: false, refund: 0 };
+  sellTower(gridX: number, gridY: number): { success: boolean; refund: number } {
+    const entry = this.findTowerEntry(gridX, gridY);
+    if (!entry) return { success: false, refund: 0 };
+    const { key: targetKey, instance: targetInstance } = entry;
 
     // Remove graphics
     targetInstance.base.destroy();
@@ -282,19 +282,12 @@ export class TowerSystem {
   }
 
   hasTowerAt(gridX: number, gridY: number): boolean {
-    for (const tower of this.towers.values()) {
-      if (tower.data.position.x === gridX && tower.data.position.y === gridY) return true;
-    }
-    return false;
+    return this.findTowerEntry(gridX, gridY) !== null;
   }
 
   getTowerAt(gridX: number, gridY: number): { data: PlacedTower; def: TowerDef } | null {
-    for (const tower of this.towers.values()) {
-      if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
-        return { data: tower.data, def: tower.def };
-      }
-    }
-    return null;
+    const entry = this.findTowerEntry(gridX, gridY);
+    return entry ? { data: entry.instance.data, def: entry.instance.def } : null;
   }
 
   removeTowerAt(gridX: number, gridY: number): boolean {

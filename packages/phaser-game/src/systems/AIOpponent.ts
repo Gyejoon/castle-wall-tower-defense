@@ -50,16 +50,18 @@ export class AIOpponent {
 
   hp = INITIAL_PLAYER_HP;
   gold = INITIAL_GOLD;
-  towerCount = 0;
+  get towerCount(): number { return this.towers.length; }
+
+  private lastEmittedHp = INITIAL_PLAYER_HP;
+  private lastEmittedGold = INITIAL_GOLD;
+  private lastEmittedTowerCount = 0;
 
   constructor() {
     this.gridManager = new GridManager(FOREST_GATE_MAP);
     this.randomTowerSystem = new RandomTowerSystem();
   }
 
-  /** AI build phase: spend gold on random towers */
   buildPhase(): void {
-    // Buy towers while affordable
     let attempts = 0;
     while (this.gold >= RANDOM_TOWER_COST && attempts < 10) {
       attempts++;
@@ -99,7 +101,7 @@ export class AIOpponent {
       position: { x, y },
       lastAttackTime: 0,
     });
-    this.towerCount = this.towers.length;
+    // towerCount is a getter — no manual sync needed
   }
 
   private tryMerge(): void {
@@ -124,20 +126,19 @@ export class AIOpponent {
             lastAttackTime: 0,
           };
           this.towers.splice(i, 1);
-          this.towerCount = this.towers.length;
+          // towerCount is a getter — no manual sync needed
           return;
         }
       }
     }
   }
 
-  /** Queue wave units on AI field */
-  queueUnits(unitDefId: string, count: number): void {
+  queueUnits(unitDefId: string, count: number, hpRatio = 1): void {
     const def = UNITS.find((u) => u.id === unitDefId);
     if (!def) return;
     this.spawnQueue.push({
       defId: def.id,
-      hp: def.stats.hp,
+      hp: Math.floor(def.stats.hp * hpRatio),
       maxHp: def.stats.hp,
       speed: def.stats.speed,
       armor: def.stats.armor,
@@ -146,19 +147,9 @@ export class AIOpponent {
     });
   }
 
-  /** Queue transfer units (50% HP) */
+  /** Queue transfer units at 50% HP */
   queueTransferUnits(unitDefId: string, count: number): void {
-    const def = UNITS.find((u) => u.id === unitDefId);
-    if (!def) return;
-    this.spawnQueue.push({
-      defId: def.id,
-      hp: Math.floor(def.stats.hp * 0.5),
-      maxHp: def.stats.hp,
-      speed: def.stats.speed,
-      armor: def.stats.armor,
-      bounty: def.bounty,
-      remaining: count,
-    });
+    this.queueUnits(unitDefId, count, 0.5);
   }
 
   /** Update AI simulation — returns killed unit defIds for kill transfer */
@@ -284,6 +275,10 @@ export class AIOpponent {
   }
 
   private emitState(): void {
+    if (this.gold === this.lastEmittedGold && this.hp === this.lastEmittedHp && this.towerCount === this.lastEmittedTowerCount) return;
+    this.lastEmittedGold = this.gold;
+    this.lastEmittedHp = this.hp;
+    this.lastEmittedTowerCount = this.towerCount;
     EventBus.emit('opponent-state', {
       gold: this.gold,
       hp: this.hp,

@@ -19,6 +19,10 @@ export class MergeSystem {
     return true;
   }
 
+  destroy(): void {
+    // Pure logic system — no resources to release
+  }
+
   merge(pos1: Position, pos2: Position): TowerDef | null {
     if (!this.canMerge(pos1, pos2)) return null;
 

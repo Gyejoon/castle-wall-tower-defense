@@ -411,5 +411,7 @@ export class GameScene extends Phaser.Scene {
     this.unitSystem.destroy();
     this.waveSystem.destroy();
     this.aiOpponent.destroy();
+    this.mergeSystem.destroy();
+    this.randomTowerSystem.reset();
   }
 }

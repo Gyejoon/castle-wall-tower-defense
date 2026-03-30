@@ -79,6 +79,16 @@ describe('field asset preload alignment', () => {
       type: 'image',
       path: 'assets/tiles/exit-tile.png',
     });
+    expect(manifest.assets).toContainEqual({
+      key: 'tileset',
+      type: 'image',
+      path: 'assets/tiles/tileset.png',
+    });
+    expect(manifest.assets).toContainEqual({
+      key: 'tilemap-forest-gate',
+      type: 'tilemapTiledJSON',
+      path: 'assets/maps/forest-gate.json',
+    });
   });
 
   it('preloads the isometric field tiles instead of the legacy tilemap bundle', async () => {

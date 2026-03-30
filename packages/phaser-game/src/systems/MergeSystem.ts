@@ -39,8 +39,4 @@ export class MergeSystem {
     return rolledTower;
   }
 
-  destroy(): void {
-    // Release reference to avoid retain cycles
-    this.towerSystem = null!;
-  }
 }

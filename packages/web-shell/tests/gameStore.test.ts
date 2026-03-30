@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 import { INITIAL_GOLD, INITIAL_PLAYER_HP } from '@gld/shared';
 
 describe('gameStore', () => {
   beforeEach(() => {
     useGameStore.setState(useGameStore.getInitialState());
+    useEmoteStore.setState({
+      myEmote: null,
+      opponentEmote: null,
+      showEmotePanel: false,
+    });
   });
 
   it('starts in lobby screen', () => {
@@ -88,6 +94,9 @@ describe('gameStore', () => {
     useGameStore.getState().setCountdown(2);
     useGameStore.getState().setRunStatus('defeat');
     useGameStore.getState().setPlacementFeedback('combat_phase');
+    useEmoteStore.getState().sendEmote('gg');
+    useEmoteStore.getState().receiveEmote('angry');
+    useEmoteStore.getState().toggleEmotePanel();
 
     useGameStore.getState().resetRun();
 
@@ -101,5 +110,8 @@ describe('gameStore', () => {
     expect(useGameStore.getState().wave).toBe(0);
     expect(useGameStore.getState().wavePhase).toBe('building');
     expect(useGameStore.getState().countdown).toBe(0);
+    expect(useEmoteStore.getState().myEmote).toBeNull();
+    expect(useEmoteStore.getState().opponentEmote).toBeNull();
+    expect(useEmoteStore.getState().showEmotePanel).toBe(false);
   });
 });

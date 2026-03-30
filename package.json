@@ -12,12 +12,14 @@
     "test:phaser": "bun run --filter @gld/phaser-game test",
     "test:web": "bun run --filter web-shell test",
     "lint": "bun run --filter '*' lint",
+    "lint:check": "bunx biome check .",
     "generate:assets": "bun run scripts/generate-assets/generate-all.ts"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
     "@napi-rs/canvas": "^0.1.97",
     "sharp": "^0.34.5"
   }

@@ -19,6 +19,7 @@ export interface GameEventMap {
   };
   'unit-spawned': { unitType: UnitType; count: number };
   'player-damaged': { playerId: string; damage: number; remainingHp: number };
+  'path-updated': { path: Position[] };
   'game-over': { winnerId: string };
   'gold-changed': { gold: number };
   'wave-started': { wave: number; totalWaves: number };

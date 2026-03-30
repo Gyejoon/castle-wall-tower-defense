@@ -11,10 +11,6 @@ interface TowerInstance {
   base: Phaser.GameObjects.Graphics;
   sprite: Phaser.GameObjects.Image;
   lastAttackTime: number;
-  colorNum: number;
-  worldPos: Position;
-  attackInterval: number;
-  rangeSq: number;
 }
 
 export type TowerPlacementResult =
@@ -27,13 +23,15 @@ export class TowerSystem {
   private static readonly SOUND_THROTTLE_MS = 200;
   private scene: Phaser.Scene;
   private gridManager: GridManager;
+  private pathfinding: PathfindingSystem;
   private nextId = 0;
   private attackGraphics: Phaser.GameObjects.Graphics;
   private attackLines: Array<{ x1: number; y1: number; x2: number; y2: number; color: number; ttl: number }> = [];
 
-  constructor(scene: Phaser.Scene, gridManager: GridManager) {
+  constructor(scene: Phaser.Scene, gridManager: GridManager, pathfinding: PathfindingSystem) {
     this.scene = scene;
     this.gridManager = gridManager;
+    this.pathfinding = pathfinding;
     this.attackGraphics = scene.add.graphics();
     this.attackGraphics.setDepth(10);
   }
@@ -71,9 +69,7 @@ export class TowerSystem {
     }
 
     const instanceId = `tower_${this.nextId++}`;
-    this.gridManager.occupyPlacementPoint(gridX, gridY, instanceId);
     const worldPos = this.gridManager.gridToWorld(gridX, gridY);
-    const colorNum = parseInt(def.color.replace('#', ''), 16);
 
     const towerData: PlacedTower = {
       instanceId,
@@ -94,10 +90,6 @@ export class TowerSystem {
       base,
       sprite,
       lastAttackTime: 0,
-      colorNum,
-      worldPos,
-      attackInterval: def.stats.attackSpeed > 0 ? 1000 / def.stats.attackSpeed : Infinity,
-      rangeSq: (def.stats.range * TILE_SIZE) ** 2,
     });
 
     return { success: true, tower: towerData };
@@ -108,11 +100,13 @@ export class TowerSystem {
 
     graphics.clear();
 
+    // Base platform (dark circle)
     graphics.fillStyle(0x0a0a14, 0.8);
     graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.45);
     graphics.lineStyle(1, color, 0.3);
     graphics.strokeCircle(pos.x, pos.y, TILE_SIZE * 0.45);
 
+    // Glow under tower
     graphics.fillStyle(color, 0.08);
     graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.6);
 
@@ -158,10 +152,14 @@ export class TowerSystem {
     this.damageEventsBuffer.length = 0;
 
     for (const tower of this.towers.values()) {
-      if (time - tower.lastAttackTime < tower.attackInterval) continue;
+      const { def, data } = tower;
+      if (def.stats.attackSpeed <= 0) continue;
 
-      const towerWorld = tower.worldPos;
-      const rangeSq = tower.rangeSq;
+      const attackInterval = 1000 / def.stats.attackSpeed;
+      if (time - tower.lastAttackTime < attackInterval) continue;
+
+      const towerWorld = this.gridManager.gridToWorld(data.position.x, data.position.y);
+      const rangeSq = (def.stats.range * TILE_SIZE) ** 2;
 
       let closestUnit: (typeof unitPositions)[0] | null = null;
       let closestDistSq = Infinity;
@@ -213,7 +211,7 @@ export class TowerSystem {
         this.attackLines.push({
           x1: towerWorld.x, y1: towerWorld.y,
           x2: closestUnit.x, y2: closestUnit.y,
-          color: tower.colorNum, ttl: 80,
+          color, ttl: 80,
         });
 
         // Play tower attack sound (throttled per tower type)
@@ -225,6 +223,7 @@ export class TowerSystem {
       }
     }
 
+    // Render attack lines with in-place compaction
     this.attackGraphics.clear();
     let write = 0;
     for (let i = 0; i < this.attackLines.length; i++) {
@@ -232,15 +231,16 @@ export class TowerSystem {
       line.ttl -= delta;
       if (line.ttl <= 0) continue;
       const alpha = line.ttl / 80;
-      const g = this.attackGraphics;
-      // Glow layer then core layer
-      for (const [w, a] of [[4, alpha * 0.2], [2, alpha * 0.8]] as const) {
-        g.lineStyle(w, line.color, a);
-        g.beginPath();
-        g.moveTo(line.x1, line.y1);
-        g.lineTo(line.x2, line.y2);
-        g.strokePath();
-      }
+      this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
+      this.attackGraphics.beginPath();
+      this.attackGraphics.moveTo(line.x1, line.y1);
+      this.attackGraphics.lineTo(line.x2, line.y2);
+      this.attackGraphics.strokePath();
+      this.attackGraphics.lineStyle(4, line.color, alpha * 0.2);
+      this.attackGraphics.beginPath();
+      this.attackGraphics.moveTo(line.x1, line.y1);
+      this.attackGraphics.lineTo(line.x2, line.y2);
+      this.attackGraphics.strokePath();
       if (line.ttl > 50) {
         this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
         this.attackGraphics.fillCircle(line.x2, line.y2, 4);

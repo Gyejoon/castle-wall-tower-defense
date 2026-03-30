@@ -10,6 +10,7 @@ import {
   type PressureChoice,
 } from '@gld/shared';
 import { GridManager } from '../systems/GridManager';
+import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
@@ -22,6 +23,7 @@ import { soundGenerator } from '../audio/SoundGenerator';
 
 export class GameScene extends Phaser.Scene {
   private gridManager!: GridManager;
+  private pathfinding!: PathfindingSystem;
   private towerSystem!: TowerSystem;
   private unitSystem!: UnitSystem;
   private waveSystem!: WaveSystem;
@@ -30,7 +32,6 @@ export class GameScene extends Phaser.Scene {
   private ghostPlayer!: GhostPlayer;
   private gridGraphics!: Phaser.GameObjects.Graphics;
   private hoverGraphics!: Phaser.GameObjects.Graphics;
-  private placementGraphics!: Phaser.GameObjects.Graphics;
 
   private playerHp = INITIAL_PLAYER_HP;
   private gold = INITIAL_GOLD;
@@ -56,8 +57,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gridManager = new GridManager(FOREST_GATE_MAP);
-    this.towerSystem = new TowerSystem(this, this.gridManager);
+    this.gridManager = new GridManager();
+    this.pathfinding = new PathfindingSystem();
+    this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
     this.waveSystem = new WaveSystem(this.unitSystem);
     this.pressureSystem = new PressureSystem();
@@ -98,13 +100,25 @@ export class GameScene extends Phaser.Scene {
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
 
-    // Input: hover highlight — only on placement points
+    // Compute initial path
+    const walkGrid = this.gridManager.getWalkabilityGrid();
+    const path = this.pathfinding.findPath(
+      walkGrid,
+      this.gridManager.spawnPoint,
+      this.gridManager.exitPoint,
+    );
+    if (path) {
+      this.unitSystem.setPath(path);
+      this.renderPath(path);
+    }
+
+    // Input: hover highlight
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.hoverGraphics.clear();
-      if (this.gridManager.isValidPlacementPoint(gridPos.x, gridPos.y)) {
-        const isEmpty = this.gridManager.isPlacementPointEmpty(gridPos.x, gridPos.y);
-        this.hoverGraphics.fillStyle(isEmpty ? 0x7f5af0 : 0xe53170, 0.25);
+      if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
+        const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
+        this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
         this.hoverGraphics.fillRect(
           gridPos.x * TILE_SIZE,
           gridPos.y * TILE_SIZE,
@@ -120,10 +134,6 @@ export class GameScene extends Phaser.Scene {
       const gridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
       this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
     });
-
-    this.onSelectTower = (data) => {
-      this.selectedTowerId = data.towerDefId;
-    };
 
     this.onPlaceTower = (data) => {
       this.handlePlaceTower(data.col, data.row, data.towerDefId);
@@ -166,7 +176,7 @@ export class GameScene extends Phaser.Scene {
         const path = this.pathfinding.findPath(walkGrid, this.gridManager.spawnPoint, this.gridManager.exitPoint);
         if (path) {
           this.unitSystem.setPath(path);
-          this.drawPath(path);
+          this.renderPath(path);
           EventBus.emit('path-updated', { path });
         }
         EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
@@ -320,15 +330,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private redrawPlacementPoints(): void {
-    this.placementGraphics.clear();
-    for (const pp of this.gridManager.getPlacementPoints()) {
-      if (!this.gridManager.isPlacementPointEmpty(pp.x, pp.y)) continue;
-      const world = this.gridManager.gridToWorld(pp.x, pp.y);
-      this.placementGraphics.fillStyle(0xe2b714, 0.25);
-      this.placementGraphics.fillCircle(world.x, world.y, TILE_SIZE * 0.4);
-      this.placementGraphics.lineStyle(1, 0xe2b714, 0.5);
-      this.placementGraphics.strokeCircle(world.x, world.y, TILE_SIZE * 0.4);
+  private pathGraphics?: Phaser.GameObjects.Graphics;
+
+  private renderPath(path: { x: number; y: number }[]): void {
+    if (!this.pathGraphics) {
+      this.pathGraphics = this.add.graphics();
     }
     this.pathGraphics.clear();
 
@@ -394,8 +400,10 @@ export class GameScene extends Phaser.Scene {
       this.earnGold(Math.round(bountyTotal * multiplier));
     }
 
+    // Update units — move along path
     const { reachedExit } = this.unitSystem.update(time, delta);
 
+    // Units reaching exit damage the player
     for (const _unitId of reachedExit) {
       this.playerHp = Math.max(0, this.playerHp - 1);
       EventBus.emit('player-damaged', {

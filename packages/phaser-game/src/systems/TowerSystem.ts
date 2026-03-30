@@ -122,17 +122,33 @@ export class TowerSystem {
     }
   }
 
-  private damageEventsBuffer: Array<{ unitId: string; damage: number }> = [];
+  private damageEventsBuffer: Array<{ unitId: string; damage: number; slow?: { factor: number; duration: number } }> = [];
+
+  /** Recalculate boost from adjacent shield/paladin towers */
+  private getBoostMultiplier(gridX: number, gridY: number): number {
+    let boostCount = 0;
+    for (const tower of this.towers.values()) {
+      const special = tower.def.stats.special;
+      if (!special || !special.startsWith('boost_adjacent')) continue;
+      const dx = Math.abs(tower.data.position.x - gridX);
+      const dy = Math.abs(tower.data.position.y - gridY);
+      if (dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0)) {
+        const match = special.match(/boost_adjacent_(\d+)%/);
+        if (match) boostCount += parseInt(match[1]) / 100;
+      }
+    }
+    return 1 + boostCount;
+  }
 
   /**
    * Update towers: find targets and attack.
-   * Returns damage events to apply to units.
+   * Returns damage events to apply to units (including slow effects).
    */
   update(
     time: number,
     delta: number,
     unitPositions: Array<{ instanceId: string; x: number; y: number; hp: number }>,
-  ): Array<{ unitId: string; damage: number }> {
+  ): Array<{ unitId: string; damage: number; slow?: { factor: number; duration: number } }> {
     this.damageEventsBuffer.length = 0;
 
     for (const tower of this.towers.values()) {
@@ -161,10 +177,36 @@ export class TowerSystem {
 
       if (closestUnit) {
         tower.lastAttackTime = time;
+        const boostMult = this.getBoostMultiplier(data.position.x, data.position.y);
+        const boostedDamage = Math.round(def.stats.damage * boostMult);
+        const special = def.stats.special;
+
+        // Primary target damage
+        const slowEffect = special?.startsWith('slow_')
+          ? { factor: 0.7, duration: 2000 }
+          : undefined;
         this.damageEventsBuffer.push({
           unitId: closestUnit.instanceId,
-          damage: def.stats.damage,
+          damage: boostedDamage,
+          slow: slowEffect,
         });
+
+        // Splash: hit nearby units for 50% damage
+        if (special === 'splash') {
+          const splashRadiusSq = (1.5 * TILE_SIZE) ** 2;
+          for (const unit of unitPositions) {
+            if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0) continue;
+            const sdx = closestUnit.x - unit.x;
+            const sdy = closestUnit.y - unit.y;
+            if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
+              this.damageEventsBuffer.push({
+                unitId: unit.instanceId,
+                damage: Math.round(boostedDamage * 0.5),
+              });
+            }
+          }
+        }
+
         const color = parseInt(def.color.replace('#', ''), 16);
         this.attackLines.push({
           x1: towerWorld.x, y1: towerWorld.y,
@@ -208,6 +250,42 @@ export class TowerSystem {
     this.attackLines.length = write;
 
     return this.damageEventsBuffer;
+  }
+
+  sellTower(gridX: number, gridY: number): { success: boolean; refund: number } {
+    let targetKey: string | null = null;
+    let targetInstance: TowerInstance | null = null;
+
+    for (const [key, tower] of this.towers) {
+      if (tower.data.position.x === gridX && tower.data.position.y === gridY) {
+        targetKey = key;
+        targetInstance = tower;
+        break;
+      }
+    }
+
+    if (!targetKey || !targetInstance) return { success: false, refund: 0 };
+
+    // Remove graphics
+    targetInstance.base.destroy();
+    targetInstance.sprite.destroy();
+    this.towers.delete(targetKey);
+
+    // Release grid cell
+    this.gridManager.removeTower(gridX, gridY);
+
+    // Recalculate path
+    this.pathfinding.invalidateCache();
+
+    const refund = Math.floor(targetInstance.def.cost * 0.7);
+    return { success: true, refund };
+  }
+
+  hasTowerAt(gridX: number, gridY: number): boolean {
+    for (const tower of this.towers.values()) {
+      if (tower.data.position.x === gridX && tower.data.position.y === gridY) return true;
+    }
+    return false;
   }
 
   getTowers(): PlacedTower[] {

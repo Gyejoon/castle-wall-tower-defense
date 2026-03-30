@@ -1,10 +1,15 @@
 {
-  "generated": "2026-03-29T08:53:04.783Z",
+  "generated": "2026-03-30T01:42:31.056Z",
   "assets": [
     {
       "key": "grid-floor",
       "type": "image",
       "path": "assets/tiles/grid-floor.png"
+    },
+    {
+      "key": "path-tile",
+      "type": "image",
+      "path": "assets/tiles/path-tile.png"
     },
     {
       "key": "spawn-tile",

@@ -42,6 +42,7 @@ export class GameScene extends Phaser.Scene {
   private spawnMarker?: Phaser.GameObjects.Image;
   private exitMarker?: Phaser.GameObjects.Image;
   private onPlaceTower!: (data: { col: number; row: number; towerDefId: string }) => void;
+  private onSellTower!: (data: { col: number; row: number }) => void;
   private onSelectTower!: (data: { towerDefId: string }) => void;
   private onClearTowerSelection!: () => void;
   private onStartWave!: () => void;
@@ -165,9 +166,27 @@ export class GameScene extends Phaser.Scene {
       this.ghostRecorder.recordPressure(data.choice);
     };
 
+    this.onSellTower = (data) => {
+      if (this.waveSystem.getPhase() !== 'building') return;
+      const result = this.towerSystem.sellTower(data.col, data.row);
+      if (result.success) {
+        this.earnGold(result.refund);
+        // Recalculate and update path
+        const walkGrid = this.gridManager.getWalkabilityGrid();
+        const path = this.pathfinding.findPath(walkGrid, this.gridManager.spawnPoint, this.gridManager.exitPoint);
+        if (path) {
+          this.unitSystem.setPath(path);
+          this.drawPath(path);
+          EventBus.emit('path-updated', { path });
+        }
+        EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
+      }
+    };
+
     EventBus.on('request-select-tower', this.onSelectTower);
     EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.on('request-place-tower', this.onPlaceTower);
+    EventBus.on('request-sell-tower', this.onSellTower);
     EventBus.on('request-start-wave', this.onStartWave);
     EventBus.on('game-won', this.onGameWon);
     EventBus.on('start-ghost-battle', this.onStartGhostBattle);
@@ -321,8 +340,8 @@ export class GameScene extends Phaser.Scene {
 
     if (path.length < 2) return;
 
-    // Glow layer
-    this.pathGraphics.lineStyle(6, 0x7f5af0, 0.06);
+    // Glow layer (dirt path color)
+    this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
     this.pathGraphics.beginPath();
     const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
     this.pathGraphics.moveTo(first.x, first.y);
@@ -332,8 +351,8 @@ export class GameScene extends Phaser.Scene {
     }
     this.pathGraphics.strokePath();
 
-    // Dotted path
-    this.pathGraphics.fillStyle(0x7f5af0, 0.35);
+    // Dotted path (dirt color)
+    this.pathGraphics.fillStyle(0xb8956a, 0.4);
     for (let i = 0; i < path.length - 1; i++) {
       const a = this.gridManager.gridToWorld(path[i].x, path[i].y);
       const b = this.gridManager.gridToWorld(path[i + 1].x, path[i + 1].y);
@@ -369,6 +388,10 @@ export class GameScene extends Phaser.Scene {
         bountyTotal += result.bounty;
         soundGenerator.playUnitDeath();
       }
+      // Apply slow effect from frost towers
+      if (evt.slow) {
+        this.unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+      }
     }
     if (bountyTotal > 0) {
       const multiplier = this.ghostBattleActive
@@ -400,6 +423,7 @@ export class GameScene extends Phaser.Scene {
     EventBus.off('request-select-tower', this.onSelectTower);
     EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
     EventBus.off('request-place-tower', this.onPlaceTower);
+    EventBus.off('request-sell-tower', this.onSellTower);
     EventBus.off('request-start-wave', this.onStartWave);
     EventBus.off('game-won', this.onGameWon);
     EventBus.off('start-ghost-battle', this.onStartGhostBattle);

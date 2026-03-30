@@ -148,6 +148,14 @@ export function GamePage() {
       }, 2500);
     };
 
+    const setWavePreview = useGameStore.getState().setWavePreview;
+    const onWavePreview = (data: { groups: Array<{ unitId: string; unitName: string; count: number }> }) => {
+      setWavePreview(data.groups);
+    };
+    const onWaveStartedClearPreview = () => {
+      setWavePreview(null);
+    };
+
     EventBus.on('player-damaged', onDamaged);
     EventBus.on('gold-changed', onGoldChanged);
     EventBus.on('game-over', onGameOver);
@@ -156,6 +164,8 @@ export function GamePage() {
     EventBus.on('countdown-tick', onCountdownTick);
     EventBus.on('tower-placed', onTowerPlaced);
     EventBus.on('ghost-pressure-applied', onGhostPressure);
+    EventBus.on('wave-preview', onWavePreview);
+    EventBus.on('wave-started', onWaveStartedClearPreview);
 
     return () => {
       EventBus.off('player-damaged', onDamaged);
@@ -166,6 +176,8 @@ export function GamePage() {
       EventBus.off('countdown-tick', onCountdownTick);
       EventBus.off('tower-placed', onTowerPlaced);
       EventBus.off('ghost-pressure-applied', onGhostPressure);
+      EventBus.off('wave-preview', onWavePreview);
+      EventBus.off('wave-started', onWaveStartedClearPreview);
       clearPressureWarningTimeout();
     };
   }, [
@@ -211,7 +223,7 @@ export function GamePage() {
         justifyContent: 'center',
         alignItems: 'stretch',
         background:
-          'radial-gradient(circle at top, rgba(127,90,240,0.2), transparent 24%), linear-gradient(180deg, #080811 0%, #0c1020 48%, #070812 100%)',
+          'radial-gradient(circle at top, rgba(200,160,74,0.2), transparent 24%), linear-gradient(180deg, #1a1208 0%, #2a2010 48%, #0f0a04 100%)',
         padding: '8px',
       }}
     >
@@ -225,7 +237,7 @@ export function GamePage() {
           overflow: 'hidden',
           border: `1px solid ${colors.border}`,
           boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
-          background: 'linear-gradient(180deg, rgba(9,11,18,0.98) 0%, rgba(14,18,32,0.98) 100%)',
+          background: 'linear-gradient(180deg, rgba(26,18,8,0.98) 0%, rgba(42,32,16,0.98) 100%)',
           position: 'relative',
         }}
       >
@@ -241,7 +253,7 @@ export function GamePage() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ color: colors.accent, fontSize: '8px' }}>그리드 라인 디펜스</span>
+              <span style={{ color: colors.accent, fontSize: '8px' }}>왕국의 방어선</span>
               <span style={{ color: colors.textSecondary, fontSize: '8px' }}>
                 웨이브 {formatWaveLabel(wave, totalWaves)}/{totalWaves}
               </span>
@@ -278,7 +290,7 @@ export function GamePage() {
                 style={{
                   padding: '8px 10px',
                   borderRadius: '14px',
-                  background: 'rgba(127,90,240,0.14)',
+                  background: 'rgba(200,160,74,0.14)',
                   color: colors.text,
                   fontSize: '8px',
                 }}
@@ -468,6 +480,29 @@ export function GamePage() {
                 }}
               >
                 {feedbackText}
+              </div>
+            )}
+
+            {/* Wave Preview */}
+            {runStatus === 'building' && useGameStore.getState().wavePreview && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '14px',
+                  background: 'rgba(200,160,74,0.08)',
+                  border: '1px solid rgba(200,160,74,0.2)',
+                  color: colors.textSecondary,
+                  fontSize: '8px',
+                  lineHeight: 1.8,
+                }}
+              >
+                <span style={{ color: colors.gold, marginRight: '6px' }}>다음 웨이브:</span>
+                {useGameStore.getState().wavePreview!.map((g, i) => (
+                  <span key={g.unitId}>
+                    {i > 0 && ', '}
+                    {g.unitName} x{g.count}
+                  </span>
+                ))}
               </div>
             )}
 

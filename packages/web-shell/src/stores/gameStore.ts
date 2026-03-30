@@ -22,6 +22,7 @@ interface GameStoreState {
   wavePhase: WavePhase;
   countdown: number;
   placementFeedback: PlacementFailureReason | null;
+  wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
 
   // Ghost battle state
   ghostBattleActive: boolean;
@@ -40,6 +41,7 @@ interface GameStoreState {
   setWavePhase: (phase: WavePhase) => void;
   setCountdown: (seconds: number) => void;
   setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
+  setWavePreview: (preview: Array<{ unitId: string; unitName: string; count: number }> | null) => void;
   resetRun: () => void;
   enterLobby: () => void;
 
@@ -60,6 +62,7 @@ const createRunState = () => ({
   wavePhase: 'building' as WavePhase,
   countdown: 0,
   placementFeedback: null,
+  wavePreview: null,
 });
 
 const createGhostBattleState = () => ({
@@ -86,6 +89,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setWavePhase: (phase) => set({ wavePhase: phase }),
   setCountdown: (seconds) => set({ countdown: seconds }),
   setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
+  setWavePreview: (preview) => set({ wavePreview: preview }),
 
   resetRun: () =>
     set((state) => ({

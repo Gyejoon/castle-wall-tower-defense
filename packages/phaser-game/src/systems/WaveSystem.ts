@@ -1,4 +1,4 @@
-import { WAVE_DEFS, TOTAL_WAVES } from '@gld/shared';
+import { WAVE_DEFS, TOTAL_WAVES, UNITS } from '@gld/shared';
 import type { WavePhase } from '@gld/shared';
 import type { UnitSystem } from './UnitSystem';
 import { EventBus } from '../EventBus';
@@ -49,6 +49,14 @@ export class WaveSystem {
     this.lastTickSecond = buildTime;
     EventBus.emit('building-phase-started', { nextWave: this.currentWave + 1, countdown: buildTime });
     EventBus.emit('countdown-tick', { secondsLeft: buildTime });
+
+    // Emit wave preview for the next wave
+    const nextWaveDef = WAVE_DEFS[nextWaveIndex];
+    const previewGroups = nextWaveDef.groups.map((g) => {
+      const unitDef = UNITS.find((u) => u.id === g.unitId);
+      return { unitId: g.unitId, unitName: unitDef?.name ?? g.unitId, count: g.count };
+    });
+    EventBus.emit('wave-preview', { wave: this.currentWave + 1, groups: previewGroups });
   }
 
   private updateBuilding(delta: number): void {

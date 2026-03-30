@@ -7,184 +7,149 @@ export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const entries: ManifestEntry[] = [];
 
-  // tower-icons.png (288x32, 9 icons at 32x32)
+  // tower-icons.png (288x32, 9 icons) — 중세 타워 미니 아이콘
   {
-    const towerDefs = [
-      { color: PALETTE.laser, shape: 'diamond' as const },
-      { color: PALETTE.plasma, shape: 'hexagon' as const },
-      { color: PALETTE.emp, shape: 'circle' as const },
-      { color: PALETTE.shield, shape: 'shield' as const },
-      { color: PALETTE.laser, shape: 'star' as const },
-      { color: PALETTE.emp, shape: 'star' as const },
-      { color: PALETTE.plasma, shape: 'star' as const },
-      { color: PALETTE.cyan, shape: 'star' as const },
-      { color: PALETTE.stasis, shape: 'star' as const },
-    ];
-    const { canvas, ctx } = makeCanvas(towerDefs.length * 32, 32);
+    const { canvas, ctx } = makeCanvas(288, 32);
 
-    towerDefs.forEach((t, i) => {
-      const ox = i * 32;
-      const cx = ox + 16, cy = 16;
-      switch (t.shape) {
-        case 'diamond':
-          drawLine(ctx, cx, cy - 8, cx + 8, cy, t.color);
-          drawLine(ctx, cx + 8, cy, cx, cy + 8, t.color);
-          drawLine(ctx, cx, cy + 8, cx - 8, cy, t.color);
-          drawLine(ctx, cx - 8, cy, cx, cy - 8, t.color);
-          break;
-        case 'hexagon':
-          drawPolygon(ctx, cx, cy, 9, 6, t.color, 0);
-          break;
-        case 'circle':
-          drawCircle(ctx, cx, cy, 9, t.color);
-          // Antenna
-          drawLine(ctx, cx, cy - 9, cx, cy - 13, t.color);
-          setPixel(ctx, cx, cy - 13, PALETTE.white);
-          break;
-        case 'shield':
-          drawLine(ctx, cx - 8, cy - 7, cx + 8, cy - 7, t.color);
-          drawLine(ctx, cx - 8, cy - 7, cx - 8, cy + 2, t.color);
-          drawLine(ctx, cx + 8, cy - 7, cx + 8, cy + 2, t.color);
-          drawLine(ctx, cx - 8, cy + 2, cx, cy + 9, t.color);
-          drawLine(ctx, cx + 8, cy + 2, cx, cy + 9, t.color);
-          break;
-        case 'star':
-          drawStar(ctx, cx, cy, 9, 4, 5, t.color);
-          break;
-      }
-    });
+    // 궁수 탑 (laser) — 돌 탑 실루엣
+    let ox = 0, cx = 16, cy = 16;
+    drawRect(ctx, ox + 10, cy - 4, 12, 12, PALETTE.stone);
+    drawRect(ctx, ox + 10, cy - 4, 12, 2, PALETTE.stoneLight);
+    drawRect(ctx, ox + 9, cy - 8, 4, 5, PALETTE.stone);
+    drawRect(ctx, ox + 19, cy - 8, 4, 5, PALETTE.stone);
+    setPixel(ctx, ox + 14, cy - 6, PALETTE.laser);
+
+    // 투석기 (plasma) — 나무 프레임
+    ox = 32;
+    drawRect(ctx, ox + 8, cy, 16, 4, PALETTE.wood);
+    drawCircle(ctx, ox + 10, cy + 5, 3, PALETTE.woodDark);
+    drawCircle(ctx, ox + 22, cy + 5, 3, PALETTE.woodDark);
+    drawLine(ctx, ox + 12, cy, ox + 18, cy - 8, PALETTE.woodDark);
+    fillCircle(ctx, ox + 18, cy - 8, 2, PALETTE.stoneDark);
+
+    // 서리 마탑 (emp) — 얼음 결정
+    ox = 64;
+    drawRect(ctx, ox + 11, cy - 2, 10, 12, PALETTE.stoneDark);
+    drawLine(ctx, ox + 16, cy - 8, ox + 13, cy - 2, PALETTE.ice);
+    drawLine(ctx, ox + 16, cy - 8, ox + 19, cy - 2, PALETTE.ice);
+    setPixel(ctx, ox + 16, cy - 9, PALETTE.white);
+    addGlow(ctx, ox + 16, cy - 4, 4, PALETTE.iceGlow, 0.4);
+
+    // 성기사 제단 (shield) — 황금 십자가
+    ox = 96;
+    drawRect(ctx, ox + 10, cy + 2, 12, 5, PALETTE.stone);
+    drawRect(ctx, ox + 14, cy - 6, 4, 10, PALETTE.gold);
+    drawRect(ctx, ox + 10, cy - 2, 12, 3, PALETTE.gold);
+    addGlow(ctx, ox + 16, cy - 2, 5, PALETTE.magicGold, 0.3);
+
+    // Fusion tier 2 — 별 모양 기반, 각 타워 색상
+    const fusionColors = [PALETTE.laser, PALETTE.emp, PALETTE.plasma, PALETTE.shield, PALETTE.stasis];
+    for (let i = 0; i < 5; i++) {
+      ox = (4 + i) * 32;
+      drawStar(ctx, ox + 16, cy, 9, 4, 5, fusionColors[i]);
+      fillCircle(ctx, ox + 16, cy, 3, hexToRgba(fusionColors[i], 0.4));
+    }
 
     saveCanvas(canvas, `${OUTPUT_DIR}/tower-icons.png`);
-    entries.push({
-      key: 'ui-tower-icons',
-      type: 'spritesheet',
-      path: 'assets/ui/tower-icons.png',
-      frameWidth: 32,
-      frameHeight: 32,
-      frameCount: towerDefs.length,
-    });
+    entries.push({ key: 'ui-tower-icons', type: 'spritesheet', path: 'assets/ui/tower-icons.png', frameWidth: 32, frameHeight: 32, frameCount: 9 });
   }
 
-  // unit-icons.png (160x32, 5 icons at 32x32)
+  // unit-icons.png (160x32, 5 icons) — 마물 아이콘
   {
     const { canvas, ctx } = makeCanvas(160, 32);
-    const unitDefs = [
-      { color: PALETTE.scoutDrone, shape: 'triangle' as const },
-      { color: PALETTE.battleRobot, shape: 'square' as const },
-      { color: PALETTE.heavyWalker, shape: 'hexagon' as const },
-      { color: PALETTE.stealthDrone, shape: 'diamond' as const },
-      { color: PALETTE.titan, shape: 'octagon' as const },
-    ];
+    const cy = 16;
 
-    unitDefs.forEach((u, i) => {
-      const ox = i * 32;
-      const cx = ox + 16, cy = 16;
-      switch (u.shape) {
-        case 'triangle':
-          drawLine(ctx, cx - 6, cy + 5, cx + 7, cy, u.color);
-          drawLine(ctx, cx + 7, cy, cx - 6, cy - 5, u.color);
-          drawLine(ctx, cx - 6, cy - 5, cx - 6, cy + 5, u.color);
-          break;
-        case 'square':
-          drawLine(ctx, cx - 6, cy - 6, cx + 6, cy - 6, u.color);
-          drawLine(ctx, cx + 6, cy - 6, cx + 6, cy + 6, u.color);
-          drawLine(ctx, cx + 6, cy + 6, cx - 6, cy + 6, u.color);
-          drawLine(ctx, cx - 6, cy + 6, cx - 6, cy - 6, u.color);
-          // Head notch
-          drawLine(ctx, cx - 3, cy - 9, cx + 3, cy - 9, u.color);
-          drawLine(ctx, cx - 3, cy - 9, cx - 3, cy - 6, u.color);
-          drawLine(ctx, cx + 3, cy - 9, cx + 3, cy - 6, u.color);
-          break;
-        case 'hexagon':
-          drawPolygon(ctx, cx, cy, 9, 6, u.color, Math.PI / 6);
-          break;
-        case 'diamond':
-          drawLine(ctx, cx, cy - 8, cx + 8, cy, u.color);
-          drawLine(ctx, cx + 8, cy, cx, cy + 8, u.color);
-          drawLine(ctx, cx, cy + 8, cx - 8, cy, u.color);
-          drawLine(ctx, cx - 8, cy, cx, cy - 8, u.color);
-          break;
-        case 'octagon':
-          drawPolygon(ctx, cx, cy, 10, 8, u.color, Math.PI / 8);
-          break;
+    // 고블린 정찰병
+    let ox = 0;
+    fillCircle(ctx, ox + 16, cy - 2, 5, PALETTE.scoutDrone);
+    setPixel(ctx, ox + 14, cy - 4, '#ff2020');
+    setPixel(ctx, ox + 18, cy - 4, '#ff2020');
+    setPixel(ctx, ox + 12, cy - 4, PALETTE.scoutDrone);  // ear
+    setPixel(ctx, ox + 20, cy - 4, PALETTE.scoutDrone);  // ear
+
+    // 오크 전사
+    ox = 32;
+    drawRect(ctx, ox + 11, cy - 4, 10, 10, PALETTE.battleRobot);
+    drawRect(ctx, ox + 10, cy - 6, 12, 3, '#4a4a3a');  // helmet
+    setPixel(ctx, ox + 10, cy - 8, '#4a4a3a');  // horn
+    setPixel(ctx, ox + 22, cy - 8, '#4a4a3a');  // horn
+    setPixel(ctx, ox + 14, cy - 2, '#e0e000');
+    setPixel(ctx, ox + 18, cy - 2, '#e0e000');
+
+    // 돌 트롤
+    ox = 64;
+    fillCircle(ctx, ox + 16, cy, 8, PALETTE.heavyWalker);
+    drawCircle(ctx, ox + 16, cy, 8, PALETTE.stoneDark);
+    setPixel(ctx, ox + 13, cy - 2, '#e04020');
+    setPixel(ctx, ox + 19, cy - 2, '#e04020');
+
+    // 그림자 암살자
+    ox = 96;
+    for (let dy = -6; dy <= 6; dy++) {
+      const w = 6 - Math.abs(dy);
+      for (let dx = -w; dx <= w; dx++) {
+        setPixel(ctx, ox + 16 + dx, cy + dy, hexToRgba(PALETTE.stealthDrone, 0.7));
       }
-    });
+    }
+    setPixel(ctx, ox + 15, cy - 3, '#ff40ff');
+    setPixel(ctx, ox + 17, cy - 3, '#ff40ff');
+
+    // 고대 드래곤
+    ox = 128;
+    fillCircle(ctx, ox + 16, cy, 7, hexToRgba(PALETTE.titan, 0.7));
+    drawCircle(ctx, ox + 16, cy, 7, PALETTE.titan);
+    drawLine(ctx, ox + 8, cy - 3, ox + 5, cy - 7, PALETTE.titan);  // wing
+    drawLine(ctx, ox + 24, cy - 3, ox + 27, cy - 7, PALETTE.titan);  // wing
+    setPixel(ctx, ox + 15, cy - 2, '#ffe040');
+    setPixel(ctx, ox + 17, cy - 2, '#ffe040');
+    addGlow(ctx, ox + 16, cy, 4, PALETTE.fireOrange, 0.2);
 
     saveCanvas(canvas, `${OUTPUT_DIR}/unit-icons.png`);
-    entries.push({
-      key: 'ui-unit-icons',
-      type: 'spritesheet',
-      path: 'assets/ui/unit-icons.png',
-      frameWidth: 32,
-      frameHeight: 32,
-      frameCount: 5,
-    });
+    entries.push({ key: 'ui-unit-icons', type: 'spritesheet', path: 'assets/ui/unit-icons.png', frameWidth: 32, frameHeight: 32, frameCount: 5 });
   }
 
-  // hp-bar.png (32x4)
+  // hp-bar.png (32x4) — 갈색/금빛 테마
   {
     const { canvas, ctx } = makeCanvas(32, 4);
-    // Left-to-right gradient: green -> gold -> red
     for (let x = 0; x < 32; x++) {
-      let color: string;
+      let r: number, g: number, b: number;
       if (x < 16) {
-        // Green to gold
+        // Green → Gold
         const t = x / 16;
-        const r = Math.round(0x2c + (0xe2 - 0x2c) * t);
-        const g = Math.round(0xb6 + (0xb7 - 0xb6) * t);
-        const b = Math.round(0x7d + (0x14 - 0x7d) * t);
-        color = `rgb(${r},${g},${b})`;
+        r = Math.round(0x7a + (0xf0 - 0x7a) * t);
+        g = Math.round(0xb6 + (0xd0 - 0xb6) * t);
+        b = Math.round(0x48 + (0x60 - 0x48) * t);
       } else {
-        // Gold to red
+        // Gold → Red
         const t = (x - 16) / 16;
-        const r = Math.round(0xe2 + (0xe5 - 0xe2) * t);
-        const g = Math.round(0xb7 + (0x31 - 0xb7) * t);
-        const b = Math.round(0x14 + (0x70 - 0x14) * t);
-        color = `rgb(${r},${g},${b})`;
+        r = Math.round(0xf0 + (0xc0 - 0xf0) * t);
+        g = Math.round(0xd0 + (0x30 - 0xd0) * t);
+        b = Math.round(0x60 + (0x20 - 0x60) * t);
       }
-      drawRect(ctx, x, 0, 1, 4, color);
+      drawRect(ctx, x, 0, 1, 4, `rgb(${r},${g},${b})`);
     }
     saveCanvas(canvas, `${OUTPUT_DIR}/hp-bar.png`);
     entries.push({ key: 'ui-hp-bar', type: 'image', path: 'assets/ui/hp-bar.png' });
   }
 
-  // cursor-place.png (32x32)
+  // cursor-place.png (32x32) — 중세 배치 커서 (금빛 테두리)
   {
     const { canvas, ctx } = makeCanvas(32, 32);
-    // Purple square outline, 2px thick, dashed pattern
-    const color = PALETTE.purple;
+    const color = PALETTE.gold;
     const dashLen = 4;
-    // Top edge
     for (let x = 0; x < 32; x++) {
       if (Math.floor(x / dashLen) % 2 === 0) {
-        setPixel(ctx, x, 0, color);
-        setPixel(ctx, x, 1, color);
+        setPixel(ctx, x, 0, color); setPixel(ctx, x, 1, color);
+        setPixel(ctx, x, 30, color); setPixel(ctx, x, 31, color);
       }
     }
-    // Bottom edge
-    for (let x = 0; x < 32; x++) {
-      if (Math.floor(x / dashLen) % 2 === 0) {
-        setPixel(ctx, x, 30, color);
-        setPixel(ctx, x, 31, color);
-      }
-    }
-    // Left edge
     for (let y = 0; y < 32; y++) {
       if (Math.floor(y / dashLen) % 2 === 0) {
-        setPixel(ctx, 0, y, color);
-        setPixel(ctx, 1, y, color);
+        setPixel(ctx, 0, y, color); setPixel(ctx, 1, y, color);
+        setPixel(ctx, 30, y, color); setPixel(ctx, 31, y, color);
       }
     }
-    // Right edge
-    for (let y = 0; y < 32; y++) {
-      if (Math.floor(y / dashLen) % 2 === 0) {
-        setPixel(ctx, 30, y, color);
-        setPixel(ctx, 31, y, color);
-      }
-    }
-    // Subtle inner glow
-    addGlow(ctx, 16, 16, 10, PALETTE.purple, 0.1);
-
+    addGlow(ctx, 16, 16, 10, PALETTE.gold, 0.08);
     saveCanvas(canvas, `${OUTPUT_DIR}/cursor-place.png`);
     entries.push({ key: 'ui-cursor-place', type: 'image', path: 'assets/ui/cursor-place.png' });
   }

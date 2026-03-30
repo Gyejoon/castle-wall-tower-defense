@@ -150,9 +150,7 @@ describe('GamePage', () => {
     expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
   });
 
-  it('emits send-emote and schedules an opponent AI response after local emote selection', () => {
-    vi.useFakeTimers();
-    vi.spyOn(Math, 'random').mockReturnValue(0);
+  it('emits send-emote after local emote selection (AI response handled by AIOpponent)', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
@@ -161,12 +159,6 @@ describe('GamePage', () => {
 
     expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
     expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
-
-    expect(emitSpy).toHaveBeenCalledWith('emote-received', { emoteId: 'nice', playerId: 'opponent' });
   });
 
   it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {

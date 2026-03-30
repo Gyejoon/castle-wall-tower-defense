@@ -164,13 +164,6 @@ export function GamePage() {
   useEffect(() => {
     if (!myEmote) return;
     EventBus.emit('send-emote', { emoteId: myEmote.id });
-
-    const aiResponse = EMOTES[Math.floor(Math.random() * EMOTES.length)];
-    const timer = window.setTimeout(() => {
-      EventBus.emit('emote-received', { emoteId: aiResponse.id, playerId: 'opponent' });
-    }, 1200);
-
-    return () => window.clearTimeout(timer);
   }, [myEmote]);
 
   const tabStyle = (tab: FieldTab) => ({

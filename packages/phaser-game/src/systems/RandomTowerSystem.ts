@@ -54,4 +54,8 @@ export class RandomTowerSystem {
   reset(): void {
     this.consecutiveCommonRolls = 0;
   }
+
+  destroy(): void {
+    this.consecutiveCommonRolls = 0;
+  }
 }

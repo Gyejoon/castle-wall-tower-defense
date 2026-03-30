@@ -5,6 +5,8 @@ import { generate as generateUnits } from './generate-units';
 import { generate as generateProjectiles } from './generate-projectiles';
 import { generate as generateVfx } from './generate-vfx';
 import { generate as generateUi } from './generate-ui';
+import { generateTileset } from './generate-tileset';
+import { generateMap } from './generate-map';
 
 async function main() {
   console.log('=== Generating all assets ===\n');
@@ -27,6 +29,12 @@ async function main() {
   console.log('\n[ui]');
   const ui = await generateUi();
 
+  console.log('\n[tileset]');
+  const tileset = await generateTileset();
+
+  console.log('\n[map]');
+  const mapAssets = await generateMap();
+
   const allEntries = [
     ...tiles,
     ...towers,
@@ -34,6 +42,8 @@ async function main() {
     ...projectiles,
     ...vfx,
     ...ui,
+    ...tileset,
+    ...mapAssets,
   ];
 
   const manifest = {

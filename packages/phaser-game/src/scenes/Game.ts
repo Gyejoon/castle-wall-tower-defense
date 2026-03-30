@@ -6,6 +6,7 @@ import {
   INITIAL_GOLD,
   BASE_TOWERS,
   GHOST_BATTLE_WAVES,
+  FOREST_GATE_MAP,
   type GhostRecord,
   type PressureChoice,
 } from '@gld/shared';
@@ -54,7 +55,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gridManager = new GridManager();
+    this.gridManager = new GridManager({
+      width: FOREST_GATE_MAP.width,
+      height: FOREST_GATE_MAP.height,
+      spawnPoint: FOREST_GATE_MAP.spawnPoint,
+      exitPoint: FOREST_GATE_MAP.exitPoint,
+    });
     this.pathfinding = new PathfindingSystem();
     this.towerSystem = new TowerSystem(this, this.gridManager, this.pathfinding);
     this.unitSystem = new UnitSystem(this, this.gridManager);
@@ -80,17 +86,9 @@ export class GameScene extends Phaser.Scene {
     // Hover highlight
     this.hoverGraphics = this.add.graphics();
 
-    // Compute initial path
-    const walkGrid = this.gridManager.getWalkabilityGrid();
-    const path = this.pathfinding.findPath(
-      walkGrid,
-      this.gridManager.spawnPoint,
-      this.gridManager.exitPoint,
-    );
-    if (path) {
-      this.unitSystem.setPath(path);
-      this.renderPath(path);
-    }
+    // Use fixed path from map data
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
 
     // Input: hover highlight
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -151,14 +149,9 @@ export class GameScene extends Phaser.Scene {
       const result = this.towerSystem.sellTower(data.col, data.row);
       if (result.success) {
         this.earnGold(result.refund);
-        // Recalculate and update path
-        const walkGrid = this.gridManager.getWalkabilityGrid();
-        const path = this.pathfinding.findPath(walkGrid, this.gridManager.spawnPoint, this.gridManager.exitPoint);
-        if (path) {
-          this.unitSystem.setPath(path);
-          this.renderPath(path);
-          EventBus.emit('path-updated', { path });
-        }
+        this.unitSystem.setPath(FOREST_GATE_MAP.path);
+        this.renderPath(FOREST_GATE_MAP.path);
+        EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
         EventBus.emit('tower-sold', { col: data.col, row: data.row, refund: result.refund });
       }
     };
@@ -301,13 +294,9 @@ export class GameScene extends Phaser.Scene {
       success: true,
     });
 
-    // TowerSystem already recomputed and cached the path
-    const path = this.pathfinding.getCachedPath();
-    if (path) {
-      this.unitSystem.setPath(path);
-      this.renderPath(path);
-      EventBus.emit('path-updated', { path });
-    }
+    this.unitSystem.setPath(FOREST_GATE_MAP.path);
+    this.renderPath(FOREST_GATE_MAP.path);
+    EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
   }
 
   private pathGraphics?: Phaser.GameObjects.Graphics;

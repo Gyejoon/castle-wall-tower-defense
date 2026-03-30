@@ -132,32 +132,4 @@ describe('GamePage', () => {
     expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
   });
 
-  it('keeps the latest ghost pressure warning visible until its own timer expires', () => {
-    vi.useFakeTimers();
-    const { emitSpy } = getEventBusHarness();
-    render(<GamePage />);
-
-    act(() => {
-      emitSpy('ghost-pressure-applied', { wave: 1, pressure: 'attack' });
-    });
-    expect(useGameStore.getState().ghostPressureWarning).toBe(
-      '고스트 공격! 정찰 드론 3기 출격!',
-    );
-
-    act(() => {
-      vi.advanceTimersByTime(2000);
-      emitSpy('ghost-pressure-applied', { wave: 2, pressure: 'defend' });
-    });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
-
-    act(() => {
-      vi.advanceTimersByTime(600);
-    });
-    expect(useGameStore.getState().ghostPressureWarning).toBe('고스트가 방어를 강화합니다.');
-
-    act(() => {
-      vi.advanceTimersByTime(1900);
-    });
-    expect(useGameStore.getState().ghostPressureWarning).toBeNull();
-  });
 });

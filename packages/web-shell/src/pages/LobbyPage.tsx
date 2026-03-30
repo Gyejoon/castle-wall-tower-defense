@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PixelPanel } from '../components/ui/PixelPanel';
 import { uiMobileArt } from '../assets/uiMobileArt';
-import { fetchRandomGhost, GHOST_FETCH_ERROR_MESSAGE } from '../game/fetchRandomGhost';
 import { useGameStore } from '../stores/gameStore';
 import { colors } from '../styles/tokens';
 
@@ -14,23 +12,6 @@ const featureCopy = [
 
 export function LobbyPage() {
   const resetRun = useGameStore((s) => s.resetRun);
-  const startGhostBattle = useGameStore((s) => s.startGhostBattle);
-  const [loadingGhost, setLoadingGhost] = useState(false);
-  const [ghostLoadError, setGhostLoadError] = useState<string | null>(null);
-
-  const handleGhostBattle = async () => {
-    setLoadingGhost(true);
-    setGhostLoadError(null);
-
-    try {
-      const ghost = await fetchRandomGhost();
-      startGhostBattle(ghost);
-    } catch {
-      setGhostLoadError(GHOST_FETCH_ERROR_MESSAGE);
-    } finally {
-      setLoadingGhost(false);
-    }
-  };
 
   return (
     <div
@@ -81,7 +62,7 @@ export function LobbyPage() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: colors.info, fontSize: '8px' }}>TOWER DEFENSE PVP</span>
+            <span style={{ color: colors.info, fontSize: '8px' }}>PALACE RANDOM TD</span>
             <span style={{ color: colors.textSecondary, fontSize: '8px' }}>PHASE 1</span>
           </div>
 
@@ -94,9 +75,9 @@ export function LobbyPage() {
                 textShadow: `0 0 14px rgba(200, 160, 74, 0.45)`,
               }}
             >
-              왕국의
+              팔라스
               <br />
-              방어선
+              개인랜덤타워디펜스
             </h1>
             <p style={{ color: colors.textSecondary, fontSize: '9px', lineHeight: 1.9 }}>
               왕국을 향해 밀려오는 마물의 군대를 막아라. 10웨이브를 버텨내면 승리!
@@ -204,32 +185,8 @@ export function LobbyPage() {
                 }}
                 onClick={resetRun}
               >
-                수비 시작
+                게임 시작
               </PixelButton>
-              <PixelButton
-                variant="danger"
-                style={{
-                  width: '100%',
-                  padding: '16px 18px',
-                  fontSize: '10px',
-                  boxShadow: `0 0 0 1px rgba(192,48,32,0.28), 0 18px 30px rgba(192,48,32,0.14)`,
-                }}
-                onClick={handleGhostBattle}
-                disabled={loadingGhost}
-              >
-                {loadingGhost ? '로딩 중...' : '고스트 배틀'}
-              </PixelButton>
-              <p style={{ color: colors.textSecondary, fontSize: '8px', lineHeight: 1.8 }}>
-                고스트 배틀: 기록된 상대와 5웨이브 비동기 PvP 대전.
-              </p>
-              {ghostLoadError ? (
-                <p
-                  role="alert"
-                  style={{ color: colors.danger, fontSize: '7px', lineHeight: 1.8, margin: 0 }}
-                >
-                  {ghostLoadError}
-                </p>
-              ) : null}
             </div>
           </div>
         </div>

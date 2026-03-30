@@ -3,8 +3,6 @@ import type {
   PlacementFailureReason,
   Position,
   UnitType,
-  PressureChoice,
-  GhostRecord,
 } from '@gld/shared';
 
 export interface GameEventMap {
@@ -27,9 +25,6 @@ export interface GameEventMap {
   'building-phase-started': { nextWave: number; countdown: number };
   'countdown-tick': { secondsLeft: number };
   'game-won': undefined;
-  'pressure-choice-made': { choice: PressureChoice };
-  'ghost-pressure-applied': { wave: number; pressure: PressureChoice };
-  'ghost-battle-result': { playerRecord: GhostRecord };
 
   // Tower sell
   'tower-sold': { col: number; row: number; refund: number };
@@ -46,8 +41,6 @@ export interface GameEventMap {
   'request-start-game': undefined;
   'request-pause': undefined;
   'request-resume': undefined;
-  'request-pressure-choice': { choice: PressureChoice };
-  'start-ghost-battle': { ghost: GhostRecord };
 
   // Internal
   'current-scene-ready': Phaser.Scene;

@@ -1,6 +1,6 @@
-# 왕국의 방어선 (Grid Line Defense PvP)
+# 팔라스 개인랜덤타워디펜스 (Palace 개랜타디)
 
-20x20 그리드 기반 중세 판타지 타워 디펜스 PvP 게임. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성.
+1:1 개인 랜덤 타워디펜스 게임. 랜덤 타워 구매 + 합성으로 강화하며 20웨이브를 버텨라. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성.
 
 ## Tech Stack
 

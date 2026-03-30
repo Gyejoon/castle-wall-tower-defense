@@ -1,5 +1,5 @@
 {
-  "name": "grid-line-defense-pvp",
+  "name": "palace-random-td",
   "private": true,
   "workspaces": [
     "packages/*"

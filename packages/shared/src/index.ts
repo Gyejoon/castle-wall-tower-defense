@@ -6,19 +6,11 @@ export type { WavePhase, PlayerState, GameState } from './types/game-state';
 export type { ReactToGameEvent, GameToReactEvent } from './types/events';
 export type { PlacementFailureReason } from './types/placement';
 export type { MapLayout } from './types/map';
-export type {
-  PressureChoice,
-  TowerPlacement,
-  GhostWaveAction,
-  GhostResult,
-  GhostRecord,
-  MatchResult,
-} from './types/ghost';
 
 // Constants
 export { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE, DEFAULT_GRID_CONFIG, INITIAL_PLAYER_HP, INITIAL_GOLD, UNIT_SEND_COUNT } from './constants/grid';
 export { BASE_TOWERS, FUSION_TOWERS, ALL_TOWERS } from './constants/towers';
 export { UNITS } from './constants/units';
 export type { WaveGroup, WaveDef } from './constants/waves';
-export { WAVE_DEFS, TOTAL_WAVES, GHOST_BATTLE_WAVES } from './constants/waves';
+export { WAVE_DEFS, TOTAL_WAVES } from './constants/waves';
 export { FOREST_GATE_MAP, DEFAULT_MAP } from './constants/maps';

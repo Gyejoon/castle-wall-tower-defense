@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-왕국의 방어선 (Grid Line Defense PvP) — 20x20 그리드 기반 중세 판타지 타워 디펜스 PvP 게임. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성. Phase 1 완료.
+팔라스 개인랜덤타워디펜스 (Palace 개랜타디) — 1:1 개인 랜덤 타워디펜스 게임. 랜덤 타워 구매 + 합성 + 킬 트랜스퍼. Phaser 3 + React 프론트엔드를 bun 모노레포로 구성.
 
 ## Theme
 

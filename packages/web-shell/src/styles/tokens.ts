@@ -12,5 +12,5 @@ export const colors = {
 } as const;
 
 export const fonts = {
-  pixel: "'Press Start 2P', cursive",
+  pixel: "'Galmuri11', 'Press Start 2P', cursive",
 } as const;

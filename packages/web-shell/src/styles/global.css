@@ -15,7 +15,7 @@ html, body, #root {
 body {
   background-color: #16161a;
   color: #fffffe;
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'Galmuri11', 'Press Start 2P', cursive;
   font-size: 12px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -30,4 +30,157 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: #2e2e3a;
+}
+
+/* Lobby animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Torch flicker effect */
+.torch {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 208, 96, 0.4), transparent 70%);
+  animation: torchFlicker 1.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.torch-left {
+  bottom: 35%;
+  left: 20%;
+}
+.torch-right {
+  bottom: 35%;
+  right: 20%;
+}
+
+@keyframes torchFlicker {
+  0% { opacity: 0.6; transform: scale(1); }
+  25% { opacity: 0.9; transform: scale(1.1); }
+  50% { opacity: 0.5; transform: scale(0.95); }
+  75% { opacity: 0.85; transform: scale(1.05); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+
+/* Castle flag flutter */
+.castle-flag {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  width: 20px;
+  height: 14px;
+  background: #c03020;
+  transform-origin: left center;
+  animation: flagFlutter 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes flagFlutter {
+  0% { transform: skewX(0deg); }
+  50% { transform: skewX(-5deg); }
+  100% { transform: skewX(3deg); }
+}
+
+/* Stars twinkle overlay */
+.stars-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 15% 8%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px at 35% 5%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 55% 12%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 72% 3%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 88% 9%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 25% 15%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 65% 18%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(2px 2px at 45% 2%, rgba(240,208,96,0.6), transparent);
+  animation: starsTwinkle 3s ease-in-out infinite alternate;
+}
+
+@keyframes starsTwinkle {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Matchmaking swords animation */
+.matchmaking-swords {
+  position: relative;
+}
+.matchmaking-swords::before,
+.matchmaking-swords::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 48px;
+  background: #f0d060;
+  top: 50%;
+  left: 50%;
+}
+.matchmaking-swords::before {
+  transform: translate(-12px, -50%) rotate(-30deg);
+  animation: swordLeft 1s ease-in-out infinite alternate;
+}
+.matchmaking-swords::after {
+  transform: translate(8px, -50%) rotate(30deg);
+  animation: swordRight 1s ease-in-out infinite alternate;
+}
+
+@keyframes swordLeft {
+  from { transform: translate(-12px, -50%) rotate(-30deg); }
+  to { transform: translate(-8px, -50%) rotate(-10deg); }
+}
+@keyframes swordRight {
+  from { transform: translate(8px, -50%) rotate(30deg); }
+  to { transform: translate(4px, -50%) rotate(10deg); }
+}
+
+.matchmaking-dots::after {
+  content: '...';
+  font-family: 'Press Start 2P', cursive;
+  font-size: 16px;
+  color: #a09070;
+  animation: dotsLoading 1.5s steps(3) infinite;
+}
+
+@keyframes dotsLoading {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+
+/* Responsive: small screens (320px) */
+@media (max-width: 359px) {
+  .profile-currency {
+    display: none !important;
+  }
+  .tab-label {
+    display: none !important;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .torch, .castle-flag, .stars-overlay,
+  .matchmaking-swords::before, .matchmaking-swords::after,
+  .matchmaking-dots::after {
+    animation: none;
+  }
+  @keyframes fadeIn {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(0); }
+    to { transform: translateY(0); }
+  }
 }

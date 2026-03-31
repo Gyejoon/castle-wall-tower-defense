@@ -11,7 +11,7 @@ This file provides guidance to AI coding agents when working with code in this r
 **중세 자연 판타지** — 잔디 그리드, 돌/나무 타워, 마물 유닛, 2.5D 픽셀 아트.
 - 타워 이름: 궁수 탑, 투석기, 서리 마탑, 성기사 제단 (한글)
 - 유닛 이름: 고블린 정찰병, 오크 전사, 돌 트롤, 그림자 암살자, 고대 드래곤 (한글)
-- UI: 갈색/금빛/초록 따뜻한 색감, Press Start 2P 픽셀 폰트
+- UI: 갈색/금빛/초록 따뜻한 색감, Galmuri11 한글 픽셀 폰트 + Press Start 2P 폴백
 - 에셋 팔레트: 잔디(#7ab648), 흙길(#b8956a), 돌(#8c8c8c), 나무(#8b5e3c), 얼음(#a8def0), 황금(#f0d060)
 
 ## Commands
@@ -103,11 +103,19 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 
 ### Web-Shell
 
-- **상태관리:** Zustand (gameStore — runStatus, gold, lives, wave, selectedTower, wavePreview)
-- **UI:** Inline styles + `styles/tokens.ts` 중세 색상 팔레트 (갈색/금빛/초록)
+- **상태관리:** Zustand (gameStore — runStatus, lobbyTab, gold, lives, wave, selectedTower, wavePreview, soundEnabled, screenShake, showDamageNumbers)
+- **UI:** Inline styles + `styles/tokens.ts` 중세 색상 팔레트 (갈색/금빛/초록), Galmuri11 한글 픽셀 폰트
 - **Phaser 마운트:** `PhaserGame.tsx`가 useRef/useEffect로 Phaser.Game 인스턴스 관리
-- **LobbyPage:** "Palace 개랜타디" 타이틀, 한글 UI, 중세 판타지 배경
+- **LobbyPage:** Living Castle 3탭 모바일 로비 (max-width 430px)
+  - `ProfileBar` — 아바타, 닉네임, 레벨, 트로피, 골드
+  - `BottomTabBar` — 3탭 (마당/전쟁탁자/영주실), ARIA tablist, 매칭 중 disabled
+  - `HomeTab` — 성 마당 배경, CSS 유휴 애니메이션(횃불/깃발/별), 배틀 CTA, 매치 대기 오버레이
+  - `CollectionTab` — 전쟁 탁자 배경, 타워 그리드 (보유/미획득), 바텀시트 상세
+  - `SettingsTab` — 영주실 배경, 토글 스위치 (role="switch" + aria-checked)
+  - `TabBackground` — 공통 배경 이미지 + CSS gradient 폴백 컴포넌트
+  - 반응형: 320px~430px (320px 이하: ProfileBar 축약, 탭 라벨 숨김)
 - **GamePage:** Phaser 캔버스 + 타워 선택 패널 + 웨이브 미리보기 + 타워 판매
+- **Mock 데이터:** `data/mockLobbyData.ts` — TowerCard 12종, MOCK_PROFILE, ELEMENT_COLORS (상수 export, 스토어 아님)
 
 ### Asset Pipeline
 
@@ -123,7 +131,7 @@ scripts/generate-assets/
 ├── generate-projectiles.ts  # 화살, 돌 투사체, 얼음 결정, 황금빛
 ├── generate-vfx.ts     # 착탄, 얼음 파동, 황금 오라, 동굴 이펙트
 ├── generate-ui.ts      # 타워/유닛 아이콘, HP바, 배치 커서
-├── generate-ui-mobile.ts    # 로비 키아트, CTA 아트
+├── generate-ui-mobile.ts    # 로비 키아트, CTA 아트, Living Castle 배경(courtyard/wartable/lordchamber), 탭/프로필/재화 아이콘
 ├── generate-map.ts     # Tiled JSON 맵 생성
 ├── generate-icons.ts   # PWA 아이콘 생성
 └── generate-all.ts     # 전체 에셋 오케스트레이터
@@ -144,6 +152,7 @@ scripts/generate-assets/
 
 - **Phase 1** (완료): 프로토타입 — 그리드, 타워(특수효과), 유닛, 20웨이브, AI 대전, 모바일, 중세 테마
 - **Phase 1.5** (진행): 프로덕션 준비 — PWA, CI/CD, 에셋 파이프라인, 코드 품질
-- Phase 2: 네트워킹 (WebSocket, 실시간 동기화)
-- Phase 3: 토스 연동 (인증, 결제)
-- Phase 4: 게임 완성 (밸런싱, 매치메이킹)
+- **Phase 2** (완료): Living Castle 로비 — 3탭 모바일 로비 (마당/전쟁탁자/영주실), 매치 대기, 한글 폰트
+- Phase 3: 네트워킹 (WebSocket, 실시간 동기화)
+- Phase 4: 토스 연동 (인증, 결제)
+- Phase 5: 게임 완성 (밸런싱, 매치메이킹)

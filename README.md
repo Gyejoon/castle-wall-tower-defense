@@ -10,6 +10,7 @@
 - **Package Manager:** bun (monorepo workspaces)
 - **Testing:** Vitest
 - **Asset Pipeline:** @napi-rs/canvas (절차적 픽셀 아트 생성)
+- **Font:** Galmuri11 (한글 픽셀 폰트) + Press Start 2P
 
 ## Architecture
 
@@ -106,9 +107,10 @@ bun test:web          # web-shell
 |-------|-------------|--------|
 | 1 | 프로토타입 — 그리드, 타워, 유닛, 20웨이브, AI 대전, 모바일, 중세 테마 | **Complete** |
 | 1.5 | 프로덕션 준비 — PWA, CI/CD, 에셋 파이프라인, 코드 품질 | In Progress |
-| 2 | 네트워킹 — WebSocket, 실시간 동기화 | Planned |
-| 3 | 토스 연동 — 인증, 결제 | Planned |
-| 4 | 게임 완성 — 밸런싱, 매치메이킹 | Planned |
+| 2 | Living Castle 로비 — 3탭 모바일 로비 (마당/전쟁탁자/영주실), 매치 대기, 한글 폰트 | **Complete** |
+| 3 | 네트워킹 — WebSocket, 실시간 동기화 | Planned |
+| 4 | 토스 연동 — 인증, 결제 | Planned |
+| 5 | 게임 완성 — 밸런싱, 매치메이킹 | Planned |
 
 ## License
 

@@ -85,7 +85,16 @@ describe('LobbyPage', () => {
     fireEvent.click(startBtn);
 
     // Button should now show "매칭 중..." and be disabled
-    expect(view.getByText('매칭 중...')).toBeTruthy();
+    const matchingBtn = view.getByText('매칭 중...');
+    expect(matchingBtn).toBeTruthy();
+
+    // Second tap should be a no-op — status still lobby before timer fires
+    fireEvent.click(matchingBtn);
+    expect(useGameStore.getState().runStatus).toBe('lobby');
+
+    // Only one timer should fire after 1.5s
+    act(() => { vi.advanceTimersByTime(1500); });
+    expect(useGameStore.getState().runStatus).toBe('building');
   });
 
   it('clears stale emotes when starting a game', () => {

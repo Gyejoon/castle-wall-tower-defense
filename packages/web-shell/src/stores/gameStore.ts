@@ -26,6 +26,8 @@ interface GameStoreState {
   wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
   lobbyTab: LobbyTab;
   soundEnabled: boolean;
+  screenShake: boolean;
+  showDamageNumbers: boolean;
   activeTab: FieldTab;
   playerTowerCount: number;
   opponentHp: number;
@@ -50,6 +52,8 @@ interface GameStoreState {
   resetRun: () => void;
   enterLobby: () => void;
   toggleSound: () => void;
+  toggleScreenShake: () => void;
+  toggleDamageNumbers: () => void;
 }
 
 const createRunState = () => ({
@@ -75,6 +79,8 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   runStatus: 'lobby',
   lobbyTab: 'home',
   soundEnabled: true,
+  screenShake: true,
+  showDamageNumbers: true,
   ...createRunState(),
 
   setRunStatus: (status) => set({ runStatus: status }),
@@ -114,4 +120,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
     })),
 
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+  toggleScreenShake: () => set((state) => ({ screenShake: !state.screenShake })),
+  toggleDamageNumbers: () => set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
 }));

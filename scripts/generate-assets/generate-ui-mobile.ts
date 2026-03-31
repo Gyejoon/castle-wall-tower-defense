@@ -1157,7 +1157,7 @@ function paintTabIcon(ctx: SKRSContext2D, width: number, height: number, config:
     ctx.closePath();
     ctx.fill();
     // Page lines
-    ctx.strokeStyle = config.active ? '#1a1208' : '#1a1208';
+    ctx.strokeStyle = config.active ? '#1a1208' : '#2a2218';
     ctx.lineWidth = 1.5;
     for (let i = 0; i < 4; i++) {
       const ly = 12 + i * 4;

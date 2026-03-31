@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { TabBackground } from '../TabBackground';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
@@ -7,8 +6,10 @@ import { colors, fonts } from '../../../styles/tokens';
 export function SettingsTab() {
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const toggleSound = useGameStore((s) => s.toggleSound);
-  const [screenShake, setScreenShake] = useState(true);
-  const [showDamageNumbers, setShowDamageNumbers] = useState(true);
+  const screenShake = useGameStore((s) => s.screenShake);
+  const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
+  const showDamageNumbers = useGameStore((s) => s.showDamageNumbers);
+  const toggleDamageNumbers = useGameStore((s) => s.toggleDamageNumbers);
 
   return (
     <div
@@ -44,8 +45,8 @@ export function SettingsTab() {
         </SettingsSection>
 
         <SettingsSection title="화면">
-          <ToggleRow label="화면 흔들림" checked={screenShake} onChange={() => setScreenShake(!screenShake)} />
-          <ToggleRow label="데미지 숫자" checked={showDamageNumbers} onChange={() => setShowDamageNumbers(!showDamageNumbers)} />
+          <ToggleRow label="화면 흔들림" checked={screenShake} onChange={toggleScreenShake} />
+          <ToggleRow label="데미지 숫자" checked={showDamageNumbers} onChange={toggleDamageNumbers} />
         </SettingsSection>
 
         <SettingsSection title="정보">

@@ -42,7 +42,7 @@ describe('asset integration', () => {
     }
   });
 
-  it('AI runtime tileset remains aligned with the existing Tiled map contract', async () => {
+  it('AI runtime tileset remains aligned with the generated Tiled map contract', async () => {
     const mapJson = JSON.parse(
       readFileSync(new URL('../../web-shell/public/assets/maps/forest-gate.json', import.meta.url), 'utf-8'),
     ) as {
@@ -59,13 +59,13 @@ describe('asset integration', () => {
 
     expect(mapJson.tilesets).toHaveLength(1);
     expect(mapJson.tilesets[0]).toMatchObject({
-      image: '../tileset.png',
-      imagewidth: 256,
-      imageheight: 96,
+      image: '../tiles/tileset.png',
+      imagewidth: 320,
+      imageheight: 128,
       tilewidth: 32,
       tileheight: 32,
-      tilecount: 24,
-      columns: 8,
+      tilecount: 40,
+      columns: 10,
     });
   });
 });

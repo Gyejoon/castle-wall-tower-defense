@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { UnitDef, ActiveUnit, Position } from '@gld/shared';
-import { UNITS, TILE_SIZE } from '@gld/shared';
+import { UNITS, TILE_SIZE, ISO_TILE_W } from '@gld/shared';
 import { GridManager } from './GridManager';
 import { EventBus } from '../EventBus';
 
@@ -91,9 +91,9 @@ export class UnitSystem {
     };
 
     const sprite = this.scene.add.sprite(startWorld.x, startWorld.y, `unit-${def.id}`);
-    sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
+    sprite.setDisplaySize(40, 48);
     sprite.play(`${def.id}-walk`);
-    sprite.setDepth(6);
+    sprite.setDepth(this.gridManager.getIsoDepth(startGrid.x, startGrid.y));
 
     const hpBar = this.scene.add.graphics();
     this.renderHpBar(hpBar, startWorld.x, startWorld.y, def, def.stats.hp);
@@ -110,19 +110,11 @@ export class UnitSystem {
     });
   }
 
-  private renderHpBar(
-    graphics: Phaser.GameObjects.Graphics,
-    x: number,
-    y: number,
-    def: UnitDef,
-    hp: number,
-  ): void {
+  private renderHpBar(graphics: Phaser.GameObjects.Graphics, x: number, y: number, def: UnitDef, hp: number): void {
     graphics.clear();
-    // HP bar
-    const barWidth = TILE_SIZE * 0.7;
+    const barWidth = 24;
     const barHeight = 2;
-    const barY = y - TILE_SIZE * 0.5 - 6;
-    // BG
+    const barY = y - 28; // above 48px unit sprite
     graphics.fillStyle(0x0a0a14, 0.8);
     graphics.fillRect(x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
     const hpRatio = Math.max(0, hp / def.stats.hp);
@@ -156,7 +148,7 @@ export class UnitSystem {
       unit.sprite.destroy();
       unit.hpBar.destroy();
       const deathFx = this.scene.add.sprite(unit.worldX, unit.worldY, 'unit-death');
-      deathFx.setDisplaySize(TILE_SIZE, TILE_SIZE);
+      deathFx.setDisplaySize(40, 48);
       deathFx.play('unit-death');
       deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => deathFx.destroy());
       this.units.delete(unitId);
@@ -215,7 +207,7 @@ export class UnitSystem {
       // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
       const targetWorld = this.currentPathWorld[pathIdx + 1];
-      const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
+      const speed = unit.def.stats.speed * ISO_TILE_W * unit.slowFactor; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;
       const dy = targetWorld.y - unit.worldY;
@@ -234,6 +226,8 @@ export class UnitSystem {
       }
 
       unit.sprite.setPosition(unit.worldX, unit.worldY);
+      const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
+      unit.sprite.setDepth(this.gridManager.getIsoDepth(currentGrid.x, currentGrid.y));
       this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
     }
 

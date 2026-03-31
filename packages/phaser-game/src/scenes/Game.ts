@@ -78,6 +78,11 @@ export class GameScene extends Phaser.Scene {
 	// AI emote timer (mirrors removed AIOpponent behavior)
 	private aiEmoteTimer = 0;
 
+	// Named HUD handlers (bound in create)
+	private onHudBuy!: () => void;
+	private onHudWave!: () => void;
+	private onHudReset!: () => void;
+
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
 	private onGameWon!: () => void;
@@ -136,6 +141,11 @@ export class GameScene extends Phaser.Scene {
 
 		// Input only on player field — clicks on AI area naturally out-of-bounds
 		this.setupInput();
+
+		this.onHudBuy = () => this.handleBuyTower();
+		this.onHudWave = () => this.playerWaves.skipCountdown();
+		this.onHudReset = () => EventBus.emit('request-reset-run');
+
 		this.createHUD();
 		this.createAIOverlay();
 
@@ -376,6 +386,9 @@ export class GameScene extends Phaser.Scene {
 						this.playerUnits.setPath(FOREST_GATE_MAP.path);
 						this.renderPath(this.playerGrid, false);
 						EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+						EventBus.emit('player-tower-count', {
+							count: this.playerTowers.getTowers().length,
+						});
 					}
 				} else {
 					EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
@@ -409,14 +422,14 @@ export class GameScene extends Phaser.Scene {
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', () => this.handleBuyTower());
+			.on('pointerdown', this.onHudBuy);
 
 		this.hudWaveBtn = this.add
 			.text(ISO_CANVAS_W * 0.54, hudY, '웨이브 시작', btnStyle)
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', () => this.playerWaves.skipCountdown());
+			.on('pointerdown', this.onHudWave);
 
 		this.add
 			.text(ISO_CANVAS_W * 0.85, hudY, '초기화', {
@@ -426,7 +439,7 @@ export class GameScene extends Phaser.Scene {
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', () => EventBus.emit('request-reset-run'));
+			.on('pointerdown', this.onHudReset);
 
 		this.hudRolledInfo = this.add
 			.text(ISO_CANVAS_W / 2, DUAL_CANVAS_H - HUD_HEIGHT - 4, '', {
@@ -596,6 +609,9 @@ export class GameScene extends Phaser.Scene {
 			towerId: towerDefId,
 			success: true,
 		});
+		EventBus.emit('player-tower-count', {
+			count: this.playerTowers.getTowers().length,
+		});
 		this.playerUnits.setPath(FOREST_GATE_MAP.path);
 		this.renderPath(this.playerGrid, false);
 		EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
@@ -724,23 +740,24 @@ export class GameScene extends Phaser.Scene {
 			}
 		}
 
+		// Detect changes before updating cached values
+		const aiTowerCount = this.aiTowers.getTowers().length;
+		const hpChanged = this.aiHp !== this.lastAiHp;
+		const goldChanged = this.aiGold !== this.lastAiGold;
+		const towerChanged = aiTowerCount !== this.lastAiTowerCount;
+
 		// Update overlays only when values change
-		if (this.aiHp !== this.lastAiHp) {
+		if (hpChanged) {
 			this.lastAiHp = this.aiHp;
 			this.aiHpText.setText(`AI HP ${this.aiHp}`);
 		}
-		if (this.aiGold !== this.lastAiGold) {
+		if (goldChanged) {
 			this.lastAiGold = this.aiGold;
 			this.aiGoldText.setText(`AI 골드 ${this.aiGold}`);
 		}
 
-		// Emit opponent state only on change
-		const aiTowerCount = this.aiTowers.getTowers().length;
-		if (
-			this.aiHp !== this.lastAiHp ||
-			this.aiGold !== this.lastAiGold ||
-			aiTowerCount !== this.lastAiTowerCount
-		) {
+		// Emit opponent state on any change
+		if (hpChanged || goldChanged || towerChanged) {
 			this.lastAiTowerCount = aiTowerCount;
 			EventBus.emit('opponent-state', {
 				gold: this.aiGold,

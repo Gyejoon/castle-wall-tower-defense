@@ -61,6 +61,9 @@ export const PALETTE = {
 } as const;
 
 export const TILE_SIZE = 32;
+export const ISO_TILE_W = 64;
+export const ISO_TILE_H = 32;
+export const ISO_TILE_DEPTH = 8;
 
 // === Utilities ===
 export function makeCanvas(w: number, h: number): { canvas: Canvas; ctx: SKRSContext2D } {
@@ -179,6 +182,59 @@ export function addGlow(ctx: SKRSContext2D, cx: number, cy: number, radius: numb
   for (let r = radius; r > 0; r--) {
     const a = alpha * (r / radius) * 0.5;
     fillCircle(ctx, cx, cy, r, hexToRgba(color, a));
+  }
+}
+
+export function drawIsoDiamondTile(
+  ctx: SKRSContext2D,
+  ox: number, oy: number,
+  topColor: string, leftColor: string, rightColor: string,
+  depth: number,
+): void {
+  const cx = ox + ISO_TILE_W / 2;
+  const cy = oy + ISO_TILE_H / 2;
+  const hw = ISO_TILE_W / 2;
+  const hh = ISO_TILE_H / 2;
+
+  // Top face (diamond shape)
+  for (let dy = -hh; dy <= hh; dy++) {
+    const ratio = 1 - Math.abs(dy) / hh;
+    const halfW = Math.round(hw * ratio);
+    for (let dx = -halfW; dx <= halfW; dx++) {
+      setPixel(ctx, cx + dx, cy + dy, topColor);
+    }
+  }
+
+  // Left face (depth below left half)
+  for (let d = 1; d <= depth; d++) {
+    for (let row = 0; row <= hh; row++) {
+      const ratio = 1 - row / hh;
+      const halfW = Math.round(hw * ratio);
+      for (let dx = -halfW; dx < 0; dx++) {
+        setPixel(ctx, cx + dx, cy + row + d, leftColor);
+      }
+    }
+  }
+
+  // Right face (depth below right half)
+  for (let d = 1; d <= depth; d++) {
+    for (let row = 0; row <= hh; row++) {
+      const ratio = 1 - row / hh;
+      const halfW = Math.round(hw * ratio);
+      for (let dx = 0; dx <= halfW; dx++) {
+        setPixel(ctx, cx + dx, cy + row + d, rightColor);
+      }
+    }
+  }
+}
+
+export function drawIsoShadow(ctx: SKRSContext2D, cx: number, cy: number, rx: number, ry: number, alpha: number = 0.3): void {
+  for (let dy = -ry; dy <= ry; dy++) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1) {
+        setPixel(ctx, cx + dx, cy + dy, hexToRgba('#000000', alpha));
+      }
+    }
   }
 }
 

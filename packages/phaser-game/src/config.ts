@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
-import { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE } from '@gld/shared';
+import { ISO_CANVAS_W, ISO_CANVAS_H } from '@gld/shared';
 import { Boot } from './scenes/Boot';
 import { Preloader } from './scenes/Preloader';
 import { GameScene } from './scenes/Game';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: GRID_WIDTH * TILE_SIZE,
-  height: GRID_HEIGHT * TILE_SIZE,
+  width: ISO_CANVAS_W,
+  height: ISO_CANVAS_H,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
   scale: {

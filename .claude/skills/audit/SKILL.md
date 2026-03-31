@@ -1,147 +1,147 @@
 ---
 name: audit
-description: Run technical quality checks across accessibility, performance, theming, responsive design, and anti-patterns. Generates a scored report with P0-P3 severity ratings and actionable plan. Use when the user wants an accessibility check, performance audit, or technical quality review.
+description: 접근성, 성능, 테마, 반응형 디자인, 안티패턴 전반에 걸쳐 기술 품질 검사를 실행합니다. P0-P3 심각도 등급과 실행 계획이 포함된 점수 리포트를 생성합니다. 접근성 검사, 성능 감사, 기술 품질 리뷰가 필요할 때 사용합니다.
 user-invocable: true
-argument-hint: "[area (feature, page, component...)]"
+argument-hint: "[영역 (기능, 페이지, 컴포넌트...)]"
 ---
 
-## MANDATORY PREPARATION
+## 필수 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출합니다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있습니다. 진행 전에 프로토콜을 따르세요 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 합니다.
 
 ---
 
-Run systematic **technical** quality checks and generate a comprehensive report. Don't fix issues — document them for other commands to address.
+체계적인 **기술** 품질 검사를 수행하고 종합 리포트를 생성합니다. 문제를 수정하지 않습니다 — 다른 커맨드가 처리할 수 있도록 문서화합니다.
 
-This is a code-level audit, not a design critique. Check what's measurable and verifiable in the implementation.
+이것은 코드 레벨 감사이며, 디자인 비평이 아닙니다. 구현에서 측정 가능하고 검증 가능한 것을 점검합니다.
 
-## Diagnostic Scan
+## 진단 스캔
 
-Run comprehensive checks across 5 dimensions. Score each dimension 0-4 using the criteria below.
+5개 차원에 걸쳐 종합 점검을 수행합니다. 아래 기준으로 각 차원에 0-4점을 부여합니다.
 
-### 1. Accessibility (A11y)
+### 1. 접근성(Accessibility, A11y)
 
-**Check for**:
-- **Contrast issues**: Text contrast ratios < 4.5:1 (or 7:1 for AAA)
-- **Missing ARIA**: Interactive elements without proper roles, labels, or states
-- **Keyboard navigation**: Missing focus indicators, illogical tab order, keyboard traps
-- **Semantic HTML**: Improper heading hierarchy, missing landmarks, divs instead of buttons
-- **Alt text**: Missing or poor image descriptions
-- **Form issues**: Inputs without labels, poor error messaging, missing required indicators
+**점검 항목**:
+- **대비 문제**: 텍스트 대비율 < 4.5:1 (또는 AAA의 경우 7:1)
+- **누락된 ARIA**: 적절한 역할, 레이블, 상태가 없는 인터랙티브 요소
+- **키보드 내비게이션**: 누락된 포커스 인디케이터, 비논리적 탭 순서, 키보드 트랩
+- **시맨틱 HTML**: 부적절한 제목 위계, 누락된 랜드마크, 버튼 대신 div 사용
+- **대체 텍스트**: 누락되거나 부적절한 이미지 설명
+- **폼 문제**: 레이블 없는 입력, 부적절한 에러 메시지, 필수 표시 누락
 
-**Score 0-4**: 0=Inaccessible (fails WCAG A), 1=Major gaps (few ARIA labels, no keyboard nav), 2=Partial (some a11y effort, significant gaps), 3=Good (WCAG AA mostly met, minor gaps), 4=Excellent (WCAG AA fully met, approaches AAA)
+**점수 0-4**: 0=접근 불가 (WCAG A 미달), 1=주요 결함 (ARIA 레이블 거의 없음, 키보드 내비게이션 불가), 2=부분적 (일부 접근성 노력, 상당한 결함), 3=양호 (WCAG AA 대부분 충족, 사소한 결함), 4=우수 (WCAG AA 완전 충족, AAA에 근접)
 
-### 2. Performance
+### 2. 성능(Performance)
 
-**Check for**:
-- **Layout thrashing**: Reading/writing layout properties in loops
-- **Expensive animations**: Animating layout properties (width, height, top, left) instead of transform/opacity
-- **Missing optimization**: Images without lazy loading, unoptimized assets, missing will-change
-- **Bundle size**: Unnecessary imports, unused dependencies
-- **Render performance**: Unnecessary re-renders, missing memoization
+**점검 항목**:
+- **레이아웃 스래싱(Layout Thrashing)**: 루프 내에서 레이아웃 속성 읽기/쓰기
+- **비효율적 애니메이션**: transform/opacity 대신 레이아웃 속성(width, height, top, left) 애니메이션
+- **최적화 누락**: 지연 로딩 없는 이미지, 최적화되지 않은 에셋, will-change 누락
+- **번들 크기**: 불필요한 임포트, 미사용 의존성
+- **렌더링 성능**: 불필요한 리렌더링, 메모이제이션 누락
 
-**Score 0-4**: 0=Severe issues (layout thrash, unoptimized everything), 1=Major problems (no lazy loading, expensive animations), 2=Partial (some optimization, gaps remain), 3=Good (mostly optimized, minor improvements possible), 4=Excellent (fast, lean, well-optimized)
+**점수 0-4**: 0=심각한 문제 (레이아웃 스래싱, 최적화 전무), 1=주요 문제 (지연 로딩 없음, 비효율적 애니메이션), 2=부분적 (일부 최적화, 결함 존재), 3=양호 (대부분 최적화, 사소한 개선 가능), 4=우수 (빠르고 가볍고 잘 최적화됨)
 
-### 3. Theming
+### 3. 테마(Theming)
 
-**Check for**:
-- **Hard-coded colors**: Colors not using design tokens
-- **Broken dark mode**: Missing dark mode variants, poor contrast in dark theme
-- **Inconsistent tokens**: Using wrong tokens, mixing token types
-- **Theme switching issues**: Values that don't update on theme change
+**점검 항목**:
+- **하드코딩된 색상**: 디자인 토큰을 사용하지 않는 색상
+- **깨진 다크 모드**: 누락된 다크 모드 변형, 다크 테마에서 부족한 대비
+- **비일관적 토큰**: 잘못된 토큰 사용, 토큰 유형 혼합
+- **테마 전환 문제**: 테마 변경 시 업데이트되지 않는 값
 
-**Score 0-4**: 0=No theming (hard-coded everything), 1=Minimal tokens (mostly hard-coded), 2=Partial (tokens exist but inconsistently used), 3=Good (tokens used, minor hard-coded values), 4=Excellent (full token system, dark mode works perfectly)
+**점수 0-4**: 0=테마 없음 (모든 것이 하드코딩), 1=최소한의 토큰 (대부분 하드코딩), 2=부분적 (토큰 존재하나 비일관적 사용), 3=양호 (토큰 사용, 사소한 하드코딩 값), 4=우수 (완전한 토큰 시스템, 다크 모드 완벽 작동)
 
-### 4. Responsive Design
+### 4. 반응형 디자인(Responsive Design)
 
-**Check for**:
-- **Fixed widths**: Hard-coded widths that break on mobile
-- **Touch targets**: Interactive elements < 44x44px
-- **Horizontal scroll**: Content overflow on narrow viewports
-- **Text scaling**: Layouts that break when text size increases
-- **Missing breakpoints**: No mobile/tablet variants
+**점검 항목**:
+- **고정 너비**: 모바일에서 깨지는 하드코딩된 너비
+- **터치 타겟**: 44x44px 미만의 인터랙티브 요소
+- **가로 스크롤**: 좁은 뷰포트에서 콘텐츠 오버플로
+- **텍스트 스케일링**: 텍스트 크기 증가 시 깨지는 레이아웃
+- **누락된 브레이크포인트**: 모바일/태블릿 변형 없음
 
-**Score 0-4**: 0=Desktop-only (breaks on mobile), 1=Major issues (some breakpoints, many failures), 2=Partial (works on mobile, rough edges), 3=Good (responsive, minor touch target or overflow issues), 4=Excellent (fluid, all viewports, proper touch targets)
+**점수 0-4**: 0=데스크톱 전용 (모바일에서 깨짐), 1=주요 문제 (일부 브레이크포인트, 다수 실패), 2=부분적 (모바일에서 작동하나 거친 부분 있음), 3=양호 (반응형, 사소한 터치 타겟 또는 오버플로 문제), 4=우수 (유동적, 모든 뷰포트, 적절한 터치 타겟)
 
-### 5. Anti-Patterns (CRITICAL)
+### 5. 안티패턴 (핵심)
 
-Check against ALL the **DON'T** guidelines in the frontend-design skill. Look for AI slop tells (AI color palette, gradient text, glassmorphism, hero metrics, card grids, generic fonts) and general design anti-patterns (gray on color, nested cards, bounce easing, redundant copy).
+/frontend-design 스킬의 모든 **이러지 마세요** 가이드라인과 대조하여 점검합니다. AI 양산형 징후(AI 색상 팔레트, 그라데이션 텍스트, 글래스모피즘, 히어로 지표, 카드 그리드, 뻔한 폰트)와 일반 디자인 안티패턴(색상 위 회색, 중첩 카드, 바운스 이징, 중복 문구)을 확인합니다.
 
-**Score 0-4**: 0=AI slop gallery (5+ tells), 1=Heavy AI aesthetic (3-4 tells), 2=Some tells (1-2 noticeable), 3=Mostly clean (subtle issues only), 4=No AI tells (distinctive, intentional design)
+**점수 0-4**: 0=AI 양산형 전시장 (5개 이상 징후), 1=AI 미학 과다 (3-4개 징후), 2=일부 징후 (1-2개 눈에 띔), 3=대체로 깨끗 (미묘한 문제만), 4=AI 징후 없음 (차별화되고 의도적인 디자인)
 
-## Generate Report
+## 리포트 생성
 
-### Audit Health Score
+### 감사 건강 점수
 
-| # | Dimension | Score | Key Finding |
-|---|-----------|-------|-------------|
-| 1 | Accessibility | ? | [most critical a11y issue or "--"] |
-| 2 | Performance | ? | |
-| 3 | Responsive Design | ? | |
-| 4 | Theming | ? | |
-| 5 | Anti-Patterns | ? | |
-| **Total** | | **??/20** | **[Rating band]** |
+| # | 차원 | 점수 | 핵심 발견 |
+|---|------|------|----------|
+| 1 | 접근성 | ? | [가장 핵심적인 접근성 문제 또는 "--"] |
+| 2 | 성능 | ? | |
+| 3 | 반응형 디자인 | ? | |
+| 4 | 테마 | ? | |
+| 5 | 안티패턴 | ? | |
+| **합계** | | **??/20** | **[등급]** |
 
-**Rating bands**: 18-20 Excellent (minor polish), 14-17 Good (address weak dimensions), 10-13 Acceptable (significant work needed), 6-9 Poor (major overhaul), 0-5 Critical (fundamental issues)
+**등급 기준**: 18-20 우수 (사소한 다듬기), 14-17 양호 (취약 차원 보완), 10-13 수용 가능 (상당한 작업 필요), 6-9 미흡 (대규모 개선), 0-5 심각 (근본적 문제)
 
-### Anti-Patterns Verdict
-**Start here.** Pass/fail: Does this look AI-generated? List specific tells. Be brutally honest.
+### 안티패턴 판정
+**여기서부터 시작합니다.** 합격/불합격: AI가 생성한 것처럼 보이는가? 구체적인 징후를 나열합니다. 솔직하게 평가합니다.
 
-### Executive Summary
-- Audit Health Score: **??/20** ([rating band])
-- Total issues found (count by severity: P0/P1/P2/P3)
-- Top 3-5 critical issues
-- Recommended next steps
+### 요약
+- 감사 건강 점수: **??/20** ([등급])
+- 발견된 총 이슈 수 (심각도별 카운트: P0/P1/P2/P3)
+- 상위 3-5개 핵심 이슈
+- 권장 다음 단계
 
-### Detailed Findings by Severity
+### 심각도별 상세 발견 사항
 
-Tag every issue with **P0-P3 severity**:
-- **P0 Blocking**: Prevents task completion — fix immediately
-- **P1 Major**: Significant difficulty or WCAG AA violation — fix before release
-- **P2 Minor**: Annoyance, workaround exists — fix in next pass
-- **P3 Polish**: Nice-to-fix, no real user impact — fix if time permits
+모든 이슈에 **P0-P3 심각도**를 태깅합니다:
+- **P0 차단**: 작업 완료를 방해 — 즉시 수정
+- **P1 주요**: 상당한 어려움 또는 WCAG AA 위반 — 릴리스 전 수정
+- **P2 경미**: 불편하지만 우회 가능 — 다음 패스에서 수정
+- **P3 다듬기**: 수정하면 좋지만 실질적 사용자 영향 없음 — 시간이 허락하면 수정
 
-For each issue, document:
-- **[P?] Issue name**
-- **Location**: Component, file, line
-- **Category**: Accessibility / Performance / Theming / Responsive / Anti-Pattern
-- **Impact**: How it affects users
-- **WCAG/Standard**: Which standard it violates (if applicable)
-- **Recommendation**: How to fix it
-- **Suggested command**: Which command to use (prefer: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive)
+각 이슈별 문서화:
+- **[P?] 이슈명**
+- **위치**: 컴포넌트, 파일, 라인
+- **카테고리**: 접근성 / 성능 / 테마 / 반응형 / 안티패턴
+- **영향**: 사용자에게 미치는 영향
+- **WCAG/표준**: 위반하는 표준 (해당되는 경우)
+- **권장 조치**: 수정 방법
+- **제안 커맨드**: 사용할 커맨드 (우선 고려: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive)
 
-### Patterns & Systemic Issues
+### 패턴 및 체계적 문제
 
-Identify recurring problems that indicate systemic gaps rather than one-off mistakes:
-- "Hard-coded colors appear in 15+ components, should use design tokens"
-- "Touch targets consistently too small (<44px) throughout mobile experience"
+일회성 실수가 아닌 체계적 결함을 나타내는 반복 문제를 식별합니다:
+- "하드코딩된 색상이 15개 이상 컴포넌트에 나타남, 디자인 토큰을 사용해야 함"
+- "모바일 경험 전반에서 터치 타겟이 지속적으로 너무 작음 (<44px)"
 
-### Positive Findings
+### 긍정적 발견 사항
 
-Note what's working well — good practices to maintain and replicate.
+잘 되고 있는 부분을 기록합니다 — 유지하고 확산해야 할 좋은 관행.
 
-## Recommended Actions
+## 권장 조치
 
-List recommended commands in priority order (P0 first, then P1, then P2):
+권장 커맨드를 우선순위 순으로 나열합니다 (P0 먼저, P1, P2 순):
 
-1. **[P?] `/command-name`** — Brief description (specific context from audit findings)
-2. **[P?] `/command-name`** — Brief description (specific context)
+1. **[P?] `/command-name`** — 간단한 설명 (감사 발견 사항의 구체적 맥락)
+2. **[P?] `/command-name`** — 간단한 설명 (구체적 맥락)
 
-**Rules**: Only recommend commands from: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive. Map findings to the most appropriate command. End with `/polish` as the final step if any fixes were recommended.
+**규칙**: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive에서만 커맨드를 권장합니다. 발견 사항을 가장 적합한 커맨드에 매핑합니다. 수정이 권장된 경우 마지막 단계로 `/polish`를 추가합니다.
 
-After presenting the summary, tell the user:
+요약 제시 후 사용자에게 안내합니다:
 
-> You can ask me to run these one at a time, all at once, or in any order you prefer.
+> 하나씩, 한꺼번에, 또는 원하는 순서로 실행할 수 있습니다.
 >
-> Re-run `/audit` after fixes to see your score improve.
+> 수정 후 `/audit`를 다시 실행하면 점수 변화를 확인할 수 있습니다.
 
-**IMPORTANT**: Be thorough but actionable. Too many P3 issues creates noise. Focus on what actually matters.
+**중요**: 철저하되 실행 가능하게. P3 이슈가 너무 많으면 노이즈가 됩니다. 실제로 중요한 것에 집중합니다.
 
-**NEVER**:
-- Report issues without explaining impact (why does this matter?)
-- Provide generic recommendations (be specific and actionable)
-- Skip positive findings (celebrate what works)
-- Forget to prioritize (everything can't be P0)
-- Report false positives without verification
+**절대 금지**:
+- 영향을 설명하지 않고 이슈 보고 (이것이 왜 중요한가?)
+- 뻔한 권장 사항 제공 (구체적이고 실행 가능하게)
+- 긍정적 발견 사항 생략 (잘 되고 있는 것을 기린다)
+- 우선순위 매기기 무시 (모든 것이 P0이면 아무것도 P0이 아님)
+- 검증 없이 오탐 보고
 
-Remember: You're a technical quality auditor. Document systematically, prioritize ruthlessly, cite specific code locations, and provide clear paths to improvement.
+기억하세요: 당신은 기술 품질 감사관입니다. 체계적으로 문서화하고, 무자비하게 우선순위를 매기고, 구체적 코드 위치를 인용하며, 개선으로 가는 명확한 경로를 제공합니다.

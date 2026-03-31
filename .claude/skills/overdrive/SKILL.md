@@ -1,102 +1,102 @@
 ---
 name: overdrive
-description: Pushes interfaces past conventional limits with technically ambitious implementations — shaders, spring physics, scroll-driven reveals, 60fps animations. Use when the user wants to wow, impress, go all-out, or make something that feels extraordinary.
+description: 셰이더, 스프링 물리, 스크롤 기반 연출, 60fps 애니메이션 등 기술적으로 야심찬 구현으로 인터페이스를 일반적 한계 너머로 밀어붙입니다. 와우 효과, 감동, 올인, 비범한 느낌을 원할 때 사용하세요.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Start your response with:
+응답을 다음과 같이 시작하세요:
 
 ```
 ──────────── ⚡ OVERDRIVE ─────────────
-》》》 Entering overdrive mode...
+》》》 오버드라이브 모드 진입...
 ```
 
-Push an interface past conventional limits. This isn't just about visual effects — it's about using the full power of the browser to make any part of an interface feel extraordinary: a table that handles a million rows, a dialog that morphs from its trigger, a form that validates in real-time with streaming feedback, a page transition that feels cinematic.
+인터페이스를 일반적 한계 너머로 밀어붙입니다. 이것은 단순한 시각 효과가 아닙니다 — 브라우저의 모든 역량을 활용하여 인터페이스의 어떤 부분이든 비범하게 느끼도록 만드는 것입니다: 백만 행을 처리하는 테이블, 트리거에서 변형되는 다이얼로그, 스트리밍 피드백으로 실시간 검증하는 폼, 영화적으로 느껴지는 페이지 전환.
 
-## MANDATORY PREPARATION
+## 필수 사전 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 실행하세요 — 디자인 원칙, 안티패턴, **맥락 수집 프로토콜(Context Gathering Protocol)**이 포함되어 있습니다. 진행 전 프로토콜을 따르세요 — 디자인 맥락이 아직 없다면 반드시 /teach-impeccable을 먼저 실행해야 합니다.
 
-**EXTRA IMPORTANT FOR THIS SKILL**: Context determines what "extraordinary" means. A particle system on a creative portfolio is impressive. The same particle system on a settings page is embarrassing. But a settings page with instant optimistic saves and animated state transitions? That's extraordinary too. Understand the project's personality and goals before deciding what's appropriate.
+**이 스킬에서 특히 중요**: 맥락이 "비범함"의 의미를 결정합니다. 크리에이티브 포트폴리오의 파티클 시스템은 인상적입니다. 같은 파티클 시스템이 설정 페이지에 있으면 당혹스럽습니다. 하지만 즉각적인 낙관적 저장과 애니메이션 상태 전환이 있는 설정 페이지는? 그것도 비범합니다. 무엇이 적절한지 결정하기 전에 프로젝트의 성격과 목표를 파악하세요.
 
-### Propose Before Building
+### 구현 전 제안
 
-This skill has the highest potential to misfire. Do NOT jump straight into implementation. You MUST:
+이 스킬은 빗나갈 가능성이 가장 높습니다. 구현으로 바로 뛰어들지 마세요. 반드시:
 
-1. **Think through 2-3 different directions** — consider different techniques, levels of ambition, and aesthetic approaches. For each direction, briefly describe what the result would look and feel like.
-2. **STOP and call the AskUserQuestion tool to clarify.** to present these directions and get the user's pick before writing any code. Explain trade-offs (browser support, performance cost, complexity).
-3. Only proceed with the direction the user confirms.
+1. **2-3가지 다른 방향을 생각하세요** — 다양한 기법, 야심 수준, 미적 접근법을 고려합니다. 각 방향에 대해 결과가 어떻게 보이고 느껴질지 간략히 설명합니다.
+2. **멈추고 AskUserQuestion 도구를 호출하여 확인하세요.** 이 방향들을 제시하고 사용자의 선택을 받은 후에야 코드를 작성합니다. 트레이드오프(브라우저 지원, 성능 비용, 복잡도)를 설명합니다.
+3. 사용자가 확인한 방향으로만 진행합니다.
 
-Skipping this step risks building something embarrassing that needs to be thrown away.
+이 단계를 건너뛰면 버려야 할 당혹스러운 결과물을 만들 위험이 있습니다.
 
-### Iterate with Browser Automation
+### 브라우저 자동화로 반복
 
-Technically ambitious effects almost never work on the first try. You MUST actively use browser automation tools to preview your work, visually verify the result, and iterate. Do not assume the effect looks right — check it. Expect multiple rounds of refinement. The gap between "technically works" and "looks extraordinary" is closed through visual iteration, not code alone.
+기술적으로 야심찬 효과는 첫 시도에서 거의 작동하지 않습니다. 브라우저 자동화 도구를 적극적으로 사용하여 작업을 미리보고, 시각적으로 결과를 확인하고, 반복해야 합니다. 효과가 제대로 보일 것이라 가정하지 마세요 — 직접 확인하세요. 여러 차례 다듬기를 예상하세요. "기술적으로 작동함"과 "비범하게 보임" 사이의 간극은 코드만으로가 아닌 시각적 반복을 통해 좁혀집니다.
 
 ---
 
-## Assess What "Extraordinary" Means Here
+## "비범함"이 여기서 무엇을 의미하는지 평가
 
-The right kind of technical ambition depends entirely on what you're working with. Before choosing a technique, ask: **what would make a user of THIS specific interface say "wow, that's nice"?**
+적절한 수준의 기술적 야심은 전적으로 작업 대상에 달려 있습니다. 기법을 선택하기 전에 물어보세요: **이 특정 인터페이스의 사용자가 "와, 좋다"라고 말하게 할 것은 무엇인가?**
 
-### For visual/marketing surfaces
-Pages, hero sections, landing pages, portfolios — the "wow" is often sensory: a scroll-driven reveal, a shader background, a cinematic page transition, generative art that responds to the cursor.
+### 시각적/마케팅 표면
+페이지, 히어로 섹션, 랜딩 페이지, 포트폴리오 — "와우"는 보통 감각적입니다: 스크롤 기반 연출, 셰이더 배경, 영화적 페이지 전환, 커서에 반응하는 제너러티브 아트.
 
-### For functional UI
-Tables, forms, dialogs, navigation — the "wow" is in how it FEELS: a dialog that morphs from the button that triggered it via View Transitions, a data table that renders 100k rows at 60fps via virtual scrolling, a form with streaming validation that feels instant, drag-and-drop with spring physics.
+### 기능적 UI
+테이블, 폼, 다이얼로그, 내비게이션 — "와우"는 느낌에 있습니다: 뷰 트랜지션(View Transitions)을 통해 트리거 버튼에서 변형되는 다이얼로그, 가상 스크롤링으로 10만 행을 60fps로 렌더링하는 데이터 테이블, 즉각적으로 느껴지는 스트리밍 검증이 있는 폼, 스프링 물리를 적용한 드래그 앤 드롭.
 
-### For performance-critical UI
-The "wow" is invisible but felt: a search that filters 50k items without a flicker, a complex form that never blocks the main thread, an image editor that processes in near-real-time. The interface just never hesitates.
+### 성능 중심 UI
+"와우"는 보이지 않지만 체감됩니다: 깜빡임 없이 5만 항목을 필터링하는 검색, 메인 스레드를 절대 차단하지 않는 복잡한 폼, 거의 실시간으로 처리하는 이미지 편집기. 인터페이스가 절대 주저하지 않습니다.
 
-### For data-heavy interfaces
-Charts and dashboards — the "wow" is in fluidity: GPU-accelerated rendering via Canvas/WebGL for massive datasets, animated transitions between data states, force-directed graph layouts that settle naturally.
+### 데이터 중심 인터페이스
+차트와 대시보드 — "와우"는 유동성에 있습니다: 대규모 데이터셋을 위한 Canvas/WebGL GPU 가속 렌더링, 데이터 상태 간 애니메이션 전환, 자연스럽게 안정되는 포스 디렉티드(force-directed) 그래프 레이아웃.
 
-**The common thread**: something about the implementation goes beyond what users expect from a web interface. The technique serves the experience, not the other way around.
+**공통점**: 구현의 무언가가 사용자가 웹 인터페이스에서 기대하는 것을 넘어섭니다. 기법이 경험을 위해 봉사하는 것이지, 그 반대가 아닙니다.
 
-## The Toolkit
+## 도구 상자
 
-Organized by what you're trying to achieve, not by technology name.
+기술 이름이 아닌 달성하려는 목표별로 구성합니다.
 
-### Make transitions feel cinematic
-- **View Transitions API** (same-document: all browsers; cross-document: no Firefox) — shared element morphing between states. A list item expanding into a detail page. A button morphing into a dialog. This is the closest thing to native FLIP animations.
-- **`@starting-style`** (all browsers) — animate elements from `display: none` to visible with CSS only, including entry keyframes
-- **Spring physics** — natural motion with mass, tension, and damping instead of cubic-bezier. Libraries: motion (formerly Framer Motion), GSAP, or roll your own spring solver.
+### 전환을 영화적으로 만들기
+- **View Transitions API** (동일 문서: 전 브라우저; 크로스 문서: Firefox 미지원) — 상태 간 공유 요소 모핑. 리스트 아이템이 상세 페이지로 확장. 버튼이 다이얼로그로 모핑. 네이티브 FLIP 애니메이션에 가장 가까운 것.
+- **`@starting-style`** (전 브라우저) — CSS만으로 `display: none`에서 보이는 상태로 애니메이션, 진입 키프레임 포함
+- **스프링 물리(spring physics)** — cubic-bezier 대신 질량, 장력, 감쇠로 자연스러운 모션. 라이브러리: motion (이전 Framer Motion), GSAP, 또는 자체 스프링 솔버.
 
-### Tie animation to scroll position
-- **Scroll-driven animations** (`animation-timeline: scroll()`) — CSS-only, no JS. Parallax, progress bars, reveal sequences all driven by scroll position. (Chrome/Edge/Safari; Firefox: flag only — always provide a static fallback)
+### 애니메이션을 스크롤 위치에 연결
+- **스크롤 기반 애니메이션(Scroll-driven animations)** (`animation-timeline: scroll()`) — CSS만, JS 없음. 패럴랙스, 프로그레스 바, 연출 시퀀스 모두 스크롤 위치로 구동. (Chrome/Edge/Safari; Firefox: 플래그만 — 항상 정적 폴백 제공)
 
-### Render beyond CSS
-- **WebGL** (all browsers) — shader effects, post-processing, particle systems. Libraries: Three.js, OGL (lightweight), regl. Use for effects CSS can't express.
-- **WebGPU** (Chrome/Edge; Safari partial; Firefox: flag only) — next-gen GPU compute. More powerful than WebGL but limited browser support. Always fall back to WebGL2.
-- **Canvas 2D / OffscreenCanvas** — custom rendering, pixel manipulation, or moving heavy rendering off the main thread entirely via Web Workers + OffscreenCanvas.
-- **SVG filter chains** — displacement maps, turbulence, morphology for organic distortion effects. CSS-animatable.
+### CSS를 넘어 렌더링
+- **WebGL** (전 브라우저) — 셰이더 효과, 포스트 프로세싱, 파티클 시스템. 라이브러리: Three.js, OGL (경량), regl. CSS가 표현할 수 없는 효과에 사용.
+- **WebGPU** (Chrome/Edge; Safari 부분 지원; Firefox: 플래그만) — 차세대 GPU 컴퓨트. WebGL보다 강력하지만 브라우저 지원 제한. 항상 WebGL2로 폴백.
+- **Canvas 2D / OffscreenCanvas** — 커스텀 렌더링, 픽셀 조작, 또는 Web Workers + OffscreenCanvas로 무거운 렌더링을 메인 스레드에서 완전히 분리.
+- **SVG 필터 체인** — 디스플레이스먼트 맵, 터뷸런스, 모폴로지로 유기적 왜곡 효과. CSS로 애니메이션 가능.
 
-### Make data feel alive
-- **Virtual scrolling** — render only visible rows for tables/lists with tens of thousands of items. No library required for simple cases; TanStack Virtual for complex ones.
-- **GPU-accelerated charts** — Canvas or WebGL-rendered data visualization for datasets too large for SVG/DOM. Libraries: deck.gl, regl-based custom renderers.
-- **Animated data transitions** — morph between chart states rather than replacing. D3's `transition()` or View Transitions for DOM-based charts.
+### 데이터에 생명 불어넣기
+- **가상 스크롤링(virtual scrolling)** — 수만 항목의 테이블/리스트에서 보이는 행만 렌더링. 단순한 경우 라이브러리 불필요; 복잡한 경우 TanStack Virtual.
+- **GPU 가속 차트** — SVG/DOM으로는 감당할 수 없는 대규모 데이터셋을 위한 Canvas 또는 WebGL 렌더링 데이터 시각화. 라이브러리: deck.gl, regl 기반 커스텀 렌더러.
+- **애니메이션 데이터 전환** — 차트 상태를 교체하지 않고 모핑. D3의 `transition()` 또는 DOM 기반 차트에 View Transitions.
 
-### Animate complex properties
-- **`@property`** (all browsers) — register custom CSS properties with types, enabling animation of gradients, colors, and complex values that CSS can't normally interpolate.
-- **Web Animations API** (all browsers) — JavaScript-driven animations with the performance of CSS. Composable, cancellable, reversible. The foundation for complex choreography.
+### 복잡한 속성 애니메이션
+- **`@property`** (전 브라우저) — 타입이 있는 커스텀 CSS 속성 등록으로 CSS가 일반적으로 보간할 수 없는 그라디언트, 색상, 복잡한 값의 애니메이션 활성화.
+- **Web Animations API** (전 브라우저) — CSS의 성능으로 JavaScript 기반 애니메이션. 합성 가능, 취소 가능, 되감기 가능. 복잡한 안무의 기반.
 
-### Push performance boundaries
-- **Web Workers** — move computation off the main thread. Heavy data processing, image manipulation, search indexing — anything that would cause jank.
-- **OffscreenCanvas** — render in a Worker thread. The main thread stays free while complex visuals render in the background.
-- **WASM** — near-native performance for computation-heavy features. Image processing, physics simulations, codecs.
+### 성능 한계 밀어붙이기
+- **Web Workers** — 메인 스레드에서 계산 분리. 무거운 데이터 처리, 이미지 조작, 검색 인덱싱 — 버벅거림을 유발할 모든 것.
+- **OffscreenCanvas** — Worker 스레드에서 렌더링. 복잡한 시각물이 백그라운드에서 렌더링되는 동안 메인 스레드는 자유.
+- **WASM** — 계산 집약적 기능을 위한 거의 네이티브 수준의 성능. 이미지 처리, 물리 시뮬레이션, 코덱.
 
-### Interact with the device
-- **Web Audio API** — spatial audio, audio-reactive visualizations, sonic feedback. Requires user gesture to start.
-- **Device APIs** — orientation, ambient light, geolocation. Use sparingly and always with user permission.
+### 기기와 상호작용
+- **Web Audio API** — 공간 오디오, 오디오 반응형 시각화, 소닉 피드백. 시작하려면 사용자 제스처 필요.
+- **Device APIs** — 방향, 주변광, 지리위치. 아껴서 사용하고 항상 사용자 권한 필요.
 
-**NOTE**: This skill is about enhancing how an interface FEELS, not changing what a product DOES. Adding real-time collaboration, offline support, or new backend capabilities are product decisions, not UI enhancements. Focus on making existing features feel extraordinary.
+**참고**: 이 스킬은 인터페이스의 느낌을 향상시키는 것이지 제품의 기능을 바꾸는 것이 아닙니다. 실시간 협업, 오프라인 지원, 새로운 백엔드 기능 추가는 제품 결정이지 UI 향상이 아닙니다. 기존 기능을 비범하게 느끼도록 만드는 데 집중하세요.
 
-## Implement with Discipline
+## 규율을 가지고 구현
 
-### Progressive enhancement is non-negotiable
+### 점진적 향상(Progressive enhancement)은 타협할 수 없음
 
-Every technique must degrade gracefully. The experience without the enhancement must still be good.
+모든 기법은 우아하게 성능이 저하되어야 합니다. 향상 없이도 경험이 여전히 좋아야 합니다.
 
 ```css
 @supports (animation-timeline: scroll()) {
@@ -106,36 +106,36 @@ Every technique must degrade gracefully. The experience without the enhancement 
 
 ```javascript
 if ('gpu' in navigator) { /* WebGPU */ }
-else if (canvas.getContext('webgl2')) { /* WebGL2 fallback */ }
-/* CSS-only fallback must still look good */
+else if (canvas.getContext('webgl2')) { /* WebGL2 폴백 */ }
+/* CSS만의 폴백도 여전히 좋아 보여야 함 */
 ```
 
-### Performance rules
+### 성능 규칙
 
-- Target 60fps. If dropping below 50, simplify.
-- Respect `prefers-reduced-motion` — always. Provide a beautiful static alternative.
-- Lazy-initialize heavy resources (WebGL contexts, WASM modules) only when near viewport.
-- Pause off-screen rendering. Kill what you can't see.
-- Test on real mid-range devices, not just your development machine.
+- 60fps를 목표로 합니다. 50 이하로 떨어지면 단순화하세요.
+- `prefers-reduced-motion`을 존중하세요 — 항상. 아름다운 정적 대안을 제공하세요.
+- 무거운 리소스(WebGL 컨텍스트, WASM 모듈)는 뷰포트 근처에 올 때만 지연 초기화.
+- 화면 밖 렌더링은 일시 정지. 보이지 않는 것은 종료.
+- 개발 머신이 아닌 실제 중급 기기에서 테스트하세요.
 
-### Polish is the difference
+### 다듬기가 차이를 만든다
 
-The gap between "cool" and "extraordinary" is in the last 20% of refinement: the easing curve on a spring animation, the timing offset in a staggered reveal, the subtle secondary motion that makes a transition feel physical. Don't ship the first version that works — ship the version that feels inevitable.
+"쿨하다"와 "비범하다"의 차이는 마지막 20% 다듬기에 있습니다: 스프링 애니메이션의 이징 커브, 엇갈린 연출의 타이밍 오프셋, 전환이 물리적으로 느껴지게 하는 미묘한 부차 모션. 작동하는 첫 버전을 출시하지 마세요 — 필연적으로 느껴지는 버전을 출시하세요.
 
-**NEVER**:
-- Ignore `prefers-reduced-motion` — this is an accessibility requirement, not a suggestion
-- Ship effects that cause jank on mid-range devices
-- Use bleeding-edge APIs without a functional fallback
-- Add sound without explicit user opt-in
-- Use technical ambition to mask weak design fundamentals — fix those first with other skills
-- Layer multiple competing extraordinary moments — focus creates impact, excess creates noise
+**절대 하지 말 것**:
+- `prefers-reduced-motion` 무시 — 이것은 접근성 요구사항이지 제안이 아닙니다
+- 중급 기기에서 버벅거리는 효과 출시
+- 기능적 폴백 없이 최신 API 사용
+- 명시적 사용자 옵트인 없이 소리 추가
+- 약한 디자인 기초를 가리기 위해 기술적 야심 사용 — 다른 스킬로 먼저 기초를 잡으세요
+- 여러 개의 경쟁하는 비범한 순간을 겹치기 — 집중이 임팩트를 만들고, 과잉은 소음을 만듭니다
 
-## Verify the Result
+## 결과 검증
 
-- **The wow test**: Show it to someone who hasn't seen it. Do they react?
-- **The removal test**: Take it away. Does the experience feel diminished, or does nobody notice?
-- **The device test**: Run it on a phone, a tablet, a Chromebook. Still smooth?
-- **The accessibility test**: Enable reduced motion. Still beautiful?
-- **The context test**: Does this make sense for THIS brand and audience?
+- **와우 테스트**: 처음 보는 사람에게 보여주세요. 반응이 있는가?
+- **제거 테스트**: 없애보세요. 경험이 줄어든 것 같은가, 아니면 아무도 못 알아채는가?
+- **기기 테스트**: 폰, 태블릿, 크롬북에서 실행하세요. 여전히 부드러운가?
+- **접근성 테스트**: 모션 줄이기를 활성화하세요. 여전히 아름다운가?
+- **맥락 테스트**: 이 브랜드와 대상에게 적합한가?
 
-Remember: "Technically extraordinary" isn't about using the newest API. It's about making an interface do something users didn't think a website could do.
+기억하세요: "기술적으로 비범한"은 최신 API를 사용하는 것이 아닙니다. 사용자가 웹사이트에서 가능하리라 생각하지 못했던 것을 인터페이스가 해내도록 만드는 것입니다.

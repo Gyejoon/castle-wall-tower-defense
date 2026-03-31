@@ -1,44 +1,44 @@
 ---
 name: optimize
-description: Diagnoses and fixes UI performance across loading speed, rendering, animations, images, and bundle size. Use when the user mentions slow, laggy, janky, performance, bundle size, load time, or wants a faster, smoother experience.
+description: 로딩 속도, 렌더링, 애니메이션, 이미지, 번들 크기 전반에 걸쳐 UI 성능 문제를 진단하고 수정합니다. 느림, 버벅거림, 끊김, 성능, 번들 크기, 로딩 시간, 더 빠르고 부드러운 경험을 원할 때 사용하세요.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Identify and fix performance issues to create faster, smoother user experiences.
+성능 문제를 파악하고 수정하여 더 빠르고 부드러운 사용자 경험을 만듭니다.
 
-## Assess Performance Issues
+## 성능 문제 평가
 
-Understand current performance and identify problems:
+현재 성능을 파악하고 문제를 식별합니다:
 
-1. **Measure current state**:
-   - **Core Web Vitals**: LCP, FID/INP, CLS scores
-   - **Load time**: Time to interactive, first contentful paint
-   - **Bundle size**: JavaScript, CSS, image sizes
-   - **Runtime performance**: Frame rate, memory usage, CPU usage
-   - **Network**: Request count, payload sizes, waterfall
+1. **현재 상태 측정**:
+   - **코어 웹 바이탈(Core Web Vitals)**: LCP, FID/INP, CLS 점수
+   - **로딩 시간**: 인터랙티브 시간, 첫 콘텐츠풀 페인트(First Contentful Paint)
+   - **번들 크기**: JavaScript, CSS, 이미지 크기
+   - **런타임 성능**: 프레임레이트, 메모리 사용량, CPU 사용량
+   - **네트워크**: 요청 수, 페이로드 크기, 워터폴
 
-2. **Identify bottlenecks**:
-   - What's slow? (Initial load? Interactions? Animations?)
-   - What's causing it? (Large images? Expensive JavaScript? Layout thrashing?)
-   - How bad is it? (Perceivable? Annoying? Blocking?)
-   - Who's affected? (All users? Mobile only? Slow connections?)
+2. **병목 지점 식별**:
+   - 무엇이 느린가? (초기 로드? 인터랙션? 애니메이션?)
+   - 원인이 무엇인가? (큰 이미지? 비용이 큰 JavaScript? 레이아웃 스래싱(layout thrashing)?)
+   - 얼마나 심각한가? (인지 가능? 짜증나는 수준? 차단 수준?)
+   - 누가 영향을 받는가? (전체 사용자? 모바일만? 느린 연결?)
 
-**CRITICAL**: Measure before and after. Premature optimization wastes time. Optimize what actually matters.
+**핵심**: 전후를 반드시 측정하세요. 섣부른 최적화는 시간 낭비입니다. 실제로 중요한 것만 최적화하세요.
 
-## Optimization Strategy
+## 최적화 전략
 
-Create systematic improvement plan:
+체계적인 개선 계획을 수립합니다:
 
-### Loading Performance
+### 로딩 성능
 
-**Optimize Images**:
-- Use modern formats (WebP, AVIF)
-- Proper sizing (don't load 3000px image for 300px display)
-- Lazy loading for below-fold images
-- Responsive images (`srcset`, `picture` element)
-- Compress images (80-85% quality is usually imperceptible)
-- Use CDN for faster delivery
+**이미지 최적화**:
+- 최신 포맷 사용 (WebP, AVIF)
+- 적절한 크기 (300px 표시에 3000px 이미지를 로드하지 않기)
+- 스크롤 아래 이미지에 지연 로딩(lazy loading)
+- 반응형 이미지 (`srcset`, `picture` 요소)
+- 이미지 압축 (80-85% 품질이면 보통 구분 불가)
+- 더 빠른 전달을 위해 CDN 사용
 
 ```html
 <img 
@@ -50,216 +50,216 @@ Create systematic improvement plan:
 />
 ```
 
-**Reduce JavaScript Bundle**:
-- Code splitting (route-based, component-based)
-- Tree shaking (remove unused code)
-- Remove unused dependencies
-- Lazy load non-critical code
-- Use dynamic imports for large components
+**JavaScript 번들 줄이기**:
+- 코드 분할(code splitting) — 라우트 기반, 컴포넌트 기반
+- 트리 쉐이킹(tree shaking) — 사용하지 않는 코드 제거
+- 사용하지 않는 의존성 제거
+- 비핵심 코드 지연 로딩
+- 대형 컴포넌트에 동적 임포트(dynamic import) 사용
 
 ```javascript
-// Lazy load heavy component
+// 무거운 컴포넌트 지연 로딩
 const HeavyChart = lazy(() => import('./HeavyChart'));
 ```
 
-**Optimize CSS**:
-- Remove unused CSS
-- Critical CSS inline, rest async
-- Minimize CSS files
-- Use CSS containment for independent regions
+**CSS 최적화**:
+- 사용하지 않는 CSS 제거
+- 크리티컬 CSS 인라인, 나머지 비동기
+- CSS 파일 최소화
+- 독립 영역에 CSS containment 사용
 
-**Optimize Fonts**:
-- Use `font-display: swap` or `optional`
-- Subset fonts (only characters you need)
-- Preload critical fonts
-- Use system fonts when appropriate
-- Limit font weights loaded
+**폰트 최적화**:
+- `font-display: swap` 또는 `optional` 사용
+- 폰트 서브셋(subset) — 필요한 문자만
+- 크리티컬 폰트 프리로드(preload)
+- 적절한 경우 시스템 폰트 사용
+- 로딩하는 폰트 두께 제한
 
 ```css
 @font-face {
   font-family: 'CustomFont';
   src: url('/fonts/custom.woff2') format('woff2');
-  font-display: swap; /* Show fallback immediately */
-  unicode-range: U+0020-007F; /* Basic Latin only */
+  font-display: swap; /* 폴백을 즉시 표시 */
+  unicode-range: U+0020-007F; /* 기본 라틴 문자만 */
 }
 ```
 
-**Optimize Loading Strategy**:
-- Critical resources first (async/defer non-critical)
-- Preload critical assets
-- Prefetch likely next pages
-- Service worker for offline/caching
-- HTTP/2 or HTTP/3 for multiplexing
+**로딩 전략 최적화**:
+- 핵심 리소스 먼저 (비핵심은 async/defer)
+- 핵심 애셋 프리로드
+- 다음 페이지 프리페치(prefetch)
+- 오프라인/캐싱을 위한 서비스 워커
+- 멀티플렉싱을 위한 HTTP/2 또는 HTTP/3
 
-### Rendering Performance
+### 렌더링 성능
 
-**Avoid Layout Thrashing**:
+**레이아웃 스래싱 방지**:
 ```javascript
-// ❌ Bad: Alternating reads and writes (causes reflows)
+// ❌ 나쁨: 읽기와 쓰기를 번갈아 실행 (리플로우 유발)
 elements.forEach(el => {
-  const height = el.offsetHeight; // Read (forces layout)
-  el.style.height = height * 2; // Write
+  const height = el.offsetHeight; // 읽기 (레이아웃 강제)
+  el.style.height = height * 2; // 쓰기
 });
 
-// ✅ Good: Batch reads, then batch writes
-const heights = elements.map(el => el.offsetHeight); // All reads
+// ✅ 좋음: 읽기를 모아서, 그다음 쓰기를 모아서
+const heights = elements.map(el => el.offsetHeight); // 전부 읽기
 elements.forEach((el, i) => {
-  el.style.height = heights[i] * 2; // All writes
+  el.style.height = heights[i] * 2; // 전부 쓰기
 });
 ```
 
-**Optimize Rendering**:
-- Use CSS `contain` property for independent regions
-- Minimize DOM depth (flatter is faster)
-- Reduce DOM size (fewer elements)
-- Use `content-visibility: auto` for long lists
-- Virtual scrolling for very long lists (react-window, react-virtualized)
+**렌더링 최적화**:
+- 독립 영역에 CSS `contain` 속성 사용
+- DOM 깊이 최소화 (얕을수록 빠름)
+- DOM 크기 줄이기 (요소 수 줄이기)
+- 긴 리스트에 `content-visibility: auto` 사용
+- 매우 긴 리스트에 가상 스크롤링 (react-window, react-virtualized)
 
-**Reduce Paint & Composite**:
-- Use `transform` and `opacity` for animations (GPU-accelerated)
-- Avoid animating layout properties (width, height, top, left)
-- Use `will-change` sparingly for known expensive operations
-- Minimize paint areas (smaller is faster)
+**페인트 및 컴포지트(Composite) 줄이기**:
+- 애니메이션에 transform과 opacity 사용 (GPU 가속)
+- 레이아웃 속성 애니메이션 피하기 (width, height, top, left)
+- 비용이 큰 것으로 알려진 작업에만 will-change 아껴서 사용
+- 페인트 영역 최소화 (작을수록 빠름)
 
-### Animation Performance
+### 애니메이션 성능
 
-**GPU Acceleration**:
+**GPU 가속**:
 ```css
-/* ✅ GPU-accelerated (fast) */
+/* ✅ GPU 가속 (빠름) */
 .animated {
   transform: translateX(100px);
   opacity: 0.5;
 }
 
-/* ❌ CPU-bound (slow) */
+/* ❌ CPU 바운드 (느림) */
 .animated {
   left: 100px;
   width: 300px;
 }
 ```
 
-**Smooth 60fps**:
-- Target 16ms per frame (60fps)
-- Use `requestAnimationFrame` for JS animations
-- Debounce/throttle scroll handlers
-- Use CSS animations when possible
-- Avoid long-running JavaScript during animations
+**부드러운 60fps**:
+- 프레임당 16ms 목표 (60fps)
+- JS 애니메이션에 `requestAnimationFrame` 사용
+- 스크롤 핸들러 디바운스/스로틀
+- 가능하면 CSS 애니메이션 사용
+- 애니메이션 중 오래 걸리는 JavaScript 피하기
 
-**Intersection Observer**:
+**IntersectionObserver**:
 ```javascript
-// Efficiently detect when elements enter viewport
+// 요소가 뷰포트에 들어오는 것을 효율적으로 감지
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      // Element is visible, lazy load or animate
+      // 요소가 보임, 지연 로딩 또는 애니메이션 실행
     }
   });
 });
 ```
 
-### React/Framework Optimization
+### React/프레임워크 최적화
 
-**React-specific**:
-- Use `memo()` for expensive components
-- `useMemo()` and `useCallback()` for expensive computations
-- Virtualize long lists
-- Code split routes
-- Avoid inline function creation in render
-- Use React DevTools Profiler
+**React 전용**:
+- 비용이 큰 컴포넌트에 `memo()` 사용
+- 비용이 큰 계산에 `useMemo()`와 `useCallback()`
+- 긴 리스트 가상화
+- 라우트 코드 분할
+- 렌더에서 인라인 함수 생성 피하기
+- React DevTools Profiler 사용
 
-**Framework-agnostic**:
-- Minimize re-renders
-- Debounce expensive operations
-- Memoize computed values
-- Lazy load routes and components
+**프레임워크 공통**:
+- 리렌더링 최소화
+- 비용이 큰 작업 디바운스
+- 계산된 값 메모이제이션
+- 라우트와 컴포넌트 지연 로딩
 
-### Network Optimization
+### 네트워크 최적화
 
-**Reduce Requests**:
-- Combine small files
-- Use SVG sprites for icons
-- Inline small critical assets
-- Remove unused third-party scripts
+**요청 줄이기**:
+- 작은 파일 결합
+- 아이콘에 SVG 스프라이트 사용
+- 작은 핵심 애셋 인라인
+- 사용하지 않는 서드파티 스크립트 제거
 
-**Optimize APIs**:
-- Use pagination (don't load everything)
-- GraphQL to request only needed fields
-- Response compression (gzip, brotli)
-- HTTP caching headers
-- CDN for static assets
+**API 최적화**:
+- 페이지네이션 사용 (전부 로드하지 않기)
+- 필요한 필드만 요청하는 GraphQL
+- 응답 압축 (gzip, brotli)
+- HTTP 캐싱 헤더
+- 정적 애셋에 CDN
 
-**Optimize for Slow Connections**:
-- Adaptive loading based on connection (navigator.connection)
-- Optimistic UI updates
-- Request prioritization
-- Progressive enhancement
+**느린 연결 최적화**:
+- 연결 상태에 따른 적응형 로딩 (navigator.connection)
+- 낙관적 UI 업데이트
+- 요청 우선순위 지정
+- 점진적 향상
 
-## Core Web Vitals Optimization
+## 코어 웹 바이탈 최적화
 
-### Largest Contentful Paint (LCP < 2.5s)
-- Optimize hero images
-- Inline critical CSS
-- Preload key resources
-- Use CDN
-- Server-side rendering
+### 최대 콘텐츠풀 페인트 (LCP < 2.5초)
+- 히어로 이미지 최적화
+- 크리티컬 CSS 인라인
+- 핵심 리소스 프리로드
+- CDN 사용
+- 서버 사이드 렌더링
 
-### First Input Delay (FID < 100ms) / INP (< 200ms)
-- Break up long tasks
-- Defer non-critical JavaScript
-- Use web workers for heavy computation
-- Reduce JavaScript execution time
+### 첫 입력 지연 (FID < 100ms) / INP (< 200ms)
+- 긴 작업 분할
+- 비핵심 JavaScript 지연
+- 무거운 계산에 웹 워커(Web Worker) 사용
+- JavaScript 실행 시간 줄이기
 
-### Cumulative Layout Shift (CLS < 0.1)
-- Set dimensions on images and videos
-- Don't inject content above existing content
-- Use `aspect-ratio` CSS property
-- Reserve space for ads/embeds
-- Avoid animations that cause layout shifts
+### 누적 레이아웃 이동 (CLS < 0.1)
+- 이미지와 비디오에 치수 설정
+- 기존 콘텐츠 위에 콘텐츠 삽입하지 않기
+- CSS `aspect-ratio` 속성 사용
+- 광고/임베드 공간 예약
+- 레이아웃 이동을 유발하는 애니메이션 피하기
 
 ```css
-/* Reserve space for image */
+/* 이미지 공간 예약 */
 .image-container {
   aspect-ratio: 16 / 9;
 }
 ```
 
-## Performance Monitoring
+## 성능 모니터링
 
-**Tools to use**:
-- Chrome DevTools (Lighthouse, Performance panel)
+**사용할 도구**:
+- Chrome DevTools (Lighthouse, Performance 패널)
 - WebPageTest
-- Core Web Vitals (Chrome UX Report)
-- Bundle analyzers (webpack-bundle-analyzer)
-- Performance monitoring (Sentry, DataDog, New Relic)
+- 코어 웹 바이탈 (Chrome UX Report)
+- 번들 분석기 (webpack-bundle-analyzer)
+- 성능 모니터링 (Sentry, DataDog, New Relic)
 
-**Key metrics**:
-- LCP, FID/INP, CLS (Core Web Vitals)
-- Time to Interactive (TTI)
-- First Contentful Paint (FCP)
-- Total Blocking Time (TBT)
-- Bundle size
-- Request count
+**핵심 지표**:
+- LCP, FID/INP, CLS (코어 웹 바이탈)
+- 인터랙티브 시간 (TTI)
+- 첫 콘텐츠풀 페인트 (FCP)
+- 총 차단 시간 (TBT)
+- 번들 크기
+- 요청 수
 
-**IMPORTANT**: Measure on real devices with real network conditions. Desktop Chrome with fast connection isn't representative.
+**중요**: 실제 기기와 실제 네트워크 환경에서 측정하세요. 빠른 연결의 데스크톱 Chrome은 대표성이 없습니다.
 
-**NEVER**:
-- Optimize without measuring (premature optimization)
-- Sacrifice accessibility for performance
-- Break functionality while optimizing
-- Use `will-change` everywhere (creates new layers, uses memory)
-- Lazy load above-fold content
-- Optimize micro-optimizations while ignoring major issues (optimize the biggest bottleneck first)
-- Forget about mobile performance (often slower devices, slower connections)
+**절대 하지 말 것**:
+- 측정 없이 최적화 (섣부른 최적화)
+- 성능을 위해 접근성 희생
+- 최적화하면서 기능 망가뜨리기
+- will-change를 남발 (새 레이어 생성, 메모리 사용)
+- 스크롤 위 콘텐츠를 지연 로딩
+- 주요 문제를 무시하면서 미세 최적화에 집중 (가장 큰 병목부터 최적화)
+- 모바일 성능 잊기 (보통 더 느린 기기, 더 느린 연결)
 
-## Verify Improvements
+## 개선 검증
 
-Test that optimizations worked:
+최적화가 효과가 있었는지 테스트합니다:
 
-- **Before/after metrics**: Compare Lighthouse scores
-- **Real user monitoring**: Track improvements for real users
-- **Different devices**: Test on low-end Android, not just flagship iPhone
-- **Slow connections**: Throttle to 3G, test experience
-- **No regressions**: Ensure functionality still works
-- **User perception**: Does it *feel* faster?
+- **전후 지표**: Lighthouse 점수 비교
+- **실사용자 모니터링**: 실제 사용자의 개선 사항 추적
+- **다양한 기기**: 저사양 안드로이드에서 테스트, 최신 아이폰만이 아닌
+- **느린 연결**: 3G로 스로틀링하여 경험 테스트
+- **회귀 없음**: 기능이 여전히 작동하는지 확인
+- **사용자 인지**: *체감상* 더 빨라졌는가?
 
-Remember: Performance is a feature. Fast experiences feel more responsive, more polished, more professional. Optimize systematically, measure ruthlessly, and prioritize user-perceived performance.
+기억하세요: 성능은 기능입니다. 빠른 경험은 더 반응적이고, 더 세련되고, 더 전문적으로 느껴집니다. 체계적으로 최적화하고, 냉정하게 측정하고, 사용자가 체감하는 성능을 우선시하세요.

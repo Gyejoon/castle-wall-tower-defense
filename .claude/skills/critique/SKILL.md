@@ -1,201 +1,201 @@
 ---
 name: critique
-description: Evaluate design from a UX perspective, assessing visual hierarchy, information architecture, emotional resonance, cognitive load, and overall quality with quantitative scoring, persona-based testing, and actionable feedback. Use when the user asks to review, critique, evaluate, or give feedback on a design or component.
+description: UX 관점에서 디자인을 평가합니다. 시각적 위계, 정보 구조, 감정적 공명, 인지 부하, 전반적 품질을 정량적 점수, 페르소나 기반 테스트, 실행 가능한 피드백으로 평가합니다. 디자인이나 컴포넌트의 리뷰, 비평, 평가, 피드백을 요청받았을 때 사용합니다.
 user-invocable: true
-argument-hint: "[area (feature, page, component...)]"
+argument-hint: "[영역 (기능, 페이지, 컴포넌트...)]"
 ---
 
-## MANDATORY PREPARATION
+## 필수 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: what the interface is trying to accomplish.
+/frontend-design을 호출합니다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있습니다. 진행 전에 프로토콜을 따르세요 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 합니다. 추가로 인터페이스가 달성하려는 목표를 파악합니다.
 
 ---
 
-Conduct a holistic design critique, evaluating whether the interface actually works — not just technically, but as a designed experience. Think like a design director giving feedback.
+총체적 디자인 비평을 수행하여 인터페이스가 실제로 작동하는지 평가합니다 — 기술적으로뿐만 아니라 디자인된 경험으로서. 피드백을 주는 디자인 디렉터처럼 생각합니다.
 
-## Phase 1: Design Critique
+## 1단계: 디자인 비평
 
-Evaluate the interface across these dimensions:
+다음 차원에 걸쳐 인터페이스를 평가합니다:
 
-### 1. AI Slop Detection (CRITICAL)
+### 1. AI 양산형 탐지 (핵심)
 
-**This is the most important check.** Does this look like every other AI-generated interface from 2024-2025?
+**가장 중요한 점검입니다.** 이것이 2024-2025년의 다른 모든 AI 생성 인터페이스와 같아 보이나요?
 
-Review the design against ALL the **DON'T** guidelines in the frontend-design skill — they are the fingerprints of AI-generated work. Check for the AI color palette, gradient text, dark mode with glowing accents, glassmorphism, hero metric layouts, identical card grids, generic fonts, and all other tells.
+/frontend-design 스킬의 모든 **이러지 마세요** 가이드라인과 대조하여 디자인을 검토합니다 — 이것들이 AI 생성 작업의 지문입니다. AI 색상 팔레트, 그라데이션 텍스트, 빛나는 액센트의 다크 모드, 글래스모피즘, 히어로 지표 레이아웃, 동일 카드 그리드, 뻔한 폰트 및 기타 모든 징후를 확인합니다.
 
-**The test**: If you showed this to someone and said "AI made this," would they believe you immediately? If yes, that's the problem.
+**테스트**: 이것을 누군가에게 보여주며 "AI가 만들었다"고 하면 즉시 믿을까요? 그렇다면, 그것이 문제입니다.
 
-### 2. Visual Hierarchy
-- Does the eye flow to the most important element first?
-- Is there a clear primary action? Can you spot it in 2 seconds?
-- Do size, color, and position communicate importance correctly?
-- Is there visual competition between elements that should have different weights?
+### 2. 시각적 위계
+- 시선이 가장 중요한 요소로 먼저 이동하는가?
+- 명확한 주요 액션이 있는가? 2초 안에 찾을 수 있는가?
+- 크기, 색상, 위치가 중요도를 올바르게 전달하는가?
+- 다른 비중을 가져야 할 요소들 간에 시각적 경쟁이 있는가?
 
-### 3. Information Architecture & Cognitive Load
-> *Consult [cognitive-load](reference/cognitive-load.md) for the working memory rule and 8-item checklist*
-- Is the structure intuitive? Would a new user understand the organization?
-- Is related content grouped logically?
-- Are there too many choices at once? Count visible options at each decision point — if >4, flag it
-- Is the navigation clear and predictable?
-- **Progressive disclosure**: Is complexity revealed only when needed, or dumped on the user upfront?
-- **Run the 8-item cognitive load checklist** from the reference. Report failure count: 0–1 = low (good), 2–3 = moderate, 4+ = critical.
+### 3. 정보 구조(Information Architecture) 및 인지 부하(Cognitive Load)
+> *작업 기억 규칙과 8항목 체크리스트는 [cognitive-load](reference/cognitive-load.md) 참조*
+- 구조가 직관적인가? 새 사용자가 조직 방식을 이해할 수 있는가?
+- 관련 콘텐츠가 논리적으로 그룹화되어 있는가?
+- 한 번에 너무 많은 선택지가 있는가? 각 의사결정 지점에서 보이는 옵션 수를 세세요 — 4개 초과 시 플래그
+- 내비게이션이 명확하고 예측 가능한가?
+- **점진적 공개**: 복잡성이 필요할 때만 드러나는가, 아니면 사용자에게 한꺼번에 던지는가?
+- **8항목 인지 부하 체크리스트**를 레퍼런스에서 실행합니다. 실패 횟수 보고: 0-1 = 낮음 (양호), 2-3 = 보통, 4+ = 심각.
 
-### 4. Emotional Journey
-- What emotion does this interface evoke? Is that intentional?
-- Does it match the brand personality?
-- Does it feel trustworthy, approachable, premium, playful — whatever it should feel?
-- Would the target user feel "this is for me"?
-- **Peak-end rule**: Is the most intense moment positive? Does the experience end well (confirmation, celebration, clear next step)?
-- **Emotional valleys**: Check for onboarding frustration, error cliffs, feature discovery gaps, or anxiety spikes at high-stakes moments (payment, delete, commit)
-- **Interventions at negative moments**: Are there design interventions where users are likely to feel frustrated or anxious? (progress indicators, reassurance copy, undo options, social proof)
+### 4. 감정 여정(Emotional Journey)
+- 이 인터페이스가 어떤 감정을 불러일으키는가? 그것이 의도적인가?
+- 브랜드 개성과 일치하는가?
+- 신뢰감, 친근함, 프리미엄, 장난스러움 등 — 의도한 느낌을 주는가?
+- 타겟 사용자가 "이건 나를 위한 거다"라고 느끼는가?
+- **피크-엔드 법칙(Peak-end Rule)**: 가장 강렬한 순간이 긍정적인가? 경험이 좋게 마무리되는가 (확인, 축하, 명확한 다음 단계)?
+- **감정적 골짜기**: 온보딩 좌절, 에러 절벽, 기능 발견 공백, 고위험 순간(결제, 삭제, 커밋)에서의 불안 급등이 있는가?
+- **부정적 순간의 개입**: 사용자가 좌절하거나 불안할 만한 지점에 디자인 개입이 있는가? (진행 표시기, 안심 문구, 실행 취소 옵션, 사회적 증거)
 
-### 5. Discoverability & Affordance
-- Are interactive elements obviously interactive?
-- Would a user know what to do without instructions?
-- Are hover/focus states providing useful feedback?
-- Are there hidden features that should be more visible?
+### 5. 발견 가능성(Discoverability) 및 어포던스(Affordance)
+- 인터랙티브 요소가 명확히 인터랙티브해 보이는가?
+- 안내 없이도 사용자가 무엇을 해야 할지 아는가?
+- 호버/포커스 상태가 유용한 피드백을 제공하는가?
+- 더 눈에 띄어야 할 숨겨진 기능이 있는가?
 
-### 6. Composition & Balance
-- Does the layout feel balanced or uncomfortably weighted?
-- Is whitespace used intentionally or just leftover?
-- Is there visual rhythm in spacing and repetition?
-- Does asymmetry feel designed or accidental?
+### 6. 구도 및 균형
+- 레이아웃이 균형 잡힌 느낌인가 아니면 불편하게 한쪽으로 치우친 느낌인가?
+- 여백이 의도적으로 사용되는가 아니면 남은 공간에 불과한가?
+- 간격과 반복에 시각적 리듬이 있는가?
+- 비대칭이 디자인된 것으로 느껴지는가 아니면 우연으로 느껴지는가?
 
-### 7. Typography as Communication
-- Does the type hierarchy clearly signal what to read first, second, third?
-- Is body text comfortable to read? (line length, spacing, size)
-- Do font choices reinforce the brand/tone?
-- Is there enough contrast between heading levels?
+### 7. 소통 수단으로서의 타이포그래피
+- 타입 위계가 무엇을 먼저, 둘째, 셋째로 읽어야 하는지 명확히 신호하는가?
+- 본문 텍스트가 읽기 편한가? (줄 길이, 간격, 크기)
+- 폰트 선택이 브랜드/톤을 강화하는가?
+- 제목 레벨 간 충분한 대비가 있는가?
 
-### 8. Color with Purpose
-- Is color used to communicate, not just decorate?
-- Does the palette feel cohesive?
-- Are accent colors drawing attention to the right things?
-- Does it work for colorblind users? (not just technically — does meaning still come through?)
+### 8. 목적 있는 색상
+- 색상이 장식이 아닌 소통을 위해 사용되는가?
+- 팔레트가 일관된 느낌인가?
+- 액센트 색상이 올바른 것에 주목을 끄는가?
+- 색각 이상 사용자에게 작동하는가? (기술적으로만이 아니라 — 의미가 여전히 전달되는가?)
 
-### 9. States & Edge Cases
-- Empty states: Do they guide users toward action, or just say "nothing here"?
-- Loading states: Do they reduce perceived wait time?
-- Error states: Are they helpful and non-blaming?
-- Success states: Do they confirm and guide next steps?
+### 9. 상태 및 엣지 케이스
+- 빈 상태: 사용자를 행동으로 유도하는가, 아니면 "여기에 아무것도 없습니다"만 표시하는가?
+- 로딩 상태: 체감 대기 시간을 줄이는가?
+- 에러 상태: 도움이 되고 비난하지 않는가?
+- 성공 상태: 확인하고 다음 단계를 안내하는가?
 
-### 10. Microcopy & Voice
-- Is the writing clear and concise?
-- Does it sound like a human (the right human for this brand)?
-- Are labels and buttons unambiguous?
-- Does error copy help users fix the problem?
+### 10. 마이크로카피(Microcopy) 및 보이스
+- 문구가 명확하고 간결한가?
+- 사람처럼 들리는가 (이 브랜드에 맞는 사람)?
+- 레이블과 버튼이 모호하지 않은가?
+- 에러 문구가 사용자의 문제 해결을 돕는가?
 
-## Phase 2: Present Findings
+## 2단계: 발견 사항 제시
 
-Structure your feedback as a design director would:
+디자인 디렉터가 하듯 피드백을 구조화합니다:
 
-### Design Health Score
-> *Consult [heuristics-scoring](reference/heuristics-scoring.md)*
+### 디자인 건강 점수
+> *[heuristics-scoring](reference/heuristics-scoring.md) 참조*
 
-Score each of Nielsen's 10 heuristics 0–4. Present as a table:
+닐슨의 10가지 휴리스틱(Nielsen's 10 Heuristics) 각각에 0-4점을 부여합니다. 테이블로 제시합니다:
 
-| # | Heuristic | Score | Key Issue |
-|---|-----------|-------|-----------|
-| 1 | Visibility of System Status | ? | [specific finding or "—" if solid] |
-| 2 | Match System / Real World | ? | |
-| 3 | User Control and Freedom | ? | |
-| 4 | Consistency and Standards | ? | |
-| 5 | Error Prevention | ? | |
-| 6 | Recognition Rather Than Recall | ? | |
-| 7 | Flexibility and Efficiency | ? | |
-| 8 | Aesthetic and Minimalist Design | ? | |
-| 9 | Error Recovery | ? | |
-| 10 | Help and Documentation | ? | |
-| **Total** | | **??/40** | **[Rating band]** |
+| # | 휴리스틱 | 점수 | 핵심 이슈 |
+|---|---------|------|----------|
+| 1 | 시스템 상태의 가시성 | ? | [구체적 발견 사항 또는 "—" (양호 시)] |
+| 2 | 시스템과 현실 세계의 일치 | ? | |
+| 3 | 사용자 통제와 자유 | ? | |
+| 4 | 일관성과 표준 | ? | |
+| 5 | 오류 예방 | ? | |
+| 6 | 기억보다 인식 | ? | |
+| 7 | 유연성과 효율성 | ? | |
+| 8 | 미적이고 미니멀한 디자인 | ? | |
+| 9 | 오류 복구 | ? | |
+| 10 | 도움말과 문서화 | ? | |
+| **합계** | | **??/40** | **[등급]** |
 
-Be honest with scores. A 4 means genuinely excellent. Most real interfaces score 20–32.
+점수는 정직하게 매깁니다. 4점은 진정으로 우수하다는 의미입니다. 대부분의 실제 인터페이스는 20-32점입니다.
 
-### Anti-Patterns Verdict
-**Start here.** Pass/fail: Does this look AI-generated? List specific tells from the skill's Anti-Patterns section. Be brutally honest.
+### 안티패턴 판정
+**여기서부터 시작합니다.** 합격/불합격: AI가 생성한 것처럼 보이는가? 스킬의 안티패턴 섹션에서 구체적 징후를 나열합니다. 솔직하게 평가합니다.
 
-### Overall Impression
-A brief gut reaction — what works, what doesn't, and the single biggest opportunity.
+### 전체 인상
+간단한 직감적 반응 — 잘 되는 것, 안 되는 것, 그리고 가장 큰 기회 하나.
 
-### What's Working
-Highlight 2–3 things done well. Be specific about why they work.
+### 잘 되고 있는 점
+잘 된 2-3가지를 강조합니다. 왜 효과적인지 구체적으로 설명합니다.
 
-### Priority Issues
-The 3–5 most impactful design problems, ordered by importance.
+### 우선 이슈
+영향이 가장 큰 3-5개 디자인 문제를 중요도 순으로 정렬합니다.
 
-For each issue, tag with **P0–P3 severity** (consult [heuristics-scoring](reference/heuristics-scoring.md) for severity definitions):
-- **[P?] What**: Name the problem clearly
-- **Why it matters**: How this hurts users or undermines goals
-- **Fix**: What to do about it (be concrete)
-- **Suggested command**: Which command could address this (from: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive)
+각 이슈에 **P0-P3 심각도**를 태깅합니다 (심각도 정의는 [heuristics-scoring](reference/heuristics-scoring.md) 참조):
+- **[P?] 무엇**: 문제를 명확히 명명
+- **왜 중요한가**: 사용자에게 어떤 피해를 주거나 목표를 저해하는지
+- **수정 방법**: 구체적 조치 (구체적으로)
+- **제안 커맨드**: 이 문제를 해결할 커맨드 (선택 범위: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive)
 
-### Persona Red Flags
-> *Consult [personas](reference/personas.md)*
+### 페르소나 레드 플래그
+> *[personas](reference/personas.md) 참조*
 
-Auto-select 2–3 personas most relevant to this interface type (use the selection table in the reference). If `CLAUDE.md` contains a `## Design Context` section from `teach-impeccable`, also generate 1–2 project-specific personas from the audience/brand info.
+이 인터페이스 유형에 가장 관련 있는 2-3개 페르소나를 자동 선택합니다 (레퍼런스의 선택 테이블 사용). `CLAUDE.md`에 /teach-impeccable의 `## Design Context` 섹션이 있으면, 사용자/브랜드 정보에서 프로젝트 특화 페르소나 1-2개도 생성합니다.
 
-For each selected persona, walk through the primary user action and list specific red flags found:
+선택된 각 페르소나별로 주요 사용자 행동을 따라가며 발견된 구체적 레드 플래그를 나열합니다:
 
-**Alex (Power User)**: No keyboard shortcuts detected. Form requires 8 clicks for primary action. Forced modal onboarding. ⚠️ High abandonment risk.
+**Alex (파워 유저)**: 키보드 단축키 미감지. 주요 액션에 8번 클릭 필요. 강제 모달 온보딩. ⚠️ 높은 이탈 위험.
 
-**Jordan (First-Timer)**: Icon-only nav in sidebar. Technical jargon in error messages ("404 Not Found"). No visible help. ⚠️ Will abandon at step 2.
+**Jordan (처음 사용자)**: 사이드바에 아이콘만 있는 내비게이션. 에러 메시지에 기술 용어 ("404 Not Found"). 도움말 미표시. ⚠️ 2단계에서 이탈 예상.
 
-Be specific — name the exact elements and interactions that fail each persona. Don't write generic persona descriptions; write what broke for them.
+구체적으로 — 각 페르소나가 실패하는 정확한 요소와 인터랙션을 명시합니다. 일반적인 페르소나 설명이 아니라 무엇이 깨졌는지를 씁니다.
 
-### Minor Observations
-Quick notes on smaller issues worth addressing.
+### 기타 관찰 사항
+해결할 가치가 있는 작은 이슈에 대한 간단한 메모.
 
-**Remember**:
-- Be direct — vague feedback wastes everyone's time
-- Be specific — "the submit button" not "some elements"
-- Say what's wrong AND why it matters to users
-- Give concrete suggestions, not just "consider exploring..."
-- Prioritize ruthlessly — if everything is important, nothing is
-- Don't soften criticism — developers need honest feedback to ship great design
+**기억하세요**:
+- 직접적으로 — 모호한 피드백은 시간 낭비
+- 구체적으로 — "일부 요소"가 아니라 "제출 버튼"
+- 무엇이 잘못됐는지와 왜 사용자에게 중요한지를 함께
+- "고려해 보세요..."가 아닌 구체적 제안
+- 무자비하게 우선순위 매기기 — 모든 것이 중요하면 아무것도 중요하지 않음
+- 비판을 부드럽게 하지 않기 — 개발자에게는 훌륭한 디자인을 위한 솔직한 피드백이 필요
 
-## Phase 3: Ask the User
+## 3단계: 사용자에게 질문
 
-**After presenting findings**, use targeted questions based on what was actually found. STOP and call the AskUserQuestion tool to clarify. These answers will shape the action plan.
+**발견 사항 제시 후**, 실제 발견된 내용에 기반한 맞춤 질문을 합니다. 멈추고 AskUserQuestion 도구를 호출하여 확인합니다. 이 답변이 실행 계획을 형성합니다.
 
-Ask questions along these lines (adapt to the specific findings — do NOT ask generic questions):
+다음과 같은 방향으로 질문합니다 (구체적 발견 사항에 맞게 조정 — 일반적인 질문은 절대 금지):
 
-1. **Priority direction**: Based on the issues found, ask which category matters most to the user right now. For example: "I found problems with visual hierarchy, color usage, and information overload. Which area should we tackle first?" Offer the top 2–3 issue categories as options.
+1. **우선순위 방향**: 발견된 이슈를 기반으로 사용자에게 지금 가장 중요한 카테고리를 묻습니다. 예: "시각적 위계, 색상 사용, 정보 과부하에서 문제를 발견했습니다. 어떤 영역을 먼저 해결할까요?" 상위 2-3개 이슈 카테고리를 옵션으로 제시합니다.
 
-2. **Design intent**: If the critique found a tonal mismatch, ask whether it was intentional. For example: "The interface feels clinical and corporate. Is that the intended tone, or should it feel warmer/bolder/more playful?" Offer 2–3 tonal directions as options based on what would fix the issues found.
+2. **디자인 의도**: 비평에서 톤 불일치를 발견한 경우 의도적이었는지 묻습니다. 예: "인터페이스가 임상적이고 기업적으로 느껴집니다. 의도한 톤인가요, 아니면 더 따뜻하게/대담하게/장난스럽게 바꿔야 할까요?" 발견된 문제를 해결할 수 있는 2-3개 톤 방향을 옵션으로 제시합니다.
 
-3. **Scope**: Ask how much the user wants to take on. For example: "I found N issues. Want to address everything, or focus on the top 3?" Offer scope options like "Top 3 only", "All issues", "Critical issues only".
+3. **범위**: 사용자가 얼마나 많이 해결하고 싶은지 묻습니다. 예: "N개의 이슈를 발견했습니다. 모두 해결할까요, 아니면 상위 3개에 집중할까요?" "상위 3개만", "모든 이슈", "핵심 이슈만" 같은 범위 옵션을 제시합니다.
 
-4. **Constraints** (optional — only ask if relevant): If the findings touch many areas, ask if anything is off-limits. For example: "Should any sections stay as-is?" This prevents the plan from touching things the user considers done.
+4. **제약** (선택 — 관련 있을 때만): 발견 사항이 많은 영역에 걸쳐 있으면 손대지 말아야 할 부분이 있는지 묻습니다. 예: "그대로 유지해야 할 섹션이 있나요?" 사용자가 완료됐다고 여기는 부분을 건드리는 것을 방지합니다.
 
-**Rules for questions**:
-- Every question must reference specific findings from Phase 2 — never ask generic "who is your audience?" questions
-- Keep it to 2–4 questions maximum — respect the user's time
-- Offer concrete options, not open-ended prompts
-- If findings are straightforward (e.g., only 1–2 clear issues), skip questions and go directly to Phase 4
+**질문 규칙**:
+- 모든 질문은 2단계의 구체적 발견 사항을 참조해야 합니다 — "타겟 사용자가 누구인가요?" 같은 일반적 질문은 절대 금지
+- 최대 2-4개 질문 — 사용자의 시간을 존중
+- 열린 질문이 아닌 구체적 옵션 제시
+- 발견 사항이 명확한 경우 (예: 1-2개 명확한 이슈만) 질문을 건너뛰고 바로 4단계로 진행
 
-## Phase 4: Recommended Actions
+## 4단계: 권장 조치
 
-**After receiving the user's answers**, present a prioritized action summary reflecting the user's priorities and scope from Phase 3.
+**사용자 답변을 받은 후**, 3단계에서 사용자의 우선순위와 범위를 반영한 우선순위별 실행 요약을 제시합니다.
 
-### Action Summary
+### 실행 요약
 
-List recommended commands in priority order, based on the user's answers:
+사용자 답변에 기반하여 권장 커맨드를 우선순위 순으로 나열합니다:
 
-1. **`/command-name`** — Brief description of what to fix (specific context from critique findings)
-2. **`/command-name`** — Brief description (specific context)
+1. **`/command-name`** — 수정할 내용의 간단한 설명 (비평 발견 사항의 구체적 맥락)
+2. **`/command-name`** — 간단한 설명 (구체적 맥락)
 ...
 
-**Rules for recommendations**:
-- Only recommend commands from: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive
-- Order by the user's stated priorities first, then by impact
-- Each item's description should carry enough context that the command knows what to focus on
-- Map each Priority Issue to the appropriate command
-- Skip commands that would address zero issues
-- If the user chose a limited scope, only include items within that scope
-- If the user marked areas as off-limits, exclude commands that would touch those areas
-- End with `/polish` as the final step if any fixes were recommended
+**권장 규칙**:
+- /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /arrange, /typeset, /critique, /colorize, /overdrive에서만 커맨드를 권장
+- 사용자가 밝힌 우선순위 먼저, 그다음 영향도 순으로 정렬
+- 각 항목의 설명에 해당 커맨드가 무엇에 집중해야 하는지 충분한 맥락 포함
+- 각 우선 이슈를 적절한 커맨드에 매핑
+- 해결할 이슈가 없는 커맨드는 건너뜀
+- 사용자가 제한된 범위를 선택한 경우 해당 범위 내 항목만 포함
+- 사용자가 손대지 말라고 한 영역은 관련 커맨드 제외
+- 수정이 권장된 경우 마지막 단계로 `/polish` 추가
 
-After presenting the summary, tell the user:
+요약 제시 후 사용자에게 안내합니다:
 
-> You can ask me to run these one at a time, all at once, or in any order you prefer.
+> 하나씩, 한꺼번에, 또는 원하는 순서로 실행할 수 있습니다.
 >
-> Re-run `/critique` after fixes to see your score improve.
+> 수정 후 `/critique`를 다시 실행하면 점수 변화를 확인할 수 있습니다.

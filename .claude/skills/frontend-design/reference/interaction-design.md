@@ -1,96 +1,96 @@
-# Interaction Design
+# 인터랙션 디자인
 
-## The Eight Interactive States
+## 8가지 인터랙티브 상태
 
-Every interactive element needs these states designed:
+모든 인터랙티브 요소는 다음 상태를 설계해야 한다:
 
-| State | When | Visual Treatment |
-|-------|------|------------------|
-| **Default** | At rest | Base styling |
-| **Hover** | Pointer over (not touch) | Subtle lift, color shift |
-| **Focus** | Keyboard/programmatic focus | Visible ring (see below) |
-| **Active** | Being pressed | Pressed in, darker |
-| **Disabled** | Not interactive | Reduced opacity, no pointer |
-| **Loading** | Processing | Spinner, skeleton |
-| **Error** | Invalid state | Red border, icon, message |
-| **Success** | Completed | Green check, confirmation |
+| 상태 | 시점 | 시각적 처리 |
+|------|------|------------|
+| **기본(Default)** | 대기 상태 | 기본 스타일링 |
+| **호버(Hover)** | 포인터가 위에 있을 때 (터치 제외) | 미세한 들어올림, 색상 변화 |
+| **포커스(Focus)** | 키보드/프로그래밍 포커스 | 눈에 보이는 링 (아래 참조) |
+| **활성(Active)** | 누르는 중 | 눌린 느낌, 더 어둡게 |
+| **비활성(Disabled)** | 상호작용 불가 | 투명도 감소, 포인터 없음 |
+| **로딩(Loading)** | 처리 중 | 스피너, 스켈레톤 |
+| **오류(Error)** | 유효하지 않은 상태 | 빨간 테두리, 아이콘, 메시지 |
+| **성공(Success)** | 완료됨 | 초록 체크, 확인 메시지 |
 
-**The common miss**: Designing hover without focus, or vice versa. They're different. Keyboard users never see hover states.
+**흔한 누락**: 호버는 설계하면서 포커스는 빠뜨리거나, 그 반대. 둘은 다르다. 키보드 사용자는 호버 상태를 절대 볼 수 없다.
 
-## Focus Rings: Do Them Right
+## 포커스 링: 제대로 구현하기
 
-**Never `outline: none` without replacement.** It's an accessibility violation. Instead, use `:focus-visible` to show focus only for keyboard users:
+**대체 없이 `outline: none`을 절대 쓰지 말라.** 접근성 위반이다. 대신 `:focus-visible`을 사용하여 키보드 사용자에게만 포커스를 표시하라:
 
 ```css
-/* Hide focus ring for mouse/touch */
+/* 마우스/터치에서 포커스 링 숨기기 */
 button:focus {
   outline: none;
 }
 
-/* Show focus ring for keyboard */
+/* 키보드에서 포커스 링 표시 */
 button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 ```
 
-**Focus ring design**:
-- High contrast (3:1 minimum against adjacent colors)
-- 2-3px thick
-- Offset from element (not inside it)
-- Consistent across all interactive elements
+**포커스 링 디자인**:
+- 높은 대비 (인접 색상 대비 최소 3:1)
+- 2-3px 두께
+- 요소 바깥에 오프셋 (안쪽이 아님)
+- 모든 인터랙티브 요소에서 일관성 유지
 
-## Form Design: The Non-Obvious
+## 폼 디자인: 알려지지 않은 핵심
 
-**Placeholders aren't labels**—they disappear on input. Always use visible `<label>` elements. **Validate on blur**, not on every keystroke (exception: password strength). Place errors **below** fields with `aria-describedby` connecting them.
+**플레이스홀더는 라벨이 아니다**—입력 시 사라진다. 항상 눈에 보이는 `<label>` 요소를 사용하라. **blur 시 유효성 검사**를 하고, 매 키 입력마다 하지 마라 (예외: 비밀번호 강도). 오류는 필드 **아래에** 배치하고 `aria-describedby`로 연결하라.
 
-## Loading States
+## 로딩 상태
 
-**Optimistic updates**: Show success immediately, rollback on failure. Use for low-stakes actions (likes, follows), not payments or destructive actions. **Skeleton screens > spinners**—they preview content shape and feel faster than generic spinners.
+**낙관적 업데이트(optimistic update)**: 성공을 즉시 보여주고, 실패 시 롤백한다. 저위험 액션(좋아요, 팔로우)에 사용하고, 결제나 파괴적 액션에는 사용하지 않는다. **스켈레톤 화면 > 스피너**—콘텐츠 형태를 미리 보여주어 일반 스피너보다 빠르게 느껴진다.
 
-## Modals: The Inert Approach
+## 모달: inert 방식
 
-Focus trapping in modals used to require complex JavaScript. Now use the `inert` attribute:
+모달에서 포커스 가두기(focus trapping)는 복잡한 JavaScript가 필요했다. 이제 `inert` 속성을 사용한다:
 
 ```html
-<!-- When modal is open -->
+<!-- 모달이 열려 있을 때 -->
 <main inert>
-  <!-- Content behind modal can't be focused or clicked -->
+  <!-- 모달 뒤의 콘텐츠는 포커스되거나 클릭될 수 없음 -->
 </main>
 <dialog open>
-  <h2>Modal Title</h2>
-  <!-- Focus stays inside modal -->
+  <h2>모달 제목</h2>
+  <!-- 포커스가 모달 안에 유지됨 -->
 </dialog>
 ```
 
-Or use the native `<dialog>` element:
+또는 네이티브 `<dialog>` 요소를 사용한다:
 
 ```javascript
 const dialog = document.querySelector('dialog');
-dialog.showModal();  // Opens with focus trap, closes on Escape
+dialog.showModal();  // 포커스 가두기와 함께 열림, Escape로 닫힘
 ```
 
-## The Popover API
+## Popover API
 
-For tooltips, dropdowns, and non-modal overlays, use native popovers:
+툴팁, 드롭다운, 비모달 오버레이에는 네이티브 popover를 사용하라:
 
 ```html
-<button popovertarget="menu">Open menu</button>
+<button popovertarget="menu">메뉴 열기</button>
 <div id="menu" popover>
-  <button>Option 1</button>
-  <button>Option 2</button>
+  <button>옵션 1</button>
+  <button>옵션 2</button>
 </div>
 ```
 
-**Benefits**: Light-dismiss (click outside closes), proper stacking, no z-index wars, accessible by default.
+**장점**: 라이트 디스미스(light-dismiss, 바깥 클릭으로 닫기), 올바른 스태킹, z-index 충돌 없음, 기본적으로 접근성 지원.
 
-## Dropdown & Overlay Positioning
+## 드롭다운과 오버레이 위치 지정
 
-Dropdowns rendered with `position: absolute` inside a container that has `overflow: hidden` or `overflow: auto` will be clipped. This is the single most common dropdown bug in generated code.
+`overflow: hidden`이나 `overflow: auto`가 있는 컨테이너 안에서 `position: absolute`로 렌더링된 드롭다운은 잘린다. 이것이 생성 코드에서 가장 흔한 드롭다운 버그다.
 
-### CSS Anchor Positioning
+### CSS 앵커 포지셔닝(Anchor Positioning)
 
-The modern solution uses the CSS Anchor Positioning API to tether an overlay to its trigger without JavaScript:
+최신 솔루션은 CSS Anchor Positioning API를 사용하여 JavaScript 없이 오버레이를 트리거에 연결한다:
 
 ```css
 .trigger {
@@ -104,92 +104,92 @@ The modern solution uses the CSS Anchor Positioning API to tether an overlay to 
   margin-top: 4px;
 }
 
-/* Flip above if no room below */
+/* 아래에 공간이 없으면 위로 뒤집기 */
 @position-try --flip-above {
   position-area: block-start span-inline-end;
   margin-bottom: 4px;
 }
 ```
 
-Because the dropdown uses `position: fixed`, it escapes any `overflow` clipping on ancestor elements. The `@position-try` block handles viewport edges automatically. **Browser support**: Chrome 125+, Edge 125+. Not yet in Firefox or Safari - use a fallback for those browsers.
+드롭다운이 `position: fixed`를 사용하므로 상위 요소의 `overflow` 클리핑을 벗어난다. `@position-try` 블록이 뷰포트 경계를 자동으로 처리한다. **브라우저 지원**: Chrome 125+, Edge 125+. Firefox와 Safari는 아직 미지원—해당 브라우저용 폴백을 사용하라.
 
-### Popover + Anchor Combo
+### Popover + 앵커 조합
 
-Combining the Popover API with anchor positioning gives you stacking, light-dismiss, accessibility, and correct positioning in one pattern:
+Popover API와 앵커 포지셔닝을 결합하면 스태킹, 라이트 디스미스, 접근성, 올바른 위치 지정을 하나의 패턴으로 해결할 수 있다:
 
 ```html
-<button popovertarget="menu" class="trigger">Open</button>
+<button popovertarget="menu" class="trigger">열기</button>
 <div id="menu" popover class="dropdown">
-  <button>Option 1</button>
-  <button>Option 2</button>
+  <button>옵션 1</button>
+  <button>옵션 2</button>
 </div>
 ```
 
-The `popover` attribute places the element in the **top layer**, which sits above all other content regardless of z-index or overflow. No portal needed.
+`popover` 속성은 요소를 **최상위 레이어(top layer)**에 배치하여 z-index나 overflow와 상관없이 모든 콘텐츠 위에 표시된다. 포탈이 필요 없다.
 
-### Portal / Teleport Pattern
+### 포탈 / 텔레포트 패턴
 
-In component frameworks, render the dropdown at the document root and position it with JavaScript:
+컴포넌트 프레임워크에서는 드롭다운을 문서 루트에 렌더링하고 JavaScript로 위치를 지정한다:
 
 - **React**: `createPortal(dropdown, document.body)`
 - **Vue**: `<Teleport to="body">`
-- **Svelte**: Use a portal library or mount to `document.body`
+- **Svelte**: 포탈 라이브러리 사용 또는 `document.body`에 마운트
 
-Calculate position from the trigger's `getBoundingClientRect()`, then apply `position: fixed` with `top` and `left` values. Recalculate on scroll and resize.
+트리거의 `getBoundingClientRect()`에서 위치를 계산한 후 `position: fixed`와 `top`, `left` 값을 적용한다. 스크롤과 리사이즈 시 재계산하라.
 
-### Fixed Positioning Fallback
+### Fixed 포지셔닝 폴백
 
-For browsers without anchor positioning support, `position: fixed` with manual coordinates avoids overflow clipping:
+앵커 포지셔닝을 지원하지 않는 브라우저에서는 수동 좌표와 함께 `position: fixed`로 overflow 클리핑을 방지한다:
 
 ```css
 .dropdown {
   position: fixed;
-  /* top/left set via JS from trigger's getBoundingClientRect() */
+  /* top/left는 트리거의 getBoundingClientRect()로 JS에서 설정 */
 }
 ```
 
-Check viewport boundaries before rendering. If the dropdown would overflow the bottom edge, flip it above the trigger. If it would overflow the right edge, align it to the trigger's right side instead.
+렌더링 전에 뷰포트 경계를 확인하라. 드롭다운이 하단을 넘치면 트리거 위로 뒤집고, 오른쪽을 넘치면 트리거의 오른쪽에 정렬하라.
 
-### Anti-Patterns
+### 안티패턴
 
-- **`position: absolute` inside `overflow: hidden`** - The dropdown will be clipped. Use `position: fixed` or the top layer instead.
-- **Arbitrary z-index values** like `z-index: 9999` - Use a semantic z-index scale: `dropdown (100) -> sticky (200) -> modal-backdrop (300) -> modal (400) -> toast (500) -> tooltip (600)`.
-- **Rendering dropdown markup inline** without an escape hatch from the parent's stacking context. Either use `popover` (top layer), a portal, or `position: fixed`.
+- **`overflow: hidden` 안에서 `position: absolute`** - 드롭다운이 잘린다. `position: fixed` 또는 최상위 레이어를 사용하라.
+- **`z-index: 9999` 같은 임의의 z-index 값** - 의미 있는 z-index 스케일을 사용하라: `dropdown (100) -> sticky (200) -> modal-backdrop (300) -> modal (400) -> toast (500) -> tooltip (600)`.
+- **부모의 스태킹 컨텍스트에서 벗어날 수단 없이 드롭다운 마크업을 인라인으로 렌더링하기**. `popover`(최상위 레이어), 포탈, 또는 `position: fixed`를 사용하라.
 
-## Destructive Actions: Undo > Confirm
+## 파괴적 액션: 확인보다 되돌리기
 
-**Undo is better than confirmation dialogs**—users click through confirmations mindlessly. Remove from UI immediately, show undo toast, actually delete after toast expires. Use confirmation only for truly irreversible actions (account deletion), high-cost actions, or batch operations.
+**되돌리기(undo)가 확인 대화상자보다 낫다**—사용자는 확인 대화상자를 무심코 클릭한다. UI에서 즉시 제거하고, 되돌리기 토스트를 보여주고, 토스트 만료 후 실제로 삭제하라. 확인 대화상자는 진정으로 되돌릴 수 없는 액션(계정 삭제), 비용이 큰 액션, 또는 일괄 작업에서만 사용하라.
 
-## Keyboard Navigation Patterns
+## 키보드 내비게이션 패턴
 
-### Roving Tabindex
+### 로빙 탭인덱스(Roving Tabindex)
 
-For component groups (tabs, menu items, radio groups), one item is tabbable; arrow keys move within:
+컴포넌트 그룹(탭, 메뉴 항목, 라디오 그룹)에서는 하나의 항목만 탭 가능하고, 화살표 키로 그룹 내부를 이동한다:
 
 ```html
 <div role="tablist">
-  <button role="tab" tabindex="0">Tab 1</button>
-  <button role="tab" tabindex="-1">Tab 2</button>
-  <button role="tab" tabindex="-1">Tab 3</button>
+  <button role="tab" tabindex="0">탭 1</button>
+  <button role="tab" tabindex="-1">탭 2</button>
+  <button role="tab" tabindex="-1">탭 3</button>
 </div>
 ```
 
-Arrow keys move `tabindex="0"` between items. Tab moves to the next component entirely.
+화살표 키가 항목 간에 `tabindex="0"`을 이동시킨다. Tab 키는 다음 컴포넌트 전체로 이동한다.
 
-### Skip Links
+### 건너뛰기 링크(Skip Link)
 
-Provide skip links (`<a href="#main-content">Skip to main content</a>`) for keyboard users to jump past navigation. Hide off-screen, show on focus.
+키보드 사용자가 내비게이션을 건너뛸 수 있도록 건너뛰기 링크(`<a href="#main-content">본문으로 건너뛰기</a>`)를 제공하라. 화면 밖에 숨기고 포커스 시 표시한다.
 
-## Gesture Discoverability
+## 제스처 발견 가능성
 
-Swipe-to-delete and similar gestures are invisible. Hint at their existence:
+스와이프하여 삭제(swipe-to-delete)와 같은 제스처는 보이지 않는다. 존재를 알려주라:
 
-- **Partially reveal**: Show delete button peeking from edge
-- **Onboarding**: Coach marks on first use
-- **Alternative**: Always provide a visible fallback (menu with "Delete")
+- **부분 노출**: 가장자리에서 삭제 버튼이 살짝 보이게
+- **온보딩**: 첫 사용 시 코치 마크
+- **대안**: 항상 눈에 보이는 폴백을 제공 ("삭제"가 있는 메뉴)
 
-Don't rely on gestures as the only way to perform actions.
+제스처를 액션의 유일한 수행 방법으로 의존하지 말라.
 
 ---
 
-**Avoid**: Removing focus indicators without alternatives. Using placeholder text as labels. Touch targets <44x44px. Generic error messages. Custom controls without ARIA/keyboard support.
+**피해야 할 것**: 대체 없이 포커스 인디케이터를 제거하는 것. 플레이스홀더 텍스트를 라벨로 사용하는 것. 44x44px 미만의 터치 타겟. 일반적인 오류 메시지. ARIA/키보드 지원 없는 커스텀 컨트롤.

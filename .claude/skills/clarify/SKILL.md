@@ -1,182 +1,182 @@
 ---
 name: clarify
-description: Improve unclear UX copy, error messages, microcopy, labels, and instructions to make interfaces easier to understand. Use when the user mentions confusing text, unclear labels, bad error messages, hard-to-follow instructions, or wanting better UX writing.
+description: 불명확한 UX 문구, 오류 메시지, 마이크로카피, 라벨, 안내문을 개선하여 인터페이스를 이해하기 쉽게 만든다. 사용자가 혼란스러운 텍스트, 불명확한 라벨, 나쁜 오류 메시지, 이해하기 어려운 안내문, 더 나은 UX 라이팅을 언급할 때 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Identify and improve unclear, confusing, or poorly written interface text to make the product easier to understand and use.
+불명확하거나 혼란스럽거나 잘못 작성된 인터페이스 텍스트를 찾아내고 개선하여 제품을 더 쉽게 이해하고 사용할 수 있게 한다.
 
-## MANDATORY PREPARATION
+## 필수 사전 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: audience technical level and users' mental state in context.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴(anti-pattern), **컨텍스트 수집 프로토콜(Context Gathering Protocol)**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 한다. 추가로 수집할 것: 대상 사용자의 기술 수준과 맥락상 사용자의 심리 상태.
 
 ---
 
-## Assess Current Copy
+## 현재 문구 평가
 
-Identify what makes the text unclear or ineffective:
+텍스트가 불명확하거나 비효과적인 이유를 파악한다:
 
-1. **Find clarity problems**:
-   - **Jargon**: Technical terms users won't understand
-   - **Ambiguity**: Multiple interpretations possible
-   - **Passive voice**: "Your file has been uploaded" vs "We uploaded your file"
-   - **Length**: Too wordy or too terse
-   - **Assumptions**: Assuming user knowledge they don't have
-   - **Missing context**: Users don't know what to do or why
-   - **Tone mismatch**: Too formal, too casual, or inappropriate for situation
+1. **명확성 문제 찾기**:
+   - **전문 용어**: 사용자가 이해하지 못할 기술 용어
+   - **모호함**: 여러 가지 해석이 가능한 경우
+   - **수동태**: "파일이 업로드되었습니다" vs "파일을 업로드했습니다"
+   - **길이**: 너무 장황하거나 너무 짧은 경우
+   - **가정**: 사용자가 모르는 지식을 전제하는 경우
+   - **맥락 부재**: 사용자가 무엇을 왜 해야 하는지 모르는 경우
+   - **톤 불일치**: 상황에 비해 너무 격식적이거나, 너무 캐주얼하거나, 부적절한 경우
 
-2. **Understand the context**:
-   - Who's the audience? (Technical? General? First-time users?)
-   - What's the user's mental state? (Stressed during error? Confident during success?)
-   - What's the action? (What do we want users to do?)
-   - What's the constraint? (Character limits? Space limitations?)
+2. **맥락 이해**:
+   - 대상은 누구인가? (기술적? 일반? 처음 사용하는 사용자?)
+   - 사용자의 심리 상태는? (오류 시 스트레스? 성공 시 자신감?)
+   - 행동은 무엇인가? (사용자가 무엇을 하길 바라는가?)
+   - 제약은 무엇인가? (글자 수 제한? 공간 제한?)
 
-**CRITICAL**: Clear copy helps users succeed. Unclear copy creates frustration, errors, and support tickets.
+**핵심**: 명확한 문구는 사용자의 성공을 돕는다. 불명확한 문구는 좌절감, 오류, 고객 문의를 유발한다.
 
-## Plan Copy Improvements
+## 문구 개선 계획
 
-Create a strategy for clearer communication:
+더 명확한 커뮤니케이션을 위한 전략을 수립한다:
 
-- **Primary message**: What's the ONE thing users need to know?
-- **Action needed**: What should users do next (if anything)?
-- **Tone**: How should this feel? (Helpful? Apologetic? Encouraging?)
-- **Constraints**: Length limits, brand voice, localization considerations
+- **핵심 메시지**: 사용자가 반드시 알아야 할 단 하나는?
+- **필요한 행동**: 사용자가 다음에 해야 할 것은? (있다면)
+- **톤**: 어떤 느낌이어야 하는가? (도움이 되는? 사과하는? 격려하는?)
+- **제약**: 길이 제한, 브랜드 보이스(brand voice), 현지화 고려사항
 
-**IMPORTANT**: Good UX writing is invisible. Users should understand immediately without noticing the words.
+**중요**: 좋은 UX 라이팅(UX writing)은 눈에 띄지 않는다. 사용자가 글자를 의식하지 않고 즉시 이해해야 한다.
 
-## Improve Copy Systematically
+## 체계적 문구 개선
 
-Refine text across these common areas:
+다음 주요 영역에서 텍스트를 개선한다:
 
-### Error Messages
-**Bad**: "Error 403: Forbidden"
-**Good**: "You don't have permission to view this page. Contact your admin for access."
+### 오류 메시지
+**나쁜 예**: "오류 403: 접근 금지"
+**좋은 예**: "이 페이지를 볼 권한이 없습니다. 관리자에게 접근 권한을 요청하세요."
 
-**Bad**: "Invalid input"
-**Good**: "Email addresses need an @ symbol. Try: name@example.com"
+**나쁜 예**: "잘못된 입력"
+**좋은 예**: "이메일 주소에는 @ 기호가 필요합니다. 예시: name@example.com"
 
-**Principles**:
-- Explain what went wrong in plain language
-- Suggest how to fix it
-- Don't blame the user
-- Include examples when helpful
-- Link to help/support if applicable
+**원칙**:
+- 무엇이 잘못되었는지 쉬운 말로 설명한다
+- 해결 방법을 안내한다
+- 사용자를 탓하지 않는다
+- 도움이 될 때 예시를 포함한다
+- 해당되면 도움말/지원 링크를 제공한다
 
-### Form Labels & Instructions
-**Bad**: "DOB (MM/DD/YYYY)"
-**Good**: "Date of birth" (with placeholder showing format)
+### 폼 라벨 & 안내문
+**나쁜 예**: "생년월일 (YYYY/MM/DD)"
+**좋은 예**: "생년월일" (형식을 보여주는 플레이스홀더 포함)
 
-**Bad**: "Enter value here"
-**Good**: "Your email address" or "Company name"
+**나쁜 예**: "여기에 값을 입력하세요"
+**좋은 예**: "이메일 주소" 또는 "회사명"
 
-**Principles**:
-- Use clear, specific labels (not generic placeholders)
-- Show format expectations with examples
-- Explain why you're asking (when not obvious)
-- Put instructions before the field, not after
-- Keep required field indicators clear
+**원칙**:
+- 명확하고 구체적인 라벨을 사용한다 (범용 플레이스홀더가 아닌)
+- 형식 기대치를 예시로 보여준다
+- 이유가 명확하지 않을 때 왜 묻는지 설명한다
+- 안내문은 필드 뒤가 아닌 앞에 둔다
+- 필수 필드 표시를 명확히 한다
 
-### Button & CTA Text
-**Bad**: "Click here" | "Submit" | "OK"
-**Good**: "Create account" | "Save changes" | "Got it, thanks"
+### 버튼 & CTA 텍스트
+**나쁜 예**: "여기 클릭" | "제출" | "확인"
+**좋은 예**: "계정 만들기" | "변경사항 저장" | "알겠습니다"
 
-**Principles**:
-- Describe the action specifically
-- Use active voice (verb + noun)
-- Match user's mental model
-- Be specific ("Save" is better than "OK")
+**원칙**:
+- 행동을 구체적으로 설명한다
+- 능동태를 사용한다 (동사 + 명사)
+- 사용자의 멘탈 모델(mental model)에 맞춘다
+- 구체적으로 쓴다 ("저장"이 "확인"보다 낫다)
 
-### Help Text & Tooltips
-**Bad**: "This is the username field"
-**Good**: "Choose a username. You can change this later in Settings."
+### 도움말 텍스트 & 툴팁
+**나쁜 예**: "사용자명 입력 필드입니다"
+**좋은 예**: "사용자명을 선택하세요. 나중에 설정에서 변경할 수 있습니다."
 
-**Principles**:
-- Add value (don't just repeat the label)
-- Answer the implicit question ("What is this?" or "Why do you need this?")
-- Keep it brief but complete
-- Link to detailed docs if needed
+**원칙**:
+- 가치를 더한다 (라벨을 반복하지 않는다)
+- 암묵적 질문에 답한다 ("이게 뭐지?" 또는 "왜 이걸 요구하지?")
+- 간결하되 완전하게 쓴다
+- 필요하면 상세 문서 링크를 제공한다
 
-### Empty States
-**Bad**: "No items"
-**Good**: "No projects yet. Create your first project to get started."
+### 빈 상태
+**나쁜 예**: "항목 없음"
+**좋은 예**: "아직 프로젝트가 없습니다. 첫 프로젝트를 만들어 시작하세요."
 
-**Principles**:
-- Explain why it's empty (if not obvious)
-- Show next action clearly
-- Make it welcoming, not dead-end
+**원칙**:
+- 왜 비어있는지 설명한다 (명확하지 않을 때)
+- 다음 행동을 분명히 보여준다
+- 막다른 길이 아닌 환영하는 느낌을 준다
 
-### Success Messages
-**Bad**: "Success"
-**Good**: "Settings saved! Your changes will take effect immediately."
+### 성공 메시지
+**나쁜 예**: "성공"
+**좋은 예**: "설정이 저장되었습니다! 변경사항이 즉시 적용됩니다."
 
-**Principles**:
-- Confirm what happened
-- Explain what happens next (if relevant)
-- Be brief but complete
-- Match the user's emotional moment (celebrate big wins)
+**원칙**:
+- 무슨 일이 일어났는지 확인한다
+- 다음에 어떻게 되는지 설명한다 (해당되는 경우)
+- 간결하되 완전하게 쓴다
+- 사용자의 감정적 순간에 맞춘다 (큰 성과는 축하한다)
 
-### Loading States
-**Bad**: "Loading..." (for 30+ seconds)
-**Good**: "Analyzing your data... this usually takes 30-60 seconds"
+### 로딩 상태
+**나쁜 예**: "로딩 중..." (30초 이상)
+**좋은 예**: "데이터를 분석하고 있습니다... 보통 30-60초 소요됩니다"
 
-**Principles**:
-- Set expectations (how long?)
-- Explain what's happening (when it's not obvious)
-- Show progress when possible
-- Offer escape hatch if appropriate ("Cancel")
+**원칙**:
+- 기대치를 설정한다 (얼마나 걸리는지?)
+- 무슨 일이 일어나고 있는지 설명한다 (명확하지 않을 때)
+- 가능하면 진행 상황을 보여준다
+- 적절하면 탈출구를 제공한다 ("취소")
 
-### Confirmation Dialogs
-**Bad**: "Are you sure?"
-**Good**: "Delete 'Project Alpha'? This can't be undone."
+### 확인 대화상자
+**나쁜 예**: "정말로 진행하시겠습니까?"
+**좋은 예**: "'프로젝트 알파'를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
 
-**Principles**:
-- State the specific action
-- Explain consequences (especially for destructive actions)
-- Use clear button labels ("Delete project" not "Yes")
-- Don't overuse confirmations (only for risky actions)
+**원칙**:
+- 구체적인 행동을 명시한다
+- 결과를 설명한다 (특히 파괴적 행동의 경우)
+- 명확한 버튼 라벨을 사용한다 ("프로젝트 삭제"이지 "예"가 아닌)
+- 확인을 남용하지 않는다 (위험한 행동에만 사용)
 
-### Navigation & Wayfinding
-**Bad**: Generic labels like "Items" | "Things" | "Stuff"
-**Good**: Specific labels like "Your projects" | "Team members" | "Settings"
+### 내비게이션 & 길 안내
+**나쁜 예**: "항목" | "것들" | "기타" 같은 범용 라벨
+**좋은 예**: "내 프로젝트" | "팀 멤버" | "설정" 같은 구체적 라벨
 
-**Principles**:
-- Be specific and descriptive
-- Use language users understand (not internal jargon)
-- Make hierarchy clear
-- Consider information scent (breadcrumbs, current location)
+**원칙**:
+- 구체적이고 설명적으로 쓴다
+- 사용자가 이해하는 언어를 사용한다 (내부 전문 용어가 아닌)
+- 계층 구조를 명확히 한다
+- 정보 향기(information scent)를 고려한다 (브레드크럼, 현재 위치)
 
-## Apply Clarity Principles
+## 명확성 원칙 적용
 
-Every piece of copy should follow these rules:
+모든 문구는 다음 규칙을 따라야 한다:
 
-1. **Be specific**: "Enter email" not "Enter value"
-2. **Be concise**: Cut unnecessary words (but don't sacrifice clarity)
-3. **Be active**: "Save changes" not "Changes will be saved"
-4. **Be human**: "Oops, something went wrong" not "System error encountered"
-5. **Be helpful**: Tell users what to do, not just what happened
-6. **Be consistent**: Use same terms throughout (don't vary for variety)
+1. **구체적으로**: "이메일 입력"이지 "값 입력"이 아닌
+2. **간결하게**: 불필요한 단어를 줄인다 (명확성을 희생하지 않으면서)
+3. **능동적으로**: "변경사항 저장"이지 "변경사항이 저장됩니다"가 아닌
+4. **인간적으로**: "이런, 문제가 발생했습니다"이지 "시스템 오류가 발생했습니다"가 아닌
+5. **도움이 되게**: 무슨 일이 일어났는지만이 아니라 무엇을 해야 하는지 알려준다
+6. **일관되게**: 같은 용어를 일관되게 사용한다 (다양성을 위해 바꾸지 않는다)
 
-**NEVER**:
-- Use jargon without explanation
-- Blame users ("You made an error" → "This field is required")
-- Be vague ("Something went wrong" without explanation)
-- Use passive voice unnecessarily
-- Write overly long explanations (be concise)
-- Use humor for errors (be empathetic instead)
-- Assume technical knowledge
-- Vary terminology (pick one term and stick with it)
-- Repeat information (headers restating intros, redundant explanations)
-- Use placeholders as the only labels (they disappear when users type)
+**절대 하지 말 것**:
+- 설명 없이 전문 용어 사용 ("오류가 발생했습니다" → "이 필드는 필수입니다")
+- 사용자 탓하기
+- 설명 없이 모호하게 쓰기 ("문제가 발생했습니다"만 쓰고 끝내기)
+- 불필요하게 수동태 사용
+- 지나치게 긴 설명 쓰기 (간결하게)
+- 오류에 유머 사용 (대신 공감하기)
+- 기술 지식을 가정하기
+- 용어를 혼용하기 (하나를 골라 일관되게 사용)
+- 정보 반복 (헤더가 본문을 반복하거나 중복 설명)
+- 플레이스홀더만을 라벨로 사용 (사용자가 입력하면 사라진다)
 
-## Verify Improvements
+## 개선사항 검증
 
-Test that copy improvements work:
+문구 개선이 효과적인지 테스트한다:
 
-- **Comprehension**: Can users understand without context?
-- **Actionability**: Do users know what to do next?
-- **Brevity**: Is it as short as possible while remaining clear?
-- **Consistency**: Does it match terminology elsewhere?
-- **Tone**: Is it appropriate for the situation?
+- **이해도**: 맥락 없이도 사용자가 이해할 수 있는가?
+- **행동 가능성**: 사용자가 다음에 무엇을 해야 하는지 아는가?
+- **간결성**: 명확함을 유지하면서 최대한 짧은가?
+- **일관성**: 다른 곳의 용어와 일치하는가?
+- **톤**: 상황에 적절한가?
 
-Remember: You're a clarity expert with excellent communication skills. Write like you're explaining to a smart friend who's unfamiliar with the product. Be clear, be helpful, be human.
+기억할 것: 당신은 뛰어난 커뮤니케이션 능력을 갖춘 명확성 전문가다. 제품에 익숙하지 않은 똑똑한 친구에게 설명하듯 쓴다. 명확하고, 도움이 되고, 인간적으로.

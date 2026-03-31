@@ -1,107 +1,107 @@
-# UX Writing
+# UX 라이팅
 
-## The Button Label Problem
+## 버튼 라벨 문제
 
-**Never use "OK", "Submit", or "Yes/No".** These are lazy and ambiguous. Use specific verb + object patterns:
+**"확인", "제출", "예/아니오"를 절대 쓰지 말라.** 이것들은 게으르고 모호하다. 구체적인 동사 + 대상 패턴을 사용하라:
 
-| Bad | Good | Why |
-|-----|------|-----|
-| OK | Save changes | Says what will happen |
-| Submit | Create account | Outcome-focused |
-| Yes | Delete message | Confirms the action |
-| Cancel | Keep editing | Clarifies what "cancel" means |
-| Click here | Download PDF | Describes the destination |
+| 나쁜 예 | 좋은 예 | 이유 |
+|---------|---------|------|
+| 확인 | 변경사항 저장 | 무엇이 일어날지 알려줌 |
+| 제출 | 계정 만들기 | 결과에 초점 |
+| 예 | 메시지 삭제 | 액션을 확인시킴 |
+| 취소 | 편집 계속하기 | "취소"의 의미를 명확히 함 |
+| 여기를 클릭 | PDF 다운로드 | 목적지를 설명함 |
 
-**For destructive actions**, name the destruction:
-- "Delete" not "Remove" (delete is permanent, remove implies recoverable)
-- "Delete 5 items" not "Delete selected" (show the count)
+**파괴적 액션에는** 파괴 행위를 명시하라:
+- "제거"가 아닌 "삭제" (삭제는 영구적, 제거는 복구 가능을 암시)
+- "선택 항목 삭제"가 아닌 "5개 항목 삭제" (개수를 보여주라)
 
-## Error Messages: The Formula
+## 오류 메시지: 공식
 
-Every error message should answer: (1) What happened? (2) Why? (3) How to fix it? Example: "Email address isn't valid. Please include an @ symbol." not "Invalid input".
+모든 오류 메시지는 다음에 답해야 한다: (1) 무엇이 발생했는가? (2) 왜? (3) 어떻게 수정하는가? 예시: "이메일 주소가 유효하지 않습니다. @ 기호를 포함해주세요."가 "잘못된 입력"보다 낫다.
 
-### Error Message Templates
+### 오류 메시지 템플릿
 
-| Situation | Template |
-|-----------|----------|
-| **Format error** | "[Field] needs to be [format]. Example: [example]" |
-| **Missing required** | "Please enter [what's missing]" |
-| **Permission denied** | "You don't have access to [thing]. [What to do instead]" |
-| **Network error** | "We couldn't reach [thing]. Check your connection and [action]." |
-| **Server error** | "Something went wrong on our end. We're looking into it. [Alternative action]" |
+| 상황 | 템플릿 |
+|------|--------|
+| **형식 오류** | "[필드]는 [형식]이어야 합니다. 예시: [예시]" |
+| **필수 항목 누락** | "[누락된 항목]을 입력해주세요" |
+| **권한 거부** | "[대상]에 접근 권한이 없습니다. [대안 안내]" |
+| **네트워크 오류** | "[대상]에 연결할 수 없습니다. 연결을 확인하고 [액션]해주세요." |
+| **서버 오류** | "서버에 문제가 발생했습니다. 확인 중입니다. [대안 액션]" |
 
-### Don't Blame the User
+### 사용자를 탓하지 말라
 
-Reframe errors: "Please enter a date in MM/DD/YYYY format" not "You entered an invalid date".
+오류를 재구성하라: "날짜를 MM/DD/YYYY 형식으로 입력해주세요"가 "잘못된 날짜를 입력했습니다"보다 낫다.
 
-## Empty States Are Opportunities
+## 빈 상태(empty state)는 기회다
 
-Empty states are onboarding moments: (1) Acknowledge briefly, (2) Explain the value of filling it, (3) Provide a clear action. "No projects yet. Create your first one to get started." not just "No items".
+빈 상태는 온보딩 순간이다: (1) 간결하게 인정하고, (2) 채움의 가치를 설명하고, (3) 명확한 액션을 제공하라. "아직 프로젝트가 없습니다. 첫 번째 프로젝트를 만들어 시작하세요."가 단순히 "항목 없음"보다 낫다.
 
-## Voice vs Tone
+## 보이스 vs 톤(voice vs tone)
 
-**Voice** is your brand's personality—consistent everywhere.
-**Tone** adapts to the moment.
+**보이스(voice)**는 브랜드의 성격이다—어디서나 일관적이다.
+**톤(tone)**은 상황에 맞게 변한다.
 
-| Moment | Tone Shift |
-|--------|------------|
-| Success | Celebratory, brief: "Done! Your changes are live." |
-| Error | Empathetic, helpful: "That didn't work. Here's what to try..." |
-| Loading | Reassuring: "Saving your work..." |
-| Destructive confirm | Serious, clear: "Delete this project? This can't be undone." |
+| 순간 | 톤 변화 |
+|------|---------|
+| 성공 | 축하하되 간결하게: "완료! 변경사항이 적용되었습니다." |
+| 오류 | 공감하며 도움을 주는: "작동하지 않았습니다. 이렇게 해보세요..." |
+| 로딩 | 안심시키는: "작업을 저장하는 중..." |
+| 파괴적 확인 | 진지하고 명확하게: "이 프로젝트를 삭제할까요? 되돌릴 수 없습니다." |
 
-**Never use humor for errors.** Users are already frustrated. Be helpful, not cute.
+**오류에 유머를 절대 쓰지 말라.** 사용자는 이미 불만이다. 귀엽기보다 도움이 되어라.
 
-## Writing for Accessibility
+## 접근성을 위한 글쓰기
 
-**Link text** must have standalone meaning—"View pricing plans" not "Click here". **Alt text** describes information, not the image—"Revenue increased 40% in Q4" not "Chart". Use `alt=""` for decorative images. **Icon buttons** need `aria-label` for screen reader context.
+**링크 텍스트**는 단독으로 의미가 있어야 한다—"여기를 클릭"이 아닌 "요금제 보기". **대체 텍스트(alt text)**는 이미지가 아닌 정보를 설명한다—"차트"가 아닌 "4분기 매출 40% 증가". 장식 이미지에는 `alt=""`를 사용하라. **아이콘 버튼**에는 스크린 리더를 위한 `aria-label`이 필요하다.
 
-## Writing for Translation
+## 번역을 고려한 글쓰기
 
-### Plan for Expansion
+### 길이 확장에 대비하라
 
-German text is ~30% longer than English. Allocate space:
+독일어 텍스트는 영어보다 ~30% 길다. 공간을 확보하라:
 
-| Language | Expansion |
-|----------|-----------|
-| German | +30% |
-| French | +20% |
-| Finnish | +30-40% |
-| Chinese | -30% (fewer chars, but same width) |
+| 언어 | 확장률 |
+|------|--------|
+| 독일어 | +30% |
+| 프랑스어 | +20% |
+| 핀란드어 | +30-40% |
+| 중국어 | -30% (글자 수는 적지만 너비는 비슷) |
 
-### Translation-Friendly Patterns
+### 번역 친화적 패턴
 
-Keep numbers separate ("New messages: 3" not "You have 3 new messages"). Use full sentences as single strings (word order varies by language). Avoid abbreviations ("5 minutes ago" not "5 mins ago"). Give translators context about where strings appear.
+숫자를 분리하라 ("새 메시지: 3"이 "새 메시지 3개가 있습니다"보다 나음). 완전한 문장을 하나의 문자열로 사용하라 (언어마다 어순이 다름). 약어를 피하라 ("5분 전"이 "5분전"보다 나음). 문자열이 어디에 표시되는지 번역자에게 맥락을 제공하라.
 
-## Consistency: The Terminology Problem
+## 일관성: 용어 문제
 
-Pick one term and stick with it:
+하나의 용어를 선택하고 고수하라:
 
-| Inconsistent | Consistent |
-|--------------|------------|
-| Delete / Remove / Trash | Delete |
-| Settings / Preferences / Options | Settings |
-| Sign in / Log in / Enter | Sign in |
-| Create / Add / New | Create |
+| 비일관적 | 일관적 |
+|----------|--------|
+| 삭제 / 제거 / 휴지통 | 삭제 |
+| 설정 / 환경설정 / 옵션 | 설정 |
+| 로그인 / 로그인하기 / 접속 | 로그인 |
+| 만들기 / 추가 / 새로 만들기 | 만들기 |
 
-Build a terminology glossary and enforce it. Variety creates confusion.
+용어 사전을 만들고 강제하라. 다양성은 혼란을 만든다.
 
-## Avoid Redundant Copy
+## 중복 문구 제거
 
-If the heading explains it, the intro is redundant. If the button is clear, don't explain it again. Say it once, say it well.
+제목이 설명하고 있다면 서문은 불필요하다. 버튼이 명확하다면 다시 설명하지 말라. 한 번만, 잘 말하라.
 
-## Loading States
+## 로딩 상태
 
-Be specific: "Saving your draft..." not "Loading...". For long waits, set expectations ("This usually takes 30 seconds") or show progress.
+구체적으로 쓰라: "로딩 중..."이 아닌 "초안을 저장하는 중...". 오래 걸리는 대기에는 기대치를 설정하라 ("보통 30초 정도 걸립니다") 또는 진행 상황을 보여주라.
 
-## Confirmation Dialogs: Use Sparingly
+## 확인 대화상자: 아껴서 사용하라
 
-Most confirmation dialogs are design failures—consider undo instead. When you must confirm: name the action, explain consequences, use specific button labels ("Delete project" / "Keep project", not "Yes" / "No").
+대부분의 확인 대화상자는 디자인 실패다—되돌리기(undo)를 대신 고려하라. 반드시 확인이 필요할 때: 액션을 명시하고, 결과를 설명하고, 구체적 버튼 라벨을 사용하라 ("예" / "아니오"가 아닌 "프로젝트 삭제" / "프로젝트 유지").
 
-## Form Instructions
+## 폼 안내문
 
-Show format with placeholders, not instructions. For non-obvious fields, explain why you're asking.
+형식은 플레이스홀더로 보여주고 별도 안내문으로 쓰지 말라. 의도가 불명확한 필드에는 왜 묻는지 설명하라.
 
 ---
 
-**Avoid**: Jargon without explanation. Blaming users ("You made an error" → "This field is required"). Vague errors ("Something went wrong"). Varying terminology for variety. Humor for errors.
+**피해야 할 것**: 설명 없는 전문 용어. 사용자 탓하기 ("오류가 발생했습니다" → "이 항목은 필수입니다"). 모호한 오류 ("문제가 발생했습니다"). 다양성을 위한 용어 변경. 오류에 유머 사용.

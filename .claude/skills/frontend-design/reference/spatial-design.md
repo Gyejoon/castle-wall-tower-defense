@@ -1,53 +1,53 @@
-# Spatial Design
+# 공간 디자인
 
-## Spacing Systems
+## 간격 시스템
 
-### Use 4pt Base, Not 8pt
+### 8pt가 아닌 4pt 기반을 사용하라
 
-8pt systems are too coarse—you'll frequently need 12px (between 8 and 16). Use 4pt for granularity: 4, 8, 12, 16, 24, 32, 48, 64, 96px.
+8pt 시스템은 너무 성기다—12px(8과 16 사이)가 자주 필요하다. 세밀한 조절을 위해 4pt를 사용하라: 4, 8, 12, 16, 24, 32, 48, 64, 96px.
 
-### Name Tokens Semantically
+### 토큰 이름은 의미적으로
 
-Name by relationship (`--space-sm`, `--space-lg`), not value (`--spacing-8`). Use `gap` instead of margins for sibling spacing—it eliminates margin collapse and cleanup hacks.
+값(`--spacing-8`)이 아닌 관계(`--space-sm`, `--space-lg`)로 이름 붙여라. 형제 요소 간격에는 margin 대신 `gap`을 사용하라—마진 병합(margin collapse)과 정리 핵을 없앤다.
 
-## Grid Systems
+## 그리드 시스템
 
-### The Self-Adjusting Grid
+### 자동 조절 그리드
 
-Use `repeat(auto-fit, minmax(280px, 1fr))` for responsive grids without breakpoints. Columns are at least 280px, as many as fit per row, leftovers stretch. For complex layouts, use named grid areas (`grid-template-areas`) and redefine them at breakpoints.
+브레이크포인트 없이 반응형 그리드를 만들려면 `repeat(auto-fit, minmax(280px, 1fr))`을 사용하라. 열은 최소 280px이고, 한 행에 들어가는 만큼 배치되며, 남은 공간은 늘어난다. 복잡한 레이아웃에는 이름 있는 그리드 영역(`grid-template-areas`)을 사용하고 브레이크포인트에서 재정의하라.
 
-## Visual Hierarchy
+## 시각적 계층 구조(visual hierarchy)
 
-### The Squint Test
+### 눈 흐리게 보기 테스트(squint test)
 
-Blur your eyes (or screenshot and blur). Can you still identify:
-- The most important element?
-- The second most important?
-- Clear groupings?
+눈을 흐리게 뜨거나 (스크린샷을 찍어서 블러 처리하라). 다음을 여전히 식별할 수 있는가:
+- 가장 중요한 요소?
+- 두 번째로 중요한 요소?
+- 명확한 그룹핑?
 
-If everything looks the same weight blurred, you have a hierarchy problem.
+블러했을 때 모든 것이 같은 무게감으로 보인다면, 계층 구조에 문제가 있다.
 
-### Hierarchy Through Multiple Dimensions
+### 여러 차원을 통한 계층 구조
 
-Don't rely on size alone. Combine:
+크기에만 의존하지 말라. 다음을 조합하라:
 
-| Tool | Strong Hierarchy | Weak Hierarchy |
-|------|------------------|----------------|
-| **Size** | 3:1 ratio or more | <2:1 ratio |
-| **Weight** | Bold vs Regular | Medium vs Regular |
-| **Color** | High contrast | Similar tones |
-| **Position** | Top/left (primary) | Bottom/right |
-| **Space** | Surrounded by white space | Crowded |
+| 도구 | 강한 계층 구조 | 약한 계층 구조 |
+|------|---------------|---------------|
+| **크기** | 3:1 비율 이상 | 2:1 비율 미만 |
+| **굵기** | 볼드 vs 레귤러 | 미디엄 vs 레귤러 |
+| **색상** | 높은 대비 | 비슷한 톤 |
+| **위치** | 상단/왼쪽 (주요) | 하단/오른쪽 |
+| **공간** | 여백으로 둘러싸임 | 빽빽함 |
 
-**The best hierarchy uses 2-3 dimensions at once**: A heading that's larger, bolder, AND has more space above it.
+**최고의 계층 구조는 2-3개 차원을 동시에 사용한다**: 더 크고, 더 굵고, 위에 더 많은 여백이 있는 제목.
 
-### Cards Are Not Required
+### 카드가 필수는 아니다
 
-Cards are overused. Spacing and alignment create visual grouping naturally. Use cards only when content is truly distinct and actionable, items need visual comparison in a grid, or content needs clear interaction boundaries. **Never nest cards inside cards**—use spacing, typography, and subtle dividers for hierarchy within a card.
+카드는 남용된다. 간격과 정렬만으로도 자연스럽게 시각적 그룹핑이 만들어진다. 카드는 콘텐츠가 진정으로 독립적이고 액션 가능할 때, 그리드에서 시각적 비교가 필요할 때, 또는 콘텐츠에 명확한 인터랙션 경계가 필요할 때만 사용하라. **카드 안에 카드를 절대 중첩하지 말라**—카드 내부의 계층 구조에는 간격, 타이포그래피, 미묘한 구분선을 사용하라.
 
-## Container Queries
+## 컨테이너 쿼리(container query)
 
-Viewport queries are for page layouts. **Container queries are for components**:
+뷰포트 쿼리는 페이지 레이아웃용이다. **컨테이너 쿼리는 컴포넌트용이다**:
 
 ```css
 .card-container {
@@ -59,7 +59,7 @@ Viewport queries are for page layouts. **Container queries are for components**:
   gap: var(--space-md);
 }
 
-/* Card layout changes based on its container, not viewport */
+/* 카드 레이아웃이 뷰포트가 아닌 컨테이너 기준으로 변경됨 */
 @container (min-width: 400px) {
   .card {
     grid-template-columns: 120px 1fr;
@@ -67,19 +67,19 @@ Viewport queries are for page layouts. **Container queries are for components**:
 }
 ```
 
-**Why this matters**: A card in a narrow sidebar stays compact, while the same card in a main content area expands—automatically, without viewport hacks.
+**이것이 중요한 이유**: 좁은 사이드바의 카드는 컴팩트하게 유지되고, 같은 카드가 메인 콘텐츠 영역에서는 확장된다—뷰포트 핵 없이 자동으로.
 
-## Optical Adjustments
+## 시각적 보정(optical adjustment)
 
-Text at `margin-left: 0` looks indented due to letterform whitespace—use negative margin (`-0.05em`) to optically align. Geometrically centered icons often look off-center; play icons need to shift right, arrows shift toward their direction.
+`margin-left: 0`의 텍스트는 글자 형태의 여백 때문에 들여쓴 것처럼 보인다—시각적으로 정렬하려면 음수 마진(`-0.05em`)을 사용하라. 기하학적으로 정중앙에 놓인 아이콘은 종종 중심에서 벗어나 보인다; 재생 아이콘은 오른쪽으로, 화살표는 가리키는 방향으로 약간 이동시켜야 한다.
 
-### Touch Targets vs Visual Size
+### 터치 타겟 vs 시각적 크기
 
-Buttons can look small but need large touch targets (44px minimum). Use padding or pseudo-elements:
+버튼은 시각적으로 작아도 큰 터치 타겟(최소 44px)이 필요하다. padding이나 의사 요소(pseudo-element)를 사용하라:
 
 ```css
 .icon-button {
-  width: 24px;  /* Visual size */
+  width: 24px;  /* 시각적 크기 */
   height: 24px;
   position: relative;
 }
@@ -87,14 +87,14 @@ Buttons can look small but need large touch targets (44px minimum). Use padding 
 .icon-button::before {
   content: '';
   position: absolute;
-  inset: -10px;  /* Expand tap target to 44px */
+  inset: -10px;  /* 탭 타겟을 44px로 확장 */
 }
 ```
 
-## Depth & Elevation
+## 깊이와 엘리베이션(elevation)
 
-Create semantic z-index scales (dropdown → sticky → modal-backdrop → modal → toast → tooltip) instead of arbitrary numbers. For shadows, create a consistent elevation scale (sm → md → lg → xl). **Key insight**: Shadows should be subtle—if you can clearly see it, it's probably too strong.
+임의의 숫자 대신 의미 있는 z-index 스케일(dropdown → sticky → modal-backdrop → modal → toast → tooltip)을 만들라. 그림자는 일관된 엘리베이션 스케일(sm → md → lg → xl)을 만들라. **핵심 인사이트**: 그림자는 미묘해야 한다—뚜렷하게 보이면 아마 너무 강한 것이다.
 
 ---
 
-**Avoid**: Arbitrary spacing values outside your scale. Making all spacing equal (variety creates hierarchy). Creating hierarchy through size alone - combine size, weight, color, and space.
+**피해야 할 것**: 스케일 밖의 임의적인 간격 값. 모든 간격을 동일하게 만드는 것 (다양성이 계층 구조를 만든다). 크기만으로 계층 구조를 만드는 것 - 크기, 굵기, 색상, 공간을 조합하라.

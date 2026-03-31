@@ -1,84 +1,84 @@
 ---
 name: delight
-description: Add moments of joy, personality, and unexpected touches that make interfaces memorable and enjoyable to use. Elevates functional to delightful. Use when the user asks to add polish, personality, animations, micro-interactions, delight, or make an interface feel fun or memorable.
+description: 인터페이스를 기억에 남고 즐겁게 만드는 기쁨의 순간, 개성, 예상치 못한 터치를 더한다. 기능적인 것을 즐거운 것으로 끌어올린다. 사용자가 다듬기, 개성, 애니메이션, 마이크로 인터랙션, 즐거움 추가, 또는 재미있고 기억에 남는 인터페이스를 요청할 때 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Identify opportunities to add moments of joy, personality, and unexpected polish that transform functional interfaces into delightful experiences.
+기능적인 인터페이스를 즐거운 경험으로 변환하는 기쁨의 순간, 개성, 예상치 못한 완성도를 더할 기회를 찾는다.
 
-## MANDATORY PREPARATION
+## 필수 사전 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: what's appropriate for the domain (playful vs professional vs quirky vs elegant).
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴(anti-pattern), **컨텍스트 수집 프로토콜(Context Gathering Protocol)**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 한다. 추가로 수집할 것: 도메인에 적합한 분위기 (장난스러운 vs 전문적인 vs 개성있는 vs 우아한).
 
 ---
 
-## Assess Delight Opportunities
+## 즐거움 기회 평가
 
-Identify where delight would enhance (not distract from) the experience:
+즐거움이 경험을 향상시킬 (방해하지 않을) 지점을 파악한다:
 
-1. **Find natural delight moments**:
-   - **Success states**: Completed actions (save, send, publish)
-   - **Empty states**: First-time experiences, onboarding
-   - **Loading states**: Waiting periods that could be entertaining
-   - **Achievements**: Milestones, streaks, completions
-   - **Interactions**: Hover states, clicks, drags
-   - **Errors**: Softening frustrating moments
-   - **Easter eggs**: Hidden discoveries for curious users
+1. **자연스러운 즐거움 순간 찾기**:
+   - **성공 상태**: 완료된 행동 (저장, 전송, 발행)
+   - **빈 상태**: 처음 사용하는 경험, 온보딩(onboarding)
+   - **로딩 상태**: 재미있게 만들 수 있는 대기 시간
+   - **성취**: 마일스톤, 연속 기록, 완료
+   - **인터랙션**: 호버 상태, 클릭, 드래그
+   - **오류**: 좌절스러운 순간을 부드럽게 만들기
+   - **이스터 에그(easter egg)**: 호기심 많은 사용자를 위한 숨겨진 발견
 
-2. **Understand the context**:
-   - What's the brand personality? (Playful? Professional? Quirky? Elegant?)
-   - Who's the audience? (Tech-savvy? Creative? Corporate?)
-   - What's the emotional context? (Accomplishment? Exploration? Frustration?)
-   - What's appropriate? (Banking app ≠ gaming app)
+2. **맥락 이해**:
+   - 브랜드 성격은? (장난스러운? 전문적인? 개성있는? 우아한?)
+   - 대상은 누구인가? (기술에 능한? 창작자? 기업 사용자?)
+   - 감정적 맥락은? (성취감? 탐험? 좌절?)
+   - 무엇이 적절한가? (은행 앱 ≠ 게임 앱)
 
-3. **Define delight strategy**:
-   - **Subtle sophistication**: Refined micro-interactions (luxury brands)
-   - **Playful personality**: Whimsical illustrations and copy (consumer apps)
-   - **Helpful surprises**: Anticipating needs before users ask (productivity tools)
-   - **Sensory richness**: Satisfying sounds, smooth animations (creative tools)
+3. **즐거움 전략 정의**:
+   - **세련된 정교함**: 정제된 마이크로 인터랙션(micro-interaction) (럭셔리 브랜드)
+   - **장난스러운 개성**: 재치있는 일러스트와 문구 (소비자 앱)
+   - **도움이 되는 깜짝 선물**: 사용자가 요청하기 전에 필요를 예측 (생산성 도구)
+   - **감각적 풍부함**: 만족스러운 사운드, 부드러운 애니메이션 (창작 도구)
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+이 중 코드베이스에서 불분명한 것이 있으면, 멈추고 AskUserQuestion 도구를 호출하여 확인한다.
 
-**CRITICAL**: Delight should enhance usability, never obscure it. If users notice the delight more than accomplishing their goal, you've gone too far.
+**핵심**: 즐거움은 사용성을 향상시켜야지, 절대 가려서는 안 된다. 사용자가 목표 달성보다 즐거움 요소를 더 많이 의식한다면, 과한 것이다.
 
-## Delight Principles
+## 즐거움 원칙
 
-Follow these guidelines:
+다음 지침을 따른다:
 
-### Delight Amplifies, Never Blocks
-- Delight moments should be quick (< 1 second)
-- Never delay core functionality for delight
-- Make delight skippable or subtle
-- Respect user's time and task focus
+### 즐거움은 증폭시키되, 절대 방해하지 않는다
+- 즐거움 순간은 빨라야 한다 (1초 미만)
+- 핵심 기능을 즐거움 때문에 지연시키지 않는다
+- 즐거움은 건너뛸 수 있거나 은은해야 한다
+- 사용자의 시간과 작업 집중을 존중한다
 
-### Surprise and Discovery
-- Hide delightful details for users to discover
-- Reward exploration and curiosity
-- Don't announce every delight moment
-- Let users share discoveries with others
+### 놀라움과 발견
+- 사용자가 발견할 즐거운 디테일을 숨겨둔다
+- 탐험과 호기심에 보상한다
+- 모든 즐거움 순간을 알려주지 않는다
+- 사용자가 발견한 것을 다른 사람과 공유하게 한다
 
-### Appropriate to Context
-- Match delight to emotional moment (celebrate success, empathize with errors)
-- Respect the user's state (don't be playful during critical errors)
-- Match brand personality and audience expectations
-- Cultural sensitivity (what's delightful varies by culture)
+### 맥락에 적절하게
+- 즐거움을 감정적 순간에 맞춘다 (성공은 축하, 오류는 공감)
+- 사용자의 상태를 존중한다 (심각한 오류 중에 장난스럽지 않게)
+- 브랜드 성격과 대상 기대에 맞춘다
+- 문화적 감수성을 고려한다 (즐거움의 기준은 문화마다 다르다)
 
-### Compound Over Time
-- Delight should remain fresh with repeated use
-- Vary responses (not same animation every time)
-- Reveal deeper layers with continued use
-- Build anticipation through patterns
+### 시간이 지나도 신선하게
+- 반복 사용에도 즐거움이 유지되어야 한다
+- 반응을 다양하게 한다 (매번 같은 애니메이션이 아닌)
+- 지속 사용에 따라 더 깊은 레이어를 드러낸다
+- 패턴을 통해 기대감을 형성한다
 
-## Delight Techniques
+## 즐거움 기법
 
-Add personality and joy through these methods:
+다음 방법으로 개성과 기쁨을 더한다:
 
-### Micro-interactions & Animation
+### 마이크로 인터랙션 & 애니메이션
 
-**Button delight**:
+**버튼 즐거움**:
 ```css
-/* Satisfying button press */
+/* 만족스러운 버튼 누르기 */
 .button {
   transition: transform 0.1s, box-shadow 0.1s;
 }
@@ -87,217 +87,217 @@ Add personality and joy through these methods:
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Ripple effect on click */
-/* Smooth lift on hover */
+/* 클릭 시 리플 효과 */
+/* 호버 시 부드러운 들어올림 */
 .button:hover {
   transform: translateY(-2px);
   transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); /* ease-out-quart */
 }
 ```
 
-**Loading delight**:
-- Playful loading animations (not just spinners)
-- Personality in loading messages (write product-specific ones, not generic AI filler)
-- Progress indication with encouraging messages
-- Skeleton screens with subtle animations
+**로딩 즐거움**:
+- 재미있는 로딩 애니메이션 (스피너만이 아닌)
+- 로딩 메시지에 개성 넣기 (범용 AI 문구가 아닌, 제품에 맞게 작성)
+- 격려 메시지와 함께 진행 표시
+- 은은한 애니메이션이 있는 스켈레톤 스크린(skeleton screen)
 
-**Success animations**:
-- Checkmark draw animation
-- Confetti burst for major achievements
-- Gentle scale + fade for confirmation
-- Satisfying sound effects (subtle)
+**성공 애니메이션**:
+- 체크마크 그리기 애니메이션
+- 큰 성취에 색종이 터뜨리기
+- 확인을 위한 부드러운 크기 조절 + 페이드
+- 만족스러운 효과음 (은은하게)
 
-**Hover surprises**:
-- Icons that animate on hover
-- Color shifts or glow effects
-- Tooltip reveals with personality
-- Cursor changes (custom cursors for branded experiences)
+**호버 서프라이즈**:
+- 호버 시 애니메이션되는 아이콘
+- 색상 변화 또는 글로우 효과
+- 개성 있는 툴팁 표시
+- 커서 변경 (브랜드 경험을 위한 커스텀 커서)
 
-### Personality in Copy
+### 문구의 개성
 
-**Playful error messages**:
+**장난스러운 오류 메시지**:
 ```
-"Error 404"
-"This page is playing hide and seek. (And winning)"
+"오류 404"
+"이 페이지가 숨바꼭질을 하고 있네요. (그리고 이기고 있어요)"
 
-"Connection failed"
-"Looks like the internet took a coffee break. Want to retry?"
-```
-
-**Encouraging empty states**:
-```
-"No projects"
-"Your canvas awaits. Create something amazing."
-
-"No messages"
-"Inbox zero! You're crushing it today."
+"연결 실패"
+"인터넷이 커피 마시러 간 것 같아요. 다시 시도할까요?"
 ```
 
-**Playful labels & tooltips**:
+**격려하는 빈 상태**:
 ```
-"Delete"
-"Send to void" (for playful brand)
+"프로젝트 없음"
+"캔버스가 기다리고 있어요. 멋진 것을 만들어보세요."
 
-"Help"
-"Rescue me" (tooltip)
-```
-
-**IMPORTANT**: Match copy personality to brand. Banks shouldn't be wacky, but they can be warm.
-
-### Illustrations & Visual Personality
-
-**Custom illustrations**:
-- Empty state illustrations (not stock icons)
-- Error state illustrations (friendly monsters, quirky characters)
-- Loading state illustrations (animated characters)
-- Success state illustrations (celebrations)
-
-**Icon personality**:
-- Custom icon set matching brand personality
-- Animated icons (subtle motion on hover/click)
-- Illustrative icons (more detailed than generic)
-- Consistent style across all icons
-
-**Background effects**:
-- Subtle particle effects
-- Gradient mesh backgrounds
-- Geometric patterns
-- Parallax depth
-- Time-of-day themes (morning vs night)
-
-### Satisfying Interactions
-
-**Drag and drop delight**:
-- Lift effect on drag (shadow, scale)
-- Snap animation when dropped
-- Satisfying placement sound
-- Undo toast ("Dropped in wrong place? [Undo]")
-
-**Toggle switches**:
-- Smooth slide with spring physics
-- Color transition
-- Haptic feedback on mobile
-- Optional sound effect
-
-**Progress & achievements**:
-- Streak counters with celebratory milestones
-- Progress bars that "celebrate" at 100%
-- Badge unlocks with animation
-- Playful stats ("You're on fire! 5 days in a row")
-
-**Form interactions**:
-- Input fields that animate on focus
-- Checkboxes with a satisfying scale pulse when checked
-- Success state that celebrates valid input
-- Auto-grow textareas
-
-### Sound Design
-
-**Subtle audio cues** (when appropriate):
-- Notification sounds (distinctive but not annoying)
-- Success sounds (satisfying "ding")
-- Error sounds (empathetic, not harsh)
-- Typing sounds for chat/messaging
-- Ambient background audio (very subtle)
-
-**IMPORTANT**:
-- Respect system sound settings
-- Provide mute option
-- Keep volumes quiet (subtle cues, not alarms)
-- Don't play on every interaction (sound fatigue is real)
-
-### Easter Eggs & Hidden Delights
-
-**Discovery rewards**:
-- Konami code unlocks special theme
-- Hidden keyboard shortcuts (Cmd+K for special features)
-- Hover reveals on logos or illustrations
-- Alt text jokes on images (for screen reader users too!)
-- Console messages for developers ("Like what you see? We're hiring!")
-
-**Seasonal touches**:
-- Holiday themes (subtle, tasteful)
-- Seasonal color shifts
-- Weather-based variations
-- Time-based changes (dark at night, light during day)
-
-**Contextual personality**:
-- Different messages based on time of day
-- Responses to specific user actions
-- Randomized variations (not same every time)
-- Progressive reveals with continued use
-
-### Loading & Waiting States
-
-**Make waiting engaging**:
-- Interesting loading messages that rotate
-- Progress bars with personality
-- Mini-games during long loads
-- Fun facts or tips while waiting
-- Countdown with encouraging messages
-
-```
-Loading messages — write ones specific to your product, not generic AI filler:
-- "Crunching your latest numbers..."
-- "Syncing with your team's changes..."
-- "Preparing your dashboard..."
-- "Checking for updates since yesterday..."
+"메시지 없음"
+"받은 편지함이 비었어요! 오늘 정말 잘하고 있네요."
 ```
 
-**WARNING**: Avoid cliched loading messages like "Herding pixels", "Teaching robots to dance", "Consulting the magic 8-ball", "Counting backwards from infinity". These are AI-slop copy — instantly recognizable as machine-generated. Write messages that are specific to what your product actually does.
+**장난스러운 라벨 & 툴팁**:
+```
+"삭제"
+"어둠 속으로 보내기" (장난스러운 브랜드의 경우)
 
-### Celebration Moments
+"도움말"
+"구해주세요" (툴팁)
+```
 
-**Success celebrations**:
-- Confetti for major milestones
-- Animated checkmarks for completions
-- Progress bar celebrations at 100%
-- "Achievement unlocked" style notifications
-- Personalized messages ("You published your 10th article!")
+**중요**: 문구의 개성을 브랜드에 맞춘다. 은행은 엉뚱해서는 안 되지만, 따뜻할 수는 있다.
 
-**Milestone recognition**:
-- First-time actions get special treatment
-- Streak tracking and celebration
-- Progress toward goals
-- Anniversary celebrations
+### 일러스트 & 시각적 개성
 
-## Implementation Patterns
+**커스텀 일러스트**:
+- 빈 상태 일러스트 (스톡 아이콘이 아닌)
+- 오류 상태 일러스트 (친근한 몬스터, 개성있는 캐릭터)
+- 로딩 상태 일러스트 (애니메이션 캐릭터)
+- 성공 상태 일러스트 (축하)
 
-**Animation libraries**:
+**아이콘 개성**:
+- 브랜드 성격에 맞는 커스텀 아이콘 세트
+- 애니메이션 아이콘 (호버/클릭 시 은은한 움직임)
+- 일러스트 아이콘 (범용보다 더 상세한)
+- 모든 아이콘에 일관된 스타일
+
+**배경 효과**:
+- 은은한 파티클 효과
+- 그라디언트 메쉬(gradient mesh) 배경
+- 기하학적 패턴
+- 패럴랙스(parallax) 깊이감
+- 시간대별 테마 (아침 vs 밤)
+
+### 만족스러운 인터랙션
+
+**드래그 앤 드롭 즐거움**:
+- 드래그 시 들어올림 효과 (그림자, 크기 조절)
+- 드롭 시 스냅 애니메이션
+- 만족스러운 배치 사운드
+- 실행 취소 토스트 ("잘못된 위치에 놓았나요? [되돌리기]")
+
+**토글 스위치**:
+- 스프링 물리가 적용된 부드러운 슬라이드
+- 색상 전환
+- 모바일에서 햅틱 피드백(haptic feedback)
+- 선택적 효과음
+
+**진행 & 성취**:
+- 축하 마일스톤이 있는 연속 기록 카운터
+- 100%에서 "축하"하는 진행 바
+- 애니메이션이 있는 배지 잠금 해제
+- 장난스러운 통계 ("불꽃이야! 5일 연속!")
+
+**폼 인터랙션**:
+- 포커스 시 애니메이션되는 입력 필드
+- 체크 시 만족스러운 크기 펄스가 있는 체크박스
+- 유효한 입력을 축하하는 성공 상태
+- 자동 확장 텍스트 영역
+
+### 사운드 디자인
+
+**은은한 오디오 신호** (적절한 경우):
+- 알림음 (독특하지만 거슬리지 않은)
+- 성공음 (만족스러운 "딩")
+- 오류음 (공감적인, 거칠지 않은)
+- 채팅/메시징용 타이핑 사운드
+- 앰비언트 배경 오디오 (매우 은은한)
+
+**중요**:
+- 시스템 사운드 설정을 존중한다
+- 음소거 옵션을 제공한다
+- 볼륨은 조용하게 유지한다 (은은한 신호, 알람이 아닌)
+- 모든 인터랙션에서 재생하지 않는다 (사운드 피로는 실재한다)
+
+### 이스터 에그 & 숨겨진 즐거움
+
+**발견 보상**:
+- 코나미 코드(Konami code)로 특별 테마 잠금 해제
+- 숨겨진 키보드 단축키 (Cmd+K로 특별 기능)
+- 로고나 일러스트에 호버 시 드러나는 것
+- 이미지의 재미있는 alt 텍스트 (스크린 리더 사용자를 위해서도!)
+- 개발자를 위한 콘솔 메시지 ("마음에 드시나요? 채용 중입니다!")
+
+**계절 터치**:
+- 명절 테마 (은은하고, 품위있게)
+- 계절별 색상 변화
+- 날씨 기반 변형
+- 시간 기반 변경 (밤에는 어둡게, 낮에는 밝게)
+
+**맥락적 개성**:
+- 시간대에 따른 다른 메시지
+- 특정 사용자 행동에 대한 반응
+- 무작위 변형 (매번 같지 않게)
+- 지속 사용에 따른 점진적 공개
+
+### 로딩 & 대기 상태
+
+**대기를 매력적으로 만들기**:
+- 회전하는 재미있는 로딩 메시지
+- 개성 있는 진행 바
+- 긴 로딩 중 미니 게임
+- 대기 중 재미있는 사실이나 팁
+- 격려 메시지가 있는 카운트다운
+
+```
+로딩 메시지 — 범용 AI 문구가 아닌, 제품에 맞는 것을 작성한다:
+- "최신 수치를 계산하는 중..."
+- "팀의 변경사항을 동기화하는 중..."
+- "대시보드를 준비하는 중..."
+- "어제 이후 업데이트를 확인하는 중..."
+```
+
+**주의**: "픽셀을 정리하는 중", "로봇에게 춤을 가르치는 중", "마법의 8번 공에 물어보는 중", "무한대에서 거꾸로 세는 중" 같은 상투적인 로딩 메시지를 피한다. 이것들은 AI 슬롭 문구(AI-slop copy) — 기계가 생성한 것임이 즉시 드러난다. 제품이 실제로 하는 일에 맞는 메시지를 작성한다.
+
+### 축하 순간
+
+**성공 축하**:
+- 큰 마일스톤에 색종이
+- 완료에 애니메이션 체크마크
+- 100%에서 진행 바 축하
+- "업적 달성" 스타일 알림
+- 개인화된 메시지 ("10번째 글을 발행하셨습니다!")
+
+**마일스톤 인정**:
+- 처음 하는 행동에 특별 대우
+- 연속 기록 추적과 축하
+- 목표를 향한 진행
+- 기념일 축하
+
+## 구현 패턴
+
+**애니메이션 라이브러리**:
 - Framer Motion (React)
-- GSAP (universal)
-- Lottie (After Effects animations)
-- Canvas confetti (party effects)
+- GSAP (범용)
+- Lottie (After Effects 애니메이션)
+- Canvas confetti (파티 효과)
 
-**Sound libraries**:
-- Howler.js (audio management)
-- Use-sound (React hook)
+**사운드 라이브러리**:
+- Howler.js (오디오 관리)
+- Use-sound (React 훅)
 
-**Physics libraries**:
-- React Spring (spring physics)
-- Popmotion (animation primitives)
+**물리 라이브러리**:
+- React Spring (스프링 물리)
+- Popmotion (애니메이션 기본 요소)
 
-**IMPORTANT**: File size matters. Compress images, optimize animations, lazy load delight features.
+**중요**: 파일 크기가 중요하다. 이미지를 압축하고, 애니메이션을 최적화하고, 즐거움 기능은 지연 로딩(lazy load)한다.
 
-**NEVER**:
-- Delay core functionality for delight
-- Force users through delightful moments (make skippable)
-- Use delight to hide poor UX
-- Overdo it (less is more)
-- Ignore accessibility (animate responsibly, provide alternatives)
-- Make every interaction delightful (special moments should be special)
-- Sacrifice performance for delight
-- Be inappropriate for context (read the room)
+**절대 하지 말 것**:
+- 즐거움 때문에 핵심 기능 지연시키기
+- 사용자에게 즐거움 순간을 강제하기 (건너뛸 수 있게)
+- 즐거움으로 나쁜 UX를 숨기기
+- 과하게 하기 (적은 것이 더 낫다)
+- 접근성 무시하기 (책임감 있게 애니메이션하고, 대안 제공)
+- 모든 인터랙션을 즐겁게 만들기 (특별한 순간은 특별해야 한다)
+- 즐거움을 위해 성능 희생하기
+- 맥락에 부적절하게 하기 (분위기를 파악한다)
 
-## Verify Delight Quality
+## 즐거움 품질 검증
 
-Test that delight actually delights:
+즐거움이 실제로 즐거운지 테스트한다:
 
-- **User reactions**: Do users smile? Share screenshots?
-- **Doesn't annoy**: Still pleasant after 100th time?
-- **Doesn't block**: Can users opt out or skip?
-- **Performant**: No jank, no slowdown
-- **Appropriate**: Matches brand and context
-- **Accessible**: Works with reduced motion, screen readers
+- **사용자 반응**: 사용자가 미소 짓는가? 스크린샷을 공유하는가?
+- **짜증나지 않는지**: 100번째에도 여전히 즐거운가?
+- **방해하지 않는지**: 사용자가 거부하거나 건너뛸 수 있는가?
+- **성능**: 끊김이나 느려짐이 없는가?
+- **적절성**: 브랜드와 맥락에 맞는가?
+- **접근성**: 모션 감소(reduced motion), 스크린 리더에서도 작동하는가?
 
-Remember: Delight is the difference between a tool and an experience. Add personality, surprise users positively, and create moments worth sharing. But always respect usability - delight should enhance, never obstruct.
+기억할 것: 즐거움은 도구와 경험의 차이다. 개성을 더하고, 사용자를 긍정적으로 놀라게 하고, 공유할 만한 순간을 만든다. 하지만 항상 사용성을 존중한다 — 즐거움은 향상시켜야지, 절대 방해해서는 안 된다.

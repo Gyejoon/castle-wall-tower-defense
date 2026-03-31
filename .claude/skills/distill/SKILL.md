@@ -1,121 +1,121 @@
 ---
 name: distill
-description: Strip designs to their essence by removing unnecessary complexity. Great design is simple, powerful, and clean. Use when the user asks to simplify, declutter, reduce noise, remove elements, or make a UI cleaner and more focused.
+description: 불필요한 복잡성을 제거하여 디자인을 본질로 정제한다. 훌륭한 디자인은 단순하고, 강력하고, 깔끔하다. 사용자가 단순화, 정리, 노이즈 제거, 요소 제거, 또는 UI를 더 깔끔하고 집중되게 만들기를 요청할 때 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Remove unnecessary complexity from designs, revealing the essential elements and creating clarity through ruthless simplification.
+디자인에서 불필요한 복잡성을 제거하고, 본질적인 요소를 드러내며, 과감한 단순화를 통해 명확성을 만든다.
 
-## MANDATORY PREPARATION
+## 필수 사전 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴(anti-pattern), **컨텍스트 수집 프로토콜(Context Gathering Protocol)**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 한다.
 
 ---
 
-## Assess Current State
+## 현재 상태 평가
 
-Analyze what makes the design feel complex or cluttered:
+디자인이 복잡하거나 어수선하게 느껴지는 원인을 분석한다:
 
-1. **Identify complexity sources**:
-   - **Too many elements**: Competing buttons, redundant information, visual clutter
-   - **Excessive variation**: Too many colors, fonts, sizes, styles without purpose
-   - **Information overload**: Everything visible at once, no progressive disclosure
-   - **Visual noise**: Unnecessary borders, shadows, backgrounds, decorations
-   - **Confusing hierarchy**: Unclear what matters most
-   - **Feature creep**: Too many options, actions, or paths forward
+1. **복잡성의 원인 파악**:
+   - **요소 과다**: 경쟁하는 버튼, 중복 정보, 시각적 잡음
+   - **과도한 변형**: 목적 없이 너무 많은 색상, 폰트, 크기, 스타일
+   - **정보 과부하**: 모든 것이 한 번에 보이고, 점진적 공개(progressive disclosure)가 없음
+   - **시각적 노이즈**: 불필요한 테두리, 그림자, 배경, 장식
+   - **혼란스러운 위계**: 가장 중요한 것이 불분명
+   - **기능 비대화(feature creep)**: 너무 많은 옵션, 행동, 또는 진행 경로
 
-2. **Find the essence**:
-   - What's the primary user goal? (There should be ONE)
-   - What's actually necessary vs nice-to-have?
-   - What can be removed, hidden, or combined?
-   - What's the 20% that delivers 80% of value?
+2. **본질 찾기**:
+   - 사용자의 주요 목표는? (단 하나여야 한다)
+   - 실제로 필요한 것 vs 있으면 좋은 것은?
+   - 제거, 숨기기, 또는 통합할 수 있는 것은?
+   - 80% 가치를 제공하는 20%는 무엇인가?
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+이 중 코드베이스에서 불분명한 것이 있으면, 멈추고 AskUserQuestion 도구를 호출하여 확인한다.
 
-**CRITICAL**: Simplicity is not about removing features - it's about removing obstacles between users and their goals. Every element should justify its existence.
+**핵심**: 단순함은 기능을 제거하는 것이 아니다 — 사용자와 목표 사이의 장애물을 제거하는 것이다. 모든 요소는 존재 이유를 정당화해야 한다.
 
-## Plan Simplification
+## 단순화 계획
 
-Create a ruthless editing strategy:
+과감한 편집 전략을 수립한다:
 
-- **Core purpose**: What's the ONE thing this should accomplish?
-- **Essential elements**: What's truly necessary to achieve that purpose?
-- **Progressive disclosure**: What can be hidden until needed?
-- **Consolidation opportunities**: What can be combined or integrated?
+- **핵심 목적**: 이것이 달성해야 할 단 하나는?
+- **필수 요소**: 그 목적을 달성하는 데 진정으로 필요한 것은?
+- **점진적 공개**: 필요할 때까지 숨길 수 있는 것은?
+- **통합 기회**: 합치거나 통합할 수 있는 것은?
 
-**IMPORTANT**: Simplification is hard. It requires saying no to good ideas to make room for great execution. Be ruthless.
+**중요**: 단순화는 어렵다. 훌륭한 실행을 위한 공간을 만들기 위해 좋은 아이디어에도 거절해야 한다. 과감하라.
 
-## Simplify the Design
+## 디자인 단순화
 
-Systematically remove complexity across these dimensions:
+다음 차원에서 체계적으로 복잡성을 제거한다:
 
-### Information Architecture
-- **Reduce scope**: Remove secondary actions, optional features, redundant information
-- **Progressive disclosure**: Hide complexity behind clear entry points (accordions, modals, step-through flows)
-- **Combine related actions**: Merge similar buttons, consolidate forms, group related content
-- **Clear hierarchy**: ONE primary action, few secondary actions, everything else tertiary or hidden
-- **Remove redundancy**: If it's said elsewhere, don't repeat it here
+### 정보 구조(Information Architecture)
+- **범위 축소**: 부차적 행동, 선택적 기능, 중복 정보 제거
+- **점진적 공개**: 명확한 진입점 뒤에 복잡성을 숨긴다 (아코디언, 모달, 단계별 흐름)
+- **관련 행동 통합**: 비슷한 버튼 합치기, 폼 통합, 관련 콘텐츠 그룹화
+- **명확한 위계**: 하나의 주요 행동, 소수의 보조 행동, 나머지는 3차 또는 숨김
+- **중복 제거**: 다른 곳에서 이미 말한 것이면 여기서 반복하지 않는다
 
-### Visual Simplification
-- **Reduce color palette**: Use 1-2 colors plus neutrals, not 5-7 colors
-- **Limit typography**: One font family, 3-4 sizes maximum, 2-3 weights
-- **Remove decorations**: Eliminate borders, shadows, backgrounds that don't serve hierarchy or function
-- **Flatten structure**: Reduce nesting, remove unnecessary containers—never nest cards inside cards
-- **Remove unnecessary cards**: Cards aren't needed for basic layout; use spacing and alignment instead
-- **Consistent spacing**: Use one spacing scale, remove arbitrary gaps
+### 시각적 단순화
+- **색상 팔레트 축소**: 1-2가지 색상 + 뉴트럴, 5-7가지 색상이 아닌
+- **타이포그래피 제한**: 하나의 폰트 패밀리, 최대 3-4가지 크기, 2-3가지 굵기
+- **장식 제거**: 위계나 기능에 기여하지 않는 테두리, 그림자, 배경 제거
+- **구조 평탄화**: 중첩 줄이기, 불필요한 컨테이너 제거 — 카드 안에 카드를 절대 넣지 않는다
+- **불필요한 카드 제거**: 기본 레이아웃에 카드가 필요하지 않다; 대신 간격과 정렬을 사용한다
+- **일관된 간격**: 하나의 간격 체계를 사용하고, 임의의 간격을 제거한다
 
-### Layout Simplification
-- **Linear flow**: Replace complex grids with simple vertical flow where possible
-- **Remove sidebars**: Move secondary content inline or hide it
-- **Full-width**: Use available space generously instead of complex multi-column layouts
-- **Consistent alignment**: Pick left or center, stick with it
-- **Generous white space**: Let content breathe, don't pack everything tight
+### 레이아웃 단순화
+- **선형 흐름**: 가능하면 복잡한 그리드를 단순한 수직 흐름으로 대체
+- **사이드바 제거**: 보조 콘텐츠를 인라인으로 이동하거나 숨긴다
+- **전체 너비**: 복잡한 다단 레이아웃 대신 사용 가능한 공간을 넉넉하게 활용
+- **일관된 정렬**: 좌측 또는 중앙을 선택하고 일관되게 유지
+- **넉넉한 여백**: 콘텐츠가 숨 쉴 수 있게, 모든 것을 빽빽하게 채우지 않는다
 
-### Interaction Simplification
-- **Reduce choices**: Fewer buttons, fewer options, clearer path forward (paradox of choice is real)
-- **Smart defaults**: Make common choices automatic, only ask when necessary
-- **Inline actions**: Replace modal flows with inline editing where possible
-- **Remove steps**: Can signup be one step instead of three? Can checkout be simplified?
-- **Clear CTAs**: ONE obvious next step, not five competing actions
+### 인터랙션 단순화
+- **선택지 줄이기**: 더 적은 버튼, 더 적은 옵션, 더 명확한 앞으로의 길 (선택의 역설은 실재한다)
+- **스마트 기본값(smart default)**: 일반적인 선택을 자동화하고, 필요할 때만 묻는다
+- **인라인 행동**: 가능하면 모달 흐름을 인라인 편집으로 대체
+- **단계 제거**: 회원가입을 세 단계 대신 한 단계로 할 수 있는가? 결제를 단순화할 수 있는가?
+- **명확한 CTA**: 경쟁하는 다섯 개 행동이 아닌, 하나의 명확한 다음 단계
 
-### Content Simplification
-- **Shorter copy**: Cut every sentence in half, then do it again
-- **Active voice**: "Save changes" not "Changes will be saved"
-- **Remove jargon**: Plain language always wins
-- **Scannable structure**: Short paragraphs, bullet points, clear headings
-- **Essential information only**: Remove marketing fluff, legalese, hedging
-- **Remove redundant copy**: No headers restating intros, no repeated explanations, say it once
+### 콘텐츠 단순화
+- **더 짧은 문구**: 모든 문장을 반으로 줄이고, 다시 한 번 줄인다
+- **능동태**: "변경사항 저장"이지 "변경사항이 저장됩니다"가 아닌
+- **전문 용어 제거**: 쉬운 말이 항상 이긴다
+- **스캔 가능한 구조**: 짧은 단락, 글머리 기호, 명확한 제목
+- **필수 정보만**: 마케팅 미사여구, 법률 문구, 애매한 표현 제거
+- **중복 문구 제거**: 헤더가 본문을 반복하거나 중복 설명 없이, 한 번만 말한다
 
-### Code Simplification
-- **Remove unused code**: Dead CSS, unused components, orphaned files
-- **Flatten component trees**: Reduce nesting depth
-- **Consolidate styles**: Merge similar styles, use utilities consistently
-- **Reduce variants**: Does that component need 12 variations, or can 3 cover 90% of cases?
+### 코드 단순화
+- **사용하지 않는 코드 제거**: 죽은 CSS, 미사용 컴포넌트, 고아 파일
+- **컴포넌트 트리 평탄화**: 중첩 깊이 줄이기
+- **스타일 통합**: 유사한 스타일 합치기, 유틸리티를 일관되게 사용
+- **변형 줄이기**: 그 컴포넌트에 12가지 변형이 필요한가, 아니면 3가지로 90%를 커버할 수 있는가?
 
-**NEVER**:
-- Remove necessary functionality (simplicity ≠ feature-less)
-- Sacrifice accessibility for simplicity (clear labels and ARIA still required)
-- Make things so simple they're unclear (mystery ≠ minimalism)
-- Remove information users need to make decisions
-- Eliminate hierarchy completely (some things should stand out)
-- Oversimplify complex domains (match complexity to actual task complexity)
+**절대 하지 말 것**:
+- 필요한 기능 제거 (단순함 ≠ 기능 없음)
+- 단순함을 위해 접근성 희생 (명확한 라벨과 ARIA는 여전히 필수)
+- 너무 단순해서 불분명하게 만들기 (미스터리 ≠ 미니멀리즘)
+- 사용자가 결정에 필요한 정보 제거
+- 위계를 완전히 없애기 (어떤 것은 돋보여야 한다)
+- 복잡한 도메인을 과도하게 단순화 (실제 작업 복잡성에 맞춘다)
 
-## Verify Simplification
+## 단순화 검증
 
-Ensure simplification improves usability:
+단순화가 사용성을 향상시키는지 확인한다:
 
-- **Faster task completion**: Can users accomplish goals more quickly?
-- **Reduced cognitive load**: Is it easier to understand what to do?
-- **Still complete**: Are all necessary features still accessible?
-- **Clearer hierarchy**: Is it obvious what matters most?
-- **Better performance**: Does simpler design load faster?
+- **작업 완료 속도**: 사용자가 목표를 더 빨리 달성할 수 있는가?
+- **인지 부하 감소**: 무엇을 해야 하는지 이해하기 더 쉬운가?
+- **여전히 완전한가**: 필요한 모든 기능에 여전히 접근할 수 있는가?
+- **더 명확한 위계**: 무엇이 가장 중요한지 명확한가?
+- **더 나은 성능**: 더 단순한 디자인이 더 빨리 로드되는가?
 
-## Document Removed Complexity
+## 제거된 복잡성 문서화
 
-If you removed features or options:
-- Document why they were removed
-- Consider if they need alternative access points
-- Note any user feedback to monitor
+기능이나 옵션을 제거했다면:
+- 제거 이유를 문서화한다
+- 대체 접근 경로가 필요한지 고려한다
+- 모니터링할 사용자 피드백을 기록한다
 
-Remember: You have great taste and judgment. Simplification is an act of confidence - knowing what to keep and courage to remove the rest. As Antoine de Saint-Exupéry said: "Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away."
+기억할 것: 당신은 훌륭한 안목과 판단력을 갖고 있다. 단순화는 자신감의 행위다 — 무엇을 유지할지 아는 것, 그리고 나머지를 제거할 용기. 앙투안 드 생텍쥐페리(Antoine de Saint-Exupery)의 말처럼: "완벽이란 더 이상 더할 것이 없을 때가 아니라, 더 이상 뺄 것이 없을 때 달성된다."

@@ -1,91 +1,91 @@
 ---
 name: extract
-description: Extract and consolidate reusable components, design tokens, and patterns into your design system. Identifies opportunities for systematic reuse and enriches your component library. Use when the user asks to create components, refactor repeated UI patterns, build a design system, or extract tokens.
+description: 재사용 가능한 컴포넌트, 디자인 토큰, 패턴을 디자인 시스템으로 추출하고 통합합니다. 체계적 재사용 기회를 발견하고 컴포넌트 라이브러리를 풍부하게 만듭니다. 컴포넌트 생성, 반복되는 UI 패턴 리팩토링, 디자인 시스템 구축, 토큰 추출 요청 시 사용하세요.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Identify reusable patterns, components, and design tokens, then extract and consolidate them into the design system for systematic reuse.
+재사용 가능한 패턴, 컴포넌트, 디자인 토큰을 식별한 후 체계적 재사용을 위해 디자인 시스템으로 추출하고 통합합니다.
 
-## Discover
+## 발견
 
-Analyze the target area to identify extraction opportunities:
+대상 영역을 분석하여 추출 기회를 식별합니다:
 
-1. **Find the design system**: Locate your design system, component library, or shared UI directory (grep for "design system", "ui", "components", etc.). Understand its structure:
-   - Component organization and naming conventions
-   - Design token structure (if any)
-   - Documentation patterns
-   - Import/export conventions
+1. **디자인 시스템 찾기**: 디자인 시스템, 컴포넌트 라이브러리 또는 공유 UI 디렉토리를 찾습니다 ("design system", "ui", "components" 등으로 grep). 구조를 파악합니다:
+   - 컴포넌트 구성 및 네이밍 컨벤션
+   - 디자인 토큰(design token) 구조 (있는 경우)
+   - 문서화 패턴
+   - import/export 규칙
    
-   **CRITICAL**: If no design system exists, ask before creating one. Understand the preferred location and structure first.
+   **핵심**: 디자인 시스템이 없다면 생성하기 전에 먼저 확인하세요. 선호하는 위치와 구조를 먼저 파악하세요.
 
-2. **Identify patterns**: Look for:
-   - **Repeated components**: Similar UI patterns used multiple times (buttons, cards, inputs, etc.)
-   - **Hard-coded values**: Colors, spacing, typography, shadows that should be tokens
-   - **Inconsistent variations**: Multiple implementations of the same concept (3 different button styles)
-   - **Reusable patterns**: Layout patterns, composition patterns, interaction patterns worth systematizing
+2. **패턴 식별**: 다음을 찾습니다:
+   - **반복되는 컴포넌트**: 여러 번 사용되는 유사한 UI 패턴 (버튼, 카드, 입력 필드 등)
+   - **하드코딩된 값**: 토큰이 되어야 할 색상, 간격, 타이포그래피, 그림자
+   - **일관성 없는 변형**: 같은 개념의 여러 구현 (3가지 다른 버튼 스타일)
+   - **재사용 가능한 패턴**: 체계화할 가치가 있는 레이아웃 패턴, 합성 패턴, 인터랙션 패턴
 
-3. **Assess value**: Not everything should be extracted. Consider:
-   - Is this used 3+ times, or likely to be reused?
-   - Would systematizing this improve consistency?
-   - Is this a general pattern or context-specific?
-   - What's the maintenance cost vs benefit?
+3. **가치 평가**: 모든 것을 추출할 필요는 없습니다. 고려할 사항:
+   - 3회 이상 사용되었거나 재사용될 가능성이 있는가?
+   - 체계화하면 일관성이 향상되는가?
+   - 범용 패턴인가 아니면 맥락에 특화된 것인가?
+   - 유지보수 비용 대비 이점은?
 
-## Plan Extraction
+## 추출 계획
 
-Create a systematic extraction plan:
+체계적인 추출 계획을 수립합니다:
 
-- **Components to extract**: Which UI elements become reusable components?
-- **Tokens to create**: Which hard-coded values become design tokens?
-- **Variants to support**: What variations does each component need?
-- **Naming conventions**: Component names, token names, prop names that match existing patterns
-- **Migration path**: How to refactor existing uses to consume the new shared versions
+- **추출할 컴포넌트**: 어떤 UI 요소를 재사용 가능한 컴포넌트로 만들 것인가?
+- **생성할 토큰**: 어떤 하드코딩된 값을 디자인 토큰으로 만들 것인가?
+- **지원할 변형(variant)**: 각 컴포넌트에 어떤 변형이 필요한가?
+- **네이밍 컨벤션**: 기존 패턴에 맞는 컴포넌트명, 토큰명, prop명
+- **마이그레이션 경로**: 기존 사용처를 새 공유 버전으로 리팩토링하는 방법
 
-**IMPORTANT**: Design systems grow incrementally. Extract what's clearly reusable now, not everything that might someday be reusable.
+**중요**: 디자인 시스템은 점진적으로 성장합니다. 지금 확실히 재사용 가능한 것을 추출하세요. 언젠가 재사용될지 모르는 모든 것을 추출하지 마세요.
 
-## Extract & Enrich
+## 추출 및 보강
 
-Build improved, reusable versions:
+개선된 재사용 가능한 버전을 만듭니다:
 
-- **Components**: Create well-designed components with:
-  - Clear props API with sensible defaults
-  - Proper variants for different use cases
-  - Accessibility built in (ARIA, keyboard navigation, focus management)
-  - Documentation and usage examples
+- **컴포넌트**: 잘 설계된 컴포넌트를 만듭니다:
+  - 합리적 기본값이 있는 명확한 props API
+  - 다양한 사용 사례를 위한 적절한 변형
+  - 내장된 접근성 (ARIA, 키보드 내비게이션, 포커스 관리)
+  - 문서화 및 사용 예시
   
-- **Design tokens**: Create tokens with:
-  - Clear naming (primitive vs semantic)
-  - Proper hierarchy and organization
-  - Documentation of when to use each token
+- **디자인 토큰**: 토큰을 만듭니다:
+  - 명확한 네이밍 (원시 토큰 vs 시맨틱 토큰)
+  - 적절한 계층 구조와 구성
+  - 각 토큰을 언제 사용할지에 대한 문서화
   
-- **Patterns**: Document patterns with:
-  - When to use this pattern
-  - Code examples
-  - Variations and combinations
+- **패턴**: 패턴을 문서화합니다:
+  - 이 패턴을 언제 사용할 것인가
+  - 코드 예시
+  - 변형과 조합
 
-**NEVER**:
-- Extract one-off, context-specific implementations without generalization
-- Create components so generic they're useless
-- Extract without considering existing design system conventions
-- Skip proper TypeScript types or prop documentation
-- Create tokens for every single value (tokens should have semantic meaning)
+**절대 하지 말 것**:
+- 일반화 없이 일회성이고 맥락에 특화된 구현을 추출
+- 너무 범용적이어서 쓸모없는 컴포넌트 생성
+- 기존 디자인 시스템 규칙을 고려하지 않고 추출
+- 적절한 TypeScript 타입이나 prop 문서화 건너뛰기
+- 모든 개별 값에 대해 토큰 생성 (토큰에는 시맨틱한 의미가 있어야 함)
 
-## Migrate
+## 마이그레이션
 
-Replace existing uses with the new shared versions:
+기존 사용처를 새 공유 버전으로 교체합니다:
 
-- **Find all instances**: Search for the patterns you've extracted
-- **Replace systematically**: Update each use to consume the shared version
-- **Test thoroughly**: Ensure visual and functional parity
-- **Delete dead code**: Remove the old implementations
+- **모든 인스턴스 찾기**: 추출한 패턴을 검색
+- **체계적으로 교체**: 각 사용처를 공유 버전을 사용하도록 업데이트
+- **철저히 테스트**: 시각적 및 기능적 동등성 확인
+- **죽은 코드 삭제**: 이전 구현 제거
 
-## Document
+## 문서화
 
-Update design system documentation:
+디자인 시스템 문서를 업데이트합니다:
 
-- Add new components to the component library
-- Document token usage and values
-- Add examples and guidelines
-- Update any Storybook or component catalog
+- 컴포넌트 라이브러리에 새 컴포넌트 추가
+- 토큰 사용법과 값 문서화
+- 예시와 가이드라인 추가
+- Storybook이나 컴포넌트 카탈로그 업데이트
 
-Remember: A good design system is a living system. Extract patterns as they emerge, enrich them thoughtfully, and maintain them consistently.
+기억하세요: 좋은 디자인 시스템은 살아있는 시스템입니다. 패턴이 드러나면 추출하고, 사려 깊게 보강하고, 일관되게 유지하세요.

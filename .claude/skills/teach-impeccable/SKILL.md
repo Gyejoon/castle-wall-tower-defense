@@ -1,71 +1,71 @@
 ---
 name: teach-impeccable
-description: One-time setup that gathers design context for your project and saves it to your AI config file. Run once to establish persistent design guidelines.
+description: 프로젝트의 디자인 컨텍스트를 수집하여 AI 설정 파일에 저장하는 일회성 셋업. 한 번 실행하면 영구적인 디자인 가이드라인이 수립됩니다.
 user-invocable: true
 ---
 
-Gather design context for this project, then persist it for all future sessions.
+이 프로젝트의 디자인 컨텍스트를 수집한 뒤, 이후 모든 세션에서 사용할 수 있도록 영속화합니다.
 
-## Step 1: Explore the Codebase
+## 1단계: 코드베이스 탐색
 
-Before asking questions, thoroughly scan the project to discover what you can:
+질문하기 전에 프로젝트를 철저히 스캔하여 파악할 수 있는 정보를 수집합니다:
 
-- **README and docs**: Project purpose, target audience, any stated goals
-- **Package.json / config files**: Tech stack, dependencies, existing design libraries
-- **Existing components**: Current design patterns, spacing, typography in use
-- **Brand assets**: Logos, favicons, color values already defined
-- **Design tokens / CSS variables**: Existing color palettes, font stacks, spacing scales
-- **Any style guides or brand documentation**
+- **README 및 문서**: 프로젝트 목적, 타겟 사용자, 명시된 목표
+- **Package.json / 설정 파일**: 기술 스택, 의존성, 기존 디자인 라이브러리
+- **기존 컴포넌트**: 현재 사용 중인 디자인 패턴, 간격, 타이포그래피
+- **브랜드 에셋**: 로고, 파비콘, 이미 정의된 색상 값
+- **디자인 토큰(Design Tokens) / CSS 변수**: 기존 색상 팔레트, 폰트 스택, 간격 체계
+- **스타일 가이드 또는 브랜드 문서**
 
-Note what you've learned and what remains unclear.
+파악한 내용과 아직 불분명한 부분을 정리합니다.
 
-## Step 2: Ask UX-Focused Questions
+## 2단계: UX 중심 질문
 
-STOP and call the AskUserQuestion tool to clarify. Focus only on what you couldn't infer from the codebase:
+멈추고 AskUserQuestion 도구를 호출하여 확인합니다. 코드베이스에서 유추할 수 없었던 부분에만 집중합니다:
 
-### Users & Purpose
-- Who uses this? What's their context when using it?
-- What job are they trying to get done?
-- What emotions should the interface evoke? (confidence, delight, calm, urgency, etc.)
+### 사용자 및 목적
+- 누가 사용하나요? 사용 시의 맥락은?
+- 사용자가 달성하려는 핵심 과제는 무엇인가요?
+- 인터페이스가 어떤 감정을 불러일으켜야 하나요? (신뢰감, 즐거움, 차분함, 긴박감 등)
 
-### Brand & Personality
-- How would you describe the brand personality in 3 words?
-- Any reference sites or apps that capture the right feel? What specifically about them?
-- What should this explicitly NOT look like? Any anti-references?
+### 브랜드 및 개성
+- 브랜드 개성을 3단어로 표현한다면?
+- 원하는 느낌을 잘 보여주는 참고 사이트나 앱이 있나요? 구체적으로 어떤 점이 좋은가요?
+- 명시적으로 피해야 할 스타일은? 안티 레퍼런스가 있나요?
 
-### Aesthetic Preferences
-- Any strong preferences for visual direction? (minimal, bold, elegant, playful, technical, organic, etc.)
-- Light mode, dark mode, or both?
-- Any colors that must be used or avoided?
+### 미적 선호
+- 비주얼 방향에 대한 강한 선호가 있나요? (미니멀, 대담함, 우아함, 장난스러움, 기술적, 유기적 등)
+- 라이트 모드, 다크 모드, 또는 둘 다?
+- 반드시 사용하거나 피해야 할 색상이 있나요?
 
-### Accessibility & Inclusion
-- Specific accessibility requirements? (WCAG level, known user needs)
-- Considerations for reduced motion, color blindness, or other accommodations?
+### 접근성(Accessibility) 및 포용성
+- 특정 접근성 요구사항이 있나요? (WCAG 레벨, 알려진 사용자 니즈)
+- 모션 감소, 색각 이상 등에 대한 고려가 필요한가요?
 
-Skip questions where the answer is already clear from the codebase exploration.
+코드베이스 탐색에서 이미 답을 얻은 질문은 건너뜁니다.
 
-## Step 3: Write Design Context
+## 3단계: 디자인 컨텍스트 작성
 
-Synthesize your findings and the user's answers into a `## Design Context` section:
+수집한 정보와 사용자 답변을 종합하여 `## Design Context` 섹션을 작성합니다:
 
 ```markdown
 ## Design Context
 
 ### Users
-[Who they are, their context, the job to be done]
+[사용자가 누구인지, 사용 맥락, 달성하려는 핵심 과제]
 
 ### Brand Personality
-[Voice, tone, 3-word personality, emotional goals]
+[목소리, 톤, 3단어 개성, 감정적 목표]
 
 ### Aesthetic Direction
-[Visual tone, references, anti-references, theme]
+[비주얼 톤, 레퍼런스, 안티 레퍼런스, 테마]
 
 ### Design Principles
-[3-5 principles derived from the conversation that should guide all design decisions]
+[대화에서 도출한 3-5개의 원칙 — 모든 디자인 결정의 기준]
 ```
 
-Write this section to `.impeccable.md` in the project root. If the file already exists, update the Design Context section in place.
+이 섹션을 프로젝트 루트의 `.impeccable.md`에 작성합니다. 파일이 이미 존재하면 Design Context 섹션만 업데이트합니다.
 
-Then STOP and call the AskUserQuestion tool to clarify. whether they'd also like the Design Context appended to CLAUDE.md. If yes, append or update the section there as well.
+그런 다음 멈추고 AskUserQuestion 도구를 호출하여 CLAUDE.md에도 Design Context를 추가할지 확인합니다. 사용자가 원하면 해당 파일에도 섹션을 추가하거나 업데이트합니다.
 
-Confirm completion and summarize the key design principles that will now guide all future work.
+완료를 확인하고, 앞으로 모든 작업의 기준이 될 핵심 디자인 원칙을 요약합니다.

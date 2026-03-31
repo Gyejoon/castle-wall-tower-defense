@@ -1,142 +1,142 @@
 ---
 name: colorize
-description: Add strategic color to features that are too monochromatic or lack visual interest, making interfaces more engaging and expressive. Use when the user mentions the design looking gray, dull, lacking warmth, needing more color, or wanting a more vibrant or expressive palette.
+description: 너무 단색적이거나 시각적 흥미가 부족한 기능에 전략적으로 색상을 추가하여 인터페이스를 더 매력적이고 표현력 있게 만든다. 디자인이 회색빛이거나, 칙칙하거나, 따뜻함이 부족하거나, 더 많은 색상이 필요하거나, 더 생생하고 표현력 있는 팔레트를 원할 때 사용한다.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Strategically introduce color to designs that are too monochromatic, gray, or lacking in visual warmth and personality.
+너무 단색적이거나, 회색빛이거나, 시각적 따뜻함과 개성이 부족한 디자인에 전략적으로 색상을 도입한다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: existing brand colors.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다. 추가로 기존 브랜드 색상을 수집한다.
 
 ---
 
-## Assess Color Opportunity
+## 색상 기회 평가
 
-Analyze the current state and identify opportunities:
+현재 상태를 분석하고 기회를 식별한다:
 
-1. **Understand current state**:
-   - **Color absence**: Pure grayscale? Limited neutrals? One timid accent?
-   - **Missed opportunities**: Where could color add meaning, hierarchy, or delight?
-   - **Context**: What's appropriate for this domain and audience?
-   - **Brand**: Are there existing brand colors we should use?
+1. **현재 상태 파악**:
+   - **색상 부재**: 순수 그레이스케일? 제한된 중립색? 소심한 악센트 하나?
+   - **놓친 기회**: 색상이 의미, 계층구조, 또는 즐거움을 더할 수 있는 곳은?
+   - **맥락**: 이 도메인과 대상에게 적절한 것은?
+   - **브랜드**: 사용해야 할 기존 브랜드 색상이 있는가?
 
-2. **Identify where color adds value**:
-   - **Semantic meaning**: Success (green), error (red), warning (yellow/orange), info (blue)
-   - **Hierarchy**: Drawing attention to important elements
-   - **Categorization**: Different sections, types, or states
-   - **Emotional tone**: Warmth, energy, trust, creativity
-   - **Wayfinding**: Helping users navigate and understand structure
-   - **Delight**: Moments of visual interest and personality
+2. **색상이 가치를 더하는 곳 식별**:
+   - **의미적 의미**: 성공(녹색), 오류(빨강), 경고(노랑/주황), 정보(파랑)
+   - **계층구조**: 중요한 요소에 주의 끌기
+   - **분류**: 다른 섹션, 유형, 또는 상태
+   - **감성적 톤**: 따뜻함, 에너지, 신뢰, 창의성
+   - **길 안내**: 사용자가 구조를 탐색하고 이해하도록 돕기
+   - **즐거움**: 시각적 흥미와 개성의 순간
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+코드베이스에서 이 중 불확실한 것이 있다면 **멈추고** AskUserQuestion 도구를 호출하여 명확히 한다.
 
-**CRITICAL**: More color ≠ better. Strategic color beats rainbow vomit every time. Every color should have a purpose.
+**핵심**: 색상이 많다고 좋은 것이 아니다. 전략적 색상이 무지개 난사보다 항상 낫다. 모든 색상에는 목적이 있어야 한다.
 
-## Plan Color Strategy
+## 색상 전략 계획
 
-Create a purposeful color introduction plan:
+목적 있는 색상 도입 계획을 수립한다:
 
-- **Color palette**: What colors match the brand/context? (Choose 2-4 colors max beyond neutrals)
-- **Dominant color**: Which color owns 60% of colored elements?
-- **Accent colors**: Which colors provide contrast and highlights? (30% and 10%)
-- **Application strategy**: Where does each color appear and why?
+- **색상 팔레트**: 브랜드/맥락에 맞는 색상은? (중립색 외 최대 2-4개 색상 선택)
+- **지배색**: 60%의 색상 요소를 차지하는 색상은?
+- **악센트 색상**: 대비와 하이라이트를 제공하는 색상은? (30%와 10%)
+- **적용 전략**: 각 색상이 어디에 왜 나타나는가?
 
-**IMPORTANT**: Color should enhance hierarchy and meaning, not create chaos. Less is more when it matters more.
+**중요**: 색상은 계층구조와 의미를 강화해야 하며, 혼란을 만들어서는 안 된다. 중요할수록 덜 써야 한다.
 
-## Introduce Color Strategically
+## 전략적으로 색상 도입
 
-Add color systematically across these dimensions:
+다음 차원에 걸쳐 체계적으로 색상을 추가한다:
 
-### Semantic Color
-- **State indicators**:
-  - Success: Green tones (emerald, forest, mint)
-  - Error: Red/pink tones (rose, crimson, coral)
-  - Warning: Orange/amber tones
-  - Info: Blue tones (sky, ocean, indigo)
-  - Neutral: Gray/slate for inactive states
+### 의미적 색상
+- **상태 표시기**:
+  - 성공: 녹색 계열 (에메랄드, 포레스트, 민트)
+  - 오류: 빨강/분홍 계열 (로즈, 크림슨, 코랄)
+  - 경고: 주황/앰버 계열
+  - 정보: 파랑 계열 (스카이, 오션, 인디고)
+  - 중립: 비활성 상태용 회색/슬레이트
 
-- **Status badges**: Colored backgrounds or borders for states (active, pending, completed, etc.)
-- **Progress indicators**: Colored bars, rings, or charts showing completion or health
+- **상태 뱃지**: 상태별 색상 배경이나 테두리 (활성, 대기 중, 완료 등)
+- **진행 표시기**: 완료도나 건강 상태를 보여주는 색상 바, 링, 또는 차트
 
-### Accent Color Application
-- **Primary actions**: Color the most important buttons/CTAs
-- **Links**: Add color to clickable text (maintain accessibility)
-- **Icons**: Colorize key icons for recognition and personality
-- **Headers/titles**: Add color to section headers or key labels
-- **Hover states**: Introduce color on interaction
+### 악센트 색상 적용
+- **주요 액션**: 가장 중요한 버튼/CTA에 색상 적용
+- **링크**: 클릭 가능한 텍스트에 색상 추가 (접근성 유지)
+- **아이콘**: 인지와 개성을 위해 주요 아이콘에 색상 적용
+- **헤더/제목**: 섹션 헤더나 핵심 라벨에 색상 추가
+- **호버 상태**: 인터랙션 시 색상 도입
 
-### Background & Surfaces
-- **Tinted backgrounds**: Replace pure gray (`#f5f5f5`) with warm neutrals (`oklch(97% 0.01 60)`) or cool tints (`oklch(97% 0.01 250)`)
-- **Colored sections**: Use subtle background colors to separate areas
-- **Gradient backgrounds**: Add depth with subtle, intentional gradients (not generic purple-blue)
-- **Cards & surfaces**: Tint cards or surfaces slightly for warmth
+### 배경과 표면
+- **색조 있는 배경**: 순수 회색(`#f5f5f5`)을 따뜻한 중립색(`oklch(97% 0.01 60)`)이나 차가운 색조(`oklch(97% 0.01 250)`)로 대체
+- **색상 섹션**: 은은한 배경색으로 영역 분리
+- **그라데이션 배경**: 은은하고 의도적인 그라데이션으로 깊이 추가 (평범한 보라-파랑이 아닌)
+- **카드와 표면**: 따뜻함을 위해 카드나 표면에 약간의 색조
 
-**Use OKLCH for color**: It's perceptually uniform, meaning equal steps in lightness *look* equal. Great for generating harmonious scales.
+**색상에는 OKLCH 사용**: 지각적으로 균일하여, 밝기의 동일한 단계가 *실제로도* 동일하게 보인다. 조화로운 스케일 생성에 적합하다.
 
-### Data Visualization
-- **Charts & graphs**: Use color to encode categories or values
-- **Heatmaps**: Color intensity shows density or importance
-- **Comparison**: Color coding for different datasets or timeframes
+### 데이터 시각화
+- **차트와 그래프**: 카테고리나 값을 인코딩하는 데 색상 사용
+- **히트맵**: 색상 강도로 밀도나 중요도 표시
+- **비교**: 다른 데이터셋이나 기간에 대한 색상 코딩
 
-### Borders & Accents
-- **Accent borders**: Add colored left/top borders to cards or sections
-- **Underlines**: Color underlines for emphasis or active states
-- **Dividers**: Subtle colored dividers instead of gray lines
-- **Focus rings**: Colored focus indicators matching brand
+### 테두리와 악센트
+- **악센트 테두리**: 카드나 섹션에 색상 있는 왼쪽/상단 테두리 추가
+- **밑줄**: 강조나 활성 상태를 위한 색상 밑줄
+- **구분선**: 회색 선 대신 은은한 색상 구분선
+- **포커스 링**: 브랜드에 맞는 색상 포커스 인디케이터
 
-### Typography Color
-- **Colored headings**: Use brand colors for section headings (maintain contrast)
-- **Highlight text**: Color for emphasis or categories
-- **Labels & tags**: Small colored labels for metadata or categories
+### 타이포그래피 색상
+- **색상 있는 제목**: 섹션 제목에 브랜드 색상 사용 (대비 유지)
+- **강조 텍스트**: 강조나 분류를 위한 색상
+- **라벨과 태그**: 메타데이터나 분류용 작은 색상 라벨
 
-### Decorative Elements
-- **Illustrations**: Add colored illustrations or icons
-- **Shapes**: Geometric shapes in brand colors as background elements
-- **Gradients**: Colorful gradient overlays or mesh backgrounds
-- **Blobs/organic shapes**: Soft colored shapes for visual interest
+### 장식 요소
+- **일러스트레이션**: 색상 있는 일러스트레이션이나 아이콘 추가
+- **도형**: 배경 요소로 브랜드 색상의 기하학적 도형
+- **그라데이션**: 화려한 그라데이션 오버레이나 메시 배경
+- **블롭/유기적 도형**: 시각적 흥미를 위한 부드러운 색상 도형
 
-## Balance & Refinement
+## 균형과 정제
 
-Ensure color addition improves rather than overwhelms:
+색상 추가가 압도하지 않고 개선하는지 확인한다:
 
-### Maintain Hierarchy
-- **Dominant color** (60%): Primary brand color or most used accent
-- **Secondary color** (30%): Supporting color for variety
-- **Accent color** (10%): High contrast for key moments
-- **Neutrals** (remaining): Gray/black/white for structure
+### 계층구조 유지
+- **지배색** (60%): 주요 브랜드 색상 또는 가장 많이 사용되는 악센트
+- **보조색** (30%): 다양성을 위한 지원 색상
+- **악센트** (10%): 핵심 순간을 위한 고대비
+- **중립색** (나머지): 구조를 위한 회색/검정/흰색
 
-### Accessibility
-- **Contrast ratios**: Ensure WCAG compliance (4.5:1 for text, 3:1 for UI components)
-- **Don't rely on color alone**: Use icons, labels, or patterns alongside color
-- **Test for color blindness**: Verify red/green combinations work for all users
+### 접근성
+- **대비 비율**: WCAG 준수 보장 (텍스트 4.5:1, UI 컴포넌트 3:1)
+- **색상에만 의존하지 않기**: 색상과 함께 아이콘, 라벨, 또는 패턴 사용
+- **색맹 테스트**: 빨강/녹색 조합이 모든 사용자에게 작동하는지 확인
 
-### Cohesion
-- **Consistent palette**: Use colors from defined palette, not arbitrary choices
-- **Systematic application**: Same color meanings throughout (green always = success)
-- **Temperature consistency**: Warm palette stays warm, cool stays cool
+### 응집성
+- **일관된 팔레트**: 임의 선택이 아닌 정의된 팔레트의 색상 사용
+- **체계적 적용**: 동일한 색상 의미를 전체에 걸쳐 유지 (녹색은 항상 = 성공)
+- **온도 일관성**: 따뜻한 팔레트는 따뜻하게, 차가운 것은 차갑게 유지
 
-**NEVER**:
-- Use every color in the rainbow (choose 2-4 colors beyond neutrals)
-- Apply color randomly without semantic meaning
-- Put gray text on colored backgrounds—it looks washed out; use a darker shade of the background color or transparency instead
-- Use pure gray for neutrals—add subtle color tint (warm or cool) for sophistication
-- Use pure black (`#000`) or pure white (`#fff`) for large areas
-- Violate WCAG contrast requirements
-- Use color as the only indicator (accessibility issue)
-- Make everything colorful (defeats the purpose)
-- Default to purple-blue gradients (AI slop aesthetic)
+**절대 하지 말 것**:
+- 무지개의 모든 색을 사용 (중립색 외 2-4개 색상 선택)
+- 의미적 의미 없이 무작위로 색상 적용
+- 색상 배경에 회색 텍스트 배치 — 바랜 느낌이 난다; 대신 배경색의 어두운 음영이나 투명도를 사용
+- 중립색에 순수 회색 사용 — 세련됨을 위해 은은한 색조(따뜻하거나 차가운) 추가
+- 넓은 영역에 순수 검정(`#000`)이나 순수 흰색(`#fff`) 사용
+- WCAG 대비 요구사항 위반
+- 색상을 유일한 표시기로 사용 (접근성 문제)
+- 모든 것을 화려하게 만들기 (목적을 훼손)
+- 보라-파랑 그라데이션 기본 사용 (AI 슬롭 미학)
 
-## Verify Color Addition
+## 색상 추가 검증
 
-Test that colorization improves the experience:
+색상화가 경험을 개선하는지 테스트한다:
 
-- **Better hierarchy**: Does color guide attention appropriately?
-- **Clearer meaning**: Does color help users understand states/categories?
-- **More engaging**: Does the interface feel warmer and more inviting?
-- **Still accessible**: Do all color combinations meet WCAG standards?
-- **Not overwhelming**: Is color balanced and purposeful?
+- **나은 계층구조**: 색상이 주의를 적절히 안내하는가?
+- **더 명확한 의미**: 색상이 사용자가 상태/분류를 이해하는 데 도움이 되는가?
+- **더 매력적**: 인터페이스가 더 따뜻하고 초대하는 느낌인가?
+- **여전히 접근 가능**: 모든 색상 조합이 WCAG 기준을 충족하는가?
+- **압도적이지 않음**: 색상이 균형 있고 목적적인가?
 
-Remember: Color is emotional and powerful. Use it to create warmth, guide attention, communicate meaning, and express personality. But restraint and strategy matter more than saturation and variety. Be colorful, but be intentional.
+기억하라: 색상은 감정적이고 강력하다. 따뜻함을 만들고, 주의를 안내하고, 의미를 전달하고, 개성을 표현하는 데 사용한다. 하지만 절제와 전략이 채도와 다양성보다 중요하다. 화려하되, 의도적이어야 한다.

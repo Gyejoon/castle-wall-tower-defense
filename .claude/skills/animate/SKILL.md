@@ -1,146 +1,146 @@
 ---
 name: animate
-description: Review a feature and enhance it with purposeful animations, micro-interactions, and motion effects that improve usability and delight. Use when the user mentions adding animation, transitions, micro-interactions, motion design, hover effects, or making the UI feel more alive.
+description: 기능을 검토하고 사용성과 즐거움을 높이는 목적 있는 애니메이션, 마이크로 인터랙션, 모션 효과로 강화한다. 애니메이션 추가, 트랜지션, 마이크로 인터랙션, 모션 디자인, 호버 효과, UI를 더 생동감 있게 만들고 싶을 때 사용한다.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Analyze a feature and strategically add animations and micro-interactions that enhance understanding, provide feedback, and create delight.
+기능을 분석하고 이해를 높이고, 피드백을 제공하고, 즐거움을 만드는 애니메이션과 마이크로 인터랙션을 전략적으로 추가한다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: performance constraints.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다. 추가로 성능 제약 사항을 수집한다.
 
 ---
 
-## Assess Animation Opportunities
+## 애니메이션 기회 평가
 
-Analyze where motion would improve the experience:
+모션이 경험을 개선할 수 있는 곳을 분석한다:
 
-1. **Identify static areas**:
-   - **Missing feedback**: Actions without visual acknowledgment (button clicks, form submission, etc.)
-   - **Jarring transitions**: Instant state changes that feel abrupt (show/hide, page loads, route changes)
-   - **Unclear relationships**: Spatial or hierarchical relationships that aren't obvious
-   - **Lack of delight**: Functional but joyless interactions
-   - **Missed guidance**: Opportunities to direct attention or explain behavior
+1. **정적인 영역 식별**:
+   - **피드백 부재**: 시각적 확인 없는 액션 (버튼 클릭, 폼 제출 등)
+   - **갑작스러운 전환**: 급격하게 느껴지는 즉각적 상태 변화 (표시/숨김, 페이지 로드, 라우트 변경)
+   - **불명확한 관계**: 명확하지 않은 공간적 또는 계층적 관계
+   - **즐거움 부재**: 기능적이지만 재미없는 인터랙션
+   - **안내 누락**: 주의를 유도하거나 동작을 설명할 기회
 
-2. **Understand the context**:
-   - What's the personality? (Playful vs serious, energetic vs calm)
-   - What's the performance budget? (Mobile-first? Complex page?)
-   - Who's the audience? (Motion-sensitive users? Power users who want speed?)
-   - What matters most? (One hero animation vs many micro-interactions?)
+2. **맥락 이해**:
+   - 어떤 개성인가? (장난스러운 vs 진지한, 활기찬 vs 차분한)
+   - 성능 예산은? (모바일 우선? 복잡한 페이지?)
+   - 누가 대상인가? (모션 민감 사용자? 속도를 원하는 파워 유저?)
+   - 무엇이 가장 중요한가? (하나의 히어로 애니메이션 vs 여러 마이크로 인터랙션?)
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+코드베이스에서 이 중 불확실한 것이 있다면 **멈추고** AskUserQuestion 도구를 호출하여 명확히 한다.
 
-**CRITICAL**: Respect `prefers-reduced-motion`. Always provide non-animated alternatives for users who need them.
+**핵심**: `prefers-reduced-motion`을 존중한다. 항상 모션이 필요한 사용자를 위해 애니메이션 없는 대안을 제공한다.
 
-## Plan Animation Strategy
+## 애니메이션 전략 계획
 
-Create a purposeful animation plan:
+목적 있는 애니메이션 계획을 수립한다:
 
-- **Hero moment**: What's the ONE signature animation? (Page load? Hero section? Key interaction?)
-- **Feedback layer**: Which interactions need acknowledgment?
-- **Transition layer**: Which state changes need smoothing?
-- **Delight layer**: Where can we surprise and delight?
+- **히어로 모먼트**: 하나의 시그니처 애니메이션은 무엇인가? (페이지 로드? 히어로 섹션? 핵심 인터랙션?)
+- **피드백 레이어**: 어떤 인터랙션에 확인이 필요한가?
+- **전환 레이어**: 어떤 상태 변화에 부드러움이 필요한가?
+- **즐거움 레이어**: 어디서 놀라움과 즐거움을 줄 수 있는가?
 
-**IMPORTANT**: One well-orchestrated experience beats scattered animations everywhere. Focus on high-impact moments.
+**중요**: 잘 조율된 하나의 경험이 여기저기 흩뿌린 애니메이션보다 낫다. 높은 임팩트의 순간에 집중한다.
 
-## Implement Animations
+## 애니메이션 구현
 
-Add motion systematically across these categories:
+다음 카테고리에 걸쳐 체계적으로 모션을 추가한다:
 
-### Entrance Animations
-- **Page load choreography**: Stagger element reveals (100-150ms delays), fade + slide combinations
-- **Hero section**: Dramatic entrance for primary content (scale, parallax, or creative effects)
-- **Content reveals**: Scroll-triggered animations using intersection observer
-- **Modal/drawer entry**: Smooth slide + fade, backdrop fade, focus management
+### 진입 애니메이션
+- **페이지 로드 안무**: 요소 노출을 시차 적용 (100-150ms 지연), 페이드 + 슬라이드 조합
+- **히어로 섹션**: 주요 콘텐츠의 극적인 진입 (스케일, 패럴랙스, 또는 창의적 효과)
+- **콘텐츠 노출**: 인터섹션 옵저버(intersection observer)를 사용한 스크롤 트리거 애니메이션
+- **모달/드로어 진입**: 부드러운 슬라이드 + 페이드, 백드롭 페이드, 포커스 관리
 
-### Micro-interactions
-- **Button feedback**:
-  - Hover: Subtle scale (1.02-1.05), color shift, shadow increase
-  - Click: Quick scale down then up (0.95 → 1), ripple effect
-  - Loading: Spinner or pulse state
-- **Form interactions**:
-  - Input focus: Border color transition, slight scale or glow
-  - Validation: Shake on error, check mark on success, smooth color transitions
-- **Toggle switches**: Smooth slide + color transition (200-300ms)
-- **Checkboxes/radio**: Check mark animation, ripple effect
-- **Like/favorite**: Scale + rotation, particle effects, color transition
+### 마이크로 인터랙션
+- **버튼 피드백**:
+  - 호버: 미세한 스케일 (1.02-1.05), 색상 변화, 그림자 증가
+  - 클릭: 빠른 축소 후 확대 (0.95 → 1), 리플 효과
+  - 로딩: 스피너 또는 펄스 상태
+- **폼 인터랙션**:
+  - 입력 포커스: 테두리 색상 트랜지션, 미세한 스케일 또는 글로우
+  - 유효성 검사: 오류 시 흔들기, 성공 시 체크 마크, 부드러운 색상 트랜지션
+- **토글 스위치**: 부드러운 슬라이드 + 색상 트랜지션 (200-300ms)
+- **체크박스/라디오**: 체크 마크 애니메이션, 리플 효과
+- **좋아요/즐겨찾기**: 스케일 + 회전, 파티클 효과, 색상 트랜지션
 
-### State Transitions
-- **Show/hide**: Fade + slide (not instant), appropriate timing (200-300ms)
-- **Expand/collapse**: Height transition with overflow handling, icon rotation
-- **Loading states**: Skeleton screen fades, spinner animations, progress bars
-- **Success/error**: Color transitions, icon animations, gentle scale pulse
-- **Enable/disable**: Opacity transitions, cursor changes
+### 상태 전환
+- **표시/숨김**: 페이드 + 슬라이드 (즉각적이지 않게), 적절한 타이밍 (200-300ms)
+- **펼치기/접기**: 오버플로 처리가 있는 높이 트랜지션, 아이콘 회전
+- **로딩 상태**: 스켈레톤 스크린 페이드, 스피너 애니메이션, 프로그레스 바
+- **성공/오류**: 색상 트랜지션, 아이콘 애니메이션, 부드러운 스케일 펄스
+- **활성화/비활성화**: 투명도 트랜지션, 커서 변경
 
-### Navigation & Flow
-- **Page transitions**: Crossfade between routes, shared element transitions
-- **Tab switching**: Slide indicator, content fade/slide
-- **Carousel/slider**: Smooth transforms, snap points, momentum
-- **Scroll effects**: Parallax layers, sticky headers with state changes, scroll progress indicators
+### 내비게이션과 흐름
+- **페이지 전환**: 라우트 간 크로스페이드, 공유 요소 트랜지션
+- **탭 전환**: 슬라이드 인디케이터, 콘텐츠 페이드/슬라이드
+- **캐러셀/슬라이더**: 부드러운 트랜스폼, 스냅 포인트, 모멘텀
+- **스크롤 효과**: 패럴랙스 레이어, 상태 변화가 있는 스티키 헤더, 스크롤 진행 인디케이터
 
-### Feedback & Guidance
-- **Hover hints**: Tooltip fade-ins, cursor changes, element highlights
-- **Drag & drop**: Lift effect (shadow + scale), drop zone highlights, smooth repositioning
-- **Copy/paste**: Brief highlight flash on paste, "copied" confirmation
-- **Focus flow**: Highlight path through form or workflow
+### 피드백과 안내
+- **호버 힌트**: 툴팁 페이드인, 커서 변경, 요소 하이라이트
+- **드래그 앤 드롭**: 들어올리기 효과 (그림자 + 스케일), 드롭 영역 하이라이트, 부드러운 재배치
+- **복사/붙여넣기**: 붙여넣기 시 짧은 하이라이트 깜박임, "복사됨" 확인
+- **포커스 흐름**: 폼이나 워크플로우를 통한 하이라이트 경로
 
-### Delight Moments
-- **Empty states**: Subtle floating animations on illustrations
-- **Completed actions**: Confetti, check mark flourish, success celebrations
-- **Easter eggs**: Hidden interactions for discovery
-- **Contextual animation**: Weather effects, time-of-day themes, seasonal touches
+### 즐거움의 순간
+- **빈 상태**: 일러스트레이션의 은은한 떠다니는 애니메이션
+- **완료된 액션**: 색종이, 체크 마크 플러리시, 성공 축하
+- **이스터 에그**: 발견을 위한 숨겨진 인터랙션
+- **맥락적 애니메이션**: 날씨 효과, 시간대별 테마, 계절 터치
 
-## Technical Implementation
+## 기술 구현
 
-Use appropriate techniques for each animation:
+각 애니메이션에 적절한 기법을 사용한다:
 
-### Timing & Easing
+### 타이밍과 이징(easing)
 
-**Durations by purpose:**
-- **100-150ms**: Instant feedback (button press, toggle)
-- **200-300ms**: State changes (hover, menu open)
-- **300-500ms**: Layout changes (accordion, modal)
-- **500-800ms**: Entrance animations (page load)
+**목적별 지속 시간:**
+- **100-150ms**: 즉각 피드백 (버튼 누르기, 토글)
+- **200-300ms**: 상태 변화 (호버, 메뉴 열기)
+- **300-500ms**: 레이아웃 변화 (아코디언, 모달)
+- **500-800ms**: 진입 애니메이션 (페이지 로드)
 
-**Easing curves (use these, not CSS defaults):**
+**이징 커브 (CSS 기본값이 아닌 다음을 사용):**
 ```css
-/* Recommended - natural deceleration */
---ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);    /* Smooth, refined */
---ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);   /* Slightly snappier */
---ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* Confident, decisive */
+/* 권장 - 자연스러운 감속 */
+--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);    /* 부드럽고 세련된 */
+--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);   /* 약간 더 경쾌한 */
+--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* 자신감 있고 단호한 */
 
-/* AVOID - feel dated and tacky */
+/* 피하기 - 촌스럽고 구식으로 느껴짐 */
 /* bounce: cubic-bezier(0.34, 1.56, 0.64, 1); */
 /* elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6); */
 ```
 
-**Exit animations are faster than entrances.** Use ~75% of enter duration.
+**퇴장 애니메이션은 진입보다 빠르다.** 진입 지속 시간의 ~75%를 사용한다.
 
-### CSS Animations
+### CSS 애니메이션
 ```css
-/* Prefer for simple, declarative animations */
-- transitions for state changes
-- @keyframes for complex sequences
-- transform + opacity only (GPU-accelerated)
+/* 단순하고 선언적 애니메이션에 적합 */
+- 상태 변화에는 transitions
+- 복잡한 시퀀스에는 @keyframes
+- transform + opacity만 사용 (GPU 가속)
 ```
 
-### JavaScript Animation
+### 자바스크립트 애니메이션
 ```javascript
-/* Use for complex, interactive animations */
-- Web Animations API for programmatic control
-- Framer Motion for React
-- GSAP for complex sequences
+/* 복잡하고 인터랙티브한 애니메이션에 사용 */
+- 프로그래밍 제어를 위한 Web Animations API
+- React용 Framer Motion
+- 복잡한 시퀀스용 GSAP
 ```
 
-### Performance
-- **GPU acceleration**: Use `transform` and `opacity`, avoid layout properties
-- **will-change**: Add sparingly for known expensive animations
-- **Reduce paint**: Minimize repaints, use `contain` where appropriate
-- **Monitor FPS**: Ensure 60fps on target devices
+### 성능
+- **GPU 가속**: `transform`과 `opacity` 사용, 레이아웃 속성 피하기
+- **will-change**: 비용이 높은 것으로 알려진 애니메이션에만 아껴서 추가
+- **리페인트 최소화**: 리페인트를 줄이고, 적절한 곳에 `contain` 사용
+- **FPS 모니터링**: 대상 디바이스에서 60fps 보장
 
-### Accessibility
+### 접근성
 ```css
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -151,24 +151,24 @@ Use appropriate techniques for each animation:
 }
 ```
 
-**NEVER**:
-- Use bounce or elastic easing curves—they feel dated and draw attention to the animation itself
-- Animate layout properties (width, height, top, left)—use transform instead
-- Use durations over 500ms for feedback—it feels laggy
-- Animate without purpose—every animation needs a reason
-- Ignore `prefers-reduced-motion`—this is an accessibility violation
-- Animate everything—animation fatigue makes interfaces feel exhausting
-- Block interaction during animations unless intentional
+**절대 하지 말 것**:
+- 바운스나 엘라스틱 이징 커브 사용 — 구식으로 느껴지며 애니메이션 자체에 주의를 끈다
+- 레이아웃 속성(width, height, top, left) 애니메이션 — 대신 transform 사용
+- 피드백에 500ms 이상의 지속 시간 사용 — 느리게 느껴진다
+- 목적 없이 애니메이션 — 모든 애니메이션에는 이유가 필요하다
+- `prefers-reduced-motion` 무시 — 접근성 위반이다
+- 모든 것에 애니메이션 — 애니메이션 피로가 인터페이스를 지치게 만든다
+- 의도적이지 않은 한 애니메이션 중 인터랙션 차단
 
-## Verify Quality
+## 품질 검증
 
-Test animations thoroughly:
+애니메이션을 철저히 테스트한다:
 
-- **Smooth at 60fps**: No jank on target devices
-- **Feels natural**: Easing curves feel organic, not robotic
-- **Appropriate timing**: Not too fast (jarring) or too slow (laggy)
-- **Reduced motion works**: Animations disabled or simplified appropriately
-- **Doesn't block**: Users can interact during/after animations
-- **Adds value**: Makes interface clearer or more delightful
+- **60fps에서 부드러움**: 대상 디바이스에서 끊김 없음
+- **자연스러운 느낌**: 이징 커브가 로봇적이지 않고 유기적
+- **적절한 타이밍**: 너무 빠르지(갑작스러운) 너무 느리지(지연되는) 않은
+- **축소 모션 작동**: 애니메이션이 적절히 비활성화되거나 단순화됨
+- **차단하지 않음**: 사용자가 애니메이션 중/후에 인터랙션 가능
+- **가치 추가**: 인터페이스를 더 명확하거나 즐겁게 만듦
 
-Remember: Motion should enhance understanding and provide feedback, not just add decoration. Animate with purpose, respect performance constraints, and always consider accessibility. Great animation is invisible - it just makes everything feel right.
+기억하라: 모션은 이해를 높이고 피드백을 제공해야 하며, 단순한 장식이 아니다. 목적을 가지고 애니메이션하고, 성능 제약을 존중하며, 항상 접근성을 고려한다. 훌륭한 애니메이션은 보이지 않는다 — 모든 것이 자연스럽게 느껴지게 만들 뿐이다.

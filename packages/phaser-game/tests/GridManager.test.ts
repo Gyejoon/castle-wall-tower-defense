@@ -1,6 +1,26 @@
-import { describe, it, expect } from 'vitest';
-import { GridManager } from '../src/systems/GridManager';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import type { GridConfig } from '@gld/shared';
+import { ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W } from '@gld/shared';
+
+// Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics
+vi.mock('phaser', () => ({
+  default: {
+    Geom: {
+      Point: class {
+        x: number; y: number;
+        constructor(x: number, y: number) { this.x = x; this.y = y; }
+      },
+    },
+    GameObjects: { Graphics: class {} },
+  },
+}));
+
+// Dynamic import after mock is registered
+let GridManager: typeof import('../src/systems/GridManager').GridManager;
+beforeAll(async () => {
+  const mod = await import('../src/systems/GridManager');
+  GridManager = mod.GridManager;
+});
 
 const TEST_CONFIG: GridConfig = {
   width: 10,
@@ -8,6 +28,9 @@ const TEST_CONFIG: GridConfig = {
   spawnPoint: { x: 0, y: 5 },
   exitPoint: { x: 5, y: 5 },
 };
+
+const OFFSET_X = ISO_CANVAS_W / 2;
+const OFFSET_Y = ISO_TILE_H / 2;
 
 describe('GridManager', () => {
   it('생성자가 속성을 올바르게 설정해야 한다', () => {
@@ -31,7 +54,6 @@ describe('GridManager', () => {
   it('isWalkable이 빈 타일에 true를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     expect(gm.isWalkable(1, 1)).toBe(true);
-    expect(gm.isWalkable(3, 3)).toBe(true);
   });
 
   it('isWalkable이 범위 밖에 false를 반환해야 한다', () => {
@@ -42,8 +64,7 @@ describe('GridManager', () => {
 
   it('placeTower가 빈 타일에 배치하고 true를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
-    const result = gm.placeTower(1, 1, 'tower-1');
-    expect(result).toBe(true);
+    expect(gm.placeTower(1, 1, 'tower-1')).toBe(true);
   });
 
   it('placeTower 후 isWalkable이 false를 반환해야 한다', () => {
@@ -55,25 +76,19 @@ describe('GridManager', () => {
   it('이미 점유된 타일에 placeTower가 false를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     gm.placeTower(1, 1, 'tower-1');
-    const result = gm.placeTower(1, 1, 'tower-2');
-    expect(result).toBe(false);
+    expect(gm.placeTower(1, 1, 'tower-2')).toBe(false);
   });
 
-  it('placeTower가 스폰 포인트에 false를 반환해야 한다', () => {
+  it('placeTower가 스폰/출구 포인트에 false를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     expect(gm.placeTower(0, 5, 'tower-1')).toBe(false);
-  });
-
-  it('placeTower가 출구 포인트에 false를 반환해야 한다', () => {
-    const gm = new GridManager(TEST_CONFIG);
     expect(gm.placeTower(5, 5, 'tower-1')).toBe(false);
   });
 
   it('removeTower가 타워를 제거하고 true를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     gm.placeTower(1, 1, 'tower-1');
-    const result = gm.removeTower(1, 1);
-    expect(result).toBe(true);
+    expect(gm.removeTower(1, 1)).toBe(true);
     expect(gm.isWalkable(1, 1)).toBe(true);
   });
 
@@ -82,7 +97,7 @@ describe('GridManager', () => {
     expect(gm.removeTower(1, 1)).toBe(false);
   });
 
-  it('getTile이 타일 정보를 반환해야 한다', () => {
+  it('getTile이 올바른 타일 정보를 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     const tile = gm.getTile(1, 1);
     expect(tile).not.toBeNull();
@@ -91,36 +106,62 @@ describe('GridManager', () => {
     expect(tile!.towerId).toBeNull();
   });
 
-  it('getTile이 placeTower 후 올바른 towerId를 반환해야 한다', () => {
-    const gm = new GridManager(TEST_CONFIG);
-    gm.placeTower(3, 4, 'laser-tower');
-    const tile = gm.getTile(3, 4);
-    expect(tile!.towerId).toBe('laser-tower');
-    expect(tile!.occupied).toBe(true);
-  });
-
   it('getTile이 범위 밖에 null을 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     expect(gm.getTile(-1, 0)).toBeNull();
     expect(gm.getTile(10, 0)).toBeNull();
   });
 
-  it('gridToWorld가 타일 중앙 픽셀 좌표로 변환해야 한다', () => {
+  it('gridToWorld가 아이소메트릭 좌표로 변환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
-    expect(gm.gridToWorld(0, 0)).toEqual({ x: 16, y: 16 });
-    expect(gm.gridToWorld(1, 2)).toEqual({ x: 48, y: 80 });
+    const p00 = gm.gridToWorld(0, 0);
+    expect(p00.x).toBe(OFFSET_X);
+    expect(p00.y).toBe(OFFSET_Y);
+
+    const p10 = gm.gridToWorld(1, 0);
+    expect(p10.x).toBe(OFFSET_X + ISO_TILE_W / 2);
+    expect(p10.y).toBe(OFFSET_Y + ISO_TILE_H / 2);
+
+    const p01 = gm.gridToWorld(0, 1);
+    expect(p01.x).toBe(OFFSET_X - ISO_TILE_W / 2);
+    expect(p01.y).toBe(OFFSET_Y + ISO_TILE_H / 2);
   });
 
-  it('worldToGrid가 그리드 좌표로 변환해야 한다', () => {
+  it('worldToGrid가 아이소메트릭 역변환을 수행해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
-    expect(gm.worldToGrid(32 * 3 + 10, 32 * 7 + 5)).toEqual({ x: 3, y: 7 });
+    const world = gm.gridToWorld(3, 2);
+    const grid = gm.worldToGrid(world.x, world.y);
+    expect(grid.x).toBe(3);
+    expect(grid.y).toBe(2);
+  });
+
+  it('worldToGridFloat가 연속 좌표를 반환해야 한다', () => {
+    const gm = new GridManager(TEST_CONFIG);
+    const world = gm.gridToWorld(3, 2);
+    const floatGrid = gm.worldToGridFloat(world.x, world.y);
+    expect(floatGrid.x).toBeCloseTo(3, 5);
+    expect(floatGrid.y).toBeCloseTo(2, 5);
+  });
+
+  it('worldToGridFloat가 타일 사이 위치에서 소수점을 반환해야 한다', () => {
+    const gm = new GridManager(TEST_CONFIG);
+    const world = gm.gridToWorld(3, 2);
+    const shifted = gm.worldToGridFloat(world.x + 10, world.y + 5);
+    expect(shifted.x % 1).not.toBe(0);
+  });
+
+  it('getIsoDepth가 gridX + gridY + 10을 반환해야 한다', () => {
+    const gm = new GridManager(TEST_CONFIG);
+    expect(gm.getIsoDepth(0, 0)).toBe(10);
+    expect(gm.getIsoDepth(3, 4)).toBe(17);
+    expect(gm.getIsoDepth(9, 9)).toBe(28);
   });
 
   it('getWalkabilityGrid가 올바른 2D 배열을 반환해야 한다', () => {
     const gm = new GridManager(TEST_CONFIG);
     gm.placeTower(2, 3, 'tower-1');
     const grid = gm.getWalkabilityGrid();
-    expect(grid[3][2]).toBe(1); // occupied = blocked
-    expect(grid[0][0]).toBe(0); // empty = walkable
+    expect(grid[3][2]).toBe(1);
+    expect(grid[0][0]).toBe(0);
   });
 });

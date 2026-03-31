@@ -1,8 +1,8 @@
 {
-  "buildCommand": "bun run build:web",
-  "outputDirectory": "packages/web-shell/dist",
-  "installCommand": "bun install",
-  "framework": "vite",
+  "buildCommand": "cd ../.. && bunx tsc -b packages/web-shell && cd packages/web-shell && bunx vite build",
+  "outputDirectory": "dist",
+  "installCommand": "cd ../.. && bun install",
+  "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

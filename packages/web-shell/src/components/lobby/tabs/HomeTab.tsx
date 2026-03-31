@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
 import { TabBackground } from '../TabBackground';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
@@ -7,10 +7,14 @@ import { useGameStore } from '../../../stores/gameStore';
 import { MOCK_PROFILE } from '../../../data/mockLobbyData';
 import { colors, fonts } from '../../../styles/tokens';
 
-export function HomeTab() {
+interface HomeTabProps {
+  isMatchmaking: boolean;
+  setIsMatchmaking: (v: boolean) => void;
+}
+
+export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
   const resetRun = useGameStore((s) => s.resetRun);
   const resetEmotes = useEmoteStore((s) => s.reset);
-  const [isMatchmaking, setIsMatchmaking] = useState(false);
 
   useEffect(() => {
     if (!isMatchmaking) return;

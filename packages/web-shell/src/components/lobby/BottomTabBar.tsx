@@ -8,7 +8,7 @@ const tabs: Array<{ id: LobbyTab; label: string; activeIcon: string; inactiveIco
   { id: 'settings', label: '영주실', activeIcon: uiMobileArt.settingsTabIconActive, inactiveIcon: uiMobileArt.settingsTabIconInactive },
 ];
 
-export function BottomTabBar() {
+export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
   const lobbyTab = useGameStore((s) => s.lobbyTab);
   const setLobbyTab = useGameStore((s) => s.setLobbyTab);
 
@@ -32,8 +32,10 @@ export function BottomTabBar() {
             key={tab.id}
             role="tab"
             aria-selected={isActive}
+            aria-label={tab.label}
             aria-controls={`tabpanel-${tab.id}`}
-            onClick={() => setLobbyTab(tab.id)}
+            disabled={disabled}
+            onClick={() => !disabled && setLobbyTab(tab.id)}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -42,9 +44,10 @@ export function BottomTabBar() {
               padding: '6px 16px',
               background: 'none',
               border: 'none',
-              cursor: 'pointer',
+              cursor: disabled ? 'not-allowed' : 'pointer',
               minWidth: '60px',
               touchAction: 'manipulation',
+              opacity: disabled ? 0.5 : 1,
             }}
           >
             <img
@@ -53,6 +56,7 @@ export function BottomTabBar() {
               width={24}
               height={24}
               style={{ imageRendering: 'pixelated' }}
+              aria-hidden="true"
             />
             <span
               className="tab-label"

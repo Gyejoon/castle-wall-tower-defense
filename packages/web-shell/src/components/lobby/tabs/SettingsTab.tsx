@@ -79,6 +79,9 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
   return (
     <button
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       onClick={onChange}
       style={{
         display: 'flex',

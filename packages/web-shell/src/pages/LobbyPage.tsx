@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { ProfileBar } from '../components/lobby/ProfileBar';
 import { BottomTabBar } from '../components/lobby/BottomTabBar';
@@ -6,15 +7,9 @@ import { CollectionTab } from '../components/lobby/tabs/CollectionTab';
 import { SettingsTab } from '../components/lobby/tabs/SettingsTab';
 import { colors } from '../styles/tokens';
 
-const tabComponents = {
-  home: HomeTab,
-  collection: CollectionTab,
-  settings: SettingsTab,
-} as const;
-
 export function LobbyPage() {
   const lobbyTab = useGameStore((s) => s.lobbyTab);
-  const TabContent = tabComponents[lobbyTab];
+  const [isMatchmaking, setIsMatchmaking] = useState(false);
 
   return (
     <div
@@ -54,11 +49,15 @@ export function LobbyPage() {
               animation: lobbyTab === 'home' ? 'fadeIn 500ms ease-out' : 'fadeIn 200ms ease-out',
             }}
           >
-            <TabContent />
+            {lobbyTab === 'home' && (
+              <HomeTab isMatchmaking={isMatchmaking} setIsMatchmaking={setIsMatchmaking} />
+            )}
+            {lobbyTab === 'collection' && <CollectionTab />}
+            {lobbyTab === 'settings' && <SettingsTab />}
           </div>
         </div>
 
-        <BottomTabBar />
+        <BottomTabBar disabled={isMatchmaking} />
       </div>
     </div>
   );

@@ -13,15 +13,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// Register service worker (injected by vite-plugin-pwa)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
-      // SW registration failed — app still works without it
-    });
-  });
-}
-
 // Screen orientation lock (portrait)
 (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })
   ?.lock?.('portrait')

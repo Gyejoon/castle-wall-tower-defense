@@ -15,7 +15,8 @@ import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/tiles';
 const COLS = 10;
-const TILE = TILE_SIZE; // 32
+export const TILESET_COLS = COLS;
+export const TILE = TILE_SIZE; // 32
 
 // 2.5D helper: 하단 어둡게, 상단 밝게 음영 그라데이션
 function shade25D(ctx: any, ox: number, oy: number, baseColor: string, darkColor: string, lightColor: string) {
@@ -387,6 +388,8 @@ const TILE_DRAWERS: Array<(ctx: any, ox: number, oy: number) => void> = [
   drawSignpost, drawSpawnCave, drawExitGate, drawPlacementPoint, drawPlacementOccupied, // 25-29
   drawGrassPathL, drawGrassPathR, drawPathCorner, drawCliffEdge, drawWaterfall, // 30-34
 ];
+
+export const TILESET_ROWS = Math.ceil(TILE_DRAWERS.length / COLS);
 
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });

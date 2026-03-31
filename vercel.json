@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd packages/web-shell && bun run build",
+  "buildCommand": "tsc -b packages/web-shell && cd packages/web-shell && bunx vite build",
   "outputDirectory": "packages/web-shell/dist",
   "installCommand": "bun install",
   "framework": "vite",

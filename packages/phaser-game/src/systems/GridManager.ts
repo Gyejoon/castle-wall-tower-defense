@@ -108,6 +108,16 @@ export class GridManager {
     ], true);
   }
 
+  /** Convert world coords to continuous (non-floored) grid coords for distance calculations */
+  worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
+    const rx = (worldX - this.offsetX) / ISO_TILE_W;
+    const ry = (worldY - this.offsetY) / ISO_TILE_H;
+    return {
+      x: rx + ry,
+      y: ry - rx,
+    };
+  }
+
   /** Get isometric depth for correct draw order */
   getIsoDepth(gridX: number, gridY: number): number {
     return 10 + gridX + gridY;

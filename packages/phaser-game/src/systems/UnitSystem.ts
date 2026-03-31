@@ -149,6 +149,7 @@ export class UnitSystem {
       unit.hpBar.destroy();
       const deathFx = this.scene.add.sprite(unit.worldX, unit.worldY, 'unit-death');
       deathFx.setDisplaySize(40, 48);
+      deathFx.setDepth(this.gridManager.getIsoDepth(unit.data.position.x, unit.data.position.y));
       deathFx.play('unit-death');
       deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => deathFx.destroy());
       this.units.delete(unitId);

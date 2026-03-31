@@ -47,7 +47,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     const cy = ISO_TILE_H / 2;
     const pebbles = [[-8, -3], [6, -4], [10, 2], [-6, 4], [0, -2]];
     for (const [dx, dy] of pebbles) {
-      if (Math.abs(dx) / 32 + Math.abs(dy) / 16 <= 1) {
+      if (Math.abs(dx) / (ISO_TILE_W / 2) + Math.abs(dy) / (ISO_TILE_H / 2) <= 1) {
         setPixel(ctx, cx + dx, cy + dy, PALETTE.stoneDark);
         setPixel(ctx, cx + dx + 1, cy + dy, hexToRgba(PALETTE.stoneLight, 0.5));
       }

@@ -168,7 +168,7 @@ export class TowerSystem {
 
       for (const unit of unitPositions) {
         if (unit.hp <= 0) continue;
-        const unitGrid = this.gridManager.worldToGrid(unit.x, unit.y);
+        const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
         const gdx = data.position.x - unitGrid.x;
         const gdy = data.position.y - unitGrid.y;
         const gridDistSq = gdx * gdx + gdy * gdy;
@@ -197,10 +197,10 @@ export class TowerSystem {
         // Splash: hit nearby units for 50% damage
         if (special === 'splash') {
           const splashRadiusSq = 1.5 * 1.5; // 1.5 grid units
-          const closestGrid = this.gridManager.worldToGrid(closestUnit.x, closestUnit.y);
+          const closestGrid = this.gridManager.worldToGridFloat(closestUnit.x, closestUnit.y);
           for (const unit of unitPositions) {
             if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0) continue;
-            const sUnitGrid = this.gridManager.worldToGrid(unit.x, unit.y);
+            const sUnitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
             const sdx = closestGrid.x - sUnitGrid.x;
             const sdy = closestGrid.y - sUnitGrid.y;
             if (sdx * sdx + sdy * sdy <= splashRadiusSq) {

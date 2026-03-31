@@ -389,7 +389,7 @@ const TILE_DRAWERS: Array<(ctx: any, ox: number, oy: number) => void> = [
   drawGrassPathL, drawGrassPathR, drawPathCorner, drawCliffEdge, drawWaterfall, // 30-34
 ];
 
-export const TILESET_ROWS = Math.ceil(TILE_DRAWERS.length / COLS);
+export const TILESET_ROWS = Math.ceil(TILE_DRAWERS.length / TILESET_COLS);
 
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });

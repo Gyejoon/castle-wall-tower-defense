@@ -1,102 +1,83 @@
 ---
 name: quieter
-description: Tones down visually aggressive or overstimulating designs, reducing intensity while preserving quality. Use when the user mentions too bold, too loud, overwhelming, aggressive, garish, or wants a calmer, more refined aesthetic.
+description: 시각적으로 공격적이거나 과도하게 자극적인 디자인을 톤다운하여 품질을 유지하면서 강도를 낮춘다. '너무 대담해', '시끄러워', '압도적이야', '공격적이야', '촌스러워', '눈이 아파', '너무 화려해', '정신없어', '차분하게 해줘', '세련되게', '톤다운해줘', '절제 좀', '수수하게', '품격 있게', '럭셔리하게' 등 시각적 강도/자극 관련 불만이면 반드시 이 스킬 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Reduce visual intensity in designs that are too bold, aggressive, or overstimulating, creating a more refined and approachable aesthetic without losing effectiveness.
+너무 대담하거나, 공격적이거나, 과도하게 자극적인 디자인의 시각적 강도를 줄여, 효과를 잃지 않으면서 더 세련되고 접근하기 쉬운 미학을 만든다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다.
 
 ---
 
-## Assess Current State
+## 현재 상태 평가
 
-Analyze what makes the design feel too intense:
+디자인이 너무 강렬하게 느껴지는 원인을 분석한다:
 
-1. **Identify intensity sources**:
-   - **Color saturation**: Overly bright or saturated colors
-   - **Contrast extremes**: Too much high-contrast juxtaposition
-   - **Visual weight**: Too many bold, heavy elements competing
-   - **Animation excess**: Too much motion or overly dramatic effects
-   - **Complexity**: Too many visual elements, patterns, or decorations
-   - **Scale**: Everything is large and loud with no hierarchy
+1. **강도의 원인**: 지나치게 높은 채도, 너무 많은 고대비 병치, 경쟁하는 굵고 무거운 요소들, 과잉 애니메이션, 과도한 시각 요소/장식, 계층구조 없이 모든 것이 크고 시끄러움
 
-2. **Understand the context**:
-   - What's the purpose? (Marketing vs tool vs reading experience)
-   - Who's the audience? (Some contexts need energy)
-   - What's working? (Don't throw away good ideas)
-   - What's the core message? (Preserve what matters)
+2. **맥락**: 목적(마케팅 vs 도구 vs 읽기 경험), 대상(에너지가 필요한 맥락도 있다), 무엇이 잘 되고 있는가(좋은 아이디어를 버리지 않기), 핵심 메시지(중요한 것을 보존)
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+불확실한 것이 있다면 **멈추고** AskUserQuestion 도구를 호출하여 명확히 한다.
 
-**CRITICAL**: "Quieter" doesn't mean boring or generic. It means refined, sophisticated, and easier on the eyes. Think luxury, not laziness.
+**핵심**: "더 조용하게"는 지루하거나 평범한 것이 아니다. 세련되고, 품격 있고, 눈에 편한 것이다. 럭셔리를 생각한다, 게으름이 아닌.
 
-## Plan Refinement
+## 정제 계획
 
-Create a strategy to reduce intensity while maintaining impact:
+- **색상**: 채도를 낮추거나 더 세련된 톤으로 이동
+- **계층구조**: 대담하게 유지할 극소수를 정하고, 나머지는 후퇴
+- **단순화**: 완전히 제거할 수 있는 것
+- **품격**: 절제를 통해 품질을 어떻게 전달할 것인가
 
-- **Color approach**: Desaturate or shift to more sophisticated tones?
-- **Hierarchy approach**: Which elements should stay bold (very few), which should recede?
-- **Simplification approach**: What can be removed entirely?
-- **Sophistication approach**: How can we signal quality through restraint?
+훌륭한 조용한 디자인은 훌륭한 대담한 디자인보다 어렵다 — 미묘함에는 정밀함이 필요하다.
 
-**IMPORTANT**: Great quiet design is harder than great bold design. Subtlety requires precision.
+## 디자인 정제
 
-## Refine the Design
+### 색상 정제
+- **채도 낮추기**: 완전 채도→70-85%. 원래 색상의 에너지를 유지하면서 눈의 피로를 줄인다.
+- **팔레트 부드럽게**: 밝은 색상→차분하고 세련된 톤
+- **색상 다양성 줄이기**: 더 적은 색상을 더 신중하게
+- **중립색 지배**: 중립색에 더 많은 역할, 색상은 악센트로 (10% 규칙)
+- **색조 있는 회색**: 순수 회색 대신 따뜻하거나 차가운 색조 — 시끄러움 없이 품격을 더한다
+- 색상 배경에 회색 텍스트가 있다면 바랜 느낌을 준다 — 해당 색상의 어두운 음영이나 투명도를 대신 사용한다
 
-Systematically reduce intensity across these dimensions:
+### 시각적 무게 감소
+- **타이포그래피**: 굵기 낮추기 (900→600, 700→500), 적절한 곳에서 크기 줄이기
+- **미묘함 통한 계층구조**: 색상과 굵기 대신 무게, 크기, 공간으로 구분
+- **여백**: 숨 쉬는 공간 늘리기, 밀도 줄이기
+- **테두리와 선**: 두께 줄이기, 투명도 낮추기, 또는 완전 제거
 
-### Color Refinement
-- **Reduce saturation**: Shift from fully saturated to 70-85% saturation
-- **Soften palette**: Replace bright colors with muted, sophisticated tones
-- **Reduce color variety**: Use fewer colors more thoughtfully
-- **Neutral dominance**: Let neutrals do more work, use color as accent (10% rule)
-- **Gentler contrasts**: High contrast only where it matters most
-- **Tinted grays**: Use warm or cool tinted grays instead of pure gray—adds sophistication without loudness
-- **Never gray on color**: If you have gray text on a colored background, use a darker shade of that color or transparency instead
+### 단순화
+- **장식 요소 제거**: 목적에 기여하지 않는 그라데이션, 그림자, 패턴, 텍스처. 장식은 의미가 없으면 잡음이다.
+- **레이어링 줄이기**: 시각적 계층구조를 가능한 곳에서 평탄화
+- **효과 정리**: 블러, 글로우, 다중 그림자 줄이거나 제거
 
-### Visual Weight Reduction
-- **Typography**: Reduce font weights (900 → 600, 700 → 500), decrease sizes where appropriate
-- **Hierarchy through subtlety**: Use weight, size, and space instead of color and boldness
-- **White space**: Increase breathing room, reduce density
-- **Borders & lines**: Reduce thickness, decrease opacity, or remove entirely
+### 모션 감소
+- **강도 줄이기**: 이동 거리를 40px→10-20px, 더 부드러운 이징
+- **장식적 애니메이션 제거**: 기능적 모션은 유지, 플러리시 제거. 명확한 목적이 없는 애니메이션은 인지 부하만 높이기 때문이다.
+- **미묘한 마이크로 인터랙션**: 극적인 효과→부드러운 피드백
+- **이징**: ease-out-quart로 부드럽고 절제된 모션. 바운스나 엘라스틱은 조용한 디자인과 근본적으로 충돌한다 — 주의를 끌어 "차분함"의 목적을 훼손한다.
 
-### Simplification
-- **Remove decorative elements**: Gradients, shadows, patterns, textures that don't serve purpose
-- **Simplify shapes**: Reduce border radius extremes, simplify custom shapes
-- **Reduce layering**: Flatten visual hierarchy where possible
-- **Clean up effects**: Reduce or remove blur effects, glows, multiple shadows
+### 구성 정제
+- **스케일 점프 줄이기**: 크기 간 작은 대비가 더 차분한 느낌
+- **그리드에 정렬**: 벗어난 요소를 체계적 정렬로 복귀
+- **간격 균일화**: 극단적 간격 변화→일관된 리듬
 
-### Motion Reduction
-- **Reduce animation intensity**: Shorter distances (10-20px instead of 40px), gentler easing
-- **Remove decorative animations**: Keep functional motion, remove flourishes
-- **Subtle micro-interactions**: Replace dramatic effects with gentle feedback
-- **Refined easing**: Use ease-out-quart for smooth, understated motion—never bounce or elastic
-- **Remove animations entirely** if they're not serving a clear purpose
+### 피해야 할 패턴과 이유
 
-### Composition Refinement
-- **Reduce scale jumps**: Smaller contrast between sizes creates calmer feeling
-- **Align to grid**: Bring rogue elements back into systematic alignment
-- **Even out spacing**: Replace extreme spacing variations with consistent rhythm
+- 모든 것을 같은 크기/무게로 만들면 계층구조가 사라진다 — 조용한 디자인도 주요/보조 구분이 필요하다.
+- 모든 색상을 제거하면 조용함이 아니라 무미건조함이다 — 악센트 하나는 유지한다.
+- 모든 개성을 제거하면 정제가 아니라 후퇴다 — 절제를 통해 캐릭터를 유지한다.
+- 모든 것을 작고 가볍게 만들면 앵커가 없어 시선이 떠돈다 — 무게 있는 요소 1-2개를 남긴다.
 
-**NEVER**:
-- Make everything the same size/weight (hierarchy still matters)
-- Remove all color (quiet ≠ grayscale)
-- Eliminate all personality (maintain character through refinement)
-- Sacrifice usability for aesthetics (functional elements still need clear affordances)
-- Make everything small and light (some anchors needed)
+## 품질 검증
 
-## Verify Quality
+- **여전히 기능적**: 사용자가 쉽게 작업을 수행할 수 있는가?
+- **여전히 독특한**: 캐릭터가 있는가, 아니면 평범해졌는가?
+- **더 나은 읽기**: 텍스트가 오래 읽어도 편안한가?
+- **품격**: 더 세련되고 프리미엄한 느낌인가?
 
-Ensure refinement maintains quality:
-
-- **Still functional**: Can users still accomplish tasks easily?
-- **Still distinctive**: Does it have character, or is it generic now?
-- **Better reading**: Is text easier to read for extended periods?
-- **Sophistication**: Does it feel more refined and premium?
-
-Remember: Quiet design is confident design. It doesn't need to shout. Less is more, but less is also harder. Refine with precision and maintain intentionality.
+조용한 디자인은 자신감 있는 디자인이다 — 소리 지를 필요가 없다. 적은 것이 더 많지만, 적은 것이 더 어렵기도 하다. 정밀하게 정제하고 의도성을 유지한다.

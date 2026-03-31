@@ -1,147 +1,139 @@
 ---
 name: frontend-design
-description: Create distinctive, production-grade frontend interfaces with high design quality. Generates creative, polished code that avoids generic AI aesthetics. Use when the user asks to build web components, pages, artifacts, posters, or applications, or when any design skill requires project context.
+description: "차별화된 프로덕션 수준의 프론트엔드 인터페이스를 높은 디자인 품질로 제작한다. 뻔한 AI 미학을 피하는 창의적이고 세련된 코드를 생성한다. '웹 컴포넌트 만들어줘', '페이지 디자인해줘', '포스터 만들어줘', '애플리케이션 만들어줘', '아티팩트 만들어줘', '프론트엔드 구현해줘', '이쁘게 만들어줘' 등 프론트엔드 제작 요청이면 이 스킬 사용. 다른 디자인 스킬에 프로젝트 컨텍스트가 필요할 때도 이 스킬이 기반."
 license: Apache 2.0. Based on Anthropic's frontend-design skill. See NOTICE.md for attribution.
 ---
 
-This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+뻔한 "AI 양산형(AI slop)" 미학을 피하는 차별화된 프로덕션 수준의 프론트엔드 인터페이스 제작을 안내한다. 미적 디테일과 창의적 선택에 뛰어난 주의를 기울여 실제 작동하는 코드를 구현한다.
 
-## Context Gathering Protocol
+## 컨텍스트 수집 프로토콜
 
-Design skills produce generic output without project context. You MUST have confirmed design context before doing any design work.
+디자인 스킬은 프로젝트 컨텍스트 없이는 뻔한 결과물을 만들어낸다 — 코드는 무엇이 만들어졌는지 알려줄 뿐, 누구를 위한 것인지나 어떤 느낌이어야 하는지는 알려주지 않기 때문이다.
 
-**Required context** — every design skill needs at minimum:
-- **Target audience**: Who uses this product and in what context?
-- **Use cases**: What jobs are they trying to get done?
-- **Brand personality/tone**: How should the interface feel?
+**필수 컨텍스트** — 모든 디자인 스킬에 최소한 다음이 필요하다:
+- **타겟 사용자**: 이 제품을 누가, 어떤 맥락에서 사용하는가?
+- **사용 사례**: 사용자가 달성하려는 과제는 무엇인가?
+- **브랜드 개성/톤**: 인터페이스가 어떤 느낌이어야 하는가?
 
-Individual skills may require additional context — check the skill's preparation section for specifics.
-
-**CRITICAL**: You cannot infer this context by reading the codebase. Code tells you what was built, not who it's for or what it should feel like. Only the creator can provide this context.
-
-**Gathering order:**
-1. **Check current instructions (instant)**: If your loaded instructions already contain a **Design Context** section, proceed immediately.
-2. **Check .impeccable.md (fast)**: If not in instructions, read `.impeccable.md` from the project root. If it exists and contains the required context, proceed.
-3. **Run teach-impeccable (REQUIRED)**: If neither source has context, you MUST run /teach-impeccable NOW before doing anything else. Do NOT skip this step. Do NOT attempt to infer context from the codebase instead.
+**수집 순서:**
+1. **현재 지시사항 확인 (즉시)**: 로드된 지시사항에 **Design Context** 섹션이 이미 있으면 바로 진행한다.
+2. **.impeccable.md 확인 (빠름)**: 지시사항에 없으면 프로젝트 루트의 `.impeccable.md`를 읽는다. 필수 컨텍스트가 포함되어 있으면 진행한다.
+3. **/teach-impeccable 실행 (필수)**: 어느 소스에도 컨텍스트가 없으면, 다른 작업 전에 반드시 /teach-impeccable을 실행한다. 코드베이스에서 컨텍스트를 유추하려 하면 결과물이 뻔해지기 때문이다.
 
 ---
 
-## Design Direction
+## 디자인 방향
 
-Commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+과감한(BOLD) 미적 방향을 결정한다:
+- **목적**: 이 인터페이스가 해결하는 문제는? 누가 사용하는가?
+- **톤**: 극단적인 방향을 선택한다 — 극도의 미니멀, 맥시멀리스트 카오스, 레트로 퓨처리즘, 유기적/자연적, 럭셔리/세련됨, 장난스러움/토이, 에디토리얼/매거진, 브루탈리스트/로우, 아르데코/기하학적, 소프트/파스텔, 산업적/실용적 등. 이들을 영감으로 삼되 미적 방향에 충실한 디자인을 만든다.
+- **제약**: 기술적 요구사항 (프레임워크, 성능, 접근성).
+- **차별화**: 무엇이 이것을 잊을 수 없게 만드는가? 누군가가 기억할 단 하나는?
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work—the key is intentionality, not intensity.
+명확한 컨셉 방향을 정하고 정밀하게 실행한다. 대담한 맥시멀리즘과 세련된 미니멀리즘 모두 유효하다 — 핵심은 강렬함이 아니라 의도성이다.
 
-Then implement working code that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+그런 다음 다음 조건을 충족하는 작동하는 코드를 구현한다:
+- 프로덕션 수준의 기능성
+- 시각적으로 인상적이고 기억에 남는 디자인
+- 명확한 미적 관점을 가진 일관된 디자인
+- 모든 디테일이 세심하게 다듬어진 결과물
 
-## Frontend Aesthetics Guidelines
+## 프론트엔드 미학 가이드라인
 
-### Typography
-→ *Consult [typography reference](reference/typography.md) for scales, pairing, and loading strategies.*
+### 타이포그래피(Typography)
+→ *타이포그래피 스케일, 조합, 로딩 전략은 [typography reference](reference/typography.md) 참조.*
 
-Choose fonts that are beautiful, unique, and interesting. Pair a distinctive display font with a refined body font.
+아름답고 독특하며 흥미로운 폰트를 선택한다. 특색 있는 디스플레이 폰트와 세련된 본문 폰트를 조합한다.
 
-**DO**: Use a modular type scale with fluid sizing (clamp)
-**DO**: Vary font weights and sizes to create clear visual hierarchy
-**DON'T**: Use overused fonts—Inter, Roboto, Arial, Open Sans, system defaults
-**DON'T**: Use monospace typography as lazy shorthand for "technical/developer" vibes
-**DON'T**: Put large icons with rounded corners above every heading—they rarely add value and make sites look templated
+- 유동적 사이즈(clamp)와 함께 모듈러 타입 스케일을 사용한다
+- 폰트 굵기와 크기를 다양하게 하여 명확한 시각적 위계를 만든다
+- 과도하게 사용된 폰트(Inter, Roboto, Arial, Open Sans, 시스템 기본)는 피한다 — 어디서나 보이는 폰트는 차별화를 죽인다
+- 모노스페이스 타이포그래피를 "기술적/개발자" 느낌의 안이한 수단으로 쓰지 않는다
+- 모든 제목 위에 둥근 모서리의 큰 아이콘을 배치하지 않는다 — 가치를 더하는 경우가 드물고 템플릿처럼 보인다
 
-### Color & Theme
-→ *Consult [color reference](reference/color-and-contrast.md) for OKLCH, palettes, and dark mode.*
+### 색상 및 테마
+→ *OKLCH, 팔레트, 다크 모드는 [color reference](reference/color-and-contrast.md) 참조.*
 
-Commit to a cohesive palette. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
+일관된 팔레트를 확립한다. 강렬한 주색과 날카로운 액센트의 조합이 소극적이고 균등 분배된 팔레트보다 효과적이다.
 
-**DO**: Use modern CSS color functions (oklch, color-mix, light-dark) for perceptually uniform, maintainable palettes
-**DO**: Tint your neutrals toward your brand hue—even a subtle hint creates subconscious cohesion
-**DON'T**: Use gray text on colored backgrounds—it looks washed out; use a shade of the background color instead
-**DON'T**: Use pure black (#000) or pure white (#fff)—always tint; pure black/white never appears in nature
-**DON'T**: Use the AI color palette: cyan-on-dark, purple-to-blue gradients, neon accents on dark backgrounds
-**DON'T**: Use gradient text for "impact"—especially on metrics or headings; it's decorative rather than meaningful
-**DON'T**: Default to dark mode with glowing accents—it looks "cool" without requiring actual design decisions
+- 현대적 CSS 색상 함수(oklch, color-mix, light-dark)로 지각적으로 균일하고 유지보수가 용이한 팔레트를 구축한다
+- 뉴트럴 색상에 브랜드 색조를 살짝 입혀 무의식적 일관성을 생성한다
+- 색상 배경 위에 회색 텍스트를 사용하지 않는다 — 바랜 느낌을 준다; 배경색의 셰이드를 사용한다
+- 순수 블랙(#000)이나 순수 화이트(#fff)를 사용하지 않는다 — 자연에는 순수 흑백이 존재하지 않으므로 항상 색조를 입힌다
+- AI 색상 팔레트(다크 배경에 시안, 퍼플-투-블루 그라데이션, 다크 배경에 네온 액센트)를 피한다
+- "임팩트"를 위한 그라데이션 텍스트를 피한다 — 특히 지표나 제목에; 의미 전달이 아닌 장식이다
+- 빛나는 액센트의 다크 모드를 기본값으로 쓰지 않는다 — 실제 디자인 결정 없이 "멋져 보이기"만 하기 때문이다
 
-### Layout & Space
-→ *Consult [spatial reference](reference/spatial-design.md) for grids, rhythm, and container queries.*
+### 레이아웃 및 공간
+→ *그리드, 리듬, 컨테이너 쿼리는 [spatial reference](reference/spatial-design.md) 참조.*
 
-Create visual rhythm through varied spacing—not the same padding everywhere. Embrace asymmetry and unexpected compositions. Break the grid intentionally for emphasis.
+다양한 간격을 통해 시각적 리듬을 만든다. 비대칭과 예상치 못한 구성을 적극 활용한다.
 
-**DO**: Create visual rhythm through varied spacing—tight groupings, generous separations
-**DO**: Use fluid spacing with clamp() that breathes on larger screens
-**DO**: Use asymmetry and unexpected compositions; break the grid intentionally for emphasis
-**DON'T**: Wrap everything in cards—not everything needs a container
-**DON'T**: Nest cards inside cards—visual noise, flatten the hierarchy
-**DON'T**: Use identical card grids—same-sized cards with icon + heading + text, repeated endlessly
-**DON'T**: Use the hero metric layout template—big number, small label, supporting stats, gradient accent
-**DON'T**: Center everything—left-aligned text with asymmetric layouts feels more designed
-**DON'T**: Use the same spacing everywhere—without rhythm, layouts feel monotonous
+- 촘촘한 그룹핑, 넉넉한 분리로 시각적 리듬을 생성한다
+- clamp()로 유동적 간격을 사용하여 큰 화면에서 여유롭게 한다
+- 강조를 위해 의도적으로 그리드를 깬다
+- 모든 것을 카드로 감싸지 않는다 — 모든 것에 컨테이너가 필요하지 않다
+- 카드 안에 카드를 중첩하지 않는다 — 시각적 노이즈가 위계를 평탄화한다
+- 동일한 카드 그리드(아이콘 + 제목 + 텍스트의 같은 크기 카드 반복)를 피한다
+- 히어로 지표 레이아웃 템플릿(큰 숫자, 작은 레이블, 부가 통계, 그라데이션 액센트)을 피한다
+- 모든 것을 가운데 정렬하지 않는다 — 비대칭 레이아웃에 왼쪽 정렬 텍스트가 더 디자인된 느낌이다
+- 어디나 같은 간격을 쓰지 않는다 — 리듬 없이는 레이아웃이 단조로워진다
 
-### Visual Details
-**DO**: Use intentional, purposeful decorative elements that reinforce brand
-**DON'T**: Use glassmorphism everywhere—blur effects, glass cards, glow borders used decoratively rather than purposefully
-**DON'T**: Use rounded elements with thick colored border on one side—a lazy accent that almost never looks intentional
-**DON'T**: Use sparklines as decoration—tiny charts that look sophisticated but convey nothing meaningful
-**DON'T**: Use rounded rectangles with generic drop shadows—safe, forgettable, could be any AI output
-**DON'T**: Use modals unless there's truly no better alternative—modals are lazy
+### 비주얼 디테일
+- 브랜드를 강화하는 의도적이고 목적 있는 장식 요소를 사용한다
+- 글래스모피즘(Glassmorphism)을 남용하지 않는다 — 블러 효과, 유리 카드, 글로우 보더를 목적 없이 장식적으로 쓰면 AI 생성물의 지문이 된다
+- 한 면에 두꺼운 컬러 보더가 있는 둥근 요소를 피한다 — 의도적으로 보이는 경우가 거의 없는 안이한 액센트다
+- 장식용 스파크라인을 피한다 — 세련돼 보이지만 의미 있는 정보를 전달하지 않는다
+- 뻔한 드롭 섀도가 있는 둥근 직사각형을 피한다 — 안전하고 기억에 남지 않는다
+- 진정으로 더 나은 대안이 없는 경우가 아니면 모달을 쓰지 않는다 — 모달은 안이한 선택이기 때문이다
 
-### Motion
-→ *Consult [motion reference](reference/motion-design.md) for timing, easing, and reduced motion.*
+### 모션(Motion)
+→ *타이밍, 이징, 모션 감소 대응은 [motion reference](reference/motion-design.md) 참조.*
 
-Focus on high-impact moments: one well-orchestrated page load with staggered reveals creates more delight than scattered micro-interactions.
+고영향 순간에 집중한다: 시차를 둔 공개가 포함된 하나의 잘 조율된 페이지 로드가 산발적인 마이크로 인터랙션보다 더 큰 즐거움을 준다.
 
-**DO**: Use motion to convey state changes—entrances, exits, feedback
-**DO**: Use exponential easing (ease-out-quart/quint/expo) for natural deceleration
-**DO**: For height animations, use grid-template-rows transitions instead of animating height directly
-**DON'T**: Animate layout properties (width, height, padding, margin)—use transform and opacity only
-**DON'T**: Use bounce or elastic easing—they feel dated and tacky; real objects decelerate smoothly
+- 상태 변화를 전달하기 위해 모션을 사용한다 — 진입, 퇴장, 피드백
+- 자연스러운 감속을 위한 지수 이징(ease-out-quart/quint/expo)을 사용한다
+- 높이 애니메이션에는 height를 직접 애니메이션하지 않고 grid-template-rows 트랜지션을 사용한다
+- 레이아웃 속성(width, height, padding, margin)을 애니메이션하지 않는다 — transform과 opacity만 사용해야 60fps를 유지할 수 있다
+- 바운스나 일래스틱 이징을 피한다 — 실제 물체는 부드럽게 감속하므로 촌스럽고 구식으로 느껴진다
 
-### Interaction
-→ *Consult [interaction reference](reference/interaction-design.md) for forms, focus, and loading patterns.*
+### 인터랙션(Interaction)
+→ *폼, 포커스, 로딩 패턴은 [interaction reference](reference/interaction-design.md) 참조.*
 
-Make interactions feel fast. Use optimistic UI—update immediately, sync later.
+인터랙션이 빠르게 느껴지도록 한다. 낙관적 UI(Optimistic UI)를 사용한다 — 즉시 업데이트하고 나중에 동기화.
 
-**DO**: Use progressive disclosure—start simple, reveal sophistication through interaction (basic options first, advanced behind expandable sections; hover states that reveal secondary actions)
-**DO**: Design empty states that teach the interface, not just say "nothing here"
-**DO**: Make every interactive surface feel intentional and responsive
-**DON'T**: Repeat the same information—redundant headers, intros that restate the heading
-**DON'T**: Make every button primary—use ghost buttons, text links, secondary styles; hierarchy matters
+- 점진적 공개(Progressive Disclosure)를 사용한다 — 단순하게 시작하고 인터랙션을 통해 복잡성을 드러낸다
+- 빈 상태에서 인터페이스 사용법을 알려주는 디자인을 한다 — "여기에 아무것도 없습니다"는 기회 낭비다
+- 모든 인터랙티브 표면이 의도적이고 반응적으로 느껴지도록 한다
+- 같은 정보를 반복하지 않는다 — 제목을 되풀이하는 중복 헤더와 소개문은 사용자의 시간을 뺏는다
+- 모든 버튼을 프라이머리로 만들지 않는다 — 고스트 버튼, 텍스트 링크, 세컨더리 스타일을 활용하여 위계를 만든다
 
-### Responsive
-→ *Consult [responsive reference](reference/responsive-design.md) for mobile-first, fluid design, and container queries.*
+### 반응형(Responsive)
+→ *모바일 퍼스트, 유동적 디자인, 컨테이너 쿼리는 [responsive reference](reference/responsive-design.md) 참조.*
 
-**DO**: Use container queries (@container) for component-level responsiveness
-**DO**: Adapt the interface for different contexts—don't just shrink it
-**DON'T**: Hide critical functionality on mobile—adapt the interface, don't amputate it
+- 컴포넌트 단위 반응형을 위해 컨테이너 쿼리(@container)를 사용한다
+- 다른 맥락에 맞게 인터페이스를 적응시킨다 — 단순히 축소하면 모바일 경험이 열화된다
+- 모바일에서 핵심 기능을 숨기지 않는다 — 인터페이스를 적응시키지, 절단하지 않는다
 
-### UX Writing
-→ *Consult [ux-writing reference](reference/ux-writing.md) for labels, errors, and empty states.*
+### UX 라이팅(UX Writing)
+→ *레이블, 에러, 빈 상태는 [ux-writing reference](reference/ux-writing.md) 참조.*
 
-**DO**: Make every word earn its place
-**DON'T**: Repeat information users can already see
-
----
-
-## The AI Slop Test
-
-**Critical quality check**: If you showed this interface to someone and said "AI made this," would they believe you immediately? If yes, that's the problem.
-
-A distinctive interface should make someone ask "how was this made?" not "which AI made this?"
-
-Review the DON'T guidelines above—they are the fingerprints of AI-generated work from 2024-2025.
+- 모든 단어가 존재 이유를 증명하게 한다
+- 사용자가 이미 볼 수 있는 정보를 반복하지 않는다
 
 ---
 
-## Implementation Principles
+## AI 양산형 테스트
 
-Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details.
+이 인터페이스를 누군가에게 보여주며 "AI가 만들었다"고 하면 즉시 믿을까? 그렇다면, 그것이 문제다. 차별화된 인터페이스는 "어떤 AI가 만들었지?"가 아니라 "이걸 어떻게 만들었지?"라는 질문을 이끌어내야 한다.
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices across generations.
+---
 
-Remember: Claude is capable of extraordinary creative work. Don't hold back—show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+## 구현 원칙
+
+구현의 복잡도를 미적 비전에 맞춘다. 맥시멀리스트 디자인은 방대한 애니메이션과 효과가 포함된 정교한 코드가 필요하다. 미니멀리스트나 세련된 디자인은 절제, 정밀함, 간격/타이포그래피/미묘한 디테일에 대한 세심한 주의가 필요하다.
+
+창의적으로 해석하고 맥락에 진정으로 맞게 디자인된 느낌의 예상치 못한 선택을 한다. 어떤 디자인도 같아서는 안 된다. 라이트와 다크 테마, 다른 폰트, 다른 미학을 번갈아 사용한다. 생성 간에 흔한 선택으로 수렴하지 않는다.
+
+Claude는 놀라운 창의적 작업이 가능하다. 틀 밖에서 사고하고 차별화된 비전에 온전히 몰입할 때 진정으로 무엇을 만들 수 있는지 보여준다.

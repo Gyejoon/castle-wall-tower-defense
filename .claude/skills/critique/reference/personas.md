@@ -1,178 +1,178 @@
-# Persona-Based Design Testing
+# 페르소나(Persona) 기반 디자인 테스트
 
-Test the interface through the eyes of 5 distinct user archetypes. Each persona exposes different failure modes that a single "design director" perspective would miss.
+5가지 고유 사용자 원형(archetype)의 눈으로 인터페이스를 테스트한다. 각 페르소나는 단일 "디자인 디렉터" 관점에서는 놓칠 수 있는 서로 다른 실패 모드를 드러낸다.
 
-**How to use**: Select 2–3 personas most relevant to the interface being critiqued. Walk through the primary user action as each persona. Report specific red flags — not generic concerns.
-
----
-
-## 1. Impatient Power User — "Alex"
-
-**Profile**: Expert with similar products. Expects efficiency, hates hand-holding. Will find shortcuts or leave.
-
-**Behaviors**:
-- Skips all onboarding and instructions
-- Looks for keyboard shortcuts immediately
-- Tries to bulk-select, batch-edit, and automate
-- Gets frustrated by required steps that feel unnecessary
-- Abandons if anything feels slow or patronizing
-
-**Test Questions**:
-- Can Alex complete the core task in under 60 seconds?
-- Are there keyboard shortcuts for common actions?
-- Can onboarding be skipped entirely?
-- Do modals have keyboard dismiss (Esc)?
-- Is there a "power user" path (shortcuts, bulk actions)?
-
-**Red Flags** (report these specifically):
-- Forced tutorials or unskippable onboarding
-- No keyboard navigation for primary actions
-- Slow animations that can't be skipped
-- One-item-at-a-time workflows where batch would be natural
-- Redundant confirmation steps for low-risk actions
+**사용법**: 비평 대상 인터페이스에 가장 관련 있는 페르소나 2~3개를 선택한다. 각 페르소나로서 주요 사용자 동작을 따라간다. 일반적 우려가 아닌 구체적 위험 신호를 보고한다.
 
 ---
 
-## 2. Confused First-Timer — "Jordan"
+## 1. 성급한 파워 유저 — "Alex"
 
-**Profile**: Never used this type of product. Needs guidance at every step. Will abandon rather than figure it out.
+**프로필**: 유사 제품에 능숙한 전문가. 효율을 기대하고, 과잉 안내를 싫어한다. 단축키를 찾거나 떠난다.
 
-**Behaviors**:
-- Reads all instructions carefully
-- Hesitates before clicking anything unfamiliar
-- Looks for help or support constantly
-- Misunderstands jargon and abbreviations
-- Takes the most literal interpretation of any label
+**행동 패턴**:
+- 모든 온보딩과 안내를 건너뜀
+- 즉시 키보드 단축키를 찾음
+- 일괄 선택, 배치 편집, 자동화를 시도
+- 불필요하게 느껴지는 필수 단계에 좌절
+- 느리거나 유치하게 느껴지면 이탈
 
-**Test Questions**:
-- Is the first action obviously clear within 5 seconds?
-- Are all icons labeled with text?
-- Is there contextual help at decision points?
-- Does terminology assume prior knowledge?
-- Is there a clear "back" or "undo" at every step?
+**테스트 질문**:
+- Alex가 핵심 과제를 60초 이내에 완료할 수 있는가?
+- 주요 동작에 키보드 단축키가 있는가?
+- 온보딩을 완전히 건너뛸 수 있는가?
+- 모달에 키보드 닫기(Esc)가 있는가?
+- "파워 유저" 경로가 있는가 (단축키, 일괄 동작)?
 
-**Red Flags** (report these specifically):
-- Icon-only navigation with no labels
-- Technical jargon without explanation
-- No visible help option or guidance
-- Ambiguous next steps after completing an action
-- No confirmation that an action succeeded
-
----
-
-## 3. Accessibility-Dependent User — "Sam"
-
-**Profile**: Uses screen reader (VoiceOver/NVDA), keyboard-only navigation. May have low vision, motor impairment, or cognitive differences.
-
-**Behaviors**:
-- Tabs through the interface linearly
-- Relies on ARIA labels and heading structure
-- Cannot see hover states or visual-only indicators
-- Needs adequate color contrast (4.5:1 minimum)
-- May use browser zoom up to 200%
-
-**Test Questions**:
-- Can the entire primary flow be completed keyboard-only?
-- Are all interactive elements focusable with visible focus indicators?
-- Do images have meaningful alt text?
-- Is color contrast WCAG AA compliant (4.5:1 for text)?
-- Does the screen reader announce state changes (loading, success, errors)?
-
-**Red Flags** (report these specifically):
-- Click-only interactions with no keyboard alternative
-- Missing or invisible focus indicators
-- Meaning conveyed by color alone (red = error, green = success)
-- Unlabeled form fields or buttons
-- Time-limited actions without extension option
-- Custom components that break screen reader flow
+**위험 신호** (구체적으로 보고할 것):
+- 강제 튜토리얼이나 건너뛸 수 없는 온보딩
+- 주요 동작에 키보드 네비게이션이 없음
+- 건너뛸 수 없는 느린 애니메이션
+- 배치가 자연스러운 곳에서 한 건씩 처리하는 워크플로우
+- 저위험 동작에 대한 불필요한 확인 단계
 
 ---
 
-## 4. Deliberate Stress Tester — "Riley"
+## 2. 혼란스러운 첫 사용자 — "Jordan"
 
-**Profile**: Methodical user who pushes interfaces beyond the happy path. Tests edge cases, tries unexpected inputs, and probes for gaps in the experience.
+**프로필**: 이런 유형의 제품을 사용해본 적이 없다. 모든 단계에서 안내가 필요하다. 스스로 알아내느니 이탈한다.
 
-**Behaviors**:
-- Tests edge cases intentionally (empty states, long strings, special characters)
-- Submits forms with unexpected data (emoji, RTL text, very long values)
-- Tries to break workflows by navigating backwards, refreshing mid-flow, or opening in multiple tabs
-- Looks for inconsistencies between what the UI promises and what actually happens
-- Documents problems methodically
+**행동 패턴**:
+- 모든 안내를 꼼꼼히 읽음
+- 익숙하지 않은 것을 클릭하기 전에 주저
+- 끊임없이 도움말이나 지원을 찾음
+- 전문 용어와 약어를 오해
+- 모든 라벨을 가장 문자적으로 해석
 
-**Test Questions**:
-- What happens at the edges (0 items, 1000 items, very long text)?
-- Do error states recover gracefully or leave the UI in a broken state?
-- What happens on refresh mid-workflow? Is state preserved?
-- Are there features that appear to work but produce broken results?
-- How does the UI handle unexpected input (emoji, special chars, paste from Excel)?
+**테스트 질문**:
+- 5초 이내에 첫 번째 동작이 명확히 보이는가?
+- 모든 아이콘에 텍스트 라벨이 있는가?
+- 결정 지점에 맥락적 도움말이 있는가?
+- 용어가 사전 지식을 전제하는가?
+- 모든 단계에 명확한 "뒤로" 또는 "실행 취소"가 있는가?
 
-**Red Flags** (report these specifically):
-- Features that appear to work but silently fail or produce wrong results
-- Error handling that exposes technical details or leaves UI in a broken state
-- Empty states that show nothing useful ("No results" with no guidance)
-- Workflows that lose user data on refresh or navigation
-- Inconsistent behavior between similar interactions in different parts of the UI
-
----
-
-## 5. Distracted Mobile User — "Casey"
-
-**Profile**: Using phone one-handed on the go. Frequently interrupted. Possibly on a slow connection.
-
-**Behaviors**:
-- Uses thumb only — prefers bottom-of-screen actions
-- Gets interrupted mid-flow and returns later
-- Switches between apps frequently
-- Has limited attention span and low patience
-- Types as little as possible, prefers taps and selections
-
-**Test Questions**:
-- Are primary actions in the thumb zone (bottom half of screen)?
-- Is state preserved if the user leaves and returns?
-- Does it work on slow connections (3G)?
-- Can forms leverage autocomplete and smart defaults?
-- Are touch targets at least 44×44pt?
-
-**Red Flags** (report these specifically):
-- Important actions positioned at the top of the screen (unreachable by thumb)
-- No state persistence — progress lost on tab switch or interruption
-- Large text inputs required where selection would work
-- Heavy assets loading on every page (no lazy loading)
-- Tiny tap targets or targets too close together
+**위험 신호** (구체적으로 보고할 것):
+- 라벨 없는 아이콘 전용 네비게이션
+- 설명 없는 기술 전문 용어
+- 가시적 도움말 옵션이나 안내가 없음
+- 동작 완료 후 모호한 다음 단계
+- 동작 성공에 대한 확인이 없음
 
 ---
 
-## Selecting Personas
+## 3. 접근성 의존 사용자 — "Sam"
 
-Choose personas based on the interface type:
+**프로필**: 스크린 리더(VoiceOver/NVDA), 키보드 전용 네비게이션을 사용한다. 저시력, 운동 장애, 인지적 차이가 있을 수 있다.
 
-| Interface Type | Primary Personas | Why |
-|---------------|-----------------|-----|
-| Landing page / marketing | Jordan, Riley, Casey | First impressions, trust, mobile |
-| Dashboard / admin | Alex, Sam | Power users, accessibility |
-| E-commerce / checkout | Casey, Riley, Jordan | Mobile, edge cases, clarity |
-| Onboarding flow | Jordan, Casey | Confusion, interruption |
-| Data-heavy / analytics | Alex, Sam | Efficiency, keyboard nav |
-| Form-heavy / wizard | Jordan, Sam, Casey | Clarity, accessibility, mobile |
+**행동 패턴**:
+- 인터페이스를 선형으로 탭 이동
+- ARIA 라벨과 헤딩 구조에 의존
+- 호버 상태나 시각 전용 표시기를 볼 수 없음
+- 적절한 색상 대비가 필요 (최소 4.5:1)
+- 브라우저 확대를 200%까지 사용할 수 있음
+
+**테스트 질문**:
+- 전체 주요 흐름을 키보드만으로 완료할 수 있는가?
+- 모든 인터랙티브 요소가 포커스 가능하고 가시적 포커스 표시기가 있는가?
+- 이미지에 의미 있는 대체 텍스트(alt text)가 있는가?
+- 색상 대비가 WCAG AA 기준을 충족하는가 (텍스트 4.5:1)?
+- 스크린 리더가 상태 변경을 안내하는가 (로딩, 성공, 오류)?
+
+**위험 신호** (구체적으로 보고할 것):
+- 키보드 대안 없는 클릭 전용 인터랙션
+- 누락되거나 보이지 않는 포커스 표시기
+- 색상만으로 전달되는 의미 (빨간색 = 오류, 초록색 = 성공)
+- 라벨 없는 폼 필드나 버튼
+- 연장 옵션 없는 시간 제한 동작
+- 스크린 리더 흐름을 깨뜨리는 커스텀 컴포넌트
 
 ---
 
-## Project-Specific Personas
+## 4. 의도적 스트레스 테스터 — "Riley"
 
-If `CLAUDE.md` contains a `## Design Context` section (generated by `teach-impeccable`), derive 1–2 additional personas from the audience and brand information:
+**프로필**: 인터페이스를 해피 패스(happy path) 너머로 밀어붙이는 체계적 사용자. 엣지 케이스를 테스트하고, 예상치 못한 입력을 시도하며, 경험의 빈틈을 탐색한다.
 
-1. Read the target audience description
-2. Identify the primary user archetype not covered by the 5 predefined personas
-3. Create a persona following this template:
+**행동 패턴**:
+- 의도적으로 엣지 케이스를 테스트 (빈 상태, 긴 문자열, 특수 문자)
+- 예상치 못한 데이터로 폼 제출 (이모지, RTL 텍스트, 매우 긴 값)
+- 뒤로 가기, 중간 새로고침, 여러 탭에서 열기 등으로 워크플로우를 깨뜨리려 시도
+- UI가 약속하는 것과 실제 일어나는 것의 불일치를 찾음
+- 문제를 체계적으로 기록
+
+**테스트 질문**:
+- 경계에서 무슨 일이 일어나는가 (0개 항목, 1000개 항목, 매우 긴 텍스트)?
+- 오류 상태가 자연스럽게 복구되는가, 아니면 UI가 깨진 상태로 남는가?
+- 워크플로우 중간에 새로고침하면 어떻게 되는가? 상태가 보존되는가?
+- 작동하는 것처럼 보이지만 깨진 결과를 내는 기능이 있는가?
+- 예상치 못한 입력을 어떻게 처리하는가 (이모지, 특수 문자, Excel에서 붙여넣기)?
+
+**위험 신호** (구체적으로 보고할 것):
+- 작동하는 것처럼 보이지만 조용히 실패하거나 잘못된 결과를 내는 기능
+- 기술적 세부사항을 노출하거나 UI를 깨진 상태로 두는 오류 처리
+- 아무런 안내 없이 아무것도 보여주지 않는 빈 상태 ("결과 없음")
+- 새로고침이나 네비게이션 시 사용자 데이터를 잃는 워크플로우
+- UI의 다른 부분에서 유사한 인터랙션 간의 일관성 없는 동작
+
+---
+
+## 5. 산만한 모바일 사용자 — "Casey"
+
+**프로필**: 이동 중에 한 손으로 폰을 사용. 자주 중단됨. 느린 연결일 수도 있음.
+
+**행동 패턴**:
+- 엄지만 사용 — 화면 하단의 동작을 선호
+- 흐름 중간에 중단되었다가 나중에 돌아옴
+- 앱 간 전환이 잦음
+- 주의 집중 시간이 짧고 인내심이 적음
+- 가능한 한 타이핑을 피하고 탭과 선택을 선호
+
+**테스트 질문**:
+- 주요 동작이 엄지 영역(thumb zone, 화면 하단)에 있는가?
+- 사용자가 떠났다가 돌아왔을 때 상태가 보존되는가?
+- 느린 연결(3G)에서 작동하는가?
+- 폼이 자동완성과 스마트 기본값을 활용할 수 있는가?
+- 터치 타겟이 최소 44x44pt인가?
+
+**위험 신호** (구체적으로 보고할 것):
+- 화면 상단에 위치한 중요 동작 (엄지로 닿을 수 없음)
+- 상태 보존 없음 — 탭 전환이나 중단 시 진행 상황 소실
+- 선택으로 충분한 곳에서 대량 텍스트 입력 요구
+- 매 페이지마다 무거운 에셋 로딩 (지연 로딩 없음)
+- 작은 탭 타겟이나 너무 가까이 붙은 타겟
+
+---
+
+## 페르소나 선택
+
+인터페이스 유형에 따라 페르소나를 선택한다:
+
+| 인터페이스 유형 | 주요 페르소나 | 이유 |
+|----------------|--------------|------|
+| 랜딩 페이지 / 마케팅 | Jordan, Riley, Casey | 첫인상, 신뢰, 모바일 |
+| 대시보드 / 관리자 | Alex, Sam | 파워 유저, 접근성 |
+| 이커머스 / 결제 | Casey, Riley, Jordan | 모바일, 엣지 케이스, 명확성 |
+| 온보딩 흐름 | Jordan, Casey | 혼란, 중단 |
+| 데이터 중심 / 분석 | Alex, Sam | 효율, 키보드 네비게이션 |
+| 폼 중심 / 위자드 | Jordan, Sam, Casey | 명확성, 접근성, 모바일 |
+
+---
+
+## 프로젝트별 페르소나
+
+`CLAUDE.md`에 `## Design Context` 섹션이 포함되어 있다면 (`teach-impeccable`로 생성된), 대상 사용자와 브랜드 정보에서 추가 페르소나 1~2개를 도출한다:
+
+1. 대상 사용자 설명을 읽는다
+2. 미리 정의된 5개 페르소나로 커버되지 않는 주요 사용자 원형을 식별한다
+3. 다음 템플릿에 따라 페르소나를 생성한다:
 
 ```
-### [Role] — "[Name]"
+### [역할] — "[이름]"
 
-**Profile**: [2-3 key characteristics derived from Design Context]
+**프로필**: [Design Context에서 도출한 2~3가지 핵심 특성]
 
-**Behaviors**: [3-4 specific behaviors based on the described audience]
+**행동 패턴**: [설명된 사용자층에 기반한 3~4가지 구체적 행동]
 
-**Red Flags**: [3-4 things that would alienate this specific user type]
+**위험 신호**: [이 특정 사용자 유형을 이탈시킬 3~4가지 요소]
 ```
 
-Only generate project-specific personas when real Design Context data is available. Don't invent audience details — use the 5 predefined personas when no context exists.
+실제 Design Context 데이터가 있을 때만 프로젝트별 페르소나를 생성한다. 사용자 정보를 지어내지 말 것 — 컨텍스트가 없으면 미리 정의된 5개 페르소나를 사용한다.

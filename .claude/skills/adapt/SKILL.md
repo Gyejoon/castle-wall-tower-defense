@@ -1,198 +1,113 @@
 ---
 name: adapt
-description: Adapt designs to work across different screen sizes, devices, contexts, or platforms. Implements breakpoints, fluid layouts, and touch targets. Use when the user mentions responsive design, mobile layouts, breakpoints, viewport adaptation, or cross-device compatibility.
+description: "다양한 화면 크기, 기기, 맥락에 맞게 디자인을 적응시킨다. 브레이크포인트, 유동 레이아웃, 터치 타겟 구현. '모바일에서 깨져', '태블릿 대응해줘', '반응형으로 만들어줘', '터치 타겟 너무 작아', '가로 스크롤 생겨', '모바일 레이아웃 수정', '화면 크기별로 다르게', '데스크톱에서 여백이 너무 넓어', '세로/가로 방향 대응' 등 반응형/크로스 디바이스 관련 요청이면 반드시 이 스킬 사용."
 user-invocable: true
-argument-hint: "[target] [context (mobile, tablet, print...)]"
+argument-hint: "[대상] [맥락 — 모바일, 태블릿, 인쇄, 이메일...]"
 ---
 
-Adapt existing designs to work effectively across different contexts - different screen sizes, devices, platforms, or use cases.
+기존 디자인을 다양한 맥락(화면 크기, 기기, 플랫폼, 사용 목적)에서 효과적으로 작동하도록 적응시킨다.
 
-## MANDATORY PREPARATION
+## 필수 사전 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: target platforms/devices and usage contexts.
+/frontend-design을 실행한다 — 디자인 원칙, 안티패턴, 맥락 수집 프로토콜이 포함되어 있다. 디자인 맥락이 아직 없다면 /teach-impeccable을 먼저 실행한다. 대상 플랫폼/기기와 사용 맥락을 파악한다.
 
 ---
 
-## Assess Adaptation Challenge
+## 적응 과제 평가
 
-Understand what needs adaptation and why:
+무엇을 왜 적응시켜야 하는지 파악한다:
 
-1. **Identify the source context**:
-   - What was it designed for originally? (Desktop web? Mobile app?)
-   - What assumptions were made? (Large screen? Mouse input? Fast connection?)
-   - What works well in current context?
+1. **원래 맥락 파악**: 어떤 환경을 위해 디자인되었나? 어떤 전제가 있었나? (큰 화면? 마우스 입력?) 현재 맥락에서 잘 작동하는 부분은?
 
-2. **Understand target context**:
-   - **Device**: Mobile, tablet, desktop, TV, watch, print?
-   - **Input method**: Touch, mouse, keyboard, voice, gamepad?
-   - **Screen constraints**: Size, resolution, orientation?
-   - **Connection**: Fast wifi, slow 3G, offline?
-   - **Usage context**: On-the-go vs desk, quick glance vs focused reading?
-   - **User expectations**: What do users expect on this platform?
+2. **대상 맥락 이해**:
+   - **기기**: 모바일, 태블릿, 데스크톱, TV, 워치, 인쇄?
+   - **입력 방식**: 터치, 마우스, 키보드, 음성, 게임패드?
+   - **화면 제약**: 크기, 해상도, 방향?
+   - **연결 상태**: 고속 와이파이, 저속 3G, 오프라인?
+   - **사용 맥락**: 이동 중 빠른 확인 vs 책상 앞 집중 읽기?
 
-3. **Identify adaptation challenges**:
-   - What won't fit? (Content, navigation, features)
-   - What won't work? (Hover states on touch, tiny touch targets)
-   - What's inappropriate? (Desktop patterns on mobile, mobile patterns on desktop)
+3. **적응 과제 식별**: 무엇이 안 맞는가? (콘텐츠, 내비게이션, 기능) 무엇이 작동하지 않는가? (터치에서의 호버 상태, 작은 터치 타겟) 무엇이 부적절한가? (모바일에서의 데스크톱 패턴)
 
-**CRITICAL**: Adaptation is not just scaling - it's rethinking the experience for the new context.
+적응은 단순한 크기 조절이 아니라 새로운 맥락에 맞게 경험 자체를 재고하는 것이다.
 
-## Plan Adaptation Strategy
+## 적응 전략
 
-Create context-appropriate strategy:
+### 모바일 적응 (데스크톱 -> 모바일)
 
-### Mobile Adaptation (Desktop → Mobile)
+**레이아웃**: 다중 컬럼 대신 단일 컬럼. 고정 너비 대신 전체 너비 컴포넌트. 상단/측면 내비게이션 대신 하단 내비게이션.
 
-**Layout Strategy**:
-- Single column instead of multi-column
-- Vertical stacking instead of side-by-side
-- Full-width components instead of fixed widths
-- Bottom navigation instead of top/side navigation
+**인터랙션**: 터치 타겟 최소 44x44px. 호버에 의존하지 않는다. 드롭다운 대신 바텀 시트. 엄지 우선 디자인 — 엄지가 닿는 범위에 컨트롤을 배치한다.
 
-**Interaction Strategy**:
-- Touch targets 44x44px minimum (not hover-dependent)
-- Swipe gestures where appropriate (lists, carousels)
-- Bottom sheets instead of dropdowns
-- Thumbs-first design (controls within thumb reach)
-- Larger tap areas with more spacing
+**콘텐츠**: 점진적 공개(progressive disclosure) — 한 번에 모든 것을 보여주지 않는다. 주요 콘텐츠 우선, 부차 콘텐츠는 탭/아코디언에. 텍스트 최소 16px.
 
-**Content Strategy**:
-- Progressive disclosure (don't show everything at once)
-- Prioritize primary content (secondary content in tabs/accordions)
-- Shorter text (more concise)
-- Larger text (16px minimum)
+**내비게이션**: 햄버거 메뉴 또는 하단 내비게이션. 복잡도를 줄인다. 맥락 유지를 위한 고정 헤더.
 
-**Navigation Strategy**:
-- Hamburger menu or bottom navigation
-- Reduce navigation complexity
-- Sticky headers for context
-- Back button in navigation flow
+### 태블릿 적응 (하이브리드)
 
-### Tablet Adaptation (Hybrid Approach)
+2단 레이아웃이 자연스럽다. 마스터-디테일 뷰(목록 + 상세). 방향에 따른 적응(세로 vs 가로). 터치와 포인터 모두 지원하되, 폰보다 밀도 높은 레이아웃을 허용한다.
 
-**Layout Strategy**:
-- Two-column layouts (not single or three-column)
-- Side panels for secondary content
-- Master-detail views (list + detail)
-- Adaptive based on orientation (portrait vs landscape)
+### 데스크톱 적응 (모바일 -> 데스크톱)
 
-**Interaction Strategy**:
-- Support both touch and pointer
-- Touch targets 44x44px but allow denser layouts than phone
-- Side navigation drawers
-- Multi-column forms where appropriate
+**레이아웃**: 다중 컬럼으로 수평 공간을 활용한다. 항상 보이는 사이드 내비게이션. 여러 정보 패널 동시 표시. max-width 제약을 둔다 — 4K까지 늘리면 읽기 어렵다.
 
-### Desktop Adaptation (Mobile → Desktop)
+**인터랙션**: 호버 상태로 추가 정보 제공. 키보드 단축키. 우클릭 컨텍스트 메뉴. 드래그 앤 드롭.
 
-**Layout Strategy**:
-- Multi-column layouts (use horizontal space)
-- Side navigation always visible
-- Multiple information panels simultaneously
-- Fixed widths with max-width constraints (don't stretch to 4K)
+**콘텐츠**: 더 많은 정보를 미리 표시한다. 여러 컬럼의 데이터 테이블. 더 풍부한 시각화.
 
-**Interaction Strategy**:
-- Hover states for additional information
-- Keyboard shortcuts
-- Right-click context menus
-- Drag and drop where helpful
-- Multi-select with Shift/Cmd
+### 인쇄 적응 (화면 -> 인쇄)
 
-**Content Strategy**:
-- Show more information upfront (less progressive disclosure)
-- Data tables with many columns
-- Richer visualizations
-- More detailed descriptions
+논리적 지점에서 페이지 나눔. 내비게이션, 푸터, 인터랙티브 요소 제거. 흑백 또는 제한된 색상. 축약된 콘텐츠 펼치기(전체 URL, 숨겨진 섹션 표시). 페이지 번호, 머리말, 꼬리말 추가.
 
-### Print Adaptation (Screen → Print)
+### 이메일 적응 (웹 -> 이메일)
 
-**Layout Strategy**:
-- Page breaks at logical points
-- Remove navigation, footer, interactive elements
-- Black and white (or limited color)
-- Proper margins for binding
+좁은 너비(최대 600px), 단일 컬럼, 인라인 CSS(외부 스타일시트 없음), 테이블 기반 레이아웃(이메일 클라이언트 호환성). 크고 명확한 CTA 버튼. 호버 상태에 의존하지 않는다 — 이메일 클라이언트에서 신뢰할 수 없기 때문이다.
 
-**Content Strategy**:
-- Expand shortened content (show full URLs, hidden sections)
-- Add page numbers, headers, footers
-- Include metadata (print date, page title)
-- Convert charts to print-friendly versions
+## 적응 구현
 
-### Email Adaptation (Web → Email)
+### 반응형 브레이크포인트
 
-**Layout Strategy**:
-- Narrow width (600px max)
-- Single column only
-- Inline CSS (no external stylesheets)
-- Table-based layouts (for email client compatibility)
+콘텐츠 기반 브레이크포인트가 가장 좋다 — 디자인이 깨지는 지점을 기준으로 잡는다. 범용 참고값: 모바일 320-767px, 태블릿 768-1023px, 데스크톱 1024px+.
 
-**Interaction Strategy**:
-- Large, obvious CTAs (buttons not text links)
-- No hover states (not reliable)
-- Deep links to web app for complex interactions
+### 핵심 기법
 
-## Implement Adaptations
+- **CSS Grid/Flexbox**: 레이아웃 자동 리플로우
+- **컨테이너 쿼리(Container Queries)**: 뷰포트가 아닌 컨테이너 기반 적응
+- **`clamp()`**: 최소값과 최대값 사이의 유동적 크기 조절
+- **미디어 쿼리**: 맥락별 다른 스타일
 
-Apply changes systematically:
+### 터치 적응
 
-### Responsive Breakpoints
+터치 타겟 크기 키우기(최소 44x44px). 인터랙티브 요소 사이 간격 추가. 호버 의존 인터랙션 제거. 엄지 영역 고려 — 하단이 상단보다 접근 용이하다.
 
-Choose appropriate breakpoints:
-- Mobile: 320px-767px
-- Tablet: 768px-1023px
-- Desktop: 1024px+
-- Or content-driven breakpoints (where design breaks)
+### 콘텐츠 적응
 
-### Layout Adaptation Techniques
+`display: none`은 아껴서 사용한다 — 숨겨도 여전히 다운로드된다. 점진적 향상(progressive enhancement)으로 핵심 콘텐츠 먼저, 큰 화면에서 보강. 반응형 이미지(`srcset`, `picture` 요소).
 
-- **CSS Grid/Flexbox**: Reflow layouts automatically
-- **Container Queries**: Adapt based on container, not viewport
-- **`clamp()`**: Fluid sizing between min and max
-- **Media queries**: Different styles for different contexts
-- **Display properties**: Show/hide elements per context
+## 피해야 할 접근과 그 이유
 
-### Touch Adaptation
+고정 너비 컨테이너는 피한다 — 390px iPhone SE부터 1440px 데스크톱까지 모든 뷰포트에서 작동해야 하므로 유동 단위(%, vw, clamp())가 더 안전하다.
 
-- Increase touch target sizes (44x44px minimum)
-- Add more spacing between interactive elements
-- Remove hover-dependent interactions
-- Add touch feedback (ripples, highlights)
-- Consider thumb zones (easier to reach bottom than top)
+모바일에서 핵심 기능을 숨기지 않는다 — 중요하다면 작동하게 만든다. 모바일 사용자도 동일한 작업을 수행하려 하기 때문이다.
 
-### Content Adaptation
+데스크톱 레이아웃을 모바일에 그대로 축소하지 않는다 — 터치 타겟이 44px 미만이 되면 엄지로 누를 수 없다.
 
-- Use `display: none` sparingly (still downloads)
-- Progressive enhancement (core content first, enhancements on larger screens)
-- Lazy loading for off-screen content
-- Responsive images (`srcset`, `picture` element)
+맥락별로 다른 정보 구조를 사용하지 않는다 — 사용자가 기기를 오가며 사용할 때 혼란을 유발한다.
 
-### Navigation Adaptation
+범용 브레이크포인트를 맹목적으로 복사하지 않는다 — 콘텐츠가 깨지는 지점이 진짜 브레이크포인트다.
 
-- Transform complex nav to hamburger/drawer on mobile
-- Bottom nav bar for mobile apps
-- Persistent side navigation on desktop
-- Breadcrumbs on smaller screens for context
+가로 방향을 잊지 않는다 — 모바일/태블릿 사용자의 상당수가 가로로 사용한다.
 
-**IMPORTANT**: Test on real devices, not just browser DevTools. Device emulation is helpful but not perfect.
+데스크톱에서 터치를 무시하지 않는다 — 많은 데스크톱 기기가 터치를 지원한다.
 
-**NEVER**:
-- Hide core functionality on mobile (if it matters, make it work)
-- Assume desktop = powerful device (consider accessibility, older machines)
-- Use different information architecture across contexts (confusing)
-- Break user expectations for platform (mobile users expect mobile patterns)
-- Forget landscape orientation on mobile/tablet
-- Use generic breakpoints blindly (use content-driven breakpoints)
-- Ignore touch on desktop (many desktop devices have touch)
+## 적응 검증
 
-## Verify Adaptations
+브라우저 DevTools가 아닌 실제 기기에서 테스트한다. 에뮬레이션은 도움이 되지만 완벽하지 않다.
 
-Test thoroughly across contexts:
+- **실제 기기**: 실제 폰, 태블릿, 데스크톱에서 테스트
+- **다양한 방향**: 세로와 가로
+- **다양한 브라우저**: Safari, Chrome, Firefox, Edge
+- **다양한 입력 방식**: 터치, 마우스, 키보드
+- **엣지 케이스**: 매우 작은 화면(320px), 매우 큰 화면(4K)
+- **느린 연결**: 스로틀링된 네트워크에서 테스트
 
-- **Real devices**: Test on actual phones, tablets, desktops
-- **Different orientations**: Portrait and landscape
-- **Different browsers**: Safari, Chrome, Firefox, Edge
-- **Different OS**: iOS, Android, Windows, macOS
-- **Different input methods**: Touch, mouse, keyboard
-- **Edge cases**: Very small screens (320px), very large screens (4K)
-- **Slow connections**: Test on throttled network
-
-Remember: You're a cross-platform design expert. Make experiences that feel native to each context while maintaining brand and functionality consistency. Adapt intentionally, test thoroughly.
+크로스 플랫폼 디자인의 목표는 브랜드와 기능의 일관성을 유지하면서 각 맥락에서 네이티브처럼 느껴지는 경험을 만드는 것이다.

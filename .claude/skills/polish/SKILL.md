@@ -1,202 +1,174 @@
 ---
 name: polish
-description: Performs a final quality pass fixing alignment, spacing, consistency, and micro-detail issues before shipping. Use when the user mentions polish, finishing touches, pre-launch review, something looks off, or wants to go from good to great.
+description: "출시 전 최종 품질 패스 — 정렬, 간격, 일관성, 마이크로 디테일 이슈를 수정한다. '다듬어줘', '마무리 작업', '출시 전 체크', '뭔가 어색해', '좋은 걸 훌륭하게', '퀄리티 올려줘', '디테일 잡아줘', '마지막 점검', '깔끔하게 정리해줘', '릴리스 준비' 등 마감 품질을 높이는 모든 요청에 이 스킬 사용."
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-## MANDATORY PREPARATION
+## 필수 준비
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: quality bar (MVP vs flagship).
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없으면 /teach-impeccable을 먼저 실행한다. 추가로 품질 기준(MVP vs 플래그십)을 파악한다.
 
 ---
 
-Perform a meticulous final pass to catch all the small details that separate good work from great work. The difference between shipped and polished.
+좋은 작업과 훌륭한 작업을 가르는 모든 작은 디테일을 잡아내는 세심한 최종 패스를 수행한다. 완성된 것과 다듬어진 것의 차이다.
 
-## Pre-Polish Assessment
+**예시:**
+입력: "/polish 타워 선택 패널"
+출력: 완성도 검토 → 12개 차원 체계적 다듬기 → 체크리스트 점검 → 최종 검증
 
-Understand the current state and goals:
+## 다듬기 전 평가
 
-1. **Review completeness**:
-   - Is it functionally complete?
-   - Are there known issues to preserve (mark with TODOs)?
-   - What's the quality bar? (MVP vs flagship feature?)
-   - When does it ship? (How much time for polish?)
+현재 상태와 목표를 파악한다:
 
-2. **Identify polish areas**:
-   - Visual inconsistencies
-   - Spacing and alignment issues
-   - Interaction state gaps
-   - Copy inconsistencies
-   - Edge cases and error states
-   - Loading and transition smoothness
+1. **완성도 검토**: 기능적으로 완성됐는가? TODO가 남아 있는가? 품질 기준은? (MVP vs 플래그십?) 출시까지 시간은?
+2. **다듬기 영역 식별**: 시각적 불일치, 간격 및 정렬 이슈, 인터랙션 상태 공백, 문구 불일치, 엣지 케이스와 에러 상태, 로딩 및 트랜지션 매끄러움
 
-**CRITICAL**: Polish is the last step, not the first. Don't polish work that's not functionally complete.
+다듬기는 마지막 단계이지 첫 번째가 아니다 — 기능적으로 완성되지 않은 작업을 다듬으면 나중에 기능 변경 시 다듬기 작업이 무효화되기 때문이다.
 
-## Polish Systematically
+## 체계적으로 다듬기
 
-Work through these dimensions methodically:
+다음 차원을 순서대로 작업한다:
 
-### Visual Alignment & Spacing
+### 시각적 정렬 및 간격
 
-- **Pixel-perfect alignment**: Everything lines up to grid
-- **Consistent spacing**: All gaps use spacing scale (no random 13px gaps)
-- **Optical alignment**: Adjust for visual weight (icons may need offset for optical centering)
-- **Responsive consistency**: Spacing and alignment work at all breakpoints
-- **Grid adherence**: Elements snap to baseline grid
+- **픽셀 완벽 정렬**: 모든 것이 그리드에 맞춤
+- **일관된 간격**: 모든 갭이 간격 스케일을 사용 (임의의 13px 갭 없음)
+- **시각적 정렬(Optical Alignment)**: 시각적 무게에 맞게 조정 (아이콘은 시각적 중심을 맞추기 위해 오프셋이 필요할 수 있음)
+- **반응형 일관성**: 모든 브레이크포인트에서 간격과 정렬이 작동
+- **그리드 준수**: 요소가 베이스라인 그리드에 맞춤
 
-**Check**:
-- Enable grid overlay and verify alignment
-- Check spacing with browser inspector
-- Test at multiple viewport sizes
-- Look for elements that "feel" off
+### 타이포그래피 정제
 
-### Typography Refinement
+- **위계 일관성**: 같은 요소가 전체에서 같은 크기/굵기 사용
+- **줄 길이**: 본문 텍스트 45-75자
+- **줄 높이**: 폰트 크기와 맥락에 적합
+- **과부(Widows) 및 고아(Orphans)**: 마지막 줄에 단어 하나만 남지 않도록
+- **자간(Kerning)**: 필요한 곳에서 글자 간격 조정 (특히 헤드라인)
+- **폰트 로딩**: FOUT/FOIT 깜빡임 없음
 
-- **Hierarchy consistency**: Same elements use same sizes/weights throughout
-- **Line length**: 45-75 characters for body text
-- **Line height**: Appropriate for font size and context
-- **Widows & orphans**: No single words on last line
-- **Hyphenation**: Appropriate for language and column width
-- **Kerning**: Adjust letter spacing where needed (especially headlines)
-- **Font loading**: No FOUT/FOIT flashes
+### 색상 및 대비
 
-### Color & Contrast
+- **대비율**: 모든 텍스트가 WCAG 표준 충족
+- **일관된 토큰 사용**: 하드코딩된 색상 없이 모두 디자인 토큰 사용
+- **테마 일관성**: 모든 테마 변형에서 작동
+- **색상 의미**: 같은 색상이 전체에서 같은 의미
+- **접근 가능한 포커스**: 충분한 대비의 포커스 인디케이터
+- **색조 뉴트럴(Tinted Neutrals)**: 순수 회색이나 순수 검정 대신 미묘한 색조 추가 — 자연에는 순수 뉴트럴이 없으므로 미세한 색조가 따뜻함을 준다
+- **색상 위 회색 금지**: 색상 배경에 회색 텍스트 대신 해당 색상의 셰이드나 투명도를 사용한다 — 회색이 색상 위에 올라가면 바래 보이기 때문이다
 
-- **Contrast ratios**: All text meets WCAG standards
-- **Consistent token usage**: No hard-coded colors, all use design tokens
-- **Theme consistency**: Works in all theme variants
-- **Color meaning**: Same colors mean same things throughout
-- **Accessible focus**: Focus indicators visible with sufficient contrast
-- **Tinted neutrals**: No pure gray or pure black—add subtle color tint (0.01 chroma)
-- **Gray on color**: Never put gray text on colored backgrounds—use a shade of that color or transparency
+### 인터랙션 상태
 
-### Interaction States
+모든 인터랙티브 요소에 전체 상태가 필요하다 — 누락된 상태는 혼란과 깨진 경험을 만든다:
 
-Every interactive element needs all states:
+- **기본(Default)**: 대기 상태
+- **호버(Hover)**: 미묘한 피드백 (색상, 스케일, 그림자)
+- **포커스(Focus)**: 키보드 포커스 인디케이터 — 제거하면 키보드 사용자가 현재 위치를 잃는다
+- **활성(Active)**: 클릭/탭 피드백
+- **비활성(Disabled)**: 명확히 비인터랙티브
+- **로딩(Loading)**: 비동기 액션 피드백
+- **에러(Error)**: 유효성 검사 또는 에러 상태
+- **성공(Success)**: 완료 확인
 
-- **Default**: Resting state
-- **Hover**: Subtle feedback (color, scale, shadow)
-- **Focus**: Keyboard focus indicator (never remove without replacement)
-- **Active**: Click/tap feedback
-- **Disabled**: Clearly non-interactive
-- **Loading**: Async action feedback
-- **Error**: Validation or error state
-- **Success**: Successful completion
+### 마이크로 인터랙션 및 트랜지션
 
-**Missing states create confusion and broken experiences**.
+- **매끄러운 트랜지션**: 모든 상태 변화가 적절히 애니메이션 (150-300ms)
+- **일관된 이징**: 자연스러운 감속을 위해 ease-out-quart/quint/expo 사용 — 바운스나 일래스틱은 실제 물체의 운동과 맞지 않아 구식 느낌을 준다
+- **60fps 유지**: transform과 opacity만 애니메이션
+- **적절한 모션**: 모션은 장식이 아닌 목적에 부합
+- **모션 감소 대응**: `prefers-reduced-motion` 존중
 
-### Micro-interactions & Transitions
+### 콘텐츠 및 문구
 
-- **Smooth transitions**: All state changes animated appropriately (150-300ms)
-- **Consistent easing**: Use ease-out-quart/quint/expo for natural deceleration. Never bounce or elastic—they feel dated.
-- **No jank**: 60fps animations, only animate transform and opacity
-- **Appropriate motion**: Motion serves purpose, not decoration
-- **Reduced motion**: Respects `prefers-reduced-motion`
+- **일관된 용어**: 같은 것을 전체에서 같은 이름으로
+- **일관된 대소문자**: 타이틀 케이스 vs 문장 케이스 일관 적용
+- **문법 및 맞춤법**: 오타 없음
+- **적절한 길이**: 너무 장황하지도 너무 간결하지도 않게
+- **구두점 일관성**: 문장에는 마침표, 레이블에는 없음
 
-### Content & Copy
+### 아이콘 및 이미지
 
-- **Consistent terminology**: Same things called same names throughout
-- **Consistent capitalization**: Title Case vs Sentence case applied consistently
-- **Grammar & spelling**: No typos
-- **Appropriate length**: Not too wordy, not too terse
-- **Punctuation consistency**: Periods on sentences, not on labels (unless all labels have them)
+- **일관된 스타일**: 모든 아이콘이 같은 패밀리 또는 일치하는 스타일
+- **적절한 크기와 정렬**: 아이콘이 인접 텍스트와 시각적으로 정렬
+- **대체 텍스트**: 모든 이미지에 설명적 대체 텍스트
+- **로딩 상태**: 이미지가 레이아웃 시프트를 유발하지 않음, 적절한 종횡비
+- **레티나 지원**: 고해상도 화면을 위한 2x 에셋
 
-### Icons & Images
+### 폼 및 입력
 
-- **Consistent style**: All icons from same family or matching style
-- **Appropriate sizing**: Icons sized consistently for context
-- **Proper alignment**: Icons align with adjacent text optically
-- **Alt text**: All images have descriptive alt text
-- **Loading states**: Images don't cause layout shift, proper aspect ratios
-- **Retina support**: 2x assets for high-DPI screens
+- **레이블 일관성**: 모든 입력에 적절한 레이블
+- **필수 표시**: 명확하고 일관
+- **에러 메시지**: 도움이 되고 일관
+- **탭 순서**: 논리적 키보드 내비게이션
+- **유효성 검사 타이밍**: 일관 (blur 시 vs submit 시)
 
-### Forms & Inputs
+### 엣지 케이스 및 에러 상태
 
-- **Label consistency**: All inputs properly labeled
-- **Required indicators**: Clear and consistent
-- **Error messages**: Helpful and consistent
-- **Tab order**: Logical keyboard navigation
-- **Auto-focus**: Appropriate (don't overuse)
-- **Validation timing**: Consistent (on blur vs on submit)
+- **로딩 상태**: 모든 비동기 액션에 로딩 피드백
+- **빈 상태**: 빈 공간이 아닌 도움이 되는 빈 상태
+- **에러 상태**: 복구 경로가 있는 명확한 에러 메시지
+- **긴 콘텐츠**: 매우 긴 이름, 설명 등 처리
+- **콘텐츠 없음**: 데이터 누락을 우아하게 처리
 
-### Edge Cases & Error States
+### 반응형
 
-- **Loading states**: All async actions have loading feedback
-- **Empty states**: Helpful empty states, not just blank space
-- **Error states**: Clear error messages with recovery paths
-- **Success states**: Confirmation of successful actions
-- **Long content**: Handles very long names, descriptions, etc.
-- **No content**: Handles missing data gracefully
-- **Offline**: Appropriate offline handling (if applicable)
+- **모든 브레이크포인트**: 모바일, 태블릿, 데스크톱 테스트
+- **터치 타겟**: 터치 기기에서 최소 44x44px
+- **가독성 있는 텍스트**: 모바일에서 14px 미만 텍스트 없음
+- **가로 스크롤 없음**: 콘텐츠가 뷰포트에 맞음
 
-### Responsiveness
+### 성능
 
-- **All breakpoints**: Test mobile, tablet, desktop
-- **Touch targets**: 44x44px minimum on touch devices
-- **Readable text**: No text smaller than 14px on mobile
-- **No horizontal scroll**: Content fits viewport
-- **Appropriate reflow**: Content adapts logically
+- **빠른 초기 로드**: 크리티컬 패스 최적화
+- **레이아웃 시프트 없음**: 로드 후 요소가 점프하지 않음 (CLS)
+- **매끄러운 인터랙션**: 지연이나 버벅임 없음
+- **최적화된 이미지**: 적절한 포맷과 크기
+- **지연 로딩(Lazy Loading)**: 화면 밖 콘텐츠는 지연 로딩
 
-### Performance
+### 코드 품질
 
-- **Fast initial load**: Optimize critical path
-- **No layout shift**: Elements don't jump after load (CLS)
-- **Smooth interactions**: No lag or jank
-- **Optimized images**: Appropriate formats and sizes
-- **Lazy loading**: Off-screen content loads lazily
+- **console.log 제거**: 프로덕션에 디버그 로그 없음
+- **주석 처리된 코드 제거**: 죽은 코드 정리
+- **미사용 임포트 제거**: 미사용 의존성 정리
+- **일관된 명명**: 변수와 함수가 컨벤션 준수
+- **타입 안전성**: TypeScript `any` 또는 무시된 에러 없음
+- **접근성**: 적절한 ARIA 레이블과 시맨틱 HTML
 
-### Code Quality
+## 다듬기 체크리스트
 
-- **Remove console logs**: No debug logging in production
-- **Remove commented code**: Clean up dead code
-- **Remove unused imports**: Clean up unused dependencies
-- **Consistent naming**: Variables and functions follow conventions
-- **Type safety**: No TypeScript `any` or ignored errors
-- **Accessibility**: Proper ARIA labels and semantic HTML
+- [ ] 모든 브레이크포인트에서 시각적 정렬 완벽
+- [ ] 간격이 일관되게 디자인 토큰 사용
+- [ ] 타이포그래피 위계 일관
+- [ ] 모든 인터랙션 상태 구현
+- [ ] 모든 트랜지션 매끄러움 (60fps)
+- [ ] 문구가 일관되고 다듬어짐
+- [ ] 아이콘이 일관되고 적절한 크기
+- [ ] 모든 폼에 적절한 레이블과 유효성 검사
+- [ ] 에러 상태가 도움이 됨
+- [ ] 로딩 상태가 명확
+- [ ] 빈 상태가 친근
+- [ ] 터치 타겟 최소 44x44px
+- [ ] 대비율이 WCAG AA 충족
+- [ ] 키보드 내비게이션 작동
+- [ ] 포커스 인디케이터 표시
+- [ ] 콘솔 에러나 경고 없음
+- [ ] 로드 시 레이아웃 시프트 없음
+- [ ] 지원 브라우저 전체에서 작동
+- [ ] 모션 감소 선호 존중
+- [ ] 코드 정리 완료 (TODO, console.log, 주석 코드 없음)
 
-## Polish Checklist
+## 다듬기 품질 원칙
 
-Go through systematically:
+기능적으로 완성되기 전에 다듬기 시작하면 기능 변경이 다듬기 작업을 무효화한다. 시간이 촉박할 때는 트리아지한다 — 30분 후 출시인데 몇 시간짜리 다듬기를 하면 안 된다. 다듬으면서 버그를 도입하지 않도록 철저히 테스트한다. 간격이 어디서나 어긋나면 개별 수정이 아니라 시스템을 수정한다 — 체계적 문제에는 체계적 해결이 필요하다. 하나만 완벽하게 하고 나머지를 거칠게 방치하지 않는다 — 일관된 품질 수준이 전체적 인상을 결정하기 때문이다.
 
-- [ ] Visual alignment perfect at all breakpoints
-- [ ] Spacing uses design tokens consistently
-- [ ] Typography hierarchy consistent
-- [ ] All interactive states implemented
-- [ ] All transitions smooth (60fps)
-- [ ] Copy is consistent and polished
-- [ ] Icons are consistent and properly sized
-- [ ] All forms properly labeled and validated
-- [ ] Error states are helpful
-- [ ] Loading states are clear
-- [ ] Empty states are welcoming
-- [ ] Touch targets are 44x44px minimum
-- [ ] Contrast ratios meet WCAG AA
-- [ ] Keyboard navigation works
-- [ ] Focus indicators visible
-- [ ] No console errors or warnings
-- [ ] No layout shift on load
-- [ ] Works in all supported browsers
-- [ ] Respects reduced motion preference
-- [ ] Code is clean (no TODOs, console.logs, commented code)
+## 최종 검증
 
-**IMPORTANT**: Polish is about details. Zoom in. Squint at it. Use it yourself. The little things add up.
+완료 표시 전:
 
-**NEVER**:
-- Polish before it's functionally complete
-- Spend hours on polish if it ships in 30 minutes (triage)
-- Introduce bugs while polishing (test thoroughly)
-- Ignore systematic issues (if spacing is off everywhere, fix the system)
-- Perfect one thing while leaving others rough (consistent quality level)
+- **직접 사용해 보기**: 실제로 기능과 상호작용
+- **실제 기기에서 테스트**: 브라우저 DevTools만이 아닌
+- **다른 사람에게 리뷰 요청**: 새로운 눈이 놓친 것을 발견
+- **디자인과 비교**: 의도한 디자인과 일치하는지
+- **모든 상태 점검**: 해피 패스만 테스트하지 않기
 
-## Final Verification
-
-Before marking as done:
-
-- **Use it yourself**: Actually interact with the feature
-- **Test on real devices**: Not just browser DevTools
-- **Ask someone else to review**: Fresh eyes catch things
-- **Compare to design**: Match intended design
-- **Check all states**: Don't just test happy path
-
-Remember: You have impeccable attention to detail and exquisite taste. Polish until it feels effortless, looks intentional, and works flawlessly. Sweat the details - they matter.
+사용하기에 자연스럽고, 의도적으로 보이며, 완벽하게 작동할 때까지 다듬는다. 디테일에 땀을 흘린다 — 그것이 좋은 것과 훌륭한 것의 차이다.

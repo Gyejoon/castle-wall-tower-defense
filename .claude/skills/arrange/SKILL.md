@@ -1,124 +1,108 @@
 ---
 name: arrange
-description: Improve layout, spacing, and visual rhythm. Fixes monotonous grids, inconsistent spacing, and weak visual hierarchy. Use when the user mentions layout feeling off, spacing issues, visual hierarchy, crowded UI, alignment problems, or wanting better composition.
+description: 레이아웃, 간격, 시각적 리듬을 개선한다. 단조로운 그리드, 빽빽한 UI, 약한 시각적 계층구조를 수정한다. '레이아웃 어색해', '간격 좀 맞춰줘', '너무 빽빽해', '정렬 안 맞아', 'UI가 답답해', '여백 좀 줘', '카드 배치 개선해줘', '섹션 구분이 안 돼', '그리드가 단조로워', '공간 활용이 안 돼' 등 레이아웃/간격 관련 불만이면 반드시 이 스킬 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Assess and improve layout and spacing that feels monotonous, crowded, or structurally weak — turning generic arrangements into intentional, rhythmic compositions.
+단조롭거나 빽빽하거나 구조적으로 약한 레이아웃과 간격을 평가하고 개선한다 — 평범한 배치를 의도적이고 리듬감 있는 구성으로 바꾼다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다.
 
 ---
 
-## Assess Current Layout
+## 현재 레이아웃 평가
 
-Analyze what's weak about the current spatial design:
+현재 공간 디자인에서 약한 부분을 분석한다:
 
-1. **Spacing**:
-   - Is spacing consistent or arbitrary? (Random padding/margin values)
-   - Is all spacing the same? (Equal padding everywhere = no rhythm)
-   - Are related elements grouped tightly, with generous space between groups?
+1. **간격**: 일관적인가, 임의적인가? 모든 간격이 동일한가(= 리듬 없음)? 관련 요소끼리 밀접하고 그룹 사이에는 넉넉한가?
 
-2. **Visual hierarchy**:
-   - Apply the squint test: blur your (metaphorical) eyes — can you still identify the most important element, second most important, and clear groupings?
-   - Is hierarchy achieved effectively? (Space and weight alone can be enough — but is the current approach working?)
-   - Does whitespace guide the eye to what matters?
+2. **시각적 계층구조**: 찡그림 테스트(squint test) — 눈을 흐리게 했을 때 주요 요소, 보조 요소, 명확한 그룹을 여전히 식별할 수 있는가? 여백이 중요한 곳으로 시선을 안내하는가?
 
-3. **Grid & structure**:
-   - Is there a clear underlying structure, or does the layout feel random?
-   - Are identical card grids used everywhere? (Icon + heading + text, repeated endlessly)
-   - Is everything centered? (Left-aligned with asymmetric layouts feels more designed, but not a hard and fast rule)
+3. **그리드와 구조**: 명확한 기본 구조가 있는가? 동일한 카드 그리드가 반복되는가? 모든 것이 중앙 정렬인가(비대칭 왼쪽 정렬이 더 디자인된 느낌이지만 절대 규칙은 아니다)?
 
-4. **Rhythm & variety**:
-   - Does the layout have visual rhythm? (Alternating tight/generous spacing)
-   - Is every section structured the same way? (Monotonous repetition)
-   - Are there intentional moments of surprise or emphasis?
+4. **리듬과 변화**: 촘촘한/넉넉한 간격의 교대가 있는가? 모든 섹션이 같은 방식으로 구성되는가?
 
-5. **Density**:
-   - Is the layout too cramped? (Not enough breathing room)
-   - Is the layout too sparse? (Excessive whitespace without purpose)
-   - Does density match the content type? (Data-dense UIs need tighter spacing; marketing pages need more air)
+5. **밀도**: 숨 쉴 공간이 부족한가? 목적 없는 과도한 여백인가? 콘텐츠 유형에 맞는가(데이터 UI는 촘촘하게, 마케팅은 여유롭게)?
 
-**CRITICAL**: Layout problems are often the root cause of interfaces feeling "off" even when colors and fonts are fine. Space is a design material — use it with intention.
+**핵심**: 레이아웃 문제는 색상과 폰트가 괜찮아도 인터페이스가 "어색하게" 느껴지는 근본 원인인 경우가 많다. 공간은 디자인 재료다 — 의도를 갖고 사용한다.
 
-## Plan Layout Improvements
+## 레이아웃 개선 계획
 
-Consult the [spatial design reference](reference/spatial-design.md) from the frontend-design skill for detailed guidance on grids, rhythm, and container queries.
+상세한 그리드, 리듬, 컨테이너 쿼리(container query) 안내는 frontend-design 스킬의 [공간 디자인 레퍼런스](reference/spatial-design.md)를 참고한다.
 
-Create a systematic plan:
+체계적인 계획을 수립한다:
 
-- **Spacing system**: Use a consistent scale — whether that's a framework's built-in scale (e.g., Tailwind), rem-based tokens, or a custom system. The specific values matter less than consistency.
-- **Hierarchy strategy**: How will space communicate importance?
-- **Layout approach**: What structure fits the content? Flex for 1D, Grid for 2D, named areas for complex page layouts.
-- **Rhythm**: Where should spacing be tight vs generous?
+- **간격 시스템**: 프레임워크 내장 스케일(Tailwind 등), rem 기반 토큰, 커스텀 시스템 중 선택. 구체적 값보다 일관성이 중요하다.
+- **계층구조 전략**: 공간으로 중요도를 어떻게 전달할 것인가?
+- **레이아웃 접근법**: 1D는 Flex, 2D는 Grid, 복잡한 페이지는 이름 있는 영역.
+- **리듬**: 어디서 촘촘하고 어디서 넉넉해야 하는가?
 
-## Improve Layout Systematically
+## 체계적으로 레이아웃 개선
 
-### Establish a Spacing System
+### 간격 시스템 수립
 
-- Use a consistent spacing scale — framework scales (Tailwind, etc.), rem-based tokens, or a custom scale all work. What matters is that values come from a defined set, not arbitrary numbers.
-- Name tokens semantically if using custom properties: `--space-xs` through `--space-xl`, not `--spacing-8`
-- Use `gap` for sibling spacing instead of margins — eliminates margin collapse hacks
-- Apply `clamp()` for fluid spacing that breathes on larger screens
+- 일관된 간격 스케일 사용 — 값이 정의된 집합에서 나오는 것이 핵심이지, 임의의 숫자가 아니다.
+- 커스텀 속성은 시맨틱하게 명명: `--space-xs`~`--space-xl`. `--spacing-8`처럼 값 이름은 쓰지 않는다.
+- 형제 간격에는 마진 대신 `gap` 사용 — 마진 겹침 해킹을 제거한다.
+- 큰 화면에서 유연하게 숨 쉬는 간격을 위해 `clamp()` 적용.
 
-### Create Visual Rhythm
+### 시각적 리듬 만들기
 
-- **Tight grouping** for related elements (8-12px between siblings)
-- **Generous separation** between distinct sections (48-96px)
-- **Varied spacing** within sections — not every row needs the same gap
-- **Asymmetric compositions** — break the predictable centered-content pattern when it makes sense
+- **밀접한 그룹화**: 관련 요소 사이 (8-12px)
+- **넉넉한 분리**: 구별되는 섹션 사이 (48-96px)
+- **다양한 간격**: 섹션 내에서 — 모든 행이 같은 간격일 필요 없다
+- **비대칭 구성** — 예측 가능한 중앙 정렬 패턴을 의미 있을 때 깨트린다
 
-### Choose the Right Layout Tool
+### 적절한 레이아웃 도구 선택
 
-- **Use Flexbox for 1D layouts**: Rows of items, nav bars, button groups, card contents, most component internals. Flex is simpler and more appropriate for the majority of layout tasks.
-- **Use Grid for 2D layouts**: Page-level structure, dashboards, data-dense interfaces, anything where rows AND columns need coordinated control.
-- **Don't default to Grid** when Flexbox with `flex-wrap` would be simpler and more flexible.
-- Use `repeat(auto-fit, minmax(280px, 1fr))` for responsive grids without breakpoints.
-- Use named grid areas (`grid-template-areas`) for complex page layouts — redefine at breakpoints.
+- **1D에는 Flexbox**: 아이템 행, 네비게이션 바, 버튼 그룹, 카드 내용, 대부분의 컴포넌트 내부.
+- **2D에는 Grid**: 페이지 레벨 구조, 대시보드, 데이터 밀집 인터페이스.
+- `flex-wrap` Flexbox가 더 단순할 때 Grid를 기본으로 쓰지 않는다 — Flex가 더 단순하고 유연한 경우가 많기 때문이다.
+- 브레이크포인트 없는 반응형 그리드에는 `repeat(auto-fit, minmax(280px, 1fr))`.
+- 복잡한 페이지에는 `grid-template-areas` — 브레이크포인트에서 재정의한다.
 
-### Break Card Grid Monotony
+### 카드 그리드 단조로움 깨기
 
-- Don't default to card grids for everything — spacing and alignment create visual grouping naturally
-- Use cards only when content is truly distinct and actionable — never nest cards inside cards
-- Vary card sizes, span columns, or mix cards with non-card content to break repetition
+- 모든 것에 카드 그리드를 기본으로 쓰지 않는다 — 간격과 정렬만으로도 시각적 그룹이 생긴다.
+- 카드는 콘텐츠가 진정으로 구별되고 액션 가능할 때만 사용한다. 카드 안에 카드를 중첩하면 계층구조가 무너진다 — 내부에는 간격과 구분선을 쓴다.
+- 카드 크기를 다양하게 하거나, 열을 확장하거나, 카드와 비카드 콘텐츠를 섞어 반복을 깨트린다.
 
-### Strengthen Visual Hierarchy
+### 시각적 계층구조 강화
 
-- Use the fewest dimensions needed for clear hierarchy. Space alone can be enough — generous whitespace around an element draws the eye. Some of the most sophisticated designs achieve rhythm with just space and weight. Add color or size contrast only when simpler means aren't sufficient.
-- Be aware of reading flow — in LTR languages, the eye naturally scans top-left to bottom-right, but primary action placement depends on context (e.g., bottom-right in dialogs, top in navigation).
-- Create clear content groupings through proximity and separation.
+- 명확한 계층구조를 위해 최소한의 차원을 사용한다. 공간만으로도 충분할 수 있다 — 요소 주변의 넉넉한 여백이 시선을 끈다. 더 단순한 수단으로 충분하지 않을 때만 색상이나 크기 대비를 추가한다.
+- 읽기 흐름을 인식한다 — LTR 언어에서 시선은 왼쪽 상단→오른쪽 하단이지만, 주요 액션 배치는 맥락에 따라 다르다(대화 상자: 오른쪽 하단, 내비게이션: 상단).
+- 근접성과 분리를 통해 명확한 콘텐츠 그룹을 만든다.
 
-### Manage Depth & Elevation
+### 깊이와 높낮이
 
-- Create a semantic z-index scale (dropdown → sticky → modal-backdrop → modal → toast → tooltip)
-- Build a consistent shadow scale (sm → md → lg → xl) — shadows should be subtle
-- Use elevation to reinforce hierarchy, not as decoration
+- 시맨틱 z-index 스케일: 드롭다운 → 스티키 → 모달 백드롭 → 모달 → 토스트 → 툴팁. 임의의 z-index(999, 9999)는 디버깅을 불가능하게 만들기 때문에 피한다.
+- 일관된 그림자 스케일 (sm → md → lg → xl) — 그림자는 은은해야 한다.
+- 높낮이를 장식이 아닌 계층구조 강화에 사용한다.
 
-### Optical Adjustments
+### 시각적 보정
 
-- If an icon looks visually off-center despite being geometrically centered, nudge it — but only if you're confident it actually looks wrong. Don't adjust speculatively.
+- 아이콘이 기하학적으로는 중앙이지만 시각적으로 어긋나 보인다면 조정한다 — 실제로 잘못 보인다고 확신할 때만. 추측으로 조정하지 않는다.
 
-**NEVER**:
-- Use arbitrary spacing values outside your scale
-- Make all spacing equal — variety creates hierarchy
-- Wrap everything in cards — not everything needs a container
-- Nest cards inside cards — use spacing and dividers for hierarchy within
-- Use identical card grids everywhere (icon + heading + text, repeated)
-- Center everything — left-aligned with asymmetry feels more designed
-- Default to the hero metric layout (big number, small label, stats, gradient) as a template. If showing real user data, a prominent metric can work — but it should display actual data, not decorative numbers.
-- Default to CSS Grid when Flexbox would be simpler — use the simplest tool for the job
-- Use arbitrary z-index values (999, 9999) — build a semantic scale
+### 피해야 할 패턴과 이유
 
-## Verify Layout Improvements
+- 스케일 밖의 임의 간격 값은 일관성을 깨뜨리고 유지보수를 어렵게 한다.
+- 모든 간격을 동일하게 만들면 시각적 리듬이 사라지고 계층구조를 전달할 수 없다.
+- 모든 것을 카드로 감싸면 — 모든 것에 컨테이너가 필요한 것은 아니며, 과도한 카드는 오히려 구조를 평탄화한다.
+- 어디서나 동일한 카드 그리드(아이콘 + 제목 + 텍스트, 반복)는 단조로움의 주범이다.
+- 모든 것을 중앙 정렬하면 시각적 긴장감이 없어진다 — 비대칭 왼쪽 정렬이 더 디자인된 느낌을 준다.
+- 히어로 메트릭 레이아웃(큰 숫자, 작은 라벨, 그라데이션)을 기본으로 쓰면 AI 슬롭처럼 보인다 — 실제 사용자 데이터를 보여줄 때만 사용한다.
+- Flexbox가 더 단순할 때 CSS Grid를 기본으로 쓰면 불필요한 복잡성을 추가한다.
 
-- **Squint test**: Can you identify primary, secondary, and groupings with blurred vision?
-- **Rhythm**: Does the page have a satisfying beat of tight and generous spacing?
-- **Hierarchy**: Is the most important content obvious within 2 seconds?
-- **Breathing room**: Does the layout feel comfortable, not cramped or wasteful?
-- **Consistency**: Is the spacing system applied uniformly?
-- **Responsiveness**: Does the layout adapt gracefully across screen sizes?
+## 레이아웃 개선 검증
 
-Remember: Space is the most underused design tool. A layout with the right rhythm and hierarchy can make even simple content feel polished and intentional.
+- **찡그림 테스트**: 흐린 시야로도 주요, 보조, 그룹을 식별할 수 있는가?
+- **리듬**: 촘촘한 간격과 넉넉한 간격의 만족스러운 박자가 있는가?
+- **계층구조**: 가장 중요한 콘텐츠가 2초 안에 명확한가?
+- **숨 쉬는 공간**: 빽빽하지도 낭비적이지도 않고 편안한가?
+- **일관성**: 간격 시스템이 균일하게 적용되었는가?
+- **반응성**: 화면 크기에 따라 자연스럽게 적응하는가?
+
+공간은 가장 과소 활용되는 디자인 도구다. 적절한 리듬과 계층구조를 가진 레이아웃은 단순한 콘텐츠도 세련되고 의도적으로 느끼게 만든다.

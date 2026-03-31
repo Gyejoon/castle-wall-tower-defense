@@ -1,234 +1,234 @@
-# Heuristics Scoring Guide
+# 휴리스틱(Heuristic) 채점 가이드
 
-Score each of Nielsen's 10 Usability Heuristics on a 0–4 scale. Be honest — a 4 means genuinely excellent, not "good enough."
+닐슨의 10가지 사용성 휴리스틱 각각을 0~4점 척도로 채점한다. 솔직하게 — 4점은 정말로 탁월하다는 뜻이지, "그럭저럭 괜찮다"가 아니다.
 
-## Nielsen's 10 Heuristics
+## 닐슨의 10가지 휴리스틱
 
-### 1. Visibility of System Status
+### 1. 시스템 상태 가시성(Visibility of System Status)
 
-Keep users informed about what's happening through timely, appropriate feedback.
+적시에 적절한 피드백을 통해 사용자에게 무슨 일이 일어나고 있는지 알려준다.
 
-**Check for**:
-- Loading indicators during async operations
-- Confirmation of user actions (save, submit, delete)
-- Progress indicators for multi-step processes
-- Current location in navigation (breadcrumbs, active states)
-- Form validation feedback (inline, not just on submit)
+**확인 사항**:
+- 비동기 작업 중 로딩 표시기
+- 사용자 동작 확인 (저장, 제출, 삭제)
+- 다단계 프로세스의 진행 표시기
+- 네비게이션에서 현재 위치 (브레드크럼, 활성 상태)
+- 폼 유효성 검사 피드백 (제출 시가 아닌 인라인)
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | No feedback — user is guessing what happened |
-| 1 | Rare feedback — most actions produce no visible response |
-| 2 | Partial — some states communicated, major gaps remain |
-| 3 | Good — most operations give clear feedback, minor gaps |
-| 4 | Excellent — every action confirms, progress is always visible |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 피드백 없음 — 사용자가 무슨 일이 일어났는지 추측해야 함 |
+| 1 | 피드백이 드묾 — 대부분의 동작에 가시적 반응이 없음 |
+| 2 | 부분적 — 일부 상태는 전달되지만 큰 빈틈이 남아 있음 |
+| 3 | 양호 — 대부분의 작업이 명확한 피드백을 제공, 사소한 빈틈 |
+| 4 | 탁월 — 모든 동작이 확인되고 진행 상태가 항상 가시적 |
 
-### 2. Match Between System and Real World
+### 2. 시스템과 현실 세계의 일치(Match Between System and Real World)
 
-Speak the user's language. Follow real-world conventions. Information appears in natural, logical order.
+사용자의 언어로 말한다. 현실 세계의 관례를 따른다. 정보가 자연스럽고 논리적인 순서로 나타난다.
 
-**Check for**:
-- Familiar terminology (no unexplained jargon)
-- Logical information order matching user expectations
-- Recognizable icons and metaphors
-- Domain-appropriate language for the target audience
-- Natural reading flow (left-to-right, top-to-bottom priority)
+**확인 사항**:
+- 친숙한 용어 (설명 없는 전문 용어 배제)
+- 사용자 기대에 맞는 논리적 정보 순서
+- 인식 가능한 아이콘과 메타포
+- 대상 사용자에게 적합한 도메인 언어
+- 자연스러운 읽기 흐름 (왼쪽→오른쪽, 위→아래 우선순위)
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Pure tech jargon, alien to users |
-| 1 | Mostly confusing — requires domain expertise to navigate |
-| 2 | Mixed — some plain language, some jargon leaks through |
-| 3 | Mostly natural — occasional term needs context |
-| 4 | Speaks the user's language fluently throughout |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 순수 기술 전문 용어, 사용자에게 낯선 표현 |
+| 1 | 대부분 혼란 — 탐색하려면 도메인 전문 지식이 필요 |
+| 2 | 혼재 — 일부는 평이한 언어, 일부는 전문 용어가 새어 나옴 |
+| 3 | 대부분 자연스러움 — 간혹 맥락이 필요한 용어가 있음 |
+| 4 | 전체적으로 사용자의 언어를 유창하게 구사 |
 
-### 3. User Control and Freedom
+### 3. 사용자 제어와 자유(User Control and Freedom)
 
-Users need a clear "emergency exit" from unwanted states without extended dialogue.
+사용자에게 원치 않는 상태에서 긴 대화 없이 빠져나올 수 있는 명확한 "비상구"가 필요하다.
 
-**Check for**:
-- Undo/redo functionality
-- Cancel buttons on forms and modals
-- Clear navigation back to safety (home, previous)
-- Easy way to clear filters, search, selections
-- Escape from long or multi-step processes
+**확인 사항**:
+- 실행 취소/다시 실행 기능
+- 폼과 모달의 취소 버튼
+- 안전한 곳으로 돌아가는 명확한 네비게이션 (홈, 이전)
+- 필터, 검색, 선택을 쉽게 해제하는 방법
+- 길거나 다단계 프로세스에서의 탈출
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Users get trapped — no way out without refreshing |
-| 1 | Difficult exits — must find obscure paths to escape |
-| 2 | Some exits — main flows have escape, edge cases don't |
-| 3 | Good control — users can exit and undo most actions |
-| 4 | Full control — undo, cancel, back, and escape everywhere |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 사용자가 갇힘 — 새로고침 외에 탈출 방법이 없음 |
+| 1 | 탈출이 어려움 — 빠져나가려면 숨겨진 경로를 찾아야 함 |
+| 2 | 일부 탈출 가능 — 주요 흐름은 탈출 가능하나 예외 상황은 불가 |
+| 3 | 양호한 제어 — 대부분의 동작을 취소하고 되돌릴 수 있음 |
+| 4 | 완전한 제어 — 실행 취소, 취소, 뒤로, 탈출이 모든 곳에 있음 |
 
-### 4. Consistency and Standards
+### 4. 일관성과 표준(Consistency and Standards)
 
-Users shouldn't wonder whether different words, situations, or actions mean the same thing.
+사용자가 다른 단어, 상황, 동작이 같은 의미인지 궁금해해서는 안 된다.
 
-**Check for**:
-- Consistent terminology throughout the interface
-- Same actions produce same results everywhere
-- Platform conventions followed (standard UI patterns)
-- Visual consistency (colors, typography, spacing, components)
-- Consistent interaction patterns (same gesture = same behavior)
+**확인 사항**:
+- 인터페이스 전체에서 일관된 용어
+- 같은 동작이 모든 곳에서 같은 결과를 생성
+- 플랫폼 관례 준수 (표준 UI 패턴)
+- 시각적 일관성 (색상, 타이포그래피, 간격, 컴포넌트)
+- 일관된 인터랙션 패턴 (같은 제스처 = 같은 동작)
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Inconsistent everywhere — feels like different products stitched together |
-| 1 | Many inconsistencies — similar things look/behave differently |
-| 2 | Partially consistent — main flows match, details diverge |
-| 3 | Mostly consistent — occasional deviation, nothing confusing |
-| 4 | Fully consistent — cohesive system, predictable behavior |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 전체적으로 비일관적 — 서로 다른 제품을 이어 붙인 느낌 |
+| 1 | 많은 비일관성 — 유사한 것들이 다르게 보이거나 동작함 |
+| 2 | 부분적 일관성 — 주요 흐름은 일치하나 세부사항이 다름 |
+| 3 | 대부분 일관적 — 간혹 벗어남이 있으나 혼란스럽지 않음 |
+| 4 | 완전히 일관적 — 응집력 있는 시스템, 예측 가능한 동작 |
 
-### 5. Error Prevention
+### 5. 오류 예방(Error Prevention)
 
-Better than good error messages is a design that prevents problems in the first place.
+좋은 오류 메시지보다 나은 것은 애초에 문제를 방지하는 디자인이다.
 
-**Check for**:
-- Confirmation before destructive actions (delete, overwrite)
-- Constraints preventing invalid input (date pickers, dropdowns)
-- Smart defaults that reduce errors
-- Clear labels that prevent misunderstanding
-- Autosave and draft recovery
+**확인 사항**:
+- 파괴적 동작 전 확인 (삭제, 덮어쓰기)
+- 잘못된 입력을 방지하는 제약 (날짜 선택기, 드롭다운)
+- 오류를 줄이는 스마트 기본값
+- 오해를 방지하는 명확한 라벨
+- 자동 저장과 임시 저장 복구
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Errors easy to make — no guardrails anywhere |
-| 1 | Few safeguards — some inputs validated, most aren't |
-| 2 | Partial prevention — common errors caught, edge cases slip |
-| 3 | Good prevention — most error paths blocked proactively |
-| 4 | Excellent — errors nearly impossible through smart constraints |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 오류가 쉽게 발생 — 어디에도 안전장치가 없음 |
+| 1 | 안전장치가 적음 — 일부 입력만 검증, 대부분은 미검증 |
+| 2 | 부분적 예방 — 흔한 오류는 잡히나 예외 상황은 빠져나감 |
+| 3 | 양호한 예방 — 대부분의 오류 경로가 사전에 차단됨 |
+| 4 | 탁월 — 스마트 제약을 통해 오류가 거의 불가능 |
 
-### 6. Recognition Rather Than Recall
+### 6. 회상보다 인식(Recognition Rather Than Recall)
 
-Minimize memory load. Make objects, actions, and options visible or easily retrievable.
+기억 부담을 최소화한다. 객체, 동작, 옵션을 가시적이거나 쉽게 찾을 수 있게 만든다.
 
-**Check for**:
-- Visible options (not buried in hidden menus)
-- Contextual help when needed (tooltips, inline hints)
-- Recent items and history
-- Autocomplete and suggestions
-- Labels on icons (not icon-only navigation)
+**확인 사항**:
+- 가시적 옵션 (숨겨진 메뉴에 묻히지 않음)
+- 필요할 때의 맥락적 도움말 (툴팁, 인라인 힌트)
+- 최근 항목과 기록
+- 자동완성과 제안
+- 아이콘에 라벨 표시 (아이콘만 있는 네비게이션 지양)
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Heavy memorization — users must remember paths and commands |
-| 1 | Mostly recall — many hidden features, few visible cues |
-| 2 | Some aids — main actions visible, secondary features hidden |
-| 3 | Good recognition — most things discoverable, few memory demands |
-| 4 | Everything discoverable — users never need to memorize |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 많은 암기 필요 — 경로와 명령을 기억해야 함 |
+| 1 | 대부분 회상 의존 — 숨겨진 기능이 많고 가시적 단서가 적음 |
+| 2 | 일부 보조 — 주요 동작은 가시적이나 부가 기능은 숨겨져 있음 |
+| 3 | 양호한 인식 — 대부분 발견 가능, 기억 요구가 적음 |
+| 4 | 모든 것이 발견 가능 — 사용자가 암기할 필요가 전혀 없음 |
 
-### 7. Flexibility and Efficiency of Use
+### 7. 유연성과 사용 효율(Flexibility and Efficiency of Use)
 
-Accelerators — invisible to novices — speed up expert interaction.
+가속기(accelerator) — 초보자에게는 보이지 않는 — 가 전문가의 인터랙션을 빠르게 한다.
 
-**Check for**:
-- Keyboard shortcuts for common actions
-- Customizable interface elements
-- Recent items and favorites
-- Bulk/batch actions
-- Power user features that don't complicate the basics
+**확인 사항**:
+- 주요 동작의 키보드 단축키
+- 커스터마이징 가능한 인터페이스 요소
+- 최근 항목과 즐겨찾기
+- 일괄/배치 동작
+- 기본 기능을 복잡하게 만들지 않는 파워 유저 기능
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | One rigid path — no shortcuts or alternatives |
-| 1 | Limited flexibility — few alternatives to the main path |
-| 2 | Some shortcuts — basic keyboard support, limited bulk actions |
-| 3 | Good accelerators — keyboard nav, some customization |
-| 4 | Highly flexible — multiple paths, power features, customizable |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 하나의 경직된 경로 — 단축키나 대안이 없음 |
+| 1 | 제한적 유연성 — 주 경로에 대한 대안이 거의 없음 |
+| 2 | 일부 단축키 — 기본적 키보드 지원, 제한적 일괄 동작 |
+| 3 | 양호한 가속기 — 키보드 네비게이션, 일부 커스터마이징 |
+| 4 | 매우 유연 — 다양한 경로, 파워 기능, 커스터마이징 가능 |
 
-### 8. Aesthetic and Minimalist Design
+### 8. 심미적이고 미니멀한 디자인(Aesthetic and Minimalist Design)
 
-Interfaces should not contain irrelevant or rarely needed information. Every element should serve a purpose.
+인터페이스에 무관하거나 거의 필요하지 않은 정보가 포함되어서는 안 된다. 모든 요소가 목적을 가져야 한다.
 
-**Check for**:
-- Only necessary information visible at each step
-- Clear visual hierarchy directing attention
-- Purposeful use of color and emphasis
-- No decorative clutter competing for attention
-- Focused, uncluttered layouts
+**확인 사항**:
+- 각 단계에서 필요한 정보만 가시적
+- 주의를 유도하는 명확한 시각적 위계
+- 색상과 강조의 의도적 사용
+- 주의를 빼앗는 장식적 잡음 배제
+- 집중된, 깔끔한 레이아웃
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Overwhelming — everything competes for attention equally |
-| 1 | Cluttered — too much noise, hard to find what matters |
-| 2 | Some clutter — main content clear, periphery noisy |
-| 3 | Mostly clean — focused design, minor visual noise |
-| 4 | Perfectly minimal — every element earns its pixel |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 압도적 — 모든 것이 동등하게 주의를 경쟁함 |
+| 1 | 어수선 — 잡음이 많아 중요한 것을 찾기 어려움 |
+| 2 | 약간의 잡음 — 주요 콘텐츠는 명확하나 주변부가 시끄러움 |
+| 3 | 대부분 깔끔 — 집중된 디자인, 사소한 시각적 잡음 |
+| 4 | 완벽하게 미니멀 — 모든 요소가 자기 자리를 정당화함 |
 
-### 9. Help Users Recognize, Diagnose, and Recover from Errors
+### 9. 오류 인식, 진단, 복구 지원(Help Users Recognize, Diagnose, and Recover from Errors)
 
-Error messages should use plain language, precisely indicate the problem, and constructively suggest a solution.
+오류 메시지는 평이한 언어를 사용하고, 문제를 정확히 지적하며, 건설적으로 해결책을 제안해야 한다.
 
-**Check for**:
-- Plain language error messages (no error codes for users)
-- Specific problem identification ("Email is missing @" not "Invalid input")
-- Actionable recovery suggestions
-- Errors displayed near the source of the problem
-- Non-blocking error handling (don't wipe the form)
+**확인 사항**:
+- 평이한 언어의 오류 메시지 (사용자에게 오류 코드 표시 지양)
+- 구체적 문제 식별 ("잘못된 입력"이 아닌 "이메일에 @가 빠져 있습니다")
+- 실행 가능한 복구 제안
+- 문제 발생 지점 근처에 오류 표시
+- 비차단적 오류 처리 (폼을 초기화하지 않기)
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | Cryptic errors — codes, jargon, or no message at all |
-| 1 | Vague errors — "Something went wrong" with no guidance |
-| 2 | Clear but unhelpful — names the problem but not the fix |
-| 3 | Clear with suggestions — identifies problem and offers next steps |
-| 4 | Perfect recovery — pinpoints issue, suggests fix, preserves user work |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 암호 같은 오류 — 코드, 전문 용어, 또는 메시지 자체가 없음 |
+| 1 | 모호한 오류 — "문제가 발생했습니다"에 안내 없음 |
+| 2 | 명확하지만 도움이 안 됨 — 문제는 언급하나 해결책은 없음 |
+| 3 | 제안이 있는 명확한 오류 — 문제를 식별하고 다음 단계를 제시 |
+| 4 | 완벽한 복구 — 문제를 정확히 짚고, 해결책을 제안하며, 사용자 작업을 보존 |
 
-### 10. Help and Documentation
+### 10. 도움말과 문서(Help and Documentation)
 
-Even if the system is usable without docs, help should be easy to find, task-focused, and concise.
+시스템이 문서 없이도 사용 가능하더라도, 도움말은 찾기 쉽고, 과제 중심이며, 간결해야 한다.
 
-**Check for**:
-- Searchable help or documentation
-- Contextual help (tooltips, inline hints, guided tours)
-- Task-focused organization (not feature-organized)
-- Concise, scannable content
-- Easy access without leaving current context
+**확인 사항**:
+- 검색 가능한 도움말 또는 문서
+- 맥락적 도움말 (툴팁, 인라인 힌트, 가이드 투어)
+- 과제 중심의 구성 (기능 중심이 아닌)
+- 간결하고 스캔하기 쉬운 콘텐츠
+- 현재 맥락을 떠나지 않고 쉽게 접근
 
-**Scoring**:
-| Score | Criteria |
-|-------|----------|
-| 0 | No help available anywhere |
-| 1 | Help exists but hard to find or irrelevant |
-| 2 | Basic help — FAQ or docs exist, not contextual |
-| 3 | Good documentation — searchable, mostly task-focused |
-| 4 | Excellent contextual help — right info at the right moment |
-
----
-
-## Score Summary
-
-**Total possible**: 40 points (10 heuristics × 4 max)
-
-| Score Range | Rating | What It Means |
-|-------------|--------|---------------|
-| 36–40 | Excellent | Minor polish only — ship it |
-| 28–35 | Good | Address weak areas, solid foundation |
-| 20–27 | Acceptable | Significant improvements needed before users are happy |
-| 12–19 | Poor | Major UX overhaul required — core experience broken |
-| 0–11 | Critical | Redesign needed — unusable in current state |
+**채점**:
+| 점수 | 기준 |
+|------|------|
+| 0 | 어디에도 도움말이 없음 |
+| 1 | 도움말이 있으나 찾기 어렵거나 관련 없음 |
+| 2 | 기본적 도움말 — FAQ나 문서가 존재하나 맥락적이지 않음 |
+| 3 | 양호한 문서 — 검색 가능하고 대부분 과제 중심 |
+| 4 | 탁월한 맥락적 도움말 — 적절한 순간에 적절한 정보 |
 
 ---
 
-## Issue Severity (P0–P3)
+## 점수 요약
 
-Tag each individual issue found during scoring with a priority level:
+**총 만점**: 40점 (10개 휴리스틱 x 최대 4점)
 
-| Priority | Name | Description | Action |
-|----------|------|-------------|--------|
-| **P0** | Blocking | Prevents task completion entirely | Fix immediately — this is a showstopper |
-| **P1** | Major | Causes significant difficulty or confusion | Fix before release |
-| **P2** | Minor | Annoyance, but workaround exists | Fix in next pass |
-| **P3** | Polish | Nice-to-fix, no real user impact | Fix if time permits |
+| 점수 범위 | 등급 | 의미 |
+|-----------|------|------|
+| 36~40 | 탁월 | 사소한 다듬기만 필요 — 출시해도 됨 |
+| 28~35 | 양호 | 약한 영역을 개선, 탄탄한 기반 |
+| 20~27 | 수용 가능 | 사용자가 만족하려면 상당한 개선 필요 |
+| 12~19 | 미흡 | 대대적 UX 개편 필요 — 핵심 경험이 망가져 있음 |
+| 0~11 | 심각 | 재설계 필요 — 현재 상태로는 사용 불가 |
 
-**Tip**: If you're unsure between two levels, ask: "Would a user contact support about this?" If yes, it's at least P1.
+---
+
+## 이슈 심각도 (P0~P3)
+
+채점 중 발견된 각 개별 이슈에 우선순위 레벨을 태그한다:
+
+| 우선순위 | 이름 | 설명 | 조치 |
+|----------|------|------|------|
+| **P0** | 차단(Blocking) | 과제 완료를 완전히 방해 | 즉시 수정 — 출시 불가 수준 |
+| **P1** | 주요(Major) | 상당한 어려움이나 혼란을 유발 | 출시 전 수정 |
+| **P2** | 경미(Minor) | 불편하지만 우회 방법이 존재 | 다음 패스에서 수정 |
+| **P3** | 다듬기(Polish) | 수정하면 좋지만 실질적 사용자 영향 없음 | 시간이 허락하면 수정 |
+
+**팁**: 두 레벨 사이에서 고민된다면 이렇게 자문하라: "사용자가 이것 때문에 고객 지원에 연락할까?" 그렇다면 최소 P1이다.

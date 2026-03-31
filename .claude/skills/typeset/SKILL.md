@@ -1,115 +1,103 @@
 ---
 name: typeset
-description: Improves typography by fixing font choices, hierarchy, sizing, weight, and readability so text feels intentional. Use when the user mentions fonts, type, readability, text hierarchy, sizing looks off, or wants more polished, intentional typography.
+description: 폰트 선택, 계층구조, 크기, 굵기, 가독성을 수정하여 텍스트가 의도적으로 느껴지도록 타이포그래피를 개선한다. '폰트 바꿔줘', '글씨가 안 읽혀', '텍스트 계층구조가 없어', '크기가 어색해', '제목이 안 눈에 띄어', '본문 가독성 떨어져', '서체 추천해줘', '타이포 정리해줘', '글자 간격 이상해', '줄간격 조정해줘', '폰트 무게감이 없어' 등 폰트/서체/가독성 관련 불만이면 반드시 이 스킬 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Assess and improve typography that feels generic, inconsistent, or poorly structured — turning default-looking text into intentional, well-crafted type.
+평범하거나 일관성 없거나 구조가 약한 타이포그래피를 평가하고 개선한다 — 기본값처럼 보이는 텍스트를 의도적이고 잘 다듬어진 서체로 바꾼다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다.
 
 ---
 
-## Assess Current Typography
+## 현재 타이포그래피 평가
 
-Analyze what's weak or generic about the current type:
+1. **폰트 선택**: 보이지 않는 기본값(Inter, Roboto, Arial)을 쓰는가? 브랜드 개성에 맞는가? 패밀리가 3개 이상이면 거의 항상 지저분하다.
 
-1. **Font choices**:
-   - Are we using invisible defaults? (Inter, Roboto, Arial, Open Sans, system defaults)
-   - Does the font match the brand personality? (A playful brand shouldn't use a corporate typeface)
-   - Are there too many font families? (More than 2-3 is almost always a mess)
+2. **계층구조**: 제목/본문/캡션을 한눈에 구별할 수 있는가? 크기가 너무 가까운가(14/15/16px = 흐릿한 계층구조)? 굵기 대비가 충분한가(미디엄 vs 레귤러는 거의 구별 불가)?
 
-2. **Hierarchy**:
-   - Can you tell headings from body from captions at a glance?
-   - Are font sizes too close together? (14px, 15px, 16px = muddy hierarchy)
-   - Are weight contrasts strong enough? (Medium vs Regular is barely visible)
+3. **크기와 스케일**: 일관된 타입 스케일이 있는가? 본문 최소 16px? 앱 UI는 고정 `rem` 스케일, 마케팅 제목은 `clamp()`가 적절하다.
 
-3. **Sizing & scale**:
-   - Is there a consistent type scale, or are sizes arbitrary?
-   - Does body text meet minimum readability? (16px+)
-   - Is the sizing strategy appropriate for the context? (Fixed `rem` scales for app UIs; fluid `clamp()` for marketing/content page headings)
+4. **가독성**: 줄 길이 45-75자? line-height가 적절한가? 대비가 충분한가?
 
-4. **Readability**:
-   - Are line lengths comfortable? (45-75 characters ideal)
-   - Is line-height appropriate for the font and context?
-   - Is there enough contrast between text and background?
+5. **일관성**: 같은 요소가 전체에서 같은 스타일인가? 굵기와 자간(letter-spacing)이 의도적인가?
 
-5. **Consistency**:
-   - Are the same elements styled the same way throughout?
-   - Are font weights used consistently? (Not bold in one section, semibold in another for the same role)
-   - Is letter-spacing intentional or default everywhere?
+**핵심**: 텍스트를 "더 화려하게"가 아니라 더 명확하고, 읽기 쉽고, 의도적으로 만드는 것이 목표다. 좋은 타이포그래피는 보이지 않고, 나쁜 타이포그래피는 산만하다.
 
-**CRITICAL**: The goal isn't to make text "fancier" — it's to make it clearer, more readable, and more intentional. Good typography is invisible; bad typography is distracting.
+## 타이포그래피 개선 계획
 
-## Plan Typography Improvements
+스케일, 페어링, 로딩 전략의 상세 안내는 frontend-design 스킬의 [타이포그래피 레퍼런스](reference/typography.md)를 참고한다.
 
-Consult the [typography reference](reference/typography.md) from the frontend-design skill for detailed guidance on scales, pairing, and loading strategies.
+- **폰트 선택**: 교체가 필요한가? 브랜드/맥락에 맞는 것은?
+- **타입 스케일**: 모듈러 스케일 수립 (예: 1.25 비율)
+- **굵기 전략**: 본문 레귤러, 라벨 세미볼드, 제목 볼드 — 또는 맥락에 맞게
+- **간격**: line-height, 자간, 마진
 
-Create a systematic plan:
+## 체계적으로 타이포그래피 개선
 
-- **Font selection**: Do fonts need replacing? What fits the brand/context?
-- **Type scale**: Establish a modular scale (e.g., 1.25 ratio) with clear hierarchy
-- **Weight strategy**: Which weights serve which roles? (Regular for body, Semibold for labels, Bold for headings — or whatever fits)
-- **Spacing**: Line-heights, letter-spacing, and margins between typographic elements
+### 폰트 선택
 
-## Improve Typography Systematically
+폰트 교체가 필요하다면:
+- 브랜드 개성을 반영하는 폰트 선택
+- 진정한 대비로 페어링 (세리프 + 산세리프, 기하학적 + 휴머니스트) — 또는 다양한 굵기의 단일 패밀리
+- `font-display: swap`과 메트릭 매칭 폴백으로 레이아웃 시프트 방지
 
-### Font Selection
+### 계층구조 수립
 
-If fonts need replacing:
-- Choose fonts that reflect the brand personality
-- Pair with genuine contrast (serif + sans, geometric + humanist) — or use a single family in multiple weights
-- Ensure web font loading doesn't cause layout shift (`font-display: swap`, metric-matched fallbacks)
+```
+/* 예시: 5단계 타입 스케일 (1.25 비율) */
+--text-caption:   0.8rem;    /* 12.8px — 보조 정보 */
+--text-secondary: 0.875rem;  /* 14px — 메타데이터 */
+--text-body:      1rem;      /* 16px — 본문 */
+--text-subtitle:  1.25rem;   /* 20px — 소제목 */
+--text-heading:   1.563rem;  /* 25px — 제목 */
+```
 
-### Establish Hierarchy
+- **5가지 크기가 대부분의 요구를 충족**: 캡션, 보조, 본문, 소제목, 제목
+- **차원 결합**: 크기 + 굵기 + 색상 + 공간으로 강한 계층구조 — 크기에만 의존하지 않는다
+- **앱 UI**: 고정 `rem` 기반 타입 스케일. 유동적 크기는 밀집된 컨테이너 기반 레이아웃의 공간적 예측 가능성을 훼손하기 때문이다.
+- **마케팅/콘텐츠 페이지**: 제목에 `clamp(min, preferred, max)` 사용. 본문은 고정 유지.
 
-Build a clear type scale:
-- **5 sizes cover most needs**: caption, secondary, body, subheading, heading
-- **Use a consistent ratio** between levels (1.25, 1.333, or 1.5)
-- **Combine dimensions**: Size + weight + color + space for strong hierarchy — don't rely on size alone
-- **App UIs**: Use a fixed `rem`-based type scale, optionally adjusted at 1-2 breakpoints. Fluid sizing undermines the spatial predictability that dense, container-based layouts need
-- **Marketing / content pages**: Use fluid sizing via `clamp(min, preferred, max)` for headings and display text. Keep body text fixed
+### 가독성 수정
 
-### Fix Readability
+- 텍스트 컨테이너에 `max-width: 65ch` — 줄 길이가 길면 시선이 다음 줄을 찾기 어렵다.
+- 맥락별 line-height: 제목은 촘촘하게 (1.1-1.2), 본문은 느슨하게 (1.5-1.7).
+- 어두운 배경 위 밝은 텍스트는 line-height를 약간 높인다 — 반전 대비에서 글자 간 간격이 더 좁아 보이기 때문이다.
+- 본문 최소 16px / 1rem.
 
-- Set `max-width` on text containers using `ch` units (`max-width: 65ch`)
-- Adjust line-height per context: tighter for headings (1.1-1.2), looser for body (1.5-1.7)
-- Increase line-height slightly for light-on-dark text
-- Ensure body text is at least 16px / 1rem
+### 세부 사항 정제
 
-### Refine Details
+- 데이터 테이블과 정렬 필요한 숫자에 `tabular-nums`
+- `letter-spacing`: 대문자/스몰캡에는 약간 넓게, 큰 디스플레이 텍스트에는 기본 또는 촘촘하게
+- 시맨틱 토큰 이름(`--text-body`, `--text-heading`) 사용 — `--font-16`처럼 값 이름은 디자인 변경 시 의미가 어긋난다.
+- `font-kerning: normal` 설정하고 적절한 곳에서 OpenType 기능 고려
 
-- Use `tabular-nums` for data tables and numbers that should align
-- Apply proper `letter-spacing`: slightly open for small caps and uppercase, default or tight for large display text
-- Use semantic token names (`--text-body`, `--text-heading`), not value names (`--font-16`)
-- Set `font-kerning: normal` and consider OpenType features where appropriate
+### 굵기 일관성
 
-### Weight Consistency
+- 각 굵기에 명확한 역할을 정의하고 고수한다
+- 3-4개 이상 불필요 (레귤러, 미디엄, 세미볼드, 볼드면 충분)
+- 실제 사용하는 굵기만 로드 — 각 굵기가 페이지 로드 시간에 추가된다
 
-- Define clear roles for each weight and stick to them
-- Don't use more than 3-4 weights (Regular, Medium, Semibold, Bold is plenty)
-- Load only the weights you actually use (each weight adds to page load)
+### 피해야 할 패턴과 이유
 
-**NEVER**:
-- Use more than 2-3 font families
-- Pick sizes arbitrarily — commit to a scale
-- Set body text below 16px
-- Use decorative/display fonts for body text
-- Disable browser zoom (`user-scalable=no`)
-- Use `px` for font sizes — use `rem` to respect user settings
-- Default to Inter/Roboto/Open Sans when personality matters
-- Pair fonts that are similar but not identical (two geometric sans-serifs)
+- 3개 이상의 폰트 패밀리를 쓰면 시각적 일관성이 무너지고 로딩 비용이 급증한다.
+- 임의 크기 선택은 계층구조를 흐리게 만든다 — 정의된 스케일에 전념한다.
+- 본문 16px 미만은 모바일에서 가독성이 크게 떨어지고, 사용자가 줌을 강제당한다.
+- 본문에 장식/디스플레이 폰트를 쓰면 긴 텍스트 읽기가 피로해진다 — 디스플레이 폰트는 헤드라인 전용이다.
+- `px` 대신 `rem`을 쓰는 이유: 사용자가 브라우저 기본 폰트 크기를 바꿨을 때 `px`은 이를 무시한다.
+- 비슷하지만 동일하지 않은 폰트 페어링(두 개의 기하학적 산세리프)은 실수처럼 보인다 — 대비가 있거나 같은 패밀리를 쓴다.
+- 개성이 중요한 맥락에서 Inter/Roboto/Open Sans를 기본으로 쓰면 "템플릿" 느낌을 준다.
 
-## Verify Typography Improvements
+## 타이포그래피 개선 검증
 
-- **Hierarchy**: Can you identify heading vs body vs caption instantly?
-- **Readability**: Is body text comfortable to read in long passages?
-- **Consistency**: Are same-role elements styled identically throughout?
-- **Personality**: Does the typography reflect the brand?
-- **Performance**: Are web fonts loading efficiently without layout shift?
-- **Accessibility**: Does text meet WCAG contrast ratios? Is it zoomable to 200%?
+- **계층구조**: 제목/본문/캡션을 즉시 식별할 수 있는가?
+- **가독성**: 본문이 긴 문장에서 편안한가?
+- **일관성**: 같은 역할의 요소가 전체에서 동일한가?
+- **개성**: 브랜드를 반영하는가?
+- **성능**: 웹 폰트가 레이아웃 시프트 없이 로딩되는가?
+- **접근성**: WCAG 대비 비율 충족? 200%까지 확대 가능?
 
-Remember: Typography is the foundation of interface design — it carries the majority of information. Getting it right is the highest-leverage improvement you can make.
+타이포그래피는 인터페이스 디자인의 기초다 — 정보의 대부분을 전달한다. 이를 제대로 잡는 것이 가장 높은 레버리지의 개선이다.

@@ -1,245 +1,155 @@
 ---
 name: onboard
-description: Designs and improves onboarding flows, empty states, and first-run experiences to help users reach value quickly. Use when the user mentions onboarding, first-time users, empty states, activation, getting started, or new user flows.
+description: "온보딩 흐름, 빈 상태, 첫 실행 경험을 설계하고 개선하여 사용자가 빠르게 가치에 도달하도록 돕는다. '온보딩 만들어줘', '처음 사용자 경험 개선', '빈 상태 디자인', '시작하기 흐름', '신규 사용자 가이드', '활성화 개선', '아하 순간까지 빨리', '첫 화면이 텅 비었어', '사용자가 이탈해', '워크스루 만들어줘', '기능 발견 개선', '툴팁 추가', '빈 화면 뭘 보여줘야 해?' 등 온보딩/첫 경험/빈 상태 관련 요청이면 반드시 이 스킬 사용."
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[온보딩 대상 화면 또는 흐름]"
 ---
 
-## MANDATORY PREPARATION
+사용자가 제품을 빠르게 이해하고, 채택하고, 성공적으로 사용할 수 있도록 온보딩 경험을 만들거나 개선한다.
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first. Additionally gather: the "aha moment" you want users to reach, and users' experience level.
+## 필수 사전 준비
+
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴(anti-pattern), **컨텍스트 수집 프로토콜(Context Gathering Protocol)**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없으면 반드시 /teach-impeccable을 먼저 실행해야 한다. 추가로 수집할 것: 사용자가 도달해야 할 "아하 순간(aha moment)", 사용자의 경험 수준.
 
 ---
 
-Create or improve onboarding experiences that help users understand, adopt, and succeed with the product quickly.
+## 온보딩 필요성 평가
 
-## Assess Onboarding Needs
+사용자가 무엇을 배워야 하고 왜 그런지 파악한다:
 
-Understand what users need to learn and why:
+1. **도전 과제 파악**:
+   - 사용자가 달성하려는 것은?
+   - 현재 경험에서 혼란스럽거나 불분명한 것은?
+   - 사용자가 어디서 막히거나 이탈하는가?
+   - "아하 순간"은 무엇인가?
 
-1. **Identify the challenge**:
-   - What are users trying to accomplish?
-   - What's confusing or unclear about current experience?
-   - Where do users get stuck or drop off?
-   - What's the "aha moment" we want users to reach?
+2. **사용자 이해**:
+   - 경험 수준은? (초보자, 고급 사용자, 혼합?)
+   - 동기는? (기대에 차서 탐색? 업무상 의무?)
+   - 투자할 시간은? (5분? 30분?)
+   - 경쟁 제품에서 온 사용자인가, 카테고리 자체가 처음인가?
 
-2. **Understand the users**:
-   - What's their experience level? (Beginners, power users, mixed?)
-   - What's their motivation? (Excited and exploring? Required by work?)
-   - What's their time commitment? (5 minutes? 30 minutes?)
-   - What alternatives do they know? (Coming from competitor? New to category?)
+3. **성공 정의**:
+   - 성공하기 위해 최소한으로 배워야 할 것은?
+   - 사용자가 취하길 바라는 핵심 행동은?
+   - 온보딩 성공 지표는? (완료율? 가치 도달 시간?)
 
-3. **Define success**:
-   - What's the minimum users need to learn to be successful?
-   - What's the key action we want them to take? (First project? First invite?)
-   - How do we know onboarding worked? (Completion rate? Time to value?)
+**핵심**: 온보딩은 가능한 모든 것을 가르치는 게 아니라, 최대한 빨리 가치에 도달하게 하는 것이다.
 
-**CRITICAL**: Onboarding should get users to value as quickly as possible, not teach everything possible.
+## 온보딩 원칙
 
-## Onboarding Principles
+### 말하지 말고 보여준다
+- 설명이 아닌 작동하는 예시로 보여준다
+- 별도 튜토리얼 모드가 아닌, 실제 기능을 사용하게 한다
+- 점진적 공개 — 한 번에 하나씩 가르친다
 
-Follow these core principles:
+### 선택적으로 만든다
+- 경험 있는 사용자는 건너뛸 수 있게 한다
+- 제품 접근을 차단하지 않는다
+- "건너뛰기" 또는 "직접 둘러볼게요" 옵션을 제공한다
 
-### Show, Don't Tell
-- Demonstrate with working examples, not just descriptions
-- Provide real functionality in onboarding, not separate tutorial mode
-- Use progressive disclosure - teach one thing at a time
+### 가치 도달 시간을 최소화한다
+- "아하 순간"에 최대한 빨리 도달시킨다
+- 80% 가치를 제공하는 20%를 가르친다
+- 고급 기능은 맥락적 발견에 맡긴다
 
-### Make It Optional (When Possible)
-- Let experienced users skip onboarding
-- Don't block access to product
-- Provide "Skip" or "I'll explore on my own" options
+### 맥락에 맞게 가르친다
+- 기능을 사용자가 필요할 때 가르친다
+- 빈 상태를 온보딩 기회로 활용한다
+- 사용 지점에서 툴팁과 힌트를 제공한다
 
-### Time to Value
-- Get users to their "aha moment" ASAP
-- Front-load most important concepts
-- Teach 20% that delivers 80% of value
-- Save advanced features for contextual discovery
+### 사용자의 지능을 존중한다
+- 과하게 설명하지 않는다
+- 표준 패턴은 사용자가 스스로 파악할 수 있다고 가정한다
 
-### Context Over Ceremony
-- Teach features when users need them, not upfront
-- Empty states are onboarding opportunities
-- Tooltips and hints at point of use
+## 온보딩 경험 설계
 
-### Respect User Intelligence
-- Don't patronize or over-explain
-- Be concise and clear
-- Assume users can figure out standard patterns
+### 초기 제품 온보딩
 
-## Design Onboarding Experiences
+**환영 화면**: 명확한 가치 제안, 시간 예상, 건너뛰기 옵션
 
-Create appropriate onboarding for the context:
+**계정 설정**: 최소한의 필수 정보만 수집하고, 나머지는 나중에. 각 정보를 왜 요청하는지 설명한다.
 
-### Initial Product Onboarding
+**핵심 개념 소개**: 1-3가지 핵심 개념만. 쉬운 말과 예시 사용. 가능하면 인터랙티브하게.
 
-**Welcome Screen**:
-- Clear value proposition (what is this product?)
-- What users will learn/accomplish
-- Time estimate (honest about commitment)
-- Option to skip (for experienced users)
+**첫 성공**:
 
-**Account Setup**:
-- Minimal required information (collect more later)
-- Explain why you're asking for each piece of information
-- Smart defaults where possible
-- Social login when appropriate
+**예시:**
+입력: 빈 대시보드
+출력: "첫 프로젝트를 만들어보세요" + 미리 채워진 템플릿 + 완료 축하
 
-**Core Concept Introduction**:
-- Introduce 1-3 core concepts (not everything)
-- Use simple language and examples
-- Interactive when possible (do, don't just read)
-- Progress indication (step 1 of 3)
+사용자가 실제로 무언가를 달성하도록 안내하고, 완료를 축하한다.
 
-**First Success**:
-- Guide users to accomplish something real
-- Pre-populated examples or templates
-- Celebrate completion (but don't overdo it)
-- Clear next steps
+### 빈 상태 설계
 
-### Feature Discovery & Adoption
+모든 빈 상태에 포함할 것:
 
-**Empty States**:
-Instead of blank space, show:
-- What will appear here (description + screenshot/illustration)
-- Why it's valuable
-- Clear CTA to create first item
-- Example or template option
-
-Example:
+**예시:**
+입력: 빈 프로젝트 목록 페이지
+출력:
 ```
-No projects yet
-Projects help you organize your work and collaborate with your team.
-[Create your first project] or [Start from template]
+[일러스트]
+아직 프로젝트가 없습니다
+프로젝트로 작업을 정리하고 팀과 협업할 수 있습니다.
+[첫 프로젝트 만들기] 또는 [템플릿으로 시작]
+시작이 필요하신가요? [2분 튜토리얼 보기]
 ```
 
-**Contextual Tooltips**:
-- Appear at relevant moment (first time user sees feature)
-- Point directly at relevant UI element
-- Brief explanation + benefit
-- Dismissable (with "Don't show again" option)
-- Optional "Learn more" link
+**빈 상태 유형별 접근**:
+- **첫 사용**: 가치 강조, 템플릿 제공
+- **사용자가 비움**: 가벼운 터치, 쉽게 재생성
+- **결과 없음**: 다른 쿼리 제안, 필터 초기화
+- **권한 없음**: 이유 설명, 접근 방법 안내
+- **오류 상태**: 무슨 일이 일어났는지 설명, 재시도 옵션
 
-**Feature Announcements**:
-- Highlight new features when they're released
-- Show what's new and why it matters
-- Let users try immediately
-- Dismissable
+### 맥락적 툴팁
+- 관련 순간에 나타남 (사용자가 기능을 처음 볼 때)
+- 관련 UI 요소를 직접 가리킴
+- 간단한 설명 + 이점
+- 닫을 수 있음 ("다시 보지 않기" 포함)
 
-**Progressive Onboarding**:
-- Teach features when users encounter them
-- Badges or indicators on new/unused features
-- Unlock complexity gradually (don't show all options immediately)
+### 가이드 투어
 
-### Guided Tours & Walkthroughs
+복잡한 인터페이스나 큰 변경이 있을 때 사용한다:
+- 특정 UI 요소를 스포트라이트한다
+- 투어당 최대 3-7단계로 짧게 유지한다
+- 기능이 아닌 워크플로우에 집중한다 ("프로젝트 만들기"이지 "이것은 프로젝트 버튼입니다"가 아닌)
+- 건너뛰기 옵션과 다시 재생 가능하게 한다
 
-**When to use**:
-- Complex interfaces with many features
-- Significant changes to existing product
-- Industry-specific tools needing domain knowledge
+### 인터랙티브 튜토리얼
 
-**How to design**:
-- Spotlight specific UI elements (dim rest of page)
-- Keep steps short (3-7 steps max per tour)
-- Allow users to click through tour freely
-- Include "Skip tour" option
-- Make replayable (help menu)
+사용자가 실습이 필요하거나 높은 리스크가 있을 때:
+- 샘플 데이터가 있는 샌드박스(sandbox) 환경을 제공한다
+- 명확한 목표를 설정한다
+- 단계별로 안내하고 검증한다
 
-**Best practices**:
-- Interactive > passive (let users click real buttons)
-- Focus on workflow, not features ("Create a project" not "This is the project button")
-- Provide sample data so actions work
+## 구현 패턴
 
-### Interactive Tutorials
+**투어 라이브러리**: Intro.js, Shepherd.js, React Joyride
+**진행 추적**: LocalStorage로 본 상태를 추적한다
 
-**When to use**:
-- Users need hands-on practice
-- Concepts are complex or unfamiliar
-- High stakes (better to practice in safe environment)
-
-**How to design**:
-- Sandbox environment with sample data
-- Clear objectives ("Create a chart showing sales by region")
-- Step-by-step guidance
-- Validation (confirm they did it right)
-- Graduation moment (you're ready!)
-
-### Documentation & Help
-
-**In-product help**:
-- Contextual help links throughout interface
-- Keyboard shortcut reference
-- Search-able help center
-- Video tutorials for complex workflows
-
-**Help patterns**:
-- `?` icon near complex features
-- "Learn more" links in tooltips
-- Keyboard shortcut hints (`⌘K` shown on search box)
-
-## Empty State Design
-
-Every empty state needs:
-
-### What Will Be Here
-"Your recent projects will appear here"
-
-### Why It Matters  
-"Projects help you organize your work and collaborate with your team"
-
-### How to Get Started
-[Create project] or [Import from template]
-
-### Visual Interest
-Illustration or icon (not just text on blank page)
-
-### Contextual Help
-"Need help getting started? [Watch 2-min tutorial]"
-
-**Empty state types**:
-- **First use**: Never used this feature (emphasize value, provide template)
-- **User cleared**: Intentionally deleted everything (light touch, easy to recreate)
-- **No results**: Search or filter returned nothing (suggest different query, clear filters)
-- **No permissions**: Can't access (explain why, how to get access)
-- **Error state**: Failed to load (explain what happened, retry option)
-
-## Implementation Patterns
-
-### Technical approaches:
-
-**Tooltip libraries**: Tippy.js, Popper.js
-**Tour libraries**: Intro.js, Shepherd.js, React Joyride
-**Modal patterns**: Focus trap, backdrop, ESC to close
-**Progress tracking**: LocalStorage for "seen" states
-**Analytics**: Track completion, drop-off points
-
-**Storage patterns**:
 ```javascript
-// Track which onboarding steps user has seen
 localStorage.setItem('onboarding-completed', 'true');
 localStorage.setItem('feature-tooltip-seen-reports', 'true');
 ```
 
-**IMPORTANT**: Don't show same onboarding twice (annoying). Track completion and respect dismissals.
+같은 온보딩을 두 번 보여주면 짜증난다 — 완료를 추적하고 닫기를 존중한다.
 
-**NEVER**:
-- Force users through long onboarding before they can use product
-- Patronize users with obvious explanations
-- Show same tooltip repeatedly (respect dismissals)
-- Block all UI during tour (let users explore)
-- Create separate tutorial mode disconnected from real product
-- Overwhelm with information upfront (progressive disclosure!)
-- Hide "Skip" or make it hard to find
-- Forget about returning users (don't show initial onboarding again)
+## 피해야 할 패턴과 그 이유
 
-## Verify Onboarding Quality
+- **제품 사용 전 긴 온보딩 강제** — 사용자는 아직 제품에 투자하지 않은 상태이므로, 긴 설명을 읽을 동기가 없다; 빨리 써보게 해야 한다
+- **뻔한 설명** — "저장 버튼을 누르면 저장됩니다" 같은 설명은 사용자를 깔보는 느낌을 준다
+- **같은 툴팁 반복 노출** — 닫기를 무시하면 사용자가 모든 안내를 무시하게 훈련된다
+- **투어 중 전체 UI 차단** — 사용자는 둘러보고 싶은데 강제로 가두면 이탈한다
+- **별도 튜토리얼 모드** — 실제 제품과 분리된 환경에서 배운 것은 실제 사용에 전이되지 않는다
+- **정보 쏟아붓기** — 한 번에 10가지를 가르치면 아무것도 기억하지 못한다
 
-Test with real users:
+## 온보딩 품질 검증
 
-- **Time to completion**: Can users complete onboarding quickly?
-- **Comprehension**: Do users understand after completing?
-- **Action**: Do users take desired next step?
-- **Skip rate**: Are too many users skipping? (Maybe it's too long/not valuable)
-- **Completion rate**: Are users completing? (If low, simplify)
-- **Time to value**: How long until users get first value?
+- **완료 시간**: 빠르게 완료할 수 있는가?
+- **이해도**: 완료 후 핵심을 이해하는가?
+- **행동**: 원하는 다음 단계를 취하는가?
+- **건너뛰기 비율**: 너무 높으면 너무 길거나 가치가 없다는 신호
+- **가치 도달 시간**: 첫 가치를 얻기까지 얼마나 걸리는가?
 
-Remember: You're a product educator with excellent teaching instincts. Get users to their "aha moment" as quickly as possible. Teach the essential, make it contextual, respect user time and intelligence.
+사용자를 가능한 한 빨리 "아하 순간"에 도달시킨다. 핵심만 가르치고, 맥락에 맞게 하고, 사용자의 시간과 지능을 존중한다.

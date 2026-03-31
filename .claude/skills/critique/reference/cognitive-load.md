@@ -1,106 +1,106 @@
-# Cognitive Load Assessment
+# 인지 부하(Cognitive Load) 평가
 
-Cognitive load is the total mental effort required to use an interface. Overloaded users make mistakes, get frustrated, and leave. This reference helps identify and fix cognitive overload.
-
----
-
-## Three Types of Cognitive Load
-
-### Intrinsic Load — The Task Itself
-Complexity inherent to what the user is trying to do. You can't eliminate this, but you can structure it.
-
-**Manage it by**:
-- Breaking complex tasks into discrete steps
-- Providing scaffolding (templates, defaults, examples)
-- Progressive disclosure — show what's needed now, hide the rest
-- Grouping related decisions together
-
-### Extraneous Load — Bad Design
-Mental effort caused by poor design choices. **Eliminate this ruthlessly** — it's pure waste.
-
-**Common sources**:
-- Confusing navigation that requires mental mapping
-- Unclear labels that force users to guess meaning
-- Visual clutter competing for attention
-- Inconsistent patterns that prevent learning
-- Unnecessary steps between user intent and result
-
-### Germane Load — Learning Effort
-Mental effort spent building understanding. This is *good* cognitive load — it leads to mastery.
-
-**Support it by**:
-- Progressive disclosure that reveals complexity gradually
-- Consistent patterns that reward learning
-- Feedback that confirms correct understanding
-- Onboarding that teaches through action, not walls of text
+인지 부하(cognitive load)란 인터페이스를 사용하는 데 필요한 총 정신적 노력이다. 과부하된 사용자는 실수하고, 좌절하고, 떠난다. 이 레퍼런스는 인지 과부하를 식별하고 해결하는 데 도움을 준다.
 
 ---
 
-## Cognitive Load Checklist
+## 인지 부하의 세 가지 유형
 
-Evaluate the interface against these 8 items:
+### 내재적 부하(Intrinsic Load) — 과제 자체의 복잡성
+사용자가 하려는 일에 본질적으로 내재된 복잡성이다. 이를 제거할 수는 없지만, 구조화할 수는 있다.
 
-- [ ] **Single focus**: Can the user complete their primary task without distraction from competing elements?
-- [ ] **Chunking**: Is information presented in digestible groups (≤4 items per group)?
-- [ ] **Grouping**: Are related items visually grouped together (proximity, borders, shared background)?
-- [ ] **Visual hierarchy**: Is it immediately clear what's most important on the screen?
-- [ ] **One thing at a time**: Can the user focus on a single decision before moving to the next?
-- [ ] **Minimal choices**: Are decisions simplified (≤4 visible options at any decision point)?
-- [ ] **Working memory**: Does the user need to remember information from a previous screen to act on the current one?
-- [ ] **Progressive disclosure**: Is complexity revealed only when the user needs it?
+**관리 방법**:
+- 복잡한 과제를 개별 단계로 분리
+- 스캐폴딩(scaffolding) 제공 (템플릿, 기본값, 예시)
+- 점진적 공개(progressive disclosure) — 지금 필요한 것만 보여주고 나머지는 숨기기
+- 관련 의사결정을 한데 묶기
 
-**Scoring**: Count the failed items. 0–1 failures = low cognitive load (good). 2–3 = moderate (address soon). 4+ = high cognitive load (critical fix needed).
+### 외재적 부하(Extraneous Load) — 나쁜 디자인
+잘못된 디자인 선택이 유발하는 정신적 노력. **가차 없이 제거해야 한다** — 순수한 낭비다.
 
----
+**흔한 원인**:
+- 머릿속 지도를 그려야 하는 혼란스러운 네비게이션
+- 의미를 추측하게 만드는 불명확한 라벨
+- 주의를 빼앗는 시각적 잡음
+- 학습을 방해하는 일관성 없는 패턴
+- 사용자 의도와 결과 사이의 불필요한 단계
 
-## The Working Memory Rule
+### 발생적 부하(Germane Load) — 학습 노력
+이해를 쌓는 데 쓰이는 정신적 노력. 이것은 *좋은* 인지 부하다 — 숙달로 이어진다.
 
-**Humans can hold ≤4 items in working memory at once** (Miller's Law revised by Cowan, 2001).
-
-At any decision point, count the number of distinct options, actions, or pieces of information a user must simultaneously consider:
-- **≤4 items**: Within working memory limits — manageable
-- **5–7 items**: Pushing the boundary — consider grouping or progressive disclosure
-- **8+ items**: Overloaded — users will skip, misclick, or abandon
-
-**Practical applications**:
-- Navigation menus: ≤5 top-level items (group the rest under clear categories)
-- Form sections: ≤4 fields visible per group before a visual break
-- Action buttons: 1 primary, 1–2 secondary, group the rest in a menu
-- Dashboard widgets: ≤4 key metrics visible without scrolling
-- Pricing tiers: ≤3 options (more causes analysis paralysis)
+**지원 방법**:
+- 복잡성을 점진적으로 드러내는 점진적 공개
+- 학습에 보상을 주는 일관된 패턴
+- 올바른 이해를 확인해주는 피드백
+- 텍스트 벽이 아닌 행동을 통해 가르치는 온보딩
 
 ---
 
-## Common Cognitive Load Violations
+## 인지 부하 체크리스트
 
-### 1. The Wall of Options
-**Problem**: Presenting 10+ choices at once with no hierarchy.
-**Fix**: Group into categories, highlight recommended, use progressive disclosure.
+다음 8개 항목으로 인터페이스를 평가한다:
 
-### 2. The Memory Bridge
-**Problem**: User must remember info from step 1 to complete step 3.
-**Fix**: Keep relevant context visible, or repeat it where it's needed.
+- [ ] **단일 초점**: 사용자가 경쟁 요소의 방해 없이 주요 과제를 완료할 수 있는가?
+- [ ] **청킹(Chunking)**: 정보가 소화 가능한 그룹으로 제시되는가 (그룹당 4개 이하)?
+- [ ] **그룹핑**: 관련 항목이 시각적으로 묶여 있는가 (근접성, 테두리, 공유 배경)?
+- [ ] **시각적 위계**: 화면에서 가장 중요한 것이 즉시 명확한가?
+- [ ] **한 번에 하나씩**: 다음으로 넘어가기 전에 하나의 결정에 집중할 수 있는가?
+- [ ] **최소 선택지**: 결정이 단순화되어 있는가 (결정 지점당 4개 이하의 가시적 옵션)?
+- [ ] **작업 기억(Working Memory)**: 현재 화면에서 행동하기 위해 이전 화면의 정보를 기억해야 하는가?
+- [ ] **점진적 공개**: 복잡성이 사용자가 필요할 때만 드러나는가?
 
-### 3. The Hidden Navigation
-**Problem**: User must build a mental map of where things are.
-**Fix**: Always show current location (breadcrumbs, active states, progress indicators).
+**채점**: 실패 항목 수를 센다. 0~1개 실패 = 낮은 인지 부하 (양호). 2~3개 = 보통 (조속히 개선). 4개 이상 = 높은 인지 부하 (긴급 수정 필요).
 
-### 4. The Jargon Barrier
-**Problem**: Technical or domain language forces translation effort.
-**Fix**: Use plain language. If domain terms are unavoidable, define them inline.
+---
 
-### 5. The Visual Noise Floor
-**Problem**: Every element has the same visual weight — nothing stands out.
-**Fix**: Establish clear hierarchy: one primary element, 2–3 secondary, everything else muted.
+## 작업 기억 규칙
 
-### 6. The Inconsistent Pattern
-**Problem**: Similar actions work differently in different places.
-**Fix**: Standardize interaction patterns. Same type of action = same type of UI.
+**인간은 작업 기억에 동시에 4개 이하의 항목만 유지할 수 있다** (밀러의 법칙(Miller's Law)을 코완(Cowan, 2001)이 수정).
 
-### 7. The Multi-Task Demand
-**Problem**: Interface requires processing multiple simultaneous inputs (reading + deciding + navigating).
-**Fix**: Sequence the steps. Let the user do one thing at a time.
+각 결정 지점에서 사용자가 동시에 고려해야 하는 개별 옵션, 행동, 정보 조각의 수를 센다:
+- **4개 이하**: 작업 기억 한계 이내 — 관리 가능
+- **5~7개**: 경계에 근접 — 그룹핑이나 점진적 공개를 고려
+- **8개 이상**: 과부하 — 사용자가 건너뛰거나, 잘못 클릭하거나, 이탈할 것
 
-### 8. The Context Switch
-**Problem**: User must jump between screens/tabs/modals to gather info for a single decision.
-**Fix**: Co-locate the information needed for each decision. Reduce back-and-forth.
+**실용적 적용**:
+- 네비게이션 메뉴: 최상위 항목 5개 이하 (나머지는 명확한 카테고리 아래로 그룹핑)
+- 폼 섹션: 시각적 구분 전에 그룹당 4개 이하의 필드 표시
+- 액션 버튼: 기본 1개, 보조 1~2개, 나머지는 메뉴로 그룹핑
+- 대시보드 위젯: 스크롤 없이 4개 이하의 핵심 지표 표시
+- 요금제: 3개 이하의 옵션 (많으면 분석 마비(analysis paralysis) 유발)
+
+---
+
+## 흔한 인지 부하 위반 사례
+
+### 1. 선택지의 벽
+**문제**: 위계 없이 10개 이상의 선택지를 한꺼번에 제시.
+**해결**: 카테고리로 그룹핑, 추천 항목 강조, 점진적 공개 사용.
+
+### 2. 기억의 다리
+**문제**: 3단계를 완료하기 위해 1단계의 정보를 기억해야 함.
+**해결**: 관련 맥락을 계속 보여주거나, 필요한 곳에서 반복.
+
+### 3. 숨겨진 네비게이션
+**문제**: 사용자가 어디에 무엇이 있는지 머릿속 지도를 만들어야 함.
+**해결**: 항상 현재 위치를 표시 (브레드크럼, 활성 상태, 진행 표시기).
+
+### 4. 전문 용어 장벽
+**문제**: 기술적 또는 도메인 용어가 번역 노력을 강제.
+**해결**: 평이한 언어를 사용. 도메인 용어가 불가피하면 인라인으로 정의.
+
+### 5. 시각적 잡음 평탄화
+**문제**: 모든 요소가 같은 시각적 가중치를 가짐 — 아무것도 눈에 띄지 않음.
+**해결**: 명확한 위계 수립: 주요 요소 1개, 보조 2~3개, 나머지는 모두 약하게.
+
+### 6. 일관성 없는 패턴
+**문제**: 유사한 동작이 다른 곳에서 다르게 작동.
+**해결**: 인터랙션 패턴을 표준화. 같은 유형의 동작 = 같은 유형의 UI.
+
+### 7. 다중 작업 요구
+**문제**: 인터페이스가 여러 동시 입력 처리를 요구 (읽기 + 결정하기 + 탐색하기).
+**해결**: 단계를 순서대로 배치. 사용자가 한 번에 하나씩 할 수 있게.
+
+### 8. 맥락 전환
+**문제**: 하나의 결정을 위해 화면/탭/모달 사이를 오가며 정보를 수집해야 함.
+**해결**: 각 결정에 필요한 정보를 같은 곳에 배치. 왔다 갔다를 줄이기.

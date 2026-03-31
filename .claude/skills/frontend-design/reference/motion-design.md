@@ -1,69 +1,69 @@
-# Motion Design
+# 모션 디자인
 
-## Duration: The 100/300/500 Rule
+## 지속 시간: 100/300/500 규칙
 
-Timing matters more than easing. These durations feel right for most UI:
+이징(easing)보다 타이밍이 더 중요하다. 대부분의 UI에서 다음 지속 시간이 적절하다:
 
-| Duration | Use Case | Examples |
-|----------|----------|----------|
-| **100-150ms** | Instant feedback | Button press, toggle, color change |
-| **200-300ms** | State changes | Menu open, tooltip, hover states |
-| **300-500ms** | Layout changes | Accordion, modal, drawer |
-| **500-800ms** | Entrance animations | Page load, hero reveals |
+| 지속 시간 | 용도 | 예시 |
+|-----------|------|------|
+| **100-150ms** | 즉각적 피드백 | 버튼 누르기, 토글, 색상 변경 |
+| **200-300ms** | 상태 전환 | 메뉴 열기, 툴팁, 호버 상태 |
+| **300-500ms** | 레이아웃 변경 | 아코디언, 모달, 드로어 |
+| **500-800ms** | 등장 애니메이션 | 페이지 로드, 히어로 노출 |
 
-**Exit animations are faster than entrances**—use ~75% of enter duration.
+**퇴장 애니메이션은 등장보다 빠르게**—등장 지속 시간의 ~75%를 사용하라.
 
-## Easing: Pick the Right Curve
+## 이징: 올바른 커브 선택
 
-**Don't use `ease`.** It's a compromise that's rarely optimal. Instead:
+**`ease`를 쓰지 말라.** 최적이 아닌 타협이다. 대신:
 
-| Curve | Use For | CSS |
-|-------|---------|-----|
-| **ease-out** | Elements entering | `cubic-bezier(0.16, 1, 0.3, 1)` |
-| **ease-in** | Elements leaving | `cubic-bezier(0.7, 0, 0.84, 0)` |
-| **ease-in-out** | State toggles (there → back) | `cubic-bezier(0.65, 0, 0.35, 1)` |
+| 커브 | 용도 | CSS |
+|------|------|-----|
+| **ease-out** | 요소 등장 | `cubic-bezier(0.16, 1, 0.3, 1)` |
+| **ease-in** | 요소 퇴장 | `cubic-bezier(0.7, 0, 0.84, 0)` |
+| **ease-in-out** | 상태 토글 (왔다 → 갔다) | `cubic-bezier(0.65, 0, 0.35, 1)` |
 
-**For micro-interactions, use exponential curves**—they feel natural because they mimic real physics (friction, deceleration):
+**마이크로 인터랙션에는 지수 커브(exponential curve)를 사용하라**—실제 물리(마찰, 감속)를 모방하기 때문에 자연스럽게 느껴진다:
 
 ```css
-/* Quart out - smooth, refined (recommended default) */
+/* Quart out - 부드럽고 세련됨 (권장 기본값) */
 --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 
-/* Quint out - slightly more dramatic */
+/* Quint out - 약간 더 극적 */
 --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 
-/* Expo out - snappy, confident */
+/* Expo out - 빠르고 확신에 찬 */
 --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 ```
 
-**Avoid bounce and elastic curves.** They were trendy in 2015 but now feel tacky and amateurish. Real objects don't bounce when they stop—they decelerate smoothly. Overshoot effects draw attention to the animation itself rather than the content.
+**바운스와 탄성 커브를 피하라.** 2015년에 유행했지만 지금은 촌스럽고 아마추어처럼 보인다. 실제 물체는 멈출 때 튀지 않는다—부드럽게 감속한다. 오버슈트 효과는 콘텐츠가 아닌 애니메이션 자체에 시선을 끈다.
 
-## The Only Two Properties You Should Animate
+## 애니메이션해야 할 속성은 딱 두 가지
 
-**transform** and **opacity** only—everything else causes layout recalculation. For height animations (accordions), use `grid-template-rows: 0fr → 1fr` instead of animating `height` directly.
+**transform**과 **opacity**만—나머지는 전부 레이아웃 재계산을 유발한다. 높이 애니메이션(아코디언)에는 `height`를 직접 애니메이션하는 대신 `grid-template-rows: 0fr → 1fr`을 사용하라.
 
-## Staggered Animations
+## 순차 애니메이션(staggered animation)
 
-Use CSS custom properties for cleaner stagger: `animation-delay: calc(var(--i, 0) * 50ms)` with `style="--i: 0"` on each item. **Cap total stagger time**—10 items at 50ms = 500ms total. For many items, reduce per-item delay or cap staggered count.
+CSS 커스텀 프로퍼티로 더 깔끔한 순차 효과를 만들라: `animation-delay: calc(var(--i, 0) * 50ms)`와 각 항목에 `style="--i: 0"`. **전체 순차 시간에 상한을 두라**—10개 항목을 50ms씩이면 총 500ms다. 항목이 많으면 항목당 딜레이를 줄이거나 순차 적용 개수를 제한하라.
 
-## Reduced Motion
+## 모션 감소(reduced motion)
 
-This is not optional. Vestibular disorders affect ~35% of adults over 40.
+이것은 선택 사항이 아니다. 전정 기관 장애(vestibular disorder)는 40세 이상 성인의 ~35%에게 영향을 미친다.
 
 ```css
-/* Define animations normally */
+/* 일반적으로 애니메이션 정의 */
 .card {
   animation: slide-up 500ms ease-out;
 }
 
-/* Provide alternative for reduced motion */
+/* 모션 감소 요청 시 대안 제공 */
 @media (prefers-reduced-motion: reduce) {
   .card {
-    animation: fade-in 200ms ease-out;  /* Crossfade instead of motion */
+    animation: fade-in 200ms ease-out;  /* 이동 대신 크로스페이드 */
   }
 }
 
-/* Or disable entirely */
+/* 또는 완전히 비활성화 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -72,28 +72,28 @@ This is not optional. Vestibular disorders affect ~35% of adults over 40.
 }
 ```
 
-**What to preserve**: Functional animations like progress bars, loading spinners (slowed down), and focus indicators should still work—just without spatial movement.
+**유지해야 할 것**: 진행 표시줄, 로딩 스피너(속도 줄여서), 포커스 인디케이터 같은 기능적 애니메이션은 계속 동작해야 한다—단지 공간적 이동 없이.
 
-## Perceived Performance
+## 체감 성능(perceived performance)
 
-**Nobody cares how fast your site is—just how fast it feels.** Perception can be as effective as actual performance.
+**아무도 사이트가 실제로 얼마나 빠른지 신경 쓰지 않는다—얼마나 빠르게 *느끼는지*가 중요하다.** 인식은 실제 성능만큼 효과적일 수 있다.
 
-**The 80ms threshold**: Our brains buffer sensory input for ~80ms to synchronize perception. Anything under 80ms feels instant and simultaneous. This is your target for micro-interactions.
+**80ms 임계값**: 우리 뇌는 인식을 동기화하기 위해 감각 입력을 ~80ms 동안 버퍼링한다. 80ms 미만은 즉각적이고 동시에 일어난 것처럼 느껴진다. 이것이 마이크로 인터랙션의 목표다.
 
-**Active vs passive time**: Passive waiting (staring at a spinner) feels longer than active engagement. Strategies to shift the balance:
+**능동적 시간 vs 수동적 시간**: 수동적 대기(스피너를 응시)는 능동적 참여보다 길게 느껴진다. 균형을 바꾸는 전략:
 
-- **Preemptive start**: Begin transitions immediately while loading (iOS app zoom, skeleton UI). Users perceive work happening.
-- **Early completion**: Show content progressively—don't wait for everything. Video buffering, progressive images, streaming HTML.
-- **Optimistic UI**: Update the interface immediately, handle failures gracefully. Instagram likes work offline—the UI updates instantly, syncs later. Use for low-stakes actions; avoid for payments or destructive operations.
+- **선제적 시작**: 로딩하는 동안 즉시 트랜지션을 시작하라 (iOS 앱 줌, 스켈레톤 UI). 사용자가 작업이 진행되고 있다고 인식한다.
+- **조기 완료**: 콘텐츠를 점진적으로 보여주라—전부 기다리지 말라. 비디오 버퍼링, 점진적 이미지, 스트리밍 HTML.
+- **낙관적 UI**: 인터페이스를 즉시 업데이트하고, 실패를 우아하게 처리하라. Instagram 좋아요는 오프라인에서도 동작한다—UI가 즉시 업데이트되고 나중에 동기화한다. 저위험 액션에 사용하고 결제나 파괴적 작업에는 피하라.
 
-**Easing affects perceived duration**: Ease-in (accelerating toward completion) makes tasks feel shorter because the peak-end effect weights final moments heavily. Ease-out feels satisfying for entrances, but ease-in toward a task's end compresses perceived time.
+**이징은 체감 지속 시간에 영향을 미친다**: ease-in(완료를 향해 가속)은 피크-엔드 효과(peak-end effect)가 마지막 순간에 가중치를 두기 때문에 작업이 더 짧게 느껴진다. ease-out은 등장 시 만족스럽지만, 작업 끝을 향한 ease-in이 체감 시간을 압축한다.
 
-**Caution**: Too-fast responses can decrease perceived value. Users may distrust instant results for complex operations (search, analysis). Sometimes a brief delay signals "real work" is happening.
+**주의**: 너무 빠른 응답은 체감 가치를 떨어뜨릴 수 있다. 사용자는 복잡한 작업(검색, 분석)에서 즉각적인 결과를 불신할 수 있다. 때로는 짧은 지연이 "실제 작업"이 진행 중임을 알려준다.
 
-## Performance
+## 성능
 
-Don't use `will-change` preemptively—only when animation is imminent (`:hover`, `.animating`). For scroll-triggered animations, use Intersection Observer instead of scroll events; unobserve after animating once. Create motion tokens for consistency (durations, easings, common transitions).
+`will-change`를 선제적으로 쓰지 말라—애니메이션이 임박할 때만 사용하라 (`:hover`, `.animating`). 스크롤 트리거 애니메이션에는 scroll 이벤트 대신 Intersection Observer를 사용하고, 한 번 애니메이션한 후에는 unobserve하라. 일관성을 위해 모션 토큰을 만들라 (지속 시간, 이징, 공통 트랜지션).
 
 ---
 
-**Avoid**: Animating everything (animation fatigue is real). Using >500ms for UI feedback. Ignoring `prefers-reduced-motion`. Using animation to hide slow loading.
+**피해야 할 것**: 모든 것에 애니메이션 적용 (애니메이션 피로는 실재한다). UI 피드백에 500ms 이상 사용. `prefers-reduced-motion` 무시. 느린 로딩을 숨기기 위해 애니메이션 사용.

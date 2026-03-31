@@ -1,132 +1,132 @@
-# Color & Contrast
+# 색상과 대비
 
-## Color Spaces: Use OKLCH
+## 색상 공간: OKLCH를 사용하라
 
-**Stop using HSL.** Use OKLCH (or LCH) instead. It's perceptually uniform, meaning equal steps in lightness *look* equal—unlike HSL where 50% lightness in yellow looks bright while 50% in blue looks dark.
+**HSL 사용을 중단하라.** 대신 OKLCH(또는 LCH)를 사용하라. 지각적으로 균일(perceptually uniform)하기 때문에 밝기의 동일한 단계가 실제로 동일하게 *보인다*—HSL에서는 노란색의 50% 밝기가 밝게 보이는 반면 파란색의 50%는 어둡게 보이는 문제가 있다.
 
 ```css
-/* OKLCH: lightness (0-100%), chroma (0-0.4+), hue (0-360) */
---color-primary: oklch(60% 0.15 250);      /* Blue */
---color-primary-light: oklch(85% 0.08 250); /* Same hue, lighter */
---color-primary-dark: oklch(35% 0.12 250);  /* Same hue, darker */
+/* OKLCH: 밝기(0-100%), 채도(0-0.4+), 색상(0-360) */
+--color-primary: oklch(60% 0.15 250);      /* 파랑 */
+--color-primary-light: oklch(85% 0.08 250); /* 같은 색상, 더 밝게 */
+--color-primary-dark: oklch(35% 0.12 250);  /* 같은 색상, 더 어둡게 */
 ```
 
-**Key insight**: As you move toward white or black, reduce chroma (saturation). High chroma at extreme lightness looks garish. A light blue at 85% lightness needs ~0.08 chroma, not the 0.15 of your base color.
+**핵심 인사이트**: 흰색이나 검은색에 가까워질수록 채도(chroma)를 줄여야 한다. 극단적인 밝기에서 높은 채도는 촌스러워 보인다. 85% 밝기의 연한 파랑은 기본 색상의 0.15가 아닌 ~0.08 정도의 채도가 적절하다.
 
-## Building Functional Palettes
+## 기능적 팔레트(functional palette) 구축
 
-### The Tinted Neutral Trap
+### 색조 입힌 중성색의 함정
 
-**Pure gray is dead.** Add a subtle hint of your brand hue to all neutrals:
+**순수한 회색은 생기가 없다.** 모든 중성색(neutral)에 브랜드 색상의 미묘한 힌트를 추가하라:
 
 ```css
-/* Dead grays */
---gray-100: oklch(95% 0 0);     /* No personality */
+/* 생기 없는 회색 */
+--gray-100: oklch(95% 0 0);     /* 개성이 없음 */
 --gray-900: oklch(15% 0 0);
 
-/* Warm-tinted grays (add brand warmth) */
---gray-100: oklch(95% 0.01 60);  /* Hint of warmth */
+/* 따뜻한 색조의 회색 (브랜드 온기 추가) */
+--gray-100: oklch(95% 0.01 60);  /* 살짝 따뜻하게 */
 --gray-900: oklch(15% 0.01 60);
 
-/* Cool-tinted grays (tech, professional) */
---gray-100: oklch(95% 0.01 250); /* Hint of blue */
+/* 차가운 색조의 회색 (테크, 전문적) */
+--gray-100: oklch(95% 0.01 250); /* 살짝 파랗게 */
 --gray-900: oklch(15% 0.01 250);
 ```
 
-The chroma is tiny (0.01) but perceptible. It creates subconscious cohesion between your brand color and your UI.
+채도가 아주 미세(0.01)하지만 지각할 수 있다. 브랜드 색상과 UI 사이에 무의식적 통일감을 만들어낸다.
 
-### Palette Structure
+### 팔레트 구조
 
-A complete system needs:
+완전한 시스템에는 다음이 필요하다:
 
-| Role | Purpose | Example |
-|------|---------|---------|
-| **Primary** | Brand, CTAs, key actions | 1 color, 3-5 shades |
-| **Neutral** | Text, backgrounds, borders | 9-11 shade scale |
-| **Semantic** | Success, error, warning, info | 4 colors, 2-3 shades each |
-| **Surface** | Cards, modals, overlays | 2-3 elevation levels |
+| 역할 | 목적 | 예시 |
+|------|------|------|
+| **주요색(Primary)** | 브랜드, CTA, 핵심 액션 | 1가지 색상, 3-5개 명도 단계 |
+| **중성색(Neutral)** | 텍스트, 배경, 테두리 | 9-11개 명도 단계 |
+| **의미색(Semantic)** | 성공, 오류, 경고, 정보 | 4가지 색상, 각 2-3개 명도 단계 |
+| **표면색(Surface)** | 카드, 모달, 오버레이 | 2-3개 엘리베이션 레벨 |
 
-**Skip secondary/tertiary unless you need them.** Most apps work fine with one accent color. Adding more creates decision fatigue and visual noise.
+**보조색/삼차색은 꼭 필요할 때만 추가하라.** 대부분의 앱은 액센트 색상 하나로 충분하다. 더 추가하면 결정 피로(decision fatigue)와 시각적 노이즈만 만든다.
 
-### The 60-30-10 Rule (Applied Correctly)
+### 60-30-10 규칙 (올바른 적용)
 
-This rule is about **visual weight**, not pixel count:
+이 규칙은 픽셀 수가 아닌 **시각적 무게감(visual weight)**에 관한 것이다:
 
-- **60%**: Neutral backgrounds, white space, base surfaces
-- **30%**: Secondary colors—text, borders, inactive states
-- **10%**: Accent—CTAs, highlights, focus states
+- **60%**: 중성 배경, 여백, 기본 표면
+- **30%**: 보조 색상—텍스트, 테두리, 비활성 상태
+- **10%**: 액센트—CTA, 하이라이트, 포커스 상태
 
-The common mistake: using the accent color everywhere because it's "the brand color." Accent colors work *because* they're rare. Overuse kills their power.
+흔한 실수: 액센트 색상이 "브랜드 색상"이라는 이유로 어디에나 쓰는 것. 액센트 색상은 *드물기 때문에* 효과가 있다. 남용하면 힘을 잃는다.
 
-## Contrast & Accessibility
+## 대비(contrast)와 접근성
 
-### WCAG Requirements
+### WCAG 요구사항
 
-| Content Type | AA Minimum | AAA Target |
-|--------------|------------|------------|
-| Body text | 4.5:1 | 7:1 |
-| Large text (18px+ or 14px bold) | 3:1 | 4.5:1 |
-| UI components, icons | 3:1 | 4.5:1 |
-| Non-essential decorations | None | None |
+| 콘텐츠 유형 | AA 최소 | AAA 목표 |
+|-------------|---------|----------|
+| 본문 텍스트 | 4.5:1 | 7:1 |
+| 큰 텍스트 (18px+ 또는 14px 볼드) | 3:1 | 4.5:1 |
+| UI 컴포넌트, 아이콘 | 3:1 | 4.5:1 |
+| 비필수 장식 요소 | 없음 | 없음 |
 
-**The gotcha**: Placeholder text still needs 4.5:1. That light gray placeholder you see everywhere? Usually fails WCAG.
+**주의할 점**: 플레이스홀더 텍스트도 4.5:1이 필요하다. 흔히 쓰이는 연한 회색 플레이스홀더는 대부분 WCAG를 충족하지 못한다.
 
-### Dangerous Color Combinations
+### 위험한 색상 조합
 
-These commonly fail contrast or cause readability issues:
+대비가 떨어지거나 가독성 문제를 일으키는 흔한 조합:
 
-- Light gray text on white (the #1 accessibility fail)
-- **Gray text on any colored background**—gray looks washed out and dead on color. Use a darker shade of the background color, or transparency
-- Red text on green background (or vice versa)—8% of men can't distinguish these
-- Blue text on red background (vibrates visually)
-- Yellow text on white (almost always fails)
-- Thin light text on images (unpredictable contrast)
+- 흰색 위의 연한 회색 텍스트 (접근성 위반 1위)
+- **유채색 배경 위의 회색 텍스트**—회색은 색상 위에서 바래고 생기 없어 보인다. 배경색의 어두운 명도를 사용하거나 투명도를 적용하라
+- 초록 배경 위의 빨간 텍스트 (또는 반대)—남성의 8%가 이 색상을 구분하지 못한다
+- 빨간 배경 위의 파란 텍스트 (시각적으로 떨림)
+- 흰색 위의 노란 텍스트 (거의 항상 실패)
+- 이미지 위의 가는 밝은 텍스트 (예측 불가능한 대비)
 
-### Never Use Pure Gray or Pure Black
+### 순수한 회색이나 순수한 검은색은 절대 쓰지 말라
 
-Pure gray (`oklch(50% 0 0)`) and pure black (`#000`) don't exist in nature—real shadows and surfaces always have a color cast. Even a chroma of 0.005-0.01 is enough to feel natural without being obviously tinted. (See tinted neutrals example above.)
+순수한 회색(`oklch(50% 0 0)`)과 순수한 검은색(`#000`)은 자연에 존재하지 않는다—실제 그림자와 표면에는 항상 색상이 섞여 있다. 0.005-0.01 정도의 채도만으로도 눈에 띄게 색조를 입히지 않으면서 자연스러운 느낌을 준다. (위의 색조 입힌 중성색 예시 참고.)
 
-### Testing
+### 테스트
 
-Don't trust your eyes. Use tools:
+눈을 믿지 말라. 도구를 사용하라:
 
 - [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
-- Browser DevTools → Rendering → Emulate vision deficiencies
-- [Polypane](https://polypane.app/) for real-time testing
+- 브라우저 개발자 도구 → 렌더링 → 시각 장애 시뮬레이션
+- [Polypane](https://polypane.app/) 실시간 테스트
 
-## Theming: Light & Dark Mode
+## 테마: 라이트 모드와 다크 모드
 
-### Dark Mode Is Not Inverted Light Mode
+### 다크 모드는 라이트 모드를 반전한 것이 아니다
 
-You can't just swap colors. Dark mode requires different design decisions:
+단순히 색상만 바꿀 수 없다. 다크 모드에는 다른 디자인 결정이 필요하다:
 
-| Light Mode | Dark Mode |
-|------------|-----------|
-| Shadows for depth | Lighter surfaces for depth (no shadows) |
-| Dark text on light | Light text on dark (reduce font weight) |
-| Vibrant accents | Desaturate accents slightly |
-| White backgrounds | Never pure black—use dark gray (oklch 12-18%) |
+| 라이트 모드 | 다크 모드 |
+|------------|----------|
+| 깊이감을 위한 그림자 | 깊이감을 위한 밝은 표면 (그림자 없음) |
+| 밝은 배경에 어두운 텍스트 | 어두운 배경에 밝은 텍스트 (폰트 굵기 줄이기) |
+| 선명한 액센트 | 액센트 채도를 약간 낮추기 |
+| 흰색 배경 | 순수한 검은색 금지—어두운 회색 사용 (oklch 12-18%) |
 
 ```css
-/* Dark mode depth via surface color, not shadow */
+/* 다크 모드: 그림자가 아닌 표면 색상으로 깊이감 표현 */
 :root[data-theme="dark"] {
   --surface-1: oklch(15% 0.01 250);
-  --surface-2: oklch(20% 0.01 250);  /* "Higher" = lighter */
+  --surface-2: oklch(20% 0.01 250);  /* "높을수록" = 밝게 */
   --surface-3: oklch(25% 0.01 250);
 
-  /* Reduce text weight slightly */
-  --body-weight: 350;  /* Instead of 400 */
+  /* 텍스트 굵기를 약간 줄이기 */
+  --body-weight: 350;  /* 400 대신 */
 }
 ```
 
-### Token Hierarchy
+### 토큰 계층 구조
 
-Use two layers: primitive tokens (`--blue-500`) and semantic tokens (`--color-primary: var(--blue-500)`). For dark mode, only redefine the semantic layer—primitives stay the same.
+두 계층을 사용하라: 원시 토큰(primitive token, `--blue-500`)과 의미 토큰(semantic token, `--color-primary: var(--blue-500)`). 다크 모드에서는 의미 계층만 재정의하고—원시 토큰은 그대로 유지한다.
 
-## Alpha Is A Design Smell
+## 투명도(Alpha)는 설계 결함의 신호
 
-Heavy use of transparency (rgba, hsla) usually means an incomplete palette. Alpha creates unpredictable contrast, performance overhead, and inconsistency. Define explicit overlay colors for each context instead. Exception: focus rings and interactive states where see-through is needed.
+투명도(rgba, hsla)를 과도하게 사용하는 것은 대개 팔레트가 불완전하다는 뜻이다. 투명도는 예측 불가능한 대비, 성능 오버헤드, 일관성 저하를 초래한다. 각 맥락에 맞는 명시적 오버레이 색상을 정의하라. 예외: 포커스 링이나 인터랙티브 상태처럼 투과가 필요한 경우.
 
 ---
 
-**Avoid**: Relying on color alone to convey information. Creating palettes without clear roles for each color. Using pure black (#000) for large areas. Skipping color blindness testing (8% of men affected).
+**피해야 할 것**: 색상만으로 정보를 전달하는 것. 각 색상의 명확한 역할 없이 팔레트를 만드는 것. 넓은 영역에 순수한 검은색(#000) 사용. 색각 이상 테스트를 건너뛰는 것 (남성의 8%가 영향 받음).

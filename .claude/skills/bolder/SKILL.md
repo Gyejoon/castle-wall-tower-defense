@@ -1,116 +1,93 @@
 ---
 name: bolder
-description: Amplify safe or boring designs to make them more visually interesting and stimulating. Increases impact while maintaining usability. Use when the user says the design looks bland, generic, too safe, lacks personality, or wants more visual impact and character.
+description: 안전하거나 지루한 디자인을 시각적으로 더 흥미롭고 자극적으로 증폭시킨다. 사용성을 유지하면서 임팩트를 높인다. '밋밋해', '평범해', '너무 안전해', '개성이 없어', '임팩트가 부족해', '눈에 안 띄어', '지루해', '무난해', '좀 더 과감하게', '펀치감이 없어', '기억에 안 남아', '존재감이 없어', '더 세게', '더 강렬하게' 등 시각적 임팩트/개성 부족 불만이면 반드시 이 스킬 사용.
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Increase visual impact and personality in designs that are too safe, generic, or visually underwhelming, creating more engaging and memorable experiences.
+너무 안전하거나, 평범하거나, 시각적으로 밋밋한 디자인의 시각적 임팩트와 개성을 높여, 더 매력적이고 기억에 남는 경험을 만든다.
 
-## MANDATORY PREPARATION
+## 필수 준비사항
 
-Invoke /frontend-design — it contains design principles, anti-patterns, and the **Context Gathering Protocol**. Follow the protocol before proceeding — if no design context exists yet, you MUST run /teach-impeccable first.
+/frontend-design을 호출한다 — 디자인 원칙, 안티패턴, **컨텍스트 수집 프로토콜**이 포함되어 있다. 진행 전에 프로토콜을 따른다 — 디자인 컨텍스트가 아직 없다면 반드시 /teach-impeccable을 먼저 실행한다.
 
 ---
 
-## Assess Current State
+## 현재 상태 평가
 
-Analyze what makes the design feel too safe or boring:
+디자인이 너무 안전하거나 지루한 원인을 분석한다:
 
-1. **Identify weakness sources**:
-   - **Generic choices**: System fonts, basic colors, standard layouts
-   - **Timid scale**: Everything is medium-sized with no drama
-   - **Low contrast**: Everything has similar visual weight
-   - **Static**: No motion, no energy, no life
-   - **Predictable**: Standard patterns with no surprises
-   - **Flat hierarchy**: Nothing stands out or commands attention
+1. **약점의 원인**: 평범한 선택(시스템 폰트, 기본 색상), 소심한 스케일(모든 것이 중간 크기), 낮은 대비, 정적임(모션 없음), 예측 가능(놀라움 없음), 평평한 계층구조
 
-2. **Understand the context**:
-   - What's the brand personality? (How far can we push?)
-   - What's the purpose? (Marketing can be bolder than financial dashboards)
-   - Who's the audience? (What will resonate?)
-   - What are the constraints? (Brand guidelines, accessibility, performance)
+2. **맥락**: 브랜드 개성(얼마나 밀어붙일 수 있는가?), 목적(마케팅 vs 대시보드), 대상, 제약(브랜드 가이드라인, 접근성, 성능)
 
-If any of these are unclear from the codebase, STOP and call the AskUserQuestion tool to clarify.
+불확실한 것이 있다면 **멈추고** AskUserQuestion 도구를 호출하여 명확히 한다.
 
-**CRITICAL**: "Bolder" doesn't mean chaotic or garish. It means distinctive, memorable, and confident. Think intentional drama, not random chaos.
+**핵심**: "더 대담하게"는 혼란스럽거나 촌스러운 것이 아니다. 독특하고, 기억에 남고, 자신감 있는 것이다.
 
-**WARNING - AI SLOP TRAP**: When making things "bolder," AI defaults to the same tired tricks: cyan/purple gradients, glassmorphism, neon accents on dark backgrounds, gradient text on metrics. These are the OPPOSITE of bold—they're generic. Review ALL the DON'T guidelines in the frontend-design skill before proceeding. Bold means distinctive, not "more effects."
+**경고 — AI 슬롭 함정**: "더 대담하게" 만들 때 AI는 같은 진부한 트릭으로 기본 설정된다 — 시안/보라 그라데이션, 글래스모피즘(glassmorphism), 네온 악센트, 그라데이션 텍스트. 이것들은 대담함의 정반대로, 평범하다. frontend-design 스킬의 모든 DON'T 가이드라인을 먼저 검토한다.
 
-## Plan Amplification
+## 증폭 계획
 
-Create a strategy to increase impact while maintaining coherence:
+- **초점**: 히어로 모먼트 하나를 골라 놀랍게 만든다
+- **개성 방향**: 맥시멀리스트? 우아한 드라마? 장난스러운 에너지? 방향을 정한다
+- **리스크 예산**: 제약 안에서 경계를 밀어붙인다
+- **계층구조 증폭**: 큰 것은 더 크게, 작은 것은 더 작게
 
-- **Focal point**: What should be the hero moment? (Pick ONE, make it amazing)
-- **Personality direction**: Maximalist chaos? Elegant drama? Playful energy? Dark moody? Choose a lane.
-- **Risk budget**: How experimental can we be? Push boundaries within constraints.
-- **Hierarchy amplification**: Make big things BIGGER, small things smaller (increase contrast)
+대담한 디자인도 사용 가능해야 한다. 기능 없는 임팩트는 그저 장식이다.
 
-**IMPORTANT**: Bold design must still be usable. Impact without function is just decoration.
+## 디자인 증폭
 
-## Amplify the Design
+### 타이포그래피 증폭
+- **평범한 폰트 교체**: 시스템 폰트→독특한 선택 (frontend-design 스킬 참고)
+- **극적인 스케일**: 1.5배가 아닌 3-5배 크기 점프
+- **굵기 대비**: 600/400이 아닌 900/200 페어링
+- **예상 밖의 선택**: 가변 폰트, 디스플레이 폰트, 컨덴스/익스텐디드, 의도적 악센트로서의 모노스페이스
 
-Systematically increase impact across these dimensions:
+### 색상 강화
+- **채도 증가**: 더 생동감 있는 색상으로 이동 (네온은 아닌)
+- **대담한 팔레트**: 예상 밖의 조합. 보라-파랑 그라데이션은 AI 슬롭이므로 피한다 — 모든 AI 생성 사이트가 똑같이 보이는 이유가 바로 이 팔레트다.
+- **지배색 전략**: 하나의 대담한 색상이 60%를 차지
+- **색조 있는 중립색**: 순수 회색→팔레트와 조화하는 색조 있는 회색
 
-### Typography Amplification
-- **Replace generic fonts**: Swap system fonts for distinctive choices (see frontend-design skill for inspiration)
-- **Extreme scale**: Create dramatic size jumps (3x-5x differences, not 1.5x)
-- **Weight contrast**: Pair 900 weights with 200 weights, not 600 with 400
-- **Unexpected choices**: Variable fonts, display fonts for headlines, condensed/extended widths, monospace as intentional accent (not as lazy "dev tool" default)
+### 공간적 드라마
+- **극적인 스케일 점프**: 중요한 요소를 주변보다 3-5배 크게
+- **그리드 깨기**: 히어로 요소가 컨테이너를 벗어나게
+- **비대칭 레이아웃**: 중앙 정렬된 균형→긴장감 있는 비대칭
+- **넉넉한 공간**: 20-40px이 아닌 100-200px 간격으로 여백을 드라마틱하게 사용
+- **겹침**: 깊이를 위해 요소를 의도적으로 겹치기
 
-### Color Intensification
-- **Increase saturation**: Shift to more vibrant, energetic colors (but not neon)
-- **Bold palette**: Introduce unexpected color combinations—avoid the purple-blue gradient AI slop
-- **Dominant color strategy**: Let one bold color own 60% of the design
-- **Sharp accents**: High-contrast accent colors that pop
-- **Tinted neutrals**: Replace pure grays with tinted grays that harmonize with your palette
-- **Rich gradients**: Intentional multi-stop gradients (not generic purple-to-blue)
+### 시각적 효과
+- **극적인 그림자**: 높낮이를 위한 크고 부드러운 그림자
+- **배경 처리**: 메시 패턴, 노이즈 텍스처, 기하학적 패턴
+- **텍스처와 깊이**: 그레인, 하프톤, 듀오톤, 레이어드 요소. 글래스모피즘은 피한다 — 2022년 이후 남용되어 "AI가 만든 UI"의 대명사가 되었기 때문이다.
+- **커스텀 요소**: 일러스트, 커스텀 아이콘, 브랜드를 강화하는 장식적 디테일
 
-### Spatial Drama
-- **Extreme scale jumps**: Make important elements 3-5x larger than surroundings
-- **Break the grid**: Let hero elements escape containers and cross boundaries
-- **Asymmetric layouts**: Replace centered, balanced layouts with tension-filled asymmetry
-- **Generous space**: Use white space dramatically (100-200px gaps, not 20-40px)
-- **Overlap**: Layer elements intentionally for depth
+### 모션과 애니메이션
+- **진입 안무**: 50-100ms 지연의 시차 있는 드라마틱한 페이지 로드
+- **스크롤 효과**: 패럴랙스, 노출 애니메이션, 스크롤 트리거 시퀀스
+- **마이크로 인터랙션**: 만족스러운 호버 효과, 클릭 피드백
+- **트랜지션**: ease-out-quart/quint/expo 사용. 바운스나 엘라스틱은 피한다 — 효과를 싸구려로 만들고 2020년대 초반 트렌드의 잔재이기 때문이다.
 
-### Visual Effects
-- **Dramatic shadows**: Large, soft shadows for elevation (but not generic drop shadows on rounded rectangles)
-- **Background treatments**: Mesh patterns, noise textures, geometric patterns, intentional gradients (not purple-to-blue)
-- **Texture & depth**: Grain, halftone, duotone, layered elements—NOT glassmorphism (it's overused AI slop)
-- **Borders & frames**: Thick borders, decorative frames, custom shapes (not rounded rectangles with colored border on one side)
-- **Custom elements**: Illustrative elements, custom icons, decorative details that reinforce brand
+### 구성의 대담함
+- **히어로 모먼트**: 드라마틱한 처리로 명확한 초점
+- **풀 블리드 요소**: 전체 뷰포트 너비/높이 활용
+- **예상 밖의 비율**: 70/30, 80/20 분할
 
-### Motion & Animation
-- **Entrance choreography**: Staggered, dramatic page load animations with 50-100ms delays
-- **Scroll effects**: Parallax, reveal animations, scroll-triggered sequences
-- **Micro-interactions**: Satisfying hover effects, click feedback, state changes
-- **Transitions**: Smooth, noticeable transitions using ease-out-quart/quint/expo (not bounce or elastic—they cheapen the effect)
+### 피해야 할 패턴과 이유
 
-### Composition Boldness
-- **Hero moments**: Create clear focal points with dramatic treatment
-- **Diagonal flows**: Escape horizontal/vertical rigidity with diagonal arrangements
-- **Full-bleed elements**: Use full viewport width/height for impact
-- **Unexpected proportions**: Golden ratio? Throw it out. Try 70/30, 80/20 splits
+- 무작위로 효과를 추가하면 혼란만 생긴다 — 대담함은 의도적 드라마지 무작위 잡음이 아니다.
+- 모든 것을 대담하게 만들면 대비가 사라져서 아무것도 눈에 띄지 않는다 — 히어로 모먼트 하나에 집중한다.
+- 미학을 위해 가독성을 희생하면 본질적 목적을 잃는다 — 본문 텍스트는 항상 읽을 수 있어야 한다.
+- 트렌디한 미학을 맹목적으로 따르면 대담함이 아니라 파생이다 — 독특함이 핵심이다.
 
-**NEVER**:
-- Add effects randomly without purpose (chaos ≠ bold)
-- Sacrifice readability for aesthetics (body text must be readable)
-- Make everything bold (then nothing is bold - need contrast)
-- Ignore accessibility (bold design must still meet WCAG standards)
-- Overwhelm with motion (animation fatigue is real)
-- Copy trendy aesthetics blindly (bold means distinctive, not derivative)
+## 품질 검증
 
-## Verify Quality
+- **AI 슬롭이 아닌가**: "AI가 이걸 더 대담하게 만들었어"라고 하면 즉시 믿을 것인가? 그렇다면 실패한 것이다.
+- **여전히 기능적**: 사용자가 방해 없이 작업을 수행할 수 있는가?
+- **일관적**: 모든 것이 의도적이고 통일된 느낌인가?
+- **기억에 남는**: 사용자가 이 경험을 기억할 것인가?
+- **성능 양호**: 모든 효과가 원활한가?
+- **접근 가능**: 여전히 WCAG 기준을 충족하는가?
 
-Ensure amplification maintains usability and coherence:
-
-- **NOT AI slop**: Does this look like every other AI-generated "bold" design? If yes, start over.
-- **Still functional**: Can users accomplish tasks without distraction?
-- **Coherent**: Does everything feel intentional and unified?
-- **Memorable**: Will users remember this experience?
-- **Performant**: Do all these effects run smoothly?
-- **Accessible**: Does it still meet accessibility standards?
-
-**The test**: If you showed this to someone and said "AI made this bolder," would they believe you immediately? If yes, you've failed. Bold means distinctive, not "more AI effects."
-
-Remember: Bold design is confident design. It takes risks, makes statements, and creates memorable experiences. But bold without strategy is just loud. Be intentional, be dramatic, be unforgettable.
+대담한 디자인은 자신감 있는 디자인이다. 리스크를 감수하고, 선언을 하고, 기억에 남는 경험을 만든다. 전략 없는 대담함은 그저 시끄러울 뿐이다.

@@ -1,58 +1,38 @@
 ---
 name: harden
-description: Improve interface resilience through better error handling, i18n support, text overflow handling, and edge case management. Makes interfaces robust and production-ready. Use when the user asks to harden, make production-ready, handle edge cases, add error states, or fix overflow and i18n issues.
+description: "에러 처리, i18n 지원, 텍스트 오버플로우, 엣지 케이스 관리로 인터페이스를 프로덕션 수준으로 강화한다. '에러 상태 추가해', '빈 상태 처리해', '오버플로우 깨져', '긴 텍스트에서 레이아웃 터져', 'i18n 대응해', '오프라인일 때 어떻게 되지?', '에러 메시지가 두루뭉술해', '폼 유효성 검증 추가해', '로딩 상태 없어', '대용량 데이터에서 느려', '동시 클릭하면 중복 제출돼' 등 견고화/프로덕션 준비 관련 요청이면 반드시 이 스킬 사용."
 user-invocable: true
-argument-hint: "[target]"
+argument-hint: "[대상]"
 ---
 
-Strengthen interfaces against edge cases, errors, internationalization issues, and real-world usage scenarios that break idealized designs.
+엣지 케이스, 에러, 국제화 이슈, 현실 사용 시나리오에 대비해 인터페이스를 강화한다.
 
-## Assess Hardening Needs
+## 견고화 필요성 평가
 
-Identify weaknesses and edge cases:
+약점과 엣지 케이스를 파악한다:
 
-1. **Test with extreme inputs**:
-   - Very long text (names, descriptions, titles)
-   - Very short text (empty, single character)
-   - Special characters (emoji, RTL text, accents)
-   - Large numbers (millions, billions)
-   - Many items (1000+ list items, 50+ options)
-   - No data (empty states)
+1. **극단적 입력 테스트**: 매우 긴 텍스트(이름, 설명, 제목), 매우 짧은 텍스트(빈 값, 단일 문자), 특수 문자(이모지, RTL, 악센트), 큰 숫자(백만, 십억), 많은 항목(1000+ 리스트), 데이터 없음(빈 상태)
 
-2. **Test error scenarios**:
-   - Network failures (offline, slow, timeout)
-   - API errors (400, 401, 403, 404, 500)
-   - Validation errors
-   - Permission errors
-   - Rate limiting
-   - Concurrent operations
+2. **에러 시나리오 테스트**: 네트워크 실패(오프라인, 저속, 타임아웃), API 에러(400~500), 유효성 검증 에러, 권한 에러, 속도 제한, 동시 작업
 
-3. **Test internationalization**:
-   - Long translations (German is often 30% longer than English)
-   - RTL languages (Arabic, Hebrew)
-   - Character sets (Chinese, Japanese, Korean, emoji)
-   - Date/time formats
-   - Number formats (1,000 vs 1.000)
-   - Currency symbols
+3. **국제화(i18n) 테스트**: 긴 번역문(독일어는 영어보다 30% 더 김), RTL 언어(아랍어, 히브리어), CJK 문자, 날짜/숫자/통화 형식
 
-**CRITICAL**: Designs that only work with perfect data aren't production-ready. Harden against reality.
+완벽한 데이터에서만 작동하는 디자인은 프로덕션 준비가 안 된 것이다.
 
-## Hardening Dimensions
+## 견고화 차원
 
-Systematically improve resilience:
+### 텍스트 오버플로우 및 줄바꿈
 
-### Text Overflow & Wrapping
-
-**Long text handling**:
+**긴 텍스트 처리**:
 ```css
-/* Single line with ellipsis */
+/* 한 줄 말줄임표 */
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Multi-line with clamp */
+/* 여러 줄 클램프 */
 .line-clamp {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -60,7 +40,7 @@ Systematically improve resilience:
   overflow: hidden;
 }
 
-/* Allow wrapping */
+/* 줄바꿈 허용 */
 .wrap {
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -68,287 +48,136 @@ Systematically improve resilience:
 }
 ```
 
-**Flex/Grid overflow**:
+**Flex/Grid 오버플로우 방지** — `min-width: 0`을 설정하지 않으면 flex/grid 아이템이 컨테이너를 넘치는 경우가 흔하다:
 ```css
-/* Prevent flex items from overflowing */
-.flex-item {
-  min-width: 0; /* Allow shrinking below content size */
-  overflow: hidden;
-}
-
-/* Prevent grid items from overflowing */
-.grid-item {
-  min-width: 0;
-  min-height: 0;
-}
+.flex-item { min-width: 0; overflow: hidden; }
+.grid-item { min-width: 0; min-height: 0; }
 ```
 
-**Responsive text sizing**:
-- Use `clamp()` for fluid typography
-- Set minimum readable sizes (14px on mobile)
-- Test text scaling (zoom to 200%)
-- Ensure containers expand with text
+**반응형 텍스트**: `clamp()`로 유동적 타이포그래피. 모바일에서 최소 14px. 200% 줌 테스트.
 
-### Internationalization (i18n)
+### 국제화(i18n)
 
-**Text expansion**:
-- Add 30-40% space budget for translations
-- Use flexbox/grid that adapts to content
-- Test with longest language (usually German)
-- Avoid fixed widths on text containers
-
+**텍스트 확장** — 번역을 위해 30-40% 공간 여유를 확보한다. 텍스트 컨테이너에 고정 너비를 쓰면 독일어 번역에서 깨진다:
 ```jsx
-// ❌ Bad: Assumes short English text
+// 고정 너비는 짧은 영어를 가정 — 번역에서 깨짐
 <button className="w-24">Submit</button>
 
-// ✅ Good: Adapts to content
+// 콘텐츠에 맞게 적응 — 어떤 언어든 수용
 <button className="px-4 py-2">Submit</button>
 ```
 
-**RTL (Right-to-Left) support**:
+**RTL 지원** — 물리적 속성(margin-left) 대신 논리적 속성을 쓴다. 아랍어/히브리어에서 레이아웃이 자동으로 뒤집히기 때문이다:
 ```css
-/* Use logical properties */
-margin-inline-start: 1rem; /* Not margin-left */
-padding-inline: 1rem; /* Not padding-left/right */
-border-inline-end: 1px solid; /* Not border-right */
-
-/* Or use dir attribute */
-[dir="rtl"] .arrow { transform: scaleX(-1); }
+margin-inline-start: 1rem;  /* margin-left 아님 */
+padding-inline: 1rem;       /* padding-left/right 아님 */
 ```
 
-**Character set support**:
-- Use UTF-8 encoding everywhere
-- Test with Chinese/Japanese/Korean (CJK) characters
-- Test with emoji (they can be 2-4 bytes)
-- Handle different scripts (Latin, Cyrillic, Arabic, etc.)
-
-**Date/Time formatting**:
+**날짜/숫자 형식** — 하드코딩 대신 Intl API를 쓴다:
 ```javascript
-// ✅ Use Intl API for proper formatting
 new Intl.DateTimeFormat('en-US').format(date); // 1/15/2024
 new Intl.DateTimeFormat('de-DE').format(date); // 15.1.2024
-
-new Intl.NumberFormat('en-US', { 
-  style: 'currency', 
-  currency: 'USD' 
-}).format(1234.56); // $1,234.56
 ```
 
-**Pluralization**:
-```javascript
-// ❌ Bad: Assumes English pluralization
-`${count} item${count !== 1 ? 's' : ''}`
+**복수형** — 영어 복수형 규칙(`count !== 1 ? 's' : ''`)을 가정하면 안 된다. 러시아어는 3가지, 아랍어는 6가지 복수형 규칙이 있다. i18n 라이브러리의 `t('items', { count })`를 사용한다.
 
-// ✅ Good: Use proper i18n library
-t('items', { count }) // Handles complex plural rules
-```
+### 에러 처리
 
-### Error Handling
-
-**Network errors**:
-- Show clear error messages
-- Provide retry button
-- Explain what happened
-- Offer offline mode (if applicable)
-- Handle timeout scenarios
+**네트워크 에러**: 명확한 에러 메시지 + 재시도 버튼. 무엇이 일어났는지 설명한다. 해당하는 경우 오프라인 모드를 제공한다.
 
 ```jsx
-// Error states with recovery
 {error && (
   <ErrorMessage>
-    <p>Failed to load data. {error.message}</p>
-    <button onClick={retry}>Try again</button>
+    <p>데이터를 불러오지 못했습니다. {error.message}</p>
+    <button onClick={retry}>다시 시도</button>
   </ErrorMessage>
 )}
 ```
 
-**Form validation errors**:
-- Inline errors near fields
-- Clear, specific messages
-- Suggest corrections
-- Don't block submission unnecessarily
-- Preserve user input on error
+**API 에러** — 각 상태 코드를 적절히 처리한다:
+- 400: 유효성 검증 에러 표시
+- 401: 로그인으로 리다이렉트
+- 403: 권한 에러 표시
+- 404: 찾을 수 없음 상태 표시
+- 429: 속도 제한 메시지 표시
+- 500: 일반 에러 + 지원팀 안내
 
-**API errors**:
-- Handle each status code appropriately
-  - 400: Show validation errors
-  - 401: Redirect to login
-  - 403: Show permission error
-  - 404: Show not found state
-  - 429: Show rate limit message
-  - 500: Show generic error, offer support
+**폼 유효성 검증**: 필드 근처에 인라인 에러. 수정 방법 제안. 에러 시 사용자 입력 보존. "오류가 발생했습니다" 같은 두루뭉술한 메시지는 사용자가 무엇을 고쳐야 하는지 알 수 없으므로 구체적으로 쓴다.
 
-**Graceful degradation**:
-- Core functionality works without JavaScript
-- Images have alt text
-- Progressive enhancement
-- Fallbacks for unsupported features
+### 엣지 케이스 및 경계 조건
 
-### Edge Cases & Boundary Conditions
+**빈 상태**: 리스트에 항목 없음, 검색 결과 없음, 데이터 없음 — 명확한 다음 행동을 제시한다.
 
-**Empty states**:
-- No items in list
-- No search results
-- No notifications
-- No data to display
-- Provide clear next action
+**로딩 상태**: 초기 로드, 페이지네이션, 새로고침 모두 구분한다. 무엇이 로딩 중인지 표시한다("프로젝트를 불러오는 중..."). 긴 작업에는 시간 추정을 제공한다.
 
-**Loading states**:
-- Initial load
-- Pagination load
-- Refresh
-- Show what's loading ("Loading your projects...")
-- Time estimates for long operations
+**대용량 데이터**: 페이지네이션 또는 가상 스크롤링. 10,000개 항목을 한 번에 로드하면 저사양 기기에서 브라우저가 멈춘다.
 
-**Large datasets**:
-- Pagination or virtual scrolling
-- Search/filter capabilities
-- Performance optimization
-- Don't load all 10,000 items at once
+**동시 작업**: 로딩 중 버튼 비활성화로 이중 제출 방지. 낙관적 업데이트와 롤백. 경쟁 조건(race condition) 처리.
 
-**Concurrent operations**:
-- Prevent double-submission (disable button while loading)
-- Handle race conditions
-- Optimistic updates with rollback
-- Conflict resolution
+**권한 상태**: 조회/수정 권한 없음, 읽기 전용 모드 — 이유를 명확히 설명한다.
 
-**Permission states**:
-- No permission to view
-- No permission to edit
-- Read-only mode
-- Clear explanation of why
+### 입력 유효성 검증
 
-**Browser compatibility**:
-- Polyfills for modern features
-- Fallbacks for unsupported CSS
-- Feature detection (not browser detection)
-- Test in target browsers
+**클라이언트 측**: 필수 필드, 형식(이메일/전화/URL), 길이 제한, 패턴 매칭.
 
-### Input Validation & Sanitization
+**서버 측은 항상 필요하다** — 클라이언트 측 유효성 검증은 UX 편의일 뿐이다. 브라우저 DevTools에서 쉽게 우회할 수 있으므로 서버에서 반드시 재검증한다.
 
-**Client-side validation**:
-- Required fields
-- Format validation (email, phone, URL)
-- Length limits
-- Pattern matching
-- Custom validation rules
-
-**Server-side validation** (always):
-- Never trust client-side only
-- Validate and sanitize all inputs
-- Protect against injection attacks
-- Rate limiting
-
-**Constraint handling**:
 ```html
-<!-- Set clear constraints -->
 <input 
-  type="text"
-  maxlength="100"
-  pattern="[A-Za-z0-9]+"
-  required
-  aria-describedby="username-hint"
+  type="text" maxlength="100" pattern="[A-Za-z0-9]+"
+  required aria-describedby="username-hint"
 />
-<small id="username-hint">
-  Letters and numbers only, up to 100 characters
-</small>
+<small id="username-hint">영문과 숫자만 가능, 최대 100자</small>
 ```
 
-### Accessibility Resilience
+### 접근성 복원력
 
-**Keyboard navigation**:
-- All functionality accessible via keyboard
-- Logical tab order
-- Focus management in modals
-- Skip links for long content
+**키보드 내비게이션**: 모든 기능을 키보드로 접근 가능하게. 논리적 탭 순서. 모달에서의 포커스 관리.
 
-**Screen reader support**:
-- Proper ARIA labels
-- Announce dynamic changes (live regions)
-- Descriptive alt text
-- Semantic HTML
+**스크린 리더**: 적절한 ARIA 레이블. 동적 변경 알림(라이브 리전). 시맨틱 HTML.
 
-**Motion sensitivity**:
+**모션 민감도** — `prefers-reduced-motion`을 무시하면 전정 장애가 있는 사용자에게 실제 신체적 불편을 유발할 수 있다:
 ```css
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 ```
 
-**High contrast mode**:
-- Test in Windows high contrast mode
-- Don't rely only on color
-- Provide alternative visual cues
+### 성능 복원력
 
-### Performance Resilience
+**느린 연결**: 스켈레톤 스크린, 낙관적 UI, 오프라인 지원(서비스 워커).
 
-**Slow connections**:
-- Progressive image loading
-- Skeleton screens
-- Optimistic UI updates
-- Offline support (service workers)
+**메모리 누수** — 이벤트 리스너, 구독, 타이머를 정리하지 않으면 장시간 사용 시 메모리가 계속 증가한다. 언마운트 시 대기 중인 요청도 중단한다.
 
-**Memory leaks**:
-- Clean up event listeners
-- Cancel subscriptions
-- Clear timers/intervals
-- Abort pending requests on unmount
-
-**Throttling & Debouncing**:
+**디바운싱/스로틀링**:
 ```javascript
-// Debounce search input
 const debouncedSearch = debounce(handleSearch, 300);
-
-// Throttle scroll handler
 const throttledScroll = throttle(handleScroll, 100);
 ```
 
-## Testing Strategies
+## 피해야 할 접근과 그 이유
 
-**Manual testing**:
-- Test with extreme data (very long, very short, empty)
-- Test in different languages
-- Test offline
-- Test slow connection (throttle to 3G)
-- Test with screen reader
-- Test keyboard-only navigation
-- Test on old browsers
+완벽한 입력을 가정하면 안 된다 — 실제 사용자는 상상하지 못한 데이터를 입력한다. 모든 것을 검증한다.
 
-**Automated testing**:
-- Unit tests for edge cases
-- Integration tests for error scenarios
-- E2E tests for critical paths
-- Visual regression tests
-- Accessibility tests (axe, WAVE)
+영어 길이의 텍스트를 가정하면 안 된다 — 독일어, 핀란드어 등은 영어보다 30-40% 더 길다. 고정 너비 텍스트 컨테이너에서 깨진다.
 
-**IMPORTANT**: Hardening is about expecting the unexpected. Real users will do things you never imagined.
+하나의 컴포넌트 에러가 전체 인터페이스를 차단하면 안 된다 — Error Boundary로 에러를 격리한다. 댓글 로딩 실패 때문에 전체 페이지가 흰 화면이 되는 것은 과도한 반응이다.
 
-**NEVER**:
-- Assume perfect input (validate everything)
-- Ignore internationalization (design for global)
-- Leave error messages generic ("Error occurred")
-- Forget offline scenarios
-- Trust client-side validation alone
-- Use fixed widths for text
-- Assume English-length text
-- Block entire interface when one component errors
+클라이언트 측 유효성 검증만 신뢰하면 안 된다 — 보안과 데이터 무결성은 서버에서만 보장할 수 있다.
 
-## Verify Hardening
+## 견고화 검증
 
-Test thoroughly with edge cases:
+극단적 조건에서 테스트한다:
+- **긴 텍스트**: 100자 이상의 이름
+- **이모지**: 모든 텍스트 필드에 이모지 입력
+- **RTL/CJK**: 아랍어, 중국어, 한국어로 테스트
+- **네트워크**: 인터넷 끊기, 3G 스로틀링
+- **대용량**: 1000개 이상 항목
+- **동시 행동**: 제출 버튼 10번 빠르게 클릭
+- **에러**: API 에러 강제 발생
+- **빈 상태**: 모든 데이터 제거
 
-- **Long text**: Try names with 100+ characters
-- **Emoji**: Use emoji in all text fields
-- **RTL**: Test with Arabic or Hebrew
-- **CJK**: Test with Chinese/Japanese/Korean
-- **Network issues**: Disable internet, throttle connection
-- **Large datasets**: Test with 1000+ items
-- **Concurrent actions**: Click submit 10 times rapidly
-- **Errors**: Force API errors, test all error states
-- **Empty**: Remove all data, test empty states
-
-Remember: You're hardening for production reality, not demo perfection. Expect users to input weird data, lose connection mid-flow, and use your product in unexpected ways. Build resilience into every component.
+데모의 완벽함이 아닌 프로덕션의 현실을 위해 견고화한다. 사용자는 이상한 데이터를 입력하고, 연결이 끊기고, 예상치 못한 방식으로 제품을 사용한다.

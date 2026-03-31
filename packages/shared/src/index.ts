@@ -10,7 +10,7 @@ export type { PlacementFailureReason } from './types/placement';
 export type { MapLayout } from './types/map';
 
 // Constants
-export { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE, DEFAULT_GRID_CONFIG, INITIAL_PLAYER_HP, INITIAL_GOLD, UNIT_SEND_COUNT, ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W, ISO_CANVAS_H } from './constants/grid';
+export { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE, DEFAULT_GRID_CONFIG, INITIAL_PLAYER_HP, INITIAL_GOLD, UNIT_SEND_COUNT, ISO_TILE_W, ISO_TILE_H, ISO_TILE_DEPTH, ISO_CANVAS_W, ISO_CANVAS_H, HUD_HEIGHT, DUAL_CANVAS_H } from './constants/grid';
 export { BASE_TOWERS, RARE_TOWERS, HEROIC_TOWERS, LEGENDARY_TOWERS, GOD_TOWERS, ALL_TOWERS, getTowersByTier } from './constants/towers';
 export { UNITS } from './constants/units';
 export { EMOTES } from './constants/emotes';

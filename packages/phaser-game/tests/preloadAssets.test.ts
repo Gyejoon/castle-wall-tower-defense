@@ -91,7 +91,7 @@ describe('field asset preload alignment', () => {
     });
   });
 
-  it('preloads the isometric field tiles instead of the legacy tilemap bundle', async () => {
+  it('preloads the isometric field tiles including dark AI variants', async () => {
     vi.stubGlobal('document', {
       createElement: () => ({
         toDataURL: () => 'data:image/png',
@@ -114,11 +114,19 @@ describe('field asset preload alignment', () => {
 
     scene.preload();
 
+    // Normal tiles
     expect(image).toHaveBeenCalledWith('grid-floor', 'assets/tiles/grid-floor.png');
     expect(image).toHaveBeenCalledWith('path-tile', 'assets/tiles/path-tile.png');
     expect(image).toHaveBeenCalledWith('spawn-tile', 'assets/tiles/spawn-tile.png');
     expect(image).toHaveBeenCalledWith('exit-tile', 'assets/tiles/exit-tile.png');
-    expect(image).not.toHaveBeenCalledWith('tileset-forest', expect.anything());
-    expect(tilemapTiledJSON).not.toHaveBeenCalled();
+
+    // Dark AI variants
+    expect(image).toHaveBeenCalledWith('grid-floor-dark', 'assets/tiles/grid-floor-dark.png');
+    expect(image).toHaveBeenCalledWith('path-tile-dark', 'assets/tiles/path-tile-dark.png');
+    expect(image).toHaveBeenCalledWith('spawn-tile-dark', 'assets/tiles/spawn-tile-dark.png');
+    expect(image).toHaveBeenCalledWith('exit-tile-dark', 'assets/tiles/exit-tile-dark.png');
+
+    // Tilemap for decoration layer
+    expect(tilemapTiledJSON).toHaveBeenCalledWith('tilemap-forest-gate', 'assets/maps/forest-gate.json');
   });
 });

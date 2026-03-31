@@ -63,41 +63,46 @@ describe('GameScene', () => {
     const scene = createScene();
     scene.onSelectTower = vi.fn();
     scene.onClearTowerSelection = vi.fn();
-    scene.onPlaceTower = vi.fn();
-    scene.onSellTower = vi.fn();
-    scene.onBuyRandomTower = vi.fn();
-    scene.onStartWave = vi.fn();
     scene.onGameWon = vi.fn();
     scene.onWaveStartedLifecycle = vi.fn();
-    scene.towerSystem = { destroy: vi.fn() };
-    scene.unitSystem = { destroy: vi.fn() };
-    scene.waveSystem = { destroy: vi.fn() };
-    scene.aiOpponent = { destroy: vi.fn() };
-    scene.mergeSystem = { destroy: vi.fn() };
-    scene.randomTowerSystem = { reset: vi.fn() };
+
+    // Player systems
+    scene.playerTowers = { destroy: vi.fn() };
+    scene.playerUnits = { destroy: vi.fn() };
+    scene.playerWaves = { destroy: vi.fn() };
+    scene.playerMerge = { destroy: vi.fn() };
+    scene.playerRandomTower = { reset: vi.fn() };
+
+    // AI systems
+    scene.aiTowers = { destroy: vi.fn() };
+    scene.aiUnits = { destroy: vi.fn() };
+    scene.aiRandomTower = { reset: vi.fn() };
+    scene.aiMerge = { destroy: vi.fn() };
 
     scene.cleanup();
 
     expect(EventBus.off).toHaveBeenCalledWith('request-select-tower', scene.onSelectTower);
     expect(EventBus.off).toHaveBeenCalledWith('request-clear-tower-selection', scene.onClearTowerSelection);
-    expect(EventBus.off).toHaveBeenCalledWith('request-place-tower', scene.onPlaceTower);
-    expect(EventBus.off).toHaveBeenCalledWith('request-sell-tower', scene.onSellTower);
-    expect(EventBus.off).toHaveBeenCalledWith('request-buy-random-tower', scene.onBuyRandomTower);
-    expect(EventBus.off).toHaveBeenCalledWith('request-start-wave', scene.onStartWave);
     expect(EventBus.off).toHaveBeenCalledWith('game-won', scene.onGameWon);
     expect(EventBus.off).toHaveBeenCalledWith('wave-started', scene.onWaveStartedLifecycle);
 
-    expect(scene.towerSystem.destroy).toHaveBeenCalledOnce();
-    expect(scene.unitSystem.destroy).toHaveBeenCalledOnce();
-    expect(scene.waveSystem.destroy).toHaveBeenCalledOnce();
-    expect(scene.aiOpponent.destroy).toHaveBeenCalledOnce();
+    // Player systems destroyed
+    expect(scene.playerTowers.destroy).toHaveBeenCalledOnce();
+    expect(scene.playerUnits.destroy).toHaveBeenCalledOnce();
+    expect(scene.playerWaves.destroy).toHaveBeenCalledOnce();
 
+    // AI systems destroyed
+    expect(scene.aiTowers.destroy).toHaveBeenCalledOnce();
+    expect(scene.aiUnits.destroy).toHaveBeenCalledOnce();
+
+    // EventBus.off called before system destroys
     const offCalls = EventBus.off.mock.invocationCallOrder;
     const destroyCalls = [
-      scene.towerSystem.destroy.mock.invocationCallOrder[0],
-      scene.unitSystem.destroy.mock.invocationCallOrder[0],
-      scene.waveSystem.destroy.mock.invocationCallOrder[0],
-      scene.aiOpponent.destroy.mock.invocationCallOrder[0],
+      scene.playerTowers.destroy.mock.invocationCallOrder[0],
+      scene.playerUnits.destroy.mock.invocationCallOrder[0],
+      scene.playerWaves.destroy.mock.invocationCallOrder[0],
+      scene.aiTowers.destroy.mock.invocationCallOrder[0],
+      scene.aiUnits.destroy.mock.invocationCallOrder[0],
     ];
     expect(offCalls[offCalls.length - 1]).toBeLessThan(Math.min(...destroyCalls));
   });

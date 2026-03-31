@@ -61,10 +61,10 @@ describe('asset integration', () => {
     expect(mapJson.tilesets[0]).toMatchObject({
       image: '../tiles/tileset.png',
       imagewidth: 320,
-      imageheight: 128,
+      imageheight: 160,
       tilewidth: 32,
       tileheight: 32,
-      tilecount: 40,
+      tilecount: 50,
       columns: 10,
     });
   });

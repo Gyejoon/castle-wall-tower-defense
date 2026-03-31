@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('phaser', () => ({
+  default: {
+    Scene: class {},
+    Geom: { Point: class { constructor(public x: number, public y: number) {} } },
+  },
+}));
+
 vi.mock('../src/EventBus', () => ({
   EventBus: {
     emit: vi.fn(),

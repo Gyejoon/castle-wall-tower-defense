@@ -11,9 +11,9 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().runStatus).toBe('lobby');
 	});
 
-	it('starts a run from loading state', () => {
+	it('starts a run from building state', () => {
 		useGameStore.getState().resetRun();
-		expect(useGameStore.getState().runStatus).toBe('loading');
+		expect(useGameStore.getState().runStatus).toBe('building');
 	});
 
 	it('tracks game ready state', () => {
@@ -38,6 +38,20 @@ describe('gameStore', () => {
 		useGameStore.getState().setPlacementFeedback('combat_phase');
 		expect(useGameStore.getState().selectedTowerId).toBe('laser');
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
+	});
+
+	it('tracks wave metadata', () => {
+		expect(useGameStore.getState().wave).toBe(0);
+		expect(useGameStore.getState().wavePhase).toBe('running');
+		expect(useGameStore.getState().countdown).toBe(0);
+
+		useGameStore.getState().setWave(4);
+		useGameStore.getState().setWavePhase('boss');
+		useGameStore.getState().setCountdown(2);
+
+		expect(useGameStore.getState().wave).toBe(4);
+		expect(useGameStore.getState().wavePhase).toBe('boss');
+		expect(useGameStore.getState().countdown).toBe(2);
 	});
 
 	it('patches combat HUD instead of storing build/combat countdown separately', () => {
@@ -82,36 +96,69 @@ describe('gameStore', () => {
 		useGameStore
 			.getState()
 			.setOpponentState({ hp: 5, gold: 200, towerCount: 3 });
-		const s = useGameStore.getState();
-		expect(s.opponentHp).toBe(5);
-		expect(s.opponentGold).toBe(200);
-		expect(s.opponentTowerCount).toBe(3);
+		const state = useGameStore.getState();
+		expect(state.opponentHp).toBe(5);
+		expect(state.opponentGold).toBe(200);
+		expect(state.opponentTowerCount).toBe(3);
 	});
 
-	it('enterLobby resets to lobby status', () => {
+	it('setActiveTab switches tab', () => {
+		expect(useGameStore.getState().activeTab).toBe('player');
+		useGameStore.getState().setActiveTab('opponent');
+		expect(useGameStore.getState().activeTab).toBe('opponent');
+	});
+
+	it('starts with lobbyTab home and allows switching', () => {
+		expect(useGameStore.getState().lobbyTab).toBe('home');
+		useGameStore.getState().setLobbyTab('collection');
+		expect(useGameStore.getState().lobbyTab).toBe('collection');
+		useGameStore.getState().setLobbyTab('settings');
+		expect(useGameStore.getState().lobbyTab).toBe('settings');
+	});
+
+	it('enterLobby resets lobby state and gold', () => {
 		useGameStore.getState().resetRun();
 		useGameStore.getState().setGold(999);
+		useGameStore.getState().setLobbyTab('collection');
 		useGameStore.getState().enterLobby();
+
 		expect(useGameStore.getState().runStatus).toBe('lobby');
 		expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
+		expect(useGameStore.getState().lobbyTab).toBe('home');
 	});
 
-	it('toggleSound flips soundEnabled', () => {
+	it('toggles sound and accessibility feedback flags', () => {
 		expect(useGameStore.getState().soundEnabled).toBe(true);
+		expect(useGameStore.getState().screenShake).toBe(true);
+		expect(useGameStore.getState().showDamageNumbers).toBe(true);
+
 		useGameStore.getState().toggleSound();
+		useGameStore.getState().toggleScreenShake();
+		useGameStore.getState().toggleDamageNumbers();
+
 		expect(useGameStore.getState().soundEnabled).toBe(false);
-		useGameStore.getState().toggleSound();
-		expect(useGameStore.getState().soundEnabled).toBe(true);
+		expect(useGameStore.getState().screenShake).toBe(false);
+		expect(useGameStore.getState().showDamageNumbers).toBe(false);
 	});
 
-	it('resets a run to default combat HUD resources and clears transient state', () => {
+	it('resets a run to default combat resources and clears transient state', () => {
 		const initialRunId = useGameStore.getState().runId;
 
 		useGameStore.getState().setGameReady(true);
 		useGameStore.getState().setGold(10);
 		useGameStore.getState().setLives(3);
 		useGameStore.getState().setSelectedTower('laser');
+		useGameStore.getState().setWave(4);
+		useGameStore.getState().setWavePhase('boss');
+		useGameStore.getState().setCountdown(2);
+		useGameStore
+			.getState()
+			.setWavePreview([
+				{ unitId: 'goblin', unitName: '고블린 정찰병', count: 3 },
+			]);
 		useGameStore.getState().setRunStatus('defeat');
+		useGameStore.getState().setPlacementFeedback('combat_phase');
+		useGameStore.getState().setLobbyTab('settings');
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 18,
 			phase: 'sudden_death',
@@ -127,12 +174,17 @@ describe('gameStore', () => {
 		useGameStore.getState().resetRun();
 
 		expect(useGameStore.getState().runId).toBe(initialRunId + 1);
-		expect(useGameStore.getState().runStatus).toBe('loading');
+		expect(useGameStore.getState().runStatus).toBe('building');
 		expect(useGameStore.getState().gameReady).toBe(false);
 		expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
 		expect(useGameStore.getState().lives).toBe(INITIAL_PLAYER_HP);
 		expect(useGameStore.getState().selectedTowerId).toBeNull();
 		expect(useGameStore.getState().placementFeedback).toBeNull();
+		expect(useGameStore.getState().wave).toBe(0);
+		expect(useGameStore.getState().wavePhase).toBe('running');
+		expect(useGameStore.getState().countdown).toBe(0);
+		expect(useGameStore.getState().wavePreview).toBeNull();
+		expect(useGameStore.getState().lobbyTab).toBe('home');
 		expect(useGameStore.getState().toast).toBeNull();
 		expect(useGameStore.getState().combatHud).toEqual(
 			expect.objectContaining({

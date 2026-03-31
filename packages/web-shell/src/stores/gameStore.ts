@@ -4,11 +4,13 @@ import {
 	INITIAL_PLAYER_HP,
 	type PlacementFailureReason,
 	type TowerDef,
+	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
 
-export type RunStatus = 'lobby' | 'loading' | 'running' | 'victory' | 'defeat';
+export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
 export type FieldTab = 'player' | 'opponent';
+export type LobbyTab = 'home' | 'collection' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {
@@ -16,6 +18,12 @@ export interface UiToast {
 	message: string;
 	tone: ToastTone;
 }
+
+type WavePreviewGroup = {
+	unitId: string;
+	unitName: string;
+	count: number;
+};
 
 interface GameStoreState {
 	runId: number;
@@ -25,8 +33,15 @@ interface GameStoreState {
 	lives: number;
 	selectedTowerId: string | null;
 	rolledTower: TowerDef | null;
+	wave: number;
+	wavePhase: WavePhase;
+	countdown: number;
 	placementFeedback: PlacementFailureReason | null;
+	wavePreview: WavePreviewGroup[] | null;
+	lobbyTab: LobbyTab;
 	soundEnabled: boolean;
+	screenShake: boolean;
+	showDamageNumbers: boolean;
 	activeTab: FieldTab;
 	playerTowerCount: number;
 	opponentHp: number;
@@ -41,7 +56,12 @@ interface GameStoreState {
 	setLives: (lives: number) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setRolledTower: (tower: TowerDef | null) => void;
+	setWave: (wave: number) => void;
+	setWavePhase: (phase: WavePhase) => void;
+	setCountdown: (seconds: number) => void;
 	setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
+	setWavePreview: (preview: WavePreviewGroup[] | null) => void;
+	setLobbyTab: (tab: LobbyTab) => void;
 	setActiveTab: (tab: FieldTab) => void;
 	setPlayerTowerCount: (count: number) => void;
 	setOpponentState: (state: {
@@ -55,6 +75,8 @@ interface GameStoreState {
 	resetRun: () => void;
 	enterLobby: () => void;
 	toggleSound: () => void;
+	toggleScreenShake: () => void;
+	toggleDamageNumbers: () => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -74,7 +96,11 @@ const createRunState = () => ({
 	lives: INITIAL_PLAYER_HP,
 	selectedTowerId: null,
 	rolledTower: null,
+	wave: 0,
+	wavePhase: 'running' as WavePhase,
+	countdown: 0,
 	placementFeedback: null,
+	wavePreview: null,
 	activeTab: 'player' as FieldTab,
 	playerTowerCount: 0,
 	opponentHp: INITIAL_PLAYER_HP,
@@ -87,7 +113,10 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
+	lobbyTab: 'home',
 	soundEnabled: true,
+	screenShake: true,
+	showDamageNumbers: true,
 	...createRunState(),
 
 	setRunStatus: (status) => set({ runStatus: status }),
@@ -96,7 +125,12 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setLives: (lives) => set({ lives }),
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setRolledTower: (tower) => set({ rolledTower: tower }),
+	setWave: (wave) => set({ wave }),
+	setWavePhase: (phase) => set({ wavePhase: phase }),
+	setCountdown: (seconds) => set({ countdown: seconds }),
 	setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
+	setWavePreview: (preview) => set({ wavePreview: preview }),
+	setLobbyTab: (tab) => set({ lobbyTab: tab }),
 	setActiveTab: (tab) => set({ activeTab: tab }),
 	setPlayerTowerCount: (count) => set({ playerTowerCount: count }),
 	setOpponentState: (state) =>
@@ -121,20 +155,23 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			},
 		})),
 	clearToast: () => set({ toast: null }),
-
 	resetRun: () =>
 		set((state) => ({
 			runId: state.runId + 1,
-			runStatus: 'loading',
+			runStatus: 'building',
+			lobbyTab: 'home',
 			...createRunState(),
 		})),
-
 	enterLobby: () =>
 		set((state) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
+			lobbyTab: 'home',
 			...createRunState(),
 		})),
-
 	toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+	toggleScreenShake: () =>
+		set((state) => ({ screenShake: !state.screenShake })),
+	toggleDamageNumbers: () =>
+		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
 }));

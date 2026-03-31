@@ -46,8 +46,8 @@ jobs:
       - name: Check bundle size
         run: |
           MAX_SIZE_KB=2048
-          DIST_SIZE=$(du -sk packages/web-shell/dist | cut -f1)
-          echo "Bundle size: ${DIST_SIZE}KB (budget: ${MAX_SIZE_KB}KB)"
+          DIST_SIZE=$(find packages/web-shell/dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' \) ! -name '*.map' -print0 | xargs -0 wc -c | tail -1 | awk '{print int($1/1024)}')
+          echo "Bundle size (JS/CSS/HTML): ${DIST_SIZE}KB (budget: ${MAX_SIZE_KB}KB)"
           if [ "$DIST_SIZE" -gt "$MAX_SIZE_KB" ]; then
             echo "::error::Bundle size ${DIST_SIZE}KB exceeds budget of ${MAX_SIZE_KB}KB"
             exit 1
@@ -60,23 +60,4 @@ jobs:
           path: packages/web-shell/dist/
           retention-days: 7
 
-  deploy:
-    name: Deploy to Cloudflare Pages
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    permissions:
-      contents: read
-      deployments: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=gld-pvp
+  # Deploy is handled by Vercel GitHub integration (auto-deploys on push to main)

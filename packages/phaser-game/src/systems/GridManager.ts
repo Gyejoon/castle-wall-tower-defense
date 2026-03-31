@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { Position, Tile, Grid, GridConfig } from '@gld/shared';
-import { TILE_SIZE, DEFAULT_GRID_CONFIG, ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W } from '@gld/shared';
+import { TILE_SIZE, DEFAULT_GRID_CONFIG, ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W, ISO_CANVAS_H } from '@gld/shared';
 
 export class GridManager {
   readonly width: number;
@@ -9,8 +9,8 @@ export class GridManager {
   readonly spawnPoint: Position;
   readonly exitPoint: Position;
   private grid: Grid;
-  private readonly offsetX = ISO_CANVAS_W / 2;
-  private readonly offsetY = ISO_TILE_H / 2;
+  private readonly offsetX: number;
+  private readonly offsetY: number;
 
   constructor(config: GridConfig = DEFAULT_GRID_CONFIG) {
     this.width = config.width;
@@ -18,6 +18,20 @@ export class GridManager {
     this.tileSize = TILE_SIZE;
     this.spawnPoint = config.spawnPoint;
     this.exitPoint = config.exitPoint;
+
+    // Center the isometric grid within the canvas.
+    // The grid's world-space X range spans from gridToWorld(0, height-1).x to gridToWorld(width-1, 0).x
+    // We compute offsets so the grid is centered in the canvas.
+    const maxGx = this.width - 1;
+    const maxGy = this.height - 1;
+    // X extremes (before offset): (maxGx - 0) * halfW  and  (0 - maxGy) * halfW
+    const xMin = -maxGy * (ISO_TILE_W / 2);
+    const xMax = maxGx * (ISO_TILE_W / 2);
+    this.offsetX = (ISO_CANVAS_W - (xMin + xMax)) / 2;
+    // Y extremes (before offset): 0  and  (maxGx + maxGy) * halfH
+    const yMax = (maxGx + maxGy) * (ISO_TILE_H / 2);
+    this.offsetY = (ISO_CANVAS_H - yMax) / 2;
+
     this.grid = this.createGrid();
   }
 

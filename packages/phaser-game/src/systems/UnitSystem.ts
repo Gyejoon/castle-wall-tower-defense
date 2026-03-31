@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { UnitDef, ActiveUnit, Position } from '@gld/shared';
-import { UNITS, TILE_SIZE, ISO_TILE_W } from '@gld/shared';
+import { UNITS, TILE_SIZE } from '@gld/shared';
 import { GridManager } from './GridManager';
 import { EventBus } from '../EventBus';
 
@@ -208,7 +208,7 @@ export class UnitSystem {
       // Move toward next waypoint
       const nextGrid = this.currentPath[pathIdx + 1];
       const targetWorld = this.currentPathWorld[pathIdx + 1];
-      const speed = unit.def.stats.speed * ISO_TILE_W * unit.slowFactor; // pixels per second
+      const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
 
       const dx = targetWorld.x - unit.worldX;
       const dy = targetWorld.y - unit.worldY;

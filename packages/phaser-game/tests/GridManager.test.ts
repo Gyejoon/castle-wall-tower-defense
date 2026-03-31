@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import type { GridConfig } from '@gld/shared';
-import { ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W } from '@gld/shared';
+import { ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W, ISO_CANVAS_H } from '@gld/shared';
 
 // Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics
 vi.mock('phaser', () => ({
@@ -29,8 +29,11 @@ const TEST_CONFIG: GridConfig = {
   exitPoint: { x: 5, y: 5 },
 };
 
-const OFFSET_X = ISO_CANVAS_W / 2;
-const OFFSET_Y = ISO_TILE_H / 2;
+// Offsets are computed dynamically based on grid size.
+// For 10×10 grid: xMin = -9*32 = -288, xMax = 9*32 = 288 → offsetX = (640 - 0) / 2 = 320
+// yMax = (9+9)*16 = 288 → offsetY = (320 - 288) / 2 = 16
+const OFFSET_X = ISO_CANVAS_W / 2; // 320 (symmetric for 10×10)
+const OFFSET_Y = (ISO_CANVAS_H - (9 + 9) * (ISO_TILE_H / 2)) / 2; // (320 - 288) / 2 = 16
 
 describe('GridManager', () => {
   it('생성자가 속성을 올바르게 설정해야 한다', () => {

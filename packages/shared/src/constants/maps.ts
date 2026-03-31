@@ -1,41 +1,56 @@
 import type { MapLayout } from '../types/map';
 
-// Palace map path for 12×8 grid:
-// Spawn (0,4) → Exit (11,4) straight left-to-right per spec 6.2
-
-function buildPalacePath(): Array<{ x: number; y: number }> {
-  return Array.from({ length: 12 }, (_, x) => ({ x, y: 4 }));
+function buildForestCanyonPath(): Array<{ x: number; y: number }> {
+	return [
+		{ x: 0, y: 6 },
+		{ x: 1, y: 6 },
+		{ x: 2, y: 6 },
+		{ x: 2, y: 5 },
+		{ x: 2, y: 4 },
+		{ x: 3, y: 4 },
+		{ x: 4, y: 4 },
+		{ x: 5, y: 4 },
+		{ x: 5, y: 3 },
+		{ x: 5, y: 2 },
+		{ x: 6, y: 2 },
+		{ x: 7, y: 2 },
+		{ x: 8, y: 2 },
+		{ x: 8, y: 3 },
+		{ x: 8, y: 4 },
+		{ x: 9, y: 4 },
+		{ x: 10, y: 4 },
+		{ x: 11, y: 4 },
+	];
 }
 
-// Placement points: adjacent to path, not on path, within 12×8 bounds
-const PALACE_PLACEMENT_POINTS: Array<{ x: number; y: number }> = [
-  { x: 1, y: 3 },
-  { x: 1, y: 5 },
-  { x: 2, y: 3 },
-  { x: 2, y: 5 },
-  { x: 3, y: 3 },
-  { x: 4, y: 5 },
-  { x: 5, y: 3 },
-  { x: 5, y: 5 },
-  { x: 6, y: 3 },
-  { x: 6, y: 5 },
-  { x: 7, y: 3 },
-  { x: 8, y: 5 },
-  { x: 9, y: 3 },
-  { x: 9, y: 5 },
-  { x: 10, y: 3 },
+const FOREST_CANYON_PLACEMENT_POINTS: Array<{ x: number; y: number }> = [
+	{ x: 0, y: 5 },
+	{ x: 1, y: 5 },
+	{ x: 1, y: 4 },
+	{ x: 3, y: 5 },
+	{ x: 3, y: 3 },
+	{ x: 4, y: 3 },
+	{ x: 4, y: 5 },
+	{ x: 6, y: 4 },
+	{ x: 6, y: 3 },
+	{ x: 7, y: 3 },
+	{ x: 7, y: 1 },
+	{ x: 8, y: 1 },
+	{ x: 9, y: 2 },
+	{ x: 9, y: 5 },
+	{ x: 10, y: 3 },
 ];
 
 export const FOREST_GATE_MAP: MapLayout = {
-  id: 'palace',
-  name: 'Palace',
-  width: 12,
-  height: 8,
-  tileSize: 32,
-  path: buildPalacePath(),
-  placementPoints: PALACE_PLACEMENT_POINTS,
-  spawnPoint: { x: 0, y: 4 },
-  exitPoint: { x: 11, y: 4 },
-  tilemapKey: 'tilemap-palace',
-  tilesetKey: 'tileset-palace',
+	id: 'forest-gate',
+	name: 'Forest Gate',
+	width: 12,
+	height: 8,
+	tileSize: 32,
+	path: buildForestCanyonPath(),
+	placementPoints: FOREST_CANYON_PLACEMENT_POINTS,
+	spawnPoint: { x: 0, y: 6 },
+	exitPoint: { x: 11, y: 4 },
+	tilemapKey: 'tilemap-forest-gate',
+	tilesetKey: 'tileset',
 };

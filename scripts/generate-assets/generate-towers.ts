@@ -15,7 +15,7 @@ import {
   drawIsoShadow,
   type ManifestEntry,
 } from './shared';
-import { mkdirSync } from 'fs';
+import { mkdirSync, existsSync } from 'fs';
 import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
 import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 import type { SKRSContext2D } from '@napi-rs/canvas';
@@ -50,6 +50,8 @@ const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, color, shape }) => ({
   color,
   shape: mapTowerShape(shape),
 }));
+
+const REQUIRED_FILES = TOWERS.flatMap((tower) => [`${tower.id}.png`, `${tower.id}-fire.png`]);
 
 // Draw an isometric cube: top diamond + left face (dark) + right face (medium)
 function drawIsoCube(
@@ -93,16 +95,52 @@ function drawIsoCube(
   }
 }
 
+function countOpaqueCoverage(canvas: ReturnType<typeof makeCanvas>['canvas'], width: number, height: number): number {
+  const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+  let opaque = 0;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 0) opaque++;
+  }
+  return opaque / (width * height);
+}
+
+function renderWithGate(
+  canvas: ReturnType<typeof makeCanvas>['canvas'],
+  ctx: ReturnType<typeof makeCanvas>['ctx'],
+  width: number,
+  height: number,
+  gateLabel: string,
+  drawPrimary: (drawCtx: ReturnType<typeof makeCanvas>['ctx']) => void,
+  drawFallback: (drawCtx: ReturnType<typeof makeCanvas>['ctx']) => void,
+): void {
+  drawPrimary(ctx);
+  const coverage = countOpaqueCoverage(canvas, width, height);
+  if (coverage >= 0.1 && coverage <= 0.48) {
+    return;
+  }
+
+  console.warn(`  [${gateLabel}] readability gate failed (${coverage.toFixed(2)}), using fallback silhouette`);
+  ctx.clearRect(0, 0, width, height);
+  drawFallback(ctx);
+}
+
+function assertRequiredOutputs(): void {
+  const missing = REQUIRED_FILES.filter((file) => !existsSync(`${OUTPUT_DIR}/${file}`));
+  if (missing.length > 0) {
+    throw new Error(`[towers] missing required outputs: ${missing.join(', ')}`);
+  }
+}
+
 // Stone base: isometric diamond platform with shadow
 function drawBase(ctx: SKRSContext2D, ox: number) {
   const cx = ox + 32;
   const baseY = 64;
 
   // Shadow ellipse below base
-  drawIsoShadow(ctx, cx, baseY + 6, 18, 6, 0.4);
+  drawIsoShadow(ctx, cx, baseY + 6, 20, 7, 0.42);
 
   // Stone base as small isometric diamond (24px wide, 5px half-height)
-  const hw = 12;
+  const hw = 13;
   const hh = 5;
   // Top face
   for (let dy = -hh; dy <= hh; dy++) {
@@ -139,30 +177,34 @@ function drawArcherTower(ctx: SKRSContext2D, ox: number) {
   const cx = ox + 32;
   drawBase(ctx, ox);
 
-  // Main tower body as iso cube: center top at (cx, 38), hw=10, height=22
-  drawIsoCube(ctx, cx, 38, 10, 22,
+  // Main tower body as iso cube: center top at (cx, 38), hw=11, height=24
+  drawIsoCube(ctx, cx, 38, 11, 24,
     PALETTE.stoneLight, PALETTE.stoneDark, PALETTE.stone);
 
-  // Battlement notches on top — carve two gaps in the top diamond
-  // Draw merlons as small iso cubes on top
-  drawIsoCube(ctx, cx - 7, 30, 4, 4,
+  // Battlement notches on top — chunky top that reads from far away.
+  drawIsoCube(ctx, cx - 8, 29, 5, 5,
     PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
-  drawIsoCube(ctx, cx + 7, 30, 4, 4,
+  drawIsoCube(ctx, cx + 8, 29, 5, 5,
     PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawLine(ctx, cx - 5, 26, cx + 5, 26, PALETTE.stoneLight);
 
   // Arrow slit (front face of cube = right face, around y=50)
-  setPixel(ctx, cx + 2, 50, '#1a1208');
-  setPixel(ctx, cx + 3, 50, '#1a1208');
-  setPixel(ctx, cx + 2, 51, '#1a1208');
-  setPixel(ctx, cx + 3, 51, '#1a1208');
-  setPixel(ctx, cx + 2, 52, '#1a1208');
-  setPixel(ctx, cx + 3, 52, '#1a1208');
+  drawRect(ctx, cx + 1, 49, 4, 4, '#1a1208');
+  drawRect(ctx, cx - 3, 46, 2, 7, '#1a1208');
 
   // Small flag pole on top
   drawLine(ctx, cx + 4, 22, cx + 4, 30, PALETTE.wood);
-  setPixel(ctx, cx + 5, 22, '#c03020');
-  setPixel(ctx, cx + 6, 23, '#c03020');
-  setPixel(ctx, cx + 5, 24, '#c03020');
+  drawRect(ctx, cx + 5, 22, 5, 3, '#c03020');
+  setPixel(ctx, cx + 9, 23, '#c03020');
+}
+
+function drawArcherTowerFallback(ctx: SKRSContext2D, ox: number) {
+  const cx = ox + 32;
+  drawBase(ctx, ox);
+  drawIsoCube(ctx, cx, 40, 10, 20, PALETTE.stoneLight, PALETTE.stoneDark, PALETTE.stone);
+  drawRect(ctx, cx - 2, 25, 4, 28, PALETTE.stone);
+  drawRect(ctx, cx - 9, 33, 18, 4, PALETTE.stoneDark);
+  drawRect(ctx, cx + 1, 49, 4, 4, '#1a1208');
 }
 
 // 투석기: wooden frame on wheels — iso rendering
@@ -171,31 +213,40 @@ function drawCatapult(ctx: SKRSContext2D, ox: number) {
   drawBase(ctx, ox);
 
   // Wheel left — small iso circle suggestion at base level
-  fillCircle(ctx, cx - 10, 62, 4, PALETTE.woodDark);
-  fillCircle(ctx, cx - 10, 62, 3, hexToRgba(PALETTE.wood, 0.7));
+  fillCircle(ctx, cx - 11, 62, 5, PALETTE.woodDark);
+  fillCircle(ctx, cx - 11, 62, 4, hexToRgba(PALETTE.wood, 0.7));
   setPixel(ctx, cx - 10, 62, PALETTE.woodDark);
   // Wheel right
-  fillCircle(ctx, cx + 10, 62, 4, PALETTE.woodDark);
-  fillCircle(ctx, cx + 10, 62, 3, hexToRgba(PALETTE.wood, 0.7));
+  fillCircle(ctx, cx + 11, 62, 5, PALETTE.woodDark);
+  fillCircle(ctx, cx + 11, 62, 4, hexToRgba(PALETTE.wood, 0.7));
   setPixel(ctx, cx + 10, 62, PALETTE.woodDark);
 
   // Wooden frame body as iso cube (shorter, wider)
-  drawIsoCube(ctx, cx, 48, 12, 12,
+  drawIsoCube(ctx, cx, 48, 13, 12,
     PALETTE.wood, PALETTE.woodDark, hexToRgba(PALETTE.wood, 0.8));
 
   // Arm (diagonal from frame top-left toward upper-right)
-  drawLine(ctx, cx - 6, 46, cx + 8, 30, PALETTE.woodDark);
-  drawLine(ctx, cx - 5, 46, cx + 9, 30, PALETTE.wood);
+  drawLine(ctx, cx - 7, 46, cx + 9, 28, PALETTE.woodDark);
+  drawLine(ctx, cx - 6, 46, cx + 10, 28, PALETTE.wood);
 
   // Sling cup at top of arm
-  drawRect(ctx, cx + 6, 27, 5, 4, PALETTE.woodLight);
+  drawRect(ctx, cx + 7, 26, 6, 5, PALETTE.woodLight);
   // Boulder in sling
-  fillCircle(ctx, cx + 8, 29, 3, PALETTE.stoneDark);
-  setPixel(ctx, cx + 7, 27, PALETTE.stoneLight);
+  fillCircle(ctx, cx + 10, 29, 4, PALETTE.stoneDark);
+  setPixel(ctx, cx + 9, 27, PALETTE.stoneLight);
 
   // Support strut
-  drawLine(ctx, cx - 4, 48, cx - 4, 38, PALETTE.woodDark);
-  drawLine(ctx, cx + 4, 48, cx + 6, 38, PALETTE.woodDark);
+  drawLine(ctx, cx - 5, 48, cx - 5, 38, PALETTE.woodDark);
+  drawLine(ctx, cx + 5, 48, cx + 7, 38, PALETTE.woodDark);
+}
+
+function drawCatapultFallback(ctx: SKRSContext2D, ox: number) {
+  const cx = ox + 32;
+  drawBase(ctx, ox);
+  drawIsoCube(ctx, cx, 49, 12, 10, PALETTE.wood, PALETTE.woodDark, hexToRgba(PALETTE.wood, 0.8));
+  drawLine(ctx, cx - 5, 46, cx + 8, 31, PALETTE.wood);
+  drawRect(ctx, cx + 7, 27, 5, 4, PALETTE.woodLight);
+  fillCircle(ctx, cx + 10, 29, 3, PALETTE.stoneDark);
 }
 
 // 서리 마탑: ice-tinted stone tower with crystal spires
@@ -204,18 +255,10 @@ function drawFrostTower(ctx: SKRSContext2D, ox: number) {
   drawBase(ctx, ox);
 
   // Tower body iso cube with ice tint
-  drawIsoCube(ctx, cx, 38, 9, 22,
-    hexToRgba(PALETTE.ice, 0.5), PALETTE.stoneDark, hexToRgba(PALETTE.iceGlow, 0.4));
-  // Stone underlayer
-  drawIsoCube(ctx, cx, 38, 9, 22,
-    'rgba(0,0,0,0)', PALETTE.stoneDark, PALETTE.stoneDark);
-  // Re-draw top with ice tint
-  drawIsoCube(ctx, cx, 38, 9, 0,
-    hexToRgba(PALETTE.ice, 0.6), '', '');
-
-  // Proper stone body first
-  drawIsoCube(ctx, cx, 40, 9, 20,
+  drawIsoCube(ctx, cx, 40, 10, 20,
     PALETTE.stoneDark, PALETTE.stoneDark, PALETTE.stone);
+  drawIsoCube(ctx, cx, 38, 10, 22,
+    hexToRgba(PALETTE.ice, 0.46), PALETTE.stoneDark, hexToRgba(PALETTE.iceGlow, 0.42));
   // Ice overlay on right face
   for (let y = 42; y <= 60; y++) {
     for (let x = cx; x <= cx + 9; x++) {
@@ -224,18 +267,18 @@ function drawFrostTower(ctx: SKRSContext2D, ox: number) {
   }
 
   // Center ice crystal spire
-  drawLine(ctx, cx, 18, cx - 3, 30, PALETTE.ice);
-  drawLine(ctx, cx, 18, cx + 3, 30, PALETTE.ice);
-  drawLine(ctx, cx - 3, 30, cx + 3, 30, PALETTE.ice);
+  drawLine(ctx, cx, 16, cx - 4, 29, PALETTE.ice);
+  drawLine(ctx, cx, 16, cx + 4, 29, PALETTE.ice);
+  drawLine(ctx, cx - 4, 29, cx + 4, 29, PALETTE.ice);
   setPixel(ctx, cx, 19, PALETTE.white);
   setPixel(ctx, cx, 20, PALETTE.white);
 
   // Side crystals (left)
-  drawLine(ctx, cx - 6, 22, cx - 9, 30, hexToRgba(PALETTE.ice, 0.7));
-  drawLine(ctx, cx - 6, 22, cx - 3, 30, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx - 7, 22, cx - 11, 31, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx - 7, 22, cx - 3, 30, hexToRgba(PALETTE.ice, 0.7));
   // Side crystals (right)
-  drawLine(ctx, cx + 6, 22, cx + 3, 30, hexToRgba(PALETTE.ice, 0.7));
-  drawLine(ctx, cx + 6, 22, cx + 9, 30, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx + 7, 22, cx + 3, 30, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx + 7, 22, cx + 11, 31, hexToRgba(PALETTE.ice, 0.7));
 
   // Ice shards embedded in right face
   setPixel(ctx, cx + 3, 46, PALETTE.ice);
@@ -246,33 +289,50 @@ function drawFrostTower(ctx: SKRSContext2D, ox: number) {
   addGlow(ctx, cx, 40, 10, PALETTE.iceGlow, 0.25);
 }
 
+function drawFrostTowerFallback(ctx: SKRSContext2D, ox: number) {
+  const cx = ox + 32;
+  drawBase(ctx, ox);
+  drawIsoCube(ctx, cx, 40, 9, 19, PALETTE.stoneDark, PALETTE.stoneDark, PALETTE.stone);
+  drawLine(ctx, cx, 18, cx - 3, 29, PALETTE.ice);
+  drawLine(ctx, cx, 18, cx + 3, 29, PALETTE.ice);
+  drawCircle(ctx, cx, 36, 7, PALETTE.ice);
+}
+
 // 성기사 제단: golden cross on stone altar — iso
 function drawPaladinShrine(ctx: SKRSContext2D, ox: number) {
   const cx = ox + 32;
   drawBase(ctx, ox);
 
   // Wide altar base as flat iso platform
-  drawIsoCube(ctx, cx, 54, 14, 6,
+  drawIsoCube(ctx, cx, 54, 15, 6,
     PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
   // Gold trim on top face edge
-  for (let dx = -13; dx <= 13; dx++) {
+  for (let dx = -14; dx <= 14; dx++) {
     setPixel(ctx, cx + dx, 52, hexToRgba(PALETTE.gold, 0.4));
   }
 
   // Pillar cube in center
-  drawIsoCube(ctx, cx, 40, 5, 12,
+  drawIsoCube(ctx, cx, 40, 6, 13,
     PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
 
   // Golden cross — vertical bar
-  drawRect(ctx, cx - 2, 22, 4, 18, PALETTE.gold);
+  drawRect(ctx, cx - 2, 21, 4, 19, PALETTE.gold);
   drawRect(ctx, cx - 2, 22, 1, 18, hexToRgba(PALETTE.white, 0.4));
   // Horizontal bar
-  drawRect(ctx, cx - 8, 26, 16, 4, PALETTE.gold);
+  drawRect(ctx, cx - 9, 26, 18, 4, PALETTE.gold);
   drawRect(ctx, cx - 8, 26, 16, 1, hexToRgba(PALETTE.white, 0.4));
 
   // Golden glow
   addGlow(ctx, cx, 30, 10, PALETTE.magicGold, 0.35);
   addGlow(ctx, cx, 30, 5, PALETTE.gold, 0.5);
+}
+
+function drawPaladinShrineFallback(ctx: SKRSContext2D, ox: number) {
+  const cx = ox + 32;
+  drawBase(ctx, ox);
+  drawIsoCube(ctx, cx, 54, 14, 5, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawRect(ctx, cx - 2, 22, 4, 18, PALETTE.gold);
+  drawRect(ctx, cx - 8, 26, 16, 4, PALETTE.gold);
 }
 
 // Tier 2+: star-shaped tower with variant details — iso cube base
@@ -282,30 +342,30 @@ function drawStarTower(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
   drawBase(ctx, ox);
 
   // Stone base pedestal iso cube
-  drawIsoCube(ctx, cx, 54, 8, 6,
+  drawIsoCube(ctx, cx, 54, 9, 7,
     PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
 
   // Star shape centered at cy
-  drawStar(ctx, cx, cy, 12, 5, 5, tower.color);
-  fillCircle(ctx, cx, cy, 6, hexToRgba(tower.color, 0.4));
+  drawStar(ctx, cx, cy, 13, 6, 5, tower.color);
+  fillCircle(ctx, cx, cy, 7, hexToRgba(tower.color, 0.4));
 
   // Variant-specific center details
   switch (tower.id) {
     case 'twin_laser':
       // Double arrow slits (forward-facing on right side)
-      drawRect(ctx, cx + 8, cy - 3, 6, 2, tower.color);
-      drawRect(ctx, cx + 8, cy + 2, 6, 2, tower.color);
-      addGlow(ctx, cx + 13, cy, 4, tower.color, 0.5);
+      drawRect(ctx, cx + 8, cy - 3, 7, 2, tower.color);
+      drawRect(ctx, cx + 8, cy + 2, 7, 2, tower.color);
+      addGlow(ctx, cx + 14, cy, 4, tower.color, 0.5);
       break;
     case 'disruptor':
       // Ice ring
-      drawCircle(ctx, cx, cy, 5, PALETTE.ice);
+      drawCircle(ctx, cx, cy, 6, PALETTE.ice);
       addGlow(ctx, cx, cy, 6, PALETTE.iceGlow, 0.5);
       break;
     case 'nova_cannon':
       // Large barrel
-      drawRect(ctx, cx + 8, cy - 3, 9, 6, tower.color);
-      fillCircle(ctx, cx + 16, cy, 3, hexToRgba(PALETTE.fireOrange, 0.7));
+      drawRect(ctx, cx + 8, cy - 3, 10, 6, tower.color);
+      fillCircle(ctx, cx + 17, cy, 4, hexToRgba(PALETTE.fireOrange, 0.7));
       break;
     case 'fortress':
       // Golden cross on star
@@ -315,10 +375,19 @@ function drawStarTower(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
       break;
     case 'stasis_field':
       // Frost ring
-      drawCircle(ctx, cx, cy, 8, PALETTE.ice);
+      drawCircle(ctx, cx, cy, 9, PALETTE.ice);
       addGlow(ctx, cx, cy, 6, PALETTE.iceGlow, 0.4);
       break;
   }
+}
+
+function drawStarTowerFallback(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
+  const cx = ox + 32;
+  const cy = 34;
+  drawBase(ctx, ox);
+  drawIsoCube(ctx, cx, 54, 8, 6, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawStar(ctx, cx, cy, 11, 5, 5, tower.color);
+  fillCircle(ctx, cx, cy, 5, hexToRgba(tower.color, 0.4));
 }
 
 function drawTowerShape(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
@@ -399,7 +468,23 @@ export async function generate(): Promise<ManifestEntry[]> {
     // Static sprite (64x80)
     {
       const { canvas, ctx } = makeCanvas(64, 80);
-      drawTowerShape(ctx, 0, tower);
+      renderWithGate(
+        canvas,
+        ctx,
+        64,
+        80,
+        `${tower.id}.png`,
+        (drawCtx) => drawTowerShape(drawCtx, 0, tower),
+        (drawCtx) => {
+          switch (tower.shape) {
+            case 'archer': drawArcherTowerFallback(drawCtx, 0); break;
+            case 'catapult': drawCatapultFallback(drawCtx, 0); break;
+            case 'frost': drawFrostTowerFallback(drawCtx, 0); break;
+            case 'paladin': drawPaladinShrineFallback(drawCtx, 0); break;
+            case 'star': drawStarTowerFallback(drawCtx, 0, tower); break;
+          }
+        },
+      );
       saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
       entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
     }
@@ -407,9 +492,23 @@ export async function generate(): Promise<ManifestEntry[]> {
     // Fire animation (256x80, 4 frames of 64x80)
     {
       const { canvas, ctx } = makeCanvas(256, 80);
-      for (let f = 0; f < 4; f++) {
-        drawFireFrame(ctx, f * 64, tower, f);
-      }
+      renderWithGate(
+        canvas,
+        ctx,
+        256,
+        80,
+        `${tower.id}-fire.png`,
+        (drawCtx) => {
+          for (let f = 0; f < 4; f++) {
+            drawFireFrame(drawCtx, f * 64, tower, f);
+          }
+        },
+        (drawCtx) => {
+          for (let f = 0; f < 4; f++) {
+            drawTowerShape(drawCtx, f * 64, tower);
+          }
+        },
+      );
       saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
       entries.push({
         key: `tower-${tower.id}-fire`,
@@ -421,6 +520,8 @@ export async function generate(): Promise<ManifestEntry[]> {
       });
     }
   }
+
+  assertRequiredOutputs();
 
   return entries;
 }

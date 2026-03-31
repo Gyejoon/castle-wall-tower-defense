@@ -257,7 +257,7 @@ export function drawIsoShadow(ctx: SKRSContext2D, cx: number, cy: number, rx: nu
 // === Manifest ===
 export interface ManifestEntry {
   key: string;
-  type: 'image' | 'spritesheet';
+  type: 'image' | 'spritesheet' | 'tilemapTiledJSON';
   path: string;
   frameWidth?: number;
   frameHeight?: number;

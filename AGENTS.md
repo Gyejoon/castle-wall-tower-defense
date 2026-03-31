@@ -14,6 +14,12 @@ This file provides guidance to AI coding agents when working with code in this r
 - UI: 갈색/금빛/초록 따뜻한 색감, Press Start 2P 픽셀 폰트
 - 에셋 팔레트: 잔디(#7ab648), 흙길(#b8956a), 돌(#8c8c8c), 나무(#8b5e3c), 얼음(#a8def0), 황금(#f0d060)
 
+## Local Skills
+
+- Claude Code용 수렴 리뷰 스킬: `.claude/skills/ralreview/SKILL.md`
+- Codex용 수렴 리뷰 스킬: `.agents/skills/ralreview/SKILL.md`
+- 런타임 안정성 체크 기준: `.claude/skills/phaser-best-practices/SKILL.md`
+
 ## Commands
 
 ```bash

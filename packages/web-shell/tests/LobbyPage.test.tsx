@@ -1,40 +1,44 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { LobbyPage } from '../src/pages/LobbyPage';
 import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
-import { LobbyPage } from '../src/pages/LobbyPage';
 
 describe('LobbyPage', () => {
-  beforeEach(() => {
-    useGameStore.setState(useGameStore.getInitialState());
-    useEmoteStore.setState({
-      myEmote: null,
-      opponentEmote: null,
-      showEmotePanel: false,
-    });
-  });
+	afterEach(() => {
+		cleanup();
+	});
 
-  it('introduces the random merge PvP loop and starts a run', () => {
-    const view = render(<LobbyPage />);
+	beforeEach(() => {
+		useGameStore.setState(useGameStore.getInitialState());
+		useEmoteStore.setState({
+			myEmote: null,
+			opponentEmote: null,
+			showEmotePanel: false,
+		});
+	});
 
-    expect(view.getByText(/랜덤 타워 구매 \+ 합성으로 강화/i)).toBeTruthy();
-    expect(view.getByText(/처치한 적이 상대에게 전송/i)).toBeTruthy();
+	it('introduces the random merge PvP loop and starts a run', () => {
+		const view = render(<LobbyPage />);
 
-    fireEvent.click(view.getByRole('button', { name: /게임 시작/i }));
+		expect(view.getByText(/랜덤 타워 구매 \+ 합성으로 강화/i)).toBeTruthy();
+		expect(view.getByText(/처치한 적이 상대에게 전송/i)).toBeTruthy();
 
-    expect(useGameStore.getState().runStatus).toBe('building');
-  });
+		fireEvent.click(view.getByRole('button', { name: /게임 시작/i }));
 
-  it('clears stale emotes before starting a new run', () => {
-    useEmoteStore.getState().sendEmote('gg');
-    useEmoteStore.getState().receiveEmote('angry');
-    useEmoteStore.getState().toggleEmotePanel();
+		expect(useGameStore.getState().runStatus).toBe('loading');
+	});
 
-    const view = render(<LobbyPage />);
-    fireEvent.click(view.getByRole('button', { name: /게임 시작/i }));
+	it('clears stale emotes before starting a new run', () => {
+		useEmoteStore.getState().sendEmote('gg');
+		useEmoteStore.getState().receiveEmote('angry');
+		useEmoteStore.getState().toggleEmotePanel();
 
-    expect(useEmoteStore.getState().myEmote).toBeNull();
-    expect(useEmoteStore.getState().opponentEmote).toBeNull();
-    expect(useEmoteStore.getState().showEmotePanel).toBe(false);
-  });
+		const view = render(<LobbyPage />);
+		fireEvent.click(view.getByRole('button', { name: /게임 시작/i }));
+
+		expect(useEmoteStore.getState().myEmote).toBeNull();
+		expect(useEmoteStore.getState().opponentEmote).toBeNull();
+		expect(useEmoteStore.getState().showEmotePanel).toBe(false);
+	});
 });

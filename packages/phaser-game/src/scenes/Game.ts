@@ -2,20 +2,32 @@ import {
 	DUAL_CANVAS_H,
 	EMOTES,
 	FOREST_GATE_MAP,
+	getNextEligiblePressureSlot,
 	HUD_HEIGHT,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
 	ISO_CANVAS_H,
 	ISO_CANVAS_W,
-	ISO_TILE_DEPTH,
-	ISO_TILE_H,
 	ISO_TILE_W,
+	PRESSURE_EXPIRES_AT_SEC,
+	PRESSURE_LOCK_AT_SEC,
+	PRESSURE_PACKET_BY_TIER,
+	PRESSURE_TOKEN_CAP,
+	type PressurePacketId,
 	RANDOM_TOWER_COST,
 	WAVE_DEFS,
+	type WaveDef,
+	type WavePhase,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
+import {
+	TINY_SWORDS_DECORATION_BY_KEY,
+	TINY_SWORDS_GROUND_FRAMES,
+	TINY_SWORDS_PRIMARY_TILESET,
+	type TinySwordsDecorationKind,
+} from '../fieldAssets';
 import { getPlacementGuardFailure } from '../placementRules';
 import { GridManager } from '../systems/GridManager';
 import { MergeSystem } from '../systems/MergeSystem';
@@ -25,11 +37,20 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
-const TILE_RENDER_H = ISO_TILE_H + ISO_TILE_DEPTH;
-const AI_MAX_BUILD_ATTEMPTS = 10;
-const AI_MERGE_CHANCE = 0.2;
 const AI_EMOTE_INTERVAL = 15000;
 const AI_EMOTE_CHANCE = 0.3;
+const GLOBAL_BUY_COOLDOWN_MS = 1200;
+const AI_BUY_INTERVAL_MS = 1800;
+
+type PressureOwnerId = 'local' | 'opponent';
+
+interface SlotClearState {
+	slotIndex: number;
+	localBaseRemaining: number;
+	opponentBaseRemaining: number;
+	localAwarded: boolean;
+	opponentAwarded: boolean;
+}
 
 export class GameScene extends Phaser.Scene {
 	private playerGrid!: GridManager;
@@ -53,6 +74,15 @@ export class GameScene extends Phaser.Scene {
 	private aiGold = INITIAL_GOLD;
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
+	private buyCooldownRemainingMs = 0;
+	private lastEmittedBuyCooldownMs = -1;
+	private aiBuyCooldownRemainingMs = 0;
+	private localPressureInventory: PressurePacketId[] = [];
+	private opponentPressureInventory: PressurePacketId[] = [];
+	private queuedPressureForPlayer = new Map<number, PressurePacketId>();
+	private queuedPressureForOpponent = new Map<number, PressurePacketId>();
+	private slotClearState: SlotClearState | null = null;
+	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private isDragging = false;
@@ -85,17 +115,22 @@ export class GameScene extends Phaser.Scene {
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
-	private onGameWon!: () => void;
 	private onWaveStartedLifecycle!: (data: {
 		wave: number;
 		totalWaves: number;
+		slotIndex: number;
+		phase: WavePhase;
+		kind: WaveDef['kind'];
+		startAtSec: number;
 	}) => void;
 
 	// Cached decoration data (parsed once, used for both fields)
 	private decorationTiles: Array<{
 		x: number;
 		y: number;
-		frame: number;
+		assetKey: string;
+		kind: TinySwordsDecorationKind;
+		variant: string;
 	}> | null = null;
 
 	constructor() {
@@ -143,7 +178,7 @@ export class GameScene extends Phaser.Scene {
 		this.setupInput();
 
 		this.onHudBuy = () => this.handleBuyTower();
-		this.onHudWave = () => this.playerWaves.skipCountdown();
+		this.onHudWave = () => undefined;
 		this.onHudReset = () => EventBus.emit('request-reset-run');
 
 		this.createHUD();
@@ -155,25 +190,33 @@ export class GameScene extends Phaser.Scene {
 		this.onClearTowerSelection = () => {
 			this.selectedTowerId = null;
 		};
-		this.onGameWon = () => {
-			this.endGame('local');
-		};
 
 		this.onWaveStartedLifecycle = (data) => {
+			this.currentSlotDef = WAVE_DEFS[data.slotIndex - 1] ?? WAVE_DEFS[0];
+			this.beginSlotTracking(this.currentSlotDef);
 			soundGenerator.playWaveStart();
-			const waveDef = WAVE_DEFS[data.wave - 1];
+			const waveDef = WAVE_DEFS[data.slotIndex - 1];
 			if (waveDef) {
 				for (const group of waveDef.groups) {
-					this.aiUnits.queueUnits(group.unitId, group.count);
+					this.aiUnits.queueUnits(group.unitId, group.count, {
+						source: 'base',
+						countsTowardClear: true,
+					});
 				}
 			}
-			this.aiBuildPhase();
+			this.applyQueuedPressureForSlot(data.slotIndex);
+			if (data.kind === 'sudden_death') {
+				this.expirePressureAtSuddenDeath();
+			}
+			if (data.kind === 'hard_end') {
+				this.resolveHardEnd();
+				return;
+			}
 			this.updateHUD();
 		};
 
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
-		EventBus.on('game-won', this.onGameWon);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 
 		EventBus.emit('game-ready');
@@ -185,80 +228,132 @@ export class GameScene extends Phaser.Scene {
 
 	private cacheDecorationData(): void {
 		const tilemap = this.make.tilemap({ key: 'tilemap-forest-gate' });
-		const decorLayer = tilemap.getLayer('decoration');
+		const decorLayer = tilemap.getObjectLayer?.('decorations');
 		if (!decorLayer) {
 			this.decorationTiles = [];
 			return;
 		}
 
-		this.decorationTiles = [];
-		for (let y = 0; y < decorLayer.height; y++) {
-			for (let x = 0; x < decorLayer.width; x++) {
-				const tile = decorLayer.data[y][x];
-				if (tile.index > 0) {
-					this.decorationTiles.push({ x, y, frame: tile.index - 1 });
+		this.decorationTiles = decorLayer.objects
+			.map((object) => {
+				const properties = new Map(
+					(object.properties ?? []).map(
+						(property: { name: string; value: unknown }) => [
+							property.name,
+							property.value,
+						],
+					),
+				);
+				const assetKey = properties.get('assetKey');
+				const kind = properties.get('kind');
+				const variant = properties.get('variant');
+
+				if (
+					typeof assetKey !== 'string' ||
+					typeof kind !== 'string' ||
+					typeof variant !== 'string'
+				) {
+					return null;
 				}
-			}
-		}
+
+				const objectX = typeof object.x === 'number' ? object.x : 0;
+				const objectY = typeof object.y === 'number' ? object.y : 0;
+
+				return {
+					x: Math.round(objectX / FOREST_GATE_MAP.tileSize),
+					y: Math.round(objectY / FOREST_GATE_MAP.tileSize),
+					assetKey,
+					kind: kind as TinySwordsDecorationKind,
+					variant,
+				};
+			})
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
-	private renderField(grid: GridManager, dark: boolean): void {
-		const floorKey = dark ? 'grid-floor-dark' : 'grid-floor';
-		const pathKey = dark ? 'path-tile-dark' : 'path-tile';
-		const spawnKey = dark ? 'spawn-tile-dark' : 'spawn-tile';
-		const exitKey = dark ? 'exit-tile-dark' : 'exit-tile';
-
-		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
-			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
-				const world = grid.gridToWorld(x, y);
-				const sprite = this.add.sprite(world.x, world.y, floorKey);
-				const cropX = (x + y) % 2 === 0 ? 0 : ISO_TILE_W;
-				sprite.setCrop(cropX, 0, ISO_TILE_W, TILE_RENDER_H);
-				sprite.setDisplaySize(ISO_TILE_W, TILE_RENDER_H);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(0);
-			}
-		}
+	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
+		const graphics = this.add.graphics();
+		const pathColor = dark ? 0x5c6585 : 0x9f8258;
+		const spawnColor = dark ? 0x40556f : 0x486133;
+		const exitColor = dark ? 0x7e8aa8 : 0xb0914f;
 
 		for (const point of FOREST_GATE_MAP.path) {
-			const world = grid.gridToWorld(point.x, point.y);
-			this.add
-				.image(world.x, world.y, pathKey)
-				.setDisplaySize(ISO_TILE_W, TILE_RENDER_H)
-				.setDepth(1);
+			grid.fillIsoDiamond(
+				graphics,
+				point.x,
+				point.y,
+				pathColor,
+				dark ? 0.4 : 0.52,
+			);
 		}
+
+		grid.fillIsoDiamond(
+			graphics,
+			FOREST_GATE_MAP.spawnPoint.x,
+			FOREST_GATE_MAP.spawnPoint.y,
+			spawnColor,
+			dark ? 0.58 : 0.68,
+		);
+		grid.fillIsoDiamond(
+			graphics,
+			FOREST_GATE_MAP.exitPoint.x,
+			FOREST_GATE_MAP.exitPoint.y,
+			exitColor,
+			dark ? 0.58 : 0.68,
+		);
 
 		const spawnWorld = grid.gridToWorld(
 			FOREST_GATE_MAP.spawnPoint.x,
 			FOREST_GATE_MAP.spawnPoint.y,
 		);
-		this.add
-			.image(spawnWorld.x, spawnWorld.y, spawnKey)
-			.setDisplaySize(ISO_TILE_W, TILE_RENDER_H)
-			.setDepth(2);
-
 		const exitWorld = grid.gridToWorld(
 			FOREST_GATE_MAP.exitPoint.x,
 			FOREST_GATE_MAP.exitPoint.y,
 		);
-		this.add
-			.image(exitWorld.x, exitWorld.y, exitKey)
-			.setDisplaySize(ISO_TILE_W, TILE_RENDER_H)
-			.setDepth(2);
 
+		graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
+		graphics.fillCircle(spawnWorld.x, spawnWorld.y - 6, 7);
+		graphics.fillCircle(exitWorld.x, exitWorld.y - 6, 7);
+	}
+
+	private renderField(grid: GridManager, dark: boolean): void {
+		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
+			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+				const world = grid.gridToWorld(x, y);
+				const frame =
+					TINY_SWORDS_GROUND_FRAMES[(x + y) % TINY_SWORDS_GROUND_FRAMES.length];
+				const sprite = this.add.sprite(
+					world.x,
+					world.y,
+					TINY_SWORDS_PRIMARY_TILESET.key,
+					frame,
+				);
+				sprite.setDisplaySize(ISO_TILE_W, ISO_TILE_W);
+				sprite.setOrigin(0.5, 0.62);
+				sprite.setDepth(0);
+				if (dark) {
+					sprite.setTint(0x6b7899);
+				}
+			}
+		}
+
+		this.renderFieldPathOverlay(grid, dark);
 		this.renderDecorations(grid, dark);
 	}
 
 	private renderDecorations(grid: GridManager, dark: boolean): void {
 		if (!this.decorationTiles) return;
 
-		for (const { x, y, frame } of this.decorationTiles) {
+		for (const { x, y, assetKey } of this.decorationTiles) {
+			const asset = TINY_SWORDS_DECORATION_BY_KEY[assetKey];
+			if (!asset) continue;
+
 			const world = grid.gridToWorld(x, y);
-			const sprite = this.add.sprite(world.x, world.y, 'tileset', frame);
-			sprite.setOrigin(0.5, 0.5);
-			sprite.setDepth(3);
+			const sprite = this.add.sprite(world.x, world.y, assetKey, 0);
+			sprite.setDisplaySize(asset.renderWidth, asset.renderHeight);
+			sprite.setOrigin(0.5, asset.originY);
+			sprite.setDepth(3 + x + y + asset.depthOffset);
 			if (dark) {
-				sprite.setTint(0x666688);
+				sprite.setTint(0x66758f);
 			}
 		}
 	}
@@ -355,7 +450,7 @@ export class GameScene extends Phaser.Scene {
 			}
 
 			if (
-				this.playerWaves.getPhase() === 'building' &&
+				this.playerWaves.getPhase() !== 'ended' &&
 				this.playerGrid.isInBounds(gridPos.x, gridPos.y) &&
 				this.playerTowers.hasTowerAt(gridPos.x, gridPos.y)
 			) {
@@ -383,6 +478,12 @@ export class GameScene extends Phaser.Scene {
 							newTowerId: result.id,
 							newTowerDef: result,
 						});
+						EventBus.emit('tower-merge-resolved', {
+							success: true,
+							fromPos,
+							toPos: gridPos,
+							newTowerId: result.id,
+						});
 						this.playerUnits.setPath(FOREST_GATE_MAP.path);
 						this.renderPath(this.playerGrid, false);
 						EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
@@ -392,6 +493,12 @@ export class GameScene extends Phaser.Scene {
 					}
 				} else {
 					EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
+					EventBus.emit('tower-merge-resolved', {
+						success: false,
+						fromPos: { ...this.dragFrom },
+						toPos: gridPos,
+						failureReason: 'invalid_merge',
+					});
 				}
 			}
 
@@ -478,12 +585,14 @@ export class GameScene extends Phaser.Scene {
 
 	private handleBuyTower(): void {
 		if (this.gold < RANDOM_TOWER_COST) return;
-		if (this.playerWaves.getPhase() !== 'building') return;
+		if (this.playerWaves.getPhase() === 'ended') return;
+		if (this.buyCooldownRemainingMs > 0) return;
 		if (this.selectedTowerId) return;
 
 		const rolledTower = this.playerRandomTower.rollRandomTower();
 		this.selectedTowerId = rolledTower.id;
 		this.spendGold(RANDOM_TOWER_COST);
+		this.setBuyCooldown(GLOBAL_BUY_COOLDOWN_MS);
 		this.hudRolledInfo.setText(`배치 대기: ${rolledTower.name}`);
 		EventBus.emit('random-tower-rolled', {
 			towerId: rolledTower.id,
@@ -495,13 +604,14 @@ export class GameScene extends Phaser.Scene {
 	private updateHUD(): void {
 		const phase = this.playerWaves.getPhase();
 		const canBuy =
-			phase === 'building' &&
+			phase !== 'ended' &&
 			this.gold >= RANDOM_TOWER_COST &&
-			!this.selectedTowerId;
+			!this.selectedTowerId &&
+			this.buyCooldownRemainingMs <= 0;
 		this.hudBuyBtn.setAlpha(canBuy ? 1 : 0.4);
 
-		this.hudWaveBtn.setText(phase === 'building' ? '웨이브 시작' : '전투 중');
-		this.hudWaveBtn.setAlpha(phase === 'building' ? 1 : 0.4);
+		this.hudWaveBtn.setText(this.getHudTimerLabel());
+		this.hudWaveBtn.setAlpha(0.75);
 
 		if (!this.selectedTowerId) {
 			this.hudRolledInfo.setText('');
@@ -561,6 +671,243 @@ export class GameScene extends Phaser.Scene {
 		});
 	}
 
+	private getHudTimerLabel(): string {
+		if (this.playerWaves.getPhase() === 'ended') {
+			return '종료';
+		}
+
+		const elapsedSec = Math.floor(this.playerWaves.getElapsedMs() / 1000);
+		const nextSlot = WAVE_DEFS.find(
+			(slot) => slot.slotIndex === this.currentSlotDef.slotIndex + 1,
+		);
+		const remainingSec = nextSlot
+			? Math.max(0, nextSlot.startAtSec - elapsedSec)
+			: 0;
+		const prefix =
+			this.currentSlotDef.kind === 'boss'
+				? '보스'
+				: this.currentSlotDef.kind === 'sudden_death'
+					? '서든'
+					: `슬롯 ${this.currentSlotDef.slotIndex}`;
+		return `${prefix} ${remainingSec}s`;
+	}
+
+	private setBuyCooldown(remainingMs: number): void {
+		this.buyCooldownRemainingMs = Math.max(0, remainingMs);
+		this.emitBuyCooldown();
+	}
+
+	private tickBuyCooldown(delta: number): void {
+		if (this.buyCooldownRemainingMs <= 0) return;
+		this.buyCooldownRemainingMs = Math.max(
+			0,
+			this.buyCooldownRemainingMs - delta,
+		);
+		this.emitBuyCooldown();
+	}
+
+	private emitBuyCooldown(): void {
+		const roundedMs =
+			this.buyCooldownRemainingMs <= 0
+				? 0
+				: Math.ceil(this.buyCooldownRemainingMs / 100) * 100;
+		if (roundedMs === this.lastEmittedBuyCooldownMs) return;
+		this.lastEmittedBuyCooldownMs = roundedMs;
+		EventBus.emit('buy-cooldown-updated', { remainingMs: roundedMs });
+	}
+
+	private beginSlotTracking(slot: WaveDef): void {
+		this.slotClearState = {
+			slotIndex: slot.slotIndex,
+			localBaseRemaining: slot.groups.reduce(
+				(sum, group) => sum + group.count,
+				0,
+			),
+			opponentBaseRemaining: slot.groups.reduce(
+				(sum, group) => sum + group.count,
+				0,
+			),
+			localAwarded: false,
+			opponentAwarded: false,
+		};
+	}
+
+	private applyQueuedPressureForSlot(slotIndex: number): void {
+		const playerPacket = this.queuedPressureForPlayer.get(slotIndex);
+		if (playerPacket) {
+			for (const group of PRESSURE_PACKET_BY_TIER[
+				this.getPacketTier(playerPacket)
+			].groups) {
+				this.playerUnits.queueUnits(group.unitId, group.count, {
+					bountyOverride: 0,
+					countsTowardClear: false,
+					source: 'pressure',
+				});
+			}
+			this.queuedPressureForPlayer.delete(slotIndex);
+		}
+
+		const opponentPacket = this.queuedPressureForOpponent.get(slotIndex);
+		if (opponentPacket) {
+			for (const group of PRESSURE_PACKET_BY_TIER[
+				this.getPacketTier(opponentPacket)
+			].groups) {
+				this.aiUnits.queueUnits(group.unitId, group.count, {
+					bountyOverride: 0,
+					countsTowardClear: false,
+					source: 'pressure',
+				});
+			}
+			this.queuedPressureForOpponent.delete(slotIndex);
+		}
+	}
+
+	private getPacketTier(packetId: PressurePacketId): 1 | 2 | 3 {
+		return PRESSURE_PACKET_BY_TIER[1].id === packetId
+			? 1
+			: PRESSURE_PACKET_BY_TIER[2].id === packetId
+				? 2
+				: 3;
+	}
+
+	private recordBaseKill(ownerId: PressureOwnerId): void {
+		if (
+			!this.slotClearState ||
+			this.slotClearState.slotIndex !== this.currentSlotDef.slotIndex
+		) {
+			return;
+		}
+		if (
+			this.currentSlotDef.kind !== 'normal' ||
+			!this.currentSlotDef.pressureEnabled ||
+			!this.currentSlotDef.pressureTier
+		) {
+			return;
+		}
+
+		if (ownerId === 'local') {
+			this.slotClearState.localBaseRemaining = Math.max(
+				0,
+				this.slotClearState.localBaseRemaining - 1,
+			);
+		} else {
+			this.slotClearState.opponentBaseRemaining = Math.max(
+				0,
+				this.slotClearState.opponentBaseRemaining - 1,
+			);
+		}
+
+		this.tryAwardPressure(ownerId);
+	}
+
+	private tryAwardPressure(ownerId: PressureOwnerId): void {
+		if (
+			!this.slotClearState ||
+			this.slotClearState.slotIndex !== this.currentSlotDef.slotIndex
+		)
+			return;
+		if (
+			this.currentSlotDef.kind !== 'normal' ||
+			!this.currentSlotDef.pressureEnabled ||
+			!this.currentSlotDef.pressureTier
+		)
+			return;
+
+		const deadlineMs = (this.currentSlotDef.startAtSec + 22) * 1000;
+		if (this.playerWaves.getElapsedMs() > deadlineMs) return;
+
+		const inventory =
+			ownerId === 'local'
+				? this.localPressureInventory
+				: this.opponentPressureInventory;
+		const awardedKey = ownerId === 'local' ? 'localAwarded' : 'opponentAwarded';
+		const remaining =
+			ownerId === 'local'
+				? this.slotClearState.localBaseRemaining
+				: this.slotClearState.opponentBaseRemaining;
+
+		if (this.slotClearState[awardedKey] || remaining > 0) return;
+		if (inventory.length >= PRESSURE_TOKEN_CAP) return;
+
+		const packetId =
+			PRESSURE_PACKET_BY_TIER[this.currentSlotDef.pressureTier].id;
+		inventory.push(packetId);
+		this.slotClearState[awardedKey] = true;
+		EventBus.emit('pressure-earned', {
+			ownerId,
+			slotIndex: this.currentSlotDef.slotIndex,
+			pressureTokens: inventory.length,
+			packetId,
+		});
+		this.tryQueuePressure(ownerId, this.currentSlotDef.slotIndex);
+	}
+
+	private tryQueuePressure(
+		ownerId: PressureOwnerId,
+		fromSlotIndex: number,
+	): void {
+		const elapsedSec = Math.floor(this.playerWaves.getElapsedMs() / 1000);
+		if (elapsedSec >= PRESSURE_LOCK_AT_SEC) return;
+
+		const inventory =
+			ownerId === 'local'
+				? this.localPressureInventory
+				: this.opponentPressureInventory;
+		if (inventory.length === 0) return;
+
+		const targetMap =
+			ownerId === 'local'
+				? this.queuedPressureForOpponent
+				: this.queuedPressureForPlayer;
+		let targetSlot = getNextEligiblePressureSlot(fromSlotIndex);
+		while (targetSlot && targetMap.has(targetSlot.slotIndex)) {
+			targetSlot = getNextEligiblePressureSlot(targetSlot.slotIndex);
+		}
+		if (!targetSlot) return;
+
+		const packetId = inventory.shift();
+		if (!packetId) return;
+		targetMap.set(targetSlot.slotIndex, packetId);
+		EventBus.emit('pressure-queued', {
+			ownerId,
+			slotIndex: fromSlotIndex,
+			pressureTokens: inventory.length,
+			packetId,
+			targetSlotIndex: targetSlot.slotIndex,
+		});
+	}
+
+	private expirePressureAtSuddenDeath(): void {
+		for (const packetId of this.localPressureInventory.splice(0)) {
+			EventBus.emit('pressure-expired', {
+				ownerId: 'local',
+				slotIndex: this.currentSlotDef.slotIndex,
+				pressureTokens: 0,
+				packetId,
+			});
+		}
+		for (const packetId of this.opponentPressureInventory.splice(0)) {
+			EventBus.emit('pressure-expired', {
+				ownerId: 'opponent',
+				slotIndex: this.currentSlotDef.slotIndex,
+				pressureTokens: 0,
+				packetId,
+			});
+		}
+	}
+
+	private resolveHardEnd(): void {
+		if (this.playerHp > this.aiHp) {
+			this.endGame('local');
+			return;
+		}
+		if (this.aiHp > this.playerHp) {
+			this.endGame('opponent');
+			return;
+		}
+		this.endGame(this.gold >= this.aiGold ? 'local' : 'opponent');
+	}
+
 	private handlePlaceTower(
 		gridX: number,
 		gridY: number,
@@ -574,7 +921,7 @@ export class GameScene extends Phaser.Scene {
 
 		if (guardFailure) {
 			this.showFeedback(
-				guardFailure === 'combat_phase' ? '건설 페이즈 전용' : '배치 불가',
+				guardFailure === 'combat_phase' ? '경기 종료' : '배치 불가',
 			);
 			EventBus.emit('tower-placed', {
 				col: gridX,
@@ -618,24 +965,29 @@ export class GameScene extends Phaser.Scene {
 		this.updateHUD();
 	}
 
-	private aiBuildPhase(): void {
-		let attempts = 0;
-		while (
-			this.aiGold >= RANDOM_TOWER_COST &&
-			attempts < AI_MAX_BUILD_ATTEMPTS
+	private updateAIRealtime(delta: number): void {
+		this.aiBuyCooldownRemainingMs = Math.max(
+			0,
+			this.aiBuyCooldownRemainingMs - delta,
+		);
+		if (
+			this.aiBuyCooldownRemainingMs <= 0 &&
+			this.aiGold >= RANDOM_TOWER_COST
 		) {
-			attempts++;
 			const tower = this.aiRandomTower.rollRandomTower();
 			const pos = this.findAIPlacement();
 			if (pos) {
 				this.aiGold -= RANDOM_TOWER_COST;
 				this.aiTowers.placeTower(pos.x, pos.y, tower.id);
+				this.aiBuyCooldownRemainingMs = AI_BUY_INTERVAL_MS;
 			}
 		}
 
-		if (Math.random() < AI_MERGE_CHANCE) {
+		if (Math.random() < 0.02) {
 			this.tryAIMerge();
 		}
+
+		this.tryQueuePressure('opponent', this.currentSlotDef.slotIndex);
 	}
 
 	private findAIPlacement(): { x: number; y: number } | null {
@@ -663,17 +1015,26 @@ export class GameScene extends Phaser.Scene {
 		unitSystem: UnitSystem,
 		time: number,
 		delta: number,
-		onKill: (unitDefId: string, bounty: number) => void,
+		onKill: (info: {
+			unitDefId: string;
+			bounty: number;
+			countsTowardClear: boolean;
+			source: 'base' | 'pressure' | 'transfer';
+		}) => void,
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
 		const exitedUnitIds: string[] = [];
 
 		for (const evt of damageEvents) {
-			const unitDefId = unitSystem.getUnitDefId(evt.unitId);
 			const result = unitSystem.applyDamage(evt.unitId, evt.damage);
-			if (result?.killed && unitDefId) {
-				onKill(unitDefId, result.bounty);
+			if (result?.killed) {
+				onKill({
+					unitDefId: result.unitDefId,
+					bounty: result.bounty,
+					countsTowardClear: result.countsTowardClear,
+					source: result.source,
+				});
 			}
 			if (evt.slow) {
 				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
@@ -692,6 +1053,15 @@ export class GameScene extends Phaser.Scene {
 		if (this.gameOver) return;
 
 		this.playerWaves.update(delta);
+		this.tickBuyCooldown(delta);
+		this.updateAIRealtime(delta);
+		if (
+			Math.floor(this.playerWaves.getElapsedMs() / 1000) >=
+				PRESSURE_EXPIRES_AT_SEC &&
+			this.currentSlotDef.kind === 'sudden_death'
+		) {
+			this.expirePressureAtSuddenDeath();
+		}
 
 		// Player field
 		const playerExits = this.processCombatField(
@@ -699,11 +1069,14 @@ export class GameScene extends Phaser.Scene {
 			this.playerUnits,
 			time,
 			delta,
-			(unitDefId, bounty) => {
-				this.earnGold(bounty);
+			(info) => {
+				this.earnGold(info.bounty);
 				soundGenerator.playUnitDeath();
-				this.aiUnits.queueTransferUnits(unitDefId, 1);
-				EventBus.emit('kill-transfer', { unitType: unitDefId, count: 1 });
+				this.aiUnits.queueTransferUnits(info.unitDefId, 1);
+				EventBus.emit('kill-transfer', { unitType: info.unitDefId, count: 1 });
+				if (info.countsTowardClear && info.source === 'base') {
+					this.recordBaseKill('local');
+				}
 			},
 		);
 
@@ -726,9 +1099,12 @@ export class GameScene extends Phaser.Scene {
 			this.aiUnits,
 			time,
 			delta,
-			(unitDefId, bounty) => {
-				this.aiGold += bounty;
-				this.playerUnits.queueTransferUnits(unitDefId, 1);
+			(info) => {
+				this.aiGold += info.bounty;
+				this.playerUnits.queueTransferUnits(info.unitDefId, 1);
+				if (info.countsTowardClear && info.source === 'base') {
+					this.recordBaseKill('opponent');
+				}
 			},
 		);
 
@@ -787,20 +1163,13 @@ export class GameScene extends Phaser.Scene {
 			!this.aiUnits.hasActiveUnits() &&
 			!this.aiUnits.hasQueuedUnits()
 		) {
-			if (this.playerHp > this.aiHp) {
-				this.endGame('local');
-			} else if (this.aiHp > this.playerHp) {
-				this.endGame('opponent');
-			} else {
-				this.endGame(this.gold >= this.aiGold ? 'local' : 'opponent');
-			}
+			this.resolveHardEnd();
 		}
 	}
 
 	private cleanup() {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
-		EventBus.off('game-won', this.onGameWon);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 
 		this.playerTowers.destroy();

@@ -1,5 +1,5 @@
 export interface EmoteDef {
-  id: string;
-  text: string;
-  emoji: string;
+	id: string;
+	text: string;
+	emoji: string;
 }

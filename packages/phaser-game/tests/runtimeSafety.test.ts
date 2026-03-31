@@ -1,13 +1,54 @@
-import { WAVE_DEFS } from '@gld/shared';
+import {
+	BOSS_SLOT_AT_SECS,
+	BOSS_WARNING_AT_SECS,
+	TOTAL_WAVES,
+	WAVE_DEFS,
+} from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
 
 vi.mock('phaser', () => ({
+	Events: {
+		EventEmitter: class {
+			on() {
+				return this;
+			}
+
+			off() {
+				return this;
+			}
+
+			emit() {
+				return true;
+			}
+
+			removeAllListeners() {
+				return this;
+			}
+		},
+	},
 	default: {
+		AUTO: 'AUTO',
 		Animations: {
 			Events: {
 				ANIMATION_COMPLETE: 'animationcomplete',
 			},
+		},
+		Game: class {},
+		Geom: {
+			Point: class {
+				constructor(
+					public x: number,
+					public y: number,
+				) {}
+			},
+		},
+		Scene: class {
+			constructor(_key?: string) {}
+		},
+		Scale: {
+			FIT: 'FIT',
+			CENTER_HORIZONTALLY: 'CENTER_HORIZONTALLY',
 		},
 	},
 }));
@@ -71,16 +112,51 @@ describe('runtime safety fixes', () => {
 			unitSystem as never,
 			WAVE_DEFS.length + 5,
 		);
-		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(
-			WAVE_DEFS.length,
-		);
+		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 
 		waveSystem.setMaxWaves(0);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(1);
 
 		waveSystem.setMaxWaves(WAVE_DEFS.length + 10);
-		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(
-			WAVE_DEFS.length,
+		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
+	});
+
+	it('gstack test plan: Real-time wave scheduler emits boss warning and boss slot without build phase', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+		};
+
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(unitSystem as never);
+		waveSystem.start();
+
+		expect(emitSpy).toHaveBeenCalledWith(
+			'wave-started',
+			expect.objectContaining({
+				slotIndex: 1,
+				phase: 'running',
+				kind: 'normal',
+				startAtSec: 0,
+			}),
+		);
+
+		waveSystem.update(BOSS_WARNING_AT_SECS[0] * 1000 + 1);
+		expect(emitSpy).toHaveBeenCalledWith('boss-warning', {
+			slotIndex: 8,
+			bossSlotIndex: 9,
+			startAtSec: BOSS_WARNING_AT_SECS[0],
+		});
+		waveSystem.update(30000);
+		expect(emitSpy).toHaveBeenCalledWith(
+			'wave-started',
+			expect.objectContaining({
+				slotIndex: 9,
+				phase: 'boss',
+				kind: 'boss',
+				startAtSec: BOSS_SLOT_AT_SECS[0],
+			}),
 		);
 	});
 
@@ -169,7 +245,10 @@ describe('runtime safety fixes', () => {
 
 		const gridManager = {
 			gridToWorld: vi.fn((x: number, y: number) => ({ x, y })),
-			worldToGrid: vi.fn((x: number, y: number) => ({ x: Math.floor(x), y: Math.floor(y) })),
+			worldToGrid: vi.fn((x: number, y: number) => ({
+				x: Math.floor(x),
+				y: Math.floor(y),
+			})),
 			worldToGridFloat: vi.fn((x: number, y: number) => ({ x, y })),
 			getIsoDepth: vi.fn((_x: number, _y: number) => 10),
 		};

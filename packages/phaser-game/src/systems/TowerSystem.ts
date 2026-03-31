@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { PlacementFailureReason, TowerDef, PlacedTower, Position } from '@gld/shared';
-import { ALL_TOWERS, TILE_SIZE } from '@gld/shared';
+import { ALL_TOWERS, TILE_SIZE, ISO_TILE_W, ISO_TILE_H } from '@gld/shared';
 import { GridManager } from './GridManager';
 import { PathfindingSystem } from './PathfindingSystem';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -80,8 +80,9 @@ export class TowerSystem {
 
     const base = this.scene.add.graphics();
     const sprite = this.scene.add.image(worldPos.x, worldPos.y, `tower-${towerDefId}`);
-    sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
-    sprite.setDepth(7);
+    // Tower asset is 64×80, don't constrain to tile size
+    sprite.setY(worldPos.y - 20); // tower sits above tile
+    sprite.setDepth(this.gridManager.getIsoDepth(gridX, gridY));
     this.renderTowerBase(base, worldPos, def);
 
     this.towers.set(instanceId, {
@@ -97,27 +98,28 @@ export class TowerSystem {
 
   private renderTowerBase(graphics: Phaser.GameObjects.Graphics, pos: Position, def: TowerDef): void {
     const color = parseInt(def.color.replace('#', ''), 16);
-
     graphics.clear();
 
-    // Base platform (dark circle)
+    // Isometric base (ellipse)
     graphics.fillStyle(0x0a0a14, 0.8);
-    graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.45);
+    graphics.fillEllipse(pos.x, pos.y + 4, ISO_TILE_W * 0.45, ISO_TILE_H * 0.45);
     graphics.lineStyle(1, color, 0.3);
-    graphics.strokeCircle(pos.x, pos.y, TILE_SIZE * 0.45);
+    graphics.strokeEllipse(pos.x, pos.y + 4, ISO_TILE_W * 0.45, ISO_TILE_H * 0.45);
 
-    // Glow under tower
+    // Glow (isometric ellipse)
     graphics.fillStyle(color, 0.08);
-    graphics.fillCircle(pos.x, pos.y, TILE_SIZE * 0.6);
+    graphics.fillEllipse(pos.x, pos.y + 4, ISO_TILE_W * 0.6, ISO_TILE_H * 0.6);
 
-    // Range indicator (dashed circle feel via dots)
-    const rangePx = def.stats.range * TILE_SIZE;
-    if (rangePx > 0) {
+    // Range indicator dots (isometric ellipse shape)
+    const rangeGrid = def.stats.range;
+    if (rangeGrid > 0) {
       const dots = 32;
+      const rangeW = rangeGrid * ISO_TILE_W * 0.5;
+      const rangeH = rangeGrid * ISO_TILE_H * 0.5;
       graphics.fillStyle(color, 0.1);
       for (let i = 0; i < dots; i++) {
         const a = (Math.PI * 2 / dots) * i;
-        graphics.fillCircle(pos.x + rangePx * Math.cos(a), pos.y + rangePx * Math.sin(a), 1);
+        graphics.fillCircle(pos.x + rangeW * Math.cos(a), pos.y + rangeH * Math.sin(a), 1);
       }
     }
   }
@@ -159,18 +161,19 @@ export class TowerSystem {
       if (time - tower.lastAttackTime < attackInterval) continue;
 
       const towerWorld = this.gridManager.gridToWorld(data.position.x, data.position.y);
-      const rangeSq = (def.stats.range * TILE_SIZE) ** 2;
+      const rangeSq = def.stats.range ** 2;
 
       let closestUnit: (typeof unitPositions)[0] | null = null;
       let closestDistSq = Infinity;
 
       for (const unit of unitPositions) {
         if (unit.hp <= 0) continue;
-        const dx = towerWorld.x - unit.x;
-        const dy = towerWorld.y - unit.y;
-        const distSq = dx * dx + dy * dy;
-        if (distSq <= rangeSq && distSq < closestDistSq) {
-          closestDistSq = distSq;
+        const unitGrid = this.gridManager.worldToGrid(unit.x, unit.y);
+        const gdx = data.position.x - unitGrid.x;
+        const gdy = data.position.y - unitGrid.y;
+        const gridDistSq = gdx * gdx + gdy * gdy;
+        if (gridDistSq <= rangeSq && gridDistSq < closestDistSq) {
+          closestDistSq = gridDistSq;
           closestUnit = unit;
         }
       }
@@ -193,11 +196,13 @@ export class TowerSystem {
 
         // Splash: hit nearby units for 50% damage
         if (special === 'splash') {
-          const splashRadiusSq = (1.5 * TILE_SIZE) ** 2;
+          const splashRadiusSq = 1.5 * 1.5; // 1.5 grid units
+          const closestGrid = this.gridManager.worldToGrid(closestUnit.x, closestUnit.y);
           for (const unit of unitPositions) {
             if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0) continue;
-            const sdx = closestUnit.x - unit.x;
-            const sdy = closestUnit.y - unit.y;
+            const sUnitGrid = this.gridManager.worldToGrid(unit.x, unit.y);
+            const sdx = closestGrid.x - sUnitGrid.x;
+            const sdy = closestGrid.y - sUnitGrid.y;
             if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
               this.damageEventsBuffer.push({
                 unitId: unit.instanceId,

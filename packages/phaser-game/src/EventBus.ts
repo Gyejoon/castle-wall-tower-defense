@@ -43,6 +43,7 @@ export interface GameEventMap {
   // Opponent / Kill transfer
   'opponent-damaged': { damage: number; remainingHp: number };
   'opponent-state': { gold: number; hp: number; towerCount: number };
+  'player-tower-count': { count: number };
   'kill-transfer': { unitType: string; count: number };
 
   // Emotes

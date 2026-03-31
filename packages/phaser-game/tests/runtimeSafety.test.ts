@@ -169,6 +169,9 @@ describe('runtime safety fixes', () => {
 
 		const gridManager = {
 			gridToWorld: vi.fn((x: number, y: number) => ({ x, y })),
+			worldToGrid: vi.fn((x: number, y: number) => ({ x: Math.floor(x), y: Math.floor(y) })),
+			worldToGridFloat: vi.fn((x: number, y: number) => ({ x, y })),
+			getIsoDepth: vi.fn((_x: number, _y: number) => 10),
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');

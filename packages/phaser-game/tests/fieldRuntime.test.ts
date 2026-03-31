@@ -86,6 +86,7 @@ class MockUnitSystem {
   applyDamage = vi.fn(() => null);
   applySlow = vi.fn();
   getUnitDefId = vi.fn(() => null);
+  queueUnits = vi.fn();
   queueTransferUnits = vi.fn();
 }
 
@@ -98,23 +99,14 @@ class MockWaveSystem {
 }
 
 class MockRandomTowerSystem {
-  rollRandomTower = vi.fn(() => ({ id: 'laser' }));
+  rollRandomTower = vi.fn(() => ({ id: 'laser', name: 'Laser' }));
+  reset = vi.fn();
 }
 
 class MockMergeSystem {
   canMerge = vi.fn(() => false);
   merge = vi.fn(() => null);
-}
-
-class MockAIOpponent {
-  hp = 20;
-  gold = 0;
   destroy = vi.fn();
-  queueUnits = vi.fn();
-  buildPhase = vi.fn();
-  queueTransferUnits = vi.fn();
-  update = vi.fn(() => ({ killedUnits: [] }));
-  hasActiveUnits = vi.fn(() => false);
 }
 
 vi.mock('../src/systems/GridManager', () => ({
@@ -145,10 +137,6 @@ vi.mock('../src/systems/MergeSystem', () => ({
   MergeSystem: MockMergeSystem,
 }));
 
-vi.mock('../src/systems/AIOpponent', () => ({
-  AIOpponent: MockAIOpponent,
-}));
-
 function createGraphics() {
   return {
     setDepth: vi.fn().mockReturnThis(),
@@ -170,6 +158,21 @@ function createImage() {
     setDisplaySize: vi.fn().mockReturnThis(),
     setDepth: vi.fn().mockReturnThis(),
     setAlpha: vi.fn().mockReturnThis(),
+    setOrigin: vi.fn().mockReturnThis(),
+    setTint: vi.fn().mockReturnThis(),
+    setCrop: vi.fn().mockReturnThis(),
+    destroy: vi.fn(),
+  };
+}
+
+function createText() {
+  return {
+    setOrigin: vi.fn().mockReturnThis(),
+    setDepth: vi.fn().mockReturnThis(),
+    setInteractive: vi.fn().mockReturnThis(),
+    setAlpha: vi.fn().mockReturnThis(),
+    setText: vi.fn().mockReturnThis(),
+    on: vi.fn().mockReturnThis(),
     destroy: vi.fn(),
   };
 }
@@ -181,14 +184,21 @@ describe('GameScene field runtime', () => {
     eventBus.emit.mockClear();
   });
 
-  it('renders the field from generated tile assets instead of the legacy tilemap bundle', async () => {
+  it('renders dual fields (AI dark + player normal) from generated tile assets', async () => {
     const addImage = vi.fn(() => createImage());
     const addSprite = vi.fn(() => createImage());
     const addGraphics = vi.fn(() => createGraphics());
-    const makeTilemap = vi.fn(() => ({
-      addTilesetImage: vi.fn(() => ({})),
-      createLayer: vi.fn(() => ({ setDepth: vi.fn().mockReturnThis() })),
-    }));
+    const addText = vi.fn(() => createText());
+    const tilemapData = {
+      getLayer: vi.fn(() => ({
+        height: FOREST_GATE_MAP.height,
+        width: FOREST_GATE_MAP.width,
+        data: Array.from({ length: FOREST_GATE_MAP.height }, () =>
+          Array.from({ length: FOREST_GATE_MAP.width }, () => ({ index: 0 })),
+        ),
+      })),
+    };
+    const makeTilemap = vi.fn(() => tilemapData);
 
     const { GameScene } = await import('../src/scenes/Game');
     const scene = new GameScene();
@@ -198,6 +208,7 @@ describe('GameScene field runtime', () => {
         image: addImage,
         sprite: addSprite,
         graphics: addGraphics,
+        text: addText,
       },
       make: {
         tilemap: makeTilemap,
@@ -212,15 +223,24 @@ describe('GameScene field runtime', () => {
 
     scene.create();
 
-    const imageKeys = addImage.mock.calls.map((call) => call[2]);
     const spriteKeys = addSprite.mock.calls.map((call) => call[2]);
+    const imageKeys = addImage.mock.calls.map((call) => call[2]);
 
-    expect(makeTilemap).not.toHaveBeenCalled();
-    expect(spriteKeys.filter((key) => key === 'grid-floor')).toHaveLength(
-      FOREST_GATE_MAP.width * FOREST_GATE_MAP.height,
-    );
+    // Both fields rendered: 2x grid floor sprites
+    const gridFloorCount = spriteKeys.filter((k) => k === 'grid-floor').length;
+    const gridFloorDarkCount = spriteKeys.filter((k) => k === 'grid-floor-dark').length;
+    expect(gridFloorCount).toBe(FOREST_GATE_MAP.width * FOREST_GATE_MAP.height);
+    expect(gridFloorDarkCount).toBe(FOREST_GATE_MAP.width * FOREST_GATE_MAP.height);
+
+    // Path tiles for both fields
     expect(imageKeys).toContain('path-tile');
+    expect(imageKeys).toContain('path-tile-dark');
     expect(imageKeys).toContain('spawn-tile');
+    expect(imageKeys).toContain('spawn-tile-dark');
     expect(imageKeys).toContain('exit-tile');
+    expect(imageKeys).toContain('exit-tile-dark');
+
+    // HUD text buttons created
+    expect(addText.mock.calls.length).toBeGreaterThanOrEqual(3);
   });
 });

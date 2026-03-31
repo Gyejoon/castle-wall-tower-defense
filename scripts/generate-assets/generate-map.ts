@@ -32,6 +32,19 @@ const GID = {
   EDGE_S:          22, // index 21
   EDGE_E:          23, // index 22
   EDGE_W:          24, // index 23
+  // Nature background tiles
+  MOSSY_STONE:     36, // index 35
+  MUD:             37, // index 36
+  SAND:            38, // index 37
+  FERN:            39, // index 38
+  MUSHROOM:        40, // index 39
+  VINE:            41, // index 40
+  SHALLOW_WATER:   42, // index 41
+  REED:            43, // index 42
+  MOSSY_ROCK:      44, // index 43
+  RUINS:           45, // index 44
+  ANCIENT_PILLAR:  46, // index 45
+  FALLEN_LEAVES:   47, // index 46
 } as const;
 
 interface TiledMap {
@@ -196,18 +209,23 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   const decorData = makeEmptyLayer(width, height);
 
   const decorOptions = [
-    GID.TREE_SMALL, GID.TREE_SMALL, GID.TREE_SMALL,
+    GID.TREE_SMALL, GID.TREE_SMALL,
     GID.TREE_LARGE,
-    GID.ROCK_SMALL, GID.ROCK_SMALL,
+    GID.ROCK_SMALL,
     GID.ROCK_LARGE,
     GID.BUSH, GID.BUSH,
     GID.FLOWERS, GID.FLOWERS,
+    // Nature background
+    GID.FERN, GID.FERN,
+    GID.MUSHROOM,
+    GID.MOSSY_ROCK,
+    GID.FALLEN_LEAVES, GID.FALLEN_LEAVES,
+    GID.VINE,
+    GID.RUINS,
+    GID.ANCIENT_PILLAR,
   ];
 
-  // Deterministic pseudo-random scatter — avoid path and placement cells
-  let count = 0;
-  const maxDecorations = 25;
-  // Walk a fixed pattern of candidate positions
+  // Kingdom Rush style: fill ALL non-path, non-placement cells with vegetation
   const candidates: Array<{ x: number; y: number }> = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -218,13 +236,11 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     }
   }
 
-  // Pick every Nth candidate deterministically
-  const step = Math.max(1, Math.floor(candidates.length / maxDecorations));
-  for (let i = 0; i < candidates.length && count < maxDecorations; i += step) {
+  // Fill every candidate cell — dense vegetation like Kingdom Rush
+  for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
-    const decorIdx = count % decorOptions.length;
+    const decorIdx = i % decorOptions.length;
     decorData[cellIndex(c.x, c.y, width)] = decorOptions[decorIdx];
-    count++;
   }
 
   // === Objects layer: placement points ===

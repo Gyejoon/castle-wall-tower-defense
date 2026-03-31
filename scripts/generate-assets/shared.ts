@@ -56,6 +56,22 @@ export const PALETTE = {
   tierGod:       '#f0d060',  // T5 God (황금)
   tierGodBright: '#ffe89a',  // T5 God 밝은
   tierGodDark:   '#c0a030',  // T5 God 어두운
+  // Nature background (Kingdom Rush style — vibrant, lush)
+  moss:          '#3d7a20',  // 이끼 진녹
+  sand:          '#d4b896',  // 모래
+  sandDark:      '#b89a70',  // 어두운 모래
+  mushGlow:      '#80e0a0',  // 발광 버섯
+  leafBrown:     '#a06830',  // 낙엽 갈색
+  leafOrange:    '#c08040',  // 낙엽 오렌지
+  // Kingdom Rush foliage layers
+  foliageDark:   '#1e5a10',  // 나무 그림자 (가장 어두운 초록)
+  foliageMid:    '#2d7a1e',  // 나무 중간톤
+  foliageLight:  '#4a9e30',  // 나무 밝은 부분
+  foliageBright: '#6abe48',  // 나무 하이라이트
+  foliageTop:    '#8ada60',  // 나무 최상단 반사광
+  grassRich:     '#4a8e2a',  // 풍성한 잔디 (기본)
+  grassShadow:   '#2a6a14',  // 잔디 그림자
+  grassHighlight:'#6ab840',  // 잔디 하이라이트
   // Utility
   towerBase:     '#2a1f0a',  // 타워 기단 (어두운 갈색)
 } as const;

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-30T17:02:12.371Z",
+  "generated": "2026-03-31T06:50:35.904Z",
   "assets": [
     {
       "key": "tileset",
@@ -27,6 +27,26 @@
       "path": "assets/tiles/exit-tile.png"
     },
     {
+      "key": "grid-floor-dark",
+      "type": "image",
+      "path": "assets/tiles/grid-floor-dark.png"
+    },
+    {
+      "key": "path-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/path-tile-dark.png"
+    },
+    {
+      "key": "spawn-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile-dark.png"
+    },
+    {
+      "key": "exit-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/exit-tile-dark.png"
+    },
+    {
       "key": "tower-laser",
       "type": "image",
       "path": "assets/towers/laser.png"
@@ -35,8 +55,8 @@
       "key": "tower-laser-fire",
       "type": "spritesheet",
       "path": "assets/towers/laser-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -48,8 +68,8 @@
       "key": "tower-plasma-fire",
       "type": "spritesheet",
       "path": "assets/towers/plasma-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -61,8 +81,8 @@
       "key": "tower-emp-fire",
       "type": "spritesheet",
       "path": "assets/towers/emp-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -74,8 +94,8 @@
       "key": "tower-shield-fire",
       "type": "spritesheet",
       "path": "assets/towers/shield-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -87,8 +107,8 @@
       "key": "tower-twin_laser-fire",
       "type": "spritesheet",
       "path": "assets/towers/twin_laser-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -100,8 +120,8 @@
       "key": "tower-disruptor-fire",
       "type": "spritesheet",
       "path": "assets/towers/disruptor-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -113,8 +133,8 @@
       "key": "tower-nova_cannon-fire",
       "type": "spritesheet",
       "path": "assets/towers/nova_cannon-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -126,8 +146,8 @@
       "key": "tower-fortress-fire",
       "type": "spritesheet",
       "path": "assets/towers/fortress-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -139,8 +159,8 @@
       "key": "tower-stasis_field-fire",
       "type": "spritesheet",
       "path": "assets/towers/stasis_field-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -152,8 +172,8 @@
       "key": "tower-flame_tower-fire",
       "type": "spritesheet",
       "path": "assets/towers/flame_tower-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -165,8 +185,8 @@
       "key": "tower-wind_spire-fire",
       "type": "spritesheet",
       "path": "assets/towers/wind_spire-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -178,8 +198,8 @@
       "key": "tower-earth_golem-fire",
       "type": "spritesheet",
       "path": "assets/towers/earth_golem-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -191,8 +211,8 @@
       "key": "tower-holy_shrine-fire",
       "type": "spritesheet",
       "path": "assets/towers/holy_shrine-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -204,8 +224,8 @@
       "key": "tower-dragon_nest-fire",
       "type": "spritesheet",
       "path": "assets/towers/dragon_nest-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -217,8 +237,8 @@
       "key": "tower-arcane_spire-fire",
       "type": "spritesheet",
       "path": "assets/towers/arcane_spire-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -230,8 +250,8 @@
       "key": "tower-world_tree-fire",
       "type": "spritesheet",
       "path": "assets/towers/world_tree-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -243,8 +263,8 @@
       "key": "tower-celestial-fire",
       "type": "spritesheet",
       "path": "assets/towers/celestial-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
@@ -256,56 +276,56 @@
       "key": "tower-divine_throne-fire",
       "type": "spritesheet",
       "path": "assets/towers/divine_throne-fire.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 4
     },
     {
       "key": "unit-scout_drone",
       "type": "spritesheet",
       "path": "assets/units/scout_drone.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {
       "key": "unit-battle_robot",
       "type": "spritesheet",
       "path": "assets/units/battle_robot.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {
       "key": "unit-heavy_walker",
       "type": "spritesheet",
       "path": "assets/units/heavy_walker.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {
       "key": "unit-stealth_drone",
       "type": "spritesheet",
       "path": "assets/units/stealth_drone.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {
       "key": "unit-titan",
       "type": "spritesheet",
       "path": "assets/units/titan.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {
       "key": "unit-death",
       "type": "spritesheet",
       "path": "assets/units/unit-death.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
+      "frameWidth": 40,
+      "frameHeight": 48,
       "frameCount": 4
     },
     {

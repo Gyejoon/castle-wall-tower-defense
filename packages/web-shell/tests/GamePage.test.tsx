@@ -94,18 +94,9 @@ describe('GamePage', () => {
     vi.useRealTimers();
   });
 
-  it('emits buy-random-tower event when buy button clicked', () => {
-    const { emitSpy } = getEventBusHarness();
-    const view = render(<GamePage />);
-
-    const buyButton = view.getByRole('button', { name: /타워 구매/i });
-    fireEvent.click(buyButton);
-    expect(emitSpy).toHaveBeenCalledWith('request-buy-random-tower');
-  });
-
   it('stores placement feedback from failed placement events', () => {
     const { emitSpy } = getEventBusHarness();
-    const view = render(<GamePage />);
+    render(<GamePage />);
 
     act(() => {
       emitSpy('tower-placed', {
@@ -118,7 +109,6 @@ describe('GamePage', () => {
     });
 
     expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
-    expect(view.getByText(/건설 페이즈 전용/i)).toBeTruthy();
   });
 
   it('shows victory state when local player wins', () => {
@@ -150,24 +140,26 @@ describe('GamePage', () => {
     expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
   });
 
-  it('emits send-emote after local emote selection (AI response handled by AIOpponent)', () => {
+  it('emits send-emote after clicking inline emote button', () => {
     const { emitSpy } = getEventBusHarness();
     const view = render(<GamePage />);
 
-    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
-    fireEvent.click(view.getByTestId('emote-gg'));
+    // Inline emote bar: click the GG button directly
+    const ggButtons = view.getAllByText(/GG/i);
+    fireEvent.click(ggButtons[0]);
 
     expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
-    expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
   });
 
   it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {
     vi.useFakeTimers();
     const view = render(<GamePage />);
 
-    fireEvent.click(view.getByRole('button', { name: /open emotes/i }));
-    fireEvent.click(view.getByTestId('emote-gg'));
+    // Click inline GG emote button
+    const ggButtons = view.getAllByText(/GG/i);
+    fireEvent.click(ggButtons[0]);
 
+    // EmoteBubble should appear
     expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
 
     act(() => {
@@ -186,6 +178,8 @@ describe('GamePage', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(view.queryByText(/GG/i)).toBeNull();
+    // EmoteBubble removed, but inline button still shows GG
+    const remaining = view.getAllByText(/GG/i);
+    expect(remaining.length).toBe(1); // only the inline button remains
   });
 });

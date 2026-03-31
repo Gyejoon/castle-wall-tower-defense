@@ -1,16 +1,16 @@
 ---
 name: ralreview
 description: |
-  프로젝트 전용 수렴 코드 리뷰. ralph-loop으로 반복하며 6단계 검증 파이프라인을 실행한다:
-  Simplify → Phaser 런타임 안정성 → 스펙 정합성 → 테스트 커버리지 → Codex 리뷰 → 최종 Simplify.
-  4개 차원 각 /10 점수를 매겨 합계 35/40 이상이면 PASS.
+  프로젝트 전용 수렴 코드 리뷰. ralph-loop으로 반복하며 7단계 검증 파이프라인을 실행한다:
+  Simplify → Phaser 런타임 안정성 → 스펙 정합성 → 테스트 커버리지 → Codex 리뷰 → Codex Adversarial 리뷰 → 최종 Simplify.
+  5개 차원 각 /10 점수를 매겨 합계 42/50 이상이면 PASS.
   "ralreview", "ral review", "quality review", "전체 리뷰", "품질 검수",
   "landing review", "pre-merge review" 등의 요청 시 사용.
 ---
 
 # RAL Review — 수렴 품질 리뷰
 
-프로젝트 코드 변경에 대해 6단계 파이프라인을 실행하고, 4개 차원 점수가 합계 35/40 이상이 될 때까지 반복한다.
+프로젝트 코드 변경에 대해 7단계 파이프라인을 실행하고, 5개 차원 점수가 합계 42/50 이상이 될 때까지 반복한다.
 
 ---
 
@@ -19,7 +19,7 @@ description: |
 이 스킬은 ralph-loop을 활용하여 수렴할 때까지 반복한다:
 
 ```
-/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the 6-phase workflow defined in the ralreview skill. Fix issues found in each phase. When all scores are acceptable (total >= 35/40), output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
+/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the 7-phase workflow defined in the ralreview skill. Fix issues found in each phase. When all scores are acceptable (total >= 42/50), output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
 ```
 
 ---
@@ -122,9 +122,48 @@ description: |
 
 ---
 
+## Phase 5.5: Codex Adversarial 리뷰
+
+`/codex:adversarial-review`를 실행한다. 일반 리뷰와 달리, 구현의 설계 결정과 가정 자체에 도전하는 적대적 관점의 리뷰다.
+
+- 선택한 구현 방식이 올바른지 의문을 제기
+- 설계 트레이드오프와 가정이 실제 조건에서 실패할 수 있는 지점 식별
+- 데이터 흐름의 정합성 검증 (emit하는 쪽과 listen하는 쪽이 일치하는가)
+- 상태 동기화 버그 탐색 (변경 감지 로직, 캐시 무효화 등)
+- **Codex를 사용할 수 없는 경우**: 7/10 기본 점수 부여 + "Codex Adversarial 미사용" 노트
+
+### 실행 방법
+
+1. 백그라운드로 실행:
+   ```bash
+   node "<codex-companion-path>" adversarial-review ""
+   ```
+2. 결과의 verdict에 따라 점수 매핑
+
+### 점수 매핑
+| Verdict | 점수 |
+|---------|------|
+| pass (이슈 없음) | 10 |
+| pass (informational) | 9 |
+| needs-attention (medium only) | 7-8 |
+| needs-attention (high severity) | 5-6 |
+| fail (critical, 데이터 손실/보안) | 0-4 |
+
+### 자동 수정 범위
+Adversarial 리뷰에서 발견된 이슈 중 자동 수정 가능한 항목:
+
+| 자동 수정 (AUTO) | 보고만 (REPORT) |
+|-----------------|----------------|
+| 상태 브로드캐스트 순서 버그 | 아키텍처 재설계 제안 |
+| 하드코딩된 값을 store 연결 | 새 시스템/모듈 도입 제안 |
+| 변경 감지 로직 수정 | 성능 최적화 대규모 리팩토링 |
+| 누락된 이벤트 emit 추가 | 프로토콜/인터페이스 변경 |
+
+---
+
 ## Phase 6: 최종 Simplify
 
-`/simplify`를 한 번 더 실행하여 Phase 2-5에서 발생한 수정사항을 정리한다.
+`/simplify`를 한 번 더 실행하여 Phase 2-5.5에서 발생한 수정사항을 정리한다.
 
 ---
 
@@ -140,22 +179,23 @@ description: |
 ║  Spec Alignment:         X/10       ║
 ║  Test Coverage:          X/10       ║
 ║  Codex Review:           X/10       ║
+║  Codex Adversarial:      X/10       ║
 ╠══════════════════════════════════════╣
-║  TOTAL:                 XX/40       ║
+║  TOTAL:                 XX/50       ║
 ║  STATUS:           PASS / FAIL      ║
 ╚══════════════════════════════════════╝
 ```
 
 ### 판정 기준
-- **PASS** (총 35/40 이상): `RALREVIEW PASS` 출력 → ralph-loop 종료
-- **FAIL** (총 35/40 미만):
+- **PASS** (총 42/50 이상): `RALREVIEW PASS` 출력 → ralph-loop 종료
+- **FAIL** (총 42/50 미만):
   1. 최저 점수 차원 식별
   2. 해당 차원의 구체적 이슈 나열
   3. 자동 수정 가능한 이슈 수정
   4. 비즈니스 로직 변경이 필요한 이슈는 REPORT로 분류 (수정하지 않음)
   5. 다음 반복으로 계속
 
-### 수렴 실패 시 (5회 반복 후에도 35점 미만)
+### 수렴 실패 시 (5회 반복 후에도 42점 미만)
 - 최종 스코어카드 출력
 - 미해결 이슈 목록 출력
 - 수동 확인 필요 항목 표시

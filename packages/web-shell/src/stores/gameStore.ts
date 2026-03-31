@@ -25,6 +25,7 @@ interface GameStoreState {
   wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
   soundEnabled: boolean;
   activeTab: FieldTab;
+  playerTowerCount: number;
   opponentHp: number;
   opponentGold: number;
   opponentTowerCount: number;
@@ -41,6 +42,7 @@ interface GameStoreState {
   setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
   setWavePreview: (preview: Array<{ unitId: string; unitName: string; count: number }> | null) => void;
   setActiveTab: (tab: FieldTab) => void;
+  setPlayerTowerCount: (count: number) => void;
   setOpponentState: (state: { hp: number; gold: number; towerCount: number }) => void;
   resetRun: () => void;
   enterLobby: () => void;
@@ -59,6 +61,7 @@ const createRunState = () => ({
   placementFeedback: null,
   wavePreview: null,
   activeTab: 'player' as FieldTab,
+  playerTowerCount: 0,
   opponentHp: INITIAL_PLAYER_HP,
   opponentGold: INITIAL_GOLD,
   opponentTowerCount: 0,
@@ -82,6 +85,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
   setWavePreview: (preview) => set({ wavePreview: preview }),
   setActiveTab: (tab) => set({ activeTab: tab }),
+  setPlayerTowerCount: (count) => set({ playerTowerCount: count }),
   setOpponentState: (state) => set({
     opponentHp: state.hp,
     opponentGold: state.gold,

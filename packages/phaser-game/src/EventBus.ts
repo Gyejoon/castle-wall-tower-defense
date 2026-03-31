@@ -57,6 +57,7 @@ export interface GameEventMap {
   'request-sell-tower': { col: number; row: number };
   'request-start-wave': undefined;
   'request-start-game': undefined;
+  'request-reset-run': undefined;
   'request-pause': undefined;
   'request-resume': undefined;
 

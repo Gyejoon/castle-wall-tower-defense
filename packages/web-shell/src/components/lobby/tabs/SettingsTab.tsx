@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TabBackground } from '../TabBackground';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { colors, fonts } from '../../../styles/tokens';
@@ -6,7 +7,6 @@ import { colors, fonts } from '../../../styles/tokens';
 export function SettingsTab() {
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const toggleSound = useGameStore((s) => s.toggleSound);
-  const [bgLoaded, setBgLoaded] = useState(false);
   const [screenShake, setScreenShake] = useState(true);
   const [showDamageNumbers, setShowDamageNumbers] = useState(true);
 
@@ -18,20 +18,11 @@ export function SettingsTab() {
       style={{ position: 'relative', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
       {/* Background */}
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #1a1208 0%, #2a1a10 100%)' }} />
-        <img
-          src={uiMobileArt.lordchamberBg}
-          alt=""
-          onLoad={() => setBgLoaded(true)}
-          onError={() => setBgLoaded(false)}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', imageRendering: 'pixelated',
-            opacity: bgLoaded ? 0.25 : 0, transition: 'opacity 0.3s',
-          }}
-        />
-      </div>
+      <TabBackground
+        src={uiMobileArt.lordchamberBg}
+        gradient="linear-gradient(180deg, #1a1208 0%, #2a1a10 100%)"
+        overlayOpacity={0.25}
+      />
 
       {/* Content */}
       <div

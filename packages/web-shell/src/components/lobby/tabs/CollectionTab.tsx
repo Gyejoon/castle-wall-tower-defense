@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import { TabBackground } from '../TabBackground';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { MOCK_TOWERS, ELEMENT_COLORS, type TowerCard } from '../../../data/mockLobbyData';
 import { colors, fonts } from '../../../styles/tokens';
 
 export function CollectionTab() {
   const [selectedTower, setSelectedTower] = useState<TowerCard | null>(null);
-  const [bgLoaded, setBgLoaded] = useState(false);
   const ownedTowers = MOCK_TOWERS.filter((t) => t.owned);
   const lockedTowers = MOCK_TOWERS.filter((t) => !t.owned);
 
@@ -17,20 +17,11 @@ export function CollectionTab() {
       style={{ position: 'relative', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
       {/* Background */}
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #2a2010 0%, #1a1208 100%)' }} />
-        <img
-          src={uiMobileArt.wartableBg}
-          alt=""
-          onLoad={() => setBgLoaded(true)}
-          onError={() => setBgLoaded(false)}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', imageRendering: 'pixelated',
-            opacity: bgLoaded ? 0.3 : 0, transition: 'opacity 0.3s',
-          }}
-        />
-      </div>
+      <TabBackground
+        src={uiMobileArt.wartableBg}
+        gradient="linear-gradient(180deg, #2a2010 0%, #1a1208 100%)"
+        overlayOpacity={0.3}
+      />
 
       {/* Content */}
       <div

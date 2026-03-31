@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PixelButton } from '../../ui/PixelButton';
+import { TabBackground } from '../TabBackground';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useEmoteStore } from '../../../stores/emoteStore';
 import { useGameStore } from '../../../stores/gameStore';
@@ -10,16 +11,6 @@ export function HomeTab() {
   const resetRun = useGameStore((s) => s.resetRun);
   const resetEmotes = useEmoteStore((s) => s.reset);
   const [isMatchmaking, setIsMatchmaking] = useState(false);
-  const [bgLoaded, setBgLoaded] = useState(false);
-
-  const handleStartBattle = useCallback(() => {
-    if (isMatchmaking) return;
-    setIsMatchmaking(true);
-  }, [isMatchmaking]);
-
-  const handleCancelMatch = useCallback(() => {
-    setIsMatchmaking(false);
-  }, []);
 
   useEffect(() => {
     if (!isMatchmaking) return;
@@ -38,40 +29,15 @@ export function HomeTab() {
       style={{ position: 'relative', flex: 1, overflow: 'hidden' }}
     >
       {/* Background scene */}
-      <div style={{ position: 'absolute', inset: 0 }}>
-        {/* CSS gradient fallback */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #0d1a2a 0%, #14233a 50%, #1a1208 100%)',
-          }}
-        />
-        {/* PNG background */}
-        <img
-          src={uiMobileArt.courtyardBg}
-          alt=""
-          onLoad={() => setBgLoaded(true)}
-          onError={() => setBgLoaded(false)}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            imageRendering: 'pixelated',
-            opacity: bgLoaded ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}
-        />
-        {/* Torch flicker animations */}
-        <div className="torch torch-left" />
-        <div className="torch torch-right" />
-        {/* Flag flutter */}
-        <div className="castle-flag" />
-        {/* Stars twinkle */}
-        <div className="stars-overlay" />
-      </div>
+      <TabBackground
+        src={uiMobileArt.courtyardBg}
+        gradient="linear-gradient(180deg, #0d1a2a 0%, #14233a 50%, #1a1208 100%)"
+      />
+      {/* Ambient animations */}
+      <div className="torch torch-left" />
+      <div className="torch torch-right" />
+      <div className="castle-flag" />
+      <div className="stars-overlay" />
 
       {/* Content overlay */}
       <div
@@ -128,7 +94,7 @@ export function HomeTab() {
           <PixelButton
             variant="gold"
             disabled={isMatchmaking}
-            onClick={handleStartBattle}
+            onClick={() => !isMatchmaking && setIsMatchmaking(true)}
             style={{
               width: '100%',
               padding: '14px 20px',
@@ -194,7 +160,7 @@ export function HomeTab() {
             상대를 찾는 중...
           </span>
           <div className="matchmaking-dots" />
-          <PixelButton variant="danger" onClick={handleCancelMatch} style={{ fontSize: '8px', padding: '10px 20px' }}>
+          <PixelButton variant="danger" onClick={() => setIsMatchmaking(false)} style={{ fontSize: '8px', padding: '10px 20px' }}>
             취소
           </PixelButton>
         </div>

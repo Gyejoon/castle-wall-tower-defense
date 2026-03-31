@@ -1,5 +1,6 @@
+import Phaser from 'phaser';
 import type { Position, Tile, Grid, GridConfig } from '@gld/shared';
-import { TILE_SIZE, DEFAULT_GRID_CONFIG } from '@gld/shared';
+import { TILE_SIZE, DEFAULT_GRID_CONFIG, ISO_TILE_W, ISO_TILE_H, ISO_CANVAS_W, ISO_CANVAS_H } from '@gld/shared';
 
 export class GridManager {
   readonly width: number;
@@ -8,6 +9,8 @@ export class GridManager {
   readonly spawnPoint: Position;
   readonly exitPoint: Position;
   private grid: Grid;
+  private readonly offsetX: number;
+  private readonly offsetY: number;
 
   constructor(config: GridConfig = DEFAULT_GRID_CONFIG) {
     this.width = config.width;
@@ -15,6 +18,20 @@ export class GridManager {
     this.tileSize = TILE_SIZE;
     this.spawnPoint = config.spawnPoint;
     this.exitPoint = config.exitPoint;
+
+    // Center the isometric grid within the canvas.
+    // The grid's world-space X range spans from gridToWorld(0, height-1).x to gridToWorld(width-1, 0).x
+    // We compute offsets so the grid is centered in the canvas.
+    const maxGx = this.width - 1;
+    const maxGy = this.height - 1;
+    // X extremes (before offset): (maxGx - 0) * halfW  and  (0 - maxGy) * halfW
+    const xMin = -maxGy * (ISO_TILE_W / 2);
+    const xMax = maxGx * (ISO_TILE_W / 2);
+    this.offsetX = (ISO_CANVAS_W - (xMin + xMax)) / 2;
+    // Y extremes (before offset): 0  and  (maxGx + maxGy) * halfH
+    const yMax = (maxGx + maxGy) * (ISO_TILE_H / 2);
+    this.offsetY = (ISO_CANVAS_H - yMax) / 2;
+
     this.grid = this.createGrid();
   }
 
@@ -69,20 +86,55 @@ export class GridManager {
     return true;
   }
 
-  /** Convert grid coords to world pixel coords (center of tile) */
+  /** Convert grid coords to isometric world pixel coords (center of tile) */
   gridToWorld(gridX: number, gridY: number): Position {
     return {
-      x: gridX * this.tileSize + this.tileSize / 2,
-      y: gridY * this.tileSize + this.tileSize / 2,
+      x: (gridX - gridY) * (ISO_TILE_W / 2) + this.offsetX,
+      y: (gridX + gridY) * (ISO_TILE_H / 2) + this.offsetY,
     };
   }
 
-  /** Convert world pixel coords to grid coords */
+  /** Convert isometric world pixel coords to grid coords */
   worldToGrid(worldX: number, worldY: number): Position {
+    const rx = (worldX - this.offsetX) / ISO_TILE_W;
+    const ry = (worldY - this.offsetY) / ISO_TILE_H;
     return {
-      x: Math.floor(worldX / this.tileSize),
-      y: Math.floor(worldY / this.tileSize),
+      x: Math.floor(rx + ry),
+      y: Math.floor(ry - rx),
     };
+  }
+
+  /** Fill an isometric diamond tile on a Graphics object */
+  fillIsoDiamond(
+    graphics: Phaser.GameObjects.Graphics,
+    gridX: number, gridY: number,
+    color: number, alpha: number,
+  ): void {
+    const center = this.gridToWorld(gridX, gridY);
+    const hw = ISO_TILE_W / 2;
+    const hh = ISO_TILE_H / 2;
+    graphics.fillStyle(color, alpha);
+    graphics.fillPoints([
+      new Phaser.Geom.Point(center.x, center.y - hh),
+      new Phaser.Geom.Point(center.x + hw, center.y),
+      new Phaser.Geom.Point(center.x, center.y + hh),
+      new Phaser.Geom.Point(center.x - hw, center.y),
+    ], true);
+  }
+
+  /** Convert world coords to continuous (non-floored) grid coords for distance calculations */
+  worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
+    const rx = (worldX - this.offsetX) / ISO_TILE_W;
+    const ry = (worldY - this.offsetY) / ISO_TILE_H;
+    return {
+      x: rx + ry,
+      y: ry - rx,
+    };
+  }
+
+  /** Get isometric depth for correct draw order */
+  getIsoDepth(gridX: number, gridY: number): number {
+    return 10 + gridX + gridY;
   }
 
   /** Get a 2D walkability array for pathfinding */

@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import {
   ALL_TOWERS,
   TILE_SIZE,
+  ISO_TILE_W,
+  ISO_TILE_H,
   INITIAL_PLAYER_HP,
   INITIAL_GOLD,
   RANDOM_TOWER_COST,
@@ -86,21 +88,17 @@ export class GameScene extends Phaser.Scene {
 
       if (this.isDragging && this.dragGhost) {
         this.dragGhost.clear();
-        this.dragGhost.fillStyle(0xffffff, 0.3);
-        this.dragGhost.fillRect(
-          pointer.worldX - TILE_SIZE / 2,
-          pointer.worldY - TILE_SIZE / 2,
-          TILE_SIZE,
-          TILE_SIZE,
-        );
+        const dragGridPos = this.gridManager.worldToGrid(pointer.worldX, pointer.worldY);
+        if (this.gridManager.isInBounds(dragGridPos.x, dragGridPos.y)) {
+          this.gridManager.fillIsoDiamond(this.dragGhost, dragGridPos.x, dragGridPos.y, 0xffffff, 0.3);
+        }
         this.renderMergeHighlights(gridPos);
         return;
       }
 
       if (this.gridManager.isInBounds(gridPos.x, gridPos.y)) {
         const isOccupied = !this.gridManager.isWalkable(gridPos.x, gridPos.y);
-        this.hoverGraphics.fillStyle(isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
-        this.hoverGraphics.fillRect(gridPos.x * TILE_SIZE, gridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        this.gridManager.fillIsoDiamond(this.hoverGraphics, gridPos.x, gridPos.y, isOccupied ? 0xe53170 : 0x7f5af0, 0.2);
       }
     });
 
@@ -206,30 +204,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderField(): void {
+    const tileH = ISO_TILE_H + 8; // 40px including depth
+
     for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
       for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
         const world = this.gridManager.gridToWorld(x, y);
-        const frameX = (x + y) % 2 === 0 ? world.x - TILE_SIZE : world.x;
-        this.add.sprite(frameX, world.y - TILE_SIZE / 2, 'grid-floor').setDepth(0);
+        const sprite = this.add.sprite(world.x, world.y, 'grid-floor');
+        const cropX = (x + y) % 2 === 0 ? 0 : ISO_TILE_W;
+        sprite.setCrop(cropX, 0, ISO_TILE_W, tileH);
+        sprite.setDisplaySize(ISO_TILE_W, tileH);
+        sprite.setOrigin(0.5, 0.5);
+        sprite.setDepth(0);
       }
     }
 
     for (const point of FOREST_GATE_MAP.path) {
       const world = this.gridManager.gridToWorld(point.x, point.y);
-      this.add.image(world.x, world.y, 'path-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1);
+      this.add.image(world.x, world.y, 'path-tile')
+        .setDisplaySize(ISO_TILE_W, tileH)
+        .setDepth(1);
     }
 
     const spawnWorld = this.gridManager.gridToWorld(
-      FOREST_GATE_MAP.spawnPoint.x,
-      FOREST_GATE_MAP.spawnPoint.y,
+      FOREST_GATE_MAP.spawnPoint.x, FOREST_GATE_MAP.spawnPoint.y,
     );
-    this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
+    this.add.image(spawnWorld.x, spawnWorld.y, 'spawn-tile')
+      .setDisplaySize(ISO_TILE_W, tileH)
+      .setDepth(2);
 
     const exitWorld = this.gridManager.gridToWorld(
-      FOREST_GATE_MAP.exitPoint.x,
-      FOREST_GATE_MAP.exitPoint.y,
+      FOREST_GATE_MAP.exitPoint.x, FOREST_GATE_MAP.exitPoint.y,
     );
-    this.add.image(exitWorld.x, exitWorld.y, 'exit-tile').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(2);
+    this.add.image(exitWorld.x, exitWorld.y, 'exit-tile')
+      .setDisplaySize(ISO_TILE_W, tileH)
+      .setDepth(2);
   }
 
   private renderMergeHighlights(currentGridPos: { x: number; y: number }): void {
@@ -242,8 +250,12 @@ export class GameScene extends Phaser.Scene {
       const canMerge = this.mergeSystem.canMerge(this.dragFrom, tower.position);
       if (canMerge) {
         const isHover = tower.position.x === currentGridPos.x && tower.position.y === currentGridPos.y;
-        this.mergeHighlights.fillStyle(0x2cb67d, isHover ? 0.4 : 0.15);
-        this.mergeHighlights.fillRect(tower.position.x * TILE_SIZE, tower.position.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        this.gridManager.fillIsoDiamond(
+          this.mergeHighlights,
+          tower.position.x, tower.position.y,
+          0x2cb67d,
+          isHover ? 0.4 : 0.15,
+        );
       }
     }
   }
@@ -303,7 +315,7 @@ export class GameScene extends Phaser.Scene {
     this.pathGraphics.clear();
     if (path.length < 2) return;
 
-    this.pathGraphics.lineStyle(6, 0xb8956a, 0.08);
+    this.pathGraphics.lineStyle(4, 0xb8956a, 0.08);
     this.pathGraphics.beginPath();
     const first = this.gridManager.gridToWorld(path[0].x, path[0].y);
     this.pathGraphics.moveTo(first.x, first.y);

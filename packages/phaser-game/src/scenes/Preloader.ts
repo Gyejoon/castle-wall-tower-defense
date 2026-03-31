@@ -39,18 +39,18 @@ export class Preloader extends Phaser.Scene {
       this.load.image(`tower-${id}`, assetPath(`assets/towers/${id}.png`));
     }
 
-    // Unit walk-cycle sprite sheets (128x32, 4 frames at 32x32)
+    // Unit walk-cycle sprite sheets (160x48, 4 frames at 40x48)
     for (const id of UNIT_IDS) {
       this.load.spritesheet(`unit-${id}`, assetPath(`assets/units/${id}.png`), {
-        frameWidth: 32,
-        frameHeight: 32,
+        frameWidth: 40,
+        frameHeight: 48,
       });
     }
 
-    // Shared unit death effect (128x32, 4 frames at 32x32)
+    // Shared unit death effect (160x48, 4 frames at 40x48)
     this.load.spritesheet('unit-death', assetPath('assets/units/unit-death.png'), {
-      frameWidth: 32,
-      frameHeight: 32,
+      frameWidth: 40,
+      frameHeight: 48,
     });
 
     // Pressure UI images

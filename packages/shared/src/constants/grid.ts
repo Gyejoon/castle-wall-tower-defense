@@ -4,6 +4,11 @@ export const GRID_WIDTH = 12;
 export const GRID_HEIGHT = 8;
 export const TILE_SIZE = 32; // pixels
 
+export const ISO_TILE_W = 64; // isometric diamond width
+export const ISO_TILE_H = 32; // isometric diamond height
+export const ISO_CANVAS_W = (GRID_WIDTH + GRID_HEIGHT) * (ISO_TILE_W / 2); // 640
+export const ISO_CANVAS_H = (GRID_WIDTH + GRID_HEIGHT) * (ISO_TILE_H / 2); // 320
+
 export const DEFAULT_GRID_CONFIG: GridConfig = {
   width: GRID_WIDTH,
   height: GRID_HEIGHT,

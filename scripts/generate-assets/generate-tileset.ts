@@ -14,9 +14,9 @@ import { makeCanvas, saveCanvas, PALETTE, TILE_SIZE, hexToRgba, drawRect, fillCi
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/tiles';
-const COLS = 10;
-export const TILESET_COLS = COLS;
+export const TILESET_COLS = 10;
 export const TILE = TILE_SIZE; // 32
+const COLS = TILESET_COLS;
 
 // 2.5D helper: 하단 어둡게, 상단 밝게 음영 그라데이션
 function shade25D(ctx: any, ox: number, oy: number, baseColor: string, darkColor: string, lightColor: string) {

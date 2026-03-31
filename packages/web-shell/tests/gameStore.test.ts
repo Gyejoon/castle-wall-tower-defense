@@ -76,6 +76,26 @@ describe('gameStore', () => {
     expect(useGameStore.getState().activeTab).toBe('opponent');
   });
 
+  it('starts with lobbyTab home and allows switching', () => {
+    expect(useGameStore.getState().lobbyTab).toBe('home');
+    useGameStore.getState().setLobbyTab('collection');
+    expect(useGameStore.getState().lobbyTab).toBe('collection');
+    useGameStore.getState().setLobbyTab('settings');
+    expect(useGameStore.getState().lobbyTab).toBe('settings');
+  });
+
+  it('resets lobbyTab to home on resetRun', () => {
+    useGameStore.getState().setLobbyTab('settings');
+    useGameStore.getState().resetRun();
+    expect(useGameStore.getState().lobbyTab).toBe('home');
+  });
+
+  it('resets lobbyTab to home on enterLobby', () => {
+    useGameStore.getState().setLobbyTab('collection');
+    useGameStore.getState().enterLobby();
+    expect(useGameStore.getState().lobbyTab).toBe('home');
+  });
+
   it('resets a run to default combat resources and clears transient state', () => {
     const initialRunId = useGameStore.getState().runId;
 

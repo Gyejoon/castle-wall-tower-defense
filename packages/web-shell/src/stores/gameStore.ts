@@ -9,6 +9,7 @@ import {
 
 export type RunStatus = 'lobby' | 'building' | 'combat' | 'victory' | 'defeat';
 export type FieldTab = 'player' | 'opponent';
+export type LobbyTab = 'home' | 'collection' | 'settings';
 
 interface GameStoreState {
   runId: number;
@@ -23,6 +24,7 @@ interface GameStoreState {
   countdown: number;
   placementFeedback: PlacementFailureReason | null;
   wavePreview: Array<{ unitId: string; unitName: string; count: number }> | null;
+  lobbyTab: LobbyTab;
   soundEnabled: boolean;
   activeTab: FieldTab;
   playerTowerCount: number;
@@ -41,6 +43,7 @@ interface GameStoreState {
   setCountdown: (seconds: number) => void;
   setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
   setWavePreview: (preview: Array<{ unitId: string; unitName: string; count: number }> | null) => void;
+  setLobbyTab: (tab: LobbyTab) => void;
   setActiveTab: (tab: FieldTab) => void;
   setPlayerTowerCount: (count: number) => void;
   setOpponentState: (state: { hp: number; gold: number; towerCount: number }) => void;
@@ -70,6 +73,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
   runId: 0,
   runStatus: 'lobby',
+  lobbyTab: 'home',
   soundEnabled: true,
   ...createRunState(),
 
@@ -84,6 +88,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
   setCountdown: (seconds) => set({ countdown: seconds }),
   setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
   setWavePreview: (preview) => set({ wavePreview: preview }),
+  setLobbyTab: (tab) => set({ lobbyTab: tab }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setPlayerTowerCount: (count) => set({ playerTowerCount: count }),
   setOpponentState: (state) => set({
@@ -96,6 +101,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
     set((state) => ({
       runId: state.runId + 1,
       runStatus: 'building',
+      lobbyTab: 'home',
       ...createRunState(),
     })),
 
@@ -103,6 +109,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
     set((state) => ({
       runId: state.runId + 1,
       runStatus: 'lobby',
+      lobbyTab: 'home',
       ...createRunState(),
     })),
 

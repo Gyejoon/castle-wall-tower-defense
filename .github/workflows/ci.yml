@@ -46,8 +46,8 @@ jobs:
       - name: Check bundle size
         run: |
           MAX_SIZE_KB=2048
-          DIST_SIZE=$(du -sk packages/web-shell/dist | cut -f1)
-          echo "Bundle size: ${DIST_SIZE}KB (budget: ${MAX_SIZE_KB}KB)"
+          DIST_SIZE=$(find packages/web-shell/dist -type f ! -name '*.map' -exec du -sk {} + | awk '{s+=$1} END {print s}')
+          echo "Bundle size (excl. sourcemaps): ${DIST_SIZE}KB (budget: ${MAX_SIZE_KB}KB)"
           if [ "$DIST_SIZE" -gt "$MAX_SIZE_KB" ]; then
             echo "::error::Bundle size ${DIST_SIZE}KB exceeds budget of ${MAX_SIZE_KB}KB"
             exit 1

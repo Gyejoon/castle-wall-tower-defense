@@ -22,8 +22,8 @@ import {
 } from '@gld/shared';
 import Phaser from 'phaser';
 import {
-	OPTIONAL_ASSET_SECTIONS,
 	getCachedAssetManifest,
+	OPTIONAL_ASSET_SECTIONS,
 	prefetchAssetSections,
 	registerOptionalCombatAnimations,
 	shouldUseWebPTextures,
@@ -37,6 +37,7 @@ import {
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
+import { TowerDragController } from '../input/TowerDragController';
 import { getPlacementGuardFailure } from '../placementRules';
 import { GridManager } from '../systems/GridManager';
 import { MergeSystem } from '../systems/MergeSystem';
@@ -95,12 +96,11 @@ export class GameScene extends Phaser.Scene {
 	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
-	private isDragging = false;
-	private dragFrom: { x: number; y: number } | null = null;
 	private dragGhost!: Phaser.GameObjects.Graphics;
 	private mergeHighlights!: Phaser.GameObjects.Graphics;
 	private pathGraphics?: Phaser.GameObjects.Graphics;
 	private aiPathGraphics?: Phaser.GameObjects.Graphics;
+	private playerTowerDragController?: TowerDragController;
 
 	private hudBuyBtn!: Phaser.GameObjects.Text;
 	private hudWaveBtn!: Phaser.GameObjects.Text;
@@ -192,6 +192,7 @@ export class GameScene extends Phaser.Scene {
 
 		// Input only on player field — clicks on AI area naturally out-of-bounds
 		this.setupInput();
+		this.setupTowerDragController();
 
 		this.onHudBuy = () => this.handleBuyTower();
 		this.onHudWave = () => undefined;
@@ -419,26 +420,15 @@ export class GameScene extends Phaser.Scene {
 
 	private setupInput(): void {
 		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+			if (this.playerTowerDragController?.isDragging()) {
+				return;
+			}
+
 			const gridPos = this.playerGrid.worldToGrid(
 				pointer.worldX,
 				pointer.worldY,
 			);
 			this.hoverGraphics.clear();
-
-			if (this.isDragging) {
-				this.dragGhost.clear();
-				if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
-					this.playerGrid.fillIsoDiamond(
-						this.dragGhost,
-						gridPos.x,
-						gridPos.y,
-						0xffffff,
-						0.3,
-					);
-				}
-				this.renderMergeHighlights(gridPos);
-				return;
-			}
 
 			if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
 				const isOccupied = !this.playerGrid.isWalkable(gridPos.x, gridPos.y);
@@ -463,66 +453,7 @@ export class GameScene extends Phaser.Scene {
 				this.playerGrid.isInBounds(gridPos.x, gridPos.y)
 			) {
 				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
-				return;
 			}
-
-			if (
-				this.playerWaves.getPhase() !== 'ended' &&
-				this.playerGrid.isInBounds(gridPos.x, gridPos.y) &&
-				this.playerTowers.hasTowerAt(gridPos.x, gridPos.y)
-			) {
-				this.isDragging = true;
-				this.dragFrom = { x: gridPos.x, y: gridPos.y };
-			}
-		});
-
-		this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-			if (!this.isDragging || !this.dragFrom) return;
-
-			const gridPos = this.playerGrid.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-
-			if (gridPos.x !== this.dragFrom.x || gridPos.y !== this.dragFrom.y) {
-				if (this.playerMerge.canMerge(this.dragFrom, gridPos)) {
-					const fromPos = { ...this.dragFrom };
-					const result = this.playerMerge.merge(fromPos, gridPos);
-					if (result) {
-						EventBus.emit('tower-merged', {
-							fromPos,
-							toPos: gridPos,
-							newTowerId: result.id,
-							newTowerDef: result,
-						});
-						EventBus.emit('tower-merge-resolved', {
-							success: true,
-							fromPos,
-							toPos: gridPos,
-							newTowerId: result.id,
-						});
-						this.playerUnits.setPath(FOREST_GATE_MAP.path);
-						this.renderPath(this.playerGrid, false);
-						EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
-						EventBus.emit('player-tower-count', {
-							count: this.playerTowers.getTowers().length,
-						});
-					}
-				} else {
-					EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
-					EventBus.emit('tower-merge-resolved', {
-						success: false,
-						fromPos: { ...this.dragFrom },
-						toPos: gridPos,
-						failureReason: 'invalid_merge',
-					});
-				}
-			}
-
-			this.isDragging = false;
-			this.dragFrom = null;
-			this.dragGhost.clear();
-			this.mergeHighlights.clear();
 		});
 	}
 
@@ -635,20 +566,16 @@ export class GameScene extends Phaser.Scene {
 		}
 	}
 
-	private renderMergeHighlights(currentGridPos: {
-		x: number;
-		y: number;
-	}): void {
-		if (!this.dragFrom) return;
+	private renderMergeHighlights(
+		fromPos: { x: number; y: number },
+		currentGridPos: { x: number; y: number },
+	): void {
 		this.mergeHighlights.clear();
 
 		for (const tower of this.playerTowers.getTowers()) {
-			if (
-				tower.position.x === this.dragFrom.x &&
-				tower.position.y === this.dragFrom.y
-			)
+			if (tower.position.x === fromPos.x && tower.position.y === fromPos.y)
 				continue;
-			if (!this.playerMerge.canMerge(this.dragFrom, tower.position)) continue;
+			if (!this.playerMerge.canMerge(fromPos, tower.position)) continue;
 
 			const isHover =
 				tower.position.x === currentGridPos.x &&
@@ -967,6 +894,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.selectedTowerId = null;
 		this.hudRolledInfo.setText('');
+		this.playerTowerDragController?.sync();
 		EventBus.emit('tower-placed', {
 			col: gridX,
 			row: gridY,
@@ -1188,6 +1116,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
+		this.playerTowerDragController?.destroy();
+		this.playerTowerDragController = undefined;
 
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();
@@ -1202,7 +1132,11 @@ export class GameScene extends Phaser.Scene {
 		this.aiAvatar?.destroy();
 		this.aiGoldIcon?.destroy();
 
-		unloadAssetSections(this, this.optionalAssetManifest, OPTIONAL_ASSET_SECTIONS);
+		unloadAssetSections(
+			this,
+			this.optionalAssetManifest,
+			OPTIONAL_ASSET_SECTIONS,
+		);
 	}
 
 	private async prefetchOptionalAssets(): Promise<void> {
@@ -1213,7 +1147,11 @@ export class GameScene extends Phaser.Scene {
 			shouldUseWebPTextures(),
 		);
 		if (this.isCleaningUp) {
-			unloadAssetSections(this, this.optionalAssetManifest, OPTIONAL_ASSET_SECTIONS);
+			unloadAssetSections(
+				this,
+				this.optionalAssetManifest,
+				OPTIONAL_ASSET_SECTIONS,
+			);
 			return;
 		}
 		registerOptionalCombatAnimations(this, this.optionalAssetManifest);
@@ -1236,6 +1174,85 @@ export class GameScene extends Phaser.Scene {
 				.setDepth(100)
 				.setAlpha(0.95);
 		}
+	}
+
+	private setupTowerDragController(): void {
+		const plugin = this.plugins?.get?.('rexDrag');
+		if (!plugin || typeof (plugin as { add?: unknown }).add !== 'function') {
+			return;
+		}
+		const dragPlugin = plugin as unknown as {
+			add: (
+				gameObject: Phaser.GameObjects.Image,
+				config?: Record<string, unknown>,
+			) => { destroy?: () => void };
+		};
+
+		this.playerTowerDragController = new TowerDragController({
+			dragPlugin,
+			gridManager: this.playerGrid,
+			towerSystem: this.playerTowers,
+			canInteract: () =>
+				!this.gameOver &&
+				this.playerWaves.getPhase() !== 'ended' &&
+				this.selectedTowerId === null,
+			onPreview: ({ fromPos, gridPos }) => {
+				this.hoverGraphics.clear();
+				this.dragGhost.clear();
+				if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
+					this.playerGrid.fillIsoDiamond(
+						this.dragGhost,
+						gridPos.x,
+						gridPos.y,
+						0xffffff,
+						0.3,
+					);
+				}
+				this.renderMergeHighlights(fromPos, gridPos);
+			},
+			onDrop: ({ fromPos, toPos }) => {
+				this.dragGhost.clear();
+				this.mergeHighlights.clear();
+
+				if (toPos.x === fromPos.x && toPos.y === fromPos.y) {
+					return;
+				}
+
+				if (this.playerMerge.canMerge(fromPos, toPos)) {
+					const result = this.playerMerge.merge(fromPos, toPos);
+					if (result) {
+						this.playerTowerDragController?.sync();
+						EventBus.emit('tower-merged', {
+							fromPos,
+							toPos,
+							newTowerId: result.id,
+							newTowerDef: result,
+						});
+						EventBus.emit('tower-merge-resolved', {
+							success: true,
+							fromPos,
+							toPos,
+							newTowerId: result.id,
+						});
+						this.playerUnits.setPath(FOREST_GATE_MAP.path);
+						this.renderPath(this.playerGrid, false);
+						EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+						EventBus.emit('player-tower-count', {
+							count: this.playerTowers.getTowers().length,
+						});
+					}
+					return;
+				}
+
+				EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
+				EventBus.emit('tower-merge-resolved', {
+					success: false,
+					fromPos,
+					toPos,
+					failureReason: 'invalid_merge',
+				});
+			},
+		});
 	}
 }
 

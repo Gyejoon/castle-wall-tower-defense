@@ -43,10 +43,16 @@ vi.mock('../src/assets/assetManifest', () => ({
 	OPTIONAL_ASSET_SECTIONS: ['ui', 'vfx', 'projectiles'],
 }));
 
+vi.mock('phaser3-rex-plugins/plugins/drag.js', () => ({
+	default: class Drag {
+		destroy() {}
+	},
+}));
+
 import { GameScene } from '../src/scenes/Game';
 
-function createScene(): GameScene & Record<string, any> {
-	return new GameScene() as GameScene & Record<string, any>;
+function createScene(): GameScene & Record<string, unknown> {
+	return new GameScene() as GameScene & Record<string, unknown>;
 }
 
 describe('GameScene', () => {

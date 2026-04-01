@@ -417,6 +417,10 @@ export class TowerSystem {
 		return Array.from(this.towers.values()).map((t) => t.data);
 	}
 
+	getTowerSprite(instanceId: string): Phaser.GameObjects.Image | null {
+		return this.towers.get(instanceId)?.sprite ?? null;
+	}
+
 	destroy(): void {
 		for (const tower of this.towers.values()) {
 			tower.base.destroy();

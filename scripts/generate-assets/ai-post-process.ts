@@ -3,6 +3,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { FULL_PALETTE } from './ai-config';
 import { TILE_SIZE } from './shared';
+import { TILESET_COLS, TILESET_ROWS } from './generate-tileset';
 
 // === Types ===
 interface RGB {
@@ -240,28 +241,27 @@ export async function composeRuntimeTileset(
   const spawnImage = await loadImage(inputs.spawn);
   const exitImage = await loadImage(inputs.exit);
 
-  const canvas = createCanvas(256, 96);
+  const canvas = createCanvas(TILESET_COLS * TILE_SIZE, TILESET_ROWS * TILE_SIZE);
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  ctx.drawImage(gridFloorImage, 0, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(gridFloorImage, TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 3, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 4, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 5, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 6, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(pathImage, TILE_SIZE * 7, 0, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(spawnImage, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  ctx.drawImage(exitImage, TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  const drawAtIndex = (tileIndex: number, source: CanvasImageSource) => {
+    const x = (tileIndex % TILESET_COLS) * TILE_SIZE;
+    const y = Math.floor(tileIndex / TILESET_COLS) * TILE_SIZE;
+    ctx.drawImage(source, x, y, TILE_SIZE, TILE_SIZE);
+  };
 
-  for (let x = 2; x < 8; x++) {
-    ctx.drawImage(gridFloorImage, x * TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  for (let tileIndex = 0; tileIndex < TILESET_COLS * TILESET_ROWS; tileIndex++) {
+    drawAtIndex(tileIndex, gridFloorImage);
   }
 
-  for (let x = 0; x < 8; x++) {
-    ctx.drawImage(gridFloorImage, x * TILE_SIZE, TILE_SIZE * 2, TILE_SIZE, TILE_SIZE);
+  const pathTileIndices = [2, 3, 4, 5, 6, 7, 32];
+  for (const tileIndex of pathTileIndices) {
+    drawAtIndex(tileIndex, pathImage);
   }
+
+  drawAtIndex(26, spawnImage);
+  drawAtIndex(27, exitImage);
 
   writeFileSafe(outputPath, canvas.toBuffer('image/png'));
 }

@@ -1,50 +1,141 @@
 {
-  "generated": "2026-03-31T06:50:35.904Z",
+  "generated": "2026-03-31T17:22:08.054Z",
   "assets": [
     {
-      "key": "tileset",
-      "type": "image",
-      "path": "assets/tiles/tileset.png"
+      "key": "tiny-swords-tileset-color-1",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color1.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 54
     },
     {
-      "key": "grid-floor",
-      "type": "image",
-      "path": "assets/tiles/grid-floor.png"
+      "key": "tiny-swords-tileset-color-2",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color2.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 54
     },
     {
-      "key": "path-tile",
-      "type": "image",
-      "path": "assets/tiles/path-tile.png"
+      "key": "tiny-swords-tileset-color-3",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color3.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 54
     },
     {
-      "key": "spawn-tile",
-      "type": "image",
-      "path": "assets/tiles/spawn-tile.png"
+      "key": "tiny-swords-tileset-color-4",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color4.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 54
     },
     {
-      "key": "exit-tile",
-      "type": "image",
-      "path": "assets/tiles/exit-tile.png"
+      "key": "tiny-swords-tileset-color-5",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color5.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 54
     },
     {
-      "key": "grid-floor-dark",
-      "type": "image",
-      "path": "assets/tiles/grid-floor-dark.png"
+      "key": "tiny-swords-rock-1",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 1
     },
     {
-      "key": "path-tile-dark",
-      "type": "image",
-      "path": "assets/tiles/path-tile-dark.png"
+      "key": "tiny-swords-rock-2",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock2.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 1
     },
     {
-      "key": "spawn-tile-dark",
-      "type": "image",
-      "path": "assets/tiles/spawn-tile-dark.png"
+      "key": "tiny-swords-rock-3",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock3.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 1
     },
     {
-      "key": "exit-tile-dark",
-      "type": "image",
-      "path": "assets/tiles/exit-tile-dark.png"
+      "key": "tiny-swords-rock-4",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock4.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 1
+    },
+    {
+      "key": "tiny-swords-bush-1",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe1.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frameCount": 8
+    },
+    {
+      "key": "tiny-swords-bush-2",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe2.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frameCount": 8
+    },
+    {
+      "key": "tiny-swords-bush-3",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe3.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frameCount": 8
+    },
+    {
+      "key": "tiny-swords-bush-4",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe4.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frameCount": 8
+    },
+    {
+      "key": "tiny-swords-tree-1",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree1.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "frameCount": 6
+    },
+    {
+      "key": "tiny-swords-tree-2",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree2.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "frameCount": 6
+    },
+    {
+      "key": "tiny-swords-tree-3",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree3.png",
+      "frameWidth": 256,
+      "frameHeight": 192,
+      "frameCount": 6
+    },
+    {
+      "key": "tiny-swords-tree-4",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree4.png",
+      "frameWidth": 256,
+      "frameHeight": 192,
+      "frameCount": 6
     },
     {
       "key": "tower-laser",

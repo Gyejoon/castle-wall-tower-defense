@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
 import { PRELOAD_TOWER_IDS } from '../constants/preloadAssets';
+import {
+	TINY_SWORDS_DECORATION_ASSETS,
+	TINY_SWORDS_TILESET_ASSETS,
+} from '../fieldAssets';
 
 /** Use WebP if browser supports it, fallback to PNG */
 function assetPath(path: string): string {
@@ -8,6 +12,14 @@ function assetPath(path: string): string {
 
 const supportsWebP = (() => {
 	try {
+		// Skip runtime feature detection under Node/Bun-based tests to avoid jsdom canvas noise.
+		if (
+			typeof window === 'undefined' ||
+			typeof document === 'undefined' ||
+			typeof (globalThis as Record<string, unknown>).process !== 'undefined'
+		) {
+			return false;
+		}
 		const c = document.createElement('canvas');
 		return c.toDataURL('image/webp').startsWith('data:image/webp');
 	} catch {
@@ -29,37 +41,20 @@ export class Preloader extends Phaser.Scene {
 	}
 
 	preload() {
-		// Field tiles
-		this.load.image('grid-floor', assetPath('assets/tiles/grid-floor.png'));
-		this.load.image('path-tile', assetPath('assets/tiles/path-tile.png'));
-		this.load.image('spawn-tile', assetPath('assets/tiles/spawn-tile.png'));
-		this.load.image('exit-tile', assetPath('assets/tiles/exit-tile.png'));
+		for (const asset of TINY_SWORDS_TILESET_ASSETS) {
+			this.load.spritesheet(asset.key, asset.path, {
+				frameWidth: asset.frameWidth,
+				frameHeight: asset.frameHeight,
+			});
+		}
 
-		// Dark variants for AI field
-		this.load.image(
-			'grid-floor-dark',
-			assetPath('assets/tiles/grid-floor-dark.png'),
-		);
-		this.load.image(
-			'path-tile-dark',
-			assetPath('assets/tiles/path-tile-dark.png'),
-		);
-		this.load.image(
-			'spawn-tile-dark',
-			assetPath('assets/tiles/spawn-tile-dark.png'),
-		);
-		this.load.image(
-			'exit-tile-dark',
-			assetPath('assets/tiles/exit-tile-dark.png'),
-		);
+		for (const asset of TINY_SWORDS_DECORATION_ASSETS) {
+			this.load.spritesheet(asset.key, asset.path, {
+				frameWidth: asset.frameWidth,
+				frameHeight: asset.frameHeight,
+			});
+		}
 
-		// Tileset spritesheet for decoration rendering (32x32 per frame)
-		this.load.spritesheet('tileset', assetPath('assets/tiles/tileset.png'), {
-			frameWidth: 32,
-			frameHeight: 32,
-		});
-
-		// Tilemap JSON (Tiled format) for map layers
 		this.load.tilemapTiledJSON(
 			'tilemap-forest-gate',
 			'assets/maps/forest-gate.json',

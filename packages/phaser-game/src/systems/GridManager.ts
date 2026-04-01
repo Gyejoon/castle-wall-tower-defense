@@ -71,12 +71,12 @@ export class GridManager {
 
 	isWalkable(x: number, y: number): boolean {
 		const tile = this.getTile(x, y);
-		return tile !== null && tile.walkable && !tile.occupied;
+		return tile?.walkable === true && tile.occupied === false;
 	}
 
 	placeTower(x: number, y: number, towerId: string): boolean {
 		const tile = this.getTile(x, y);
-		if (!tile || !tile.walkable || tile.occupied) return false;
+		if (!tile?.walkable || tile.occupied) return false;
 		if (x === this.spawnPoint.x && y === this.spawnPoint.y) return false;
 		if (x === this.exitPoint.x && y === this.exitPoint.y) return false;
 
@@ -87,7 +87,7 @@ export class GridManager {
 
 	removeTower(x: number, y: number): boolean {
 		const tile = this.getTile(x, y);
-		if (!tile || !tile.occupied) return false;
+		if (!tile?.occupied) return false;
 
 		tile.occupied = false;
 		tile.towerId = null;

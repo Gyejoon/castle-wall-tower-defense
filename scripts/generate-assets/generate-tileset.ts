@@ -1,4 +1,7 @@
 /**
+ * Deprecated: field decoration main path is now raw Tiny Swords asset references.
+ * This generated tileset remains as a historical fallback for older experiments only.
+ *
  * 2.5D 픽셀 아트 타일셋 생성 — Tiled 호환 스프라이트시트
  *
  * 타일 ID 배치 (20열 x 행):

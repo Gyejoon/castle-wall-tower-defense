@@ -10,6 +10,7 @@ import {
   assembleSpritesheetFromFrames,
   composeRuntimeTileset,
 } from '../ai-post-process';
+import { TILESET_COLS, TILESET_ROWS } from '../generate-tileset';
 
 const tempRoot = mkdtempSync(join(tmpdir(), 'ai-post-process-'));
 
@@ -175,8 +176,8 @@ describe('composeRuntimeTileset', () => {
     expect(existsSync(outputPath)).toBe(true);
 
     const output = await loadImage(outputPath);
-    expect(output.width).toBe(256);
-    expect(output.height).toBe(96);
+    expect(output.width).toBe(TILESET_COLS * 32);
+    expect(output.height).toBe(TILESET_ROWS * 32);
 
     const canvas = createCanvas(output.width, output.height);
     const ctx = canvas.getContext('2d');
@@ -188,10 +189,10 @@ describe('composeRuntimeTileset', () => {
     const secondGrass = ctx.getImageData(32, 0, 1, 1).data;
     expect(Array.from(secondGrass.slice(0, 3))).toEqual([0x11, 0x22, 0x33]);
 
-    const spawnTile = ctx.getImageData(0, 32, 1, 1).data;
+    const spawnTile = ctx.getImageData((26 % TILESET_COLS) * 32, Math.floor(26 / TILESET_COLS) * 32, 1, 1).data;
     expect(Array.from(spawnTile.slice(0, 3))).toEqual([0xaa, 0x55, 0x00]);
 
-    const exitTile = ctx.getImageData(32, 32, 1, 1).data;
+    const exitTile = ctx.getImageData((27 % TILESET_COLS) * 32, Math.floor(27 / TILESET_COLS) * 32, 1, 1).data;
     expect(Array.from(exitTile.slice(0, 3))).toEqual([0x00, 0xaa, 0x55]);
   });
 

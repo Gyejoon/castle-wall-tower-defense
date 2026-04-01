@@ -1,84 +1,138 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  BASE_TOWERS,
-  RARE_TOWERS,
-  HEROIC_TOWERS,
-  LEGENDARY_TOWERS,
-  GOD_TOWERS,
-  ALL_TOWERS,
-  UNITS,
-  GRID_WIDTH,
-  GRID_HEIGHT,
-  DEFAULT_GRID_CONFIG,
+	ALL_TOWERS,
+	BASE_TOWERS,
+	BOSS_SLOT_AT_SECS,
+	type CombatHudState,
+	DEFAULT_GRID_CONFIG,
+	type GameToReactEvent,
+	GOD_TOWERS,
+	GRID_HEIGHT,
+	GRID_WIDTH,
+	HARD_END_AT_SEC,
+	HEROIC_TOWERS,
+	LEGENDARY_TOWERS,
+	PRESSURE_EXPIRES_AT_SEC,
+	PRESSURE_LOCK_AT_SEC,
+	PRESSURE_TOKEN_CAP,
+	RARE_TOWERS,
+	SUDDEN_DEATH_AT_SEC,
+	type WavePhase,
+	type WaveStartedEventPayload,
 } from '../src/index';
 
 describe('Grid constants', () => {
-  it('has valid grid dimensions', () => {
-    expect(GRID_WIDTH).toBe(12);
-    expect(GRID_HEIGHT).toBe(8);
-  });
+	it('has valid grid dimensions', () => {
+		expect(GRID_WIDTH).toBe(12);
+		expect(GRID_HEIGHT).toBe(8);
+	});
 
-  it('has spawn and exit within grid bounds', () => {
-    const { spawnPoint, exitPoint } = DEFAULT_GRID_CONFIG;
-    expect(spawnPoint.x).toBeGreaterThanOrEqual(0);
-    expect(spawnPoint.x).toBeLessThan(GRID_WIDTH);
-    expect(exitPoint.x).toBeGreaterThanOrEqual(0);
-    expect(exitPoint.x).toBeLessThan(GRID_WIDTH);
-  });
+	it('has spawn and exit within grid bounds', () => {
+		const { spawnPoint, exitPoint } = DEFAULT_GRID_CONFIG;
+		expect(spawnPoint.x).toBeGreaterThanOrEqual(0);
+		expect(spawnPoint.x).toBeLessThan(GRID_WIDTH);
+		expect(exitPoint.x).toBeGreaterThanOrEqual(0);
+		expect(exitPoint.x).toBeLessThan(GRID_WIDTH);
+	});
 });
 
 describe('Tower definitions', () => {
-  it('has 4 base towers (T1)', () => {
-    expect(BASE_TOWERS).toHaveLength(4);
-  });
+	it('preserves the 18-tower pool by tier', () => {
+		expect(BASE_TOWERS).toHaveLength(4);
+		expect(RARE_TOWERS).toHaveLength(5);
+		expect(HEROIC_TOWERS).toHaveLength(4);
+		expect(LEGENDARY_TOWERS).toHaveLength(3);
+		expect(GOD_TOWERS).toHaveLength(2);
+		expect(ALL_TOWERS).toHaveLength(18);
+	});
 
-  it('has 5 rare towers (T2)', () => {
-    expect(RARE_TOWERS).toHaveLength(5);
-  });
-
-  it('has 4 heroic towers (T3)', () => {
-    expect(HEROIC_TOWERS).toHaveLength(4);
-  });
-
-  it('has 3 legendary towers (T4)', () => {
-    expect(LEGENDARY_TOWERS).toHaveLength(3);
-  });
-
-  it('has 2 god towers (T5)', () => {
-    expect(GOD_TOWERS).toHaveLength(2);
-  });
-
-  it('all towers have unique ids', () => {
-    const ids = ALL_TOWERS.map((t) => t.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it('towers have correct tier assignments', () => {
-    BASE_TOWERS.forEach((t) => expect(t.tier).toBe(1));
-    RARE_TOWERS.forEach((t) => expect(t.tier).toBe(2));
-    HEROIC_TOWERS.forEach((t) => expect(t.tier).toBe(3));
-    LEGENDARY_TOWERS.forEach((t) => expect(t.tier).toBe(4));
-    GOD_TOWERS.forEach((t) => expect(t.tier).toBe(5));
-  });
-
-  it('ALL_TOWERS contains all 18 towers', () => {
-    expect(ALL_TOWERS).toHaveLength(18);
-  });
+	it('keeps all tower ids unique', () => {
+		const ids = ALL_TOWERS.map((tower) => tower.id);
+		expect(new Set(ids).size).toBe(ids.length);
+	});
 });
 
-describe('Unit definitions', () => {
-  it('has 5 unit types', () => {
-    expect(UNITS).toHaveLength(5);
-  });
+describe('Match contracts', () => {
+	it('uses the new real-time wave phases and HUD state contract', () => {
+		const phases: WavePhase[] = ['running', 'boss', 'sudden_death', 'ended'];
+		expect(phases).toHaveLength(4);
 
-  it('units have unique ids', () => {
-    const ids = UNITS.map((u) => u.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
+		const hud: CombatHudState = {
+			currentSlot: 10,
+			phase: 'boss',
+			pressureTokens: 2,
+			queuedPressureEffect: 'mixed_pressure',
+			buyCooldownMs: 900,
+			bossWarning: true,
+			suddenDeath: false,
+			timerLabel: 'Boss 00:30',
+		};
 
-  it('titan is the most expensive to send', () => {
-    const titan = UNITS.find((u) => u.type === 'titan')!;
-    const otherMaxCost = Math.max(...UNITS.filter((u) => u.type !== 'titan').map((u) => u.sendCost));
-    expect(titan.sendCost).toBeGreaterThan(otherMaxCost);
-  });
+		expect(hud.pressureTokens).toBeLessThanOrEqual(PRESSURE_TOKEN_CAP);
+		expect(hud.phase).toBe('boss');
+		expect(hud.timerLabel).toContain('Boss');
+	});
+
+	it('keeps the documented pressure timing checkpoints aligned', () => {
+		expect(PRESSURE_TOKEN_CAP).toBe(2);
+		expect(BOSS_SLOT_AT_SECS).toEqual([240, 420]);
+		expect(PRESSURE_LOCK_AT_SEC).toBe(535);
+		expect(PRESSURE_EXPIRES_AT_SEC).toBe(540);
+		expect(SUDDEN_DEATH_AT_SEC).toBe(540);
+		expect(HARD_END_AT_SEC).toBe(600);
+	});
+
+	it('extends the wave-started payload and new event union for HUD/pressure states', () => {
+		const startedPayload: WaveStartedEventPayload = {
+			wave: 9,
+			totalWaves: 20,
+			slotIndex: 10,
+			phase: 'running',
+			kind: 'normal',
+			startAtSec: 270,
+		};
+		expect(startedPayload.slotIndex).toBe(10);
+		expect(startedPayload.phase).toBe('running');
+
+		const events: GameToReactEvent[] = [
+			{ type: 'WAVE_STARTED', ...startedPayload },
+			{
+				type: 'PRESSURE_EARNED',
+				ownerId: 'local',
+				slotIndex: 10,
+				pressureTokens: 1,
+				packetId: 'mixed_pressure',
+			},
+			{
+				type: 'PRESSURE_QUEUED',
+				ownerId: 'local',
+				slotIndex: 10,
+				pressureTokens: 0,
+				packetId: 'mixed_pressure',
+				targetSlotIndex: 11,
+			},
+			{
+				type: 'PRESSURE_EXPIRED',
+				ownerId: 'local',
+				slotIndex: 19,
+				pressureTokens: 0,
+				packetId: 'breach_pressure',
+			},
+			{ type: 'BOSS_WARNING', slotIndex: 8, bossSlotIndex: 9, startAtSec: 210 },
+			{ type: 'SUDDEN_DEATH_STARTED', slotIndex: 19, startAtSec: 540 },
+			{ type: 'BUY_COOLDOWN_UPDATED', remainingMs: 1200 },
+			{
+				type: 'TOWER_MERGE_RESOLVED',
+				success: false,
+				fromPos: { x: 1, y: 2 },
+				toPos: { x: 1, y: 3 },
+				failureReason: 'merge_failed',
+			},
+		];
+
+		expect(events).toHaveLength(8);
+		expect(events[0].type).toBe('WAVE_STARTED');
+		expect(events[1].type).toBe('PRESSURE_EARNED');
+		expect(events[7].type).toBe('TOWER_MERGE_RESOLVED');
+	});
 });

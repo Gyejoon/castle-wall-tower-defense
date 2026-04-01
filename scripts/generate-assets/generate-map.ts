@@ -1,64 +1,31 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { FOREST_GATE_MAP } from '../../packages/shared/src/index';
+import {
+  TINY_SWORDS_DECORATION_ASSETS,
+  TINY_SWORDS_PRIMARY_TILESET,
+  TINY_SWORDS_TILE_SIZE,
+  type TinySwordsDecorationAssetEntry,
+} from '../../packages/phaser-game/src/fieldAssets';
 import type { ManifestEntry } from './shared';
-import { TILESET_COLS, TILESET_ROWS, TILE as TILESET_TILE } from './generate-tileset';
 
 const OUTPUT_PATH = 'packages/web-shell/public/assets/maps/forest-gate.json';
 
-// GID constants (1-based: tile index + 1)
 const GID = {
-  EMPTY:           0,
-  GRASS_LIGHT:     1,  // index 0
-  GRASS_DARK:      2,  // index 1
-  PATH_H:          3,  // index 2
-  PATH_V:          4,  // index 3
-  PATH_CORNER_NE:  5,  // index 4
-  PATH_CORNER_NW:  6,  // index 5
-  PATH_CORNER_SE:  7,  // index 6
-  PATH_CORNER_SW:  8,  // index 7
-  PATH_SPAWN:      9,  // index 8
-  PATH_EXIT:       10, // index 9
-  TREE_SMALL:      11, // index 10
-  TREE_LARGE:      12, // index 11
-  ROCK_SMALL:      13, // index 12
-  ROCK_LARGE:      14, // index 13
-  BUSH:            15, // index 14
-  FLOWERS:         16, // index 15
-  PLACEMENT_POINT: 17, // index 16
-  WATER:           18, // index 17
-  BRIDGE_H:        19, // index 18
-  BRIDGE_V:        20, // index 19
-  EDGE_N:          21, // index 20
-  EDGE_S:          22, // index 21
-  EDGE_E:          23, // index 22
-  EDGE_W:          24, // index 23
-  // Nature background tiles
-  MOSSY_STONE:     36, // index 35
-  MUD:             37, // index 36
-  SAND:            38, // index 37
-  FERN:            39, // index 38
-  MUSHROOM:        40, // index 39
-  VINE:            41, // index 40
-  SHALLOW_WATER:   42, // index 41
-  REED:            43, // index 42
-  MOSSY_ROCK:      44, // index 43
-  RUINS:           45, // index 44
-  ANCIENT_PILLAR:  46, // index 45
-  FALLEN_LEAVES:   47, // index 46
+  EMPTY: 0,
+  GROUND_LIGHT: 1,
+  GROUND_DARK: 2,
+  PATH: 3,
+  PATH_CORNER: 4,
+  PATH_SPAWN: 5,
+  PATH_EXIT: 6,
 } as const;
 
-interface TiledMap {
-  width: number;
-  height: number;
-  tilewidth: number;
-  tileheight: number;
-  orientation: string;
-  renderorder: string;
-  type: string;
-  version: string;
-  tiledversion: string;
-  tilesets: TiledTileset[];
-  layers: TiledLayer[];
+type Cell = { x: number; y: number };
+
+interface TiledProperty {
+  name: string;
+  type: 'string' | 'int' | 'bool';
+  value: string | number | boolean;
 }
 
 interface TiledTileset {
@@ -95,6 +62,7 @@ interface TiledObject {
   y: number;
   width: number;
   height: number;
+  properties?: TiledProperty[];
 }
 
 interface TiledObjectLayer {
@@ -107,7 +75,26 @@ interface TiledObjectLayer {
   y: number;
 }
 
-type TiledLayer = TiledTileLayer | TiledObjectLayer;
+interface TiledMap {
+  width: number;
+  height: number;
+  tilewidth: number;
+  tileheight: number;
+  orientation: string;
+  renderorder: string;
+  type: string;
+  version: string;
+  tiledversion: string;
+  tilesets: TiledTileset[];
+  layers: Array<TiledTileLayer | TiledObjectLayer>;
+}
+
+interface DecorCandidate extends Cell {
+  distanceToPath: number;
+  nearestPathIndex: number;
+  isOuterCorner: boolean;
+  isEdge: boolean;
+}
 
 function makeEmptyLayer(width: number, height: number): number[] {
   return new Array<number>(width * height).fill(GID.EMPTY);
@@ -117,144 +104,348 @@ function cellIndex(x: number, y: number, width: number): number {
   return y * width + x;
 }
 
-// Determine which direction the path is traveling at each step
-type Dir = 'east' | 'west' | 'north' | 'south';
+function keyOf(cell: Cell): string {
+  return `${cell.x},${cell.y}`;
+}
 
-function getDir(from: { x: number; y: number }, to: { x: number; y: number }): Dir {
-  if (to.x > from.x) return 'east';
-  if (to.x < from.x) return 'west';
-  if (to.y > from.y) return 'south';
-  return 'north';
+function manhattan(a: Cell, b: Cell): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+function isInBounds(cell: Cell, width: number, height: number): boolean {
+  return cell.x >= 0 && cell.x < width && cell.y >= 0 && cell.y < height;
+}
+
+function countTurns(path: Cell[]): number {
+  let turns = 0;
+  for (let i = 1; i < path.length - 1; i++) {
+    const prev = path[i - 1];
+    const current = path[i];
+    const next = path[i + 1];
+    const dx1 = current.x - prev.x;
+    const dy1 = current.y - prev.y;
+    const dx2 = next.x - current.x;
+    const dy2 = next.y - current.y;
+    if (dx1 !== dx2 || dy1 !== dy2) {
+      turns++;
+    }
+  }
+  return turns;
+}
+
+function getNearestPathMeta(cell: Cell, path: Cell[]): { distance: number; index: number } {
+  let distance = Number.POSITIVE_INFINITY;
+  let index = -1;
+
+  for (let i = 0; i < path.length; i++) {
+    const currentDistance = manhattan(cell, path[i]);
+    if (currentDistance < distance) {
+      distance = currentDistance;
+      index = i;
+    }
+  }
+
+  return { distance, index };
+}
+
+function buildAdjacencyProtection(cells: Cell[], width: number, height: number): Set<string> {
+  const protectedCells = new Set<string>();
+  for (const anchor of cells) {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const cell = { x: anchor.x + dx, y: anchor.y + dy };
+        if (isInBounds(cell, width, height)) {
+          protectedCells.add(keyOf(cell));
+        }
+      }
+    }
+  }
+  return protectedCells;
+}
+
+function collectOuterCornerCells(path: Cell[], width: number, height: number): Set<string> {
+  const outerCorners = new Set<string>();
+
+  for (let i = 1; i < path.length - 1; i++) {
+    const prev = path[i - 1];
+    const current = path[i];
+    const next = path[i + 1];
+    const dx1 = current.x - prev.x;
+    const dy1 = current.y - prev.y;
+    const dx2 = next.x - current.x;
+    const dy2 = next.y - current.y;
+    if (dx1 === dx2 && dy1 === dy2) continue;
+
+    const outer = {
+      x: current.x - Math.sign(dx1 + dx2),
+      y: current.y - Math.sign(dy1 + dy2),
+    };
+
+    if (isInBounds(outer, width, height)) {
+      outerCorners.add(keyOf(outer));
+    }
+  }
+
+  return outerCorners;
+}
+
+function hasNeighbor(cell: Cell, occupied: Set<string>): boolean {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      if (occupied.has(keyOf({ x: cell.x + dx, y: cell.y + dy }))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function buildDecorationProperties(asset: TinySwordsDecorationAssetEntry): TiledProperty[] {
+  return [
+    { name: 'kind', type: 'string', value: asset.kind },
+    { name: 'assetKey', type: 'string', value: asset.key },
+    { name: 'variant', type: 'string', value: asset.variant },
+  ];
+}
+
+function assertPathLayerContract(
+  pathData: number[],
+  path: Cell[],
+  width: number,
+  spawnPoint: Cell,
+  exitPoint: Cell,
+): void {
+  const nonEmptyPathCount = pathData.filter((gid) => gid !== GID.EMPTY).length;
+  if (nonEmptyPathCount !== path.length) {
+    throw new Error(`[map] path layer mismatch: expected ${path.length} walkable tiles, got ${nonEmptyPathCount}`);
+  }
+
+  const cornerCount = pathData.filter((gid) => gid === GID.PATH_CORNER).length;
+  if (cornerCount !== countTurns(path)) {
+    throw new Error('[map] path layer corner count no longer matches FOREST_GATE_MAP.path');
+  }
+
+  if (pathData[cellIndex(spawnPoint.x, spawnPoint.y, width)] !== GID.PATH_SPAWN) {
+    throw new Error('[map] spawn tile contract drifted');
+  }
+
+  if (pathData[cellIndex(exitPoint.x, exitPoint.y, width)] !== GID.PATH_EXIT) {
+    throw new Error('[map] exit tile contract drifted');
+  }
+}
+
+function assertDecorationContract(
+  decorationObjects: TiledObject[],
+  placementPoints: Cell[],
+  width: number,
+  height: number,
+): void {
+  if (decorationObjects.length < 6) {
+    throw new Error('[map] decoration contract is too sparse to read as a field');
+  }
+
+  for (const object of decorationObjects) {
+    if (!object.properties?.some((property) => property.name === 'assetKey')) {
+      throw new Error(`[map] decoration ${object.name} is missing assetKey metadata`);
+    }
+    if (!object.properties?.some((property) => property.name === 'variant')) {
+      throw new Error(`[map] decoration ${object.name} is missing variant metadata`);
+    }
+  }
+
+  const placementSet = new Set(placementPoints.map((point) => keyOf(point)));
+  for (const object of decorationObjects) {
+    const cell = { x: Math.round(object.x / 32), y: Math.round(object.y / 32) };
+    if (placementSet.has(keyOf(cell))) {
+      throw new Error(`[map] decoration ${object.name} overlaps a placement point`);
+    }
+    if (!isInBounds(cell, width, height)) {
+      throw new Error(`[map] decoration ${object.name} is out of bounds`);
+    }
+  }
 }
 
 export async function generateMap(): Promise<ManifestEntry[]> {
   const map = FOREST_GATE_MAP;
   const { width, height, tileSize, path, placementPoints, spawnPoint, exitPoint } = map;
 
-  const pathSet = new Set<string>(path.map(p => `${p.x},${p.y}`));
-  const placementSet = new Set<string>(placementPoints.map(p => `${p.x},${p.y}`));
+  const pathSet = new Set<string>(path.map((point) => keyOf(point)));
+  const placementSet = new Set<string>(placementPoints.map((point) => keyOf(point)));
+  const pathProtection = pathSet;
+  const placementProtection = placementSet;
+  const pathAdjacencyProtection = buildAdjacencyProtection(path, width, height);
+  const placementAdjacencyProtection = buildAdjacencyProtection(placementPoints, width, height);
+  const landmarkProtection = buildAdjacencyProtection([spawnPoint, exitPoint], width, height);
+  const outerCorners = collectOuterCornerCells(path, width, height);
 
-  // === Ground layer: checkerboard of grass-light and grass-dark ===
   const groundData = makeEmptyLayer(width, height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const isLight = (x + y) % 2 === 0;
-      groundData[cellIndex(x, y, width)] = isLight ? GID.GRASS_LIGHT : GID.GRASS_DARK;
+      groundData[cellIndex(x, y, width)] = (x + y) % 2 === 0
+        ? GID.GROUND_LIGHT
+        : GID.GROUND_DARK;
     }
   }
 
-  // === Path layer ===
   const pathData = makeEmptyLayer(width, height);
-
-  // Build direction map for each path tile
-  const dirMap = new Map<string, { incoming: Dir | null; outgoing: Dir | null }>();
-
   for (let i = 0; i < path.length; i++) {
-    const cur = path[i];
-    const prev = path[i - 1] ?? null;
-    const next = path[i + 1] ?? null;
-    const key = `${cur.x},${cur.y}`;
+    const current = path[i];
+    const previous = path[i - 1];
+    const next = path[i + 1];
 
-    const incoming: Dir | null = prev ? getDir(prev, cur) : null;
-    const outgoing: Dir | null = next ? getDir(cur, next) : null;
-    dirMap.set(key, { incoming, outgoing });
-  }
-
-  for (let i = 0; i < path.length; i++) {
-    const tile = path[i];
-    const key = `${tile.x},${tile.y}`;
-    const dirs = dirMap.get(key)!;
-    const { incoming, outgoing } = dirs;
-
-    let gid: number;
-
-    const isSpawn = tile.x === spawnPoint.x && tile.y === spawnPoint.y;
-    const isExit = tile.x === exitPoint.x && tile.y === exitPoint.y;
-
-    if (isSpawn) {
+    let gid = GID.PATH;
+    if (current.x === spawnPoint.x && current.y === spawnPoint.y) {
       gid = GID.PATH_SPAWN;
-    } else if (isExit) {
+    } else if (current.x === exitPoint.x && current.y === exitPoint.y) {
       gid = GID.PATH_EXIT;
-    } else if (incoming === null || outgoing === null) {
-      // Terminal tile — default to horizontal
-      gid = GID.PATH_H;
-    } else if (incoming === outgoing) {
-      // Straight segment
-      if (incoming === 'east' || incoming === 'west') {
-        gid = GID.PATH_H;
-      } else {
-        gid = GID.PATH_V;
-      }
-    } else {
-      // Corner — map (incoming, outgoing) combinations
-      // incoming=east means we arrived from west going east; the corner then turns
-      const key2 = `${incoming}-${outgoing}`;
-      switch (key2) {
-        case 'east-south':  gid = GID.PATH_CORNER_SE; break; // going east then turning south
-        case 'east-north':  gid = GID.PATH_CORNER_NE; break;
-        case 'west-south':  gid = GID.PATH_CORNER_SW; break;
-        case 'west-north':  gid = GID.PATH_CORNER_NW; break;
-        case 'south-east':  gid = GID.PATH_CORNER_NE; break;  // was SE
-        case 'south-west':  gid = GID.PATH_CORNER_NW; break;  // was SW
-        case 'north-east':  gid = GID.PATH_CORNER_SE; break;  // was NE
-        case 'north-west':  gid = GID.PATH_CORNER_SW; break;  // was NW
-        default:            gid = GID.PATH_H;
+    } else if (previous && next) {
+      const dx1 = current.x - previous.x;
+      const dy1 = current.y - previous.y;
+      const dx2 = next.x - current.x;
+      const dy2 = next.y - current.y;
+      if (dx1 !== dx2 || dy1 !== dy2) {
+        gid = GID.PATH_CORNER;
       }
     }
 
-    pathData[cellIndex(tile.x, tile.y, width)] = gid;
+    pathData[cellIndex(current.x, current.y, width)] = gid;
   }
 
-  // === Decoration layer: sparse scatter of trees/rocks/bushes ===
-  const decorData = makeEmptyLayer(width, height);
+  assertPathLayerContract(pathData, path, width, spawnPoint, exitPoint);
 
-  const decorOptions = [
-    GID.TREE_SMALL, GID.TREE_SMALL,
-    GID.TREE_LARGE,
-    GID.ROCK_SMALL,
-    GID.ROCK_LARGE,
-    GID.BUSH, GID.BUSH,
-    GID.FLOWERS, GID.FLOWERS,
-    // Nature background
-    GID.FERN, GID.FERN,
-    GID.MUSHROOM,
-    GID.MOSSY_ROCK,
-    GID.FALLEN_LEAVES, GID.FALLEN_LEAVES,
-    GID.VINE,
-    GID.RUINS,
-    GID.ANCIENT_PILLAR,
-  ];
-
-  // Kingdom Rush style: fill ALL non-path, non-placement cells with vegetation
-  const candidates: Array<{ x: number; y: number }> = [];
+  const candidates: DecorCandidate[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const k = `${x},${y}`;
-      if (!pathSet.has(k) && !placementSet.has(k)) {
-        candidates.push({ x, y });
-      }
+      const cell = { x, y };
+      const key = keyOf(cell);
+      if (pathProtection.has(key) || placementProtection.has(key)) continue;
+
+      const nearest = getNearestPathMeta(cell, path);
+      candidates.push({
+        ...cell,
+        distanceToPath: nearest.distance,
+        nearestPathIndex: nearest.index,
+        isOuterCorner: outerCorners.has(key),
+        isEdge: x === 0 || x === width - 1 || y === 0 || y === height - 1,
+      });
     }
   }
 
-  // Fill every candidate cell — dense vegetation like Kingdom Rush
-  for (let i = 0; i < candidates.length; i++) {
-    const c = candidates[i];
-    const decorIdx = i % decorOptions.length;
-    decorData[cellIndex(c.x, c.y, width)] = decorOptions[decorIdx];
+  const occupied = new Set<string>();
+  const decorationObjects: TiledObject[] = [];
+  let nextObjectId = 10_000;
+
+  const largePool = TINY_SWORDS_DECORATION_ASSETS.filter((asset) => asset.size === 'large');
+  const edgePool = TINY_SWORDS_DECORATION_ASSETS.filter((asset) =>
+    asset.kind === 'tree_large' || asset.kind === 'rock_large'
+  );
+  const smallPool = TINY_SWORDS_DECORATION_ASSETS.filter((asset) => asset.size === 'small');
+
+  const canPlaceDecor = (cell: Cell, asset: TinySwordsDecorationAssetEntry): boolean => {
+    const key = keyOf(cell);
+    if (occupied.has(key)) return false;
+    if (pathProtection.has(key) || placementProtection.has(key) || landmarkProtection.has(key)) return false;
+    if (asset.size === 'large' && (pathAdjacencyProtection.has(key) || placementAdjacencyProtection.has(key))) {
+      return false;
+    }
+    return true;
+  };
+
+  const placeDecor = (cell: Cell, asset: TinySwordsDecorationAssetEntry): boolean => {
+    if (!canPlaceDecor(cell, asset)) return false;
+
+    occupied.add(keyOf(cell));
+    decorationObjects.push({
+      id: nextObjectId++,
+      name: `decor_${decorationObjects.length}`,
+      type: 'decoration',
+      x: cell.x * tileSize,
+      y: cell.y * tileSize,
+      width: tileSize,
+      height: tileSize,
+      properties: buildDecorationProperties(asset),
+    });
+    return true;
+  };
+
+  const placeCluster = (seed: DecorCandidate, rootAsset: TinySwordsDecorationAssetEntry) => {
+    if (!placeDecor(seed, rootAsset)) return;
+
+    const offsets = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 },
+      { x: 1, y: 1 },
+      { x: -1, y: 1 },
+    ];
+    let placedNeighbors = 0;
+    for (const [index, offset] of offsets.entries()) {
+      const neighbor = { x: seed.x + offset.x, y: seed.y + offset.y };
+      if (!isInBounds(neighbor, width, height) || hasNeighbor(neighbor, occupied)) continue;
+      const asset = smallPool[(seed.nearestPathIndex + index + seed.x + seed.y) % smallPool.length];
+      if (placeDecor(neighbor, asset)) {
+        placedNeighbors++;
+      }
+      if (placedNeighbors >= 2) break;
+    }
+  };
+
+  const outerCornerSeeds = candidates
+    .filter((candidate) => candidate.isOuterCorner && candidate.distanceToPath >= 2)
+    .sort((a, b) => a.nearestPathIndex - b.nearestPathIndex);
+  for (const seed of outerCornerSeeds) {
+    const asset = largePool[(seed.nearestPathIndex + seed.x + seed.y) % largePool.length];
+    placeCluster(seed, asset);
   }
 
-  // === Objects layer: placement points ===
-  const objects: TiledObject[] = placementPoints.map((pp, index) => ({
+  const edgeSeeds = candidates
+    .filter((candidate) => candidate.isEdge && candidate.distanceToPath >= 2)
+    .filter((candidate) => (candidate.x * 3 + candidate.y * 5 + candidate.nearestPathIndex) % 4 === 0)
+    .sort((a, b) => a.nearestPathIndex - b.nearestPathIndex);
+  for (const seed of edgeSeeds) {
+    const asset = edgePool[(seed.nearestPathIndex + seed.x) % edgePool.length];
+    placeCluster(seed, asset);
+  }
+
+  const farSeeds = candidates
+    .filter((candidate) => candidate.distanceToPath >= 3 && !candidate.isEdge && !candidate.isOuterCorner)
+    .filter((candidate) => (candidate.x * 7 + candidate.y * 11 + candidate.nearestPathIndex) % 5 === 0)
+    .sort((a, b) => a.nearestPathIndex - b.nearestPathIndex);
+  for (const seed of farSeeds) {
+    const asset = TINY_SWORDS_DECORATION_ASSETS[
+      (seed.nearestPathIndex + seed.x + seed.y) % TINY_SWORDS_DECORATION_ASSETS.length
+    ];
+    if (asset.size === 'large') {
+      placeCluster(seed, asset);
+    } else {
+      placeDecor(seed, asset);
+    }
+  }
+
+  const bufferSeeds = candidates
+    .filter((candidate) => candidate.distanceToPath === 2)
+    .filter((candidate) => (candidate.x + candidate.y + candidate.nearestPathIndex) % 6 === 0);
+  for (const seed of bufferSeeds) {
+    const asset = smallPool[(seed.nearestPathIndex + seed.x) % smallPool.length];
+    if (!hasNeighbor(seed, occupied)) {
+      placeDecor(seed, asset);
+    }
+  }
+
+  assertDecorationContract(decorationObjects, placementPoints, width, height);
+
+  const placementObjects: TiledObject[] = placementPoints.map((point, index) => ({
     id: index + 1,
     name: `pp_${index}`,
     type: 'placement_point',
-    x: pp.x * tileSize,
-    y: pp.y * tileSize,
+    x: point.x * tileSize,
+    y: point.y * tileSize,
     width: tileSize,
     height: tileSize,
   }));
 
-  // === Assemble Tiled JSON ===
   const tiledMap: TiledMap = {
     width,
     height,
@@ -265,19 +456,21 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     type: 'map',
     version: '1.10',
     tiledversion: '1.10.2',
-    tilesets: [{
-      firstgid: 1,
-      name: 'tileset',
-      image: '../tiles/tileset.png',
-      imagewidth: TILESET_COLS * TILESET_TILE,
-      imageheight: TILESET_ROWS * TILESET_TILE,
-      tilewidth: tileSize,
-      tileheight: tileSize,
-      tilecount: TILESET_COLS * TILESET_ROWS,
-      columns: TILESET_COLS,
-      margin: 0,
-      spacing: 0,
-    }],
+    tilesets: [
+      {
+        firstgid: 1,
+        name: 'tiny-swords-primary-tileset',
+        image: '../vendor/tiny-swords/terrain/tileset/Tilemap_color1.png',
+        imagewidth: TINY_SWORDS_PRIMARY_TILESET.pixelWidth,
+        imageheight: TINY_SWORDS_PRIMARY_TILESET.pixelHeight,
+        tilewidth: TINY_SWORDS_TILE_SIZE,
+        tileheight: TINY_SWORDS_TILE_SIZE,
+        tilecount: TINY_SWORDS_PRIMARY_TILESET.frameCount,
+        columns: TINY_SWORDS_PRIMARY_TILESET.pixelWidth / TINY_SWORDS_TILE_SIZE,
+        margin: 0,
+        spacing: 0,
+      },
+    ],
     layers: [
       {
         name: 'ground',
@@ -302,11 +495,9 @@ export async function generateMap(): Promise<ManifestEntry[]> {
         y: 0,
       },
       {
-        name: 'decoration',
-        type: 'tilelayer',
-        width,
-        height,
-        data: decorData,
+        name: 'decorations',
+        type: 'objectgroup',
+        objects: decorationObjects,
         visible: true,
         opacity: 1,
         x: 0,
@@ -315,7 +506,7 @@ export async function generateMap(): Promise<ManifestEntry[]> {
       {
         name: 'objects',
         type: 'objectgroup',
-        objects,
+        objects: placementObjects,
         visible: true,
         opacity: 1,
         x: 0,
@@ -328,13 +519,15 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   writeFileSync(OUTPUT_PATH, JSON.stringify(tiledMap, null, 2));
   console.log(`  wrote ${OUTPUT_PATH}`);
 
-  return [{
-    key: 'tilemap-forest-gate',
-    type: 'tilemapTiledJSON',
-    path: 'assets/maps/forest-gate.json',
-  }];
+  return [
+    {
+      key: 'tilemap-forest-gate',
+      type: 'tilemapTiledJSON',
+      path: 'assets/maps/forest-gate.json',
+    },
+  ];
 }
 
 if (import.meta.main) {
-  generateMap().then(e => console.log(JSON.stringify(e, null, 2)));
+  generateMap().then((entries) => console.log(JSON.stringify(entries, null, 2)));
 }

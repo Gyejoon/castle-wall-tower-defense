@@ -11,14 +11,14 @@
   "tilesets": [
     {
       "firstgid": 1,
-      "name": "tileset",
-      "image": "../tiles/tileset.png",
-      "imagewidth": 320,
-      "imageheight": 160,
-      "tilewidth": 32,
-      "tileheight": 32,
-      "tilecount": 50,
-      "columns": 10,
+      "name": "tiny-swords-primary-tileset",
+      "image": "../vendor/tiny-swords/terrain/tileset/Tilemap_color1.png",
+      "imagewidth": 576,
+      "imageheight": 384,
+      "tilewidth": 64,
+      "tileheight": 64,
+      "tilecount": 54,
+      "columns": 9,
       "margin": 0,
       "spacing": 0
     }
@@ -167,52 +167,52 @@
         0,
         0,
         0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        9,
+        4,
         3,
         3,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
         3,
         3,
+        4,
+        0,
+        0,
+        4,
         3,
         3,
+        6,
+        0,
+        0,
         3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
         3,
-        3,
-        3,
-        10,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
+        4,
         0,
         0,
         0,
@@ -241,107 +241,243 @@
       "y": 0
     },
     {
-      "name": "decoration",
-      "type": "tilelayer",
-      "width": 12,
-      "height": 8,
-      "data": [
-        11,
-        11,
-        12,
-        13,
-        14,
-        15,
-        15,
-        16,
-        16,
-        39,
-        39,
-        40,
-        44,
-        47,
-        47,
-        41,
-        45,
-        46,
-        11,
-        11,
-        12,
-        13,
-        14,
-        15,
-        15,
-        16,
-        16,
-        39,
-        39,
-        40,
-        44,
-        47,
-        47,
-        41,
-        45,
-        46,
-        11,
-        0,
-        0,
-        0,
-        11,
-        0,
-        0,
-        0,
-        12,
-        0,
-        0,
-        13,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        14,
-        0,
-        0,
-        15,
-        0,
-        0,
-        0,
-        15,
-        0,
-        0,
-        16,
-        16,
-        39,
-        39,
-        40,
-        44,
-        47,
-        47,
-        41,
-        45,
-        46,
-        11,
-        11,
-        12,
-        13,
-        14,
-        15,
-        15,
-        16,
-        16,
-        39,
-        39,
-        40,
-        44,
-        47,
-        47
+      "name": "decorations",
+      "type": "objectgroup",
+      "objects": [
+        {
+          "id": 10000,
+          "name": "decor_0",
+          "type": "decoration",
+          "x": 0,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock1.png"
+            }
+          ]
+        },
+        {
+          "id": 10001,
+          "name": "decor_1",
+          "type": "decoration",
+          "x": 192,
+          "y": 224,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-2"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock2.png"
+            }
+          ]
+        },
+        {
+          "id": 10002,
+          "name": "decor_2",
+          "type": "decoration",
+          "x": 160,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "tree_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-tree-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Tree1.png"
+            }
+          ]
+        },
+        {
+          "id": 10003,
+          "name": "decor_3",
+          "type": "decoration",
+          "x": 352,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "tree_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-tree-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Tree3.png"
+            }
+          ]
+        },
+        {
+          "id": 10004,
+          "name": "decor_4",
+          "type": "decoration",
+          "x": 192,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-4"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe4.png"
+            }
+          ]
+        },
+        {
+          "id": 10005,
+          "name": "decor_5",
+          "type": "decoration",
+          "x": 224,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock3.png"
+            }
+          ]
+        },
+        {
+          "id": 10006,
+          "name": "decor_6",
+          "type": "decoration",
+          "x": 320,
+          "y": 64,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe3.png"
+            }
+          ]
+        },
+        {
+          "id": 10007,
+          "name": "decor_7",
+          "type": "decoration",
+          "x": 128,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock3.png"
+            }
+          ]
+        },
+        {
+          "id": 10008,
+          "name": "decor_8",
+          "type": "decoration",
+          "x": 288,
+          "y": 192,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock3.png"
+            }
+          ]
+        }
       ],
       "visible": true,
       "opacity": 1,
@@ -356,8 +492,8 @@
           "id": 1,
           "name": "pp_0",
           "type": "placement_point",
-          "x": 32,
-          "y": 96,
+          "x": 0,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -374,8 +510,8 @@
           "id": 3,
           "name": "pp_2",
           "type": "placement_point",
-          "x": 64,
-          "y": 96,
+          "x": 32,
+          "y": 128,
           "width": 32,
           "height": 32
         },
@@ -383,7 +519,7 @@
           "id": 4,
           "name": "pp_3",
           "type": "placement_point",
-          "x": 64,
+          "x": 96,
           "y": 160,
           "width": 32,
           "height": 32
@@ -402,7 +538,7 @@
           "name": "pp_5",
           "type": "placement_point",
           "x": 128,
-          "y": 160,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -410,8 +546,8 @@
           "id": 7,
           "name": "pp_6",
           "type": "placement_point",
-          "x": 160,
-          "y": 96,
+          "x": 128,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -419,8 +555,8 @@
           "id": 8,
           "name": "pp_7",
           "type": "placement_point",
-          "x": 160,
-          "y": 160,
+          "x": 192,
+          "y": 128,
           "width": 32,
           "height": 32
         },
@@ -437,8 +573,8 @@
           "id": 10,
           "name": "pp_9",
           "type": "placement_point",
-          "x": 192,
-          "y": 160,
+          "x": 224,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -447,7 +583,7 @@
           "name": "pp_10",
           "type": "placement_point",
           "x": 224,
-          "y": 96,
+          "y": 32,
           "width": 32,
           "height": 32
         },
@@ -456,7 +592,7 @@
           "name": "pp_11",
           "type": "placement_point",
           "x": 256,
-          "y": 160,
+          "y": 32,
           "width": 32,
           "height": 32
         },
@@ -465,7 +601,7 @@
           "name": "pp_12",
           "type": "placement_point",
           "x": 288,
-          "y": 96,
+          "y": 64,
           "width": 32,
           "height": 32
         },

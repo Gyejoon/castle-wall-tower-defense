@@ -1,23 +1,23 @@
 import type { PlacementFailureReason, WavePhase } from '@gld/shared';
 
 interface PlacementGuardInput {
-  phase: WavePhase;
-  gold: number;
-  towerCost: number;
+	phase: WavePhase;
+	gold: number;
+	towerCost: number;
 }
 
 export function getPlacementGuardFailure({
-  phase,
-  gold,
-  towerCost,
+	phase,
+	gold,
+	towerCost,
 }: PlacementGuardInput): PlacementFailureReason | null {
-  if (phase !== 'building') {
-    return 'combat_phase';
-  }
+	if (phase === 'ended') {
+		return 'combat_phase';
+	}
 
-  if (gold < towerCost) {
-    return 'insufficient_gold';
-  }
+	if (gold < towerCost) {
+		return 'insufficient_gold';
+	}
 
-  return null;
+	return null;
 }

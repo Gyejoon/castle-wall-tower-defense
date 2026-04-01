@@ -10,6 +10,12 @@ Palace 개랜타디 — 모바일 우선 1:1 랜덤 타워디펜스 버티컬 �
 
 **아직 구현되지 않은 것:** 실시간 네트워크 PvP, 백엔드 서버, 결제, 매치메이킹. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
+## Local Skills
+
+- Claude Code용 수렴 리뷰 스킬: `.claude/skills/ralreview/SKILL.md`
+- Codex용 수렴 리뷰 스킬: `.agents/skills/ralreview/SKILL.md`
+- 런타임 안정성 체크 기준: `.claude/skills/phaser-best-practices/SKILL.md`
+
 ## 워크스페이스 맵
 
 | 패키지 | 역할 |

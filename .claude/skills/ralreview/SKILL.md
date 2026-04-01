@@ -1,231 +1,250 @@
 ---
 name: ralreview
-description: |
-  프로젝트 전용 수렴 코드 리뷰. ralph-loop으로 반복하며 7단계 검증 파이프라인을 실행한다:
-  Simplify → Phaser 런타임 안정성 → 스펙 정합성 → 테스트 커버리지 → Codex 리뷰 → Codex Adversarial 리뷰 → 최종 Simplify.
-  5개 차원 각 /10 점수를 매겨 합계 42/50 이상이면 PASS.
-  "ralreview", "ral review", "quality review", "전체 리뷰", "품질 검수",
-  "landing review", "pre-merge review" 등의 요청 시 사용.
+description: Use when reviewing non-trivial code changes in this repository before landing, or when the user asks for "ralreview", "ral review", "quality review", "전체 리뷰", "품질 검수", "landing review", or "pre-merge review".
 ---
 
-# RAL Review — 수렴 품질 리뷰
+# RAL Review
 
-프로젝트 코드 변경에 대해 7단계 파이프라인을 실행하고, 5개 차원 점수가 합계 42/50 이상이 될 때까지 반복한다.
+이 스킬은 이 저장소 전용 수렴형 코드 리뷰 프로토콜이다. 목표는 "한 번 훑어보기"가 아니라, 변경 diff를 여러 차례 좁혀 가며 런타임 안정성, 스펙 정합성, 테스트, 외부 시각 검증까지 통과시키는 것이다.
 
----
+핵심은 도구가 아니라 절차다. Claude Code에서는 slash command를 써도 되고, Codex에서는 같은 의도를 네이티브 셸, 서브에이전트, 리뷰 스킬로 수행하면 된다.
 
-## 실행 방법
+## 플랫폼 적응
 
-이 스킬은 ralph-loop을 활용하여 수렴할 때까지 반복한다:
+플랫폼마다 도구 이름은 달라도 아래 의미를 유지한다.
 
+| 의도 | Claude Code | Codex |
+|---|---|---|
+| 반복 수렴 루프 | `/ralph-loop` | 현재 세션에서 최대 5회 명시적 반복 |
+| 단순화 패스 | `/simplify` | 변경 파일을 직접 읽고 안전한 정리 수행 |
+| 독립 리뷰 | `/codex review` | 별도 리뷰 서브에이전트 또는 리뷰 스킬 |
+| 적대적 리뷰 | `/codex:adversarial-review` | 두 번째 리뷰 서브에이전트 또는 명시적 반대 검토 |
+
+중요: 특정 명령이 없다고 스킬을 건너뛰지 말 것. 같은 검증 목적을 다른 도구로 달성하면 된다.
+
+## 실행 원칙
+
+1. 현재 브랜치의 변경 코드만 본다.
+2. 한 번에 끝내려 하지 말고, 최대 5회까지 수렴시킨다.
+3. 자동 수정은 안전한 범위만 한다.
+4. 비즈니스 로직, 밸런스, 기능 범위를 바꾸는 수정은 보고만 한다.
+5. 루프가 끝나면 점수와 미해결 이슈를 남긴다.
+
+## 빠른 시작
+
+### Claude Code
+
+```text
+/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 42/50 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
 ```
-/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the 7-phase workflow defined in the ralreview skill. Fix issues found in each phase. When all scores are acceptable (total >= 42/50), output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
-```
 
----
+### Codex
+
+현재 세션에서 아래 Phase 0-7을 수행한다. 한 번 끝난 뒤 총점이 42/50 미만이면 같은 절차를 다시 돌린다. 최대 5회까지 반복한다.
 
 ## Phase 0: Init
 
-1. base 브랜치 감지: `git log --oneline --decorate -1` → `origin/main` 또는 `origin/master`
-2. 변경 파일 확인: `git diff origin/{base}...HEAD --stat`
-3. `.ts`/`.tsx` 변경이 없으면 즉시 `RALREVIEW PASS` 출력하고 종료
-
----
+1. base 브랜치를 정한다.
+   - 우선순위: 현재 PR base -> `origin/main` -> `origin/master`
+2. diff 범위를 정한다.
+   - 권장: `git diff --name-only <base>...HEAD`
+3. `.ts`/`.tsx` 변경이 없으면 즉시 PASS 처리한다.
+4. 이번 반복의 대상 파일 목록과 메모를 남긴다.
 
 ## Phase 1: Simplify
 
-`/simplify` 스킬을 실행한다.
+변경 파일에서 안전한 정리 작업을 먼저 한다.
 
-- 변경된 코드의 중복, 품질, 효율성을 검토
-- 불필요한 복잡성 제거
-- 기존 유틸리티 재사용 기회 식별
+- 중복 분기, 죽은 코드, 불필요한 임시 변수 제거
+- 기존 유틸리티/상수 재사용
+- 이름 명확화
+- 과한 중첩 완화
+- 테스트에서만 필요한 보조 코드가 런타임 코드에 섞여 있는지 점검
 
----
+여기서는 동작을 바꾸지 않는 수정만 한다.
 
 ## Phase 2: Phaser 런타임 안정성 검사
 
-프로젝트의 `phaser-best-practices` 스킬을 기준으로 변경된 코드를 검증한다.
+프로젝트의 [`phaser-best-practices`](../phaser-best-practices/SKILL.md) 기준으로 변경 코드를 본다. 해당 항목이 변경 코드에 실제로 적용될 때만 점수에 반영한다.
 
-### 체크리스트 (각 항목 위반 시 -1점, 기본 10점)
+### 체크리스트
 
 | # | 검사 항목 | 위반 예시 |
-|---|----------|----------|
-| 1 | Scene `create()`에서 `shutdown` 이벤트 등록 | `this.events.on('shutdown', ...)` 누락 |
-| 2 | 시스템 생성자가 `Phaser.Scene` 사용 (NOT `GameScene`) | 구체 타입 의존 |
-| 3 | 모든 시스템에 `destroy()` 메서드 존재 | destroy 미구현 |
-| 4 | EventBus 리스너에 named function reference 사용 | 익명 람다로 on() 등록 |
-| 5 | cleanup에서 EventBus.off() → system.destroy() 순서 | 순서 역전 |
-| 6 | Graphics 객체 `clear()` + redraw (NOT destroy+recreate) | 매 프레임 destroy |
-| 7 | 핫 루프에서 `Array.find()` 미사용, Map 사용 | entities를 배열에서 find |
-| 8 | `update()` 반환값으로 시스템 간 통신 | 직접 다른 시스템 mutate |
-| 9 | 배열 in-place 컴팩션 (filter 대신) | 핫 루프에서 `filter()` |
-| 10 | React useEffect cleanup에서 3계층 정리 | removeAllListeners 누락 |
+|---|---|---|
+| 1 | Scene `create()`에서 `shutdown` 정리 등록 | `this.events.on('shutdown', ...)` 누락 |
+| 2 | 시스템 생성자가 `Phaser.Scene`에만 의존 | 특정 `GameScene` 타입에 강결합 |
+| 3 | 시스템에 `destroy()`가 있고 실제 정리 수행 | destroy 껍데기만 있거나 누락 |
+| 4 | EventBus 리스너 해제 가능한 named reference 사용 | 익명 함수로 등록 |
+| 5 | 정리 순서가 `off()` 후 `destroy()` | 순서 역전 |
+| 6 | Graphics는 `clear()` 후 재사용 | 매 프레임 destroy/recreate |
+| 7 | 핫 루프에서 선형 탐색 최소화 | `Array.find()` 남용 |
+| 8 | 시스템 간 통신이 직접 mutation 대신 반환값/이벤트 기반 | 다른 시스템 내부를 직접 수정 |
+| 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 |
+| 10 | React 쪽 unmount cleanup 완전성 | Phaser destroy 후 listener 잔존 |
 
-### 점수 계산
-- 10 - (위반 수) = 점수 (최소 0)
-- 해당 항목이 변경 코드에 적용되지 않으면 위반으로 세지 않음
+### 점수
 
----
+- 기본 10점
+- 핵심 위반은 -2
+- 경미한 위반은 -1
+- 최소 0점
 
 ## Phase 3: 스펙 정합성 검사
 
-1. 최신 스펙 파일 탐색: `ls -t docs/superpowers/specs/*.md 2>/dev/null | head -1`
-2. **스펙 파일이 없으면**: 10/10 점수 부여 + "스펙 문서 없음" 노트
-3. **스펙 파일이 있으면**:
-   - 스펙의 요구사항/기능 목록 추출
-   - 변경된 코드가 각 요구사항을 충족하는지 확인
-   - 스펙에 없는 기능이 추가되었는지 확인 (scope creep)
-   - 누락된 요구사항 수 기반으로 감점
+1. 최신 스펙 파일을 찾는다.
+   - `docs/superpowers/specs/*.md`
+2. 스펙이 없으면 10/10과 `"스펙 문서 없음"` 노트를 남긴다.
+3. 스펙이 있으면 아래를 본다.
+   - 요구사항 누락
+   - 의도와 다른 동작
+   - 스펙에 없는 scope creep
 
-### 점수 계산
-- 10 - (누락 요구사항 수 × 2) - (scope creep 항목 수 × 1) = 점수 (최소 0)
+### 점수
 
----
+- 기본 10점
+- 요구사항 누락: -2/건
+- 동작 차이: -2/건
+- scope creep: -1/건
+- 최소 0점
 
 ## Phase 4: 테스트 커버리지 검사
 
-1. 변경된 `.ts` 파일 목록 수집 (`.test.ts` 제외)
-2. 각 파일에서 **테스트 필수 대상** 식별:
-   - `export function` — 순수 함수 (시그니처에 `Phaser.*` 없음)
-   - 시스템 클래스의 `destroy()` 메서드
-   - 데이터 전용 시스템 (생성자에 `Phaser.Scene` 없음)
-3. 대응하는 테스트 파일 존재 확인: `tests/*.test.ts` 또는 `__tests__/*.test.ts`
-4. `bun test` 실행하여 전체 테스트 통과 확인
+1. 변경된 소스 파일 중 테스트 필수 대상을 식별한다.
+2. 대응 테스트 파일 존재 여부를 본다.
+3. 전체 테스트 또는 관련 패키지 테스트를 실행한다.
 
-### 테스트 불필요 대상 (감점하지 않음)
-- 렌더링 코드 (Graphics draw)
-- Input 핸들러
-- EventBus 와이어링
-- 함수 시그니처에 `Phaser.*` 타입이 포함된 코드
+### 테스트 필수 대상
 
-### 점수 계산
-- 테스트 필수 함수 중 테스트가 존재하는 비율 × 8 + 전체 테스트 통과 시 +2 (최대 10)
-- 테스트 실패 시 최대 5점
+- `export function` 중 시그니처에 `Phaser.*`가 없는 순수 함수
+- 시스템 클래스의 `destroy()`
+- 데이터 전용 시스템
+- `@gld/shared` 패키지의 변경 export
 
----
+### 감점하지 않는 대상
 
-## Phase 5: Codex 리뷰
+- draw call 중심 렌더링 코드
+- Phaser input 핸들러
+- 단순 EventBus 와이어링
+- Scene lifecycle 메서드 자체
 
-`/codex review` 스킬을 실행한다.
+### 점수
 
-- Codex가 diff를 리뷰하고 pass/fail 판정
-- **Codex를 사용할 수 없는 경우**: 7/10 기본 점수 부여 + "Codex 미사용" 노트
+- 필수 대상 커버 비율로 최대 8점
+- 테스트 실행 통과 시 +2
+- 테스트 실패 시 최종 점수는 최대 5점으로 캡
 
-### 점수 매핑
-| Codex 결과 | 점수 |
-|-----------|------|
-| Pass (이슈 없음) | 10 |
-| Pass (informational only) | 9 |
-| Pass (minor suggestions) | 8 |
-| Fail (high severity) | 5-7 |
-| Fail (critical severity) | 0-4 |
+## Phase 5: 독립 리뷰
 
----
+현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다.
 
-## Phase 5.5: Codex Adversarial 리뷰
+### Claude Code
 
-`/codex:adversarial-review`를 실행한다. 일반 리뷰와 달리, 구현의 설계 결정과 가정 자체에 도전하는 적대적 관점의 리뷰다.
+- `/codex review` 같은 외부 리뷰 경로 사용 가능
 
-- 선택한 구현 방식이 올바른지 의문을 제기
-- 설계 트레이드오프와 가정이 실제 조건에서 실패할 수 있는 지점 식별
-- 데이터 흐름의 정합성 검증 (emit하는 쪽과 listen하는 쪽이 일치하는가)
-- 상태 동기화 버그 탐색 (변경 감지 로직, 캐시 무효화 등)
-- **Codex를 사용할 수 없는 경우**: 7/10 기본 점수 부여 + "Codex Adversarial 미사용" 노트
+### Codex
 
-### 실행 방법
+- 리뷰 서브에이전트를 띄워 현재 diff만 검토하게 하거나
+- 프로젝트/글로벌 리뷰 스킬을 사용해 독립 판정을 받는다
 
-1. 백그라운드로 실행:
-   ```bash
-   node "<codex-companion-path>" adversarial-review ""
-   ```
-2. 결과의 verdict에 따라 점수 매핑
+### 점수
 
-### 점수 매핑
-| Verdict | 점수 |
-|---------|------|
-| pass (이슈 없음) | 10 |
-| pass (informational) | 9 |
-| needs-attention (medium only) | 7-8 |
-| needs-attention (high severity) | 5-6 |
-| fail (critical, 데이터 손실/보안) | 0-4 |
+| 결과 | 점수 |
+|---|---|
+| pass, 이슈 없음 | 10 |
+| pass, informational only | 9 |
+| pass, minor suggestion | 8 |
+| reviewer unavailable | 7 |
+| fail, high severity | 5-6 |
+| fail, critical severity | 0-4 |
 
-### 자동 수정 범위
-Adversarial 리뷰에서 발견된 이슈 중 자동 수정 가능한 항목:
+## Phase 5.5: 적대적 리뷰
 
-| 자동 수정 (AUTO) | 보고만 (REPORT) |
-|-----------------|----------------|
-| 상태 브로드캐스트 순서 버그 | 아키텍처 재설계 제안 |
-| 하드코딩된 값을 store 연결 | 새 시스템/모듈 도입 제안 |
-| 변경 감지 로직 수정 | 성능 최적화 대규모 리팩토링 |
-| 누락된 이벤트 emit 추가 | 프로토콜/인터페이스 변경 |
+이번엔 "무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다.
 
----
+- 이벤트 emit/listen 쌍이 정말 맞물리는지
+- 캐시/파생 상태 동기화가 어긋나지 않는지
+- cleanup 순서가 반례에서 깨지지 않는지
+- 테스트가 happy path만 덮고 있지 않은지
+- 사용자의 실제 행동에서 state drift가 나는지
+
+Codex에서는 두 번째 리뷰 서브에이전트를 띄워도 되고, 직접 반대 입장에서 검토해도 된다. 다만 동일한 근거를 재진술하는 수준이면 안 된다.
+
+### 점수
+
+| 결과 | 점수 |
+|---|---|
+| pass, 이슈 없음 | 10 |
+| pass, informational only | 9 |
+| needs-attention, medium only | 7-8 |
+| needs-attention, high severity | 5-6 |
+| reviewer unavailable | 7 |
+| fail, critical severity | 0-4 |
 
 ## Phase 6: 최종 Simplify
 
-`/simplify`를 한 번 더 실행하여 Phase 2-5.5에서 발생한 수정사항을 정리한다.
+Phase 2-5.5에서 생긴 수정 이후, 한 번 더 코드 모양을 정리한다.
 
----
+- 중복 제거
+- naming 정리
+- 테스트 헬퍼 정리
+- 리뷰 대응 중 생긴 임시 분기 제거
 
-## Phase 7: 점수 집계 및 판정
+## Phase 7: 점수 집계와 판정
 
-모든 Phase 완료 후 다음 형식으로 리포트를 출력한다:
+출력 형식은 아래를 따른다.
 
+```text
+RAL REVIEW SCORECARD
+Runtime Stability:   X/10
+Spec Alignment:      X/10
+Test Coverage:       X/10
+Independent Review:  X/10
+Adversarial Review:  X/10
+Total:              XX/50
+Status:             PASS | FAIL
 ```
-╔══════════════════════════════════════╗
-║        RAL REVIEW SCORECARD          ║
-╠══════════════════════════════════════╣
-║  Runtime Stability:      X/10       ║
-║  Spec Alignment:         X/10       ║
-║  Test Coverage:          X/10       ║
-║  Codex Review:           X/10       ║
-║  Codex Adversarial:      X/10       ║
-╠══════════════════════════════════════╣
-║  TOTAL:                 XX/50       ║
-║  STATUS:           PASS / FAIL      ║
-╚══════════════════════════════════════╝
-```
 
-### 판정 기준
-- **PASS** (총 42/50 이상): `RALREVIEW PASS` 출력 → ralph-loop 종료
-- **FAIL** (총 42/50 미만):
-  1. 최저 점수 차원 식별
-  2. 해당 차원의 구체적 이슈 나열
-  3. 자동 수정 가능한 이슈 수정
-  4. 비즈니스 로직 변경이 필요한 이슈는 REPORT로 분류 (수정하지 않음)
-  5. 다음 반복으로 계속
+### 통과 기준
 
-### 수렴 실패 시 (5회 반복 후에도 42점 미만)
-- 최종 스코어카드 출력
-- 미해결 이슈 목록 출력
-- 수동 확인 필요 항목 표시
-- ralph-loop이 자동 종료됨
+- `PASS`: 총점 42/50 이상
+- `FAIL`: 총점 42 미만
 
----
+### FAIL일 때
 
-## 자동 수정 범위
+1. 최저 점수 차원을 먼저 고친다.
+2. AUTO 수정 가능한 항목만 수정한다.
+3. REPORT 항목은 남긴다.
+4. 다음 반복으로 넘어간다.
 
-비즈니스 로직을 변경하지 않는 범위에서만 자동 수정한다:
+### 루프 중단 조건
 
-| 자동 수정 (AUTO) | 보고만 (REPORT) |
-|-----------------|----------------|
-| unused import 제거 | 새 기능 구현 |
-| named reference로 변환 | 아키텍처 변경 |
-| destroy() 메서드 추가 | 게임 밸런스 조정 |
-| cleanup 순서 수정 | 스펙 요구사항 추가 구현 |
-| 누락된 테스트 작성 | 기존 테스트 로직 변경 |
-| Graphics clear+redraw 패턴 적용 | 시스템 간 통신 구조 변경 |
-| in-place 컴팩션 변환 | |
-| Map 기반 저장 변환 | |
+- 총점 42/50 이상
+- 5회 반복 도달
+- 두 번 연속으로 유의미한 개선이 없고 남은 이슈가 REPORT뿐일 때
 
----
+## AUTO / REPORT 경계
+
+| AUTO | REPORT |
+|---|---|
+| 미사용 import 제거 | 새 기능 추가 |
+| 안전한 이름 정리 | 시스템 구조 재설계 |
+| `destroy()` 누락 보완 | 게임 밸런스 변경 |
+| listener 해제 누락 수정 | 스펙 자체 변경 |
+| cleanup 순서 수정 | 프로토콜 재정의 |
+| 누락 테스트 추가 | 대규모 성능 리팩토링 |
+| 핫 루프의 명백한 비효율 완화 | 사용자 경험 정책 변경 |
 
 ## Lint 연동
 
-ralreview 완료 후 (PASS든 FAIL이든) biome lint를 1회 실행한다:
+ralreview가 끝나면 PASS/FAIL과 무관하게 lint를 한 번 실행한다.
 
 ```bash
 bunx biome check .
 ```
 
-이 결과는 점수에 포함하지 않으며 별도 보고한다. Lint는 ralreview 루프에 포함되지 않는다.
+lint는 별도 보고 대상이다. 점수에는 포함하지 않는다.
+
+## 참고 문서
+
+- [`scoring-rubric.md`](./references/scoring-rubric.md)
+- [`phaser-best-practices`](../phaser-best-practices/SKILL.md)

@@ -1,6 +1,7 @@
 import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
 import { TILE_SIZE, UNITS } from '@gld/shared';
 import Phaser from 'phaser';
+import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 
@@ -21,8 +22,8 @@ interface UnitInstance {
 	hpBar: Phaser.GameObjects.Graphics;
 	worldX: number;
 	worldY: number;
-	slowFactor: number; // 1.0 = normal, 0.7 = 30% slow
-	slowRemaining: number; // ms remaining
+	slowFactor: number;
+	slowRemaining: number;
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
@@ -43,7 +44,7 @@ export class UnitSystem {
 	private nextId = 0;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
-	private readonly SPAWN_INTERVAL = 300; // ms between spawns
+	private readonly SPAWN_INTERVAL = 300;
 
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
@@ -93,7 +94,6 @@ export class UnitSystem {
 		});
 	}
 
-	/** Queue units from kill transfer — they spawn with 50% HP */
 	queueTransferUnits(unitDefId: string, count: number): void {
 		const def = UNITS.find((u) => u.id === unitDefId);
 		if (!def) return;
@@ -135,6 +135,13 @@ export class UnitSystem {
 		sprite.setDisplaySize(40, 48);
 		sprite.play(`${entry.def.id}-walk`);
 		sprite.setDepth(this.gridManager.getIsoDepth(startGrid.x, startGrid.y));
+		this.spawnOptionalVfx(
+			'vfx-spawn-portal',
+			startWorld.x,
+			startWorld.y,
+			32,
+			this.gridManager.getIsoDepth(startGrid.x, startGrid.y) - 1,
+		);
 
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(
@@ -170,7 +177,7 @@ export class UnitSystem {
 		graphics.clear();
 		const barWidth = 24;
 		const barHeight = 2;
-		const barY = y - 28; // above 48px unit sprite
+		const barY = y - 28;
 		graphics.fillStyle(0x0a0a14, 0.8);
 		graphics.fillRect(
 			x - barWidth / 2 - 1,
@@ -190,7 +197,7 @@ export class UnitSystem {
 		if (!unit) return;
 		unit.slowFactor = factor;
 		unit.slowRemaining = durationMs;
-		unit.sprite.setTint(0x88ccff); // blue tint for slow
+		unit.sprite.setTint(0x88ccff);
 	}
 
 	getUnitDefId(unitId: string): string | null {
@@ -230,6 +237,13 @@ export class UnitSystem {
 			deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
 				deathFx.destroy(),
 			);
+			this.spawnOptionalVfx(
+				unit.def.id === 'titan' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
+				unit.worldX,
+				unit.worldY,
+				unit.def.id === 'titan' ? 64 : 32,
+				this.gridManager.getIsoDepth(deathGrid.x, deathGrid.y) + 1,
+			);
 			this.units.delete(unitId);
 			return {
 				killed: true,
@@ -264,6 +278,30 @@ export class UnitSystem {
 		return this.spawnQueue.length > 0;
 	}
 
+	private spawnOptionalVfx(
+		textureKey: string,
+		x: number,
+		y: number,
+		size: number,
+		depth: number,
+	): void {
+		const animationKey = getOptionalAnimationKey(textureKey);
+		if (
+			!this.scene.textures?.exists(textureKey) ||
+			!this.scene.anims?.exists(animationKey)
+		) {
+			return;
+		}
+
+		const effect = this.scene.add.sprite(x, y, textureKey);
+		effect.setDisplaySize(size, size);
+		effect.setDepth(depth);
+		effect.play(animationKey);
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
+			effect.destroy(),
+		);
+	}
+
 	update(_time: number, delta: number): { reachedExit: string[] } {
 		const reachedExit: string[] = [];
 
@@ -283,7 +321,6 @@ export class UnitSystem {
 		for (const [id, unit] of this.units) {
 			const pathIdx = unit.data.pathIndex;
 			if (pathIdx >= this.currentPath.length - 1) {
-				// Reached exit
 				reachedExit.push(id);
 				unit.sprite.destroy();
 				unit.hpBar.destroy();
@@ -291,7 +328,6 @@ export class UnitSystem {
 				continue;
 			}
 
-			// Decay slow effect
 			if (unit.slowRemaining > 0) {
 				unit.slowRemaining -= delta;
 				if (unit.slowRemaining <= 0) {
@@ -301,53 +337,32 @@ export class UnitSystem {
 				}
 			}
 
-			// Move toward next waypoint
 			const nextGrid = this.currentPath[pathIdx + 1];
 			const targetWorld = this.currentPathWorld[pathIdx + 1];
-			const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor; // pixels per second
+			const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;
 			const dist = Math.sqrt(dx * dx + dy * dy);
 
 			if (dist < speed * dt) {
-				// Reached waypoint
 				unit.worldX = targetWorld.x;
 				unit.worldY = targetWorld.y;
 				unit.data.pathIndex++;
 				unit.data.position = { x: nextGrid.x, y: nextGrid.y };
 			} else {
-				// Interpolate
 				unit.worldX += (dx / dist) * speed * dt;
 				unit.worldY += (dy / dist) * speed * dt;
 			}
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
-			const currentGrid = this.gridManager.worldToGrid(
-				unit.worldX,
-				unit.worldY,
-			);
-			unit.sprite.setDepth(
-				this.gridManager.getIsoDepth(currentGrid.x, currentGrid.y),
-			);
-			this.renderHpBar(
-				unit.hpBar,
-				unit.worldX,
-				unit.worldY,
-				unit.def,
-				unit.data.hp,
-			);
+			const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
+			unit.sprite.setDepth(this.gridManager.getIsoDepth(currentGrid.x, currentGrid.y));
+			this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
 		}
 
 		return { reachedExit };
 	}
-
-	private unitPositionsBuffer: Array<{
-		instanceId: string;
-		x: number;
-		y: number;
-		hp: number;
-	}> = [];
 
 	getUnitPositions(): Array<{
 		instanceId: string;
@@ -355,20 +370,12 @@ export class UnitSystem {
 		y: number;
 		hp: number;
 	}> {
-		this.unitPositionsBuffer.length = 0;
-		for (const u of this.units.values()) {
-			this.unitPositionsBuffer.push({
-				instanceId: u.data.instanceId,
-				x: u.worldX,
-				y: u.worldY,
-				hp: u.data.hp,
-			});
-		}
-		return this.unitPositionsBuffer;
-	}
-
-	getActiveUnits(): ActiveUnit[] {
-		return Array.from(this.units.values()).map((u) => u.data);
+		return Array.from(this.units.values()).map((unit) => ({
+			instanceId: unit.data.instanceId,
+			x: unit.worldX,
+			y: unit.worldY,
+			hp: unit.data.hp,
+		}));
 	}
 
 	destroy(): void {
@@ -377,6 +384,6 @@ export class UnitSystem {
 			unit.hpBar.destroy();
 		}
 		this.units.clear();
-		this.spawnQueue = [];
+		this.spawnQueue.length = 0;
 	}
 }

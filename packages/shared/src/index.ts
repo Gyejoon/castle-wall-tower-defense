@@ -1,7 +1,4 @@
-// Types
-
 export { EMOTES } from './constants/emotes';
-// Constants
 export {
 	DEFAULT_GRID_CONFIG,
 	DUAL_CANVAS_H,
@@ -61,6 +58,8 @@ export {
 	TOTAL_WAVES,
 	WAVE_DEFS,
 } from './constants/waves';
+export type { AssetManifest, AssetManifestEntry, AssetManifestSection, AssetManifestType } from './assets/manifest';
+export { inferAssetManifestSection, withManifestSection, withManifestSections } from './assets/manifest';
 export type { EmoteDef } from './types/emote';
 export type {
 	GameToReactEvent,

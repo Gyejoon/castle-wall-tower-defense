@@ -37,6 +37,7 @@ describe('mergeManifest', () => {
     const result = mergeManifest(existing, newEntries);
     expect(result.assets).toHaveLength(1);
     expect(result.assets[0].key).toBe('grid-floor');
+    expect(result.assets[0].section).toBe('preload');
   });
 
   test('overrides existing entries with same key', () => {
@@ -54,6 +55,7 @@ describe('mergeManifest', () => {
     const result = mergeManifest(existing, newEntries);
     expect(result.assets).toHaveLength(1);
     expect(result.assets[0].path).toBe('assets/tiles/grid-floor.png');
+    expect(result.assets[0].section).toBe('preload');
   });
 
   test('preserves existing entries not in new entries', () => {
@@ -72,7 +74,9 @@ describe('mergeManifest', () => {
     const result = mergeManifest(existing, newEntries);
     expect(result.assets).toHaveLength(2);
     expect(result.assets.find((a) => a.key === 'ui-hp-bar')?.path).toBe('assets/ui/hp-bar.png');
+    expect(result.assets.find((a) => a.key === 'ui-hp-bar')?.section).toBe('ui');
     expect(result.assets.find((a) => a.key === 'grid-floor')?.path).toBe('assets/tiles/new.png');
+    expect(result.assets.find((a) => a.key === 'grid-floor')?.section).toBe('preload');
   });
 
   test('updates generated timestamp', () => {

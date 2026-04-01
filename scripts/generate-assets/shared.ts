@@ -1,6 +1,7 @@
 import { createCanvas, type Canvas, type SKRSContext2D } from '@napi-rs/canvas';
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
+import type { AssetManifestEntry } from '../../packages/shared/src/assets/manifest';
 
 // === Color Palette (medieval nature theme) ===
 export const PALETTE = {
@@ -255,11 +256,4 @@ export function drawIsoShadow(ctx: SKRSContext2D, cx: number, cy: number, rx: nu
 }
 
 // === Manifest ===
-export interface ManifestEntry {
-  key: string;
-  type: 'image' | 'spritesheet' | 'tilemapTiledJSON';
-  path: string;
-  frameWidth?: number;
-  frameHeight?: number;
-  frameCount?: number;
-}
+export type ManifestEntry = AssetManifestEntry;

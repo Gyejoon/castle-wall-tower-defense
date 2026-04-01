@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_PRIMARY_TILESET,
+	TINY_SWORDS_TILESET_ASSETS,
 } from '../src/fieldAssets';
 
 vi.mock('phaser', () => ({
@@ -16,13 +17,39 @@ vi.mock('phaser', () => ({
 
 import { Preloader } from '../src/scenes/Preloader';
 
+const manifest = JSON.parse(
+	readFileSync(
+		new URL('../../web-shell/public/assets/asset-manifest.json', import.meta.url),
+		'utf-8',
+	),
+) as {
+	assets: Array<{
+		key: string;
+		path: string;
+		type: 'image' | 'spritesheet' | 'tilemapTiledJSON';
+		frameWidth?: number;
+		frameHeight?: number;
+	}>;
+};
+
 describe('asset integration', () => {
 	it('Preloader queues every tower sprite used by TowerSystem', async () => {
+		vi.stubGlobal('document', {
+			createElement: () => ({
+				toDataURL: () => 'data:image/png',
+			}),
+		});
+
 		const image = vi.fn();
 		const tilemapTiledJSON = vi.fn();
 		const spritesheet = vi.fn();
 
 		const preloader = new Preloader() as Preloader & {
+			cache: {
+				json: {
+					get: () => typeof manifest;
+				};
+			};
 			load: {
 				image: typeof image;
 				tilemapTiledJSON: typeof tilemapTiledJSON;
@@ -30,6 +57,11 @@ describe('asset integration', () => {
 			};
 		};
 
+		preloader.cache = {
+			json: {
+				get: () => manifest,
+			},
+		};
 		preloader.load = {
 			image,
 			tilemapTiledJSON,
@@ -48,6 +80,13 @@ describe('asset integration', () => {
 				`tower-${tower.id}`,
 				`assets/towers/${tower.id}.png`,
 			);
+		}
+
+		for (const asset of TINY_SWORDS_TILESET_ASSETS) {
+			expect(spritesheet).toHaveBeenCalledWith(asset.key, asset.path, {
+				frameWidth: asset.frameWidth,
+				frameHeight: asset.frameHeight,
+			});
 		}
 	});
 

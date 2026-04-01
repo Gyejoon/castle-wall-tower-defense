@@ -1,4 +1,5 @@
 import {
+	type AssetManifest,
 	DUAL_CANVAS_H,
 	EMOTES,
 	FOREST_GATE_MAP,
@@ -20,6 +21,14 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import Phaser from 'phaser';
+import {
+	OPTIONAL_ASSET_SECTIONS,
+	getCachedAssetManifest,
+	prefetchAssetSections,
+	registerOptionalCombatAnimations,
+	shouldUseWebPTextures,
+	unloadAssetSections,
+} from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
@@ -100,6 +109,8 @@ export class GameScene extends Phaser.Scene {
 	private aiHpText!: Phaser.GameObjects.Text;
 	private aiGoldText!: Phaser.GameObjects.Text;
 	private feedbackText!: Phaser.GameObjects.Text;
+	private aiAvatar?: Phaser.GameObjects.Image;
+	private aiGoldIcon?: Phaser.GameObjects.Sprite;
 
 	// Change-detection for per-frame emits
 	private lastAiHp = INITIAL_PLAYER_HP;
@@ -133,6 +144,8 @@ export class GameScene extends Phaser.Scene {
 		kind: TinySwordsDecorationKind;
 		variant: string;
 	}> | null = null;
+	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
+	private isCleaningUp = false;
 
 	constructor() {
 		super('Game');
@@ -140,7 +153,8 @@ export class GameScene extends Phaser.Scene {
 
 	create() {
 		EventBus.removeAllListeners();
-
+		this.isCleaningUp = false;
+		this.optionalAssetManifest = getCachedAssetManifest(this);
 		this.playerGrid = new GridManager(FOREST_GATE_MAP, ISO_CANVAS_H);
 		this.playerPathfinding = new PathfindingSystem();
 		this.playerTowers = new TowerSystem(
@@ -226,6 +240,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('gold-changed', { gold: this.gold });
 		EventBus.emit('current-scene-ready', this);
 
+		void this.prefetchOptionalAssets();
 		this.playerWaves.start();
 	}
 
@@ -579,10 +594,10 @@ export class GameScene extends Phaser.Scene {
 			fontSize: '8px',
 		};
 		this.aiHpText = this.add
-			.text(8, 8, `AI HP ${this.aiHp}`, { ...style, color: '#e53170' })
+			.text(28, 8, `AI HP ${this.aiHp}`, { ...style, color: '#e53170' })
 			.setDepth(100);
 		this.aiGoldText = this.add
-			.text(8, 20, `AI 골드 ${this.aiGold}`, { ...style, color: '#f0d060' })
+			.text(28, 20, `AI 골드 ${this.aiGold}`, { ...style, color: '#f0d060' })
 			.setDepth(100);
 	}
 
@@ -1168,6 +1183,9 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private cleanup() {
+		if (this.isCleaningUp) return;
+		this.isCleaningUp = true;
+
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
@@ -1182,5 +1200,49 @@ export class GameScene extends Phaser.Scene {
 		this.aiUnits.destroy();
 		this.aiRandomTower.reset();
 		this.aiMerge.destroy();
+		this.aiAvatar?.destroy();
+		this.aiGoldIcon?.destroy();
+
+		unloadAssetSections(this, this.optionalAssetManifest, OPTIONAL_ASSET_SECTIONS);
 	}
+
+	private async prefetchOptionalAssets(): Promise<void> {
+		await prefetchAssetSections(
+			this,
+			this.optionalAssetManifest,
+			OPTIONAL_ASSET_SECTIONS,
+			shouldUseWebPTextures(),
+		);
+		if (this.isCleaningUp) {
+			unloadAssetSections(this, this.optionalAssetManifest, OPTIONAL_ASSET_SECTIONS);
+			return;
+		}
+		registerOptionalCombatAnimations(this, this.optionalAssetManifest);
+		this.applyOptionalUiAssets();
+	}
+
+	private applyOptionalUiAssets(): void {
+		if (!this.aiAvatar && this.textures.exists('ui-ghost-avatar')) {
+			this.aiAvatar = this.add
+				.image(12, 14, 'ui-ghost-avatar')
+				.setDisplaySize(18, 18)
+				.setDepth(100)
+				.setAlpha(0.95);
+		}
+
+		if (!this.aiGoldIcon && this.textures.exists('ui-stat-icons')) {
+			this.aiGoldIcon = this.add
+				.sprite(12, 32, 'ui-stat-icons', 1)
+				.setDisplaySize(16, 16)
+				.setDepth(100)
+				.setAlpha(0.95);
+		}
+	}
+}
+
+function getEmptyAssetManifest(): AssetManifest {
+	return {
+		generated: '',
+		assets: [],
+	};
 }

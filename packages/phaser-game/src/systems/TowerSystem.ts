@@ -5,7 +5,8 @@ import type {
 	TowerDef,
 } from '@gld/shared';
 import { ALL_TOWERS, ISO_TILE_H, ISO_TILE_W } from '@gld/shared';
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
+import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
@@ -24,7 +25,7 @@ export type TowerPlacementResult =
 
 export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
-	private lastSoundTime: Map<string, number> = new Map(); // throttle per tower type
+	private lastSoundTime: Map<string, number> = new Map();
 	private static readonly SOUND_THROTTLE_MS = 200;
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
@@ -68,11 +69,9 @@ export class TowerSystem {
 			return { success: false, reason: 'occupied' };
 		}
 
-		// Check if placement would block the path
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
 		if (!placed) return { success: false, reason: 'occupied' };
 
-		// Verify path still exists
 		this.pathfinding.invalidateCache();
 		const walkGrid = this.gridManager.getWalkabilityGrid();
 		const path = this.pathfinding.findPath(
@@ -82,7 +81,6 @@ export class TowerSystem {
 		);
 
 		if (!path) {
-			// Revert placement — would block all paths
 			this.gridManager.removeTower(gridX, gridY);
 			this.pathfinding.invalidateCache();
 			return { success: false, reason: 'blocked_path' };
@@ -104,8 +102,7 @@ export class TowerSystem {
 			worldPos.y,
 			`tower-${towerDefId}`,
 		);
-		// Tower asset is 64×80, don't constrain to tile size
-		sprite.setY(worldPos.y - 20); // tower sits above tile
+		sprite.setY(worldPos.y - 20);
 		sprite.setDepth(this.gridManager.getIsoDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
@@ -128,7 +125,6 @@ export class TowerSystem {
 		const color = parseInt(def.color.replace('#', ''), 16);
 		graphics.clear();
 
-		// Isometric base (ellipse)
 		graphics.fillStyle(0x0a0a14, 0.8);
 		graphics.fillEllipse(
 			pos.x,
@@ -144,11 +140,9 @@ export class TowerSystem {
 			ISO_TILE_H * 0.45,
 		);
 
-		// Glow (isometric ellipse)
 		graphics.fillStyle(color, 0.08);
 		graphics.fillEllipse(pos.x, pos.y + 4, ISO_TILE_W * 0.6, ISO_TILE_H * 0.6);
 
-		// Range indicator dots (isometric ellipse shape)
 		const rangeGrid = def.stats.range;
 		if (rangeGrid > 0) {
 			const dots = 32;
@@ -172,7 +166,6 @@ export class TowerSystem {
 		slow?: { factor: number; duration: number };
 	}> = [];
 
-	/** Recalculate boost from adjacent shield/paladin towers */
 	private getBoostMultiplier(gridX: number, gridY: number): number {
 		let boostCount = 0;
 		for (const tower of this.towers.values()) {
@@ -188,10 +181,6 @@ export class TowerSystem {
 		return 1 + boostCount;
 	}
 
-	/**
-	 * Update towers: find targets and attack.
-	 * Returns damage events to apply to units (including slow effects).
-	 */
 	update(
 		time: number,
 		delta: number,
@@ -245,7 +234,6 @@ export class TowerSystem {
 				const boostedDamage = Math.round(def.stats.damage * boostMult);
 				const special = def.stats.special;
 
-				// Primary target damage
 				const slowEffect = special?.startsWith('slow_')
 					? { factor: 0.7, duration: 2000 }
 					: undefined;
@@ -255,9 +243,8 @@ export class TowerSystem {
 					slow: slowEffect,
 				});
 
-				// Splash: hit nearby units for 50% damage
 				if (special === 'splash') {
-					const splashRadiusSq = 1.5 * 1.5; // 1.5 grid units
+					const splashRadiusSq = 1.5 * 1.5;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
 						closestUnit.y,
@@ -286,8 +273,13 @@ export class TowerSystem {
 					color,
 					ttl: 80,
 				});
+				this.spawnMuzzleVfx(def.id, towerWorld, data.position);
+				this.spawnImpactVfx(
+					special === 'splash' ? 'vfx-explosion-sm' : 'projectile-hit-flash',
+					closestUnit.x,
+					closestUnit.y,
+				);
 
-				// Play tower attack sound (throttled per tower type)
 				const lastSound = this.lastSoundTime.get(def.type) ?? 0;
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
 					soundGenerator.playTowerAttack(def.type);
@@ -296,7 +288,6 @@ export class TowerSystem {
 			}
 		}
 
-		// Render attack lines with in-place compaction
 		this.attackGraphics.clear();
 		let write = 0;
 		for (let i = 0; i < this.attackLines.length; i++) {
@@ -325,6 +316,54 @@ export class TowerSystem {
 		return this.damageEventsBuffer;
 	}
 
+	private spawnMuzzleVfx(
+		towerDefId: string,
+		towerWorld: Position,
+		gridPos: Position,
+	): void {
+		const textureKey = `tower-${towerDefId}-fire`;
+		const animationKey = getOptionalAnimationKey(textureKey);
+		if (
+			!this.scene.textures.exists(textureKey) ||
+			!this.scene.anims.exists(animationKey)
+		) {
+			return;
+		}
+
+		const effect = this.scene.add.sprite(
+			towerWorld.x,
+			towerWorld.y - 20,
+			textureKey,
+		);
+		effect.setDisplaySize(64, 80);
+		effect.setDepth(this.gridManager.getIsoDepth(gridPos.x, gridPos.y) + 1);
+		effect.play(animationKey);
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
+			effect.destroy(),
+		);
+	}
+
+	private spawnImpactVfx(textureKey: string, x: number, y: number): void {
+		const animationKey = getOptionalAnimationKey(textureKey);
+		if (
+			!this.scene.textures.exists(textureKey) ||
+			!this.scene.anims.exists(animationKey)
+		) {
+			return;
+		}
+
+		const effect = this.scene.add.sprite(x, y, textureKey);
+		effect.setDisplaySize(
+			textureKey === 'projectile-hit-flash' ? 16 : 32,
+			textureKey === 'projectile-hit-flash' ? 16 : 32,
+		);
+		effect.setDepth(30);
+		effect.play(animationKey);
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
+			effect.destroy(),
+		);
+	}
+
 	private findTowerEntry(
 		gridX: number,
 		gridY: number,
@@ -345,15 +384,10 @@ export class TowerSystem {
 		if (!entry) return { success: false, refund: 0 };
 		const { key: targetKey, instance: targetInstance } = entry;
 
-		// Remove graphics
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
 		this.towers.delete(targetKey);
-
-		// Release grid cell
 		this.gridManager.removeTower(gridX, gridY);
-
-		// Recalculate path
 		this.pathfinding.invalidateCache();
 
 		const refund = Math.floor(targetInstance.def.cost * 0.7);
@@ -389,9 +423,7 @@ export class TowerSystem {
 			tower.sprite.destroy();
 		}
 		this.towers.clear();
-		if (this.attackGraphics) {
-			this.attackGraphics.destroy();
-		}
+		this.attackGraphics?.destroy();
 		this.attackLines = [];
 	}
 }

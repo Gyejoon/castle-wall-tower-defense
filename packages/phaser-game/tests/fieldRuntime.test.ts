@@ -150,6 +150,29 @@ describe('GameScene field runtime', () => {
 				graphics: addGraphics,
 				text: addText,
 			},
+			cache: {
+				json: {
+					get: vi.fn(() => ({
+						generated: '2026-04-02T00:00:00.000Z',
+						assets: [],
+					})),
+				},
+				tilemap: {
+					exists: vi.fn(() => false),
+					remove: vi.fn(),
+				},
+			},
+			load: {
+				image: vi.fn(),
+				spritesheet: vi.fn(),
+				tilemapTiledJSON: vi.fn(),
+				once: vi.fn((_event: string, callback: () => void) => callback()),
+				start: vi.fn(),
+			},
+			textures: {
+				exists: vi.fn(() => false),
+				remove: vi.fn(),
+			},
 			make: {
 				tilemap: makeTilemap,
 			},

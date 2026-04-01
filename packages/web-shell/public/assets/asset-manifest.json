@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-31T17:22:08.054Z",
+  "generated": "2026-04-01T16:07:54.256Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -7,7 +7,8 @@
       "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color1.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 54
+      "frameCount": 54,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tileset-color-2",
@@ -15,7 +16,8 @@
       "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color2.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 54
+      "frameCount": 54,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tileset-color-3",
@@ -23,7 +25,8 @@
       "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color3.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 54
+      "frameCount": 54,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tileset-color-4",
@@ -31,7 +34,8 @@
       "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color4.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 54
+      "frameCount": 54,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tileset-color-5",
@@ -39,7 +43,8 @@
       "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_color5.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 54
+      "frameCount": 54,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-rock-1",
@@ -47,7 +52,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 1
+      "frameCount": 1,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-rock-2",
@@ -55,7 +61,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock2.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 1
+      "frameCount": 1,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-rock-3",
@@ -63,7 +70,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock3.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 1
+      "frameCount": 1,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-rock-4",
@@ -71,7 +79,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock4.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 1
+      "frameCount": 1,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-bush-1",
@@ -79,7 +88,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe1.png",
       "frameWidth": 128,
       "frameHeight": 128,
-      "frameCount": 8
+      "frameCount": 8,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-bush-2",
@@ -87,7 +97,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe2.png",
       "frameWidth": 128,
       "frameHeight": 128,
-      "frameCount": 8
+      "frameCount": 8,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-bush-3",
@@ -95,7 +106,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe3.png",
       "frameWidth": 128,
       "frameHeight": 128,
-      "frameCount": 8
+      "frameCount": 8,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-bush-4",
@@ -103,7 +115,8 @@
       "path": "assets/vendor/tiny-swords/terrain/decorations/bushes/Bushe4.png",
       "frameWidth": 128,
       "frameHeight": 128,
-      "frameCount": 8
+      "frameCount": 8,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tree-1",
@@ -111,7 +124,8 @@
       "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree1.png",
       "frameWidth": 256,
       "frameHeight": 256,
-      "frameCount": 6
+      "frameCount": 6,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tree-2",
@@ -119,7 +133,8 @@
       "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree2.png",
       "frameWidth": 256,
       "frameHeight": 256,
-      "frameCount": 6
+      "frameCount": 6,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tree-3",
@@ -127,7 +142,8 @@
       "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree3.png",
       "frameWidth": 256,
       "frameHeight": 192,
-      "frameCount": 6
+      "frameCount": 6,
+      "section": "preload"
     },
     {
       "key": "tiny-swords-tree-4",
@@ -135,12 +151,14 @@
       "path": "assets/vendor/tiny-swords/terrain/resources/wood/trees/Tree4.png",
       "frameWidth": 256,
       "frameHeight": 192,
-      "frameCount": 6
+      "frameCount": 6,
+      "section": "preload"
     },
     {
       "key": "tower-laser",
       "type": "image",
-      "path": "assets/towers/laser.png"
+      "path": "assets/towers/laser.png",
+      "section": "preload"
     },
     {
       "key": "tower-laser-fire",
@@ -148,12 +166,14 @@
       "path": "assets/towers/laser-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-plasma",
       "type": "image",
-      "path": "assets/towers/plasma.png"
+      "path": "assets/towers/plasma.png",
+      "section": "preload"
     },
     {
       "key": "tower-plasma-fire",
@@ -161,12 +181,14 @@
       "path": "assets/towers/plasma-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-emp",
       "type": "image",
-      "path": "assets/towers/emp.png"
+      "path": "assets/towers/emp.png",
+      "section": "preload"
     },
     {
       "key": "tower-emp-fire",
@@ -174,12 +196,14 @@
       "path": "assets/towers/emp-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-shield",
       "type": "image",
-      "path": "assets/towers/shield.png"
+      "path": "assets/towers/shield.png",
+      "section": "preload"
     },
     {
       "key": "tower-shield-fire",
@@ -187,12 +211,14 @@
       "path": "assets/towers/shield-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-twin_laser",
       "type": "image",
-      "path": "assets/towers/twin_laser.png"
+      "path": "assets/towers/twin_laser.png",
+      "section": "preload"
     },
     {
       "key": "tower-twin_laser-fire",
@@ -200,12 +226,14 @@
       "path": "assets/towers/twin_laser-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-disruptor",
       "type": "image",
-      "path": "assets/towers/disruptor.png"
+      "path": "assets/towers/disruptor.png",
+      "section": "preload"
     },
     {
       "key": "tower-disruptor-fire",
@@ -213,12 +241,14 @@
       "path": "assets/towers/disruptor-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-nova_cannon",
       "type": "image",
-      "path": "assets/towers/nova_cannon.png"
+      "path": "assets/towers/nova_cannon.png",
+      "section": "preload"
     },
     {
       "key": "tower-nova_cannon-fire",
@@ -226,12 +256,14 @@
       "path": "assets/towers/nova_cannon-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-fortress",
       "type": "image",
-      "path": "assets/towers/fortress.png"
+      "path": "assets/towers/fortress.png",
+      "section": "preload"
     },
     {
       "key": "tower-fortress-fire",
@@ -239,12 +271,14 @@
       "path": "assets/towers/fortress-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-stasis_field",
       "type": "image",
-      "path": "assets/towers/stasis_field.png"
+      "path": "assets/towers/stasis_field.png",
+      "section": "preload"
     },
     {
       "key": "tower-stasis_field-fire",
@@ -252,12 +286,14 @@
       "path": "assets/towers/stasis_field-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-flame_tower",
       "type": "image",
-      "path": "assets/towers/flame_tower.png"
+      "path": "assets/towers/flame_tower.png",
+      "section": "preload"
     },
     {
       "key": "tower-flame_tower-fire",
@@ -265,12 +301,14 @@
       "path": "assets/towers/flame_tower-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-wind_spire",
       "type": "image",
-      "path": "assets/towers/wind_spire.png"
+      "path": "assets/towers/wind_spire.png",
+      "section": "preload"
     },
     {
       "key": "tower-wind_spire-fire",
@@ -278,12 +316,14 @@
       "path": "assets/towers/wind_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-earth_golem",
       "type": "image",
-      "path": "assets/towers/earth_golem.png"
+      "path": "assets/towers/earth_golem.png",
+      "section": "preload"
     },
     {
       "key": "tower-earth_golem-fire",
@@ -291,12 +331,14 @@
       "path": "assets/towers/earth_golem-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-holy_shrine",
       "type": "image",
-      "path": "assets/towers/holy_shrine.png"
+      "path": "assets/towers/holy_shrine.png",
+      "section": "preload"
     },
     {
       "key": "tower-holy_shrine-fire",
@@ -304,12 +346,14 @@
       "path": "assets/towers/holy_shrine-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-dragon_nest",
       "type": "image",
-      "path": "assets/towers/dragon_nest.png"
+      "path": "assets/towers/dragon_nest.png",
+      "section": "preload"
     },
     {
       "key": "tower-dragon_nest-fire",
@@ -317,12 +361,14 @@
       "path": "assets/towers/dragon_nest-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-arcane_spire",
       "type": "image",
-      "path": "assets/towers/arcane_spire.png"
+      "path": "assets/towers/arcane_spire.png",
+      "section": "preload"
     },
     {
       "key": "tower-arcane_spire-fire",
@@ -330,12 +376,14 @@
       "path": "assets/towers/arcane_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-world_tree",
       "type": "image",
-      "path": "assets/towers/world_tree.png"
+      "path": "assets/towers/world_tree.png",
+      "section": "preload"
     },
     {
       "key": "tower-world_tree-fire",
@@ -343,12 +391,14 @@
       "path": "assets/towers/world_tree-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-celestial",
       "type": "image",
-      "path": "assets/towers/celestial.png"
+      "path": "assets/towers/celestial.png",
+      "section": "preload"
     },
     {
       "key": "tower-celestial-fire",
@@ -356,12 +406,14 @@
       "path": "assets/towers/celestial-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "tower-divine_throne",
       "type": "image",
-      "path": "assets/towers/divine_throne.png"
+      "path": "assets/towers/divine_throne.png",
+      "section": "preload"
     },
     {
       "key": "tower-divine_throne-fire",
@@ -369,7 +421,8 @@
       "path": "assets/towers/divine_throne-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "unit-scout_drone",
@@ -377,7 +430,8 @@
       "path": "assets/units/scout_drone.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "unit-battle_robot",
@@ -385,7 +439,8 @@
       "path": "assets/units/battle_robot.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "unit-heavy_walker",
@@ -393,7 +448,8 @@
       "path": "assets/units/heavy_walker.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "unit-stealth_drone",
@@ -401,7 +457,8 @@
       "path": "assets/units/stealth_drone.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "unit-titan",
@@ -409,7 +466,8 @@
       "path": "assets/units/titan.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "unit-death",
@@ -417,22 +475,26 @@
       "path": "assets/units/unit-death.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "preload"
     },
     {
       "key": "projectile-laser-beam",
       "type": "image",
-      "path": "assets/projectiles/laser-beam.png"
+      "path": "assets/projectiles/laser-beam.png",
+      "section": "projectiles"
     },
     {
       "key": "projectile-plasma-bolt",
       "type": "image",
-      "path": "assets/projectiles/plasma-bolt.png"
+      "path": "assets/projectiles/plasma-bolt.png",
+      "section": "projectiles"
     },
     {
       "key": "projectile-emp-pulse",
       "type": "image",
-      "path": "assets/projectiles/emp-pulse.png"
+      "path": "assets/projectiles/emp-pulse.png",
+      "section": "projectiles"
     },
     {
       "key": "projectile-hit-flash",
@@ -440,7 +502,8 @@
       "path": "assets/projectiles/hit-flash.png",
       "frameWidth": 16,
       "frameHeight": 16,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "projectiles"
     },
     {
       "key": "vfx-explosion-sm",
@@ -448,7 +511,8 @@
       "path": "assets/vfx/explosion-sm.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "vfx-explosion-lg",
@@ -456,12 +520,14 @@
       "path": "assets/vfx/explosion-lg.png",
       "frameWidth": 64,
       "frameHeight": 64,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "vfx-shield-bubble",
       "type": "image",
-      "path": "assets/vfx/shield-bubble.png"
+      "path": "assets/vfx/shield-bubble.png",
+      "section": "vfx"
     },
     {
       "key": "vfx-spawn-portal",
@@ -469,7 +535,8 @@
       "path": "assets/vfx/spawn-portal.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "vfx"
     },
     {
       "key": "ui-tower-icons",
@@ -477,7 +544,8 @@
       "path": "assets/ui/tower-icons.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 9
+      "frameCount": 9,
+      "section": "ui"
     },
     {
       "key": "ui-unit-icons",
@@ -485,57 +553,68 @@
       "path": "assets/ui/unit-icons.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 5
+      "frameCount": 5,
+      "section": "ui"
     },
     {
       "key": "ui-hp-bar",
       "type": "image",
-      "path": "assets/ui/hp-bar.png"
+      "path": "assets/ui/hp-bar.png",
+      "section": "ui"
     },
     {
       "key": "ui-cursor-place",
       "type": "image",
-      "path": "assets/ui/cursor-place.png"
+      "path": "assets/ui/cursor-place.png",
+      "section": "ui"
     },
     {
       "key": "ui-pressure-defend",
       "type": "image",
-      "path": "assets/ui/pressure-defend.png"
+      "path": "assets/ui/pressure-defend.png",
+      "section": "ui"
     },
     {
       "key": "ui-pressure-attack",
       "type": "image",
-      "path": "assets/ui/pressure-attack.png"
+      "path": "assets/ui/pressure-attack.png",
+      "section": "ui"
     },
     {
       "key": "ui-pressure-invest",
       "type": "image",
-      "path": "assets/ui/pressure-invest.png"
+      "path": "assets/ui/pressure-invest.png",
+      "section": "ui"
     },
     {
       "key": "ui-pressure-panel-bg",
       "type": "image",
-      "path": "assets/ui/pressure-panel-bg.png"
+      "path": "assets/ui/pressure-panel-bg.png",
+      "section": "ui"
     },
     {
       "key": "ui-match-victory",
       "type": "image",
-      "path": "assets/ui/match-victory.png"
+      "path": "assets/ui/match-victory.png",
+      "section": "ui"
     },
     {
       "key": "ui-match-defeat",
       "type": "image",
-      "path": "assets/ui/match-defeat.png"
+      "path": "assets/ui/match-defeat.png",
+      "section": "ui"
     },
     {
       "key": "ui-match-draw",
       "type": "image",
-      "path": "assets/ui/match-draw.png"
+      "path": "assets/ui/match-draw.png",
+      "section": "ui"
     },
     {
       "key": "ui-ghost-avatar",
       "type": "image",
-      "path": "assets/ui/ghost-avatar.png"
+      "path": "assets/ui/ghost-avatar.png",
+      "section": "ui"
     },
     {
       "key": "ui-stat-icons",
@@ -543,7 +622,8 @@
       "path": "assets/ui/stat-icons.png",
       "frameWidth": 16,
       "frameHeight": 16,
-      "frameCount": 3
+      "frameCount": 3,
+      "section": "ui"
     },
     {
       "key": "ui-pressure-attack-effect",
@@ -551,7 +631,8 @@
       "path": "assets/ui/pressure-attack-effect.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "ui"
     },
     {
       "key": "ui-ghost-spawn",
@@ -559,7 +640,8 @@
       "path": "assets/ui/ghost-spawn.png",
       "frameWidth": 32,
       "frameHeight": 32,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "ui"
     },
     {
       "key": "ui-victory-confetti",
@@ -567,27 +649,32 @@
       "path": "assets/ui/victory-confetti.png",
       "frameWidth": 32,
       "frameHeight": 64,
-      "frameCount": 4
+      "frameCount": 4,
+      "section": "ui"
     },
     {
       "key": "icon-192",
       "type": "image",
-      "path": "assets/icons/icon-192.png"
+      "path": "assets/icons/icon-192.png",
+      "section": "icons"
     },
     {
       "key": "icon-512",
       "type": "image",
-      "path": "assets/icons/icon-512.png"
+      "path": "assets/icons/icon-512.png",
+      "section": "icons"
     },
     {
       "key": "icon-512-maskable",
       "type": "image",
-      "path": "assets/icons/icon-512-maskable.png"
+      "path": "assets/icons/icon-512-maskable.png",
+      "section": "icons"
     },
     {
       "key": "tilemap-forest-gate",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/forest-gate.json"
+      "path": "assets/maps/forest-gate.json",
+      "section": "preload"
     }
   ]
 }

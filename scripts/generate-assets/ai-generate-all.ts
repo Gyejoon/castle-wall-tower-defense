@@ -13,31 +13,30 @@
  */
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync, rmSync } from 'fs';
+import { withManifestSections, type AssetManifest, type AssetManifestEntry } from '../../packages/shared/src/assets/manifest';
 import { generate as generateTiles } from './ai-generate-tiles';
 import { generate as generateTowers } from './ai-generate-towers';
 import { generate as generateUnits } from './ai-generate-units';
 import { AI_TEMP_DIR } from './ai-config';
 import { auditPalette, composeRuntimeTileset } from './ai-post-process';
-import type { ManifestEntry } from './shared';
 
 const MANIFEST_PATH = 'packages/web-shell/public/assets/asset-manifest.json';
-
-export interface AssetManifest {
-  generated: string;
-  assets: ManifestEntry[];
-}
 
 function loadExistingManifest(): AssetManifest {
   if (!existsSync(MANIFEST_PATH)) {
     return { generated: new Date().toISOString(), assets: [] };
   }
-  return JSON.parse(readFileSync(MANIFEST_PATH, 'utf-8')) as AssetManifest;
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf-8')) as AssetManifest;
+  return {
+    ...manifest,
+    assets: withManifestSections(manifest.assets),
+  };
 }
 
-export function mergeManifest(existing: AssetManifest, newEntries: ManifestEntry[]): AssetManifest {
-  const entryMap = new Map<string, ManifestEntry>();
-  for (const entry of existing.assets) entryMap.set(entry.key, entry);
-  for (const entry of newEntries) entryMap.set(entry.key, entry);
+export function mergeManifest(existing: AssetManifest, newEntries: AssetManifestEntry[]): AssetManifest {
+  const entryMap = new Map<string, AssetManifestEntry>();
+  for (const entry of withManifestSections(existing.assets)) entryMap.set(entry.key, entry);
+  for (const entry of withManifestSections(newEntries)) entryMap.set(entry.key, entry);
 
   return {
     generated: new Date().toISOString(),
@@ -45,7 +44,7 @@ export function mergeManifest(existing: AssetManifest, newEntries: ManifestEntry
   };
 }
 
-async function runPaletteAudit(entries: ManifestEntry[]): Promise<void> {
+async function runPaletteAudit(entries: AssetManifestEntry[]): Promise<void> {
   console.log('\n[palette-audit]');
   let totalOff = 0;
 
@@ -73,7 +72,7 @@ async function runPaletteAudit(entries: ManifestEntry[]): Promise<void> {
   }
 }
 
-async function updateRuntimeTileset(entries: ManifestEntry[]): Promise<void> {
+async function updateRuntimeTileset(entries: AssetManifestEntry[]): Promise<void> {
   const entryByKey = new Map(entries.map((entry) => [entry.key, entry]));
   const gridFloor = entryByKey.get('grid-floor');
   const path = entryByKey.get('path-tile');

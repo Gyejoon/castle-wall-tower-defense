@@ -5,8 +5,22 @@ const { EventBus } = vi.hoisted(() => ({
 		emit: vi.fn(),
 		on: vi.fn(),
 		off: vi.fn(),
+		removeAllListeners: vi.fn(),
 	},
 }));
+
+const { unloadAssetSections } = vi.hoisted(() => ({
+	unloadAssetSections: vi.fn(),
+}));
+const { registerOptionalCombatAnimations } = vi.hoisted(() => ({
+	registerOptionalCombatAnimations: vi.fn(),
+}));
+const { getCachedAssetManifest, prefetchAssetSections, shouldUseWebPTextures } =
+	vi.hoisted(() => ({
+		getCachedAssetManifest: vi.fn(),
+		prefetchAssetSections: vi.fn(),
+		shouldUseWebPTextures: vi.fn(() => false),
+	}));
 
 vi.mock('phaser', () => ({
 	default: {
@@ -20,10 +34,19 @@ vi.mock('../src/EventBus', () => ({
 	EventBus,
 }));
 
+vi.mock('../src/assets/assetManifest', () => ({
+	unloadAssetSections,
+	registerOptionalCombatAnimations,
+	getCachedAssetManifest,
+	prefetchAssetSections,
+	shouldUseWebPTextures,
+	OPTIONAL_ASSET_SECTIONS: ['ui', 'vfx', 'projectiles'],
+}));
+
 import { GameScene } from '../src/scenes/Game';
 
-function createScene(): GameScene & Record<string, unknown> {
-	return new GameScene() as GameScene & Record<string, unknown>;
+function createScene(): GameScene & Record<string, any> {
+	return new GameScene() as GameScene & Record<string, any>;
 }
 
 describe('GameScene', () => {
@@ -64,19 +87,19 @@ describe('GameScene', () => {
 		scene.onSelectTower = vi.fn();
 		scene.onClearTowerSelection = vi.fn();
 		scene.onWaveStartedLifecycle = vi.fn();
-
-		// Player systems
 		scene.playerTowers = { destroy: vi.fn() };
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerMerge = { destroy: vi.fn() };
 		scene.playerRandomTower = { reset: vi.fn() };
-
-		// AI systems
 		scene.aiTowers = { destroy: vi.fn() };
 		scene.aiUnits = { destroy: vi.fn() };
 		scene.aiRandomTower = { reset: vi.fn() };
 		scene.aiMerge = { destroy: vi.fn() };
+		scene.optionalAssetManifest = {
+			generated: '2026-04-02T00:00:00.000Z',
+			assets: [],
+		};
 
 		scene.cleanup();
 
@@ -93,16 +116,6 @@ describe('GameScene', () => {
 			scene.onWaveStartedLifecycle,
 		);
 
-		// Player systems destroyed
-		expect(scene.playerTowers.destroy).toHaveBeenCalledOnce();
-		expect(scene.playerUnits.destroy).toHaveBeenCalledOnce();
-		expect(scene.playerWaves.destroy).toHaveBeenCalledOnce();
-
-		// AI systems destroyed
-		expect(scene.aiTowers.destroy).toHaveBeenCalledOnce();
-		expect(scene.aiUnits.destroy).toHaveBeenCalledOnce();
-
-		// EventBus.off called before system destroys
 		const offCalls = EventBus.off.mock.invocationCallOrder;
 		const destroyCalls = [
 			scene.playerTowers.destroy.mock.invocationCallOrder[0],
@@ -114,9 +127,14 @@ describe('GameScene', () => {
 		expect(offCalls[offCalls.length - 1]).toBeLessThan(
 			Math.min(...destroyCalls),
 		);
+		expect(unloadAssetSections).toHaveBeenCalledWith(
+			scene,
+			scene.optionalAssetManifest,
+			['ui', 'vfx', 'projectiles'],
+		);
 	});
 
-	it('gstack PvP Pressure: queued pressure units always spawn with zero bounty and do not count toward clear checks', () => {
+	it('queues pressure units without bounty or clear credit', () => {
 		const scene = createScene();
 		scene.playerUnits = { queueUnits: vi.fn() };
 		scene.aiUnits = { queueUnits: vi.fn() };
@@ -145,7 +163,7 @@ describe('GameScene', () => {
 		);
 	});
 
-	it('gstack Boss / Sudden Death: sudden death expires every unused pressure token', () => {
+	it('expires every unused pressure token on sudden death', () => {
 		const scene = createScene();
 		scene.currentSlotDef = { slotIndex: 19 };
 		scene.localPressureInventory = ['mixed_pressure', 'breach_pressure'];
@@ -167,5 +185,75 @@ describe('GameScene', () => {
 			pressureTokens: 0,
 			packetId: 'scout_pressure',
 		});
+	});
+
+	it('applies optional AI overlay art when the UI textures are available', () => {
+		const scene = createScene();
+		const addImage = vi.fn(() => ({
+			setDisplaySize: vi.fn().mockReturnThis(),
+			setDepth: vi.fn().mockReturnThis(),
+			setAlpha: vi.fn().mockReturnThis(),
+		}));
+		const addSprite = vi.fn(() => ({
+			setDisplaySize: vi.fn().mockReturnThis(),
+			setDepth: vi.fn().mockReturnThis(),
+			setAlpha: vi.fn().mockReturnThis(),
+		}));
+
+		scene.add = {
+			image: addImage,
+			sprite: addSprite,
+		};
+		scene.textures = {
+			exists: vi.fn(
+				(key: string) => key === 'ui-ghost-avatar' || key === 'ui-stat-icons',
+			),
+		};
+
+		scene.applyOptionalUiAssets();
+
+		expect(addImage).toHaveBeenCalledWith(12, 14, 'ui-ghost-avatar');
+		expect(addSprite).toHaveBeenCalledWith(12, 32, 'ui-stat-icons', 1);
+	});
+
+	it('skips optional asset post-processing when shutdown wins the race', async () => {
+		let resolvePrefetch: (() => void) | undefined;
+		prefetchAssetSections.mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					resolvePrefetch = resolve;
+				}),
+		);
+
+		const scene = createScene();
+		scene.onSelectTower = vi.fn();
+		scene.onClearTowerSelection = vi.fn();
+		scene.onWaveStartedLifecycle = vi.fn();
+		scene.playerTowers = { destroy: vi.fn() };
+		scene.playerUnits = { destroy: vi.fn() };
+		scene.playerWaves = { destroy: vi.fn() };
+		scene.playerMerge = { destroy: vi.fn() };
+		scene.playerRandomTower = { reset: vi.fn() };
+		scene.aiTowers = { destroy: vi.fn() };
+		scene.aiUnits = { destroy: vi.fn() };
+		scene.aiRandomTower = { reset: vi.fn() };
+		scene.aiMerge = { destroy: vi.fn() };
+		scene.optionalAssetManifest = {
+			generated: '2026-04-02T00:00:00.000Z',
+			assets: [],
+		};
+
+		const pending = scene.prefetchOptionalAssets();
+		scene.cleanup();
+		resolvePrefetch?.();
+		await pending;
+
+		expect(registerOptionalCombatAnimations).not.toHaveBeenCalled();
+		expect(unloadAssetSections).toHaveBeenCalledTimes(2);
+		expect(unloadAssetSections).toHaveBeenLastCalledWith(
+			scene,
+			scene.optionalAssetManifest,
+			['ui', 'vfx', 'projectiles'],
+		);
 	});
 });

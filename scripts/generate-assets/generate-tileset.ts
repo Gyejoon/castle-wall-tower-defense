@@ -702,8 +702,11 @@ export async function generate(): Promise<ManifestEntry[]> {
   saveCanvas(canvas, `${OUTPUT_DIR}/tileset.png`);
   entries.push({
     key: 'tileset',
-    type: 'image',
+    type: 'spritesheet',
     path: 'assets/tiles/tileset.png',
+    frameWidth: TILE,
+    frameHeight: TILE,
+    frameCount: TILE_DRAWERS.length,
   });
 
   return entries;

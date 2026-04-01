@@ -16,7 +16,7 @@ const supportsWebP = (() => {
 		if (
 			typeof window === 'undefined' ||
 			typeof document === 'undefined' ||
-			typeof process !== 'undefined'
+			typeof (globalThis as Record<string, unknown>).process !== 'undefined'
 		) {
 			return false;
 		}

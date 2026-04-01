@@ -73,6 +73,12 @@ vi.mock('phaser', () => ({
 	},
 }));
 
+vi.mock('phaser3-rex-plugins/plugins/drag.js', () => ({
+	default: class Drag {
+		destroy() {}
+	},
+}));
+
 function createGraphics() {
 	return {
 		setDepth: vi.fn().mockReturnThis(),

@@ -21,6 +21,7 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import Phaser from 'phaser';
+import Drag from 'phaser3-rex-plugins/plugins/drag.js';
 import {
 	getCachedAssetManifest,
 	OPTIONAL_ASSET_SECTIONS,
@@ -1177,15 +1178,14 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private setupTowerDragController(): void {
-		const plugin = this.plugins?.get?.('rexDrag');
-		if (!plugin || typeof (plugin as { add?: unknown }).add !== 'function') {
-			return;
-		}
-		const dragPlugin = plugin as unknown as {
+		const dragPlugin: {
 			add: (
 				gameObject: Phaser.GameObjects.Image,
 				config?: Record<string, unknown>,
 			) => { destroy?: () => void };
+		} = {
+			add: (gameObject, config) =>
+				new Drag(gameObject, config) as { destroy?: () => void },
 		};
 
 		this.playerTowerDragController = new TowerDragController({

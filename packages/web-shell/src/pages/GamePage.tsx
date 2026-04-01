@@ -316,6 +316,15 @@ export function GamePage() {
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
+	const handleLeaveMatch = () => {
+		if (
+			window.confirm(
+				'진행 중인 전투를 나가시겠습니까? 현재 매치는 즉시 종료됩니다.',
+			)
+		) {
+			enterLobby();
+		}
+	};
 
 	return (
 		<div
@@ -415,7 +424,7 @@ export function GamePage() {
 						<PixelButton
 							variant="danger"
 							style={{ fontSize: '8px', padding: '4px 10px', minWidth: 'auto' }}
-							onClick={enterLobby}
+							onClick={handleLeaveMatch}
 						>
 							나가기
 						</PixelButton>
@@ -479,21 +488,21 @@ export function GamePage() {
 						</div>
 					)}
 
-				{myEmote && (
-					<EmoteBubble
-						emoteId={myEmote.id}
-						onDone={clearMyEmote}
-						position="right"
-					/>
-				)}
+					{myEmote && (
+						<EmoteBubble
+							emoteId={myEmote.id}
+							onDone={clearMyEmote}
+							position="right"
+						/>
+					)}
 
-				{opponentEmote && (
-					<EmoteBubble
-						emoteId={opponentEmote.id}
-						onDone={clearOpponentEmote}
-						position="left"
-					/>
-				)}
+					{opponentEmote && (
+						<EmoteBubble
+							emoteId={opponentEmote.id}
+							onDone={clearOpponentEmote}
+							position="left"
+						/>
+					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
 						<div

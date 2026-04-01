@@ -50,4 +50,15 @@ describe('GamePage regression', () => {
 		expect(confirmSpy).toHaveBeenCalledTimes(2);
 		expect(useGameStore.getState().runStatus).toBe('lobby');
 	});
+
+	it('Regression: ISSUE-002 — 하단 패널이 남는 높이를 모두 먹지 않는다', () => {
+		const view = render(<GamePage />);
+		const panel = view.getByTestId('bottom-panel') as HTMLDivElement;
+
+		// Regression: ISSUE-002 — tall 화면에서 하단 패널이 flex: 1 + space-between 으로
+		// 남는 높이를 전부 차지해 큰 죽은 공간을 만들던 문제
+		// Found by /qa on 2026-04-02
+		expect(panel.style.flex).toBe('0 0 auto');
+		expect(panel.style.justifyContent).toBe('flex-start');
+	});
 });

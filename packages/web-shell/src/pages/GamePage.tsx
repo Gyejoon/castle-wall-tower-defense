@@ -340,7 +340,7 @@ export function GamePage() {
 				style={{
 					width: '100%',
 					maxWidth: '430px',
-					height: '100%',
+					height: 'auto',
 					display: 'flex',
 					flexDirection: 'column',
 					background: colors.bg,
@@ -439,7 +439,6 @@ export function GamePage() {
 						position: 'relative',
 						overflow: 'hidden',
 						flexShrink: 1,
-						minHeight: 0,
 						background:
 							'linear-gradient(180deg, rgba(13,26,42,0.48) 0%, rgba(26,18,8,0.4) 100%)',
 					}}
@@ -573,275 +572,276 @@ export function GamePage() {
 				</div>
 
 				<div
+					data-testid="bottom-panel"
 					style={{
-						flex: 1,
+						flex: '0 0 auto',
 						padding: '12px',
 						background: 'rgba(42, 32, 16, 0.94)',
 						borderTop: `1px solid ${colors.border}`,
 						display: 'flex',
 						flexDirection: 'column',
-						justifyContent: 'space-between',
+						justifyContent: 'flex-start',
 						gap: '8px',
 						minHeight: '80px',
 					}}
 				>
-				<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${(lives / 20) * 100}%`,
-									`linear-gradient(90deg, ${colors.danger}, rgba(192,48,32,0.55))`,
-									'left',
-								)}
-							/>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${(lives / 20) * 100}%`,
+										`linear-gradient(90deg, ${colors.danger}, rgba(192,48,32,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.danger,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{lives}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								HP
+							</span>
+							<span
+								style={{
+									color: colors.danger,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentHp}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${(opponentHp / 20) * 100}%`,
+										`linear-gradient(270deg, rgba(192,48,32,0.55), rgba(192,48,32,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
 						</div>
-						<span
-							style={{
-								color: colors.danger,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-							}}
-						>
-							{lives}
-						</span>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-							}}
-						>
-							HP
-						</span>
-						<span
-							style={{
-								color: colors.danger,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentHp}
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${(opponentHp / 20) * 100}%`,
-									`linear-gradient(270deg, rgba(192,48,32,0.55), rgba(192,48,32,0.2))`,
-									'right',
-								)}
-							/>
+
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (gold / 500) * 100)}%`,
+										`linear-gradient(90deg, ${colors.gold}, rgba(240,208,96,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.gold,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{gold}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								골드
+							</span>
+							<span
+								style={{
+									color: colors.gold,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentGold}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (opponentGold / 500) * 100)}%`,
+										`linear-gradient(270deg, rgba(240,208,96,0.55), rgba(240,208,96,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
 						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
+
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (playerTowerCount / 10) * 100)}%`,
+										`linear-gradient(90deg, ${colors.info}, rgba(91,200,232,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.info,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{playerTowerCount}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								타워
+							</span>
+							<span
+								style={{
+									color: colors.info,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentTowerCount}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (opponentTowerCount / 10) * 100)}%`,
+										`linear-gradient(270deg, rgba(91,200,232,0.55), rgba(91,200,232,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
+						</div>
 					</div>
 
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${Math.min(100, (gold / 500) * 100)}%`,
-									`linear-gradient(90deg, ${colors.gold}, rgba(240,208,96,0.55))`,
-									'left',
-								)}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.gold,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-							}}
-						>
-							{gold}
-						</span>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-							}}
-						>
-							골드
-						</span>
-						<span
-							style={{
-								color: colors.gold,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentGold}
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${Math.min(100, (opponentGold / 500) * 100)}%`,
-									`linear-gradient(270deg, rgba(240,208,96,0.55), rgba(240,208,96,0.2))`,
-									'right',
-								)}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
+					<div
+						style={{
+							display: 'flex',
+							gap: '6px',
+							overflow: 'hidden',
+						}}
+					>
+						{EMOTES.map((emote) => (
+							<button
+								key={emote.id}
+								type="button"
+								onClick={() => sendEmote(emote.id)}
+								style={{
+									flex: 1,
+									background: 'rgba(42,32,16,0.88)',
+									border: `1px solid ${colors.border}`,
+									boxShadow: '2px 2px 0px rgba(0,0,0,0.2)',
+									padding: '8px 2px',
+									cursor: 'pointer',
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									gap: '3px',
+									color: colors.textSecondary,
+									fontSize: '7px',
+									fontFamily: fonts.pixel,
+								}}
+							>
+								<span style={{ fontSize: '16px' }}>{emote.emoji}</span>
+								<span>{emote.text}</span>
+							</button>
+						))}
 					</div>
-
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${Math.min(100, (playerTowerCount / 10) * 100)}%`,
-									`linear-gradient(90deg, ${colors.info}, rgba(91,200,232,0.55))`,
-									'left',
-								)}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.info,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-							}}
-						>
-							{playerTowerCount}
-						</span>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-							}}
-						>
-							타워
-						</span>
-						<span
-							style={{
-								color: colors.info,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentTowerCount}
-						</span>
-						<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-							<div
-								style={getFillStyle(
-									`${Math.min(100, (opponentTowerCount / 10) * 100)}%`,
-									`linear-gradient(270deg, rgba(91,200,232,0.55), rgba(91,200,232,0.2))`,
-									'right',
-								)}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
-					</div>
-				</div>
-
-				<div
-					style={{
-						display: 'flex',
-						gap: '6px',
-						overflow: 'hidden',
-					}}
-				>
-					{EMOTES.map((emote) => (
-						<button
-							key={emote.id}
-							type="button"
-							onClick={() => sendEmote(emote.id)}
-							style={{
-								flex: 1,
-								background: 'rgba(42,32,16,0.88)',
-								border: `1px solid ${colors.border}`,
-								boxShadow: '2px 2px 0px rgba(0,0,0,0.2)',
-								padding: '8px 2px',
-								cursor: 'pointer',
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								gap: '3px',
-								color: colors.textSecondary,
-								fontSize: '7px',
-								fontFamily: fonts.pixel,
-							}}
-						>
-							<span style={{ fontSize: '16px' }}>{emote.emoji}</span>
-							<span>{emote.text}</span>
-						</button>
-					))}
-				</div>
 				</div>
 			</div>
 		</div>

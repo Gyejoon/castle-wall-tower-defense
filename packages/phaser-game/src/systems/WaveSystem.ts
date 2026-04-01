@@ -136,8 +136,14 @@ export class WaveSystem {
 	private getNextSlot(): WaveDef | null {
 		const nextIndex = this.currentSlotIndex;
 		const slot = WAVE_DEFS[nextIndex];
-		if (!slot) return null;
-		if (slot.slotIndex > this.maxWaves + 1) return null;
+		if (!slot) {
+			this.phase = 'ended';
+			return null;
+		}
+		if (slot.slotIndex > this.maxWaves + 1) {
+			this.phase = 'ended';
+			return null;
+		}
 		return slot;
 	}
 

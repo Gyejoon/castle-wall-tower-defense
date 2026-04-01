@@ -134,7 +134,6 @@ export class PathfindingSystem {
 
 	invalidateCache(): void {
 		this.cachedPath = null;
-		this.generation++;
 	}
 
 	getCachedPath(): Position[] | null {

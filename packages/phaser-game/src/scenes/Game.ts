@@ -82,6 +82,7 @@ export class GameScene extends Phaser.Scene {
 	private queuedPressureForPlayer = new Map<number, PressurePacketId>();
 	private queuedPressureForOpponent = new Map<number, PressurePacketId>();
 	private slotClearState: SlotClearState | null = null;
+	private pressureExpired = false;
 	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -677,9 +678,9 @@ export class GameScene extends Phaser.Scene {
 		}
 
 		const elapsedSec = Math.floor(this.playerWaves.getElapsedMs() / 1000);
-		const nextSlot = WAVE_DEFS.find(
-			(slot) => slot.slotIndex === this.currentSlotDef.slotIndex + 1,
-		);
+		const nextSlot = WAVE_DEFS[this.currentSlotDef.slotIndex] as
+			| (typeof WAVE_DEFS)[number]
+			| undefined;
 		const remainingSec = nextSlot
 			? Math.max(0, nextSlot.startAtSec - elapsedSec)
 			: 0;
@@ -1024,7 +1025,6 @@ export class GameScene extends Phaser.Scene {
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
-		const exitedUnitIds: string[] = [];
 
 		for (const evt of damageEvents) {
 			const result = unitSystem.applyDamage(evt.unitId, evt.damage);
@@ -1042,11 +1042,7 @@ export class GameScene extends Phaser.Scene {
 		}
 
 		const { reachedExit } = unitSystem.update(time, delta);
-		for (const uid of reachedExit) {
-			exitedUnitIds.push(uid);
-		}
-
-		return exitedUnitIds;
+		return reachedExit;
 	}
 
 	update(time: number, delta: number) {
@@ -1056,10 +1052,12 @@ export class GameScene extends Phaser.Scene {
 		this.tickBuyCooldown(delta);
 		this.updateAIRealtime(delta);
 		if (
+			!this.pressureExpired &&
 			Math.floor(this.playerWaves.getElapsedMs() / 1000) >=
 				PRESSURE_EXPIRES_AT_SEC &&
 			this.currentSlotDef.kind === 'sudden_death'
 		) {
+			this.pressureExpired = true;
 			this.expirePressureAtSuddenDeath();
 		}
 

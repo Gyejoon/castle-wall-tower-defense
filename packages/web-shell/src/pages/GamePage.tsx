@@ -5,13 +5,13 @@ import {
 	type PressurePacketId,
 	type TowerDef,
 } from '@gld/shared';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import { EmoteBubble } from '../components/EmoteBubble';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useEmoteStore } from '../stores/emoteStore';
 import { useGameStore } from '../stores/gameStore';
-import { colors } from '../styles/tokens';
+import { colors, fonts } from '../styles/tokens';
 
 function formatPressureLabel(packetId: PressurePacketId | null) {
 	switch (packetId) {
@@ -38,28 +38,79 @@ function getToastStyle(tone: 'info' | 'success' | 'warning' | 'error') {
 		case 'success':
 			return {
 				color: colors.success,
-				background: 'rgba(44,182,125,0.14)',
-				border: 'rgba(44,182,125,0.35)',
+				background: 'rgba(42,32,16,0.94)',
+				border: colors.success,
 			};
 		case 'warning':
 			return {
 				color: colors.gold,
-				background: 'rgba(226,183,20,0.14)',
-				border: 'rgba(226,183,20,0.3)',
+				background: 'rgba(42,32,16,0.94)',
+				border: colors.gold,
 			};
 		case 'error':
 			return {
 				color: colors.danger,
-				background: 'rgba(229,49,112,0.14)',
-				border: 'rgba(229,49,112,0.35)',
+				background: 'rgba(42,32,16,0.94)',
+				border: colors.danger,
 			};
 		default:
 			return {
 				color: colors.info,
-				background: 'rgba(91,200,232,0.14)',
-				border: 'rgba(91,200,232,0.3)',
+				background: 'rgba(42,32,16,0.94)',
+				border: colors.info,
 			};
 	}
+}
+
+function getHudChipStyle({
+	color,
+	background,
+	minWidth,
+}: {
+	color: string;
+	background: string;
+	minWidth?: CSSProperties['minWidth'];
+}): CSSProperties {
+	return {
+		padding: '5px 7px',
+		background,
+		color,
+		fontFamily: fonts.pixel,
+		fontSize: '8px',
+		border: `1px solid ${colors.border}`,
+		boxShadow: `2px 2px 0px rgba(0,0,0,0.25)`,
+		flexShrink: 0,
+		minWidth,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+	};
+}
+
+function getTrackStyle(background: string): CSSProperties {
+	return {
+		flex: 1,
+		height: '10px',
+		background,
+		overflow: 'hidden',
+		position: 'relative',
+		border: `1px solid ${colors.border}`,
+	};
+}
+
+function getFillStyle(
+	width: string,
+	background: string,
+	alignment: 'left' | 'right',
+): CSSProperties {
+	return {
+		position: 'absolute',
+		top: 0,
+		bottom: 0,
+		width,
+		background,
+		transition: 'width 0.3s',
+		...(alignment === 'left' ? { left: 0 } : { right: 0 }),
+	};
 }
 
 export function GamePage() {
@@ -265,568 +316,532 @@ export function GamePage() {
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
+	const handleLeaveMatch = () => {
+		if (
+			window.confirm(
+				'진행 중인 전투를 나가시겠습니까? 현재 매치는 즉시 종료됩니다.',
+			)
+		) {
+			enterLobby();
+		}
+	};
 
 	return (
 		<div
 			style={{
+				width: '100%',
 				height: '100%',
 				display: 'flex',
-				flexDirection: 'column',
-				background: '#1a1a2e',
+				justifyContent: 'center',
+				background: colors.bg,
 			}}
 		>
 			<div
-				data-testid="top-hud"
-				style={{
-					padding: '8px 10px',
-					display: 'flex',
-					alignItems: 'center',
-					gap: '6px',
-					flexWrap: 'nowrap',
-					whiteSpace: 'nowrap',
-					overflow: 'hidden',
-					background:
-						'linear-gradient(180deg, rgba(20,20,36,0.98) 0%, rgba(26,26,46,0.95) 100%)',
-					borderBottom: '1px solid rgba(127,90,240,0.15)',
-					flexShrink: 0,
-				}}
-			>
-				<div
-					style={{
-						padding: '4px 7px',
-						borderRadius: '10px',
-						background: 'rgba(229,49,112,0.15)',
-						color: colors.danger,
-						fontSize: '8px',
-						flexShrink: 0,
-					}}
-				>
-					HP {lives}
-				</div>
-				<div
-					style={{
-						padding: '4px 7px',
-						borderRadius: '10px',
-						background: 'rgba(226,183,20,0.15)',
-						color: colors.gold,
-						fontSize: '8px',
-						flexShrink: 0,
-					}}
-				>
-					G {gold}
-				</div>
-				<div
-					data-testid="hud-timer"
-					style={{
-						padding: '4px 7px',
-						borderRadius: '10px',
-						background: combatHud.suddenDeath
-							? 'rgba(229,49,112,0.18)'
-							: combatHud.bossWarning || combatHud.phase === 'boss'
-								? 'rgba(226,183,20,0.15)'
-								: 'rgba(200,160,74,0.12)',
-						color: combatHud.suddenDeath
-							? colors.danger
-							: combatHud.bossWarning || combatHud.phase === 'boss'
-								? colors.gold
-								: colors.text,
-						fontSize: '8px',
-						minWidth: 0,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-					}}
-				>
-					{formatTimerLabel(combatHud.timerLabel)}
-				</div>
-				<div
-					data-testid="hud-pressure"
-					style={{
-						padding: '4px 7px',
-						borderRadius: '10px',
-						background:
-							combatHud.pressureTokens > 0
-								? 'rgba(91,200,232,0.16)'
-								: 'rgba(91,200,232,0.08)',
-						color: colors.info,
-						fontSize: '8px',
-						flexShrink: 0,
-					}}
-				>
-					압박 {combatHud.pressureTokens}
-				</div>
-				<div
-					data-testid="hud-next-pressure"
-					style={{
-						padding: '4px 7px',
-						borderRadius: '10px',
-						background: 'rgba(42,32,16,0.6)',
-						color: colors.textSecondary,
-						fontSize: '8px',
-						minWidth: 0,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-					}}
-				>
-					다음 {formatPressureLabel(combatHud.queuedPressureEffect)}
-				</div>
-
-				<div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-					<PixelButton
-						variant="danger"
-						style={{ fontSize: '8px', padding: '4px 10px', minWidth: 'auto' }}
-						onClick={enterLobby}
-					>
-						나가기
-					</PixelButton>
-				</div>
-			</div>
-
-			<div
 				style={{
 					width: '100%',
-					aspectRatio: '640 / 688',
-					maxHeight: 'calc(100vh - 140px)',
-					position: 'relative',
+					maxWidth: '430px',
+					height: 'auto',
+					display: 'flex',
+					flexDirection: 'column',
+					background: colors.bg,
+					boxShadow: '0 0 40px rgba(0,0,0,0.5)',
 					overflow: 'hidden',
-					flexShrink: 1,
-					minHeight: 0,
 				}}
 			>
-				<PhaserGame key={runId} />
-
-				{!gameReady && (
+				<div
+					data-testid="top-hud"
+					style={{
+						padding: '10px 12px',
+						display: 'flex',
+						alignItems: 'center',
+						gap: '6px',
+						flexWrap: 'nowrap',
+						whiteSpace: 'nowrap',
+						overflow: 'hidden',
+						background: 'rgba(42, 32, 16, 0.92)',
+						borderBottom: `1px solid ${colors.border}`,
+						flexShrink: 0,
+					}}
+				>
 					<div
-						style={{
-							position: 'absolute',
-							inset: 0,
-							background: 'rgba(4, 5, 12, 0.72)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
+						style={getHudChipStyle({
+							color: colors.danger,
+							background: 'rgba(192,48,32,0.16)',
+						})}
+					>
+						HP {lives}
+					</div>
+					<div
+						style={getHudChipStyle({
+							color: colors.gold,
+							background: 'rgba(240,208,96,0.16)',
+						})}
+					>
+						G {gold}
+					</div>
+					<div
+						data-testid="hud-timer"
+						style={getHudChipStyle({
+							color: combatHud.suddenDeath
+								? colors.danger
+								: combatHud.bossWarning || combatHud.phase === 'boss'
+									? colors.gold
+									: colors.text,
+							background: combatHud.suddenDeath
+								? 'rgba(192,48,32,0.16)'
+								: combatHud.bossWarning || combatHud.phase === 'boss'
+									? 'rgba(240,208,96,0.16)'
+									: 'rgba(42,32,16,0.82)',
+							minWidth: 0,
+						})}
+					>
+						{formatTimerLabel(combatHud.timerLabel)}
+					</div>
+					<div
+						data-testid="hud-pressure"
+						style={getHudChipStyle({
+							color: colors.info,
+							background:
+								combatHud.pressureTokens > 0
+									? 'rgba(91,200,232,0.16)'
+									: 'rgba(42,32,16,0.82)',
+						})}
+					>
+						압박 {combatHud.pressureTokens}
+					</div>
+					<div
+						data-testid="hud-next-pressure"
+						style={getHudChipStyle({
 							color: colors.textSecondary,
-							fontSize: '9px',
-							zIndex: 2,
-						}}
+							background: 'rgba(42,32,16,0.82)',
+							minWidth: 0,
+						})}
 					>
-						그리드 부팅 중...
+						다음 {formatPressureLabel(combatHud.queuedPressureEffect)}
 					</div>
-				)}
 
-				{toast && toastStyle && (
-					<div
-						style={{
-							position: 'absolute',
-							top: 12,
-							left: '50%',
-							transform: 'translateX(-50%)',
-							zIndex: 4,
-							padding: '8px 12px',
-							borderRadius: '12px',
-							border: `1px solid ${toastStyle.border}`,
-							background: toastStyle.background,
-							color: toastStyle.color,
-							fontSize: '8px',
-							maxWidth: 'min(80vw, 280px)',
-							textAlign: 'center',
-						}}
-					>
-						{toast.message}
+					<div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+						<PixelButton
+							variant="danger"
+							style={{ fontSize: '8px', padding: '4px 10px', minWidth: 'auto' }}
+							onClick={handleLeaveMatch}
+						>
+							나가기
+						</PixelButton>
 					</div>
-				)}
+				</div>
 
-				{myEmote && (
-					<EmoteBubble
-						emoteId={myEmote.id}
-						onDone={clearMyEmote}
-						position="right"
-					/>
-				)}
+				<div
+					style={{
+						width: '100%',
+						aspectRatio: '640 / 688',
+						maxHeight: 'calc(100vh - 148px)',
+						position: 'relative',
+						overflow: 'hidden',
+						flexShrink: 1,
+						background:
+							'linear-gradient(180deg, rgba(13,26,42,0.48) 0%, rgba(26,18,8,0.4) 100%)',
+					}}
+				>
+					<PhaserGame key={runId} />
 
-				{opponentEmote && (
-					<EmoteBubble
-						emoteId={opponentEmote.id}
-						onDone={clearOpponentEmote}
-						position="left"
-					/>
-				)}
-
-				{(runStatus === 'victory' || runStatus === 'defeat') && (
-					<div
-						style={{
-							position: 'absolute',
-							inset: 0,
-							zIndex: 3,
-							background: 'rgba(6, 8, 16, 0.82)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							padding: '20px',
-						}}
-					>
+					{!gameReady && (
 						<div
 							style={{
-								width: 'min(100%, 360px)',
-								padding: '20px',
-								borderRadius: '20px',
-								background: 'rgba(12, 15, 26, 0.96)',
-								border: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+								position: 'absolute',
+								inset: 0,
+								background: 'rgba(26, 18, 8, 0.76)',
 								display: 'flex',
-								flexDirection: 'column',
-								gap: '14px',
+								alignItems: 'center',
+								justifyContent: 'center',
+								color: colors.textSecondary,
+								fontFamily: fonts.pixel,
+								fontSize: '9px',
+								zIndex: 2,
+							}}
+						>
+							그리드 부팅 중...
+						</div>
+					)}
+
+					{toast && toastStyle && (
+						<div
+							style={{
+								position: 'absolute',
+								top: 12,
+								left: '50%',
+								transform: 'translateX(-50%)',
+								zIndex: 4,
+								padding: '8px 12px',
+								border: `2px solid ${toastStyle.border}`,
+								boxShadow: `3px 3px 0px rgba(0,0,0,0.28)`,
+								background: toastStyle.background,
+								color: toastStyle.color,
+								fontFamily: fonts.pixel,
+								fontSize: '8px',
+								maxWidth: 'min(80vw, 280px)',
 								textAlign: 'center',
 							}}
 						>
-							<h2
-								style={{
-									color:
-										runStatus === 'victory' ? colors.success : colors.danger,
-									fontSize: '12px',
-								}}
-							>
-								{resultTitle}
-							</h2>
-							<p
-								style={{
-									color: colors.textSecondary,
-									fontSize: '8px',
-									lineHeight: 1.8,
-								}}
-							>
-								{runStatus === 'victory'
-									? '상대를 물리치고 왕국을 지켰습니다!'
-									: '방어선이 무너졌습니다.'}
-							</p>
-							<PixelButton
-								variant="gold"
-								style={{ width: '100%' }}
-								onClick={resetRun}
-							>
-								다시 시작
-							</PixelButton>
-							<PixelButton
-								variant="secondary"
-								style={{ width: '100%' }}
-								onClick={enterLobby}
-							>
-								로비로 돌아가기
-							</PixelButton>
+							{toast.message}
 						</div>
-					</div>
-				)}
-			</div>
+					)}
 
-			<div
-				style={{
-					flex: 1,
-					padding: '12px',
-					background:
-						'linear-gradient(180deg, rgba(26,26,46,0.95) 0%, rgba(20,20,36,0.98) 100%)',
-					borderTop: '1px solid rgba(127,90,240,0.15)',
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'space-between',
-					gap: '8px',
-					minHeight: '80px',
-				}}
-			>
-				<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(229,49,112,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
-							}}
-						>
-							<div
-								style={{
-									position: 'absolute',
-									left: 0,
-									top: 0,
-									bottom: 0,
-									width: `${(lives / 20) * 100}%`,
-									background: `linear-gradient(90deg, ${colors.danger}, rgba(229,49,112,0.6))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
-								}}
-							/>
-						</div>
-						<span
-							style={{ color: colors.danger, fontSize: '7px', width: '20px' }}
-						>
-							{lives}
-						</span>
-						<span style={{ color: colors.textSecondary, fontSize: '7px' }}>
-							HP
-						</span>
-						<span
-							style={{
-								color: colors.danger,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentHp}
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(229,49,112,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
-							}}
-						>
-							<div
-								style={{
-									position: 'absolute',
-									right: 0,
-									top: 0,
-									bottom: 0,
-									width: `${(opponentHp / 20) * 100}%`,
-									background: `linear-gradient(270deg, rgba(229,49,112,0.4), rgba(229,49,112,0.15))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
-								}}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
-					</div>
+					{myEmote && (
+						<EmoteBubble
+							emoteId={myEmote.id}
+							onDone={clearMyEmote}
+							position="right"
+						/>
+					)}
 
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(226,183,20,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
-							}}
-						>
-							<div
-								style={{
-									position: 'absolute',
-									left: 0,
-									top: 0,
-									bottom: 0,
-									width: `${Math.min(100, (gold / 500) * 100)}%`,
-									background: `linear-gradient(90deg, ${colors.gold}, rgba(226,183,20,0.6))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
-								}}
-							/>
-						</div>
-						<span
-							style={{ color: colors.gold, fontSize: '7px', width: '20px' }}
-						>
-							{gold}
-						</span>
-						<span style={{ color: colors.textSecondary, fontSize: '7px' }}>
-							골드
-						</span>
-						<span
-							style={{
-								color: colors.gold,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentGold}
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(226,183,20,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
-							}}
-						>
-							<div
-								style={{
-									position: 'absolute',
-									right: 0,
-									top: 0,
-									bottom: 0,
-									width: `${Math.min(100, (opponentGold / 500) * 100)}%`,
-									background: `linear-gradient(270deg, rgba(226,183,20,0.4), rgba(226,183,20,0.15))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
-								}}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
-					</div>
+					{opponentEmote && (
+						<EmoteBubble
+							emoteId={opponentEmote.id}
+							onDone={clearOpponentEmote}
+							position="left"
+						/>
+					)}
 
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<span
-							style={{
-								color: colors.text,
-								fontSize: '7px',
-								width: '24px',
-								textAlign: 'right',
-							}}
-						>
-							나
-						</span>
+					{(runStatus === 'victory' || runStatus === 'defeat') && (
 						<div
 							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(127,90,240,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
+								position: 'absolute',
+								inset: 0,
+								zIndex: 3,
+								background: 'rgba(10, 8, 4, 0.82)',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								padding: '20px',
 							}}
 						>
 							<div
 								style={{
-									position: 'absolute',
-									left: 0,
-									top: 0,
-									bottom: 0,
-									width: `${Math.min(100, (playerTowerCount / 10) * 100)}%`,
-									background: `linear-gradient(90deg, ${colors.info}, rgba(91,200,232,0.6))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
+									width: 'min(100%, 360px)',
+									padding: '20px',
+									background: 'rgba(42, 32, 16, 0.96)',
+									border: `2px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+									boxShadow: `6px 6px 0px ${colors.border}`,
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '14px',
+									textAlign: 'center',
 								}}
-							/>
+							>
+								<h2
+									style={{
+										color:
+											runStatus === 'victory' ? colors.success : colors.danger,
+										fontFamily: fonts.pixel,
+										fontSize: '12px',
+										fontWeight: 400,
+									}}
+								>
+									{resultTitle}
+								</h2>
+								<p
+									style={{
+										color: colors.textSecondary,
+										fontFamily: fonts.pixel,
+										fontSize: '8px',
+										lineHeight: 1.8,
+									}}
+								>
+									{runStatus === 'victory'
+										? '상대를 물리치고 왕국을 지켰습니다!'
+										: '방어선이 무너졌습니다.'}
+								</p>
+								<PixelButton
+									variant="gold"
+									style={{ width: '100%' }}
+									onClick={resetRun}
+								>
+									다시 시작
+								</PixelButton>
+								<PixelButton
+									variant="secondary"
+									style={{ width: '100%' }}
+									onClick={enterLobby}
+								>
+									로비로 돌아가기
+								</PixelButton>
+							</div>
 						</div>
-						<span
-							style={{ color: colors.info, fontSize: '7px', width: '20px' }}
-						>
-							{playerTowerCount}
-						</span>
-						<span style={{ color: colors.textSecondary, fontSize: '7px' }}>
-							타워
-						</span>
-						<span
-							style={{
-								color: colors.info,
-								fontSize: '7px',
-								width: '20px',
-								textAlign: 'right',
-								opacity: 0.6,
-							}}
-						>
-							{opponentTowerCount}
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: '8px',
-								borderRadius: '4px',
-								background: 'rgba(127,90,240,0.1)',
-								overflow: 'hidden',
-								position: 'relative',
-							}}
-						>
-							<div
-								style={{
-									position: 'absolute',
-									right: 0,
-									top: 0,
-									bottom: 0,
-									width: `${Math.min(100, (opponentTowerCount / 10) * 100)}%`,
-									background: `linear-gradient(270deg, rgba(91,200,232,0.4), rgba(91,200,232,0.15))`,
-									borderRadius: '4px',
-									transition: 'width 0.3s',
-								}}
-							/>
-						</div>
-						<span
-							style={{
-								color: colors.textSecondary,
-								fontSize: '7px',
-								width: '24px',
-								opacity: 0.6,
-							}}
-						>
-							AI
-						</span>
-					</div>
+					)}
 				</div>
 
 				<div
+					data-testid="bottom-panel"
 					style={{
+						flex: '0 0 auto',
+						padding: '12px',
+						background: 'rgba(42, 32, 16, 0.94)',
+						borderTop: `1px solid ${colors.border}`,
 						display: 'flex',
-						gap: '6px',
-						overflow: 'hidden',
+						flexDirection: 'column',
+						justifyContent: 'flex-start',
+						gap: '8px',
+						minHeight: '80px',
 					}}
 				>
-					{EMOTES.map((emote) => (
-						<button
-							key={emote.id}
-							type="button"
-							onClick={() => sendEmote(emote.id)}
-							style={{
-								flex: 1,
-								background: 'rgba(42,32,16,0.6)',
-								border: '1px solid rgba(200,160,74,0.15)',
-								borderRadius: '8px',
-								padding: '8px 2px',
-								cursor: 'pointer',
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								gap: '3px',
-								color: colors.textSecondary,
-								fontSize: '7px',
-								fontFamily: "'Press Start 2P', cursive",
-							}}
-						>
-							<span style={{ fontSize: '16px' }}>{emote.emoji}</span>
-							<span>{emote.text}</span>
-						</button>
-					))}
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${(lives / 20) * 100}%`,
+										`linear-gradient(90deg, ${colors.danger}, rgba(192,48,32,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.danger,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{lives}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								HP
+							</span>
+							<span
+								style={{
+									color: colors.danger,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentHp}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${(opponentHp / 20) * 100}%`,
+										`linear-gradient(270deg, rgba(192,48,32,0.55), rgba(192,48,32,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
+						</div>
+
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (gold / 500) * 100)}%`,
+										`linear-gradient(90deg, ${colors.gold}, rgba(240,208,96,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.gold,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{gold}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								골드
+							</span>
+							<span
+								style={{
+									color: colors.gold,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentGold}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (opponentGold / 500) * 100)}%`,
+										`linear-gradient(270deg, rgba(240,208,96,0.55), rgba(240,208,96,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
+						</div>
+
+						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							<span
+								style={{
+									color: colors.text,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									textAlign: 'right',
+								}}
+							>
+								나
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (playerTowerCount / 10) * 100)}%`,
+										`linear-gradient(90deg, ${colors.info}, rgba(91,200,232,0.55))`,
+										'left',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.info,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+								}}
+							>
+								{playerTowerCount}
+							</span>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+								}}
+							>
+								타워
+							</span>
+							<span
+								style={{
+									color: colors.info,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '20px',
+									textAlign: 'right',
+									opacity: 0.6,
+								}}
+							>
+								{opponentTowerCount}
+							</span>
+							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
+								<div
+									style={getFillStyle(
+										`${Math.min(100, (opponentTowerCount / 10) * 100)}%`,
+										`linear-gradient(270deg, rgba(91,200,232,0.55), rgba(91,200,232,0.2))`,
+										'right',
+									)}
+								/>
+							</div>
+							<span
+								style={{
+									color: colors.textSecondary,
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									width: '24px',
+									opacity: 0.6,
+								}}
+							>
+								AI
+							</span>
+						</div>
+					</div>
+
+					<div
+						style={{
+							display: 'flex',
+							gap: '6px',
+							overflow: 'hidden',
+						}}
+					>
+						{EMOTES.map((emote) => (
+							<button
+								key={emote.id}
+								type="button"
+								onClick={() => sendEmote(emote.id)}
+								style={{
+									flex: 1,
+									background: 'rgba(42,32,16,0.88)',
+									border: `1px solid ${colors.border}`,
+									boxShadow: '2px 2px 0px rgba(0,0,0,0.2)',
+									padding: '8px 2px',
+									cursor: 'pointer',
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									gap: '3px',
+									color: colors.textSecondary,
+									fontSize: '7px',
+									fontFamily: fonts.pixel,
+								}}
+							>
+								<span style={{ fontSize: '16px' }}>{emote.emoji}</span>
+								<span>{emote.text}</span>
+							</button>
+						))}
+					</div>
 				</div>
 			</div>
 		</div>

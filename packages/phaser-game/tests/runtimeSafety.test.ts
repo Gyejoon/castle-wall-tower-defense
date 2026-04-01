@@ -142,13 +142,21 @@ describe('runtime safety fixes', () => {
 			}),
 		);
 
-		waveSystem.update(BOSS_WARNING_AT_SECS[0] * 1000 + 1);
+		// Advance in 5s chunks (delta cap is 5000ms)
+		const targetMs = BOSS_WARNING_AT_SECS[0] * 1000 + 1;
+		const step = 5000;
+		for (let t = 0; t < targetMs; t += step) {
+			waveSystem.update(Math.min(step, targetMs - t));
+		}
 		expect(emitSpy).toHaveBeenCalledWith('boss-warning', {
 			slotIndex: 8,
 			bossSlotIndex: 9,
 			startAtSec: BOSS_WARNING_AT_SECS[0],
 		});
-		waveSystem.update(30000);
+		// Advance another 30s to boss slot
+		for (let t = 0; t < 30000; t += step) {
+			waveSystem.update(Math.min(step, 30000 - t));
+		}
 		expect(emitSpy).toHaveBeenCalledWith(
 			'wave-started',
 			expect.objectContaining({

@@ -36,8 +36,9 @@ export class WaveSystem {
 	update(delta: number): void {
 		if (this.phase === 'ended') return;
 
+		const MAX_DELTA_MS = 5000;
 		const previousElapsedMs = this.elapsedMs;
-		this.elapsedMs += delta;
+		this.elapsedMs += Math.min(delta, MAX_DELTA_MS);
 
 		for (const warningSec of BOSS_WARNING_AT_SECS) {
 			const warningMs = warningSec * 1000;

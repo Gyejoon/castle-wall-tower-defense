@@ -139,6 +139,8 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	create() {
+		EventBus.removeAllListeners();
+
 		this.playerGrid = new GridManager(FOREST_GATE_MAP, ISO_CANVAS_H);
 		this.playerPathfinding = new PathfindingSystem();
 		this.playerTowers = new TowerSystem(

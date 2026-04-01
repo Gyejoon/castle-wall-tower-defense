@@ -152,7 +152,6 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	create() {
-		EventBus.removeAllListeners();
 		this.isCleaningUp = false;
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		this.playerGrid = new GridManager(FOREST_GATE_MAP, ISO_CANVAS_H);

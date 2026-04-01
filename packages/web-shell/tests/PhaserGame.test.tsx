@@ -88,4 +88,24 @@ describe('PhaserGame', () => {
 
 		expect(useGameStore.getState().gameReady).toBe(false);
 	});
+
+	it('registers the game-ready listener before starting Phaser', () => {
+		const { startGameSpy, listeners } = getEventBusHarness();
+
+		render(<PhaserGame />);
+
+		expect(listeners.get('game-ready')?.size ?? 0).toBe(1);
+		expect(startGameSpy).toHaveBeenCalledOnce();
+	});
+
+	it('flips gameReady when the game-ready event arrives', () => {
+		const { listeners } = getEventBusHarness();
+
+		render(<PhaserGame />);
+
+		const onReady = Array.from(listeners.get('game-ready') ?? [])[0];
+		onReady?.();
+
+		expect(useGameStore.getState().gameReady).toBe(true);
+	});
 });

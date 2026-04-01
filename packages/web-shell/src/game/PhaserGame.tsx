@@ -11,10 +11,9 @@ export function PhaserGame() {
 	useEffect(() => {
 		if (!containerRef.current || gameRef.current) return;
 
-		gameRef.current = startGame(containerRef.current);
-
 		const onReady = () => setGameReady(true);
 		EventBus.on('game-ready', onReady);
+		gameRef.current = startGame(containerRef.current);
 
 		return () => {
 			EventBus.off('game-ready', onReady);

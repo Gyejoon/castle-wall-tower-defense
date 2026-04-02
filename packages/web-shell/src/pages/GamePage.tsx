@@ -1,10 +1,5 @@
 import { EventBus } from '@gld/phaser-game';
-import {
-	EMOTES,
-	type PlacementFailureReason,
-	type PressurePacketId,
-	type TowerDef,
-} from '@gld/shared';
+import { EMOTES, type PlacementFailureReason, type TowerDef } from '@gld/shared';
 import { useEffect, type CSSProperties } from 'react';
 import { EmoteBubble } from '../components/EmoteBubble';
 import { PixelButton } from '../components/ui/PixelButton';
@@ -12,19 +7,6 @@ import { PhaserGame } from '../game/PhaserGame';
 import { useEmoteStore } from '../stores/emoteStore';
 import { useGameStore } from '../stores/gameStore';
 import { colors, fonts } from '../styles/tokens';
-
-function formatPressureLabel(packetId: PressurePacketId | null) {
-	switch (packetId) {
-		case 'scout_pressure':
-			return '정찰';
-		case 'mixed_pressure':
-			return '혼합';
-		case 'breach_pressure':
-			return '돌파';
-		default:
-			return '없음';
-	}
-}
 
 function formatTimerLabel(rawLabel: string) {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');
@@ -120,9 +102,6 @@ export function GamePage() {
 	const lives = useGameStore((s) => s.lives);
 	const gold = useGameStore((s) => s.gold);
 	const playerTowerCount = useGameStore((s) => s.playerTowerCount);
-	const opponentHp = useGameStore((s) => s.opponentHp);
-	const opponentGold = useGameStore((s) => s.opponentGold);
-	const opponentTowerCount = useGameStore((s) => s.opponentTowerCount);
 	const combatHud = useGameStore((s) => s.combatHud);
 	const toast = useGameStore((s) => s.toast);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
@@ -131,7 +110,6 @@ export function GamePage() {
 	const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
 	const setRolledTower = useGameStore((s) => s.setRolledTower);
 	const setPlayerTowerCount = useGameStore((s) => s.setPlayerTowerCount);
-	const setOpponentState = useGameStore((s) => s.setOpponentState);
 	const patchCombatHud = useGameStore((s) => s.patchCombatHud);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const clearToast = useGameStore((s) => s.clearToast);
@@ -148,10 +126,14 @@ export function GamePage() {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
 		const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
-		const onGameOver = (data: { winnerId: string }) => {
-			setRunStatus(data.winnerId === 'local' ? 'victory' : 'defeat');
+		const onGameOver = (data: {
+			result: 'victory' | 'defeat';
+		}) => {
+			setRunStatus(data.result);
 		};
 		const onWaveStarted = (data: {
+			wave: number;
+			totalWaves: number;
 			slotIndex: number;
 			phase: 'running' | 'boss' | 'sudden_death' | 'ended';
 			kind: 'normal' | 'pre_boss' | 'boss' | 'sudden_death' | 'hard_end';
@@ -188,13 +170,6 @@ export function GamePage() {
 		}) => {
 			setRolledTower(data.towerDef);
 		};
-		const onOpponentState = (data: {
-			gold: number;
-			hp: number;
-			towerCount: number;
-		}) => {
-			setOpponentState(data);
-		};
 		const onEmoteReceived = (data: { emoteId: string; playerId: string }) => {
 			if (data.playerId !== 'opponent') return;
 			receiveEmote(data.emoteId);
@@ -202,36 +177,6 @@ export function GamePage() {
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
 		const onResetRun = () => resetRun();
-		const onPressureEarned = (data: {
-			ownerId: string;
-			pressureTokens: number;
-			packetId: PressurePacketId;
-		}) => {
-			if (data.ownerId !== 'local') return;
-			patchCombatHud({ pressureTokens: data.pressureTokens });
-			pushToast(`압박 +1 (${formatPressureLabel(data.packetId)})`, 'success');
-		};
-		const onPressureQueued = (data: {
-			ownerId: string;
-			pressureTokens: number;
-			packetId: PressurePacketId;
-			targetSlotIndex: number;
-		}) => {
-			if (data.ownerId !== 'local') return;
-			patchCombatHud({
-				pressureTokens: data.pressureTokens,
-				queuedPressureEffect: data.packetId,
-			});
-			pushToast(`다음 압박 예약 ${data.targetSlotIndex}`, 'info');
-		};
-		const onPressureExpired = (data: {
-			ownerId: string;
-			pressureTokens: number;
-		}) => {
-			if (data.ownerId !== 'local') return;
-			patchCombatHud({ pressureTokens: data.pressureTokens });
-			pushToast('미사용 압박 소멸', 'warning');
-		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			pushToast('보스 경고', 'warning');
@@ -258,13 +203,9 @@ export function GamePage() {
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
 		EventBus.on('random-tower-rolled', onRandomTowerRolled);
-		EventBus.on('opponent-state', onOpponentState);
 		EventBus.on('emote-received', onEmoteReceived);
 		EventBus.on('player-tower-count', onPlayerTowerCount);
 		EventBus.on('request-reset-run', onResetRun);
-		EventBus.on('pressure-earned', onPressureEarned);
-		EventBus.on('pressure-queued', onPressureQueued);
-		EventBus.on('pressure-expired', onPressureExpired);
 		EventBus.on('boss-warning', onBossWarning);
 		EventBus.on('sudden-death-started', onSuddenDeathStarted);
 		EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
@@ -277,13 +218,9 @@ export function GamePage() {
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
 			EventBus.off('random-tower-rolled', onRandomTowerRolled);
-			EventBus.off('opponent-state', onOpponentState);
 			EventBus.off('emote-received', onEmoteReceived);
 			EventBus.off('player-tower-count', onPlayerTowerCount);
 			EventBus.off('request-reset-run', onResetRun);
-			EventBus.off('pressure-earned', onPressureEarned);
-			EventBus.off('pressure-queued', onPressureQueued);
-			EventBus.off('pressure-expired', onPressureExpired);
 			EventBus.off('boss-warning', onBossWarning);
 			EventBus.off('sudden-death-started', onSuddenDeathStarted);
 			EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
@@ -296,7 +233,6 @@ export function GamePage() {
 		resetRun,
 		setGold,
 		setLives,
-		setOpponentState,
 		setPlacementFeedback,
 		setPlayerTowerCount,
 		setRolledTower,
@@ -398,26 +334,17 @@ export function GamePage() {
 						{formatTimerLabel(combatHud.timerLabel)}
 					</div>
 					<div
-						data-testid="hud-pressure"
+						data-testid="hud-cooldown"
 						style={getHudChipStyle({
-							color: colors.info,
+							color: combatHud.buyCooldownMs > 0 ? colors.info : colors.textSecondary,
 							background:
-								combatHud.pressureTokens > 0
+								combatHud.buyCooldownMs > 0
 									? 'rgba(91,200,232,0.16)'
 									: 'rgba(42,32,16,0.82)',
-						})}
-					>
-						압박 {combatHud.pressureTokens}
-					</div>
-					<div
-						data-testid="hud-next-pressure"
-						style={getHudChipStyle({
-							color: colors.textSecondary,
-							background: 'rgba(42,32,16,0.82)',
 							minWidth: 0,
 						})}
 					>
-						다음 {formatPressureLabel(combatHud.queuedPressureEffect)}
+						구매 {combatHud.buyCooldownMs > 0 ? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s` : '준비'}
 					</div>
 
 					<div style={{ marginLeft: 'auto', flexShrink: 0 }}>
@@ -596,7 +523,7 @@ export function GamePage() {
 									textAlign: 'right',
 								}}
 							>
-								나
+								HP
 							</span>
 							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
 								<div
@@ -612,51 +539,10 @@ export function GamePage() {
 									color: colors.danger,
 									fontFamily: fonts.pixel,
 									fontSize: '7px',
-									width: '20px',
+									width: '28px',
 								}}
 							>
 								{lives}
-							</span>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-								}}
-							>
-								HP
-							</span>
-							<span
-								style={{
-									color: colors.danger,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '20px',
-									textAlign: 'right',
-									opacity: 0.6,
-								}}
-							>
-								{opponentHp}
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${(opponentHp / 20) * 100}%`,
-										`linear-gradient(270deg, rgba(192,48,32,0.55), rgba(192,48,32,0.2))`,
-										'right',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									opacity: 0.6,
-								}}
-							>
-								AI
 							</span>
 						</div>
 
@@ -670,7 +556,7 @@ export function GamePage() {
 									textAlign: 'right',
 								}}
 							>
-								나
+								골드
 							</span>
 							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
 								<div
@@ -686,51 +572,10 @@ export function GamePage() {
 									color: colors.gold,
 									fontFamily: fonts.pixel,
 									fontSize: '7px',
-									width: '20px',
+									width: '28px',
 								}}
 							>
 								{gold}
-							</span>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-								}}
-							>
-								골드
-							</span>
-							<span
-								style={{
-									color: colors.gold,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '20px',
-									textAlign: 'right',
-									opacity: 0.6,
-								}}
-							>
-								{opponentGold}
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${Math.min(100, (opponentGold / 500) * 100)}%`,
-										`linear-gradient(270deg, rgba(240,208,96,0.55), rgba(240,208,96,0.2))`,
-										'right',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									opacity: 0.6,
-								}}
-							>
-								AI
 							</span>
 						</div>
 
@@ -744,7 +589,7 @@ export function GamePage() {
 									textAlign: 'right',
 								}}
 							>
-								나
+								타워
 							</span>
 							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
 								<div
@@ -760,51 +605,10 @@ export function GamePage() {
 									color: colors.info,
 									fontFamily: fonts.pixel,
 									fontSize: '7px',
-									width: '20px',
+									width: '28px',
 								}}
 							>
 								{playerTowerCount}
-							</span>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-								}}
-							>
-								타워
-							</span>
-							<span
-								style={{
-									color: colors.info,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '20px',
-									textAlign: 'right',
-									opacity: 0.6,
-								}}
-							>
-								{opponentTowerCount}
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${Math.min(100, (opponentTowerCount / 10) * 100)}%`,
-										`linear-gradient(270deg, rgba(91,200,232,0.55), rgba(91,200,232,0.2))`,
-										'right',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.textSecondary,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									opacity: 0.6,
-								}}
-							>
-								AI
 							</span>
 						</div>
 					</div>

@@ -73,12 +73,6 @@ vi.mock('phaser', () => ({
 	},
 }));
 
-vi.mock('phaser3-rex-plugins/plugins/drag.js', () => ({
-	default: class Drag {
-		destroy() {}
-	},
-}));
-
 function createGraphics() {
 	return {
 		setDepth: vi.fn().mockReturnThis(),
@@ -121,7 +115,7 @@ function createText() {
 }
 
 describe('GameScene field runtime', () => {
-	it('renders dual fields (AI dark + player normal) from raw Tiny Swords assets', async () => {
+	it('renders a single portrait field from raw Tiny Swords assets', async () => {
 		const addImage = vi.fn(() => createImage());
 		const addSprite = vi.fn(() => createImage());
 		const addGraphics = vi.fn(() => createGraphics());
@@ -184,6 +178,7 @@ describe('GameScene field runtime', () => {
 			},
 			input: {
 				on: vi.fn(),
+				setDraggable: vi.fn(),
 			},
 			events: {
 				on: vi.fn(),
@@ -197,17 +192,12 @@ describe('GameScene field runtime', () => {
 		const floorCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_PRIMARY_TILESET.key,
 		).length;
-		expect(floorCount).toBe(FOREST_GATE_MAP.width * FOREST_GATE_MAP.height * 2);
+		expect(floorCount).toBe(FOREST_GATE_MAP.width * FOREST_GATE_MAP.height);
 
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,
 		).length;
-		expect(decorationCount).toBe(2);
-
-		const tintedSprites = addSprite.mock.results
-			.map((result) => result.value)
-			.filter((sprite) => sprite.setTint.mock.calls.length > 0);
-		expect(tintedSprites.length).toBeGreaterThan(0);
+		expect(decorationCount).toBe(1);
 
 		expect(addText.mock.calls.length).toBeGreaterThanOrEqual(3);
 		expect(addImage).not.toHaveBeenCalledWith(

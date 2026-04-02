@@ -1,5 +1,7 @@
 import type { GridConfig } from '@gld/shared';
 import {
+	BOARD_TOP_PADDING,
+	FOREST_GATE_MAP,
 	ISO_CANVAS_H,
 	ISO_CANVAS_W,
 	ISO_TILE_H,
@@ -38,11 +40,12 @@ const TEST_CONFIG: GridConfig = {
 	exitPoint: { x: 5, y: 5 },
 };
 
-// Offsets are computed dynamically based on grid size.
-// For 10×10 grid: xMin = -9*32 = -288, xMax = 9*32 = 288 → offsetX = (640 - 0) / 2 = 320
-// yMax = (9+9)*16 = 288 → offsetY = (320 - 288) / 2 = 16
-const OFFSET_X = ISO_CANVAS_W / 2; // 320 (symmetric for 10×10)
-const OFFSET_Y = (ISO_CANVAS_H - (9 + 9) * (ISO_TILE_H / 2)) / 2; // (320 - 288) / 2 = 16
+const OFFSET_X = ISO_CANVAS_W / 2;
+const OFFSET_Y =
+	BOARD_TOP_PADDING +
+	(ISO_CANVAS_H -
+		(TEST_CONFIG.width - 1 + TEST_CONFIG.height - 1) * (ISO_TILE_H / 2)) /
+		2;
 
 describe('GridManager', () => {
 	it('생성자가 속성을 올바르게 설정해야 한다', () => {
@@ -97,6 +100,28 @@ describe('GridManager', () => {
 		expect(gm.placeTower(5, 5, 'tower-1')).toBe(false);
 	});
 
+	it('FOREST_GATE_MAP path 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const pathPoint = FOREST_GATE_MAP.path[1];
+		expect(gm.placeTower(pathPoint.x, pathPoint.y, 'tower-1')).toBe(false);
+	});
+
+	it('FOREST_GATE_MAP blocked-placement 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const blockedPoint = { x: 0, y: 0 };
+		expect(gm.placeTower(blockedPoint.x, blockedPoint.y, 'tower-1')).toBe(
+			false,
+		);
+	});
+
+	it('FOREST_GATE_MAP buildable 타일에는 타워를 배치할 수 있어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+		expect(gm.placeTower(buildablePoint.x, buildablePoint.y, 'tower-1')).toBe(
+			true,
+		);
+	});
+
 	it('removeTower가 타워를 제거하고 true를 반환해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		gm.placeTower(1, 1, 'tower-1');
@@ -127,8 +152,13 @@ describe('GridManager', () => {
 	it('gridToWorld가 아이소메트릭 좌표로 변환해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		const p00 = gm.gridToWorld(0, 0);
-		expect(p00.x).toBe(OFFSET_X);
-		expect(p00.y).toBe(OFFSET_Y);
+		expect(p00.x).toBe(ISO_CANVAS_W / 2);
+		expect(p00.y).toBe(
+			BOARD_TOP_PADDING +
+				(ISO_CANVAS_H -
+					(TEST_CONFIG.width - 1 + TEST_CONFIG.height - 1) * (ISO_TILE_H / 2)) /
+					2,
+		);
 
 		const p10 = gm.gridToWorld(1, 0);
 		expect(p10.x).toBe(OFFSET_X + ISO_TILE_W / 2);

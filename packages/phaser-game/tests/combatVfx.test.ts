@@ -140,11 +140,12 @@ describe('optional combat vfx', () => {
     const gridManager = {
       isInBounds: vi.fn(() => true),
       isWalkable: vi.fn(() => true),
+      canPlaceTower: vi.fn(() => true),
       placeTower: vi.fn(() => true),
       removeTower: vi.fn(),
       getWalkabilityGrid: vi.fn(() => []),
       spawnPoint: { x: 0, y: 0 },
-      exitPoint: { x: 11, y: 4 },
+      exitPoint: { x: 4, y: 17 },
       gridToWorld: vi.fn(() => ({ x: 100, y: 120 })),
       getIsoDepth: vi.fn(() => 10),
       worldToGridFloat: vi.fn(() => ({ x: 1, y: 0 })),

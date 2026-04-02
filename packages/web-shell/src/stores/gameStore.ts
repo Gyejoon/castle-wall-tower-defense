@@ -9,7 +9,6 @@ import {
 import { create } from 'zustand';
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
-export type FieldTab = 'player' | 'opponent';
 export type LobbyTab = 'home' | 'collection' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
@@ -42,11 +41,7 @@ interface GameStoreState {
 	soundEnabled: boolean;
 	screenShake: boolean;
 	showDamageNumbers: boolean;
-	activeTab: FieldTab;
 	playerTowerCount: number;
-	opponentHp: number;
-	opponentGold: number;
-	opponentTowerCount: number;
 	combatHud: CombatHudState;
 	toast: UiToast | null;
 
@@ -62,13 +57,7 @@ interface GameStoreState {
 	setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
 	setWavePreview: (preview: WavePreviewGroup[] | null) => void;
 	setLobbyTab: (tab: LobbyTab) => void;
-	setActiveTab: (tab: FieldTab) => void;
 	setPlayerTowerCount: (count: number) => void;
-	setOpponentState: (state: {
-		hp: number;
-		gold: number;
-		towerCount: number;
-	}) => void;
 	patchCombatHud: (patch: Partial<CombatHudState>) => void;
 	pushToast: (message: string, tone?: ToastTone) => void;
 	clearToast: () => void;
@@ -82,8 +71,6 @@ interface GameStoreState {
 const createCombatHud = (): CombatHudState => ({
 	currentSlot: 1,
 	phase: 'running',
-	pressureTokens: 0,
-	queuedPressureEffect: null,
 	buyCooldownMs: 0,
 	bossWarning: false,
 	suddenDeath: false,
@@ -101,11 +88,7 @@ const createRunState = () => ({
 	countdown: 0,
 	placementFeedback: null,
 	wavePreview: null,
-	activeTab: 'player' as FieldTab,
 	playerTowerCount: 0,
-	opponentHp: INITIAL_PLAYER_HP,
-	opponentGold: INITIAL_GOLD,
-	opponentTowerCount: 0,
 	combatHud: createCombatHud(),
 	toast: null,
 });
@@ -131,14 +114,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
 	setWavePreview: (preview) => set({ wavePreview: preview }),
 	setLobbyTab: (tab) => set({ lobbyTab: tab }),
-	setActiveTab: (tab) => set({ activeTab: tab }),
 	setPlayerTowerCount: (count) => set({ playerTowerCount: count }),
-	setOpponentState: (state) =>
-		set({
-			opponentHp: state.hp,
-			opponentGold: state.gold,
-			opponentTowerCount: state.towerCount,
-		}),
 	patchCombatHud: (patch) =>
 		set((state) => ({
 			combatHud: {

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { BottomTabBar } from '../components/lobby/BottomTabBar';
 import { ProfileBar } from '../components/lobby/ProfileBar';
 import { CollectionTab } from '../components/lobby/tabs/CollectionTab';
@@ -9,7 +8,6 @@ import { colors } from '../styles/tokens';
 
 export function LobbyPage() {
 	const lobbyTab = useGameStore((s) => s.lobbyTab);
-	const [isMatchmaking, setIsMatchmaking] = useState(false);
 
 	return (
 		<div
@@ -52,18 +50,13 @@ export function LobbyPage() {
 									: 'fadeIn 200ms ease-out',
 						}}
 					>
-						{lobbyTab === 'home' && (
-							<HomeTab
-								isMatchmaking={isMatchmaking}
-								setIsMatchmaking={setIsMatchmaking}
-							/>
-						)}
+						{lobbyTab === 'home' && <HomeTab />}
 						{lobbyTab === 'collection' && <CollectionTab />}
 						{lobbyTab === 'settings' && <SettingsTab />}
 					</div>
 				</div>
 
-				<BottomTabBar disabled={isMatchmaking} />
+				<BottomTabBar />
 			</div>
 		</div>
 	);

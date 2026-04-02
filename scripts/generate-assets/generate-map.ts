@@ -237,12 +237,11 @@ function assertPathLayerContract(
 
 function assertDecorationContract(
   decorationObjects: TiledObject[],
-  placementPoints: Cell[],
   width: number,
   height: number,
 ): void {
-  if (decorationObjects.length < 6) {
-    throw new Error('[map] decoration contract is too sparse to read as a field');
+  if (decorationObjects.length === 0) {
+    throw new Error('[map] decoration contract is empty');
   }
 
   for (const object of decorationObjects) {
@@ -254,12 +253,8 @@ function assertDecorationContract(
     }
   }
 
-  const placementSet = new Set(placementPoints.map((point) => keyOf(point)));
   for (const object of decorationObjects) {
     const cell = { x: Math.round(object.x / 32), y: Math.round(object.y / 32) };
-    if (placementSet.has(keyOf(cell))) {
-      throw new Error(`[map] decoration ${object.name} overlaps a placement point`);
-    }
     if (!isInBounds(cell, width, height)) {
       throw new Error(`[map] decoration ${object.name} is out of bounds`);
     }
@@ -268,14 +263,11 @@ function assertDecorationContract(
 
 export async function generateMap(): Promise<ManifestEntry[]> {
   const map = FOREST_GATE_MAP;
-  const { width, height, tileSize, path, placementPoints, spawnPoint, exitPoint } = map;
+  const { width, height, tileSize, path, buildablePoints, spawnPoint, exitPoint } = map;
 
   const pathSet = new Set<string>(path.map((point) => keyOf(point)));
-  const placementSet = new Set<string>(placementPoints.map((point) => keyOf(point)));
   const pathProtection = pathSet;
-  const placementProtection = placementSet;
   const pathAdjacencyProtection = buildAdjacencyProtection(path, width, height);
-  const placementAdjacencyProtection = buildAdjacencyProtection(placementPoints, width, height);
   const landmarkProtection = buildAdjacencyProtection([spawnPoint, exitPoint], width, height);
   const outerCorners = collectOuterCornerCells(path, width, height);
 
@@ -319,7 +311,7 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     for (let x = 0; x < width; x++) {
       const cell = { x, y };
       const key = keyOf(cell);
-      if (pathProtection.has(key) || placementProtection.has(key)) continue;
+      if (pathProtection.has(key)) continue;
 
       const nearest = getNearestPathMeta(cell, path);
       candidates.push({
@@ -345,8 +337,8 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   const canPlaceDecor = (cell: Cell, asset: TinySwordsDecorationAssetEntry): boolean => {
     const key = keyOf(cell);
     if (occupied.has(key)) return false;
-    if (pathProtection.has(key) || placementProtection.has(key) || landmarkProtection.has(key)) return false;
-    if (asset.size === 'large' && (pathAdjacencyProtection.has(key) || placementAdjacencyProtection.has(key))) {
+    if (pathProtection.has(key) || landmarkProtection.has(key)) return false;
+    if (asset.size === 'large' && pathAdjacencyProtection.has(key)) {
       return false;
     }
     return true;
@@ -434,9 +426,9 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     }
   }
 
-  assertDecorationContract(decorationObjects, placementPoints, width, height);
+  assertDecorationContract(decorationObjects, width, height);
 
-  const placementObjects: TiledObject[] = placementPoints.map((point, index) => ({
+  const placementObjects: TiledObject[] = buildablePoints.map((point, index) => ({
     id: index + 1,
     name: `pp_${index}`,
     type: 'placement_point',

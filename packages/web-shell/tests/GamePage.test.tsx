@@ -152,38 +152,32 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('gstack UI/UX: HUD clearly shows HP, gold, timer, pressure tokens, and next pressure effect in one row', () => {
+	it('shows single-player HUD with HP, gold, timer, and cooldown only', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
 		act(() => {
 			emitSpy('gold-changed', { gold: 60 });
 			emitSpy('wave-started', {
+				wave: 10,
+				totalWaves: 20,
 				slotIndex: 10,
 				phase: 'boss',
 				kind: 'boss',
 				startAtSec: 270,
 			});
-			emitSpy('pressure-earned', {
-				ownerId: 'local',
-				slotIndex: 10,
-				pressureTokens: 1,
-				packetId: 'mixed_pressure',
-			});
-			emitSpy('pressure-queued', {
-				ownerId: 'local',
-				slotIndex: 10,
-				pressureTokens: 0,
-				packetId: 'mixed_pressure',
-				targetSlotIndex: 11,
+			emitSpy('buy-cooldown-updated', {
+				remainingMs: 1200,
 			});
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
 		expect(view.getByText('G 60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		expect(view.getByTestId('hud-pressure').textContent).toContain('압박 0');
-		expect(view.getByTestId('hud-next-pressure').textContent).toContain('혼합');
+		expect(view.getByTestId('hud-cooldown').textContent).toContain('구매 1.2s');
+		expect(view.queryByTestId('hud-pressure')).toBeNull();
+		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
+		expect(view.queryByText('AI')).toBeNull();
 	});
 
 	it('gstack UI/UX: mobile HUD container stays on one line without wrap', () => {
@@ -200,11 +194,30 @@ describe('GamePage', () => {
 		const view = render(<GamePage />);
 
 		act(() => {
-			emitSpy('game-over', { winnerId: 'local' });
+			emitSpy('game-over', {
+				result: 'victory',
+				reason: 'all_waves_cleared',
+				finalSlot: 20,
+			});
 		});
 
 		expect(useGameStore.getState().runStatus).toBe('victory');
 		expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
+	});
+
+	it('handles game-over only through the result payload contract', () => {
+		const { emitSpy } = getEventBusHarness();
+		render(<GamePage />);
+
+		act(() => {
+			emitSpy('game-over', {
+				result: 'defeat',
+				reason: 'base_hp_depleted',
+				finalSlot: 7,
+			});
+		});
+
+		expect(useGameStore.getState().runStatus).toBe('defeat');
 	});
 
 	it('turns merge failure and boss warning into toast state instead of top-bar text noise', () => {

@@ -54,37 +54,33 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().countdown).toBe(2);
 	});
 
-	it('patches combat HUD instead of storing build/combat countdown separately', () => {
+	it('patches the single-player combat HUD contract', () => {
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 9,
 			phase: 'boss',
-			pressureTokens: 1,
-			queuedPressureEffect: 'mixed_pressure',
 			buyCooldownMs: 900,
 			bossWarning: true,
+			suddenDeath: false,
 			timerLabel: 'Boss 9',
 		});
 
-		expect(useGameStore.getState().combatHud).toEqual(
-			expect.objectContaining({
-				currentSlot: 9,
-				phase: 'boss',
-				pressureTokens: 1,
-				queuedPressureEffect: 'mixed_pressure',
-				buyCooldownMs: 900,
-				bossWarning: true,
-				timerLabel: 'Boss 9',
-			}),
-		);
+		expect(useGameStore.getState().combatHud).toEqual({
+			currentSlot: 9,
+			phase: 'boss',
+			buyCooldownMs: 900,
+			bossWarning: true,
+			suddenDeath: false,
+			timerLabel: 'Boss 9',
+		});
 	});
 
-	it('stores toast state for cooldown, pressure, and merge feedback', () => {
-		useGameStore.getState().pushToast('압박 +1', 'success');
+	it('stores toast state for cooldown and merge feedback', () => {
+		useGameStore.getState().pushToast('합성 실패', 'error');
 
 		expect(useGameStore.getState().toast).toEqual(
 			expect.objectContaining({
-				message: '압박 +1',
-				tone: 'success',
+				message: '합성 실패',
+				tone: 'error',
 			}),
 		);
 
@@ -92,20 +88,19 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().toast).toBeNull();
 	});
 
-	it('setOpponentState updates opponent fields', () => {
-		useGameStore
-			.getState()
-			.setOpponentState({ hp: 5, gold: 200, towerCount: 3 });
-		const state = useGameStore.getState();
-		expect(state.opponentHp).toBe(5);
-		expect(state.opponentGold).toBe(200);
-		expect(state.opponentTowerCount).toBe(3);
+	it('tracks player tower count only', () => {
+		expect(useGameStore.getState().playerTowerCount).toBe(0);
+		useGameStore.getState().setPlayerTowerCount(3);
+		expect(useGameStore.getState().playerTowerCount).toBe(3);
 	});
 
-	it('setActiveTab switches tab', () => {
-		expect(useGameStore.getState().activeTab).toBe('player');
-		useGameStore.getState().setActiveTab('opponent');
-		expect(useGameStore.getState().activeTab).toBe('opponent');
+	it('drops stale PvP mirror state from the store contract', () => {
+		const state = useGameStore.getState() as Record<string, unknown>;
+		expect('activeTab' in state).toBe(false);
+		expect('opponentHp' in state).toBe(false);
+		expect('opponentGold' in state).toBe(false);
+		expect('opponentTowerCount' in state).toBe(false);
+		expect('setOpponentState' in state).toBe(false);
 	});
 
 	it('starts with lobbyTab home and allows switching', () => {
@@ -141,7 +136,7 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().showDamageNumbers).toBe(false);
 	});
 
-	it('resets a run to default combat resources and clears transient state', () => {
+	it('resets a run to default single-player combat resources and clears transient state', () => {
 		const initialRunId = useGameStore.getState().runId;
 
 		useGameStore.getState().setGameReady(true);
@@ -159,11 +154,10 @@ describe('gameStore', () => {
 		useGameStore.getState().setRunStatus('defeat');
 		useGameStore.getState().setPlacementFeedback('combat_phase');
 		useGameStore.getState().setLobbyTab('settings');
+		useGameStore.getState().setPlayerTowerCount(8);
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 18,
 			phase: 'sudden_death',
-			pressureTokens: 2,
-			queuedPressureEffect: 'breach_pressure',
 			buyCooldownMs: 700,
 			bossWarning: true,
 			suddenDeath: true,
@@ -185,17 +179,15 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().countdown).toBe(0);
 		expect(useGameStore.getState().wavePreview).toBeNull();
 		expect(useGameStore.getState().lobbyTab).toBe('home');
+		expect(useGameStore.getState().playerTowerCount).toBe(0);
 		expect(useGameStore.getState().toast).toBeNull();
-		expect(useGameStore.getState().combatHud).toEqual(
-			expect.objectContaining({
-				currentSlot: 1,
-				phase: 'running',
-				pressureTokens: 0,
-				queuedPressureEffect: null,
-				buyCooldownMs: 0,
-				bossWarning: false,
-				suddenDeath: false,
-			}),
-		);
+		expect(useGameStore.getState().combatHud).toEqual({
+			currentSlot: 1,
+			phase: 'running',
+			buyCooldownMs: 0,
+			bossWarning: false,
+			suddenDeath: false,
+			timerLabel: 'Slot 1',
+		});
 	});
 });

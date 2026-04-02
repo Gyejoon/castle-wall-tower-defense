@@ -65,7 +65,7 @@ export class TowerSystem {
 			return { success: false, reason: 'out_of_bounds' };
 		}
 
-		if (!this.gridManager.isWalkable(gridX, gridY)) {
+		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
 			return { success: false, reason: 'occupied' };
 		}
 

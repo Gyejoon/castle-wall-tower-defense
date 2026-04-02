@@ -5,10 +5,8 @@ export { gameConfig } from './config';
 export type { GameEventMap } from './EventBus';
 export { EventBus } from './EventBus';
 export { getPlacementGuardFailure } from './placementRules';
-export { AIOpponent } from './systems/AIOpponent';
 // Re-export systems for testing
 export { GridManager } from './systems/GridManager';
-export { KillTransferSystem } from './systems/KillTransferSystem';
 export { MergeSystem } from './systems/MergeSystem';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
 export { RandomTowerSystem } from './systems/RandomTowerSystem';

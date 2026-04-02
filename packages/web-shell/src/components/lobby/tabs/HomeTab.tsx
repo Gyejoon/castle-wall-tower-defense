@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { MOCK_PROFILE } from '../../../data/mockLobbyData';
 import { useEmoteStore } from '../../../stores/emoteStore';
@@ -7,23 +6,9 @@ import { colors, fonts } from '../../../styles/tokens';
 import { PixelButton } from '../../ui/PixelButton';
 import { TabBackground } from '../TabBackground';
 
-interface HomeTabProps {
-	isMatchmaking: boolean;
-	setIsMatchmaking: (v: boolean) => void;
-}
-
-export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
+export function HomeTab() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const resetEmotes = useEmoteStore((s) => s.reset);
-
-	useEffect(() => {
-		if (!isMatchmaking) return;
-		const timer = setTimeout(() => {
-			resetEmotes();
-			resetRun();
-		}, 1500);
-		return () => clearTimeout(timer);
-	}, [isMatchmaking, resetEmotes, resetRun]);
 
 	return (
 		<div
@@ -117,7 +102,7 @@ export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
 								color: colors.text,
 							}}
 						>
-							PVP 대전
+							PVE 생존
 						</span>
 						<span
 							style={{
@@ -126,14 +111,16 @@ export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
 								color: colors.textSecondary,
 							}}
 						>
-							1 vs 1
+							싱글 플레이
 						</span>
 					</div>
 
 					<PixelButton
 						variant="gold"
-						disabled={isMatchmaking}
-						onClick={() => !isMatchmaking && setIsMatchmaking(true)}
+						onClick={() => {
+							resetEmotes();
+							resetRun();
+						}}
 						style={{
 							width: '100%',
 							padding: '14px 20px',
@@ -141,7 +128,7 @@ export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
 							boxShadow: `0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)`,
 						}}
 					>
-						{isMatchmaking ? '매칭 중...' : '전투 시작'}
+						즉시 시작
 					</PixelButton>
 
 					{/* Sub buttons */}
@@ -178,45 +165,6 @@ export function HomeTab({ isMatchmaking, setIsMatchmaking }: HomeTabProps) {
 				<OverlayIcon label="우편" badge={3} />
 				<OverlayIcon label="공지" badge={1} />
 			</div>
-
-			{/* Matchmaking overlay */}
-			{isMatchmaking && (
-				<div
-					style={{
-						position: 'absolute',
-						inset: 0,
-						zIndex: 10,
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
-						gap: '20px',
-						background: 'rgba(10, 8, 4, 0.88)',
-					}}
-				>
-					<div
-						className="matchmaking-swords"
-						style={{ width: 64, height: 64 }}
-					/>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '10px',
-							color: colors.gold,
-						}}
-					>
-						상대를 찾는 중...
-					</span>
-					<div className="matchmaking-dots" />
-					<PixelButton
-						variant="danger"
-						onClick={() => setIsMatchmaking(false)}
-						style={{ fontSize: '8px', padding: '10px 20px' }}
-					>
-						취소
-					</PixelButton>
-				</div>
-			)}
 		</div>
 	);
 }

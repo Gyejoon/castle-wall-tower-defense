@@ -1,5 +1,6 @@
 import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
 import {
+	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
 	ISO_CANVAS_H,
 	ISO_CANVAS_W,
@@ -18,13 +19,32 @@ export class GridManager {
 	private grid: Grid;
 	private readonly offsetX: number;
 	private readonly offsetY: number;
+	private readonly buildablePointKeys: Set<string>;
+	private readonly blockedPlacementPointKeys: Set<string>;
+	private readonly pathPointKeys: Set<string>;
 
-	constructor(config: GridConfig = DEFAULT_GRID_CONFIG, baseOffsetY = 0) {
+	constructor(config: GridConfig = DEFAULT_GRID_CONFIG) {
 		this.width = config.width;
 		this.height = config.height;
 		this.tileSize = TILE_SIZE;
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
+		const mapConfig = config as GridConfig & {
+			buildablePoints?: Position[];
+			blockedPlacementPoints?: Position[];
+			path?: Position[];
+		};
+		this.buildablePointKeys = new Set(
+			(mapConfig.buildablePoints ?? []).map((point) => `${point.x},${point.y}`),
+		);
+		this.blockedPlacementPointKeys = new Set(
+			(mapConfig.blockedPlacementPoints ?? []).map(
+				(point) => `${point.x},${point.y}`,
+			),
+		);
+		this.pathPointKeys = new Set(
+			(mapConfig.path ?? []).map((point) => `${point.x},${point.y}`),
+		);
 
 		// Center the isometric grid within the canvas.
 		// The grid's world-space X range spans from gridToWorld(0, height-1).x to gridToWorld(width-1, 0).x
@@ -37,8 +57,7 @@ export class GridManager {
 		this.offsetX = (ISO_CANVAS_W - (xMin + xMax)) / 2;
 		// Y extremes (before offset): 0  and  (maxGx + maxGy) * halfH
 		const yMax = (maxGx + maxGy) * (ISO_TILE_H / 2);
-		// Center within single-grid region (ISO_CANVAS_H), then shift by baseOffsetY for dual-grid layout
-		this.offsetY = (ISO_CANVAS_H - yMax) / 2 + baseOffsetY;
+		this.offsetY = BOARD_TOP_PADDING + (ISO_CANVAS_H - yMax) / 2;
 
 		this.grid = this.createGrid();
 	}
@@ -74,11 +93,25 @@ export class GridManager {
 		return tile?.walkable === true && tile.occupied === false;
 	}
 
-	placeTower(x: number, y: number, towerId: string): boolean {
+	canPlaceTower(x: number, y: number): boolean {
 		const tile = this.getTile(x, y);
 		if (!tile?.walkable || tile.occupied) return false;
 		if (x === this.spawnPoint.x && y === this.spawnPoint.y) return false;
 		if (x === this.exitPoint.x && y === this.exitPoint.y) return false;
+
+		const key = `${x},${y}`;
+		if (this.blockedPlacementPointKeys.has(key)) return false;
+		if (this.pathPointKeys.has(key)) return false;
+		if (this.buildablePointKeys.size > 0) {
+			return this.buildablePointKeys.has(key);
+		}
+		return true;
+	}
+
+	placeTower(x: number, y: number, towerId: string): boolean {
+		if (!this.canPlaceTower(x, y)) return false;
+		const tile = this.getTile(x, y);
+		if (!tile) return false;
 
 		tile.occupied = true;
 		tile.towerId = towerId;

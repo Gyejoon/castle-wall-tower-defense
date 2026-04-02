@@ -43,9 +43,10 @@ vi.mock('../src/assets/assetManifest', () => ({
 	OPTIONAL_ASSET_SECTIONS: ['ui', 'vfx', 'projectiles'],
 }));
 
-vi.mock('phaser3-rex-plugins/plugins/drag.js', () => ({
-	default: class Drag {
-		destroy() {}
+vi.mock('../src/audio/SoundGenerator', () => ({
+	soundGenerator: {
+		playUnitDeath: vi.fn(),
+		playWaveStart: vi.fn(),
 	},
 }));
 
@@ -98,10 +99,6 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerMerge = { destroy: vi.fn() };
 		scene.playerRandomTower = { reset: vi.fn() };
-		scene.aiTowers = { destroy: vi.fn() };
-		scene.aiUnits = { destroy: vi.fn() };
-		scene.aiRandomTower = { reset: vi.fn() };
-		scene.aiMerge = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -127,8 +124,6 @@ describe('GameScene', () => {
 			scene.playerTowers.destroy.mock.invocationCallOrder[0],
 			scene.playerUnits.destroy.mock.invocationCallOrder[0],
 			scene.playerWaves.destroy.mock.invocationCallOrder[0],
-			scene.aiTowers.destroy.mock.invocationCallOrder[0],
-			scene.aiUnits.destroy.mock.invocationCallOrder[0],
 		];
 		expect(offCalls[offCalls.length - 1]).toBeLessThan(
 			Math.min(...destroyCalls),
@@ -140,86 +135,69 @@ describe('GameScene', () => {
 		);
 	});
 
-	it('queues pressure units without bounty or clear credit', () => {
+	it('emits a PVE victory payload when the final slot ends with no remaining player units', () => {
 		const scene = createScene();
-		scene.playerUnits = { queueUnits: vi.fn() };
-		scene.aiUnits = { queueUnits: vi.fn() };
-		scene.queuedPressureForPlayer = new Map([[10, 'mixed_pressure']]);
-		scene.queuedPressureForOpponent = new Map([[10, 'breach_pressure']]);
+		scene.currentSlotDef = { slotIndex: 20 };
+		scene.playerWaves = {
+			update: vi.fn(),
+			getPhase: vi.fn(() => 'ended'),
+			getElapsedMs: vi.fn(() => 0),
+		};
+		scene.playerTowers = { update: vi.fn(() => []) };
+		scene.playerUnits = {
+			getUnitPositions: vi.fn(() => []),
+			applyDamage: vi.fn(),
+			applySlow: vi.fn(),
+			update: vi.fn(() => ({ reachedExit: [] })),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+		};
 
-		scene.applyQueuedPressureForSlot(10);
+		scene.update(0, 16);
 
-		expect(scene.playerUnits.queueUnits).toHaveBeenCalledWith(
-			'scout_drone',
-			4,
-			expect.objectContaining({
-				bountyOverride: 0,
-				countsTowardClear: false,
-				source: 'pressure',
-			}),
-		);
-		expect(scene.aiUnits.queueUnits).toHaveBeenCalledWith(
-			'battle_robot',
-			2,
-			expect.objectContaining({
-				bountyOverride: 0,
-				countsTowardClear: false,
-				source: 'pressure',
-			}),
-		);
-	});
-
-	it('expires every unused pressure token on sudden death', () => {
-		const scene = createScene();
-		scene.currentSlotDef = { slotIndex: 19 };
-		scene.localPressureInventory = ['mixed_pressure', 'breach_pressure'];
-		scene.opponentPressureInventory = ['scout_pressure'];
-
-		scene.expirePressureAtSuddenDeath();
-
-		expect(scene.localPressureInventory).toEqual([]);
-		expect(scene.opponentPressureInventory).toEqual([]);
-		expect(EventBus.emit).toHaveBeenCalledWith('pressure-expired', {
-			ownerId: 'local',
-			slotIndex: 19,
-			pressureTokens: 0,
-			packetId: 'mixed_pressure',
-		});
-		expect(EventBus.emit).toHaveBeenCalledWith('pressure-expired', {
-			ownerId: 'opponent',
-			slotIndex: 19,
-			pressureTokens: 0,
-			packetId: 'scout_pressure',
+		expect(EventBus.emit).toHaveBeenCalledWith('game-over', {
+			result: 'victory',
+			reason: 'all_waves_cleared',
+			finalSlot: 20,
 		});
 	});
 
-	it('applies optional AI overlay art when the UI textures are available', () => {
+	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
-		const addImage = vi.fn(() => ({
-			setDisplaySize: vi.fn().mockReturnThis(),
-			setDepth: vi.fn().mockReturnThis(),
-			setAlpha: vi.fn().mockReturnThis(),
-		}));
-		const addSprite = vi.fn(() => ({
-			setDisplaySize: vi.fn().mockReturnThis(),
-			setDepth: vi.fn().mockReturnThis(),
-			setAlpha: vi.fn().mockReturnThis(),
-		}));
-
-		scene.add = {
-			image: addImage,
-			sprite: addSprite,
+		scene.currentSlotDef = { slotIndex: 7 };
+		scene.playerWaves = {
+			update: vi.fn(),
+			getPhase: vi.fn(() => 'running'),
+			getElapsedMs: vi.fn(() => 0),
 		};
-		scene.textures = {
-			exists: vi.fn(
-				(key: string) => key === 'ui-ghost-avatar' || key === 'ui-stat-icons',
-			),
+		scene.playerTowers = {
+			update: vi.fn(() => [{ unitId: 'unit-1', damage: 99 }]),
+		};
+		scene.playerUnits = {
+			getUnitPositions: vi.fn(() => []),
+			applyDamage: vi.fn(() => ({
+				killed: true,
+				unitDefId: 'scout_drone',
+				bounty: 3,
+				countsTowardClear: true,
+				source: 'base',
+			})),
+			applySlow: vi.fn(),
+			update: vi.fn(() => ({ reachedExit: [] })),
+			hasActiveUnits: vi.fn(() => true),
+			hasQueuedUnits: vi.fn(() => false),
 		};
 
-		scene.applyOptionalUiAssets();
+		scene.update(0, 16);
 
-		expect(addImage).toHaveBeenCalledWith(12, 14, 'ui-ghost-avatar');
-		expect(addSprite).toHaveBeenCalledWith(12, 32, 'ui-stat-icons', 1);
+		expect(EventBus.emit).not.toHaveBeenCalledWith(
+			'opponent-state',
+			expect.anything(),
+		);
+		expect(EventBus.emit).not.toHaveBeenCalledWith(
+			'kill-transfer',
+			expect.anything(),
+		);
 	});
 
 	it('skips optional asset post-processing when shutdown wins the race', async () => {
@@ -240,10 +218,6 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerMerge = { destroy: vi.fn() };
 		scene.playerRandomTower = { reset: vi.fn() };
-		scene.aiTowers = { destroy: vi.fn() };
-		scene.aiUnits = { destroy: vi.fn() };
-		scene.aiRandomTower = { reset: vi.fn() };
-		scene.aiMerge = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

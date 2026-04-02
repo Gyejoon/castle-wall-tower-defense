@@ -1,4 +1,3 @@
-import type { PressurePacketId } from '../constants/waves';
 import type { Position } from './grid';
 import type { PlacedTower } from './tower';
 import type { ActiveUnit } from './unit';
@@ -17,8 +16,6 @@ export type WavePhase = 'running' | 'boss' | 'sudden_death' | 'ended';
 export interface CombatHudState {
 	currentSlot: number;
 	phase: WavePhase;
-	pressureTokens: number;
-	queuedPressureEffect: PressurePacketId | null;
 	buyCooldownMs: number;
 	bossWarning: boolean;
 	suddenDeath: boolean;

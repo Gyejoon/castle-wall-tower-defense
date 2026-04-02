@@ -82,6 +82,7 @@ describe('TowerDragController', () => {
 				.fn()
 				.mockReturnValueOnce({ x: 5, y: 6 })
 				.mockReturnValueOnce({ x: 7, y: 8 }),
+			worldToGridFloat: vi.fn(),
 		};
 
 		const controller = new TowerDragController({

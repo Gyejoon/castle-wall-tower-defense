@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import {
 	afterEach,
@@ -9,7 +9,6 @@ import {
 	it,
 	vi,
 } from 'vitest';
-import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 
 type EventHandler = (payload?: unknown) => void;
@@ -124,11 +123,6 @@ describe('GamePage', () => {
 		listeners.clear();
 		useGameStore.setState(useGameStore.getInitialState());
 		useGameStore.getState().resetRun();
-		useEmoteStore.setState({
-			myEmote: null,
-			opponentEmote: null,
-			showEmotePanel: false,
-		});
 	});
 
 	afterEach(() => {
@@ -152,38 +146,32 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('gstack UI/UX: HUD clearly shows HP, gold, timer, pressure tokens, and next pressure effect in one row', () => {
+	it('shows single-player HUD with HP, gold, timer, and cooldown only', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
 		act(() => {
 			emitSpy('gold-changed', { gold: 60 });
 			emitSpy('wave-started', {
+				wave: 10,
+				totalWaves: 20,
 				slotIndex: 10,
 				phase: 'boss',
 				kind: 'boss',
 				startAtSec: 270,
 			});
-			emitSpy('pressure-earned', {
-				ownerId: 'local',
-				slotIndex: 10,
-				pressureTokens: 1,
-				packetId: 'mixed_pressure',
-			});
-			emitSpy('pressure-queued', {
-				ownerId: 'local',
-				slotIndex: 10,
-				pressureTokens: 0,
-				packetId: 'mixed_pressure',
-				targetSlotIndex: 11,
+			emitSpy('buy-cooldown-updated', {
+				remainingMs: 1200,
 			});
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
 		expect(view.getByText('G 60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		expect(view.getByTestId('hud-pressure').textContent).toContain('압박 0');
-		expect(view.getByTestId('hud-next-pressure').textContent).toContain('혼합');
+		expect(view.getByTestId('hud-cooldown').textContent).toContain('구매 1.2s');
+		expect(view.queryByTestId('hud-pressure')).toBeNull();
+		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
+		expect(view.queryByText('AI')).toBeNull();
 	});
 
 	it('gstack UI/UX: mobile HUD container stays on one line without wrap', () => {
@@ -200,11 +188,30 @@ describe('GamePage', () => {
 		const view = render(<GamePage />);
 
 		act(() => {
-			emitSpy('game-over', { winnerId: 'local' });
+			emitSpy('game-over', {
+				result: 'victory',
+				reason: 'all_waves_cleared',
+				finalSlot: 20,
+			});
 		});
 
 		expect(useGameStore.getState().runStatus).toBe('victory');
 		expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
+	});
+
+	it('handles game-over only through the result payload contract', () => {
+		const { emitSpy } = getEventBusHarness();
+		render(<GamePage />);
+
+		act(() => {
+			emitSpy('game-over', {
+				result: 'defeat',
+				reason: 'base_hp_depleted',
+				finalSlot: 7,
+			});
+		});
+
+		expect(useGameStore.getState().runStatus).toBe('defeat');
 	});
 
 	it('turns merge failure and boss warning into toast state instead of top-bar text noise', () => {
@@ -231,59 +238,4 @@ describe('GamePage', () => {
 		expect(view.getByText('합성 실패')).toBeTruthy();
 	});
 
-	it('stores opponent emotes only when the event includes opponent playerId', () => {
-		const { emitSpy } = getEventBusHarness();
-		render(<GamePage />);
-
-		act(() => {
-			emitSpy('emote-received', { emoteId: 'gg', playerId: 'local' });
-		});
-
-		expect(useEmoteStore.getState().opponentEmote).toBeNull();
-
-		act(() => {
-			emitSpy('emote-received', { emoteId: 'gg', playerId: 'opponent' });
-		});
-
-		expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
-	});
-
-	it('emits send-emote after clicking inline emote button', () => {
-		const { emitSpy } = getEventBusHarness();
-		const view = render(<GamePage />);
-
-		const ggButtons = view.getAllByText(/GG/i);
-		fireEvent.click(ggButtons[0]);
-
-		expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
-	});
-
-	it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {
-		vi.useFakeTimers();
-		const view = render(<GamePage />);
-
-		const ggButtons = view.getAllByText(/GG/i);
-		fireEvent.click(ggButtons[0]);
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(4000);
-		});
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(599);
-		});
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(1);
-		});
-
-		const remaining = view.getAllByText(/GG/i);
-		expect(remaining.length).toBe(1);
-	});
 });

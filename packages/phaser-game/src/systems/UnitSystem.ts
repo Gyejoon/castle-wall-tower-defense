@@ -1,11 +1,11 @@
 import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
-import { TILE_SIZE, UNITS } from '@gld/shared';
+import { UNITS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 
-export type UnitSpawnSource = 'base' | 'pressure' | 'transfer';
+export type UnitSpawnSource = 'base';
 
 interface SpawnQueueEntry {
 	def: UnitDef;
@@ -94,22 +94,6 @@ export class UnitSystem {
 		});
 	}
 
-	queueTransferUnits(unitDefId: string, count: number): void {
-		const def = UNITS.find((u) => u.id === unitDefId);
-		if (!def) return;
-		const transferDef = {
-			...def,
-			stats: { ...def.stats, hp: Math.floor(def.stats.hp * 0.5) },
-		};
-		this.spawnQueue.push({
-			def: transferDef,
-			remaining: count,
-			bounty: def.bounty,
-			countsTowardClear: false,
-			source: 'transfer',
-		});
-	}
-
 	private spawnUnit(entry: SpawnQueueEntry): void {
 		if (this.currentPath.length === 0) return;
 
@@ -134,13 +118,13 @@ export class UnitSystem {
 		);
 		sprite.setDisplaySize(40, 48);
 		sprite.play(`${entry.def.id}-walk`);
-		sprite.setDepth(this.gridManager.getIsoDepth(startGrid.x, startGrid.y));
+		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		this.spawnOptionalVfx(
 			'vfx-spawn-portal',
 			startWorld.x,
 			startWorld.y,
 			32,
-			this.gridManager.getIsoDepth(startGrid.x, startGrid.y) - 1,
+			this.gridManager.getDepth(startGrid.x, startGrid.y) - 1,
 		);
 
 		const hpBar = this.scene.add.graphics();
@@ -200,11 +184,6 @@ export class UnitSystem {
 		unit.sprite.setTint(0x88ccff);
 	}
 
-	getUnitDefId(unitId: string): string | null {
-		const unit = this.units.get(unitId);
-		return unit ? unit.data.defId : null;
-	}
-
 	applyDamage(
 		unitId: string,
 		rawDamage: number,
@@ -232,7 +211,7 @@ export class UnitSystem {
 			);
 			deathFx.setDisplaySize(40, 48);
 			const deathGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			deathFx.setDepth(this.gridManager.getIsoDepth(deathGrid.x, deathGrid.y));
+			deathFx.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
 			deathFx.play('unit-death');
 			deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
 				deathFx.destroy(),
@@ -242,7 +221,7 @@ export class UnitSystem {
 				unit.worldX,
 				unit.worldY,
 				unit.def.id === 'titan' ? 64 : 32,
-				this.gridManager.getIsoDepth(deathGrid.x, deathGrid.y) + 1,
+				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
 			this.units.delete(unitId);
 			return {
@@ -339,7 +318,7 @@ export class UnitSystem {
 
 			const nextGrid = this.currentPath[pathIdx + 1];
 			const targetWorld = this.currentPathWorld[pathIdx + 1];
-			const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor;
+			const speed = unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;
@@ -357,7 +336,7 @@ export class UnitSystem {
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
 			const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			unit.sprite.setDepth(this.gridManager.getIsoDepth(currentGrid.x, currentGrid.y));
+			unit.sprite.setDepth(this.gridManager.getDepth(currentGrid.x, currentGrid.y));
 			this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
 		}
 

@@ -162,7 +162,7 @@ describe('asset integration', () => {
 		expect(pathLayer?.data?.[exitIndex]).not.toBe(0);
 
 		expect(objectLayer?.objects).toHaveLength(
-			FOREST_GATE_MAP.placementPoints.length,
+			FOREST_GATE_MAP.buildablePoints.length,
 		);
 		expect(
 			objectLayer?.objects?.map((object) => ({
@@ -172,7 +172,7 @@ describe('asset integration', () => {
 				height: object.height,
 			})),
 		).toEqual(
-			FOREST_GATE_MAP.placementPoints.map((point) => ({
+			FOREST_GATE_MAP.buildablePoints.map((point) => ({
 				x: point.x * FOREST_GATE_MAP.tileSize,
 				y: point.y * FOREST_GATE_MAP.tileSize,
 				width: FOREST_GATE_MAP.tileSize,

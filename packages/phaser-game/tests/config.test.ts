@@ -1,3 +1,4 @@
+import { GAME_CANVAS_H, ORTHO_CANVAS_W } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('phaser', () => ({
@@ -29,16 +30,12 @@ vi.mock('phaser', () => ({
 	},
 }));
 
-vi.mock('phaser3-rex-plugins/plugins/drag.js', () => ({
-	default: class Drag {
-		destroy() {}
-	},
-}));
-
 describe('gameConfig', () => {
-	it('does not register custom global plugins', async () => {
+	it('uses portrait canvas dimensions and no custom global plugins', async () => {
 		const { gameConfig } = await import('../src/config');
 
+		expect(gameConfig.width).toBe(ORTHO_CANVAS_W);
+		expect(gameConfig.height).toBe(GAME_CANVAS_H);
 		expect(gameConfig.plugins?.global).toBeUndefined();
 	});
 });

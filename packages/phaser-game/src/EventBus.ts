@@ -1,7 +1,6 @@
 import type {
 	PlacementFailureReason,
 	Position,
-	PressurePacketId,
 	TowerDef,
 	UnitType,
 	WavePhase,
@@ -22,7 +21,11 @@ export interface GameEventMap {
 	'unit-spawned': { unitType: UnitType; count: number };
 	'player-damaged': { playerId: string; damage: number; remainingHp: number };
 	'path-updated': { path: Position[] };
-	'game-over': { winnerId: string };
+	'game-over': {
+		result: 'victory' | 'defeat';
+		reason: 'all_waves_cleared' | 'base_hp_depleted';
+		finalSlot: number;
+	};
 	'gold-changed': { gold: number };
 	'wave-started': {
 		wave: number;
@@ -33,25 +36,6 @@ export interface GameEventMap {
 		startAtSec: number;
 	};
 	'wave-completed': { wave: number; totalWaves: number; slotIndex: number };
-	'pressure-earned': {
-		ownerId: string;
-		slotIndex: number;
-		pressureTokens: number;
-		packetId: PressurePacketId;
-	};
-	'pressure-queued': {
-		ownerId: string;
-		slotIndex: number;
-		pressureTokens: number;
-		packetId: PressurePacketId;
-		targetSlotIndex: number;
-	};
-	'pressure-expired': {
-		ownerId: string;
-		slotIndex: number;
-		pressureTokens: number;
-		packetId: PressurePacketId;
-	};
 	'boss-warning': {
 		slotIndex: number;
 		bossSlotIndex: number;
@@ -59,6 +43,12 @@ export interface GameEventMap {
 	};
 	'sudden-death-started': { slotIndex: number; startAtSec: number };
 	'buy-cooldown-updated': { remainingMs: number };
+	'player-tower-count': { count: number };
+	'wave-preview': {
+		wave: number;
+		groups: Array<{ unitId: string; unitName: string; count: number }>;
+	};
+	'tower-sold': { col: number; row: number; refund: number };
 	'tower-merge-resolved': {
 		success: boolean;
 		fromPos: Position;
@@ -66,21 +56,6 @@ export interface GameEventMap {
 		newTowerId?: string;
 		failureReason?: string;
 	};
-
-	// Tower sell
-	'tower-sold': { col: number; row: number; refund: number };
-	'player-tower-count': { count: number };
-
-	// Wave preview
-	'wave-preview': {
-		wave: number;
-		groups: Array<{ unitId: string; unitName: string; count: number }>;
-	};
-
-	// Random tower system
-	'random-tower-rolled': { towerId: string; towerDef: TowerDef };
-
-	// Merge system
 	'tower-merged': {
 		fromPos: Position;
 		toPos: Position;
@@ -88,15 +63,12 @@ export interface GameEventMap {
 		newTowerDef: TowerDef;
 	};
 	'tower-merge-failed': { reason: string };
-
-	// Opponent / Kill transfer
-	'opponent-damaged': { damage: number; remainingHp: number };
-	'opponent-state': { gold: number; hp: number; towerCount: number };
-	'kill-transfer': { unitType: string; count: number };
-
-	// Emotes
-	'send-emote': { emoteId: string };
-	'emote-received': { emoteId: string; playerId: string };
+	'random-tower-rolled': {
+		towerId: string;
+		towerDef: TowerDef;
+		source: 'owned_pool';
+		asCard: true;
+	};
 
 	// React → Game
 	'request-buy-random-tower': undefined;

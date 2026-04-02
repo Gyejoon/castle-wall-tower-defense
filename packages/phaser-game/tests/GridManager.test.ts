@@ -1,9 +1,8 @@
 import type { GridConfig } from '@gld/shared';
 import {
-	ISO_CANVAS_H,
-	ISO_CANVAS_W,
-	ISO_TILE_H,
-	ISO_TILE_W,
+	BOARD_TOP_PADDING,
+	FOREST_GATE_MAP,
+	ORTHO_TILE,
 } from '@gld/shared';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -38,18 +37,16 @@ const TEST_CONFIG: GridConfig = {
 	exitPoint: { x: 5, y: 5 },
 };
 
-// Offsets are computed dynamically based on grid size.
-// For 10×10 grid: xMin = -9*32 = -288, xMax = 9*32 = 288 → offsetX = (640 - 0) / 2 = 320
-// yMax = (9+9)*16 = 288 → offsetY = (320 - 288) / 2 = 16
-const OFFSET_X = ISO_CANVAS_W / 2; // 320 (symmetric for 10×10)
-const OFFSET_Y = (ISO_CANVAS_H - (9 + 9) * (ISO_TILE_H / 2)) / 2; // (320 - 288) / 2 = 16
+// Orthogonal offsets: offsetX = 0, offsetY = BOARD_TOP_PADDING
+const OFFSET_X = 0;
+const OFFSET_Y = BOARD_TOP_PADDING;
 
 describe('GridManager', () => {
 	it('생성자가 속성을 올바르게 설정해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		expect(gm.width).toBe(10);
 		expect(gm.height).toBe(10);
-		expect(gm.tileSize).toBe(32);
+		expect(gm.tileSize).toBe(53);
 		expect(gm.spawnPoint).toEqual({ x: 0, y: 5 });
 		expect(gm.exitPoint).toEqual({ x: 5, y: 5 });
 	});
@@ -97,6 +94,28 @@ describe('GridManager', () => {
 		expect(gm.placeTower(5, 5, 'tower-1')).toBe(false);
 	});
 
+	it('FOREST_GATE_MAP path 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const pathPoint = FOREST_GATE_MAP.path[1];
+		expect(gm.placeTower(pathPoint.x, pathPoint.y, 'tower-1')).toBe(false);
+	});
+
+	it('FOREST_GATE_MAP blocked-placement 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const blockedPoint = { x: 0, y: 0 };
+		expect(gm.placeTower(blockedPoint.x, blockedPoint.y, 'tower-1')).toBe(
+			false,
+		);
+	});
+
+	it('FOREST_GATE_MAP buildable 타일에는 타워를 배치할 수 있어야 한다', () => {
+		const gm = new GridManager(FOREST_GATE_MAP);
+		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+		expect(gm.placeTower(buildablePoint.x, buildablePoint.y, 'tower-1')).toBe(
+			true,
+		);
+	});
+
 	it('removeTower가 타워를 제거하고 true를 반환해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		gm.placeTower(1, 1, 'tower-1');
@@ -124,22 +143,24 @@ describe('GridManager', () => {
 		expect(gm.getTile(10, 0)).toBeNull();
 	});
 
-	it('gridToWorld가 아이소메트릭 좌표로 변환해야 한다', () => {
+	it('gridToWorld가 직교 좌표로 변환해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
+		const half = ORTHO_TILE / 2;
+
 		const p00 = gm.gridToWorld(0, 0);
-		expect(p00.x).toBe(OFFSET_X);
-		expect(p00.y).toBe(OFFSET_Y);
+		expect(p00.x).toBe(OFFSET_X + half);
+		expect(p00.y).toBe(OFFSET_Y + half);
 
 		const p10 = gm.gridToWorld(1, 0);
-		expect(p10.x).toBe(OFFSET_X + ISO_TILE_W / 2);
-		expect(p10.y).toBe(OFFSET_Y + ISO_TILE_H / 2);
+		expect(p10.x).toBe(OFFSET_X + ORTHO_TILE + half);
+		expect(p10.y).toBe(OFFSET_Y + half);
 
 		const p01 = gm.gridToWorld(0, 1);
-		expect(p01.x).toBe(OFFSET_X - ISO_TILE_W / 2);
-		expect(p01.y).toBe(OFFSET_Y + ISO_TILE_H / 2);
+		expect(p01.x).toBe(OFFSET_X + half);
+		expect(p01.y).toBe(OFFSET_Y + ORTHO_TILE + half);
 	});
 
-	it('worldToGrid가 아이소메트릭 역변환을 수행해야 한다', () => {
+	it('worldToGrid가 직교 역변환을 수행해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		const world = gm.gridToWorld(3, 2);
 		const grid = gm.worldToGrid(world.x, world.y);
@@ -151,8 +172,9 @@ describe('GridManager', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		const world = gm.gridToWorld(3, 2);
 		const floatGrid = gm.worldToGridFloat(world.x, world.y);
-		expect(floatGrid.x).toBeCloseTo(3, 5);
-		expect(floatGrid.y).toBeCloseTo(2, 5);
+		// gridToWorld returns tile center, so worldToGridFloat returns gx + 0.5
+		expect(floatGrid.x).toBeCloseTo(3.5, 5);
+		expect(floatGrid.y).toBeCloseTo(2.5, 5);
 	});
 
 	it('worldToGridFloat가 타일 사이 위치에서 소수점을 반환해야 한다', () => {
@@ -162,11 +184,11 @@ describe('GridManager', () => {
 		expect(shifted.x % 1).not.toBe(0);
 	});
 
-	it('getIsoDepth가 gridX + gridY + 10을 반환해야 한다', () => {
+	it('getDepth가 gridY + 10을 반환해야 한다', () => {
 		const gm = new GridManager(TEST_CONFIG);
-		expect(gm.getIsoDepth(0, 0)).toBe(10);
-		expect(gm.getIsoDepth(3, 4)).toBe(17);
-		expect(gm.getIsoDepth(9, 9)).toBe(28);
+		expect(gm.getDepth(0, 0)).toBe(10);
+		expect(gm.getDepth(3, 4)).toBe(14);
+		expect(gm.getDepth(9, 9)).toBe(19);
 	});
 
 	it('getWalkabilityGrid가 올바른 2D 배열을 반환해야 한다', () => {

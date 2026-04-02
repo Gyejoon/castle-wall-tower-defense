@@ -1,44 +1,68 @@
 import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
 import {
 	DEFAULT_GRID_CONFIG,
-	ISO_CANVAS_H,
-	ISO_CANVAS_W,
-	ISO_TILE_H,
-	ISO_TILE_W,
-	TILE_SIZE,
+	ORTHO_TILE,
 } from '@gld/shared';
 import Phaser from 'phaser';
+
+export interface GridManagerOptions {
+	tileSize?: number;
+	canvasWidth?: number;
+	canvasHeight?: number;
+}
 
 export class GridManager {
 	readonly width: number;
 	readonly height: number;
 	readonly tileSize: number;
+	readonly orthoTile: number;
 	readonly spawnPoint: Position;
 	readonly exitPoint: Position;
 	private grid: Grid;
 	private readonly offsetX: number;
 	private readonly offsetY: number;
+	private readonly buildablePointKeys: Set<string>;
+	private readonly blockedPlacementPointKeys: Set<string>;
+	private readonly pathPointKeys: Set<string>;
 
-	constructor(config: GridConfig = DEFAULT_GRID_CONFIG, baseOffsetY = 0) {
+	constructor(config: GridConfig = DEFAULT_GRID_CONFIG, options?: GridManagerOptions) {
 		this.width = config.width;
 		this.height = config.height;
-		this.tileSize = TILE_SIZE;
+
+		if (options?.canvasWidth && options?.canvasHeight) {
+			const tileByW = Math.floor(options.canvasWidth / this.width);
+			const tileByH = Math.floor(options.canvasHeight / this.height);
+			this.orthoTile = Math.max(1, Math.min(tileByW, tileByH));
+		} else {
+			this.orthoTile = options?.tileSize ?? ORTHO_TILE;
+		}
+		this.tileSize = this.orthoTile;
+
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
+		const mapConfig = config as GridConfig & {
+			buildablePoints?: Position[];
+			blockedPlacementPoints?: Position[];
+			path?: Position[];
+		};
+		this.buildablePointKeys = new Set(
+			(mapConfig.buildablePoints ?? []).map((point) => `${point.x},${point.y}`),
+		);
+		this.blockedPlacementPointKeys = new Set(
+			(mapConfig.blockedPlacementPoints ?? []).map(
+				(point) => `${point.x},${point.y}`,
+			),
+		);
+		this.pathPointKeys = new Set(
+			(mapConfig.path ?? []).map((point) => `${point.x},${point.y}`),
+		);
 
-		// Center the isometric grid within the canvas.
-		// The grid's world-space X range spans from gridToWorld(0, height-1).x to gridToWorld(width-1, 0).x
-		// We compute offsets so the grid is centered in the canvas.
-		const maxGx = this.width - 1;
-		const maxGy = this.height - 1;
-		// X extremes (before offset): (maxGx - 0) * halfW  and  (0 - maxGy) * halfW
-		const xMin = -maxGy * (ISO_TILE_W / 2);
-		const xMax = maxGx * (ISO_TILE_W / 2);
-		this.offsetX = (ISO_CANVAS_W - (xMin + xMax)) / 2;
-		// Y extremes (before offset): 0  and  (maxGx + maxGy) * halfH
-		const yMax = (maxGx + maxGy) * (ISO_TILE_H / 2);
-		// Center within single-grid region (ISO_CANVAS_H), then shift by baseOffsetY for dual-grid layout
-		this.offsetY = (ISO_CANVAS_H - yMax) / 2 + baseOffsetY;
+		const gridPixelW = this.orthoTile * this.width;
+		const gridPixelH = this.orthoTile * this.height;
+		const cw = options?.canvasWidth ?? gridPixelW;
+		const ch = options?.canvasHeight ?? gridPixelH;
+		this.offsetX = Math.floor((cw - gridPixelW) / 2);
+		this.offsetY = Math.floor((ch - gridPixelH) / 2);
 
 		this.grid = this.createGrid();
 	}
@@ -74,11 +98,25 @@ export class GridManager {
 		return tile?.walkable === true && tile.occupied === false;
 	}
 
-	placeTower(x: number, y: number, towerId: string): boolean {
+	canPlaceTower(x: number, y: number): boolean {
 		const tile = this.getTile(x, y);
 		if (!tile?.walkable || tile.occupied) return false;
 		if (x === this.spawnPoint.x && y === this.spawnPoint.y) return false;
 		if (x === this.exitPoint.x && y === this.exitPoint.y) return false;
+
+		const key = `${x},${y}`;
+		if (this.blockedPlacementPointKeys.has(key)) return false;
+		if (this.pathPointKeys.has(key)) return false;
+		if (this.buildablePointKeys.size > 0) {
+			return this.buildablePointKeys.has(key);
+		}
+		return true;
+	}
+
+	placeTower(x: number, y: number, towerId: string): boolean {
+		if (!this.canPlaceTower(x, y)) return false;
+		const tile = this.getTile(x, y);
+		if (!tile) return false;
 
 		tile.occupied = true;
 		tile.towerId = towerId;
@@ -94,60 +132,51 @@ export class GridManager {
 		return true;
 	}
 
-	/** Convert grid coords to isometric world pixel coords (center of tile) */
+	/** Convert grid coords to orthogonal world pixel coords (center of tile) */
 	gridToWorld(gridX: number, gridY: number): Position {
+		const t = this.orthoTile;
 		return {
-			x: (gridX - gridY) * (ISO_TILE_W / 2) + this.offsetX,
-			y: (gridX + gridY) * (ISO_TILE_H / 2) + this.offsetY,
+			x: gridX * t + t / 2 + this.offsetX,
+			y: gridY * t + t / 2 + this.offsetY,
 		};
 	}
 
-	/** Convert isometric world pixel coords to grid coords */
+	/** Convert orthogonal world pixel coords to grid coords */
 	worldToGrid(worldX: number, worldY: number): Position {
-		const rx = (worldX - this.offsetX) / ISO_TILE_W;
-		const ry = (worldY - this.offsetY) / ISO_TILE_H;
+		const t = this.orthoTile;
 		return {
-			x: Math.floor(rx + ry),
-			y: Math.floor(ry - rx),
+			x: Math.floor((worldX - this.offsetX) / t),
+			y: Math.floor((worldY - this.offsetY) / t),
 		};
 	}
 
-	/** Fill an isometric diamond tile on a Graphics object */
-	fillIsoDiamond(
+	/** Fill an orthogonal tile rectangle on a Graphics object */
+	fillTileRect(
 		graphics: Phaser.GameObjects.Graphics,
 		gridX: number,
 		gridY: number,
 		color: number,
 		alpha: number,
 	): void {
+		const t = this.orthoTile;
 		const center = this.gridToWorld(gridX, gridY);
-		const hw = ISO_TILE_W / 2;
-		const hh = ISO_TILE_H / 2;
+		const half = t / 2;
 		graphics.fillStyle(color, alpha);
-		graphics.fillPoints(
-			[
-				new Phaser.Geom.Point(center.x, center.y - hh),
-				new Phaser.Geom.Point(center.x + hw, center.y),
-				new Phaser.Geom.Point(center.x, center.y + hh),
-				new Phaser.Geom.Point(center.x - hw, center.y),
-			],
-			true,
-		);
+		graphics.fillRect(center.x - half, center.y - half, t, t);
 	}
 
 	/** Convert world coords to continuous (non-floored) grid coords for distance calculations */
 	worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
-		const rx = (worldX - this.offsetX) / ISO_TILE_W;
-		const ry = (worldY - this.offsetY) / ISO_TILE_H;
+		const t = this.orthoTile;
 		return {
-			x: rx + ry,
-			y: ry - rx,
+			x: (worldX - this.offsetX) / t,
+			y: (worldY - this.offsetY) / t,
 		};
 	}
 
-	/** Get isometric depth for correct draw order */
-	getIsoDepth(gridX: number, gridY: number): number {
-		return 10 + gridX + gridY;
+	/** Get depth for correct draw order (top-down: row-based) */
+	getDepth(_gridX: number, gridY: number): number {
+		return 10 + gridY;
 	}
 
 	/** Get a 2D walkability array for pathfinding */

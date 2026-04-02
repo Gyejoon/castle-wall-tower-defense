@@ -54,6 +54,8 @@ function createGraphics() {
     strokeEllipse: vi.fn().mockReturnThis(),
     lineStyle: vi.fn().mockReturnThis(),
     fillCircle: vi.fn().mockReturnThis(),
+    strokeCircle: vi.fn().mockReturnThis(),
+    fillRect: vi.fn().mockReturnThis(),
     beginPath: vi.fn().mockReturnThis(),
     moveTo: vi.fn().mockReturnThis(),
     lineTo: vi.fn().mockReturnThis(),
@@ -138,15 +140,17 @@ describe('optional combat vfx', () => {
     };
 
     const gridManager = {
+      orthoTile: 48,
       isInBounds: vi.fn(() => true),
       isWalkable: vi.fn(() => true),
+      canPlaceTower: vi.fn(() => true),
       placeTower: vi.fn(() => true),
       removeTower: vi.fn(),
       getWalkabilityGrid: vi.fn(() => []),
       spawnPoint: { x: 0, y: 0 },
-      exitPoint: { x: 11, y: 4 },
+      exitPoint: { x: 4, y: 17 },
       gridToWorld: vi.fn(() => ({ x: 100, y: 120 })),
-      getIsoDepth: vi.fn(() => 10),
+      getDepth: vi.fn(() => 10),
       worldToGridFloat: vi.fn(() => ({ x: 1, y: 0 })),
     };
 
@@ -190,10 +194,11 @@ describe('optional combat vfx', () => {
     };
 
     const gridManager = {
+      orthoTile: 48,
       gridToWorld: vi.fn(() => ({ x: 40, y: 60 })),
       worldToGrid: vi.fn(() => ({ x: 0, y: 0 })),
       worldToGridFloat: vi.fn(() => ({ x: 0, y: 0 })),
-      getIsoDepth: vi.fn(() => 10),
+      getDepth: vi.fn(() => 10),
     };
 
     const unitSystem = new UnitSystem(scene as never, gridManager as never);

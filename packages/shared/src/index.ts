@@ -1,17 +1,13 @@
-export { EMOTES } from './constants/emotes';
 export {
+	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
-	DUAL_CANVAS_H,
+	GAME_CANVAS_H,
 	GRID_HEIGHT,
 	GRID_WIDTH,
-	HUD_HEIGHT,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
-	ISO_CANVAS_H,
-	ISO_CANVAS_W,
-	ISO_TILE_DEPTH,
-	ISO_TILE_H,
-	ISO_TILE_W,
+	ORTHO_CANVAS_W,
+	ORTHO_TILE,
 	TILE_SIZE,
 	UNIT_SEND_COUNT,
 } from './constants/grid';
@@ -60,19 +56,7 @@ export {
 } from './constants/waves';
 export type { AssetManifest, AssetManifestEntry, AssetManifestSection, AssetManifestType } from './assets/manifest';
 export { inferAssetManifestSection, withManifestSection, withManifestSections } from './assets/manifest';
-export type { EmoteDef } from './types/emote';
-export type {
-	GameToReactEvent,
-	PressureEventPayload,
-	ReactToGameEvent,
-	WaveStartedEventPayload,
-} from './types/events';
-export type {
-	CombatHudState,
-	GameState,
-	PlayerState,
-	WavePhase,
-} from './types/game-state';
+export type { CombatHudState, GameState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';

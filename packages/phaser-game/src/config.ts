@@ -1,4 +1,4 @@
-import { DUAL_CANVAS_H, ISO_CANVAS_W } from '@gld/shared';
+import { GAME_CANVAS_H, ORTHO_CANVAS_W } from '@gld/shared';
 import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { GameScene } from './scenes/Game';
@@ -6,8 +6,8 @@ import { Preloader } from './scenes/Preloader';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
-	width: ISO_CANVAS_W,
-	height: DUAL_CANVAS_H,
+	width: ORTHO_CANVAS_W,
+	height: GAME_CANVAS_H,
 	parent: 'game-container',
 	backgroundColor: '#1a1a2e',
 	scale: {

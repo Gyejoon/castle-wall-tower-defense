@@ -63,7 +63,6 @@ export interface GameEventMap {
 		newTowerDef: TowerDef;
 	};
 	'tower-merge-failed': { reason: string };
-	'emote-received': { emoteId: string; playerId: string };
 	'random-tower-rolled': {
 		towerId: string;
 		towerDef: TowerDef;
@@ -79,7 +78,6 @@ export interface GameEventMap {
 	'request-sell-tower': { col: number; row: number };
 	'request-start-game': undefined;
 	'request-reset-run': undefined;
-	'send-emote': { emoteId: string };
 	'request-pause': undefined;
 	'request-resume': undefined;
 

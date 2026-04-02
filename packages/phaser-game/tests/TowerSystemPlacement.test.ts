@@ -39,6 +39,8 @@ function createGraphics() {
 		strokeEllipse: vi.fn().mockReturnThis(),
 		lineStyle: vi.fn().mockReturnThis(),
 		fillCircle: vi.fn().mockReturnThis(),
+		strokeCircle: vi.fn().mockReturnThis(),
+		fillRect: vi.fn().mockReturnThis(),
 		beginPath: vi.fn().mockReturnThis(),
 		moveTo: vi.fn().mockReturnThis(),
 		lineTo: vi.fn().mockReturnThis(),

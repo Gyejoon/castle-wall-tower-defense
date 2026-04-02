@@ -2,15 +2,12 @@ import type { GridConfig } from '../types/grid';
 
 export const GRID_WIDTH = 8;
 export const GRID_HEIGHT = 18;
-export const TILE_SIZE = 32;
+export const TILE_SIZE = 53;
 
-export const ISO_TILE_W = 64;
-export const ISO_TILE_H = 32;
-export const ISO_TILE_DEPTH = 8;
-export const ISO_CANVAS_W = (GRID_WIDTH + GRID_HEIGHT) * (ISO_TILE_W / 2); // 832
-export const ISO_CANVAS_H = (GRID_WIDTH + GRID_HEIGHT) * (ISO_TILE_H / 2); // 416
+export const ORTHO_TILE = 53;
+export const ORTHO_CANVAS_W = ORTHO_TILE * GRID_WIDTH; // 424
 
-export const BOARD_TOP_PADDING = 96;
+export const BOARD_TOP_PADDING = 0;
 export const GAME_CANVAS_H = 960;
 
 export const DEFAULT_GRID_CONFIG: GridConfig = {

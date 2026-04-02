@@ -1,6 +1,5 @@
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { MOCK_PROFILE } from '../../../data/mockLobbyData';
-import { useEmoteStore } from '../../../stores/emoteStore';
 import { useGameStore } from '../../../stores/gameStore';
 import { colors, fonts } from '../../../styles/tokens';
 import { PixelButton } from '../../ui/PixelButton';
@@ -8,7 +7,6 @@ import { TabBackground } from '../TabBackground';
 
 export function HomeTab() {
 	const resetRun = useGameStore((s) => s.resetRun);
-	const resetEmotes = useEmoteStore((s) => s.reset);
 
 	return (
 		<div
@@ -118,7 +116,6 @@ export function HomeTab() {
 					<PixelButton
 						variant="gold"
 						onClick={() => {
-							resetEmotes();
 							resetRun();
 						}}
 						style={{

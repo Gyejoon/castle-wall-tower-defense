@@ -2,10 +2,7 @@ import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
 import {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
-	ISO_CANVAS_H,
-	ISO_CANVAS_W,
-	ISO_TILE_H,
-	ISO_TILE_W,
+	ORTHO_TILE,
 	TILE_SIZE,
 } from '@gld/shared';
 import Phaser from 'phaser';
@@ -46,18 +43,8 @@ export class GridManager {
 			(mapConfig.path ?? []).map((point) => `${point.x},${point.y}`),
 		);
 
-		// Center the isometric grid within the canvas.
-		// The grid's world-space X range spans from gridToWorld(0, height-1).x to gridToWorld(width-1, 0).x
-		// We compute offsets so the grid is centered in the canvas.
-		const maxGx = this.width - 1;
-		const maxGy = this.height - 1;
-		// X extremes (before offset): (maxGx - 0) * halfW  and  (0 - maxGy) * halfW
-		const xMin = -maxGy * (ISO_TILE_W / 2);
-		const xMax = maxGx * (ISO_TILE_W / 2);
-		this.offsetX = (ISO_CANVAS_W - (xMin + xMax)) / 2;
-		// Y extremes (before offset): 0  and  (maxGx + maxGy) * halfH
-		const yMax = (maxGx + maxGy) * (ISO_TILE_H / 2);
-		this.offsetY = BOARD_TOP_PADDING + (ISO_CANVAS_H - yMax) / 2;
+		this.offsetX = 0;
+		this.offsetY = BOARD_TOP_PADDING;
 
 		this.grid = this.createGrid();
 	}
@@ -127,26 +114,24 @@ export class GridManager {
 		return true;
 	}
 
-	/** Convert grid coords to isometric world pixel coords (center of tile) */
+	/** Convert grid coords to orthogonal world pixel coords (center of tile) */
 	gridToWorld(gridX: number, gridY: number): Position {
 		return {
-			x: (gridX - gridY) * (ISO_TILE_W / 2) + this.offsetX,
-			y: (gridX + gridY) * (ISO_TILE_H / 2) + this.offsetY,
+			x: gridX * ORTHO_TILE + ORTHO_TILE / 2 + this.offsetX,
+			y: gridY * ORTHO_TILE + ORTHO_TILE / 2 + this.offsetY,
 		};
 	}
 
-	/** Convert isometric world pixel coords to grid coords */
+	/** Convert orthogonal world pixel coords to grid coords */
 	worldToGrid(worldX: number, worldY: number): Position {
-		const rx = (worldX - this.offsetX) / ISO_TILE_W;
-		const ry = (worldY - this.offsetY) / ISO_TILE_H;
 		return {
-			x: Math.floor(rx + ry),
-			y: Math.floor(ry - rx),
+			x: Math.floor((worldX - this.offsetX) / ORTHO_TILE),
+			y: Math.floor((worldY - this.offsetY) / ORTHO_TILE),
 		};
 	}
 
-	/** Fill an isometric diamond tile on a Graphics object */
-	fillIsoDiamond(
+	/** Fill an orthogonal tile rectangle on a Graphics object */
+	fillTileRect(
 		graphics: Phaser.GameObjects.Graphics,
 		gridX: number,
 		gridY: number,
@@ -154,33 +139,22 @@ export class GridManager {
 		alpha: number,
 	): void {
 		const center = this.gridToWorld(gridX, gridY);
-		const hw = ISO_TILE_W / 2;
-		const hh = ISO_TILE_H / 2;
+		const half = ORTHO_TILE / 2;
 		graphics.fillStyle(color, alpha);
-		graphics.fillPoints(
-			[
-				new Phaser.Geom.Point(center.x, center.y - hh),
-				new Phaser.Geom.Point(center.x + hw, center.y),
-				new Phaser.Geom.Point(center.x, center.y + hh),
-				new Phaser.Geom.Point(center.x - hw, center.y),
-			],
-			true,
-		);
+		graphics.fillRect(center.x - half, center.y - half, ORTHO_TILE, ORTHO_TILE);
 	}
 
 	/** Convert world coords to continuous (non-floored) grid coords for distance calculations */
 	worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
-		const rx = (worldX - this.offsetX) / ISO_TILE_W;
-		const ry = (worldY - this.offsetY) / ISO_TILE_H;
 		return {
-			x: rx + ry,
-			y: ry - rx,
+			x: (worldX - this.offsetX) / ORTHO_TILE,
+			y: (worldY - this.offsetY) / ORTHO_TILE,
 		};
 	}
 
-	/** Get isometric depth for correct draw order */
-	getIsoDepth(gridX: number, gridY: number): number {
-		return 10 + gridX + gridY;
+	/** Get depth for correct draw order (top-down: row-based) */
+	getDepth(gridX: number, gridY: number): number {
+		return 10 + gridY;
 	}
 
 	/** Get a 2D walkability array for pathfinding */

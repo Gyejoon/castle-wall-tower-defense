@@ -1,17 +1,11 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LobbyPage } from '../src/pages/LobbyPage';
-import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 
 describe('LobbyPage', () => {
 	beforeEach(() => {
 		useGameStore.setState(useGameStore.getInitialState());
-		useEmoteStore.setState({
-			myEmote: null,
-			opponentEmote: null,
-			showEmotePanel: false,
-		});
 	});
 
 	afterEach(() => {
@@ -53,18 +47,11 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('starts the run immediately and clears stale emotes', () => {
-		useEmoteStore.getState().sendEmote('gg');
-		useEmoteStore.getState().receiveEmote('angry');
-		useEmoteStore.getState().toggleEmotePanel();
-
+	it('starts the run immediately', () => {
 		const view = render(<LobbyPage />);
 		fireEvent.click(view.getByText('즉시 시작'));
 
 		expect(useGameStore.getState().runStatus).toBe('building');
-		expect(useEmoteStore.getState().myEmote).toBeNull();
-		expect(useEmoteStore.getState().opponentEmote).toBeNull();
-		expect(useEmoteStore.getState().showEmotePanel).toBe(false);
 	});
 
 	it('shows collection tab with tower grid', () => {

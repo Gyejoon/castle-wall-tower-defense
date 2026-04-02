@@ -4,7 +4,7 @@ import type {
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS, ISO_TILE_H, ISO_TILE_W } from '@gld/shared';
+import { ALL_TOWERS, ORTHO_TILE } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -103,7 +103,7 @@ export class TowerSystem {
 			`tower-${towerDefId}`,
 		);
 		sprite.setY(worldPos.y - 20);
-		sprite.setDepth(this.gridManager.getIsoDepth(gridX, gridY));
+		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
 		this.towers.set(instanceId, {
@@ -125,35 +125,25 @@ export class TowerSystem {
 		const color = parseInt(def.color.replace('#', ''), 16);
 		graphics.clear();
 
+		const baseSize = ORTHO_TILE * 0.45;
 		graphics.fillStyle(0x0a0a14, 0.8);
-		graphics.fillEllipse(
-			pos.x,
-			pos.y + 4,
-			ISO_TILE_W * 0.45,
-			ISO_TILE_H * 0.45,
-		);
+		graphics.fillCircle(pos.x, pos.y + 4, baseSize / 2);
 		graphics.lineStyle(1, color, 0.3);
-		graphics.strokeEllipse(
-			pos.x,
-			pos.y + 4,
-			ISO_TILE_W * 0.45,
-			ISO_TILE_H * 0.45,
-		);
+		graphics.strokeCircle(pos.x, pos.y + 4, baseSize / 2);
 
 		graphics.fillStyle(color, 0.08);
-		graphics.fillEllipse(pos.x, pos.y + 4, ISO_TILE_W * 0.6, ISO_TILE_H * 0.6);
+		graphics.fillCircle(pos.x, pos.y + 4, ORTHO_TILE * 0.3);
 
 		const rangeGrid = def.stats.range;
 		if (rangeGrid > 0) {
 			const dots = 32;
-			const rangeW = rangeGrid * ISO_TILE_W * 0.5;
-			const rangeH = rangeGrid * ISO_TILE_H * 0.5;
+			const rangeR = rangeGrid * ORTHO_TILE * 0.5;
 			graphics.fillStyle(color, 0.1);
 			for (let i = 0; i < dots; i++) {
 				const a = ((Math.PI * 2) / dots) * i;
 				graphics.fillCircle(
-					pos.x + rangeW * Math.cos(a),
-					pos.y + rangeH * Math.sin(a),
+					pos.x + rangeR * Math.cos(a),
+					pos.y + rangeR * Math.sin(a),
 					1,
 				);
 			}
@@ -336,7 +326,7 @@ export class TowerSystem {
 			textureKey,
 		);
 		effect.setDisplaySize(64, 80);
-		effect.setDepth(this.gridManager.getIsoDepth(gridPos.x, gridPos.y) + 1);
+		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
 		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
 			effect.destroy(),

@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import {
 	afterEach,
@@ -9,7 +9,6 @@ import {
 	it,
 	vi,
 } from 'vitest';
-import { useEmoteStore } from '../src/stores/emoteStore';
 import { useGameStore } from '../src/stores/gameStore';
 
 type EventHandler = (payload?: unknown) => void;
@@ -124,11 +123,6 @@ describe('GamePage', () => {
 		listeners.clear();
 		useGameStore.setState(useGameStore.getInitialState());
 		useGameStore.getState().resetRun();
-		useEmoteStore.setState({
-			myEmote: null,
-			opponentEmote: null,
-			showEmotePanel: false,
-		});
 	});
 
 	afterEach(() => {
@@ -244,59 +238,4 @@ describe('GamePage', () => {
 		expect(view.getByText('합성 실패')).toBeTruthy();
 	});
 
-	it('stores opponent emotes only when the event includes opponent playerId', () => {
-		const { emitSpy } = getEventBusHarness();
-		render(<GamePage />);
-
-		act(() => {
-			emitSpy('emote-received', { emoteId: 'gg', playerId: 'local' });
-		});
-
-		expect(useEmoteStore.getState().opponentEmote).toBeNull();
-
-		act(() => {
-			emitSpy('emote-received', { emoteId: 'gg', playerId: 'opponent' });
-		});
-
-		expect(useEmoteStore.getState().opponentEmote?.id).toBe('gg');
-	});
-
-	it('emits send-emote after clicking inline emote button', () => {
-		const { emitSpy } = getEventBusHarness();
-		const view = render(<GamePage />);
-
-		const ggButtons = view.getAllByText(/GG/i);
-		fireEvent.click(ggButtons[0]);
-
-		expect(emitSpy).toHaveBeenCalledWith('send-emote', { emoteId: 'gg' });
-	});
-
-	it('starts fading the emote bubble after 4 seconds and removes it after the fade', () => {
-		vi.useFakeTimers();
-		const view = render(<GamePage />);
-
-		const ggButtons = view.getAllByText(/GG/i);
-		fireEvent.click(ggButtons[0]);
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(4000);
-		});
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(599);
-		});
-
-		expect(view.getAllByText(/GG/i).length).toBeGreaterThan(0);
-
-		act(() => {
-			vi.advanceTimersByTime(1);
-		});
-
-		const remaining = view.getAllByText(/GG/i);
-		expect(remaining.length).toBe(1);
-	});
 });

@@ -4,8 +4,8 @@ import {
 	GAME_CANVAS_H,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
-	ISO_CANVAS_W,
-	ISO_TILE_W,
+	ORTHO_CANVAS_W,
+	ORTHO_TILE,
 	RANDOM_TOWER_COST,
 	WAVE_DEFS,
 	type WaveDef,
@@ -211,7 +211,7 @@ export class GameScene extends Phaser.Scene {
 		const exitColor = dark ? 0x7e8aa8 : 0xb0914f;
 
 		for (const point of FOREST_GATE_MAP.path) {
-			grid.fillIsoDiamond(
+			grid.fillTileRect(
 				graphics,
 				point.x,
 				point.y,
@@ -220,14 +220,14 @@ export class GameScene extends Phaser.Scene {
 			);
 		}
 
-		grid.fillIsoDiamond(
+		grid.fillTileRect(
 			graphics,
 			FOREST_GATE_MAP.spawnPoint.x,
 			FOREST_GATE_MAP.spawnPoint.y,
 			spawnColor,
 			dark ? 0.58 : 0.68,
 		);
-		grid.fillIsoDiamond(
+		grid.fillTileRect(
 			graphics,
 			FOREST_GATE_MAP.exitPoint.x,
 			FOREST_GATE_MAP.exitPoint.y,
@@ -261,8 +261,8 @@ export class GameScene extends Phaser.Scene {
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(ISO_TILE_W, ISO_TILE_W);
-				sprite.setOrigin(0.5, 0.62);
+				sprite.setDisplaySize(ORTHO_TILE, ORTHO_TILE);
+				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(0);
 				if (dark) {
 					sprite.setTint(0x6b7899);
@@ -341,7 +341,7 @@ export class GameScene extends Phaser.Scene {
 
 			if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
 				const canPlace = this.playerGrid.canPlaceTower(gridPos.x, gridPos.y);
-				this.playerGrid.fillIsoDiamond(
+				this.playerGrid.fillTileRect(
 					this.hoverGraphics,
 					gridPos.x,
 					gridPos.y,
@@ -379,7 +379,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.hudBuyBtn = this.add
 			.text(
-				ISO_CANVAS_W * 0.18,
+				ORTHO_CANVAS_W * 0.18,
 				hudY,
 				`타워 구매 ${RANDOM_TOWER_COST}G`,
 				btnStyle,
@@ -390,14 +390,14 @@ export class GameScene extends Phaser.Scene {
 			.on('pointerdown', this.onHudBuy);
 
 		this.hudWaveBtn = this.add
-			.text(ISO_CANVAS_W * 0.54, hudY, '웨이브 시작', btnStyle)
+			.text(ORTHO_CANVAS_W * 0.54, hudY, '웨이브 시작', btnStyle)
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
 			.on('pointerdown', this.onHudWave);
 
 		this.add
-			.text(ISO_CANVAS_W * 0.85, hudY, '초기화', {
+			.text(ORTHO_CANVAS_W * 0.85, hudY, '초기화', {
 				...btnStyle,
 				color: '#94a1b2',
 			})
@@ -407,7 +407,7 @@ export class GameScene extends Phaser.Scene {
 			.on('pointerdown', this.onHudReset);
 
 		this.hudRolledInfo = this.add
-			.text(ISO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 4, '', {
+			.text(ORTHO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 4, '', {
 				fontFamily: 'monospace',
 				fontSize: '8px',
 				color: '#f0d060',
@@ -418,7 +418,7 @@ export class GameScene extends Phaser.Scene {
 
 		// Placement feedback (shown briefly on error)
 		this.feedbackText = this.add
-			.text(ISO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 16, '', {
+			.text(ORTHO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 16, '', {
 				fontFamily: 'monospace',
 				fontSize: '8px',
 				color: '#e53170',
@@ -480,7 +480,7 @@ export class GameScene extends Phaser.Scene {
 			const isHover =
 				tower.position.x === currentGridPos.x &&
 				tower.position.y === currentGridPos.y;
-			this.playerGrid.fillIsoDiamond(
+			this.playerGrid.fillTileRect(
 				this.mergeHighlights,
 				tower.position.x,
 				tower.position.y,
@@ -765,7 +765,7 @@ export class GameScene extends Phaser.Scene {
 				this.hoverGraphics.clear();
 				this.dragGhost.clear();
 				if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
-					this.playerGrid.fillIsoDiamond(
+					this.playerGrid.fillTileRect(
 						this.dragGhost,
 						gridPos.x,
 						gridPos.y,

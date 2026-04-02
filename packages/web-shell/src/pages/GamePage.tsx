@@ -1,10 +1,8 @@
 import { EventBus } from '@gld/phaser-game';
-import { EMOTES, type PlacementFailureReason, type TowerDef } from '@gld/shared';
+import type { PlacementFailureReason, TowerDef } from '@gld/shared';
 import { useEffect, type CSSProperties } from 'react';
-import { EmoteBubble } from '../components/EmoteBubble';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
-import { useEmoteStore } from '../stores/emoteStore';
 import { useGameStore } from '../stores/gameStore';
 import { colors, fonts } from '../styles/tokens';
 
@@ -68,32 +66,6 @@ function getHudChipStyle({
 	};
 }
 
-function getTrackStyle(background: string): CSSProperties {
-	return {
-		flex: 1,
-		height: '10px',
-		background,
-		overflow: 'hidden',
-		position: 'relative',
-		border: `1px solid ${colors.border}`,
-	};
-}
-
-function getFillStyle(
-	width: string,
-	background: string,
-	alignment: 'left' | 'right',
-): CSSProperties {
-	return {
-		position: 'absolute',
-		top: 0,
-		bottom: 0,
-		width,
-		background,
-		transition: 'width 0.3s',
-		...(alignment === 'left' ? { left: 0 } : { right: 0 }),
-	};
-}
 
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
@@ -101,7 +73,6 @@ export function GamePage() {
 	const gameReady = useGameStore((s) => s.gameReady);
 	const lives = useGameStore((s) => s.lives);
 	const gold = useGameStore((s) => s.gold);
-	const playerTowerCount = useGameStore((s) => s.playerTowerCount);
 	const combatHud = useGameStore((s) => s.combatHud);
 	const toast = useGameStore((s) => s.toast);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
@@ -115,13 +86,6 @@ export function GamePage() {
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
-	const myEmote = useEmoteStore((s) => s.myEmote);
-	const opponentEmote = useEmoteStore((s) => s.opponentEmote);
-	const receiveEmote = useEmoteStore((s) => s.receiveEmote);
-	const sendEmote = useEmoteStore((s) => s.sendEmote);
-	const clearMyEmote = useEmoteStore((s) => s.clearMyEmote);
-	const clearOpponentEmote = useEmoteStore((s) => s.clearOpponentEmote);
-
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
@@ -170,10 +134,6 @@ export function GamePage() {
 		}) => {
 			setRolledTower(data.towerDef);
 		};
-		const onEmoteReceived = (data: { emoteId: string; playerId: string }) => {
-			if (data.playerId !== 'opponent') return;
-			receiveEmote(data.emoteId);
-		};
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
 		const onResetRun = () => resetRun();
@@ -203,7 +163,6 @@ export function GamePage() {
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
 		EventBus.on('random-tower-rolled', onRandomTowerRolled);
-		EventBus.on('emote-received', onEmoteReceived);
 		EventBus.on('player-tower-count', onPlayerTowerCount);
 		EventBus.on('request-reset-run', onResetRun);
 		EventBus.on('boss-warning', onBossWarning);
@@ -218,7 +177,6 @@ export function GamePage() {
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
 			EventBus.off('random-tower-rolled', onRandomTowerRolled);
-			EventBus.off('emote-received', onEmoteReceived);
 			EventBus.off('player-tower-count', onPlayerTowerCount);
 			EventBus.off('request-reset-run', onResetRun);
 			EventBus.off('boss-warning', onBossWarning);
@@ -229,7 +187,6 @@ export function GamePage() {
 	}, [
 		patchCombatHud,
 		pushToast,
-		receiveEmote,
 		resetRun,
 		setGold,
 		setLives,
@@ -244,11 +201,6 @@ export function GamePage() {
 		const timeout = window.setTimeout(() => clearToast(), 1800);
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
-
-	useEffect(() => {
-		if (!myEmote) return;
-		EventBus.emit('send-emote', { emoteId: myEmote.id });
-	}, [myEmote]);
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
@@ -361,11 +313,10 @@ export function GamePage() {
 				<div
 					style={{
 						width: '100%',
-						aspectRatio: '640 / 688',
-						maxHeight: 'calc(100vh - 148px)',
+						flex: 1,
+						maxHeight: 'calc(100vh - 48px)',
 						position: 'relative',
 						overflow: 'hidden',
-						flexShrink: 1,
 						background:
 							'linear-gradient(180deg, rgba(13,26,42,0.48) 0%, rgba(26,18,8,0.4) 100%)',
 					}}
@@ -412,22 +363,6 @@ export function GamePage() {
 						>
 							{toast.message}
 						</div>
-					)}
-
-					{myEmote && (
-						<EmoteBubble
-							emoteId={myEmote.id}
-							onDone={clearMyEmote}
-							position="right"
-						/>
-					)}
-
-					{opponentEmote && (
-						<EmoteBubble
-							emoteId={opponentEmote.id}
-							onDone={clearOpponentEmote}
-							position="left"
-						/>
 					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
@@ -498,155 +433,6 @@ export function GamePage() {
 					)}
 				</div>
 
-				<div
-					data-testid="bottom-panel"
-					style={{
-						flex: '0 0 auto',
-						padding: '12px',
-						background: 'rgba(42, 32, 16, 0.94)',
-						borderTop: `1px solid ${colors.border}`,
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'flex-start',
-						gap: '8px',
-						minHeight: '80px',
-					}}
-				>
-					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<span
-								style={{
-									color: colors.text,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									textAlign: 'right',
-								}}
-							>
-								HP
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${(lives / 20) * 100}%`,
-										`linear-gradient(90deg, ${colors.danger}, rgba(192,48,32,0.55))`,
-										'left',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.danger,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '28px',
-								}}
-							>
-								{lives}
-							</span>
-						</div>
-
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<span
-								style={{
-									color: colors.text,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									textAlign: 'right',
-								}}
-							>
-								골드
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${Math.min(100, (gold / 500) * 100)}%`,
-										`linear-gradient(90deg, ${colors.gold}, rgba(240,208,96,0.55))`,
-										'left',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.gold,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '28px',
-								}}
-							>
-								{gold}
-							</span>
-						</div>
-
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<span
-								style={{
-									color: colors.text,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '24px',
-									textAlign: 'right',
-								}}
-							>
-								타워
-							</span>
-							<div style={getTrackStyle('rgba(26,18,8,0.72)')}>
-								<div
-									style={getFillStyle(
-										`${Math.min(100, (playerTowerCount / 10) * 100)}%`,
-										`linear-gradient(90deg, ${colors.info}, rgba(91,200,232,0.55))`,
-										'left',
-									)}
-								/>
-							</div>
-							<span
-								style={{
-									color: colors.info,
-									fontFamily: fonts.pixel,
-									fontSize: '7px',
-									width: '28px',
-								}}
-							>
-								{playerTowerCount}
-							</span>
-						</div>
-					</div>
-
-					<div
-						style={{
-							display: 'flex',
-							gap: '6px',
-							overflow: 'hidden',
-						}}
-					>
-						{EMOTES.map((emote) => (
-							<button
-								key={emote.id}
-								type="button"
-								onClick={() => sendEmote(emote.id)}
-								style={{
-									flex: 1,
-									background: 'rgba(42,32,16,0.88)',
-									border: `1px solid ${colors.border}`,
-									boxShadow: '2px 2px 0px rgba(0,0,0,0.2)',
-									padding: '8px 2px',
-									cursor: 'pointer',
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-									gap: '3px',
-									color: colors.textSecondary,
-									fontSize: '7px',
-									fontFamily: fonts.pixel,
-								}}
-							>
-								<span style={{ fontSize: '16px' }}>{emote.emoji}</span>
-								<span>{emote.text}</span>
-							</button>
-						))}
-					</div>
-				</div>
 			</div>
 		</div>
 	);

@@ -134,13 +134,13 @@ export class UnitSystem {
 		);
 		sprite.setDisplaySize(40, 48);
 		sprite.play(`${entry.def.id}-walk`);
-		sprite.setDepth(this.gridManager.getIsoDepth(startGrid.x, startGrid.y));
+		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		this.spawnOptionalVfx(
 			'vfx-spawn-portal',
 			startWorld.x,
 			startWorld.y,
 			32,
-			this.gridManager.getIsoDepth(startGrid.x, startGrid.y) - 1,
+			this.gridManager.getDepth(startGrid.x, startGrid.y) - 1,
 		);
 
 		const hpBar = this.scene.add.graphics();
@@ -232,7 +232,7 @@ export class UnitSystem {
 			);
 			deathFx.setDisplaySize(40, 48);
 			const deathGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			deathFx.setDepth(this.gridManager.getIsoDepth(deathGrid.x, deathGrid.y));
+			deathFx.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
 			deathFx.play('unit-death');
 			deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
 				deathFx.destroy(),
@@ -242,7 +242,7 @@ export class UnitSystem {
 				unit.worldX,
 				unit.worldY,
 				unit.def.id === 'titan' ? 64 : 32,
-				this.gridManager.getIsoDepth(deathGrid.x, deathGrid.y) + 1,
+				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
 			this.units.delete(unitId);
 			return {
@@ -357,7 +357,7 @@ export class UnitSystem {
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
 			const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			unit.sprite.setDepth(this.gridManager.getIsoDepth(currentGrid.x, currentGrid.y));
+			unit.sprite.setDepth(this.gridManager.getDepth(currentGrid.x, currentGrid.y));
 			this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
 		}
 

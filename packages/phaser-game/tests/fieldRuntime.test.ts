@@ -144,6 +144,7 @@ describe('GameScene field runtime', () => {
 		const scene = new GameScene();
 
 		Object.assign(scene, {
+			scale: { width: 424, height: 960 },
 			add: {
 				image: addImage,
 				sprite: addSprite,

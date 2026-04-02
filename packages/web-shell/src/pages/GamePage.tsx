@@ -13,33 +13,18 @@ function formatTimerLabel(rawLabel: string) {
 	return rawLabel;
 }
 
+const TOAST_BG = 'rgba(42,32,16,0.94)';
+
+const TOAST_COLOR_MAP: Record<string, string> = {
+	success: colors.success,
+	warning: colors.gold,
+	error: colors.danger,
+	info: colors.info,
+};
+
 function getToastStyle(tone: 'info' | 'success' | 'warning' | 'error') {
-	switch (tone) {
-		case 'success':
-			return {
-				color: colors.success,
-				background: 'rgba(42,32,16,0.94)',
-				border: colors.success,
-			};
-		case 'warning':
-			return {
-				color: colors.gold,
-				background: 'rgba(42,32,16,0.94)',
-				border: colors.gold,
-			};
-		case 'error':
-			return {
-				color: colors.danger,
-				background: 'rgba(42,32,16,0.94)',
-				border: colors.danger,
-			};
-		default:
-			return {
-				color: colors.info,
-				background: 'rgba(42,32,16,0.94)',
-				border: colors.info,
-			};
-	}
+	const accent = TOAST_COLOR_MAP[tone] ?? colors.info;
+	return { color: accent, background: TOAST_BG, border: accent };
 }
 
 function getHudChipStyle({
@@ -204,15 +189,6 @@ export function GamePage() {
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
-	const handleLeaveMatch = () => {
-		if (
-			window.confirm(
-				'진행 중인 전투를 나가시겠습니까? 현재 매치는 즉시 종료됩니다.',
-			)
-		) {
-			enterLobby();
-		}
-	};
 
 	return (
 		<div
@@ -299,15 +275,6 @@ export function GamePage() {
 						구매 {combatHud.buyCooldownMs > 0 ? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s` : '준비'}
 					</div>
 
-					<div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-						<PixelButton
-							variant="danger"
-							style={{ fontSize: '8px', padding: '4px 10px', minWidth: 'auto' }}
-							onClick={handleLeaveMatch}
-						>
-							나가기
-						</PixelButton>
-					</div>
 				</div>
 
 				<div

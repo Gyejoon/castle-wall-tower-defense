@@ -4,7 +4,7 @@ import type {
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS, ORTHO_TILE } from '@gld/shared';
+import { ALL_TOWERS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -125,19 +125,19 @@ export class TowerSystem {
 		const color = parseInt(def.color.replace('#', ''), 16);
 		graphics.clear();
 
-		const baseSize = ORTHO_TILE * 0.45;
+		const baseSize = this.gridManager.orthoTile * 0.45;
 		graphics.fillStyle(0x0a0a14, 0.8);
 		graphics.fillCircle(pos.x, pos.y + 4, baseSize / 2);
 		graphics.lineStyle(1, color, 0.3);
 		graphics.strokeCircle(pos.x, pos.y + 4, baseSize / 2);
 
 		graphics.fillStyle(color, 0.08);
-		graphics.fillCircle(pos.x, pos.y + 4, ORTHO_TILE * 0.3);
+		graphics.fillCircle(pos.x, pos.y + 4, this.gridManager.orthoTile * 0.3);
 
 		const rangeGrid = def.stats.range;
 		if (rangeGrid > 0) {
 			const dots = 32;
-			const rangeR = rangeGrid * ORTHO_TILE * 0.5;
+			const rangeR = rangeGrid * this.gridManager.orthoTile * 0.5;
 			graphics.fillStyle(color, 0.1);
 			for (let i = 0; i < dots; i++) {
 				const a = ((Math.PI * 2) / dots) * i;
@@ -343,10 +343,8 @@ export class TowerSystem {
 		}
 
 		const effect = this.scene.add.sprite(x, y, textureKey);
-		effect.setDisplaySize(
-			textureKey === 'projectile-hit-flash' ? 16 : 32,
-			textureKey === 'projectile-hit-flash' ? 16 : 32,
-		);
+		const size = textureKey === 'projectile-hit-flash' ? 16 : 32;
+		effect.setDisplaySize(size, size);
 		effect.setDepth(30);
 		effect.play(animationKey);
 		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
@@ -382,10 +380,6 @@ export class TowerSystem {
 
 		const refund = Math.floor(targetInstance.def.cost * 0.7);
 		return { success: true, refund };
-	}
-
-	hasTowerAt(gridX: number, gridY: number): boolean {
-		return this.findTowerEntry(gridX, gridY) !== null;
 	}
 
 	getTowerAt(

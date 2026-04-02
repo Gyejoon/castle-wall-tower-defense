@@ -1,16 +1,21 @@
 import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
 import {
-	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
 	ORTHO_TILE,
-	TILE_SIZE,
 } from '@gld/shared';
 import Phaser from 'phaser';
+
+export interface GridManagerOptions {
+	tileSize?: number;
+	canvasWidth?: number;
+	canvasHeight?: number;
+}
 
 export class GridManager {
 	readonly width: number;
 	readonly height: number;
 	readonly tileSize: number;
+	readonly orthoTile: number;
 	readonly spawnPoint: Position;
 	readonly exitPoint: Position;
 	private grid: Grid;
@@ -20,10 +25,19 @@ export class GridManager {
 	private readonly blockedPlacementPointKeys: Set<string>;
 	private readonly pathPointKeys: Set<string>;
 
-	constructor(config: GridConfig = DEFAULT_GRID_CONFIG) {
+	constructor(config: GridConfig = DEFAULT_GRID_CONFIG, options?: GridManagerOptions) {
 		this.width = config.width;
 		this.height = config.height;
-		this.tileSize = TILE_SIZE;
+
+		if (options?.canvasWidth && options?.canvasHeight) {
+			const tileByW = Math.floor(options.canvasWidth / this.width);
+			const tileByH = Math.floor(options.canvasHeight / this.height);
+			this.orthoTile = Math.max(1, Math.min(tileByW, tileByH));
+		} else {
+			this.orthoTile = options?.tileSize ?? ORTHO_TILE;
+		}
+		this.tileSize = this.orthoTile;
+
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
 		const mapConfig = config as GridConfig & {
@@ -43,8 +57,12 @@ export class GridManager {
 			(mapConfig.path ?? []).map((point) => `${point.x},${point.y}`),
 		);
 
-		this.offsetX = 0;
-		this.offsetY = BOARD_TOP_PADDING;
+		const gridPixelW = this.orthoTile * this.width;
+		const gridPixelH = this.orthoTile * this.height;
+		const cw = options?.canvasWidth ?? gridPixelW;
+		const ch = options?.canvasHeight ?? gridPixelH;
+		this.offsetX = Math.floor((cw - gridPixelW) / 2);
+		this.offsetY = Math.floor((ch - gridPixelH) / 2);
 
 		this.grid = this.createGrid();
 	}
@@ -116,17 +134,19 @@ export class GridManager {
 
 	/** Convert grid coords to orthogonal world pixel coords (center of tile) */
 	gridToWorld(gridX: number, gridY: number): Position {
+		const t = this.orthoTile;
 		return {
-			x: gridX * ORTHO_TILE + ORTHO_TILE / 2 + this.offsetX,
-			y: gridY * ORTHO_TILE + ORTHO_TILE / 2 + this.offsetY,
+			x: gridX * t + t / 2 + this.offsetX,
+			y: gridY * t + t / 2 + this.offsetY,
 		};
 	}
 
 	/** Convert orthogonal world pixel coords to grid coords */
 	worldToGrid(worldX: number, worldY: number): Position {
+		const t = this.orthoTile;
 		return {
-			x: Math.floor((worldX - this.offsetX) / ORTHO_TILE),
-			y: Math.floor((worldY - this.offsetY) / ORTHO_TILE),
+			x: Math.floor((worldX - this.offsetX) / t),
+			y: Math.floor((worldY - this.offsetY) / t),
 		};
 	}
 
@@ -138,22 +158,24 @@ export class GridManager {
 		color: number,
 		alpha: number,
 	): void {
+		const t = this.orthoTile;
 		const center = this.gridToWorld(gridX, gridY);
-		const half = ORTHO_TILE / 2;
+		const half = t / 2;
 		graphics.fillStyle(color, alpha);
-		graphics.fillRect(center.x - half, center.y - half, ORTHO_TILE, ORTHO_TILE);
+		graphics.fillRect(center.x - half, center.y - half, t, t);
 	}
 
 	/** Convert world coords to continuous (non-floored) grid coords for distance calculations */
 	worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
+		const t = this.orthoTile;
 		return {
-			x: (worldX - this.offsetX) / ORTHO_TILE,
-			y: (worldY - this.offsetY) / ORTHO_TILE,
+			x: (worldX - this.offsetX) / t,
+			y: (worldY - this.offsetY) / t,
 		};
 	}
 
 	/** Get depth for correct draw order (top-down: row-based) */
-	getDepth(gridX: number, gridY: number): number {
+	getDepth(_gridX: number, gridY: number): number {
 		return 10 + gridY;
 	}
 

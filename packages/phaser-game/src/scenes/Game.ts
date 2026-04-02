@@ -1,11 +1,8 @@
 import {
 	type AssetManifest,
 	FOREST_GATE_MAP,
-	GAME_CANVAS_H,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
-	ORTHO_CANVAS_W,
-	ORTHO_TILE,
 	RANDOM_TOWER_COST,
 	WAVE_DEFS,
 	type WaveDef,
@@ -64,13 +61,10 @@ export class GameScene extends Phaser.Scene {
 	private playerTowerDragController?: TowerDragController;
 
 	private hudBuyBtn!: Phaser.GameObjects.Text;
-	private hudWaveBtn!: Phaser.GameObjects.Text;
 	private hudRolledInfo!: Phaser.GameObjects.Text;
 	private feedbackText!: Phaser.GameObjects.Text;
 
 	private onHudBuy!: () => void;
-	private onHudWave!: () => void;
-	private onHudReset!: () => void;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
@@ -100,7 +94,12 @@ export class GameScene extends Phaser.Scene {
 	create() {
 		this.isCleaningUp = false;
 		this.optionalAssetManifest = getCachedAssetManifest(this);
-		this.playerGrid = new GridManager(FOREST_GATE_MAP);
+		const canvasW = this.scale.width;
+		const canvasH = this.scale.height;
+		this.playerGrid = new GridManager(FOREST_GATE_MAP, {
+			canvasWidth: canvasW,
+			canvasHeight: canvasH,
+		});
 		this.playerPathfinding = new PathfindingSystem();
 		this.playerTowers = new TowerSystem(
 			this,
@@ -130,8 +129,6 @@ export class GameScene extends Phaser.Scene {
 		this.setupTowerDragController();
 
 		this.onHudBuy = () => this.handleBuyTower();
-		this.onHudWave = () => undefined;
-		this.onHudReset = () => EventBus.emit('request-reset-run');
 
 		this.createHUD();
 
@@ -261,7 +258,7 @@ export class GameScene extends Phaser.Scene {
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(ORTHO_TILE, ORTHO_TILE);
+				sprite.setDisplaySize(this.playerGrid.orthoTile, this.playerGrid.orthoTile);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(0);
 				if (dark) {
@@ -367,47 +364,31 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private createHUD(): void {
+		const cw = this.scale.width;
+		const ch = this.scale.height;
 		const HUD_HEIGHT = 88;
-		const hudY = GAME_CANVAS_H - HUD_HEIGHT / 2;
-		const btnStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-			fontFamily: 'monospace',
-			fontSize: '11px',
-			color: '#f0d060',
-			backgroundColor: '#2a1f0a',
-			padding: { x: 12, y: 8 },
-		};
+		const hudY = ch - HUD_HEIGHT / 2;
 
 		this.hudBuyBtn = this.add
 			.text(
-				ORTHO_CANVAS_W * 0.18,
+				cw / 2,
 				hudY,
 				`타워 구매 ${RANDOM_TOWER_COST}G`,
-				btnStyle,
+				{
+					fontFamily: 'monospace',
+					fontSize: '14px',
+					color: '#f0d060',
+					backgroundColor: '#2a1f0a',
+					padding: { x: 24, y: 12 },
+				},
 			)
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
 			.on('pointerdown', this.onHudBuy);
 
-		this.hudWaveBtn = this.add
-			.text(ORTHO_CANVAS_W * 0.54, hudY, '웨이브 시작', btnStyle)
-			.setOrigin(0.5)
-			.setDepth(100)
-			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', this.onHudWave);
-
-		this.add
-			.text(ORTHO_CANVAS_W * 0.85, hudY, '초기화', {
-				...btnStyle,
-				color: '#94a1b2',
-			})
-			.setOrigin(0.5)
-			.setDepth(100)
-			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', this.onHudReset);
-
 		this.hudRolledInfo = this.add
-			.text(ORTHO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 4, '', {
+			.text(cw / 2, ch - HUD_HEIGHT - 4, '', {
 				fontFamily: 'monospace',
 				fontSize: '8px',
 				color: '#f0d060',
@@ -416,9 +397,8 @@ export class GameScene extends Phaser.Scene {
 			.setOrigin(0.5, 1)
 			.setDepth(100);
 
-		// Placement feedback (shown briefly on error)
 		this.feedbackText = this.add
-			.text(ORTHO_CANVAS_W / 2, GAME_CANVAS_H - HUD_HEIGHT - 16, '', {
+			.text(cw / 2, ch - HUD_HEIGHT - 16, '', {
 				fontFamily: 'monospace',
 				fontSize: '8px',
 				color: '#e53170',
@@ -456,9 +436,6 @@ export class GameScene extends Phaser.Scene {
 			!this.selectedTowerId &&
 			this.buyCooldownRemainingMs <= 0;
 		this.hudBuyBtn.setAlpha(canBuy ? 1 : 0.4);
-
-		this.hudWaveBtn.setText(this.getHudTimerLabel());
-		this.hudWaveBtn.setAlpha(0.75);
 
 		if (!this.selectedTowerId) {
 			this.hudRolledInfo.setText('');
@@ -517,27 +494,6 @@ export class GameScene extends Phaser.Scene {
 		this.time.delayedCall(2000, () => {
 			if (this.feedbackText.text === msg) this.feedbackText.setText('');
 		});
-	}
-
-	private getHudTimerLabel(): string {
-		if (this.playerWaves.getPhase() === 'ended') {
-			return '종료';
-		}
-
-		const elapsedSec = Math.floor(this.playerWaves.getElapsedMs() / 1000);
-		const nextSlot = WAVE_DEFS[this.currentSlotDef.slotIndex] as
-			| (typeof WAVE_DEFS)[number]
-			| undefined;
-		const remainingSec = nextSlot
-			? Math.max(0, nextSlot.startAtSec - elapsedSec)
-			: 0;
-		const prefix =
-			this.currentSlotDef.kind === 'boss'
-				? '보스'
-				: this.currentSlotDef.kind === 'sudden_death'
-					? '서든'
-					: `슬롯 ${this.currentSlotDef.slotIndex}`;
-		return `${prefix} ${remainingSec}s`;
 	}
 
 	private setBuyCooldown(remainingMs: number): void {

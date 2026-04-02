@@ -1,11 +1,11 @@
 import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
-import { TILE_SIZE, UNITS } from '@gld/shared';
+import { UNITS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 
-export type UnitSpawnSource = 'base' | 'pressure' | 'transfer';
+export type UnitSpawnSource = 'base';
 
 interface SpawnQueueEntry {
 	def: UnitDef;
@@ -91,22 +91,6 @@ export class UnitSystem {
 			bounty: options.bountyOverride ?? def.bounty,
 			countsTowardClear: options.countsTowardClear ?? true,
 			source: options.source ?? 'base',
-		});
-	}
-
-	queueTransferUnits(unitDefId: string, count: number): void {
-		const def = UNITS.find((u) => u.id === unitDefId);
-		if (!def) return;
-		const transferDef = {
-			...def,
-			stats: { ...def.stats, hp: Math.floor(def.stats.hp * 0.5) },
-		};
-		this.spawnQueue.push({
-			def: transferDef,
-			remaining: count,
-			bounty: def.bounty,
-			countsTowardClear: false,
-			source: 'transfer',
 		});
 	}
 
@@ -198,11 +182,6 @@ export class UnitSystem {
 		unit.slowFactor = factor;
 		unit.slowRemaining = durationMs;
 		unit.sprite.setTint(0x88ccff);
-	}
-
-	getUnitDefId(unitId: string): string | null {
-		const unit = this.units.get(unitId);
-		return unit ? unit.data.defId : null;
 	}
 
 	applyDamage(
@@ -339,7 +318,7 @@ export class UnitSystem {
 
 			const nextGrid = this.currentPath[pathIdx + 1];
 			const targetWorld = this.currentPathWorld[pathIdx + 1];
-			const speed = unit.def.stats.speed * TILE_SIZE * unit.slowFactor;
+			const speed = unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;

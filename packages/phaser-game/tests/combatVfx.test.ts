@@ -140,6 +140,7 @@ describe('optional combat vfx', () => {
     };
 
     const gridManager = {
+      orthoTile: 48,
       isInBounds: vi.fn(() => true),
       isWalkable: vi.fn(() => true),
       canPlaceTower: vi.fn(() => true),
@@ -193,6 +194,7 @@ describe('optional combat vfx', () => {
     };
 
     const gridManager = {
+      orthoTile: 48,
       gridToWorld: vi.fn(() => ({ x: 40, y: 60 })),
       worldToGrid: vi.fn(() => ({ x: 0, y: 0 })),
       worldToGridFloat: vi.fn(() => ({ x: 0, y: 0 })),

@@ -1,3 +1,8 @@
+/**
+ * @deprecated Batch 0 — PVP match UI. Will be replaced by generate-result-ui.ts in Batch 1.
+ * PVE에서 재사용 가능한 에셋: victory-confetti
+ * 폐기 대상: match-draw, ghost-avatar, stat-icons, pressure-attack-effect, ghost-spawn
+ */
 import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 

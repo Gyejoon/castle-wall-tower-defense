@@ -1,6 +1,8 @@
 import {
 	type AssetManifest,
+	type ElementType,
 	FOREST_GATE_MAP,
+	getElementDamageMultiplier,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
 	RANDOM_TOWER_COST,
@@ -582,7 +584,7 @@ export class GameScene extends Phaser.Scene {
 		towerSystem: Pick<TowerSystem, 'update'>,
 		unitSystem: Pick<
 			UnitSystem,
-			'applyDamage' | 'applySlow' | 'getUnitPositions' | 'update'
+			'applyDamage' | 'applySlow' | 'getUnitElement' | 'getUnitPositions' | 'update'
 		>,
 		time: number,
 		delta: number,
@@ -592,7 +594,13 @@ export class GameScene extends Phaser.Scene {
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
 
 		for (const evt of damageEvents) {
-			const result = unitSystem.applyDamage(evt.unitId, evt.damage);
+			const unitElement = unitSystem.getUnitElement(evt.unitId);
+			const elementMult = getElementDamageMultiplier(
+				evt.towerElement as ElementType,
+				unitElement as ElementType,
+			);
+			const finalDamage = Math.round(evt.damage * elementMult);
+			const result = unitSystem.applyDamage(evt.unitId, finalDamage);
 			if (result?.killed) {
 				onKill({
 					unitDefId: result.unitDefId,

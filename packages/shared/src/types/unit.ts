@@ -20,6 +20,7 @@ export interface UnitDef {
 	sendCost: number; // cost to send to opponent
 	bounty: number; // gold opponent gets for killing
 	isPremium: boolean;
+	element: 'fire' | 'water' | 'lightning' | 'neutral';
 }
 
 export interface ActiveUnit {

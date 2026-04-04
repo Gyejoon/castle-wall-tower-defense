@@ -9,6 +9,7 @@ export const UNITS: UnitDef[] = [
 		sendCost: 20,
 		bounty: 5,
 		isPremium: false,
+		element: 'neutral',
 	},
 	{
 		id: 'battle_robot',
@@ -18,6 +19,7 @@ export const UNITS: UnitDef[] = [
 		sendCost: 50,
 		bounty: 12,
 		isPremium: false,
+		element: 'fire',
 	},
 	{
 		id: 'heavy_walker',
@@ -27,6 +29,7 @@ export const UNITS: UnitDef[] = [
 		sendCost: 100,
 		bounty: 25,
 		isPremium: false,
+		element: 'water',
 	},
 	{
 		id: 'stealth_drone',
@@ -36,6 +39,7 @@ export const UNITS: UnitDef[] = [
 		sendCost: 70,
 		bounty: 18,
 		isPremium: false,
+		element: 'lightning',
 	},
 	{
 		id: 'titan',
@@ -45,5 +49,6 @@ export const UNITS: UnitDef[] = [
 		sendCost: 250,
 		bounty: 60,
 		isPremium: false,
+		element: 'fire',
 	},
 ];

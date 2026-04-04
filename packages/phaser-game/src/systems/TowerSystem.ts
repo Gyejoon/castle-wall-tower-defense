@@ -153,6 +153,7 @@ export class TowerSystem {
 	private damageEventsBuffer: Array<{
 		unitId: string;
 		damage: number;
+		towerElement: string;
 		slow?: { factor: number; duration: number };
 	}> = [];
 
@@ -183,6 +184,7 @@ export class TowerSystem {
 	): Array<{
 		unitId: string;
 		damage: number;
+		towerElement: string;
 		slow?: { factor: number; duration: number };
 	}> {
 		this.damageEventsBuffer.length = 0;
@@ -230,6 +232,7 @@ export class TowerSystem {
 				this.damageEventsBuffer.push({
 					unitId: closestUnit.instanceId,
 					damage: boostedDamage,
+					towerElement: def.element,
 					slow: slowEffect,
 				});
 
@@ -249,6 +252,7 @@ export class TowerSystem {
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: Math.round(boostedDamage * 0.5),
+								towerElement: def.element,
 							});
 						}
 					}

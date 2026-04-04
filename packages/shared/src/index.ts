@@ -27,6 +27,8 @@ export {
 	RARE_TOWERS,
 } from './constants/towers';
 export { UNITS } from './constants/units';
+export { getElementDamageMultiplier, ELEMENT_TINT_COLORS } from './constants/elements';
+export type { ElementType } from './constants/elements';
 export type {
 	PressurePacketDef,
 	PressurePacketId,

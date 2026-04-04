@@ -36,6 +36,7 @@ export interface TowerDef {
 	isPremium: boolean;
 	color: string; // hex color for visual
 	shape: 'diamond' | 'circle' | 'hexagon' | 'shield' | 'star';
+	element: 'fire' | 'water' | 'lightning' | 'neutral';
 }
 
 export interface PlacedTower {

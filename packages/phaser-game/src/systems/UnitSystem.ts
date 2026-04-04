@@ -1,4 +1,4 @@
-import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
+import { type ActiveUnit, ELEMENT_TINT_COLORS, type Position, type UnitDef } from '@gld/shared';
 import { UNITS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -119,6 +119,9 @@ export class UnitSystem {
 		sprite.setDisplaySize(40, 48);
 		sprite.play(`${entry.def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
+		if (entry.def.element !== 'neutral') {
+			sprite.setTint(ELEMENT_TINT_COLORS[entry.def.element]);
+		}
 		this.spawnOptionalVfx(
 			'vfx-spawn-portal',
 			startWorld.x,
@@ -355,6 +358,11 @@ export class UnitSystem {
 			y: unit.worldY,
 			hp: unit.data.hp,
 		}));
+	}
+
+	getUnitElement(unitId: string): string {
+		const unit = this.units.get(unitId);
+		return unit?.def.element ?? 'neutral';
 	}
 
 	destroy(): void {

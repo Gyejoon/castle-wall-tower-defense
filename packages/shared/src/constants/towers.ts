@@ -12,6 +12,7 @@ export const BASE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#c8a04a',
 		shape: 'diamond',
+		element: 'neutral',
 	},
 	{
 		id: 'plasma',
@@ -23,6 +24,7 @@ export const BASE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#8b4513',
 		shape: 'hexagon',
+		element: 'fire',
 	},
 	{
 		id: 'emp',
@@ -34,6 +36,7 @@ export const BASE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#5bc8e8',
 		shape: 'circle',
+		element: 'water',
 	},
 	{
 		id: 'shield',
@@ -50,6 +53,7 @@ export const BASE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#f0e080',
 		shape: 'shield',
+		element: 'neutral',
 	},
 ];
 
@@ -65,6 +69,7 @@ export const RARE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#c8a04a',
 		shape: 'star',
+		element: 'neutral',
 	},
 	{
 		id: 'disruptor',
@@ -81,6 +86,7 @@ export const RARE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#5bc8e8',
 		shape: 'star',
+		element: 'water',
 	},
 	{
 		id: 'nova_cannon',
@@ -92,6 +98,7 @@ export const RARE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#8b4513',
 		shape: 'star',
+		element: 'fire',
 	},
 	{
 		id: 'fortress',
@@ -108,6 +115,7 @@ export const RARE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#f0e080',
 		shape: 'star',
+		element: 'neutral',
 	},
 	{
 		id: 'stasis_field',
@@ -124,6 +132,7 @@ export const RARE_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#a8def0',
 		shape: 'star',
+		element: 'water',
 	},
 ];
 
@@ -139,6 +148,7 @@ export const HEROIC_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#e85c2c',
 		shape: 'diamond',
+		element: 'fire',
 	},
 	{
 		id: 'wind_spire',
@@ -154,6 +164,7 @@ export const HEROIC_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#7ed9a0',
 		shape: 'diamond',
+		element: 'lightning',
 	},
 	{
 		id: 'earth_golem',
@@ -165,6 +176,7 @@ export const HEROIC_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#a0856e',
 		shape: 'hexagon',
+		element: 'neutral',
 	},
 	{
 		id: 'holy_shrine',
@@ -181,6 +193,7 @@ export const HEROIC_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#f0d060',
 		shape: 'shield',
+		element: 'neutral',
 	},
 ];
 
@@ -196,6 +209,7 @@ export const LEGENDARY_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#d94040',
 		shape: 'star',
+		element: 'fire',
 	},
 	{
 		id: 'arcane_spire',
@@ -207,6 +221,7 @@ export const LEGENDARY_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#9060e0',
 		shape: 'star',
+		element: 'lightning',
 	},
 	{
 		id: 'world_tree',
@@ -223,6 +238,7 @@ export const LEGENDARY_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#4aad5e',
 		shape: 'star',
+		element: 'neutral',
 	},
 ];
 
@@ -243,6 +259,7 @@ export const GOD_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#ffe870',
 		shape: 'star',
+		element: 'neutral',
 	},
 	{
 		id: 'divine_throne',
@@ -259,6 +276,7 @@ export const GOD_TOWERS: TowerDef[] = [
 		isPremium: false,
 		color: '#fff0b0',
 		shape: 'star',
+		element: 'neutral',
 	},
 ];
 

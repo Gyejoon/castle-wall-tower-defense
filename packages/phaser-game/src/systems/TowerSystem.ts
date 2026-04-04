@@ -1,10 +1,11 @@
 import type {
+	ElementType,
 	PlacedTower,
 	PlacementFailureReason,
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS } from '@gld/shared';
+import { ALL_TOWERS, CC_AURA_CONFIGS, getElementMultiplier } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -17,6 +18,7 @@ interface TowerInstance {
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
 	lastAttackTime: number;
+	lastAuraTime: number;
 }
 
 export type TowerPlacementResult =
@@ -112,6 +114,7 @@ export class TowerSystem {
 			base,
 			sprite,
 			lastAttackTime: 0,
+			lastAuraTime: 0,
 		});
 
 		return { success: true, tower: towerData };
@@ -156,19 +159,22 @@ export class TowerSystem {
 		slow?: { factor: number; duration: number };
 	}> = [];
 
-	private getBoostMultiplier(gridX: number, gridY: number): number {
-		let boostCount = 0;
-		for (const tower of this.towers.values()) {
-			const special = tower.def.stats.special;
-			if (!special?.startsWith('boost_adjacent')) continue;
-			const dx = Math.abs(tower.data.position.x - gridX);
-			const dy = Math.abs(tower.data.position.y - gridY);
-			if (dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0)) {
-				const match = special.match(/boost_adjacent_(\d+)%/);
-				if (match) boostCount += parseInt(match[1], 10) / 100;
-			}
-		}
-		return 1 + boostCount;
+	private parseSlowFactor(special: string): number {
+		const match = special.match(/slow_(\d+)%/);
+		if (!match) return 0.7;
+		return 1 - parseInt(match[1], 10) / 100;
+	}
+
+	private hasSplash(special?: string): boolean {
+		return special === 'splash' || (special?.endsWith('_splash') ?? false);
+	}
+
+	private isStunSpecial(special?: string): boolean {
+		return special?.startsWith('stun') ?? false;
+	}
+
+	private isSlowSpecial(special?: string): boolean {
+		return special?.startsWith('slow_') ?? false;
 	}
 
 	update(
@@ -179,7 +185,9 @@ export class TowerSystem {
 			x: number;
 			y: number;
 			hp: number;
+			element: ElementType;
 		}>,
+		applyStun?: (unitId: string, durationMs: number) => void,
 	): Array<{
 		unitId: string;
 		damage: number;
@@ -217,23 +225,36 @@ export class TowerSystem {
 
 			if (closestUnit) {
 				tower.lastAttackTime = time;
-				const boostMult = this.getBoostMultiplier(
-					data.position.x,
-					data.position.y,
-				);
-				const boostedDamage = Math.round(def.stats.damage * boostMult);
+				const elementMult = getElementMultiplier(def.element, closestUnit.element);
+				const baseDamage = Math.round(def.stats.damage * elementMult);
 				const special = def.stats.special;
 
-				const slowEffect = special?.startsWith('slow_')
-					? { factor: 0.7, duration: 2000 }
+				const slowEffect = this.isSlowSpecial(special)
+					? { factor: this.parseSlowFactor(special!), duration: 2000 }
 					: undefined;
 				this.damageEventsBuffer.push({
 					unitId: closestUnit.instanceId,
-					damage: boostedDamage,
+					damage: baseDamage,
 					slow: slowEffect,
 				});
 
-				if (special === 'splash') {
+				if (this.isStunSpecial(special) && applyStun) {
+					if (special!.includes('aoe')) {
+						for (const unit of unitPositions) {
+							if (unit.hp <= 0) continue;
+							const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+							const gdx = data.position.x - unitGrid.x;
+							const gdy = data.position.y - unitGrid.y;
+							if (gdx * gdx + gdy * gdy <= rangeSq) {
+								applyStun(unit.instanceId, 1000);
+							}
+						}
+					} else {
+						applyStun(closestUnit.instanceId, 1000);
+					}
+				}
+
+				if (this.hasSplash(special)) {
 					const splashRadiusSq = 1.5 * 1.5;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
@@ -246,9 +267,11 @@ export class TowerSystem {
 						const sdx = closestGrid.x - sUnitGrid.x;
 						const sdy = closestGrid.y - sUnitGrid.y;
 						if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
+							const splashElementMult = getElementMultiplier(def.element, unit.element);
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
-								damage: Math.round(boostedDamage * 0.5),
+								damage: Math.round(def.stats.damage * splashElementMult * 0.5),
+								slow: slowEffect,
 							});
 						}
 					}
@@ -265,7 +288,7 @@ export class TowerSystem {
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position);
 				this.spawnImpactVfx(
-					special === 'splash' ? 'vfx-explosion-sm' : 'projectile-hit-flash',
+					this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
 					closestUnit.x,
 					closestUnit.y,
 				);
@@ -274,6 +297,67 @@ export class TowerSystem {
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
 					soundGenerator.playTowerAttack(def.type);
 					this.lastSoundTime.set(def.type, time);
+				}
+			}
+		}
+
+		// Passive CC aura (attackSpeed=0 towers)
+		for (const tower of this.towers.values()) {
+			const { def, data } = tower;
+			if (def.stats.attackSpeed > 0) continue;
+			const special = def.stats.special;
+			if (!special) continue;
+
+			const configKey = special.replace(/%/g, '');
+			const config = CC_AURA_CONFIGS[configKey];
+			if (!config) continue;
+
+			if (time - tower.lastAuraTime < config.cooldownMs) continue;
+			tower.lastAuraTime = time;
+
+			const rangeSq = def.stats.range ** 2;
+
+			if (this.isStunSpecial(special) && applyStun) {
+				if (config.aoe) {
+					for (const unit of unitPositions) {
+						if (unit.hp <= 0) continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						if (gdx * gdx + gdy * gdy <= rangeSq) {
+							applyStun(unit.instanceId, config.durationMs);
+						}
+					}
+				} else {
+					let closest: (typeof unitPositions)[0] | null = null;
+					let closestDist = Infinity;
+					for (const unit of unitPositions) {
+						if (unit.hp <= 0) continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						const d = gdx * gdx + gdy * gdy;
+						if (d <= rangeSq && d < closestDist) {
+							closestDist = d;
+							closest = unit;
+						}
+					}
+					if (closest) applyStun(closest.instanceId, config.durationMs);
+				}
+			} else if (this.isSlowSpecial(special)) {
+				const factor = this.parseSlowFactor(special);
+				for (const unit of unitPositions) {
+					if (unit.hp <= 0) continue;
+					const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+					const gdx = data.position.x - unitGrid.x;
+					const gdy = data.position.y - unitGrid.y;
+					if (gdx * gdx + gdy * gdy <= rangeSq) {
+						this.damageEventsBuffer.push({
+							unitId: unit.instanceId,
+							damage: 0,
+							slow: { factor, duration: config.durationMs },
+						});
+					}
 				}
 			}
 		}

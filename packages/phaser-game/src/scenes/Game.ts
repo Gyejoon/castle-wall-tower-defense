@@ -34,6 +34,7 @@ import { MergeSystem } from '../systems/MergeSystem';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { RandomTowerSystem } from '../systems/RandomTowerSystem';
 import { TowerSystem } from '../systems/TowerSystem';
+import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
@@ -94,6 +95,7 @@ export class GameScene extends Phaser.Scene {
 	}> | null = null;
 	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
 	private isCleaningUp = false;
+	private tutorial?: TutorialSystem;
 
 	constructor() {
 		super('Game');
@@ -171,6 +173,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('current-scene-ready', this);
 
 		void this.prefetchOptionalAssets();
+		if (TutorialSystem.shouldShowTutorial()) {
+			this.tutorial = new TutorialSystem(this, this.optionalAssetManifest);
+			void this.tutorial.start();
+		}
 		this.playerWaves.start();
 	}
 
@@ -689,6 +695,8 @@ export class GameScene extends Phaser.Scene {
 		this.playerTowerDragController?.destroy();
 		this.playerTowerDragController = undefined;
 
+		this.tutorial?.destroy();
+		this.tutorial = undefined;
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNITS } from '../src/constants/units';
-import {
-	TOTAL_WAVES,
-	WAVE_DEFS,
-} from '../src/constants/waves';
+import { TOTAL_WAVES, WAVE_DEFS } from '../src/constants/waves';
 
 const validUnitIds = new Set(UNITS.map((u) => u.id));
 

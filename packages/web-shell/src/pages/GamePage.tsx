@@ -358,6 +358,20 @@ export function GamePage() {
 									textAlign: 'center',
 								}}
 							>
+								<img
+									src={
+										runStatus === 'victory'
+											? 'assets/ui/defense-success.png'
+											: 'assets/ui/defense-fail.png'
+									}
+									alt={resultTitle}
+									style={{
+										width: '200px',
+										height: 'auto',
+										imageRendering: 'pixelated',
+										margin: '0 auto',
+									}}
+								/>
 								<h2
 									style={{
 										color:
@@ -378,8 +392,17 @@ export function GamePage() {
 									}}
 								>
 									{runStatus === 'victory'
-										? '상대를 물리치고 왕국을 지켰습니다!'
+										? '왕국을 지켜냈습니다!'
 										: '방어선이 무너졌습니다.'}
+								</p>
+								<p
+									style={{
+										color: colors.gold,
+										fontFamily: fonts.pixel,
+										fontSize: '10px',
+									}}
+								>
+									획득 골드: {gold}G
 								</p>
 								<PixelButton
 									variant="gold"

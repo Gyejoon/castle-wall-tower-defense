@@ -95,7 +95,17 @@ export function HomeTab() {
 						{Object.values(MAP_REGISTRY).map((map) => (
 							<div
 								key={map.id}
+								role="button"
+								tabIndex={0}
+								aria-pressed={selectedMapId === map.id}
+								aria-label={`스테이지 ${map.name}`}
 								onClick={() => setSelectedMapId(map.id)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										setSelectedMapId(map.id);
+									}
+								}}
 								style={{
 									flex: '0 0 auto',
 									width: '90px',

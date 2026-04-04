@@ -521,8 +521,8 @@ export async function generateMap(): Promise<ManifestEntry[]> {
 
   // Additional stage maps (simplified — same grid size, different path counts)
   const ADDITIONAL_STAGES = [
-    { id: 'lava-fortress', pathCount: 2 },
-    { id: 'storm-citadel', pathCount: 3 },
+    { id: 'lava_fortress', pathCount: 2 },
+    { id: 'storm_citadel', pathCount: 3 },
   ];
 
   for (const stage of ADDITIONAL_STAGES) {

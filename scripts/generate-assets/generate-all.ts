@@ -140,6 +140,14 @@ export async function generateAllAssets() {
 		...gachaUi,
 	]);
 
+	const seen = new Set<string>();
+	for (const entry of allEntries) {
+		if (seen.has(entry.key)) {
+			throw new Error(`Duplicate manifest key: '${entry.key}'`);
+		}
+		seen.add(entry.key);
+	}
+
 	const manifest = {
 		generated: new Date().toISOString(),
 		assets: allEntries,

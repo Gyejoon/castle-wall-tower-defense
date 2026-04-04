@@ -30,6 +30,10 @@ function drawElementSymbol(ctx: import('@napi-rs/canvas').SKRSContext2D, element
       setPixel(ctx, cx + 1, cy, white);
       setPixel(ctx, cx, cy + 1, white);
       break;
+    default: {
+      const _exhaustive: never = element;
+      throw new Error(`Unknown element: ${_exhaustive}`);
+    }
   }
 }
 

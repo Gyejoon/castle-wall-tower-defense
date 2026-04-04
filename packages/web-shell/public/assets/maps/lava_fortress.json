@@ -311,7 +311,7 @@
     }
   ],
   "properties": {
-    "stageId": "storm-citadel",
-    "pathCount": 3
+    "stageId": "lava_fortress",
+    "pathCount": 2
   }
 }

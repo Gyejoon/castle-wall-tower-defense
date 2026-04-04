@@ -83,6 +83,7 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
+		scene.selectionGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -207,6 +208,7 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
+		scene.selectionGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

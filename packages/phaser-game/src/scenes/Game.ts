@@ -122,7 +122,6 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveStartedLifecycle = (data) => {
 			this.currentSlotDef = WAVE_DEFS[data.slotIndex - 1] ?? WAVE_DEFS[0];
 			soundGenerator.playWaveStart();
-			this.updateHUD();
 		};
 
 		EventBus.on('request-select-tower', this.onSelectTower);

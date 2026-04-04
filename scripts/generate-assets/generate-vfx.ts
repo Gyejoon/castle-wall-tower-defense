@@ -173,6 +173,56 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // Boss warning text — "WARNING" (256x64)
+  {
+    const { canvas, ctx } = makeCanvas(256, 64);
+    ctx.fillStyle = PALETTE.fireRed;
+    ctx.font = '32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WARNING', 128, 42);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-warning.png`);
+    entries.push({ key: 'vfx-boss-warning', type: 'image', path: 'assets/vfx/boss-warning.png' });
+  }
+
+  // "FINAL BOSS" text (256x64)
+  {
+    const { canvas, ctx } = makeCanvas(256, 64);
+    ctx.fillStyle = PALETTE.gold;
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('FINAL BOSS', 128, 42);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-final.png`);
+    entries.push({ key: 'vfx-boss-final', type: 'image', path: 'assets/vfx/boss-final.png' });
+  }
+
+  // Boss telegraph marker (64x64, danger zone)
+  {
+    const { canvas, ctx } = makeCanvas(64, 64);
+    fillCircle(ctx, 32, 32, 28, hexToRgba(PALETTE.fireRed, 0.4));
+    drawLine(ctx, 8, 8, 56, 56, PALETTE.fireRed);
+    drawLine(ctx, 56, 8, 8, 56, PALETTE.fireRed);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-telegraph.png`);
+    entries.push({ key: 'vfx-boss-telegraph', type: 'image', path: 'assets/vfx/boss-telegraph.png' });
+  }
+
+  // Boss death FX (256x64, 4 frames)
+  {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const radius = 10 + f * 8;
+      fillCircle(ctx, ox + 32, 32, radius, PALETTE.fireOrange);
+      addGlow(ctx, ox + 32, 32, radius + 4, PALETTE.gold, 0.5 - f * 0.1);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-death-fx.png`);
+    entries.push({
+      key: 'vfx-boss-death-fx', type: 'spritesheet',
+      path: 'assets/vfx/boss-death-fx.png',
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
   return entries;
 }
 

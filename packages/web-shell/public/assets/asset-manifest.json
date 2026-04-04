@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:29:08.234Z",
+  "generated": "2026-04-04T13:30:59.034Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -629,6 +629,33 @@
       "section": "vfx"
     },
     {
+      "key": "vfx-boss-warning",
+      "type": "image",
+      "path": "assets/vfx/boss-warning.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-boss-final",
+      "type": "image",
+      "path": "assets/vfx/boss-final.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-boss-telegraph",
+      "type": "image",
+      "path": "assets/vfx/boss-telegraph.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-boss-death-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/boss-death-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "vfx"
+    },
+    {
       "key": "ui-tower-icons",
       "type": "spritesheet",
       "path": "assets/ui/tower-icons.png",
@@ -656,6 +683,18 @@
       "key": "ui-cursor-place",
       "type": "image",
       "path": "assets/ui/cursor-place.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-boss-hp-bar",
+      "type": "image",
+      "path": "assets/ui/boss-hp-bar.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-energy-gauge",
+      "type": "image",
+      "path": "assets/ui/energy-gauge.png",
       "section": "ui"
     },
     {

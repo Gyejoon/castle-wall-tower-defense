@@ -154,6 +154,26 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-cursor-place', type: 'image', path: 'assets/ui/cursor-place.png' });
   }
 
+  // Boss HP bar (256x16)
+  {
+    const { canvas, ctx } = makeCanvas(256, 16);
+    drawRect(ctx, 0, 0, 256, 16, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 252, 12, PALETTE.fireRed);
+    drawRect(ctx, 2, 2, 252, 4, hexToRgba(PALETTE.white, 0.2));
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-hp-bar.png`);
+    entries.push({ key: 'ui-boss-hp-bar', type: 'image', path: 'assets/ui/boss-hp-bar.png' });
+  }
+
+  // Energy gauge (128x16)
+  {
+    const { canvas, ctx } = makeCanvas(128, 16);
+    drawRect(ctx, 0, 0, 128, 16, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 124, 12, PALETTE.magicBlue);
+    drawRect(ctx, 2, 2, 124, 4, hexToRgba(PALETTE.white, 0.2));
+    saveCanvas(canvas, `${OUTPUT_DIR}/energy-gauge.png`);
+    entries.push({ key: 'ui-energy-gauge', type: 'image', path: 'assets/ui/energy-gauge.png' });
+  }
+
   return entries;
 }
 

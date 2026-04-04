@@ -174,6 +174,36 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-energy-gauge', type: 'image', path: 'assets/ui/energy-gauge.png' });
   }
 
+  // Upgrade button (120x40, 3 states: available/unavailable/complete)
+  const BUTTON_STATES = [
+    { name: 'available', bg: PALETTE.gold, text: PALETTE.shadow },
+    { name: 'unavailable', bg: PALETTE.gray, text: PALETTE.shadow },
+    { name: 'complete', bg: '#2ecc71', text: PALETTE.white },
+  ];
+  for (const state of BUTTON_STATES) {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, state.bg);
+    drawRect(ctx, 2, 2, 116, 8, hexToRgba(PALETTE.white, 0.15));
+    saveCanvas(canvas, `${OUTPUT_DIR}/upgrade-btn-${state.name}.png`);
+    entries.push({
+      key: `ui-upgrade-btn-${state.name}`, type: 'image',
+      path: `assets/ui/upgrade-btn-${state.name}.png`,
+    });
+  }
+
+  // Promotion button (120x40, 2 states)
+  for (const state of [{ name: 'available', bg: PALETTE.tierHeroic }, { name: 'unavailable', bg: PALETTE.gray }]) {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, state.bg);
+    saveCanvas(canvas, `${OUTPUT_DIR}/promote-btn-${state.name}.png`);
+    entries.push({
+      key: `ui-promote-btn-${state.name}`, type: 'image',
+      path: `assets/ui/promote-btn-${state.name}.png`,
+    });
+  }
+
   return entries;
 }
 

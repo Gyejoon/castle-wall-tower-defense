@@ -223,6 +223,25 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // Upgrade success/fail effects (256x64, 4 frames each)
+  for (const result of ['success', 'fail']) {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    const color = result === 'success' ? PALETTE.gold : PALETTE.fireRed;
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const r = 8 + f * 6;
+      fillCircle(ctx, ox + 32, 32, r, color);
+      addGlow(ctx, ox + 32, 32, r + 4, PALETTE.white, 0.3 - f * 0.07);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/upgrade-${result}-fx.png`);
+    entries.push({
+      key: `vfx-upgrade-${result}-fx`, type: 'spritesheet',
+      path: `assets/vfx/upgrade-${result}-fx.png`,
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
   return entries;
 }
 

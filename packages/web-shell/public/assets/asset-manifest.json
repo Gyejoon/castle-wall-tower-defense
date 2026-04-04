@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:37:03.718Z",
+  "generated": "2026-04-04T13:38:37.011Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -656,6 +656,24 @@
       "section": "vfx"
     },
     {
+      "key": "vfx-upgrade-success-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/upgrade-success-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-upgrade-fail-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/upgrade-fail-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "vfx"
+    },
+    {
       "key": "ui-tower-icons",
       "type": "spritesheet",
       "path": "assets/ui/tower-icons.png",
@@ -695,6 +713,36 @@
       "key": "ui-energy-gauge",
       "type": "image",
       "path": "assets/ui/energy-gauge.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-upgrade-btn-available",
+      "type": "image",
+      "path": "assets/ui/upgrade-btn-available.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-upgrade-btn-unavailable",
+      "type": "image",
+      "path": "assets/ui/upgrade-btn-unavailable.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-upgrade-btn-complete",
+      "type": "image",
+      "path": "assets/ui/upgrade-btn-complete.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promote-btn-available",
+      "type": "image",
+      "path": "assets/ui/promote-btn-available.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promote-btn-unavailable",
+      "type": "image",
+      "path": "assets/ui/promote-btn-unavailable.png",
       "section": "ui"
     },
     {

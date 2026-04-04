@@ -78,6 +78,12 @@ export class GameScene extends Phaser.Scene {
 		kind: WaveDef['kind'];
 		startAtSec: number;
 	}) => void;
+	private onBossWarning!: (data: {
+		slotIndex: number;
+		bossSlotIndex: number;
+		startAtSec: number;
+	}) => void;
+	private bossPrefetched = false;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -147,9 +153,18 @@ export class GameScene extends Phaser.Scene {
 			this.updateHUD();
 		};
 
+		this.onBossWarning = () => {
+			if (!this.bossPrefetched) {
+				this.bossPrefetched = true;
+				void this.prefetchBossAssets();
+			}
+			this.showBossWarningOverlay();
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
+		EventBus.on('boss-warning', this.onBossWarning);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('gold-changed', { gold: this.gold });
@@ -670,6 +685,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
+		EventBus.off('boss-warning', this.onBossWarning);
 		this.playerTowerDragController?.destroy();
 		this.playerTowerDragController = undefined;
 
@@ -684,6 +700,40 @@ export class GameScene extends Phaser.Scene {
 			this.optionalAssetManifest,
 			OPTIONAL_ASSET_SECTIONS,
 		);
+		if (this.bossPrefetched) {
+			unloadAssetSections(this, this.optionalAssetManifest, ['boss']);
+		}
+	}
+
+	private async prefetchBossAssets(): Promise<void> {
+		await prefetchAssetSections(
+			this,
+			this.optionalAssetManifest,
+			['boss'],
+			shouldUseWebPTextures(),
+		);
+		if (!this.isCleaningUp) {
+			registerOptionalCombatAnimations(this, this.optionalAssetManifest);
+		}
+	}
+
+	private showBossWarningOverlay(): void {
+		this.cameras.main.shake(300, 0.005);
+		const overlay = this.add.rectangle(
+			this.scale.width / 2,
+			this.scale.height / 2,
+			this.scale.width,
+			this.scale.height,
+			0xff0000,
+			0.15,
+		);
+		overlay.setDepth(90);
+		this.tweens.add({
+			targets: overlay,
+			alpha: 0,
+			duration: 2000,
+			onComplete: () => overlay.destroy(),
+		});
 	}
 
 	private async prefetchOptionalAssets(): Promise<void> {

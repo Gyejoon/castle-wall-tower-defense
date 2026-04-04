@@ -99,9 +99,11 @@ export function registerOptionalCombatAnimations(
   scene: Phaser.Scene,
   manifest: AssetManifest,
 ): void {
-  for (const asset of dedupeAssets(
-    [...getManifestSectionEntries(manifest, 'vfx'), ...getManifestSectionEntries(manifest, 'projectiles')],
-  )) {
+  for (const asset of dedupeAssets([
+    ...getManifestSectionEntries(manifest, 'vfx'),
+    ...getManifestSectionEntries(manifest, 'projectiles'),
+    ...getManifestSectionEntries(manifest, 'boss'),
+  ])) {
     if (asset.type !== 'spritesheet') continue;
     if (!asset.frameCount || !asset.frameWidth || !asset.frameHeight) continue;
     if (!scene.textures.exists(asset.key)) continue;

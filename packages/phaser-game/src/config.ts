@@ -10,6 +10,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 	height: GAME_CANVAS_H,
 	parent: 'game-container',
 	backgroundColor: '#1a1a2e',
+	render: {
+		preserveDrawingBuffer: true,
+	},
 	scale: {
 		mode: Phaser.Scale.FIT,
 		autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,

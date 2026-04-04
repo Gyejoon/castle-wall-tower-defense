@@ -219,7 +219,7 @@ export function GamePage() {
 				style={{
 					width: '100%',
 					maxWidth: '430px',
-					height: 'auto',
+					height: '100dvh',
 					display: 'flex',
 					flexDirection: 'column',
 					background: colors.bg,
@@ -309,7 +309,7 @@ export function GamePage() {
 					style={{
 						width: '100%',
 						flex: 1,
-						maxHeight: 'calc(100vh - 48px)',
+						minHeight: 0,
 						position: 'relative',
 						overflow: 'hidden',
 						background:

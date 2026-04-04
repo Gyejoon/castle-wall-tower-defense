@@ -7,7 +7,7 @@ import {
 import { convertToWebP } from './convert-webp';
 import { generate as generateIcons } from './generate-icons';
 import { generateMap } from './generate-map';
-import { generate as generateMatchUi } from './generate-match-ui';
+import { generate as generateResultUi } from './generate-result-ui';
 import { generate as generateProjectiles } from './generate-projectiles';
 import type { ManifestEntry } from './shared';
 import { generate as generateTowers } from './generate-towers';
@@ -58,7 +58,7 @@ export async function generateAllAssets() {
 		projectiles,
 		vfx,
 		ui,
-		matchUi,
+		resultUi,
 		icons,
 		map,
 	] = await Promise.all([
@@ -86,8 +86,8 @@ export async function generateAllAssets() {
 			console.log('[ui] done');
 			return result;
 		}),
-		generateMatchUi().then((result) => {
-			console.log('[match-ui] done');
+		generateResultUi().then((result) => {
+			console.log('[result-ui] done');
 			return result;
 		}),
 		generateIcons().then((result) => {
@@ -107,7 +107,7 @@ export async function generateAllAssets() {
 		...projectiles,
 		...vfx,
 		...ui,
-		...matchUi,
+		...resultUi,
 		...icons,
 		...map,
 	]);

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:30:59.034Z",
+  "generated": "2026-04-04T13:33:36.215Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -698,63 +698,15 @@
       "section": "ui"
     },
     {
-      "key": "ui-match-victory",
+      "key": "ui-defense-success",
       "type": "image",
-      "path": "assets/ui/match-victory.png",
+      "path": "assets/ui/defense-success.png",
       "section": "ui"
     },
     {
-      "key": "ui-match-defeat",
+      "key": "ui-defense-fail",
       "type": "image",
-      "path": "assets/ui/match-defeat.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-match-draw",
-      "type": "image",
-      "path": "assets/ui/match-draw.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-ghost-avatar",
-      "type": "image",
-      "path": "assets/ui/ghost-avatar.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-stat-icons",
-      "type": "spritesheet",
-      "path": "assets/ui/stat-icons.png",
-      "frameWidth": 16,
-      "frameHeight": 16,
-      "frameCount": 3,
-      "section": "ui"
-    },
-    {
-      "key": "ui-pressure-attack-effect",
-      "type": "spritesheet",
-      "path": "assets/ui/pressure-attack-effect.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
-      "frameCount": 4,
-      "section": "ui"
-    },
-    {
-      "key": "ui-ghost-spawn",
-      "type": "spritesheet",
-      "path": "assets/ui/ghost-spawn.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
-      "frameCount": 4,
-      "section": "ui"
-    },
-    {
-      "key": "ui-victory-confetti",
-      "type": "spritesheet",
-      "path": "assets/ui/victory-confetti.png",
-      "frameWidth": 32,
-      "frameHeight": 64,
-      "frameCount": 4,
+      "path": "assets/ui/defense-fail.png",
       "section": "ui"
     },
     {

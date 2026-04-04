@@ -1,7 +1,7 @@
 import { mkdirSync } from 'fs';
 import type { ManifestEntry } from './shared';
 import {
-  makeCanvas, saveCanvas, drawRect, drawCircle, fillCircle,
+  makeCanvas, saveCanvas, drawRect, fillCircle,
   addGlow, PALETTE, hexToRgba,
 } from './shared';
 

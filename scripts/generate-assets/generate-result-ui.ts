@@ -1,6 +1,6 @@
 import { mkdirSync } from 'fs';
 import type { ManifestEntry } from './shared';
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, addGlow } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, addGlow } from './shared';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/ui';
 

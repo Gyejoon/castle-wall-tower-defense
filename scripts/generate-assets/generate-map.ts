@@ -1,5 +1,4 @@
 import { mkdirSync, writeFileSync } from 'fs';
-import { dirname } from 'path';
 import { FOREST_GATE_MAP } from '../../packages/shared/src/index';
 import {
   TINY_SWORDS_DECORATION_ASSETS,
@@ -556,12 +555,11 @@ export async function generateMap(): Promise<ManifestEntry[]> {
     };
 
     const mapPath = `packages/web-shell/public/assets/maps/${stage.id}.json`;
-    mkdirSync(dirname(mapPath), { recursive: true });
     writeFileSync(mapPath, JSON.stringify(mapData, null, 2));
     console.log(`  wrote ${mapPath}`);
     entries.push({
       key: `tilemap-${stage.id}`,
-      type: 'tilemapTiledJSON' as const,
+      type: 'tilemapTiledJSON',
       path: `assets/maps/${stage.id}.json`,
     });
   }

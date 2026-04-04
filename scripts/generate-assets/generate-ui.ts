@@ -1,4 +1,4 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, drawStar, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawStar, addGlow, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/ui';

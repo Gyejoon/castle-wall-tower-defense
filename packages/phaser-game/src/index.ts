@@ -12,7 +12,7 @@ export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
 export { RandomTowerSystem } from './systems/RandomTowerSystem';
 export { WaveSystem } from './systems/WaveSystem';
 
-export function startGame(parentElement?: string | HTMLElement): Phaser.Game {
+export function startGame(parentElement?: string | HTMLElement, options?: { mapId?: string }): Phaser.Game {
 	let width = gameConfig.width as number;
 	let height = gameConfig.height as number;
 
@@ -40,5 +40,9 @@ export function startGame(parentElement?: string | HTMLElement): Phaser.Game {
 			height,
 		},
 	};
-	return new Phaser.Game(config);
+	const game = new Phaser.Game(config);
+	if (options?.mapId) {
+		game.registry.set('mapId', options.mapId);
+	}
+	return game;
 }

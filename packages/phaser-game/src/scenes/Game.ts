@@ -106,7 +106,10 @@ export class GameScene extends Phaser.Scene {
 
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
-		this.currentMap = getMapById(data?.mapId ?? DEFAULT_MAP_ID);
+		const mapId = data?.mapId
+			?? (this.game.registry.get('mapId') as string | undefined)
+			?? DEFAULT_MAP_ID;
+		this.currentMap = getMapById(mapId);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;

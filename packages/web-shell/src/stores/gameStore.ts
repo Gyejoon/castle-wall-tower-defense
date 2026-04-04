@@ -30,6 +30,7 @@ interface GameStoreState {
 	gameReady: boolean;
 	gold: number;
 	lives: number;
+	selectedMapId: string;
 	selectedTowerId: string | null;
 	rolledTower: TowerDef | null;
 	wave: number;
@@ -49,6 +50,7 @@ interface GameStoreState {
 	setGameReady: (ready: boolean) => void;
 	setGold: (gold: number) => void;
 	setLives: (lives: number) => void;
+	setSelectedMapId: (mapId: string) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setRolledTower: (tower: TowerDef | null) => void;
 	setWave: (wave: number) => void;
@@ -96,6 +98,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
+	selectedMapId: 'forest_gate',
 	lobbyTab: 'home',
 	soundEnabled: true,
 	screenShake: true,
@@ -106,6 +109,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setGameReady: (ready) => set({ gameReady: ready }),
 	setGold: (gold) => set({ gold }),
 	setLives: (lives) => set({ lives }),
+	setSelectedMapId: (mapId) => set({ selectedMapId: mapId }),
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setRolledTower: (tower) => set({ rolledTower: tower }),
 	setWave: (wave) => set({ wave }),

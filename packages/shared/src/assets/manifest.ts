@@ -6,7 +6,11 @@ export type AssetManifestSection =
   | 'vfx'
   | 'projectiles'
   | 'mobile'
-  | 'icons';
+  | 'icons'
+  | 'boss'
+  | 'reward'
+  | 'tutorial'
+  | 'gacha';
 
 export interface AssetManifestEntry {
   key: string;
@@ -28,6 +32,10 @@ export function inferAssetManifestSection(entry: Pick<AssetManifestEntry, 'key' 
   if (entry.path.includes('/icons/')) return 'icons';
   if (entry.path.includes('/projectiles/')) return 'projectiles';
   if (entry.path.includes('/vfx/')) return 'vfx';
+  if (entry.path.includes('/boss/')) return 'boss';
+  if (entry.path.includes('/reward/')) return 'reward';
+  if (entry.path.includes('/tutorial/')) return 'tutorial';
+  if (entry.path.includes('/gacha/')) return 'gacha';
   if (entry.path.includes('/ui/')) return 'ui';
   if (entry.path.includes('/towers/') && entry.key.endsWith('-fire')) return 'vfx';
   return 'preload';

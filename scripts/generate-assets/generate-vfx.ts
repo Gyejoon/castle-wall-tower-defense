@@ -185,7 +185,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     ctx.textAlign = 'center';
     ctx.fillText('WARNING', 128, 42);
     saveCanvas(canvas, `${OUTPUT_DIR}/boss-warning.png`);
-    entries.push({ key: 'vfx-boss-warning', type: 'image', path: 'assets/vfx/boss-warning.png' });
+    entries.push({ key: 'vfx-boss-warning', type: 'image', path: 'assets/vfx/boss-warning.png', section: 'boss' as const });
   }
 
   // "FINAL BOSS" text (256x64)
@@ -196,7 +196,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     ctx.textAlign = 'center';
     ctx.fillText('FINAL BOSS', 128, 42);
     saveCanvas(canvas, `${OUTPUT_DIR}/boss-final.png`);
-    entries.push({ key: 'vfx-boss-final', type: 'image', path: 'assets/vfx/boss-final.png' });
+    entries.push({ key: 'vfx-boss-final', type: 'image', path: 'assets/vfx/boss-final.png', section: 'boss' as const });
   }
 
   // Boss telegraph marker (64x64, danger zone)
@@ -206,7 +206,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     drawLine(ctx, 8, 8, 56, 56, PALETTE.fireRed);
     drawLine(ctx, 56, 8, 8, 56, PALETTE.fireRed);
     saveCanvas(canvas, `${OUTPUT_DIR}/boss-telegraph.png`);
-    entries.push({ key: 'vfx-boss-telegraph', type: 'image', path: 'assets/vfx/boss-telegraph.png' });
+    entries.push({ key: 'vfx-boss-telegraph', type: 'image', path: 'assets/vfx/boss-telegraph.png', section: 'boss' as const });
   }
 
   // Boss death FX (256x64, 4 frames)
@@ -224,6 +224,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'vfx-boss-death-fx', type: 'spritesheet',
       path: 'assets/vfx/boss-death-fx.png',
       frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'boss' as const,
     });
   }
 
@@ -268,6 +269,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: `vfx-gacha-reveal-${tier.name}`, type: 'spritesheet',
       path: `assets/vfx/gacha-reveal-${tier.name}.png`,
       frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'gacha' as const,
     });
   }
 

@@ -161,7 +161,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     drawRect(ctx, 2, 2, 252, 12, PALETTE.fireRed);
     drawRect(ctx, 2, 2, 252, 4, hexToRgba(PALETTE.white, 0.2));
     saveCanvas(canvas, `${OUTPUT_DIR}/boss-hp-bar.png`);
-    entries.push({ key: 'ui-boss-hp-bar', type: 'image', path: 'assets/ui/boss-hp-bar.png' });
+    entries.push({ key: 'ui-boss-hp-bar', type: 'image', path: 'assets/ui/boss-hp-bar.png', section: 'boss' as const });
   }
 
   // Energy gauge (128x16)

@@ -29,6 +29,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({
       key: `ui-gacha-box-${box.name}`, type: 'image',
       path: `assets/ui/gacha-box-${box.name}.png`,
+      section: 'gacha' as const,
     });
   }
 
@@ -50,6 +51,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'ui-gacha-box-open', type: 'spritesheet',
       path: 'assets/ui/gacha-box-open.png',
       frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'gacha' as const,
     });
   }
 
@@ -62,7 +64,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     ctx.textAlign = 'center';
     ctx.fillText('NEW', 12, 15);
     saveCanvas(canvas, `${OUTPUT_DIR}/badge-new.png`);
-    entries.push({ key: 'ui-badge-new', type: 'image', path: 'assets/ui/badge-new.png' });
+    entries.push({ key: 'ui-badge-new', type: 'image', path: 'assets/ui/badge-new.png', section: 'gacha' as const });
   }
 
   return entries;

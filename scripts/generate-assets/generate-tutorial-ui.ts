@@ -18,7 +18,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       drawRect(ctx, 62, i, 2, 2, PALETTE.gold);
     }
     saveCanvas(canvas, `${OUTPUT_DIR}/tutorial-highlight.png`);
-    entries.push({ key: 'ui-tutorial-highlight', type: 'image', path: 'assets/ui/tutorial-highlight.png' });
+    entries.push({ key: 'ui-tutorial-highlight', type: 'image', path: 'assets/ui/tutorial-highlight.png', section: 'tutorial' as const });
   }
 
   // Arrow indicators (4 directions, 32x32 each)
@@ -40,6 +40,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({
       key: `ui-tutorial-arrow-${dir.name}`, type: 'image',
       path: `assets/ui/tutorial-arrow-${dir.name}.png`,
+      section: 'tutorial' as const,
     });
   }
 
@@ -52,7 +53,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       drawRect(ctx, 60 + i, 52 + i, 8 - i * 2, 1, PALETTE.white);
     }
     saveCanvas(canvas, `${OUTPUT_DIR}/tutorial-hint-bubble.png`);
-    entries.push({ key: 'ui-tutorial-hint-bubble', type: 'image', path: 'assets/ui/tutorial-hint-bubble.png' });
+    entries.push({ key: 'ui-tutorial-hint-bubble', type: 'image', path: 'assets/ui/tutorial-hint-bubble.png', section: 'tutorial' as const });
   }
 
   return entries;

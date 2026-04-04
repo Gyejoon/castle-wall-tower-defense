@@ -18,7 +18,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     ctx.fillText('STAGE', 128, 50);
     ctx.fillText('CLEAR', 128, 90);
     saveCanvas(canvas, `${OUTPUT_DIR}/defense-success.png`);
-    entries.push({ key: 'ui-defense-success', type: 'image', path: 'assets/ui/defense-success.png' });
+    entries.push({ key: 'ui-defense-success', type: 'image', path: 'assets/ui/defense-success.png', section: 'reward' as const });
   }
 
   // Defense Failed — "DEFENSE FAILED" (256x128)
@@ -31,7 +31,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     ctx.fillText('DEFENSE', 128, 50);
     ctx.fillText('FAILED', 128, 90);
     saveCanvas(canvas, `${OUTPUT_DIR}/defense-fail.png`);
-    entries.push({ key: 'ui-defense-fail', type: 'image', path: 'assets/ui/defense-fail.png' });
+    entries.push({ key: 'ui-defense-fail', type: 'image', path: 'assets/ui/defense-fail.png', section: 'reward' as const });
   }
 
   return entries;

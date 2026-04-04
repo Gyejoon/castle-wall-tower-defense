@@ -444,6 +444,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'unit-titan-boss',
       type: 'image',
       path: 'assets/units/titan-boss.png',
+      section: 'boss' as const,
     });
   }
 
@@ -457,6 +458,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'unit-titan-boss-rage',
       type: 'image',
       path: 'assets/units/titan-boss-rage.png',
+      section: 'boss' as const,
     });
   }
 

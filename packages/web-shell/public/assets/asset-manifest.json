@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:46:22.469Z",
+  "generated": "2026-04-04T13:48:12.643Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -818,6 +818,84 @@
       "key": "ui-icon-unlocked",
       "type": "image",
       "path": "assets/ui/icon-unlocked.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-gold",
+      "type": "image",
+      "path": "assets/ui/icon-gold.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-diamond",
+      "type": "image",
+      "path": "assets/ui/icon-diamond.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-basic",
+      "type": "image",
+      "path": "assets/ui/offer-card-basic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-premium",
+      "type": "image",
+      "path": "assets/ui/offer-card-premium.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-legendary",
+      "type": "image",
+      "path": "assets/ui/offer-card-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-buy-btn-available",
+      "type": "image",
+      "path": "assets/ui/buy-btn-available.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-buy-btn-unavailable",
+      "type": "image",
+      "path": "assets/ui/buy-btn-unavailable.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-daily",
+      "type": "image",
+      "path": "assets/ui/mission-icon-daily.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-weekly",
+      "type": "image",
+      "path": "assets/ui/mission-icon-weekly.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-kill",
+      "type": "image",
+      "path": "assets/ui/mission-icon-kill.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-build",
+      "type": "image",
+      "path": "assets/ui/mission-icon-build.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-complete",
+      "type": "image",
+      "path": "assets/ui/icon-complete.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-ad-btn",
+      "type": "image",
+      "path": "assets/ui/ad-btn.png",
       "section": "ui"
     },
     {

@@ -11,7 +11,7 @@ export {
 	TILE_SIZE,
 	UNIT_SEND_COUNT,
 } from './constants/grid';
-export { FOREST_GATE_MAP } from './constants/maps';
+export { DEFAULT_MAP_ID, FOREST_GATE_MAP, getMapById, LAVA_FORTRESS_MAP, MAP_REGISTRY, STORM_CITADEL_MAP } from './constants/maps';
 export {
 	PITY_THRESHOLD,
 	RANDOM_TOWER_COST,

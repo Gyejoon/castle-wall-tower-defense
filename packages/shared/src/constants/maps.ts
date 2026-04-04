@@ -118,7 +118,7 @@ const FOREST_GATE_BUILDABLE_POINTS = buildBuildablePoints({
 });
 
 export const FOREST_GATE_MAP: MapLayout = {
-	id: 'forest-gate',
+	id: 'forest_gate',
 	name: 'Forest Gate',
 	width: 8,
 	height: 18,
@@ -131,3 +131,47 @@ export const FOREST_GATE_MAP: MapLayout = {
 	tilemapKey: 'tilemap-forest-gate',
 	tilesetKey: 'tileset',
 };
+
+export const LAVA_FORTRESS_MAP: MapLayout = {
+	id: 'lava_fortress',
+	name: 'Lava Fortress',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: FOREST_GATE_PATH,
+	blockedPlacementPoints: FOREST_GATE_BLOCKED_PLACEMENT_POINTS,
+	buildablePoints: FOREST_GATE_BUILDABLE_POINTS,
+	spawnPoint: { x: 3, y: 0 },
+	exitPoint: { x: 4, y: 17 },
+	tilemapKey: 'tilemap-lava-fortress',
+	tilesetKey: 'tileset',
+};
+
+export const STORM_CITADEL_MAP: MapLayout = {
+	id: 'storm_citadel',
+	name: 'Storm Citadel',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: FOREST_GATE_PATH,
+	blockedPlacementPoints: FOREST_GATE_BLOCKED_PLACEMENT_POINTS,
+	buildablePoints: FOREST_GATE_BUILDABLE_POINTS,
+	spawnPoint: { x: 3, y: 0 },
+	exitPoint: { x: 4, y: 17 },
+	tilemapKey: 'tilemap-storm-citadel',
+	tilesetKey: 'tileset',
+};
+
+export const MAP_REGISTRY: Record<string, MapLayout> = {
+	forest_gate: FOREST_GATE_MAP,
+	lava_fortress: LAVA_FORTRESS_MAP,
+	storm_citadel: STORM_CITADEL_MAP,
+};
+
+export const DEFAULT_MAP_ID = 'forest_gate';
+
+export function getMapById(mapId: string): MapLayout {
+	const map = MAP_REGISTRY[mapId];
+	if (!map) throw new Error(`Unknown map ID: ${mapId}`);
+	return map;
+}

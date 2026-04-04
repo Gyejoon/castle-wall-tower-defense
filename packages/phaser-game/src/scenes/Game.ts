@@ -1,10 +1,12 @@
 import {
 	type AssetManifest,
+	DEFAULT_MAP_ID,
 	type ElementType,
-	FOREST_GATE_MAP,
 	getElementDamageMultiplier,
+	getMapById,
 	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
+	type MapLayout,
 	RANDOM_TOWER_COST,
 	WAVE_DEFS,
 	type WaveDef,
@@ -96,17 +98,19 @@ export class GameScene extends Phaser.Scene {
 	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
+	private currentMap!: MapLayout;
 
 	constructor() {
 		super('Game');
 	}
 
-	create() {
+	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
+		this.currentMap = getMapById(data?.mapId ?? DEFAULT_MAP_ID);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
-		this.playerGrid = new GridManager(FOREST_GATE_MAP, {
+		this.playerGrid = new GridManager(this.currentMap, {
 			canvasWidth: canvasW,
 			canvasHeight: canvasH,
 		});
@@ -132,7 +136,7 @@ export class GameScene extends Phaser.Scene {
 		this.mergeHighlights = this.add.graphics();
 		this.mergeHighlights.setDepth(15);
 
-		this.playerUnits.setPath(FOREST_GATE_MAP.path);
+		this.playerUnits.setPath(this.currentMap.path);
 		this.renderPath(this.playerGrid);
 
 		this.setupInput();
@@ -181,7 +185,7 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private cacheDecorationData(): void {
-		const tilemap = this.make.tilemap({ key: 'tilemap-forest-gate' });
+		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
 		const decorLayer = tilemap.getObjectLayer?.('decorations');
 		if (!decorLayer) {
 			this.decorationTiles = [];
@@ -214,8 +218,8 @@ export class GameScene extends Phaser.Scene {
 				const objectY = typeof object.y === 'number' ? object.y : 0;
 
 				return {
-					x: Math.round(objectX / FOREST_GATE_MAP.tileSize),
-					y: Math.round(objectY / FOREST_GATE_MAP.tileSize),
+					x: Math.round(objectX / this.currentMap.tileSize),
+					y: Math.round(objectY / this.currentMap.tileSize),
 					assetKey,
 					kind: kind as TinySwordsDecorationKind,
 					variant,
@@ -230,7 +234,7 @@ export class GameScene extends Phaser.Scene {
 		const spawnColor = dark ? 0x40556f : 0x486133;
 		const exitColor = dark ? 0x7e8aa8 : 0xb0914f;
 
-		for (const point of FOREST_GATE_MAP.path) {
+		for (const point of this.currentMap.path) {
 			grid.fillTileRect(
 				graphics,
 				point.x,
@@ -242,26 +246,26 @@ export class GameScene extends Phaser.Scene {
 
 		grid.fillTileRect(
 			graphics,
-			FOREST_GATE_MAP.spawnPoint.x,
-			FOREST_GATE_MAP.spawnPoint.y,
+			this.currentMap.spawnPoint.x,
+			this.currentMap.spawnPoint.y,
 			spawnColor,
 			dark ? 0.58 : 0.68,
 		);
 		grid.fillTileRect(
 			graphics,
-			FOREST_GATE_MAP.exitPoint.x,
-			FOREST_GATE_MAP.exitPoint.y,
+			this.currentMap.exitPoint.x,
+			this.currentMap.exitPoint.y,
 			exitColor,
 			dark ? 0.58 : 0.68,
 		);
 
 		const spawnWorld = grid.gridToWorld(
-			FOREST_GATE_MAP.spawnPoint.x,
-			FOREST_GATE_MAP.spawnPoint.y,
+			this.currentMap.spawnPoint.x,
+			this.currentMap.spawnPoint.y,
 		);
 		const exitWorld = grid.gridToWorld(
-			FOREST_GATE_MAP.exitPoint.x,
-			FOREST_GATE_MAP.exitPoint.y,
+			this.currentMap.exitPoint.x,
+			this.currentMap.exitPoint.y,
 		);
 
 		graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
@@ -270,8 +274,8 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private renderField(grid: GridManager, dark: boolean): void {
-		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
-			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+		for (let y = 0; y < this.currentMap.height; y++) {
+			for (let x = 0; x < this.currentMap.width; x++) {
 				const world = grid.gridToWorld(x, y);
 				const frame =
 					TINY_SWORDS_GROUND_FRAMES[(x + y) % TINY_SWORDS_GROUND_FRAMES.length];
@@ -313,7 +317,7 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private renderPath(grid: GridManager): void {
-		const path = FOREST_GATE_MAP.path;
+		const path = this.currentMap.path;
 		if (!this.pathGraphics) this.pathGraphics = this.add.graphics();
 		const graphics = this.pathGraphics;
 		graphics.clear();
@@ -595,9 +599,9 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('player-tower-count', {
 			count: this.playerTowers.getTowers().length,
 		});
-		this.playerUnits.setPath(FOREST_GATE_MAP.path);
+		this.playerUnits.setPath(this.currentMap.path);
 		this.renderPath(this.playerGrid);
-		EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+		EventBus.emit('path-updated', { path: this.currentMap.path });
 		this.updateHUD();
 	}
 
@@ -821,9 +825,9 @@ export class GameScene extends Phaser.Scene {
 							toPos,
 							newTowerId: result.id,
 						});
-						this.playerUnits.setPath(FOREST_GATE_MAP.path);
+						this.playerUnits.setPath(this.currentMap.path);
 						this.renderPath(this.playerGrid);
-						EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
+						EventBus.emit('path-updated', { path: this.currentMap.path });
 						EventBus.emit('player-tower-count', {
 							count: this.playerTowers.getTowers().length,
 						});

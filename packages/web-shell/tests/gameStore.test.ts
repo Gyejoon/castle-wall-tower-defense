@@ -1,4 +1,4 @@
-import { INITIAL_GOLD, INITIAL_PLAYER_HP } from '@gld/shared';
+import { INITIAL_ENERGY, INITIAL_PLAYER_HP } from '@gld/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useGameStore } from '../src/stores/gameStore';
 
@@ -22,12 +22,12 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().gameReady).toBe(true);
 	});
 
-	it('tracks gold and lives', () => {
-		expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
+	it('tracks energy and lives', () => {
+		expect(useGameStore.getState().energy).toBe(INITIAL_ENERGY);
 		expect(useGameStore.getState().lives).toBe(INITIAL_PLAYER_HP);
-		useGameStore.getState().setGold(150);
+		useGameStore.getState().setEnergy(15);
 		useGameStore.getState().setLives(15);
-		expect(useGameStore.getState().gold).toBe(150);
+		expect(useGameStore.getState().energy).toBe(15);
 		expect(useGameStore.getState().lives).toBe(15);
 	});
 
@@ -42,7 +42,7 @@ describe('gameStore', () => {
 
 	it('tracks wave metadata', () => {
 		expect(useGameStore.getState().wave).toBe(0);
-		expect(useGameStore.getState().wavePhase).toBe('running');
+		expect(useGameStore.getState().wavePhase).toBe('combat');
 		expect(useGameStore.getState().countdown).toBe(0);
 
 		useGameStore.getState().setWave(4);
@@ -58,18 +58,14 @@ describe('gameStore', () => {
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 9,
 			phase: 'boss',
-			buyCooldownMs: 900,
 			bossWarning: true,
-			suddenDeath: false,
 			timerLabel: 'Boss 9',
 		});
 
 		expect(useGameStore.getState().combatHud).toEqual({
 			currentSlot: 9,
 			phase: 'boss',
-			buyCooldownMs: 900,
 			bossWarning: true,
-			suddenDeath: false,
 			timerLabel: 'Boss 9',
 		});
 	});
@@ -88,6 +84,26 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().toast).toBeNull();
 	});
 
+	it('initializes deck cards from DEFAULT_DECK and tracks selection', () => {
+		const { deckCards, selectedCardIndex } = useGameStore.getState();
+		expect(deckCards).toHaveLength(4);
+		expect(deckCards[0].towerDefId).toBe('laser');
+		expect(selectedCardIndex).toBeNull();
+
+		useGameStore.getState().setSelectedCardIndex(2);
+		expect(useGameStore.getState().selectedCardIndex).toBe(2);
+
+		useGameStore.getState().setSelectedCardIndex(null);
+		expect(useGameStore.getState().selectedCardIndex).toBeNull();
+	});
+
+	it('resets deck state on resetRun', () => {
+		useGameStore.getState().setSelectedCardIndex(3);
+		useGameStore.getState().resetRun();
+		expect(useGameStore.getState().selectedCardIndex).toBeNull();
+		expect(useGameStore.getState().deckCards).toHaveLength(4);
+	});
+
 	it('tracks player tower count only', () => {
 		expect(useGameStore.getState().playerTowerCount).toBe(0);
 		useGameStore.getState().setPlayerTowerCount(3);
@@ -98,7 +114,7 @@ describe('gameStore', () => {
 		const state = useGameStore.getState() as Record<string, unknown>;
 		expect('activeTab' in state).toBe(false);
 		expect('opponentHp' in state).toBe(false);
-		expect('opponentGold' in state).toBe(false);
+		expect('opponentEnergy' in state).toBe(false);
 		expect('opponentTowerCount' in state).toBe(false);
 		expect('setOpponentState' in state).toBe(false);
 	});
@@ -111,14 +127,14 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('enterLobby resets lobby state and gold', () => {
+	it('enterLobby resets lobby state and energy', () => {
 		useGameStore.getState().resetRun();
-		useGameStore.getState().setGold(999);
+		useGameStore.getState().setEnergy(999);
 		useGameStore.getState().setLobbyTab('collection');
 		useGameStore.getState().enterLobby();
 
 		expect(useGameStore.getState().runStatus).toBe('lobby');
-		expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
+		expect(useGameStore.getState().energy).toBe(INITIAL_ENERGY);
 		expect(useGameStore.getState().lobbyTab).toBe('home');
 	});
 
@@ -140,7 +156,7 @@ describe('gameStore', () => {
 		const initialRunId = useGameStore.getState().runId;
 
 		useGameStore.getState().setGameReady(true);
-		useGameStore.getState().setGold(10);
+		useGameStore.getState().setEnergy(10);
 		useGameStore.getState().setLives(3);
 		useGameStore.getState().setSelectedTower('laser');
 		useGameStore.getState().setWave(4);
@@ -157,11 +173,9 @@ describe('gameStore', () => {
 		useGameStore.getState().setPlayerTowerCount(8);
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 18,
-			phase: 'sudden_death',
-			buyCooldownMs: 700,
+			phase: 'boss',
 			bossWarning: true,
-			suddenDeath: true,
-			timerLabel: 'Sudden Death',
+			timerLabel: 'Boss 18',
 		});
 		useGameStore.getState().pushToast('합성 실패', 'error');
 
@@ -170,12 +184,12 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().runId).toBe(initialRunId + 1);
 		expect(useGameStore.getState().runStatus).toBe('building');
 		expect(useGameStore.getState().gameReady).toBe(false);
-		expect(useGameStore.getState().gold).toBe(INITIAL_GOLD);
+		expect(useGameStore.getState().energy).toBe(INITIAL_ENERGY);
 		expect(useGameStore.getState().lives).toBe(INITIAL_PLAYER_HP);
 		expect(useGameStore.getState().selectedTowerId).toBeNull();
 		expect(useGameStore.getState().placementFeedback).toBeNull();
 		expect(useGameStore.getState().wave).toBe(0);
-		expect(useGameStore.getState().wavePhase).toBe('running');
+		expect(useGameStore.getState().wavePhase).toBe('combat');
 		expect(useGameStore.getState().countdown).toBe(0);
 		expect(useGameStore.getState().wavePreview).toBeNull();
 		expect(useGameStore.getState().lobbyTab).toBe('home');
@@ -183,10 +197,8 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().toast).toBeNull();
 		expect(useGameStore.getState().combatHud).toEqual({
 			currentSlot: 1,
-			phase: 'running',
-			buyCooldownMs: 0,
+			phase: 'combat',
 			bossWarning: false,
-			suddenDeath: false,
 			timerLabel: 'Slot 1',
 		});
 	});

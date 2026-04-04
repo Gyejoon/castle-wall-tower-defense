@@ -1,9 +1,10 @@
 import {
 	type CombatHudState,
-	INITIAL_GOLD,
+	DEFAULT_DECK,
+	type DeckCardDef,
+	INITIAL_ENERGY,
 	INITIAL_PLAYER_HP,
 	type PlacementFailureReason,
-	type TowerDef,
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
@@ -28,10 +29,11 @@ interface GameStoreState {
 	runId: number;
 	runStatus: RunStatus;
 	gameReady: boolean;
-	gold: number;
+	energy: number;
 	lives: number;
 	selectedTowerId: string | null;
-	rolledTower: TowerDef | null;
+	deckCards: readonly DeckCardDef[];
+	selectedCardIndex: number | null;
 	wave: number;
 	wavePhase: WavePhase;
 	countdown: number;
@@ -47,10 +49,11 @@ interface GameStoreState {
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
-	setGold: (gold: number) => void;
+	setEnergy: (energy: number) => void;
 	setLives: (lives: number) => void;
 	setSelectedTower: (towerId: string | null) => void;
-	setRolledTower: (tower: TowerDef | null) => void;
+	setDeckCards: (cards: readonly DeckCardDef[]) => void;
+	setSelectedCardIndex: (index: number | null) => void;
 	setWave: (wave: number) => void;
 	setWavePhase: (phase: WavePhase) => void;
 	setCountdown: (seconds: number) => void;
@@ -70,21 +73,20 @@ interface GameStoreState {
 
 const createCombatHud = (): CombatHudState => ({
 	currentSlot: 1,
-	phase: 'running',
-	buyCooldownMs: 0,
+	phase: 'combat',
 	bossWarning: false,
-	suddenDeath: false,
 	timerLabel: 'Slot 1',
 });
 
 const createRunState = () => ({
 	gameReady: false,
-	gold: INITIAL_GOLD,
+	energy: INITIAL_ENERGY,
 	lives: INITIAL_PLAYER_HP,
 	selectedTowerId: null,
-	rolledTower: null,
+	deckCards: DEFAULT_DECK,
+	selectedCardIndex: null,
 	wave: 0,
-	wavePhase: 'running' as WavePhase,
+	wavePhase: 'combat' as WavePhase,
 	countdown: 0,
 	placementFeedback: null,
 	wavePreview: null,
@@ -104,10 +106,11 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 
 	setRunStatus: (status) => set({ runStatus: status }),
 	setGameReady: (ready) => set({ gameReady: ready }),
-	setGold: (gold) => set({ gold }),
+	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
-	setRolledTower: (tower) => set({ rolledTower: tower }),
+	setDeckCards: (cards) => set({ deckCards: cards }),
+	setSelectedCardIndex: (index) => set({ selectedCardIndex: index }),
 	setWave: (wave) => set({ wave }),
 	setWavePhase: (phase) => set({ wavePhase: phase }),
 	setCountdown: (seconds) => set({ countdown: seconds }),

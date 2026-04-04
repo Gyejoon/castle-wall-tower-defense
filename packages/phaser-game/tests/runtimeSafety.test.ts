@@ -1,9 +1,4 @@
-import {
-	BOSS_SLOT_AT_SECS,
-	BOSS_WARNING_AT_SECS,
-	TOTAL_WAVES,
-	WAVE_DEFS,
-} from '@gld/shared';
+import { TOTAL_WAVES, WAVE_DEFS } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
 
@@ -106,6 +101,7 @@ describe('runtime safety fixes', () => {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
 		};
 
 		const waveSystem = new WaveSystem(
@@ -121,49 +117,75 @@ describe('runtime safety fixes', () => {
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 	});
 
-	it('gstack test plan: Real-time wave scheduler emits boss warning and boss slot without build phase', () => {
+	it('event-based wave progression: start → clear → wait → next wave', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
 		const waveSystem = new WaveSystem(unitSystem as never);
 		waveSystem.start();
 
+		// Wave 1 starts immediately
 		expect(emitSpy).toHaveBeenCalledWith(
 			'wave-started',
 			expect.objectContaining({
 				slotIndex: 1,
-				phase: 'running',
+				phase: 'combat',
 				kind: 'normal',
-				startAtSec: 0,
 			}),
 		);
 
-		// Advance in 5s chunks (delta cap is 5000ms)
-		const targetMs = BOSS_WARNING_AT_SECS[0] * 1000 + 1;
-		const step = 5000;
-		for (let t = 0; t < targetMs; t += step) {
-			waveSystem.update(Math.min(step, targetMs - t));
-		}
-		expect(emitSpy).toHaveBeenCalledWith('boss-warning', {
-			slotIndex: 8,
-			bossSlotIndex: 9,
-			startAtSec: BOSS_WARNING_AT_SECS[0],
-		});
-		// Advance another 30s to boss slot
-		for (let t = 0; t < 30000; t += step) {
-			waveSystem.update(Math.min(step, 30000 - t));
-		}
+		// Simulate units alive (activeCount > 0)
+		unitSystem.getActiveCount.mockReturnValue(5);
+		waveSystem.update(1000, 5);
+		expect(waveSystem.getPhase()).toBe('combat');
+
+		// Units cleared → transitions to waiting
+		unitSystem.getActiveCount.mockReturnValue(0);
+		waveSystem.update(100, 0);
+		expect(waveSystem.getPhase()).toBe('waiting');
+
+		// Wait through delay (3000ms for normal waves)
+		waveSystem.update(3100, 0);
 		expect(emitSpy).toHaveBeenCalledWith(
 			'wave-started',
 			expect.objectContaining({
-				slotIndex: 9,
-				phase: 'boss',
-				kind: 'boss',
-				startAtSec: BOSS_SLOT_AT_SECS[0],
+				slotIndex: 2,
+				kind: 'normal',
+			}),
+		);
+	});
+
+	it('emits boss-warning when pre_boss wave is cleared', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(unitSystem as never);
+		waveSystem.start();
+
+		// Advance through waves 1-3 (clear immediately since activeCount=0)
+		for (let i = 0; i < 3; i++) {
+			waveSystem.update(100, 0); // clear current wave
+			waveSystem.update(3100, 0); // wait through delay
+		}
+
+		// Now on wave 4 (pre_boss). Clear it.
+		waveSystem.update(100, 0);
+
+		expect(emitSpy).toHaveBeenCalledWith(
+			'boss-warning',
+			expect.objectContaining({
+				slotIndex: 4,
+				bossSlotIndex: 5,
 			}),
 		);
 	});

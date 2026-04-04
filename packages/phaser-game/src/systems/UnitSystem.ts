@@ -1,4 +1,4 @@
-import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
+import type { ActiveUnit, ElementType, Position, UnitDef } from '@gld/shared';
 import { UNITS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -24,6 +24,7 @@ interface UnitInstance {
 	worldY: number;
 	slowFactor: number;
 	slowRemaining: number;
+	stunRemaining: number;
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
@@ -145,6 +146,7 @@ export class UnitSystem {
 			worldY: startWorld.y,
 			slowFactor: 1.0,
 			slowRemaining: 0,
+			stunRemaining: 0,
 			bounty: entry.bounty,
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
@@ -179,14 +181,23 @@ export class UnitSystem {
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		unit.slowFactor = factor;
-		unit.slowRemaining = durationMs;
-		unit.sprite.setTint(0x88ccff);
+		// Keep the stronger slow (lower factor = slower)
+		unit.slowFactor = Math.min(unit.slowFactor, factor);
+		unit.slowRemaining = Math.max(unit.slowRemaining, durationMs);
+		if (unit.stunRemaining <= 0) unit.sprite.setTint(0x88ccff);
+	}
+
+	applyStun(unitId: string, durationMs: number): void {
+		const unit = this.units.get(unitId);
+		if (!unit) return;
+		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
+		unit.sprite.setTint(0xffff44);
 	}
 
 	applyDamage(
 		unitId: string,
 		rawDamage: number,
+		armorPierce = false,
 	): {
 		killed: boolean;
 		bounty: number;
@@ -197,7 +208,7 @@ export class UnitSystem {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
 
-		const armor = unit.def.stats.armor;
+		const armor = armorPierce ? 0 : unit.def.stats.armor;
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 
@@ -257,6 +268,17 @@ export class UnitSystem {
 		return this.spawnQueue.length > 0;
 	}
 
+	getActiveCount(): number {
+		let count = 0;
+		for (const unit of this.units.values()) {
+			if (unit.countsTowardClear) count += 1;
+		}
+		for (const entry of this.spawnQueue) {
+			if (entry.countsTowardClear) count += entry.remaining;
+		}
+		return count;
+	}
+
 	private spawnOptionalVfx(
 		textureKey: string,
 		x: number,
@@ -281,8 +303,11 @@ export class UnitSystem {
 		);
 	}
 
+	private reachedExitBuffer: string[] = [];
+
 	update(_time: number, delta: number): { reachedExit: string[] } {
-		const reachedExit: string[] = [];
+		const reachedExit = this.reachedExitBuffer;
+		reachedExit.length = 0;
 
 		this.spawnTimer += delta;
 		if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
@@ -312,13 +337,29 @@ export class UnitSystem {
 				if (unit.slowRemaining <= 0) {
 					unit.slowFactor = 1.0;
 					unit.slowRemaining = 0;
-					unit.sprite.clearTint();
+					if (unit.stunRemaining <= 0) {
+						unit.sprite.clearTint();
+					}
 				}
+			}
+
+			if (unit.stunRemaining > 0) {
+				unit.stunRemaining -= delta;
+				if (unit.stunRemaining <= 0) {
+					unit.stunRemaining = 0;
+					if (unit.slowRemaining <= 0) {
+						unit.sprite.clearTint();
+					} else {
+						unit.sprite.setTint(0x88ccff);
+					}
+				}
+				continue; // skip movement while stunned
 			}
 
 			const nextGrid = this.currentPath[pathIdx + 1];
 			const targetWorld = this.currentPathWorld[pathIdx + 1];
-			const speed = unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
+			const speed =
+				unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;
@@ -335,26 +376,51 @@ export class UnitSystem {
 			}
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
-			const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			unit.sprite.setDepth(this.gridManager.getDepth(currentGrid.x, currentGrid.y));
-			this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
+			const currentGrid = this.gridManager.worldToGrid(
+				unit.worldX,
+				unit.worldY,
+			);
+			unit.sprite.setDepth(
+				this.gridManager.getDepth(currentGrid.x, currentGrid.y),
+			);
+			this.renderHpBar(
+				unit.hpBar,
+				unit.worldX,
+				unit.worldY,
+				unit.def,
+				unit.data.hp,
+			);
 		}
 
 		return { reachedExit };
 	}
+
+	private unitPositionsBuffer: Array<{
+		instanceId: string;
+		x: number;
+		y: number;
+		hp: number;
+		element: ElementType;
+	}> = [];
 
 	getUnitPositions(): Array<{
 		instanceId: string;
 		x: number;
 		y: number;
 		hp: number;
+		element: ElementType;
 	}> {
-		return Array.from(this.units.values()).map((unit) => ({
-			instanceId: unit.data.instanceId,
-			x: unit.worldX,
-			y: unit.worldY,
-			hp: unit.data.hp,
-		}));
+		this.unitPositionsBuffer.length = 0;
+		for (const unit of this.units.values()) {
+			this.unitPositionsBuffer.push({
+				instanceId: unit.data.instanceId,
+				x: unit.worldX,
+				y: unit.worldY,
+				hp: unit.data.hp,
+				element: unit.def.element,
+			});
+		}
+		return this.unitPositionsBuffer;
 	}
 
 	destroy(): void {

@@ -1,5 +1,4 @@
 import {
-	BOSS_WARNING_AT_SECS,
 	TOTAL_WAVES,
 	WAVE_DEFS,
 	type WaveDef,
@@ -8,67 +7,98 @@ import {
 import { EventBus } from '../EventBus';
 import type { UnitSystem } from './UnitSystem';
 
+/**
+ * Event-based wave progression system.
+ *
+ * State machine:
+ *   spawning → combat (units alive) → waiting (delay timer) → spawning (next wave)
+ *   After final wave cleared → ended
+ *
+ * Boss warning: emitted when a pre_boss wave transitions to waiting.
+ */
 export class WaveSystem {
 	private unitSystem: UnitSystem;
 	private maxWaves: number;
+
+	private currentWaveIndex = -1; // index into WAVE_DEFS (0-based)
+	private phase: WavePhase = 'combat';
+	private waitTimerMs = 0;
+	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
-	private currentSlotIndex = 0;
-	private phase: WavePhase = 'running';
-	private emittedBossWarnings = new Set<number>();
 
 	constructor(unitSystem: UnitSystem, maxWaves?: number) {
 		this.unitSystem = unitSystem;
-		this.maxWaves = this.clampMaxWaves(maxWaves ?? TOTAL_WAVES);
+		this.maxWaves = Math.max(1, Math.min(maxWaves ?? TOTAL_WAVES, TOTAL_WAVES));
 	}
 
 	setMaxWaves(count: number): void {
-		this.maxWaves = this.clampMaxWaves(count);
+		this.maxWaves = Math.max(1, Math.min(count, TOTAL_WAVES));
 	}
 
 	start(): void {
+		this.currentWaveIndex = -1;
+		this.phase = 'combat';
+		this.waitTimerMs = 0;
+		this.hasSpawnedCurrentWave = false;
 		this.elapsedMs = 0;
-		this.currentSlotIndex = 0;
-		this.phase = 'running';
-		this.emittedBossWarnings.clear();
-		this.startSlot(WAVE_DEFS[0]);
+		this.advanceToNextWave();
 	}
 
-	update(delta: number): void {
+	/**
+	 * @param delta Frame delta in milliseconds
+	 * @param activeUnitCount Number of alive + queued units from UnitSystem
+	 */
+	update(delta: number, activeUnitCount: number): void {
 		if (this.phase === 'ended') return;
 
 		const MAX_DELTA_MS = 5000;
-		const previousElapsedMs = this.elapsedMs;
-		this.elapsedMs += Math.min(delta, MAX_DELTA_MS);
+		const clampedDelta = Math.min(delta, MAX_DELTA_MS);
+		this.elapsedMs += clampedDelta;
 
-		for (const warningSec of BOSS_WARNING_AT_SECS) {
-			const warningMs = warningSec * 1000;
-			if (
-				previousElapsedMs < warningMs &&
-				this.elapsedMs >= warningMs &&
-				!this.emittedBossWarnings.has(warningSec)
-			) {
-				this.emittedBossWarnings.add(warningSec);
-				const warningSlot = WAVE_DEFS.find(
-					(slot) => slot.startAtSec === warningSec,
-				);
-				const bossSlot = WAVE_DEFS.find(
-					(slot) => slot.startAtSec === warningSec + 30,
-				);
-				if (warningSlot && bossSlot) {
-					EventBus.emit('boss-warning', {
-						slotIndex: warningSlot.slotIndex,
-						bossSlotIndex: bossSlot.slotIndex,
-						startAtSec: warningSec,
-					});
+		if (this.phase === 'combat' || this.phase === 'boss') {
+			// Wait for all units to be cleared (killed or leaked)
+			if (this.hasSpawnedCurrentWave && activeUnitCount === 0) {
+				const currentWave = this.getCurrentWaveDef();
+				if (!currentWave) {
+					this.phase = 'ended';
+					return;
 				}
-			}
-		}
 
-		let nextSlot = this.getNextSlot();
-		while (nextSlot && this.elapsedMs >= nextSlot.startAtSec * 1000) {
-			this.finishCurrentSlot();
-			this.startSlot(nextSlot);
-			nextSlot = this.getNextSlot();
+				// Emit wave completed
+				EventBus.emit('wave-completed', {
+					wave: currentWave.slotIndex,
+					totalWaves: this.maxWaves,
+					slotIndex: currentWave.slotIndex,
+					delaySec: currentWave.delayAfterClearSec,
+				});
+
+				// Check if this was the last wave
+				if (this.currentWaveIndex >= this.maxWaves - 1) {
+					this.phase = 'ended';
+					return;
+				}
+
+				// Emit boss warning when pre_boss wave is cleared
+				if (currentWave.kind === 'pre_boss') {
+					const nextWave = WAVE_DEFS[this.currentWaveIndex + 1];
+					if (nextWave) {
+						EventBus.emit('boss-warning', {
+							slotIndex: currentWave.slotIndex,
+							bossSlotIndex: nextWave.slotIndex,
+							startAtSec: Math.round(this.elapsedMs / 1000),
+						});
+					}
+				}
+
+				// Transition to waiting
+				this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
+				this.phase = 'waiting';
+			}
+		} else if (this.phase === 'waiting') {
+			this.waitTimerMs -= clampedDelta;
+			if (this.waitTimerMs <= 0) {
+				this.advanceToNextWave();
+			}
 		}
 	}
 
@@ -77,11 +107,12 @@ export class WaveSystem {
 	}
 
 	getCurrentWave(): number {
-		return Math.min(this.currentSlotIndex, this.maxWaves);
+		const wave = this.getCurrentWaveDef();
+		return wave ? wave.slotIndex : 0;
 	}
 
 	getCurrentSlot(): WaveDef {
-		return WAVE_DEFS[this.currentSlotIndex - 1] ?? WAVE_DEFS[0];
+		return this.getCurrentWaveDef() ?? WAVE_DEFS[0];
 	}
 
 	getElapsedMs(): number {
@@ -92,69 +123,50 @@ export class WaveSystem {
 		this.phase = 'ended';
 	}
 
-	private startSlot(slot: WaveDef): void {
-		this.currentSlotIndex = slot.slotIndex;
-		this.phase = this.getPhaseForSlot(slot);
+	private getCurrentWaveDef(): WaveDef | undefined {
+		if (
+			this.currentWaveIndex < 0 ||
+			this.currentWaveIndex >= WAVE_DEFS.length
+		) {
+			return undefined;
+		}
+		return WAVE_DEFS[this.currentWaveIndex];
+	}
 
-		if (slot.kind !== 'hard_end') {
-			for (const group of slot.groups) {
-				this.unitSystem.queueUnits(group.unitId, group.count, {
-					source: 'base',
-					countsTowardClear: true,
-				});
-			}
+	private advanceToNextWave(): void {
+		this.currentWaveIndex += 1;
+
+		if (this.currentWaveIndex >= this.maxWaves) {
+			this.phase = 'ended';
+			return;
 		}
 
-		EventBus.emit('wave-started', {
-			wave: Math.min(slot.slotIndex, this.maxWaves),
-			totalWaves: this.maxWaves,
-			slotIndex: slot.slotIndex,
-			phase: this.phase,
-			kind: slot.kind,
-			startAtSec: slot.startAtSec,
-		});
+		const wave = WAVE_DEFS[this.currentWaveIndex];
+		if (!wave) {
+			this.phase = 'ended';
+			return;
+		}
 
-		if (slot.kind === 'sudden_death') {
-			EventBus.emit('sudden-death-started', {
-				slotIndex: slot.slotIndex,
-				startAtSec: slot.startAtSec,
+		this.hasSpawnedCurrentWave = false;
+		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
+
+		// Spawn units
+		for (const group of wave.groups) {
+			this.unitSystem.queueUnits(group.unitId, group.count, {
+				source: 'base',
+				countsTowardClear: true,
 			});
 		}
-	}
+		this.hasSpawnedCurrentWave = true;
 
-	private finishCurrentSlot(): void {
-		if (this.currentSlotIndex <= 0 || this.currentSlotIndex > this.maxWaves)
-			return;
-
-		EventBus.emit('wave-completed', {
-			wave: Math.min(this.currentSlotIndex, this.maxWaves),
+		// Emit wave started
+		EventBus.emit('wave-started', {
+			wave: wave.slotIndex,
 			totalWaves: this.maxWaves,
-			slotIndex: this.currentSlotIndex,
+			slotIndex: wave.slotIndex,
+			phase: this.phase,
+			kind: wave.kind,
+			startAtSec: Math.round(this.elapsedMs / 1000),
 		});
-	}
-
-	private getNextSlot(): WaveDef | null {
-		const nextIndex = this.currentSlotIndex;
-		const slot = WAVE_DEFS[nextIndex];
-		if (!slot) {
-			this.phase = 'ended';
-			return null;
-		}
-		if (slot.slotIndex > this.maxWaves + 1) {
-			this.phase = 'ended';
-			return null;
-		}
-		return slot;
-	}
-
-	private getPhaseForSlot(slot: WaveDef): WavePhase {
-		if (slot.kind === 'boss') return 'boss';
-		if (slot.kind === 'sudden_death') return 'sudden_death';
-		if (slot.kind === 'hard_end') return 'ended';
-		return 'running';
-	}
-
-	private clampMaxWaves(count: number): number {
-		return Math.max(1, Math.min(count, TOTAL_WAVES));
 	}
 }

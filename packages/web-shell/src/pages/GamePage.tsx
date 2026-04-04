@@ -1,6 +1,11 @@
 import { EventBus } from '@gld/phaser-game';
-import type { PlacementFailureReason, TowerDef } from '@gld/shared';
-import { useEffect, type CSSProperties } from 'react';
+import {
+	type DeckCardDef,
+	ENERGY_CAP,
+	type PlacementFailureReason,
+} from '@gld/shared';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
@@ -8,8 +13,7 @@ import { colors, fonts } from '../styles/tokens';
 
 function formatTimerLabel(rawLabel: string) {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');
-	if (rawLabel.startsWith('Sudden')) return '서든';
-	if (rawLabel.startsWith('Slot')) return rawLabel.replace('Slot', '슬롯');
+	if (rawLabel.startsWith('Wave')) return rawLabel.replace('Wave', '웨이브');
 	return rawLabel;
 }
 
@@ -41,7 +45,7 @@ function getHudChipStyle({
 		background,
 		color,
 		fontFamily: fonts.pixel,
-		fontSize: '8px',
+		fontSize: '10px',
 		border: `1px solid ${colors.border}`,
 		boxShadow: `2px 2px 0px rgba(0,0,0,0.25)`,
 		flexShrink: 0,
@@ -51,58 +55,60 @@ function getHudChipStyle({
 	};
 }
 
-
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
 	const runStatus = useGameStore((s) => s.runStatus);
 	const gameReady = useGameStore((s) => s.gameReady);
 	const lives = useGameStore((s) => s.lives);
-	const gold = useGameStore((s) => s.gold);
+	const energy = useGameStore((s) => s.energy);
 	const combatHud = useGameStore((s) => s.combatHud);
 	const toast = useGameStore((s) => s.toast);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
 	const setLives = useGameStore((s) => s.setLives);
-	const setGold = useGameStore((s) => s.setGold);
+	const setEnergy = useGameStore((s) => s.setEnergy);
 	const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
-	const setRolledTower = useGameStore((s) => s.setRolledTower);
+	const setDeckCards = useGameStore((s) => s.setDeckCards);
+	const setSelectedCardIndex = useGameStore((s) => s.setSelectedCardIndex);
 	const setPlayerTowerCount = useGameStore((s) => s.setPlayerTowerCount);
 	const patchCombatHud = useGameStore((s) => s.patchCombatHud);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
+	const [waitCountdown, setWaitCountdown] = useState(0);
+	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
-		const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
-		const onGameOver = (data: {
-			result: 'victory' | 'defeat';
-		}) => {
+		const onEnergyChanged = (data: { energy: number }) =>
+			setEnergy(data.energy);
+		const onGameOver = (data: { result: 'victory' | 'defeat' }) => {
 			setRunStatus(data.result);
 		};
 		const onWaveStarted = (data: {
 			wave: number;
 			totalWaves: number;
 			slotIndex: number;
-			phase: 'running' | 'boss' | 'sudden_death' | 'ended';
-			kind: 'normal' | 'pre_boss' | 'boss' | 'sudden_death' | 'hard_end';
+			phase: 'combat' | 'waiting' | 'boss' | 'ended';
+			kind: 'normal' | 'pre_boss' | 'boss';
 			startAtSec: number;
 		}) => {
-			if (data.kind === 'hard_end') return;
 			setRunStatus('running');
+			setWaitCountdown(0);
+			if (waitIntervalRef.current) {
+				clearInterval(waitIntervalRef.current);
+				waitIntervalRef.current = null;
+			}
 			patchCombatHud({
 				currentSlot: data.slotIndex,
 				phase: data.phase,
 				bossWarning: data.kind === 'pre_boss',
-				suddenDeath: data.phase === 'sudden_death',
 				timerLabel:
 					data.phase === 'boss'
 						? `Boss ${data.slotIndex}`
-						: data.phase === 'sudden_death'
-							? 'Sudden Death'
-							: data.kind === 'pre_boss'
-								? 'Boss Soon'
-								: `Slot ${data.slotIndex}`,
+						: data.kind === 'pre_boss'
+							? 'Boss Soon'
+							: `Wave ${data.wave}/${data.totalWaves}`,
 			});
 			setPlacementFeedback(null);
 		};
@@ -111,73 +117,82 @@ export function GamePage() {
 			reason?: PlacementFailureReason;
 		}) => {
 			setPlacementFeedback(data.success ? null : (data.reason ?? 'occupied'));
-			if (data.success) setRolledTower(null);
+			if (data.success) {
+				setSelectedCardIndex(null);
+			} else if (data.reason === 'insufficient_energy') {
+				pushToast('에너지 부족', 'warning');
+			}
 		};
-		const onRandomTowerRolled = (data: {
-			towerId: string;
-			towerDef: TowerDef;
-		}) => {
-			setRolledTower(data.towerDef);
+		const onDeckLoaded = (data: { cards: readonly DeckCardDef[] }) => {
+			setDeckCards(data.cards);
 		};
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
 		const onResetRun = () => resetRun();
+		const onWaveCompleted = (data: {
+			wave: number;
+			totalWaves: number;
+			delaySec: number;
+		}) => {
+			if (data.wave < data.totalWaves) {
+				setWaitCountdown(data.delaySec);
+				patchCombatHud({
+					phase: 'waiting',
+					timerLabel: `Wave ${data.wave}/${data.totalWaves}`,
+				});
+				if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+				let remaining = data.delaySec;
+				waitIntervalRef.current = setInterval(() => {
+					remaining -= 1;
+					if (remaining <= 0) {
+						setWaitCountdown(0);
+						if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+						waitIntervalRef.current = null;
+					} else {
+						setWaitCountdown(remaining);
+					}
+				}, 1000);
+			}
+		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			pushToast('보스 경고', 'warning');
 		};
-		const onSuddenDeathStarted = () => {
-			patchCombatHud({
-				phase: 'sudden_death',
-				suddenDeath: true,
-				bossWarning: false,
-				timerLabel: 'Sudden Death',
-			});
-			pushToast('서든데스 시작', 'warning');
-		};
-		const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
-			patchCombatHud({ buyCooldownMs: data.remainingMs });
-		};
-		const onTowerMergeResolved = (data: { success: boolean }) => {
-			if (!data.success) pushToast('합성 실패', 'error');
-		};
 
 		EventBus.on('player-damaged', onDamaged);
-		EventBus.on('gold-changed', onGoldChanged);
+		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
-		EventBus.on('random-tower-rolled', onRandomTowerRolled);
+		EventBus.on('deck-loaded', onDeckLoaded);
 		EventBus.on('player-tower-count', onPlayerTowerCount);
 		EventBus.on('request-reset-run', onResetRun);
+		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
-		EventBus.on('sudden-death-started', onSuddenDeathStarted);
-		EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
-		EventBus.on('tower-merge-resolved', onTowerMergeResolved);
 
 		return () => {
+			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
 			EventBus.off('player-damaged', onDamaged);
-			EventBus.off('gold-changed', onGoldChanged);
+			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
-			EventBus.off('random-tower-rolled', onRandomTowerRolled);
+			EventBus.off('deck-loaded', onDeckLoaded);
 			EventBus.off('player-tower-count', onPlayerTowerCount);
 			EventBus.off('request-reset-run', onResetRun);
+			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
-			EventBus.off('sudden-death-started', onSuddenDeathStarted);
-			EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
-			EventBus.off('tower-merge-resolved', onTowerMergeResolved);
 		};
 	}, [
 		patchCombatHud,
 		pushToast,
 		resetRun,
-		setGold,
+		setDeckCards,
+		setEnergy,
 		setLives,
 		setPlacementFeedback,
 		setPlayerTowerCount,
-		setRolledTower,
+		setSelectedCardIndex,
 		setRunStatus,
 	]);
 
@@ -204,7 +219,7 @@ export function GamePage() {
 				style={{
 					width: '100%',
 					maxWidth: '430px',
-					height: 'auto',
+					height: '100dvh',
 					display: 'flex',
 					flexDirection: 'column',
 					background: colors.bg,
@@ -236,52 +251,65 @@ export function GamePage() {
 						HP {lives}
 					</div>
 					<div
-						style={getHudChipStyle({
-							color: colors.gold,
-							background: 'rgba(240,208,96,0.16)',
-						})}
+						style={{
+							...getHudChipStyle({
+								color: colors.gold,
+								background: 'rgba(240,208,96,0.16)',
+							}),
+							display: 'flex',
+							alignItems: 'center',
+							gap: '4px',
+							minWidth: '70px',
+						}}
 					>
-						G {gold}
+						<span>⚡{energy}</span>
+						<div
+							style={{
+								flex: 1,
+								height: '4px',
+								background: 'rgba(0,0,0,0.3)',
+								borderRadius: '2px',
+								overflow: 'hidden',
+							}}
+						>
+							<div
+								style={{
+									width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
+									height: '100%',
+									background:
+										energy >= ENERGY_CAP ? colors.success : colors.gold,
+									transition: 'width 0.3s ease',
+								}}
+							/>
+						</div>
 					</div>
 					<div
 						data-testid="hud-timer"
 						style={getHudChipStyle({
-							color: combatHud.suddenDeath
-								? colors.danger
-								: combatHud.bossWarning || combatHud.phase === 'boss'
+							color:
+								combatHud.bossWarning || combatHud.phase === 'boss'
 									? colors.gold
 									: colors.text,
-							background: combatHud.suddenDeath
-								? 'rgba(192,48,32,0.16)'
-								: combatHud.bossWarning || combatHud.phase === 'boss'
+							background:
+								combatHud.bossWarning || combatHud.phase === 'boss'
 									? 'rgba(240,208,96,0.16)'
 									: 'rgba(42,32,16,0.82)',
 							minWidth: 0,
 						})}
 					>
-						{formatTimerLabel(combatHud.timerLabel)}
+						{combatHud.bossWarning
+							? '보스 임박'
+							: combatHud.phase === 'waiting' && waitCountdown > 0
+								? `다음 ${waitCountdown}s`
+								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
-					<div
-						data-testid="hud-cooldown"
-						style={getHudChipStyle({
-							color: combatHud.buyCooldownMs > 0 ? colors.info : colors.textSecondary,
-							background:
-								combatHud.buyCooldownMs > 0
-									? 'rgba(91,200,232,0.16)'
-									: 'rgba(42,32,16,0.82)',
-							minWidth: 0,
-						})}
-					>
-						구매 {combatHud.buyCooldownMs > 0 ? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s` : '준비'}
-					</div>
-
 				</div>
 
 				<div
 					style={{
 						width: '100%',
 						flex: 1,
-						maxHeight: 'calc(100vh - 48px)',
+						minHeight: 0,
 						position: 'relative',
 						overflow: 'hidden',
 						background:
@@ -400,6 +428,7 @@ export function GamePage() {
 					)}
 				</div>
 
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}
 			</div>
 		</div>
 	);

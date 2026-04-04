@@ -1,7 +1,7 @@
 import type {
+	DeckCardDef,
 	PlacementFailureReason,
 	Position,
-	TowerDef,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -17,7 +17,9 @@ export interface GameEventMap {
 		towerId: string;
 		success: boolean;
 		reason?: PlacementFailureReason;
+		energySpent?: number;
 	};
+	'deck-loaded': { cards: readonly DeckCardDef[] };
 	'unit-spawned': { unitType: UnitType; count: number };
 	'player-damaged': { playerId: string; damage: number; remainingHp: number };
 	'path-updated': { path: Position[] };
@@ -26,7 +28,7 @@ export interface GameEventMap {
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
 	};
-	'gold-changed': { gold: number };
+	'energy-changed': { energy: number };
 	'wave-started': {
 		wave: number;
 		totalWaves: number;
@@ -35,43 +37,24 @@ export interface GameEventMap {
 		kind: WaveSlotKind;
 		startAtSec: number;
 	};
-	'wave-completed': { wave: number; totalWaves: number; slotIndex: number };
+	'wave-completed': {
+		wave: number;
+		totalWaves: number;
+		slotIndex: number;
+		delaySec: number;
+	};
 	'boss-warning': {
 		slotIndex: number;
 		bossSlotIndex: number;
 		startAtSec: number;
 	};
-	'sudden-death-started': { slotIndex: number; startAtSec: number };
-	'buy-cooldown-updated': { remainingMs: number };
 	'player-tower-count': { count: number };
 	'wave-preview': {
 		wave: number;
 		groups: Array<{ unitId: string; unitName: string; count: number }>;
 	};
 	'tower-sold': { col: number; row: number; refund: number };
-	'tower-merge-resolved': {
-		success: boolean;
-		fromPos: Position;
-		toPos: Position;
-		newTowerId?: string;
-		failureReason?: string;
-	};
-	'tower-merged': {
-		fromPos: Position;
-		toPos: Position;
-		newTowerId: string;
-		newTowerDef: TowerDef;
-	};
-	'tower-merge-failed': { reason: string };
-	'random-tower-rolled': {
-		towerId: string;
-		towerDef: TowerDef;
-		source: 'owned_pool';
-		asCard: true;
-	};
-
 	// React → Game
-	'request-buy-random-tower': undefined;
 	'request-select-tower': { towerDefId: string };
 	'request-clear-tower-selection': undefined;
 	'request-place-tower': { col: number; row: number; towerDefId: string };

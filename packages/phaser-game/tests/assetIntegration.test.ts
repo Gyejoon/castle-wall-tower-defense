@@ -19,7 +19,10 @@ import { Preloader } from '../src/scenes/Preloader';
 
 const manifest = JSON.parse(
 	readFileSync(
-		new URL('../../web-shell/public/assets/asset-manifest.json', import.meta.url),
+		new URL(
+			'../../web-shell/public/assets/asset-manifest.json',
+			import.meta.url,
+		),
 		'utf-8',
 	),
 ) as {

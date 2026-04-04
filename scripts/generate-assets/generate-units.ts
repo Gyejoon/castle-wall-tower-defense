@@ -289,6 +289,60 @@ function drawAncientDragonFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox
   drawRect(ctx, cx + 1, bodyCy + 8, 4, 7, hexToRgba(PALETTE.titan, 0.8));
 }
 
+function drawBossDragon(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number): void {
+  const cx = size / 2;
+  const cy = size / 2;
+  const scale = size / 48; // 48 is existing FRAME_H
+
+  // Body (large oval)
+  const bodyW = Math.floor(16 * scale);
+  const bodyH = Math.floor(12 * scale);
+  for (let dy = -bodyH; dy <= bodyH; dy++) {
+    for (let dx = -bodyW; dx <= bodyW; dx++) {
+      if ((dx * dx) / (bodyW * bodyW) + (dy * dy) / (bodyH * bodyH) <= 1) {
+        setPixel(ctx, cx + dx, cy + dy, PALETTE.titan);
+      }
+    }
+  }
+
+  // Wings (left/right triangles)
+  const wingSpan = Math.floor(20 * scale);
+  for (let i = 0; i < wingSpan; i++) {
+    const wingH = Math.floor((wingSpan - i) * 0.6);
+    for (let dy = -wingH; dy <= 0; dy++) {
+      setPixel(ctx, cx - bodyW - i, cy + dy, '#8b2020');
+      setPixel(ctx, cx + bodyW + i, cy + dy, '#8b2020');
+    }
+  }
+
+  // Head (top circle)
+  fillCircle(ctx, cx, cy - bodyH - Math.floor(4 * scale), Math.floor(6 * scale), PALETTE.titan);
+
+  // Eyes (yellow)
+  const eyeY = cy - bodyH - Math.floor(4 * scale);
+  setPixel(ctx, cx - Math.floor(2 * scale), eyeY, PALETTE.gold);
+  setPixel(ctx, cx + Math.floor(2 * scale), eyeY, PALETTE.gold);
+
+  // Flame aura (bottom glow)
+  addGlow(ctx, cx, cy + bodyH, Math.floor(10 * scale), PALETTE.fireOrange, 0.2);
+}
+
+function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number): void {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    if (imageData.data[i + 3] > 0) { // only non-transparent pixels
+      imageData.data[i] = Math.min(255, imageData.data[i] + Math.floor(r * alpha));
+      imageData.data[i + 1] = Math.min(255, imageData.data[i + 1] + Math.floor(g * alpha));
+      imageData.data[i + 2] = Math.min(255, imageData.data[i + 2] + Math.floor(b * alpha));
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
 const DRAW_FNS: Record<string, (ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number) => void> = {
   scout_drone: drawGoblinScout,
   battle_robot: drawOrcWarrior,
@@ -379,6 +433,32 @@ export async function generate(): Promise<ManifestEntry[]> {
   }
 
   assertRequiredOutputs();
+
+  // Boss titan — enlarged sprite (96x96 static)
+  const BOSS_SIZE = 96;
+  {
+    const { canvas, ctx } = makeCanvas(BOSS_SIZE, BOSS_SIZE);
+    drawBossDragon(ctx, BOSS_SIZE);
+    saveCanvas(canvas, `${OUTPUT_DIR}/titan-boss.png`);
+    entries.push({
+      key: 'unit-titan-boss',
+      type: 'image',
+      path: 'assets/units/titan-boss.png',
+    });
+  }
+
+  // Boss titan phase 2 — rage variant (red tint intensified)
+  {
+    const { canvas, ctx } = makeCanvas(BOSS_SIZE, BOSS_SIZE);
+    drawBossDragon(ctx, BOSS_SIZE);
+    applyColorTint(ctx, BOSS_SIZE, BOSS_SIZE, PALETTE.fireRed, 0.3);
+    saveCanvas(canvas, `${OUTPUT_DIR}/titan-boss-rage.png`);
+    entries.push({
+      key: 'unit-titan-boss-rage',
+      type: 'image',
+      path: 'assets/units/titan-boss-rage.png',
+    });
+  }
 
   return entries;
 }

@@ -162,6 +162,7 @@ export class TowerSystem {
 		unitId: string;
 		damage: number;
 		slow?: { factor: number; duration: number };
+		stun?: { duration: number };
 	}> = [];
 
 	private parseSlowFactor(special: string): number {
@@ -192,11 +193,11 @@ export class TowerSystem {
 			hp: number;
 			element: ElementType;
 		}>,
-		applyStun?: (unitId: string, durationMs: number) => void,
 	): Array<{
 		unitId: string;
 		damage: number;
 		slow?: { factor: number; duration: number };
+		stun?: { duration: number };
 	}> {
 		this.damageEventsBuffer.length = 0;
 
@@ -265,7 +266,10 @@ export class TowerSystem {
 					}
 				}
 
-				if (this.isStunSpecial(special) && special && applyStun) {
+				if (this.isStunSpecial(special) && special) {
+					const configKey = special.replace(/%/g, '');
+					const stunDuration =
+						CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
@@ -276,11 +280,19 @@ export class TowerSystem {
 							const gdx = data.position.x - unitGrid.x;
 							const gdy = data.position.y - unitGrid.y;
 							if (gdx * gdx + gdy * gdy <= rangeSq) {
-								applyStun(unit.instanceId, 1000);
+								this.damageEventsBuffer.push({
+									unitId: unit.instanceId,
+									damage: 0,
+									stun: { duration: stunDuration },
+								});
 							}
 						}
 					} else {
-						applyStun(closestUnit.instanceId, 1000);
+						this.damageEventsBuffer.push({
+							unitId: closestUnit.instanceId,
+							damage: 0,
+							stun: { duration: stunDuration },
+						});
 					}
 				}
 
@@ -350,7 +362,7 @@ export class TowerSystem {
 
 			const rangeSq = def.stats.range ** 2;
 
-			if (this.isStunSpecial(special) && applyStun) {
+			if (this.isStunSpecial(special)) {
 				if (config.aoe) {
 					for (const unit of unitPositions) {
 						if (unit.hp <= 0) continue;
@@ -358,7 +370,11 @@ export class TowerSystem {
 						const gdx = data.position.x - unitGrid.x;
 						const gdy = data.position.y - unitGrid.y;
 						if (gdx * gdx + gdy * gdy <= rangeSq) {
-							applyStun(unit.instanceId, config.durationMs);
+							this.damageEventsBuffer.push({
+								unitId: unit.instanceId,
+								damage: 0,
+								stun: { duration: config.durationMs },
+							});
 						}
 					}
 				} else {
@@ -375,7 +391,13 @@ export class TowerSystem {
 							closest = unit;
 						}
 					}
-					if (closest) applyStun(closest.instanceId, config.durationMs);
+					if (closest) {
+						this.damageEventsBuffer.push({
+							unitId: closest.instanceId,
+							damage: 0,
+							stun: { duration: config.durationMs },
+						});
+					}
 				}
 			} else if (this.isSlowSpecial(special)) {
 				const factor = this.parseSlowFactor(special);

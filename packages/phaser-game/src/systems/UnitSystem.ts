@@ -273,7 +273,7 @@ export class UnitSystem {
 			if (unit.countsTowardClear) count += 1;
 		}
 		for (const entry of this.spawnQueue) {
-			if (entry.countsTowardClear) count += 1;
+			if (entry.countsTowardClear) count += entry.remaining;
 		}
 		return count;
 	}

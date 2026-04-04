@@ -447,12 +447,7 @@ export class GameScene extends Phaser.Scene {
 		onKill: () => void,
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
-		const damageEvents = towerSystem.update(
-			time,
-			delta,
-			unitPositions,
-			(unitId, durationMs) => unitSystem.applyStun(unitId, durationMs),
-		);
+		const damageEvents = towerSystem.update(time, delta, unitPositions);
 
 		for (const evt of damageEvents) {
 			if (evt.damage > 0) {
@@ -463,6 +458,9 @@ export class GameScene extends Phaser.Scene {
 			}
 			if (evt.slow) {
 				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+			}
+			if (evt.stun) {
+				unitSystem.applyStun(evt.unitId, evt.stun.duration);
 			}
 		}
 

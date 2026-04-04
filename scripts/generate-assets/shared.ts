@@ -75,7 +75,24 @@ export const PALETTE = {
   grassHighlight:'#6ab840',  // 잔디 하이라이트
   // Utility
   towerBase:     '#2a1f0a',  // 타워 기단 (어두운 갈색)
+  // Element colors (속성 색상)
+  elementFire:      '#e74c3c',  // 화 속성
+  elementFireGlow:  '#ff6b4a',  // 화 속성 글로우
+  elementWater:     '#3498db',  // 수 속성
+  elementWaterGlow: '#5dade2',  // 수 속성 글로우
+  elementLightning: '#f39c12',  // 번개 속성
+  elementLightningGlow: '#f7b731', // 번개 속성 글로우
+  elementNeutral:   '#c8a04a',  // 무 속성 (기존 laser 색상)
 } as const;
+
+export const ELEMENT_COLORS = {
+  fire:      { primary: PALETTE.elementFire, glow: PALETTE.elementFireGlow },
+  water:     { primary: PALETTE.elementWater, glow: PALETTE.elementWaterGlow },
+  lightning: { primary: PALETTE.elementLightning, glow: PALETTE.elementLightningGlow },
+  neutral:   { primary: PALETTE.elementNeutral, glow: PALETTE.gold },
+} as const;
+
+export type ElementType = keyof typeof ELEMENT_COLORS;
 
 export const TILE_SIZE = 32;
 export const ISO_TILE_W = 64;

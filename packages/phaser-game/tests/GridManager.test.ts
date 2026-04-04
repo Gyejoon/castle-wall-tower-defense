@@ -1,9 +1,5 @@
 import type { GridConfig } from '@gld/shared';
-import {
-	BOARD_TOP_PADDING,
-	FOREST_GATE_MAP,
-	ORTHO_TILE,
-} from '@gld/shared';
+import { BOARD_TOP_PADDING, FOREST_GATE_MAP, ORTHO_TILE } from '@gld/shared';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics

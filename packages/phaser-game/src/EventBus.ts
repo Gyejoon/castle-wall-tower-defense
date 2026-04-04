@@ -26,7 +26,7 @@ export interface GameEventMap {
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
 	};
-	'gold-changed': { gold: number };
+	'energy-changed': { energy: number };
 	'wave-started': {
 		wave: number;
 		totalWaves: number;
@@ -41,7 +41,6 @@ export interface GameEventMap {
 		bossSlotIndex: number;
 		startAtSec: number;
 	};
-	'sudden-death-started': { slotIndex: number; startAtSec: number };
 	'buy-cooldown-updated': { remainingMs: number };
 	'player-tower-count': { count: number };
 	'wave-preview': {

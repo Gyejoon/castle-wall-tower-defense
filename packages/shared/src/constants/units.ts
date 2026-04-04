@@ -6,7 +6,7 @@ export const UNITS: UnitDef[] = [
 		name: '고블린 정찰병',
 		type: 'scout_drone',
 		stats: { hp: 30, speed: 3.0, armor: 0 },
-		sendCost: 20,
+
 		bounty: 5,
 		isPremium: false,
 	},
@@ -15,7 +15,7 @@ export const UNITS: UnitDef[] = [
 		name: '오크 전사',
 		type: 'battle_robot',
 		stats: { hp: 80, speed: 1.5, armor: 2 },
-		sendCost: 50,
+
 		bounty: 12,
 		isPremium: false,
 	},
@@ -24,7 +24,7 @@ export const UNITS: UnitDef[] = [
 		name: '돌 트롤',
 		type: 'heavy_walker',
 		stats: { hp: 200, speed: 0.8, armor: 5 },
-		sendCost: 100,
+
 		bounty: 25,
 		isPremium: false,
 	},
@@ -33,7 +33,7 @@ export const UNITS: UnitDef[] = [
 		name: '그림자 암살자',
 		type: 'stealth_drone',
 		stats: { hp: 50, speed: 2.5, armor: 0 },
-		sendCost: 70,
+
 		bounty: 18,
 		isPremium: false,
 	},
@@ -42,7 +42,7 @@ export const UNITS: UnitDef[] = [
 		name: '고대 드래곤',
 		type: 'titan',
 		stats: { hp: 500, speed: 0.5, armor: 10 },
-		sendCost: 250,
+
 		bounty: 60,
 		isPremium: false,
 	},

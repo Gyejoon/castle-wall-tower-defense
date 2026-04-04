@@ -18,5 +18,3 @@ export const DEFAULT_GRID_CONFIG: GridConfig = {
 };
 
 export const INITIAL_PLAYER_HP = 20;
-export const INITIAL_GOLD = 200;
-export const UNIT_SEND_COUNT = 3;

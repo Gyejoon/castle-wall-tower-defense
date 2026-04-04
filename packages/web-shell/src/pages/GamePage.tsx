@@ -8,8 +8,7 @@ import { colors, fonts } from '../styles/tokens';
 
 function formatTimerLabel(rawLabel: string) {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');
-	if (rawLabel.startsWith('Sudden')) return '서든';
-	if (rawLabel.startsWith('Slot')) return rawLabel.replace('Slot', '슬롯');
+	if (rawLabel.startsWith('Wave')) return rawLabel.replace('Wave', '웨이브');
 	return rawLabel;
 }
 
@@ -57,12 +56,12 @@ export function GamePage() {
 	const runStatus = useGameStore((s) => s.runStatus);
 	const gameReady = useGameStore((s) => s.gameReady);
 	const lives = useGameStore((s) => s.lives);
-	const gold = useGameStore((s) => s.gold);
+	const energy = useGameStore((s) => s.energy);
 	const combatHud = useGameStore((s) => s.combatHud);
 	const toast = useGameStore((s) => s.toast);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
 	const setLives = useGameStore((s) => s.setLives);
-	const setGold = useGameStore((s) => s.setGold);
+	const setEnergy = useGameStore((s) => s.setEnergy);
 	const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
 	const setRolledTower = useGameStore((s) => s.setRolledTower);
 	const setPlayerTowerCount = useGameStore((s) => s.setPlayerTowerCount);
@@ -74,7 +73,7 @@ export function GamePage() {
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
-		const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
+		const onEnergyChanged = (data: { energy: number }) => setEnergy(data.energy);
 		const onGameOver = (data: {
 			result: 'victory' | 'defeat';
 		}) => {
@@ -84,25 +83,21 @@ export function GamePage() {
 			wave: number;
 			totalWaves: number;
 			slotIndex: number;
-			phase: 'running' | 'boss' | 'sudden_death' | 'ended';
-			kind: 'normal' | 'pre_boss' | 'boss' | 'sudden_death' | 'hard_end';
+			phase: 'combat' | 'waiting' | 'boss' | 'ended';
+			kind: 'normal' | 'pre_boss' | 'boss';
 			startAtSec: number;
 		}) => {
-			if (data.kind === 'hard_end') return;
 			setRunStatus('running');
 			patchCombatHud({
 				currentSlot: data.slotIndex,
 				phase: data.phase,
 				bossWarning: data.kind === 'pre_boss',
-				suddenDeath: data.phase === 'sudden_death',
 				timerLabel:
 					data.phase === 'boss'
 						? `Boss ${data.slotIndex}`
-						: data.phase === 'sudden_death'
-							? 'Sudden Death'
-							: data.kind === 'pre_boss'
-								? 'Boss Soon'
-								: `Slot ${data.slotIndex}`,
+						: data.kind === 'pre_boss'
+							? 'Boss Soon'
+							: `Wave ${data.wave}/${data.totalWaves}`,
 			});
 			setPlacementFeedback(null);
 		};
@@ -122,20 +117,19 @@ export function GamePage() {
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
 		const onResetRun = () => resetRun();
+		const onWaveCompleted = (data: { wave: number; totalWaves: number }) => {
+			if (data.wave < data.totalWaves) {
+				patchCombatHud({
+					phase: 'waiting',
+					timerLabel: `Wave ${data.wave}/${data.totalWaves}`,
+				});
+			}
+		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			pushToast('보스 경고', 'warning');
 		};
-		const onSuddenDeathStarted = () => {
-			patchCombatHud({
-				phase: 'sudden_death',
-				suddenDeath: true,
-				bossWarning: false,
-				timerLabel: 'Sudden Death',
-			});
-			pushToast('서든데스 시작', 'warning');
-		};
-		const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
+const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
 			patchCombatHud({ buyCooldownMs: data.remainingMs });
 		};
 		const onTowerMergeResolved = (data: { success: boolean }) => {
@@ -143,37 +137,37 @@ export function GamePage() {
 		};
 
 		EventBus.on('player-damaged', onDamaged);
-		EventBus.on('gold-changed', onGoldChanged);
+		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
 		EventBus.on('random-tower-rolled', onRandomTowerRolled);
 		EventBus.on('player-tower-count', onPlayerTowerCount);
 		EventBus.on('request-reset-run', onResetRun);
+		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
-		EventBus.on('sudden-death-started', onSuddenDeathStarted);
-		EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
+EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
 		EventBus.on('tower-merge-resolved', onTowerMergeResolved);
 
 		return () => {
 			EventBus.off('player-damaged', onDamaged);
-			EventBus.off('gold-changed', onGoldChanged);
+			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
 			EventBus.off('random-tower-rolled', onRandomTowerRolled);
 			EventBus.off('player-tower-count', onPlayerTowerCount);
 			EventBus.off('request-reset-run', onResetRun);
+			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
-			EventBus.off('sudden-death-started', onSuddenDeathStarted);
-			EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
+EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
 			EventBus.off('tower-merge-resolved', onTowerMergeResolved);
 		};
 	}, [
 		patchCombatHud,
 		pushToast,
 		resetRun,
-		setGold,
+		setEnergy,
 		setLives,
 		setPlacementFeedback,
 		setPlayerTowerCount,
@@ -241,21 +235,17 @@ export function GamePage() {
 							background: 'rgba(240,208,96,0.16)',
 						})}
 					>
-						G {gold}
+						E {energy}
 					</div>
 					<div
 						data-testid="hud-timer"
 						style={getHudChipStyle({
-							color: combatHud.suddenDeath
-								? colors.danger
-								: combatHud.bossWarning || combatHud.phase === 'boss'
-									? colors.gold
-									: colors.text,
-							background: combatHud.suddenDeath
-								? 'rgba(192,48,32,0.16)'
-								: combatHud.bossWarning || combatHud.phase === 'boss'
-									? 'rgba(240,208,96,0.16)'
-									: 'rgba(42,32,16,0.82)',
+							color: combatHud.bossWarning || combatHud.phase === 'boss'
+								? colors.gold
+								: colors.text,
+							background: combatHud.bossWarning || combatHud.phase === 'boss'
+								? 'rgba(240,208,96,0.16)'
+								: 'rgba(42,32,16,0.82)',
 							minWidth: 0,
 						})}
 					>

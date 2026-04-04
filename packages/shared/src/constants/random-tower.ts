@@ -1,4 +1,4 @@
-export const RANDOM_TOWER_COST = 50;
+export const RANDOM_TOWER_COST = 10; // energy cost per random tower roll
 
 export const TIER_PROBABILITIES: Record<number, number> = {
 	1: 60,

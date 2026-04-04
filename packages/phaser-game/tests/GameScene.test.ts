@@ -61,32 +61,17 @@ describe('GameScene', () => {
 		vi.clearAllMocks();
 	});
 
-	it('spendGold deducts gold and emits the updated total when affordable', () => {
+	it('energySystem spends energy and emits updated total', () => {
 		const scene = createScene();
-		scene.gold = 100;
-
-		expect(scene.spendGold(50)).toBe(true);
-		expect(scene.gold).toBe(50);
-		expect(EventBus.emit).toHaveBeenCalledWith('gold-changed', { gold: 50 });
+		expect(scene.energySystem.canAfford(10)).toBe(true);
+		expect(scene.energySystem.spend(10)).toBe(true);
+		expect(scene.energySystem.getEnergy()).toBe(10); // 20 initial - 10
 	});
 
-	it('spendGold leaves gold unchanged when funds are insufficient', () => {
+	it('energySystem rejects spend when insufficient', () => {
 		const scene = createScene();
-		scene.gold = 40;
-
-		expect(scene.spendGold(50)).toBe(false);
-		expect(scene.gold).toBe(40);
-		expect(EventBus.emit).not.toHaveBeenCalled();
-	});
-
-	it('earnGold adds gold and emits the updated total', () => {
-		const scene = createScene();
-		scene.gold = 10;
-
-		scene.earnGold(25);
-
-		expect(scene.gold).toBe(35);
-		expect(EventBus.emit).toHaveBeenCalledWith('gold-changed', { gold: 35 });
+		expect(scene.energySystem.spend(100)).toBe(false);
+		expect(scene.energySystem.getEnergy()).toBe(20); // unchanged
 	});
 
 	it('cleanup unregisters EventBus listeners before destroying systems', () => {
@@ -151,6 +136,7 @@ describe('GameScene', () => {
 			update: vi.fn(() => ({ reachedExit: [] })),
 			hasActiveUnits: vi.fn(() => false),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
 		};
 
 		scene.update(0, 16);
@@ -186,6 +172,7 @@ describe('GameScene', () => {
 			update: vi.fn(() => ({ reachedExit: [] })),
 			hasActiveUnits: vi.fn(() => true),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 1),
 		};
 
 		scene.update(0, 16);

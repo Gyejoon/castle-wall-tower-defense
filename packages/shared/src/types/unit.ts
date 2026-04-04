@@ -17,8 +17,7 @@ export interface UnitDef {
 	name: string;
 	type: UnitType;
 	stats: UnitStats;
-	sendCost: number; // cost to send to opponent
-	bounty: number; // gold opponent gets for killing
+	bounty: number; // gold earned for killing
 	isPremium: boolean;
 }
 

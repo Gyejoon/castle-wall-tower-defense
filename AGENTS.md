@@ -42,11 +42,11 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Palace 개랜타디 — 모바일 우선 1:1 랜덤 타워디펜스 버티컬 슬라이스. AI 상대와 20웨이브 생존 대전.
+Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 12×8 그리드, 타워 18종(5티어) 배치·판매·합성, 유닛 5종, A* 경로탐색, 빌드/전투 페이즈, AI 상대, 이모트, 결과 오버레이, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
+**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 랜덤 롤 경제, 이벤트 기반 10웨이브 진행, 결과 오버레이, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
 
-**아직 구현되지 않은 것:** 실시간 네트워크 PvP, 백엔드 서버, 결제, 매치메이킹. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
+**아직 구현되지 않은 것:** 속성 시스템, 보스 페이즈, 4타워 덱, 메타 성장/저장, 멀티 스테이지. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
 ## Local Skills
 
@@ -86,18 +86,18 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 ### runStatus 전이
 
 ```
-lobby → building ⇄ combat → victory | defeat → lobby
+lobby → building → running → victory | defeat → lobby
 ```
 
-`gameStore.ts`의 `runStatus`가 전체 런 상태를 관리. `runId` 변경 시 Phaser 인스턴스가 새로 마운트된다.
+`gameStore.ts`의 `runStatus`가 전체 런 상태를 관리. `runId` 변경 시 Phaser 인스턴스가 새로 마운트된다. PVE에서는 전투 중 자유 배치 허용 (빌드/전투 구분 없음).
 
 ### 타워 배치 피드백
 
-전투 페이즈 배치 시도는 `PlacementFailureReason`(`combat_phase | insufficient_gold | occupied | blocked_path | out_of_bounds`)과 함께 거부된다.
+게임 종료 후 배치 시도는 `PlacementFailureReason`(`combat_phase | insufficient_energy | occupied | blocked_path | out_of_bounds`)과 함께 거부된다. 전투 중에는 항상 배치 가능.
 
-### AI 상대
+### 에너지 경제
 
-`AIOpponent` 시스템이 타워 배치, 유닛 이동, 킬 트랜스퍼를 시뮬레이션. 실제 네트워크 상대가 아니다.
+에너지가 초당 1씩 자동 축적된다 (최대 100). 타워 랜덤 롤에 에너지 10을 소비. 킬 보상은 에너지로 변환되지 않음 (순수 시간 기반 경제).
 
 ## 하이시그널 파일
 
@@ -124,8 +124,8 @@ lobby → building ⇄ combat → victory | defeat → lobby
 | `TowerSystem.ts` | 타워 배치·판매, 범위 공격, Slow/Splash/Boost |
 | `MergeSystem.ts` | 동일 타워 합성 (같은 defId + tier < 5 → 다음 티어 랜덤) |
 | `UnitSystem.ts` | 유닛 스폰, 경로 이동, HP/아머/슬로우 |
-| `WaveSystem.ts` | 20웨이브, 빌드/전투 페이즈 전환, 웨이브 미리보기 |
-| `AIOpponent.ts` | AI 상대 시뮬레이션 |
+| `WaveSystem.ts` | 10웨이브, 이벤트 기반 진행 (combat→waiting→next), 보스 경고 |
+| `EnergySystem.ts` | 에너지 축적 (1/sec), 타워 롤 비용 관리 |
 | `RandomTowerSystem.ts` | 랜덤 타워 롤 |
 
 ## 커맨드

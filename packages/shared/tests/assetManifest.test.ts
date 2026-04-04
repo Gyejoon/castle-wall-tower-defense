@@ -16,8 +16,8 @@ describe('asset manifest helpers', () => {
     ).toBe('preload');
     expect(
       inferAssetManifestSection({
-        key: 'ui-pressure-defend',
-        path: 'assets/ui/pressure-defend.png',
+        key: 'ui-hp-bar',
+        path: 'assets/ui/hp-bar.png',
       }),
     ).toBe('ui');
     expect(

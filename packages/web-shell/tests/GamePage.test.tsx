@@ -146,15 +146,15 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('shows single-player HUD with HP, gold, timer, and cooldown only', () => {
+	it('shows single-player HUD with HP, energy, timer, and cooldown only', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
 		act(() => {
-			emitSpy('gold-changed', { gold: 60 });
+			emitSpy('energy-changed', { energy: 60 });
 			emitSpy('wave-started', {
 				wave: 10,
-				totalWaves: 20,
+				totalWaves: 10,
 				slotIndex: 10,
 				phase: 'boss',
 				kind: 'boss',
@@ -166,7 +166,7 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('G 60')).toBeTruthy();
+		expect(view.getByText('E 60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
 		expect(view.getByTestId('hud-cooldown').textContent).toContain('구매 1.2s');
 		expect(view.queryByTestId('hud-pressure')).toBeNull();

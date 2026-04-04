@@ -1,7 +1,6 @@
 import {
 	type AssetManifest,
 	FOREST_GATE_MAP,
-	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
 	RANDOM_TOWER_COST,
 	WAVE_DEFS,
@@ -27,6 +26,7 @@ import {
 } from '../fieldAssets';
 import { TowerDragController } from '../input/TowerDragController';
 import { getPlacementGuardFailure } from '../placementRules';
+import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { MergeSystem } from '../systems/MergeSystem';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
@@ -47,7 +47,7 @@ export class GameScene extends Phaser.Scene {
 	private playerMerge!: MergeSystem;
 
 	private playerHp = INITIAL_PLAYER_HP;
-	private gold = INITIAL_GOLD;
+	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private buyCooldownRemainingMs = 0;
@@ -150,7 +150,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 
 		EventBus.emit('game-ready');
-		EventBus.emit('gold-changed', { gold: this.gold });
+		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
 		EventBus.emit('current-scene-ready', this);
 
 		void this.prefetchOptionalAssets();
@@ -258,7 +258,10 @@ export class GameScene extends Phaser.Scene {
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(this.playerGrid.orthoTile, this.playerGrid.orthoTile);
+				sprite.setDisplaySize(
+					this.playerGrid.orthoTile,
+					this.playerGrid.orthoTile,
+				);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(0);
 				if (dark) {
@@ -370,18 +373,13 @@ export class GameScene extends Phaser.Scene {
 		const hudY = ch - HUD_HEIGHT / 2;
 
 		this.hudBuyBtn = this.add
-			.text(
-				cw / 2,
-				hudY,
-				`타워 구매 ${RANDOM_TOWER_COST}G`,
-				{
-					fontFamily: 'monospace',
-					fontSize: '14px',
-					color: '#f0d060',
-					backgroundColor: '#2a1f0a',
-					padding: { x: 24, y: 12 },
-				},
-			)
+			.text(cw / 2, hudY, `타워 롤 ${RANDOM_TOWER_COST}E`, {
+				fontFamily: 'monospace',
+				fontSize: '14px',
+				color: '#f0d060',
+				backgroundColor: '#2a1f0a',
+				padding: { x: 24, y: 12 },
+			})
 			.setOrigin(0.5)
 			.setDepth(100)
 			.setInteractive({ useHandCursor: true })
@@ -409,14 +407,14 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private handleBuyTower(): void {
-		if (this.gold < RANDOM_TOWER_COST) return;
+		if (!this.energySystem.canAfford(RANDOM_TOWER_COST)) return;
 		if (this.playerWaves.getPhase() === 'ended') return;
 		if (this.buyCooldownRemainingMs > 0) return;
 		if (this.selectedTowerId) return;
 
 		const rolledTower = this.playerRandomTower.rollRandomTower();
 		this.selectedTowerId = rolledTower.id;
-		this.spendGold(RANDOM_TOWER_COST);
+		this.energySystem.spend(RANDOM_TOWER_COST);
 		this.setBuyCooldown(GLOBAL_BUY_COOLDOWN_MS);
 		this.hudRolledInfo.setText(`배치 대기: ${rolledTower.name}`);
 		EventBus.emit('random-tower-rolled', {
@@ -432,7 +430,7 @@ export class GameScene extends Phaser.Scene {
 		const phase = this.playerWaves.getPhase();
 		const canBuy =
 			phase !== 'ended' &&
-			this.gold >= RANDOM_TOWER_COST &&
+			this.energySystem.canAfford(RANDOM_TOWER_COST) &&
 			!this.selectedTowerId &&
 			this.buyCooldownRemainingMs <= 0;
 		this.hudBuyBtn.setAlpha(canBuy ? 1 : 0.4);
@@ -465,18 +463,6 @@ export class GameScene extends Phaser.Scene {
 				isHover ? 0.4 : 0.15,
 			);
 		}
-	}
-
-	private spendGold(amount: number): boolean {
-		if (this.gold < amount) return false;
-		this.gold -= amount;
-		EventBus.emit('gold-changed', { gold: this.gold });
-		return true;
-	}
-
-	private earnGold(amount: number): void {
-		this.gold += amount;
-		EventBus.emit('gold-changed', { gold: this.gold });
 	}
 
 	private emitGameOver(payload: {
@@ -527,8 +513,6 @@ export class GameScene extends Phaser.Scene {
 	): void {
 		const guardFailure = getPlacementGuardFailure({
 			phase: this.playerWaves.getPhase(),
-			gold: this.gold,
-			towerCost: 0,
 		});
 
 		if (guardFailure) {
@@ -611,7 +595,8 @@ export class GameScene extends Phaser.Scene {
 	update(time: number, delta: number) {
 		if (this.gameOver) return;
 
-		this.playerWaves.update(delta);
+		this.playerWaves.update(delta, this.playerUnits.getActiveCount());
+		this.energySystem.update(delta / 1000);
 		this.tickBuyCooldown(delta);
 
 		const playerExits = this.processCombatField(
@@ -619,8 +604,7 @@ export class GameScene extends Phaser.Scene {
 			this.playerUnits,
 			time,
 			delta,
-			(info) => {
-				this.earnGold(info.bounty);
+			() => {
 				soundGenerator.playUnitDeath();
 			},
 		);

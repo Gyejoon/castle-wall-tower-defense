@@ -257,6 +257,10 @@ export class UnitSystem {
 		return this.spawnQueue.length > 0;
 	}
 
+	getActiveCount(): number {
+		return this.units.size + this.spawnQueue.length;
+	}
+
 	private spawnOptionalVfx(
 		textureKey: string,
 		x: number,
@@ -318,7 +322,8 @@ export class UnitSystem {
 
 			const nextGrid = this.currentPath[pathIdx + 1];
 			const targetWorld = this.currentPathWorld[pathIdx + 1];
-			const speed = unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
+			const speed =
+				unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;
@@ -335,9 +340,20 @@ export class UnitSystem {
 			}
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
-			const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			unit.sprite.setDepth(this.gridManager.getDepth(currentGrid.x, currentGrid.y));
-			this.renderHpBar(unit.hpBar, unit.worldX, unit.worldY, unit.def, unit.data.hp);
+			const currentGrid = this.gridManager.worldToGrid(
+				unit.worldX,
+				unit.worldY,
+			);
+			unit.sprite.setDepth(
+				this.gridManager.getDepth(currentGrid.x, currentGrid.y),
+			);
+			this.renderHpBar(
+				unit.hpBar,
+				unit.worldX,
+				unit.worldY,
+				unit.def,
+				unit.data.hp,
+			);
 		}
 
 		return { reachedExit };

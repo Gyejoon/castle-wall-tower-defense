@@ -69,9 +69,9 @@ describe('Grid constants', () => {
 describe('Tower definitions', () => {
 	it('preserves the 18-tower pool by tier', () => {
 		expect(BASE_TOWERS).toHaveLength(4);
-		expect(RARE_TOWERS).toHaveLength(5);
+		expect(RARE_TOWERS).toHaveLength(4);
 		expect(HEROIC_TOWERS).toHaveLength(4);
-		expect(LEGENDARY_TOWERS).toHaveLength(3);
+		expect(LEGENDARY_TOWERS).toHaveLength(4);
 		expect(GOD_TOWERS).toHaveLength(2);
 		expect(ALL_TOWERS).toHaveLength(18);
 	});

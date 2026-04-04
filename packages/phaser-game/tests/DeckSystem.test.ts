@@ -28,6 +28,13 @@ describe('DeckSystem', () => {
 		expect(card!.role).toBe('slow');
 	});
 
+	it('shield card has stun role', () => {
+		const ds = new DeckSystem();
+		const card = ds.getCardByTowerId('shield');
+		expect(card).not.toBeNull();
+		expect(card!.role).toBe('stun');
+	});
+
 	it('getCardByTowerId returns null for unknown id', () => {
 		const ds = new DeckSystem();
 		expect(ds.getCardByTowerId('nonexistent')).toBeNull();

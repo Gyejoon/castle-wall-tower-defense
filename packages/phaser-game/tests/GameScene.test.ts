@@ -63,15 +63,19 @@ describe('GameScene', () => {
 
 	it('energySystem spends energy and updates balance', () => {
 		const scene = createScene();
+		// INITIAL_ENERGY is 0, accumulate energy (delta clamped to 5s)
+		scene.energySystem.update(5);
+		scene.energySystem.update(5);
+		scene.energySystem.update(5); // 15 energy total
 		expect(scene.energySystem.canAfford(10)).toBe(true);
 		expect(scene.energySystem.spend(10)).toBe(true);
-		expect(scene.energySystem.getEnergy()).toBe(10); // 20 initial - 10
+		expect(scene.energySystem.getEnergy()).toBe(5); // 15 - 10
 	});
 
 	it('energySystem rejects spend when insufficient', () => {
 		const scene = createScene();
 		expect(scene.energySystem.spend(100)).toBe(false);
-		expect(scene.energySystem.getEnergy()).toBe(20); // unchanged
+		expect(scene.energySystem.getEnergy()).toBe(0); // unchanged (initial is 0)
 	});
 
 	it('cleanup unregisters EventBus listeners before destroying systems', () => {

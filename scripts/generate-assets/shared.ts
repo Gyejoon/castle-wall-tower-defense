@@ -94,6 +94,26 @@ export const ELEMENT_COLORS = {
 
 export type ElementType = keyof typeof ELEMENT_COLORS;
 
+export const STAGE_PALETTES = {
+  forest_gate: {
+    ground: { light: PALETTE.gridLight, dark: PALETTE.gridDark },
+    path: { main: PALETTE.dirtPath, dark: PALETTE.dirtDark },
+    accent: PALETTE.foliageBright,
+  },
+  lava_fortress: {
+    ground: { light: '#5a3020', dark: '#3a1a10' },
+    path: { main: '#c04020', dark: '#802010' },
+    accent: '#e07020',
+  },
+  storm_citadel: {
+    ground: { light: '#2a2a4a', dark: '#1a1a3a' },
+    path: { main: '#4060c0', dark: '#2040a0' },
+    accent: '#8060e0',
+  },
+} as const;
+
+export type StageId = keyof typeof STAGE_PALETTES;
+
 export const TILE_SIZE = 32;
 export const ISO_TILE_W = 64;
 export const ISO_TILE_H = 32;

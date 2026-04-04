@@ -6,7 +6,7 @@
 import {
   makeCanvas, saveCanvas, PALETTE, ISO_TILE_W, ISO_TILE_H, ISO_TILE_DEPTH,
   hexToRgba, setPixel, drawRect, fillCircle, drawLine, addGlow,
-  drawIsoDiamondTile, type ManifestEntry,
+  drawIsoDiamondTile, STAGE_PALETTES, type ManifestEntry, type StageId,
 } from './shared';
 import { mkdirSync, existsSync } from 'fs';
 
@@ -321,6 +321,56 @@ export async function generate(): Promise<ManifestEntry[]> {
   }
 
   assertRequiredOutputs();
+
+  // === Multi-stage tile generation ===
+  for (const stageId of Object.keys(STAGE_PALETTES) as StageId[]) {
+    const palette = STAGE_PALETTES[stageId];
+    const stageDir = `${OUTPUT_DIR}/${stageId}`;
+    mkdirSync(stageDir, { recursive: true });
+
+    // {stageId}/grid-floor.png (128×40, 2 isometric variants side by side)
+    {
+      const { canvas, ctx } = makeCanvas(ISO_TILE_W * 2, TILE_CANVAS_H);
+      drawIsoDiamondTile(
+        ctx, 0, 0,
+        palette.ground.dark,
+        palette.ground.dark,
+        palette.ground.dark,
+        ISO_TILE_DEPTH,
+      );
+      drawIsoDiamondTile(
+        ctx, ISO_TILE_W, 0,
+        palette.ground.light,
+        palette.ground.light,
+        palette.ground.light,
+        ISO_TILE_DEPTH,
+      );
+      saveCanvas(canvas, `${stageDir}/grid-floor.png`);
+      entries.push({
+        key: `${stageId}-grid-floor`,
+        type: 'image',
+        path: `assets/tiles/${stageId}/grid-floor.png`,
+      });
+    }
+
+    // {stageId}/path-tile.png (64×40)
+    {
+      const { canvas, ctx } = makeCanvas(ISO_TILE_W, TILE_CANVAS_H);
+      drawIsoDiamondTile(
+        ctx, 0, 0,
+        palette.path.main,
+        palette.path.dark,
+        palette.path.dark,
+        ISO_TILE_DEPTH,
+      );
+      saveCanvas(canvas, `${stageDir}/path-tile.png`);
+      entries.push({
+        key: `${stageId}-path-tile`,
+        type: 'image',
+        path: `assets/tiles/${stageId}/path-tile.png`,
+      });
+    }
+  }
 
   return entries;
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:38:37.011Z",
+  "generated": "2026-04-04T13:40:40.026Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -864,6 +864,90 @@
       "type": "image",
       "path": "assets/ui/level-badge.png",
       "section": "ui"
+    },
+    {
+      "key": "grid-floor",
+      "type": "image",
+      "path": "assets/tiles/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "path-tile",
+      "type": "image",
+      "path": "assets/tiles/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-tile",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "exit-tile",
+      "type": "image",
+      "path": "assets/tiles/exit-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "grid-floor-dark",
+      "type": "image",
+      "path": "assets/tiles/grid-floor-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "path-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/path-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "exit-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/exit-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "forest_gate-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/forest_gate/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "forest_gate-path-tile",
+      "type": "image",
+      "path": "assets/tiles/forest_gate/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "lava_fortress-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/lava_fortress/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "lava_fortress-path-tile",
+      "type": "image",
+      "path": "assets/tiles/lava_fortress/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "storm_citadel-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/storm_citadel/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "storm_citadel-path-tile",
+      "type": "image",
+      "path": "assets/tiles/storm_citadel/path-tile.png",
+      "section": "preload"
     }
   ]
 }

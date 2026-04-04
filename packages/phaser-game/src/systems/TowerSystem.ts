@@ -4,7 +4,7 @@ import type {
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS } from '@gld/shared';
+import { ALL_TOWERS, TIER_NAMES } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -16,6 +16,7 @@ interface TowerInstance {
 	def: TowerDef;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
+	rarityFrame?: Phaser.GameObjects.Image;
 	lastAttackTime: number;
 }
 
@@ -106,11 +107,26 @@ export class TowerSystem {
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
+		const tierName = TIER_NAMES[def.tier];
+		const rarityFrameKey = tierName ? `ui-rarity-frame-${tierName}` : null;
+		let rarityFrame: Phaser.GameObjects.Image | undefined;
+		if (rarityFrameKey && this.scene.textures.exists(rarityFrameKey)) {
+			rarityFrame = this.scene.add.image(
+				worldPos.x,
+				sprite.y,
+				rarityFrameKey,
+			);
+			rarityFrame.setDisplaySize(sprite.displayWidth + 8, sprite.displayHeight + 8);
+			rarityFrame.setDepth(this.gridManager.getDepth(gridX, gridY) - 0.5);
+			rarityFrame.setAlpha(0.8);
+		}
+
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
 			base,
 			sprite,
+			rarityFrame,
 			lastAttackTime: 0,
 		});
 
@@ -378,6 +394,7 @@ export class TowerSystem {
 
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
+		targetInstance.rarityFrame?.destroy();
 		this.towers.delete(targetKey);
 		this.gridManager.removeTower(gridX, gridY);
 		this.pathfinding.invalidateCache();
@@ -413,6 +430,7 @@ export class TowerSystem {
 		for (const tower of this.towers.values()) {
 			tower.base.destroy();
 			tower.sprite.destroy();
+			tower.rarityFrame?.destroy();
 		}
 		this.towers.clear();
 		this.attackGraphics?.destroy();

@@ -129,6 +129,15 @@
 | celestial | 천상의 탑 | 최종 광역 딜러 | - | 200 | 1.0 | 5 | unlocked | splash |
 | divine_throne | 신의 옥좌 | 최종 지원 타워 | - | 0 | 0 | 999 | unlocked | boost_adjacent_40% |
 
+#### 역할군 전투 규칙
+
+| 역할군 | 패시브 | 근거 |
+| --- | --- | --- |
+| 집중 공격형 | **armor pierce** — 대상의 armor를 무시 | flat armor 시스템에서 hit당 데미지가 낮은 집중 공격형이 고armor 보스에게 오히려 약해지는 역설 해결. 보스킬러 역할 보장 |
+| 다중 공격형 | splash — 착탄점 주변 50% 데미지 | 일반몹 군집 처리 특화 |
+| 슬로우 | 이동속도 감소 (중복 불가) | 지역 제어 |
+| 스턴 | 이동 정지 (중복 불가) | 지역 제어 |
+
 ### 6-2. Enemy Master
 
 | id | name | hp | speed | armor | bounty | trait |

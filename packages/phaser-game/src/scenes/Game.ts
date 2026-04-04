@@ -440,14 +440,19 @@ export class GameScene extends Phaser.Scene {
 		towerSystem: Pick<TowerSystem, 'update'>,
 		unitSystem: Pick<
 			UnitSystem,
-			'applyDamage' | 'applySlow' | 'getUnitPositions' | 'update'
+			'applyDamage' | 'applySlow' | 'applyStun' | 'getUnitPositions' | 'update'
 		>,
 		time: number,
 		delta: number,
 		onKill: () => void,
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
-		const damageEvents = towerSystem.update(time, delta, unitPositions);
+		const damageEvents = towerSystem.update(
+			time,
+			delta,
+			unitPositions,
+			(unitId, durationMs) => unitSystem.applyStun(unitId, durationMs),
+		);
 
 		for (const evt of damageEvents) {
 			const result = unitSystem.applyDamage(evt.unitId, evt.damage);

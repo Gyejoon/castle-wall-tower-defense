@@ -61,7 +61,7 @@ describe('GameScene', () => {
 		vi.clearAllMocks();
 	});
 
-	it('energySystem spends energy and emits updated total', () => {
+	it('energySystem spends energy and updates balance', () => {
 		const scene = createScene();
 		expect(scene.energySystem.canAfford(10)).toBe(true);
 		expect(scene.energySystem.spend(10)).toBe(true);

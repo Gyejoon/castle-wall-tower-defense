@@ -119,7 +119,7 @@ lobby → building → running → victory | defeat → lobby
 
 | 파일 | 역할 |
 |------|------|
-| `GridManager.ts` | 12×8 그리드, 타일 점유, 좌표 변환 |
+| `GridManager.ts` | 8×18 세로 그리드, 타일 점유, 좌표 변환 |
 | `PathfindingSystem.ts` | A* 경로탐색, 패스 캐싱 |
 | `TowerSystem.ts` | 타워 배치·판매, 범위 공격, Slow/Splash/Boost |
 | `MergeSystem.ts` | 동일 타워 합성 (같은 defId + tier < 5 → 다음 티어 랜덤) |
@@ -152,6 +152,6 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **로비 프로필/컬렉션 데이터는 현재 mock.** 이 영역을 수정할 때 실제 API가 없음을 인지할 것.
 - **에셋은 gitignored.** `packages/web-shell/public/assets/`는 `generate-assets`로 생성된다. 에셋 관련 변경은 생성 스크립트를 수정.
 - **Phaser 씬 클린업 순서:** EventBus off → system destroy. shutdown 시 역순 정리 필수.
-- **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → combat → victory|defeat` 순서를 따른다.
+- **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 
 활성 스펙과 플랜은 `docs/superpowers/` 아래에서 관리된다.

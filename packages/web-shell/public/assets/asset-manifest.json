@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:26:05.826Z",
+  "generated": "2026-04-04T13:27:22.379Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -500,6 +500,60 @@
       "key": "projectile-hit-flash",
       "type": "spritesheet",
       "path": "assets/projectiles/hit-flash.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-fire-bolt",
+      "type": "spritesheet",
+      "path": "assets/projectiles/fire-bolt.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-ice-shard",
+      "type": "spritesheet",
+      "path": "assets/projectiles/ice-shard.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-spark-chain",
+      "type": "spritesheet",
+      "path": "assets/projectiles/spark-chain.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-fire",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-fire.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-water",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-water.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-lightning",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-lightning.png",
       "frameWidth": 16,
       "frameHeight": 16,
       "frameCount": 4,

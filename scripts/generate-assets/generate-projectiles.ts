@@ -1,4 +1,4 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, ELEMENT_COLORS, type ElementType, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/projectiles';
@@ -99,6 +99,65 @@ export async function generate(): Promise<ManifestEntry[]> {
       frameWidth: 16,
       frameHeight: 16,
       frameCount: 4,
+    });
+  }
+
+  // Element projectile variants (fire, water, lightning)
+  const elementVariants: Array<{ element: ElementType; baseName: string }> = [
+    { element: 'fire', baseName: 'fire-bolt' },
+    { element: 'water', baseName: 'ice-shard' },
+    { element: 'lightning', baseName: 'spark-chain' },
+  ];
+
+  for (const { element, baseName } of elementVariants) {
+    const colors = ELEMENT_COLORS[element];
+    const FRAME_W = 16;
+    const FRAME_H = 16;
+    const FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FRAME_W * FRAMES, FRAME_H);
+
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FRAME_W;
+      fillCircle(ctx, ox + 8, 8, 4 + f, colors.primary);
+      addGlow(ctx, ox + 8, 8, 6 + f, colors.glow, 0.3);
+    }
+
+    const filename = `${baseName}.png`;
+    saveCanvas(canvas, `${OUTPUT_DIR}/${filename}`);
+    entries.push({
+      key: `projectile-${baseName}`,
+      type: 'spritesheet',
+      path: `assets/projectiles/${filename}`,
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
+      frameCount: FRAMES,
+    });
+  }
+
+  // Element hit flash variants
+  for (const [element, colors] of Object.entries(ELEMENT_COLORS)) {
+    if (element === 'neutral') continue; // neutral uses existing hit-flash
+    const FRAME_W = 16;
+    const FRAME_H = 16;
+    const FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FRAME_W * FRAMES, FRAME_H);
+
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FRAME_W;
+      const radius = 3 + f * 2;
+      fillCircle(ctx, ox + 8, 8, radius, colors.primary);
+      if (f < 3) addGlow(ctx, ox + 8, 8, radius + 2, colors.glow, 0.4 - f * 0.1);
+    }
+
+    const filename = `hit-flash-${element}.png`;
+    saveCanvas(canvas, `${OUTPUT_DIR}/${filename}`);
+    entries.push({
+      key: `projectile-hit-flash-${element}`,
+      type: 'spritesheet',
+      path: `assets/projectiles/${filename}`,
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
+      frameCount: FRAMES,
     });
   }
 

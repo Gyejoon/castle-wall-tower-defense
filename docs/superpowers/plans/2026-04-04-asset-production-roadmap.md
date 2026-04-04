@@ -1,3 +1,4 @@
+<!-- /autoplan restore point: /Users/lio/.gstack/projects/Gyejoon-grid-line-defense-pvp/feature-slow-owner-autoplan-restore-20260404-212336.md -->
 # Asset Production Roadmap Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -216,8 +217,7 @@ git commit -m "feat(assets): add element color constants to shared palette"
 ```typescript
 // Element badge overlays (16x16 each)
 for (const [element, colors] of Object.entries(ELEMENT_COLORS)) {
-  const canvas = makeCanvas(16, 16);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(16, 16);
   // 8px 원형 뱃지: 속성 색상 원 + 1px 어두운 테두리
   fillCircle(ctx, 8, 8, 6, colors.primary);
   drawCircle(ctx, 8, 8, 7, PALETTE.shadow);
@@ -310,8 +310,7 @@ for (const { element, baseName } of elementVariants) {
   const FRAME_W = 16;
   const FRAME_H = 16;
   const FRAMES = 4;
-  const canvas = makeCanvas(FRAME_W * FRAMES, FRAME_H);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(FRAME_W * FRAMES, FRAME_H);
 
   for (let f = 0; f < FRAMES; f++) {
     const ox = f * FRAME_W;
@@ -342,8 +341,7 @@ for (const [element, colors] of Object.entries(ELEMENT_COLORS)) {
   const FRAME_W = 16;
   const FRAME_H = 16;
   const FRAMES = 4;
-  const canvas = makeCanvas(FRAME_W * FRAMES, FRAME_H);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(FRAME_W * FRAMES, FRAME_H);
 
   for (let f = 0; f < FRAMES; f++) {
     const ox = f * FRAME_W;
@@ -400,8 +398,7 @@ generate-units.ts의 `generate()` 함수에 추가. 기존 유닛 생성 루프 
 ```typescript
 // Boss titan — enlarged sprite (96x96 static + walk cycle)
 const BOSS_SIZE = 96;
-const bossCanvas = makeCanvas(BOSS_SIZE, BOSS_SIZE);
-const bossCtx = bossCanvas.getContext('2d');
+const { canvas: bossCanvas, ctx: bossCtx } = makeCanvas(BOSS_SIZE, BOSS_SIZE);
 // drawAncientDragon을 스케일 업하여 96x96에 그리기
 // 기존 drawAncientDragon은 40x48에 그리므로, 2.0x 스케일로 재그리기
 drawBossDragon(bossCtx, BOSS_SIZE);
@@ -413,8 +410,7 @@ entries.push({
 });
 
 // Boss titan phase 2 — rage variant (red tint intensified)
-const bossP2Canvas = makeCanvas(BOSS_SIZE, BOSS_SIZE);
-const bossP2Ctx = bossP2Canvas.getContext('2d');
+const { canvas: bossP2Canvas, ctx: bossP2Ctx } = makeCanvas(BOSS_SIZE, BOSS_SIZE);
 drawBossDragon(bossP2Ctx, BOSS_SIZE);
 // Apply rage tint: overlay red
 applyColorTint(bossP2Ctx, BOSS_SIZE, BOSS_SIZE, PALETTE.fireRed, 0.3);
@@ -516,8 +512,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 ```typescript
 // Boss warning text — "WARNING" (256x64)
 {
-  const canvas = makeCanvas(256, 64);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(256, 64);
   // 큰 빨간 글자 "WARNING" — 픽셀 아트로 렌더링
   ctx.fillStyle = PALETTE.fireRed;
   ctx.font = '32px sans-serif';
@@ -529,8 +524,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 
 // "FINAL BOSS" text (256x64)
 {
-  const canvas = makeCanvas(256, 64);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(256, 64);
   ctx.fillStyle = PALETTE.gold;
   ctx.font = '28px sans-serif';
   ctx.textAlign = 'center';
@@ -541,8 +535,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 
 // Boss telegraph marker (64x64, danger zone)
 {
-  const canvas = makeCanvas(64, 64);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(64, 64);
   // 빨간 반투명 원 + X 패턴
   fillCircle(ctx, 32, 32, 28, hexToRgba(PALETTE.fireRed, 0.4));
   drawLine(ctx, 8, 8, 56, 56, PALETTE.fireRed);
@@ -554,8 +547,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 // Boss death FX (256x64, 4 frames)
 {
   const FW = 64, FH = 64, FRAMES = 4;
-  const canvas = makeCanvas(FW * FRAMES, FH);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
   for (let f = 0; f < FRAMES; f++) {
     const ox = f * FW;
     const radius = 10 + f * 8;
@@ -576,8 +568,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 ```typescript
 // Boss HP bar (256x16)
 {
-  const canvas = makeCanvas(256, 16);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(256, 16);
   // 배경 (어두운)
   drawRect(ctx, 0, 0, 256, 16, PALETTE.shadow);
   // HP 바 (빨간 그라데이션)
@@ -590,8 +581,7 @@ git commit -m "feat(assets): add titan boss sprites (96x96 normal + rage)"
 
 // Energy gauge (128x16)
 {
-  const canvas = makeCanvas(128, 16);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(128, 16);
   drawRect(ctx, 0, 0, 128, 16, PALETTE.shadow);
   drawRect(ctx, 2, 2, 124, 12, PALETTE.magicBlue);
   drawRect(ctx, 2, 2, 124, 4, hexToRgba(PALETTE.white, 0.2));
@@ -636,8 +626,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Defense Success — "STAGE CLEAR" (256x128)
   {
-    const canvas = makeCanvas(256, 128);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(256, 128);
     // 금빛 배경 글로우
     addGlow(ctx, 128, 64, 80, PALETTE.gold, 0.15);
     // 텍스트
@@ -652,8 +641,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Defense Failed — "DEFENSE FAILED" (256x128)
   {
-    const canvas = makeCanvas(256, 128);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(256, 128);
     addGlow(ctx, 128, 64, 80, PALETTE.fireRed, 0.15);
     ctx.fillStyle = PALETTE.fireRed;
     ctx.font = 'bold 32px sans-serif';
@@ -845,8 +833,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Rarity frames (72x72 each, 5 tiers)
   for (const tier of TIERS) {
-    const canvas = makeCanvas(72, 72);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(72, 72);
     // 외곽 프레임 (4px 테두리)
     drawRect(ctx, 0, 0, 72, 72, tier.color);
     drawRect(ctx, 4, 4, 64, 64, PALETTE.shadow); // 내부 어둡게
@@ -866,8 +853,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Tower card backgrounds (80x120 each, 5 tiers)
   for (const tier of TIERS) {
-    const canvas = makeCanvas(80, 120);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(80, 120);
     drawRect(ctx, 0, 0, 80, 120, PALETTE.shadow);
     drawRect(ctx, 2, 2, 76, 116, tier.color);
     drawRect(ctx, 4, 4, 72, 112, hexToRgba(PALETTE.shadow, 0.8));
@@ -883,8 +869,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Promotion glow overlays (72x72, 3 tiers: rare/heroic/legendary)
   for (const tier of TIERS.filter((t) => ['rare', 'heroic', 'legendary'].includes(t.name))) {
-    const canvas = makeCanvas(72, 72);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(72, 72);
     addGlow(ctx, 36, 36, 32, tier.color, 0.4);
     addGlow(ctx, 36, 36, 24, PALETTE.white, 0.2);
     saveCanvas(canvas, `${OUTPUT_DIR}/promotion-glow-${tier.name}.png`);
@@ -896,8 +881,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Level badge (24x24)
   {
-    const canvas = makeCanvas(24, 24);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(24, 24);
     fillCircle(ctx, 12, 12, 10, PALETTE.shadow);
     fillCircle(ctx, 12, 12, 8, PALETTE.gold);
     saveCanvas(canvas, `${OUTPUT_DIR}/level-badge.png`);
@@ -954,8 +938,7 @@ const BUTTON_STATES = [
   { name: 'complete', bg: '#2ecc71', text: PALETTE.white },
 ];
 for (const state of BUTTON_STATES) {
-  const canvas = makeCanvas(120, 40);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(120, 40);
   drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
   drawRect(ctx, 2, 2, 116, 36, state.bg);
   drawRect(ctx, 2, 2, 116, 8, hexToRgba(PALETTE.white, 0.15));
@@ -968,8 +951,7 @@ for (const state of BUTTON_STATES) {
 
 // Promotion button (120x40, 2 states)
 for (const state of [{ name: 'available', bg: PALETTE.tierHeroic }, { name: 'unavailable', bg: PALETTE.gray }]) {
-  const canvas = makeCanvas(120, 40);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(120, 40);
   drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
   drawRect(ctx, 2, 2, 116, 36, state.bg);
   saveCanvas(canvas, `${UI_DIR}/promote-btn-${state.name}.png`);
@@ -986,8 +968,7 @@ for (const state of [{ name: 'available', bg: PALETTE.tierHeroic }, { name: 'una
 // Upgrade success/fail effects (256x64, 4 frames each)
 for (const result of ['success', 'fail']) {
   const FW = 64, FH = 64, FRAMES = 4;
-  const canvas = makeCanvas(FW * FRAMES, FH);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
   const color = result === 'success' ? PALETTE.gold : PALETTE.fireRed;
   for (let f = 0; f < FRAMES; f++) {
     const ox = f * FW;
@@ -1029,7 +1010,7 @@ export const STAGE_PALETTES = {
   forest_gate: {
     ground: { light: PALETTE.gridLight, dark: PALETTE.gridDark },
     path: { main: PALETTE.dirtPath, dark: PALETTE.dirtDark },
-    accent: PALETTE.foliageVibrant,
+    accent: PALETTE.foliageBright,
   },
   lava_fortress: {
     ground: { light: '#5a3020', dark: '#3a1a10' },
@@ -1047,6 +1028,8 @@ export type StageId = keyof typeof STAGE_PALETTES;
 ```
 
 - [ ] **Step 2: generate-tiles.ts를 멀티 팔레트로 리팩터**
+
+> ⚠️ 주의: generate-tiles.ts는 현재 deprecated이며 generate-all.ts에서 호출되지 않음. 이 리팩터는 단순 팔레트 변경이 아닌 아키텍처 변경 — Tiny Swords vendor 에셋과의 통합 방식을 재설계해야 함. generate-all.ts에 tiles 생성기를 다시 등록하고, 기존 Tiny Swords 필드 에셋 테스트를 수정해야 함.
 
 기존 forest-only 로직을 `generateTilesForStage(stageId)` 함수로 추출하고, 3개 스테이지를 루프:
 
@@ -1115,13 +1098,12 @@ const STAGE_CONFIGS = {
 ```typescript
 // Stage select thumbnails (128x96 each, 3 stages)
 const STAGES = [
-  { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageVibrant },
+  { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageBright },
   { id: 'lava_fortress', name: 'Lava Fortress', color: PALETTE.fireRed },
   { id: 'storm_citadel', name: 'Storm Citadel', color: '#4060c0' },
 ];
 for (const stage of STAGES) {
-  const canvas = makeCanvas(128, 96);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(128, 96);
   drawRect(ctx, 0, 0, 128, 96, stage.color);
   drawRect(ctx, 4, 4, 120, 88, hexToRgba(PALETTE.shadow, 0.5));
   ctx.fillStyle = PALETTE.white;
@@ -1137,8 +1119,7 @@ for (const stage of STAGES) {
 
 // Lock/unlock icons (32x32 each)
 for (const state of ['locked', 'unlocked']) {
-  const canvas = makeCanvas(32, 32);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(32, 32);
   const color = state === 'locked' ? PALETTE.gray : PALETTE.gold;
   fillCircle(ctx, 16, 16, 12, color);
   // 잠금: X, 해제: 체크
@@ -1188,8 +1169,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Highlight frame (64x64, animated border)
   {
-    const canvas = makeCanvas(64, 64);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(64, 64);
     // 노란 점선 테두리
     for (let i = 0; i < 64; i += 4) {
       drawRect(ctx, i, 0, 2, 2, PALETTE.gold);
@@ -1228,8 +1208,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Hint bubble (128x64)
   {
-    const canvas = makeCanvas(128, 64);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(128, 64);
     // 둥근 배경
     drawRect(ctx, 4, 4, 120, 48, PALETTE.white);
     drawRect(ctx, 2, 2, 124, 52, hexToRgba(PALETTE.shadow, 0.3));
@@ -1288,8 +1267,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Box sprites (64x64 each)
   for (const box of BOXES) {
-    const canvas = makeCanvas(64, 64);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(64, 64);
     // 상자 본체
     drawRect(ctx, 12, 20, 40, 32, box.color);
     drawRect(ctx, 14, 22, 36, 28, hexToRgba(box.color, 0.8));
@@ -1310,8 +1288,7 @@ export async function generate(): Promise<ManifestEntry[]> {
   // Box open animation (256x64, 4 frames)
   {
     const FW = 64, FH = 64, FRAMES = 4;
-    const canvas = makeCanvas(FW * FRAMES, FH);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
     for (let f = 0; f < FRAMES; f++) {
       const ox = f * FW;
       const lidOffset = f * 8; // 뚜껑이 점점 올라감
@@ -1334,8 +1311,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // "NEW!" badge (24x24)
   {
-    const canvas = makeCanvas(24, 24);
-    const ctx = canvas.getContext('2d');
+    const { canvas, ctx } = makeCanvas(24, 24);
     fillCircle(ctx, 12, 12, 10, PALETTE.fireRed);
     ctx.fillStyle = PALETTE.white;
     ctx.font = 'bold 8px sans-serif';
@@ -1366,8 +1342,7 @@ const TIER_COLORS_FOR_FX = [
 ];
 for (const tier of TIER_COLORS_FOR_FX) {
   const FW = 64, FH = 64, FRAMES = 4;
-  const canvas = makeCanvas(FW * FRAMES, FH);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
   for (let f = 0; f < FRAMES; f++) {
     const ox = f * FW;
     const r = 6 + f * 8;
@@ -1408,8 +1383,7 @@ git commit -m "feat(assets): add gacha UI (boxes, open anim, reveal FX, NEW badg
 ```typescript
 // Gold icon (32x32)
 {
-  const canvas = makeCanvas(32, 32);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(32, 32);
   fillCircle(ctx, 16, 16, 12, PALETTE.gold);
   fillCircle(ctx, 16, 16, 8, PALETTE.tierGodBright);
   ctx.fillStyle = PALETTE.shadow;
@@ -1422,8 +1396,7 @@ git commit -m "feat(assets): add gacha UI (boxes, open anim, reveal FX, NEW badg
 
 // Diamond icon (32x32)
 {
-  const canvas = makeCanvas(32, 32);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(32, 32);
   fillCircle(ctx, 16, 16, 12, PALETTE.tierRare);
   fillCircle(ctx, 16, 16, 8, PALETTE.white);
   ctx.fillStyle = PALETTE.shadow;
@@ -1440,8 +1413,7 @@ git commit -m "feat(assets): add gacha UI (boxes, open anim, reveal FX, NEW badg
 ```typescript
 // Offer card backgrounds (160x200, 3 price tiers)
 for (const tier of [{ name: 'basic', color: PALETTE.wood }, { name: 'premium', color: PALETTE.tierRare }, { name: 'legendary', color: PALETTE.tierGod }]) {
-  const canvas = makeCanvas(160, 200);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(160, 200);
   drawRect(ctx, 0, 0, 160, 200, PALETTE.shadow);
   drawRect(ctx, 2, 2, 156, 196, tier.color);
   drawRect(ctx, 4, 4, 152, 192, hexToRgba(PALETTE.shadow, 0.7));
@@ -1451,8 +1423,7 @@ for (const tier of [{ name: 'basic', color: PALETTE.wood }, { name: 'premium', c
 
 // Buy button (120x40, 2 states)
 for (const state of [{ name: 'available', bg: '#2ecc71' }, { name: 'unavailable', bg: PALETTE.gray }]) {
-  const canvas = makeCanvas(120, 40);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(120, 40);
   drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
   drawRect(ctx, 2, 2, 116, 36, state.bg);
   saveCanvas(canvas, `${UI_DIR}/buy-btn-${state.name}.png`);
@@ -1464,11 +1435,10 @@ const MISSIONS = [
   { name: 'daily', color: PALETTE.gold, symbol: '☀' },
   { name: 'weekly', color: PALETTE.tierRare, symbol: '★' },
   { name: 'kill', color: PALETTE.fireRed, symbol: '⚔' },
-  { name: 'build', color: PALETTE.foliageVibrant, symbol: '⚒' },
+  { name: 'build', color: PALETTE.foliageBright, symbol: '⚒' },
 ];
 for (const mission of MISSIONS) {
-  const canvas = makeCanvas(32, 32);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(32, 32);
   fillCircle(ctx, 16, 16, 14, mission.color);
   fillCircle(ctx, 16, 16, 10, hexToRgba(PALETTE.shadow, 0.5));
   ctx.fillStyle = PALETTE.white;
@@ -1481,8 +1451,7 @@ for (const mission of MISSIONS) {
 
 // Complete checkmark (32x32)
 {
-  const canvas = makeCanvas(32, 32);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(32, 32);
   fillCircle(ctx, 16, 16, 14, '#2ecc71');
   drawLine(ctx, 8, 16, 14, 24, PALETTE.white);
   drawLine(ctx, 14, 24, 26, 10, PALETTE.white);
@@ -1492,8 +1461,7 @@ for (const mission of MISSIONS) {
 
 // Ad button (120x40)
 {
-  const canvas = makeCanvas(120, 40);
-  const ctx = canvas.getContext('2d');
+  const { canvas, ctx } = makeCanvas(120, 40);
   drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
   drawRect(ctx, 2, 2, 116, 36, PALETTE.magicBlue);
   saveCanvas(canvas, `${UI_DIR}/ad-btn.png`);
@@ -1569,3 +1537,34 @@ bun dev:web
 git add -A
 git commit -m "chore(assets): verify full asset pipeline — 329 assets, no errors"
 ```
+
+---
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | issues_open | 6 findings (CRITICAL: PMF 미검증, HIGH: 조기 수익화, 절차적 품질 천장, 과잉투자, MEDIUM: 경쟁 해자 없음) — **User overrode: 전체 로드맵 유지** |
+| Codex CEO | `codex exec` | Independent 2nd opinion | 1 | issues_open | 6 findings aligned with Claude — 에셋 수 ≠ 플레이어 가치, 런타임 통합 부재, 스테이지 과속 |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | issues_open | 7 findings (HIGH: 모바일 크기 부족, 상태 매트릭스 없음, sans-serif/pixel 혼합, HP바 렌더링 미정의) |
+| Codex Design | `codex exec` | UX challenge | 1 | issues_open | 5 findings — 정보 구조가 개발자 중심, 상태 설계 비어있음, 반응형/접근성 미기재 |
+| Eng Review | `/plan-eng-review` | Architecture & tests | 1 | issues_open | 7 findings (CRITICAL: makeCanvas API 불일치, HIGH: ~~PALETTE.foliageVibrant~~ → foliageBright 수정 완료, tiles 리팩터 과소평가) |
+| Codex Eng | `codex exec` | Architecture challenge | 1 | issues_open | 4 findings — makeCanvas, PALETTE 키, deprecated tiles, 테스트 계약 누락 |
+
+**VERDICT:** 6 reviews complete. CRITICAL issues found (makeCanvas API). Must fix before implementation.
+
+<!-- AUTONOMOUS DECISION LOG -->
+## Decision Audit Trail
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|---------------|-----------|-----------|----------|
+| 1 | CEO | B0-1만 실행 권고 | USER CHALLENGE | P1+P6 | 양 모델 동의: PMF 미검증 | User overrode: 전체 유지 |
+| 2 | Design | 에셋 크기 조정 | TASTE | P1 | 72x72→96x96 권고. 구현 시 조정 가능 | — |
+| 3 | Design | 상태 매트릭스 추가 | AUTO-FIX | P5 | 구현자 모호성 제거 | — |
+| 4 | Design | 픽셀 글리프 사용 | AUTO-FIX | P5 | sans-serif + pixel art 혼합 방지 | — |
+| 5 | Design | HP바 렌더링 문서화 | AUTO-FIX | P5 | 9-slice or crop 방식 명시 필요 | — |
+| 6 | Eng | makeCanvas destructuring 수정 | AUTO-FIX | P5 | CRITICAL: 모든 스니펫에서 {canvas,ctx} 필요 | — |
+| 7 | Eng | ~~PALETTE.foliageVibrant~~ → foliageBright 수정 | AUTO-FIX | P3 | shared.ts에 실제 존재하는 foliageBright 키 사용 | — |
+| 8 | Eng | Task 12 tiles 리팩터 확장 | AUTO-FIX | P1 | deprecated 파일 리팩터 → 아키텍처 변경으로 재정의 | — |
+| 9 | Eng | manifest 키 충돌 가드 추가 | AUTO-FIX | P5 | generateAllAssets() 내 dedup assert | — |
+| 10 | Eng | applyColorTint hexToRgba 수정 | AUTO-FIX | P5 | hex 직접 파싱으로 변경 | — |

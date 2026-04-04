@@ -1,4 +1,4 @@
-import type { ActiveUnit, Position, UnitDef } from '@gld/shared';
+import type { ActiveUnit, ElementType, Position, UnitDef } from '@gld/shared';
 import { UNITS } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -24,6 +24,7 @@ interface UnitInstance {
 	worldY: number;
 	slowFactor: number;
 	slowRemaining: number;
+	stunRemaining: number;
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
@@ -145,6 +146,7 @@ export class UnitSystem {
 			worldY: startWorld.y,
 			slowFactor: 1.0,
 			slowRemaining: 0,
+			stunRemaining: 0,
 			bounty: entry.bounty,
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
@@ -182,6 +184,13 @@ export class UnitSystem {
 		unit.slowFactor = factor;
 		unit.slowRemaining = durationMs;
 		unit.sprite.setTint(0x88ccff);
+	}
+
+	applyStun(unitId: string, durationMs: number): void {
+		const unit = this.units.get(unitId);
+		if (!unit) return;
+		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
+		unit.sprite.setTint(0xffff44);
 	}
 
 	applyDamage(
@@ -323,8 +332,23 @@ export class UnitSystem {
 				if (unit.slowRemaining <= 0) {
 					unit.slowFactor = 1.0;
 					unit.slowRemaining = 0;
-					unit.sprite.clearTint();
+					if (unit.stunRemaining <= 0) {
+						unit.sprite.clearTint();
+					}
 				}
+			}
+
+			if (unit.stunRemaining > 0) {
+				unit.stunRemaining -= delta;
+				if (unit.stunRemaining <= 0) {
+					unit.stunRemaining = 0;
+					if (unit.slowRemaining <= 0) {
+						unit.sprite.clearTint();
+					} else {
+						unit.sprite.setTint(0x88ccff);
+					}
+				}
+				continue; // skip movement while stunned
 			}
 
 			const nextGrid = this.currentPath[pathIdx + 1];
@@ -371,12 +395,14 @@ export class UnitSystem {
 		x: number;
 		y: number;
 		hp: number;
+		element: ElementType;
 	}> {
 		return Array.from(this.units.values()).map((unit) => ({
 			instanceId: unit.data.instanceId,
 			x: unit.worldX,
 			y: unit.worldY,
 			hp: unit.data.hp,
+			element: unit.def.element,
 		}));
 	}
 

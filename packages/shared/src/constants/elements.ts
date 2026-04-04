@@ -22,6 +22,7 @@ export interface CcAuraConfig {
 
 export const CC_AURA_CONFIGS: Record<string, CcAuraConfig> = {
 	stun: { cooldownMs: 3000, durationMs: 1000, aoe: false },
+	stun_aoe: { cooldownMs: 3000, durationMs: 1000, aoe: true },
 	stun_aoe_extended: { cooldownMs: 4000, durationMs: 1500, aoe: true },
 	stun_aoe_global: { cooldownMs: 5000, durationMs: 2000, aoe: true },
 	slow_30_aoe: { cooldownMs: 2000, durationMs: 1500, aoe: true },

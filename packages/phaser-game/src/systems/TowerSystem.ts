@@ -29,6 +29,7 @@ export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
 	private lastSoundTime: Map<string, number> = new Map();
 	private static readonly SOUND_THROTTLE_MS = 200;
+	private static readonly SPLASH_RADIUS_SQ = 2.25; // 1.5^2
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
 	private pathfinding: PathfindingSystem;
@@ -120,12 +121,16 @@ export class TowerSystem {
 		return { success: true, tower: towerData };
 	}
 
+	private static parseHexColor(hex: string): number {
+		return parseInt(hex.replace('#', ''), 16);
+	}
+
 	private renderTowerBase(
 		graphics: Phaser.GameObjects.Graphics,
 		pos: Position,
 		def: TowerDef,
 	): void {
-		const color = parseInt(def.color.replace('#', ''), 16);
+		const color = TowerSystem.parseHexColor(def.color);
 		graphics.clear();
 
 		const baseSize = this.gridManager.orthoTile * 0.45;
@@ -242,6 +247,24 @@ export class TowerSystem {
 					slow: slowEffect,
 				});
 
+				// AoE slow: apply slow to all units in range (e.g. world_tree slow_40%_aoe)
+				if (slowEffect && special?.includes('_aoe')) {
+					for (const unit of unitPositions) {
+						if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0)
+							continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						if (gdx * gdx + gdy * gdy <= rangeSq) {
+							this.damageEventsBuffer.push({
+								unitId: unit.instanceId,
+								damage: 0,
+								slow: slowEffect,
+							});
+						}
+					}
+				}
+
 				if (this.isStunSpecial(special) && special && applyStun) {
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
@@ -262,7 +285,7 @@ export class TowerSystem {
 				}
 
 				if (this.hasSplash(special)) {
-					const splashRadiusSq = 1.5 * 1.5;
+					const splashRadiusSq = TowerSystem.SPLASH_RADIUS_SQ;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
 						closestUnit.y,
@@ -287,7 +310,7 @@ export class TowerSystem {
 					}
 				}
 
-				const color = parseInt(def.color.replace('#', ''), 16);
+				const color = TowerSystem.parseHexColor(def.color);
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,
@@ -484,11 +507,6 @@ export class TowerSystem {
 		return entry
 			? { data: entry.instance.data, def: entry.instance.def }
 			: null;
-	}
-
-	removeTowerAt(gridX: number, gridY: number): boolean {
-		const result = this.sellTower(gridX, gridY);
-		return result.success;
 	}
 
 	getTowers(): PlacedTower[] {

@@ -181,9 +181,10 @@ export class UnitSystem {
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		unit.slowFactor = factor;
-		unit.slowRemaining = durationMs;
-		unit.sprite.setTint(0x88ccff);
+		// Keep the stronger slow (lower factor = slower)
+		unit.slowFactor = Math.min(unit.slowFactor, factor);
+		unit.slowRemaining = Math.max(unit.slowRemaining, durationMs);
+		if (unit.stunRemaining <= 0) unit.sprite.setTint(0x88ccff);
 	}
 
 	applyStun(unitId: string, durationMs: number): void {

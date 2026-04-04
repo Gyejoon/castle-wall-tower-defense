@@ -35,7 +35,12 @@ export interface GameEventMap {
 		kind: WaveSlotKind;
 		startAtSec: number;
 	};
-	'wave-completed': { wave: number; totalWaves: number; slotIndex: number };
+	'wave-completed': {
+		wave: number;
+		totalWaves: number;
+		slotIndex: number;
+		delaySec: number;
+	};
 	'boss-warning': {
 		slotIndex: number;
 		bossSlotIndex: number;

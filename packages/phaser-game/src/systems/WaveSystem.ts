@@ -69,6 +69,7 @@ export class WaveSystem {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
 					slotIndex: currentWave.slotIndex,
+					delaySec: currentWave.delayAfterClearSec,
 				});
 
 				// Check if this was the last wave

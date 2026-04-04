@@ -166,7 +166,7 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('E 60')).toBeTruthy();
+		expect(view.getByText('⚡60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
 		expect(view.getByTestId('hud-cooldown').textContent).toContain('구매 1.2s');
 		expect(view.queryByTestId('hud-pressure')).toBeNull();

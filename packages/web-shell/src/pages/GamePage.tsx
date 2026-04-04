@@ -1,6 +1,10 @@
 import { EventBus } from '@gld/phaser-game';
-import type { PlacementFailureReason, TowerDef } from '@gld/shared';
-import { useEffect, type CSSProperties } from 'react';
+import {
+	ENERGY_CAP,
+	type PlacementFailureReason,
+	type TowerDef,
+} from '@gld/shared';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
@@ -40,7 +44,7 @@ function getHudChipStyle({
 		background,
 		color,
 		fontFamily: fonts.pixel,
-		fontSize: '8px',
+		fontSize: '10px',
 		border: `1px solid ${colors.border}`,
 		boxShadow: `2px 2px 0px rgba(0,0,0,0.25)`,
 		flexShrink: 0,
@@ -49,7 +53,6 @@ function getHudChipStyle({
 		textOverflow: 'ellipsis',
 	};
 }
-
 
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
@@ -70,13 +73,14 @@ export function GamePage() {
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
+	const [waitCountdown, setWaitCountdown] = useState(0);
+	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
-		const onEnergyChanged = (data: { energy: number }) => setEnergy(data.energy);
-		const onGameOver = (data: {
-			result: 'victory' | 'defeat';
-		}) => {
+		const onEnergyChanged = (data: { energy: number }) =>
+			setEnergy(data.energy);
+		const onGameOver = (data: { result: 'victory' | 'defeat' }) => {
 			setRunStatus(data.result);
 		};
 		const onWaveStarted = (data: {
@@ -88,6 +92,11 @@ export function GamePage() {
 			startAtSec: number;
 		}) => {
 			setRunStatus('running');
+			setWaitCountdown(0);
+			if (waitIntervalRef.current) {
+				clearInterval(waitIntervalRef.current);
+				waitIntervalRef.current = null;
+			}
 			patchCombatHud({
 				currentSlot: data.slotIndex,
 				phase: data.phase,
@@ -117,19 +126,36 @@ export function GamePage() {
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
 		const onResetRun = () => resetRun();
-		const onWaveCompleted = (data: { wave: number; totalWaves: number }) => {
+		const onWaveCompleted = (data: {
+			wave: number;
+			totalWaves: number;
+			delaySec: number;
+		}) => {
 			if (data.wave < data.totalWaves) {
+				setWaitCountdown(data.delaySec);
 				patchCombatHud({
 					phase: 'waiting',
 					timerLabel: `Wave ${data.wave}/${data.totalWaves}`,
 				});
+				if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+				let remaining = data.delaySec;
+				waitIntervalRef.current = setInterval(() => {
+					remaining -= 1;
+					if (remaining <= 0) {
+						setWaitCountdown(0);
+						if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+						waitIntervalRef.current = null;
+					} else {
+						setWaitCountdown(remaining);
+					}
+				}, 1000);
 			}
 		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			pushToast('보스 경고', 'warning');
 		};
-const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
+		const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
 			patchCombatHud({ buyCooldownMs: data.remainingMs });
 		};
 		const onTowerMergeResolved = (data: { success: boolean }) => {
@@ -146,10 +172,11 @@ const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
 		EventBus.on('request-reset-run', onResetRun);
 		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
-EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
+		EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
 		EventBus.on('tower-merge-resolved', onTowerMergeResolved);
 
 		return () => {
+			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
@@ -160,7 +187,7 @@ EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
 			EventBus.off('request-reset-run', onResetRun);
 			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
-EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
+			EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
 			EventBus.off('tower-merge-resolved', onTowerMergeResolved);
 		};
 	}, [
@@ -230,31 +257,63 @@ EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
 						HP {lives}
 					</div>
 					<div
-						style={getHudChipStyle({
-							color: colors.gold,
-							background: 'rgba(240,208,96,0.16)',
-						})}
+						style={{
+							...getHudChipStyle({
+								color: colors.gold,
+								background: 'rgba(240,208,96,0.16)',
+							}),
+							display: 'flex',
+							alignItems: 'center',
+							gap: '4px',
+							minWidth: '70px',
+						}}
 					>
-						E {energy}
+						<span>⚡{energy}</span>
+						<div
+							style={{
+								flex: 1,
+								height: '4px',
+								background: 'rgba(0,0,0,0.3)',
+								borderRadius: '2px',
+								overflow: 'hidden',
+							}}
+						>
+							<div
+								style={{
+									width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
+									height: '100%',
+									background:
+										energy >= ENERGY_CAP ? colors.success : colors.gold,
+									transition: 'width 0.3s ease',
+								}}
+							/>
+						</div>
 					</div>
 					<div
 						data-testid="hud-timer"
 						style={getHudChipStyle({
-							color: combatHud.bossWarning || combatHud.phase === 'boss'
-								? colors.gold
-								: colors.text,
-							background: combatHud.bossWarning || combatHud.phase === 'boss'
-								? 'rgba(240,208,96,0.16)'
-								: 'rgba(42,32,16,0.82)',
+							color:
+								combatHud.bossWarning || combatHud.phase === 'boss'
+									? colors.gold
+									: colors.text,
+							background:
+								combatHud.bossWarning || combatHud.phase === 'boss'
+									? 'rgba(240,208,96,0.16)'
+									: 'rgba(42,32,16,0.82)',
 							minWidth: 0,
 						})}
 					>
-						{formatTimerLabel(combatHud.timerLabel)}
+						{combatHud.phase === 'waiting' && waitCountdown > 0
+							? `다음 ${waitCountdown}s`
+							: formatTimerLabel(combatHud.timerLabel)}
 					</div>
 					<div
 						data-testid="hud-cooldown"
 						style={getHudChipStyle({
-							color: combatHud.buyCooldownMs > 0 ? colors.info : colors.textSecondary,
+							color:
+								combatHud.buyCooldownMs > 0
+									? colors.info
+									: colors.textSecondary,
 							background:
 								combatHud.buyCooldownMs > 0
 									? 'rgba(91,200,232,0.16)'
@@ -262,9 +321,11 @@ EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
 							minWidth: 0,
 						})}
 					>
-						구매 {combatHud.buyCooldownMs > 0 ? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s` : '준비'}
+						구매{' '}
+						{combatHud.buyCooldownMs > 0
+							? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s`
+							: '준비'}
 					</div>
-
 				</div>
 
 				<div
@@ -389,7 +450,6 @@ EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
 						</div>
 					)}
 				</div>
-
 			</div>
 		</div>
 	);

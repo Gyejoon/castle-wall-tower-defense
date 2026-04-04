@@ -9,6 +9,12 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export {
+	CC_AURA_CONFIGS,
+	ELEMENT_MATCHUP,
+	getElementMultiplier,
+} from './constants/elements';
+export type { CcAuraConfig } from './constants/elements';
 export type { DeckCardDef } from './constants/deck';
 export { DEFAULT_DECK } from './constants/deck';
 export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';

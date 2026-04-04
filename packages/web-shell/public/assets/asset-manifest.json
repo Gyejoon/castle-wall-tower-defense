@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:33:36.215Z",
+  "generated": "2026-04-04T13:37:03.718Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -732,6 +732,90 @@
       "type": "tilemapTiledJSON",
       "path": "assets/maps/forest-gate.json",
       "section": "preload"
+    },
+    {
+      "key": "ui-rarity-frame-common",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-common.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-rare",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-heroic",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-legendary",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-god",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-god.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-common",
+      "type": "image",
+      "path": "assets/ui/tower-card-common.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-rare",
+      "type": "image",
+      "path": "assets/ui/tower-card-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-heroic",
+      "type": "image",
+      "path": "assets/ui/tower-card-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-legendary",
+      "type": "image",
+      "path": "assets/ui/tower-card-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-god",
+      "type": "image",
+      "path": "assets/ui/tower-card-god.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-rare",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-heroic",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-legendary",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-level-badge",
+      "type": "image",
+      "path": "assets/ui/level-badge.png",
+      "section": "ui"
     }
   ]
 }

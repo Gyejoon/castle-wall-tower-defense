@@ -14,6 +14,7 @@ import { generate as generateTowers } from './generate-towers';
 import { generate as generateUi } from './generate-ui';
 import { generate as generateUnits } from './generate-units';
 import { generate as generateVfx } from './generate-vfx';
+import { generate as generateRarityFrames } from './generate-rarity-frames';
 
 export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 	const staticEntries = [
@@ -61,6 +62,7 @@ export async function generateAllAssets() {
 		resultUi,
 		icons,
 		map,
+		rarityFrames,
 	] = await Promise.all([
 		Promise.resolve(collectStaticFieldAssetEntries()).then((result) => {
 			console.log('[vendor-field-assets] done');
@@ -98,6 +100,10 @@ export async function generateAllAssets() {
 			console.log('[map] done');
 			return result;
 		}),
+		generateRarityFrames().then((result) => {
+			console.log('[rarity-frames] done');
+			return result;
+		}),
 	]);
 
 	const allEntries = withManifestSections([
@@ -110,6 +116,7 @@ export async function generateAllAssets() {
 		...resultUi,
 		...icons,
 		...map,
+		...rarityFrames,
 	]);
 
 	const manifest = {

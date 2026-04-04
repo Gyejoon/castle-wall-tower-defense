@@ -201,7 +201,6 @@ describe('GameScene field runtime', () => {
 		).length;
 		expect(decorationCount).toBe(1);
 
-		expect(addText.mock.calls.length).toBeGreaterThanOrEqual(3);
 		expect(addImage).not.toHaveBeenCalledWith(
 			expect.anything(),
 			expect.anything(),

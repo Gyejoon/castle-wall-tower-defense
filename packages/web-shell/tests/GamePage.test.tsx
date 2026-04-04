@@ -146,29 +146,26 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('shows single-player HUD with HP, gold, timer, and cooldown only', () => {
+	it('shows single-player HUD with HP, energy, timer and deck dock', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
 		act(() => {
-			emitSpy('gold-changed', { gold: 60 });
+			emitSpy('energy-changed', { energy: 60 });
 			emitSpy('wave-started', {
 				wave: 10,
-				totalWaves: 20,
+				totalWaves: 10,
 				slotIndex: 10,
 				phase: 'boss',
 				kind: 'boss',
 				startAtSec: 270,
 			});
-			emitSpy('buy-cooldown-updated', {
-				remainingMs: 1200,
-			});
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('G 60')).toBeTruthy();
+		expect(view.getByText('⚡60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		expect(view.getByTestId('hud-cooldown').textContent).toContain('구매 1.2s');
+		expect(view.getByTestId('deck-dock')).toBeTruthy();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
 		expect(view.queryByText('AI')).toBeNull();
@@ -214,7 +211,7 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().runStatus).toBe('defeat');
 	});
 
-	it('turns merge failure and boss warning into toast state instead of top-bar text noise', () => {
+	it('shows boss warning and insufficient energy as toasts', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
@@ -228,14 +225,14 @@ describe('GamePage', () => {
 		expect(view.getByText('보스 경고')).toBeTruthy();
 
 		act(() => {
-			emitSpy('tower-merge-resolved', {
+			emitSpy('tower-placed', {
+				col: 3,
+				row: 4,
+				towerId: 'emp',
 				success: false,
-				fromPos: { x: 0, y: 0 },
-				toPos: { x: 0, y: 1 },
-				failureReason: 'merge_failed',
+				reason: 'insufficient_energy',
 			});
 		});
-		expect(view.getByText('합성 실패')).toBeTruthy();
+		expect(view.getByText('에너지 부족')).toBeTruthy();
 	});
-
 });

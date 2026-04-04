@@ -1,13 +1,10 @@
 import {
 	type AssetManifest,
 	DEFAULT_MAP_ID,
-	type ElementType,
-	getElementDamageMultiplier,
+	FOREST_GATE_MAP,
 	getMapById,
-	INITIAL_GOLD,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
-	RANDOM_TOWER_COST,
 	WAVE_DEFS,
 	type WaveDef,
 	type WavePhase,
@@ -29,18 +26,15 @@ import {
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
-import { TowerDragController } from '../input/TowerDragController';
 import { getPlacementGuardFailure } from '../placementRules';
+import { DeckSystem } from '../systems/DeckSystem';
+import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
-import { MergeSystem } from '../systems/MergeSystem';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
-import { RandomTowerSystem } from '../systems/RandomTowerSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
-
-const GLOBAL_BUY_COOLDOWN_MS = 1200;
 
 export class GameScene extends Phaser.Scene {
 	private playerGrid!: GridManager;
@@ -48,28 +42,17 @@ export class GameScene extends Phaser.Scene {
 	private playerTowers!: TowerSystem;
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
-	private playerRandomTower!: RandomTowerSystem;
-	private playerMerge!: MergeSystem;
+	private playerDeck!: DeckSystem;
 
 	private playerHp = INITIAL_PLAYER_HP;
-	private gold = INITIAL_GOLD;
+	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
-	private buyCooldownRemainingMs = 0;
-	private lastEmittedBuyCooldownMs = -1;
 	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
-	private dragGhost!: Phaser.GameObjects.Graphics;
-	private mergeHighlights!: Phaser.GameObjects.Graphics;
+	private selectionGraphics!: Phaser.GameObjects.Graphics;
 	private pathGraphics?: Phaser.GameObjects.Graphics;
-	private playerTowerDragController?: TowerDragController;
-
-	private hudBuyBtn!: Phaser.GameObjects.Text;
-	private hudRolledInfo!: Phaser.GameObjects.Text;
-	private feedbackText!: Phaser.GameObjects.Text;
-
-	private onHudBuy!: () => void;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
@@ -125,8 +108,7 @@ export class GameScene extends Phaser.Scene {
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerWaves = new WaveSystem(this.playerUnits);
-		this.playerRandomTower = new RandomTowerSystem();
-		this.playerMerge = new MergeSystem(this.playerTowers);
+		this.playerDeck = new DeckSystem();
 
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -134,32 +116,28 @@ export class GameScene extends Phaser.Scene {
 		this.renderField(this.playerGrid, false);
 
 		this.hoverGraphics = this.add.graphics();
-		this.dragGhost = this.add.graphics();
-		this.dragGhost.setDepth(20);
-		this.mergeHighlights = this.add.graphics();
-		this.mergeHighlights.setDepth(15);
+		this.selectionGraphics = this.add.graphics();
+		this.selectionGraphics.setDepth(15);
 
 		this.playerUnits.setPath(this.currentMap.path);
 		this.renderPath(this.playerGrid);
 
 		this.setupInput();
-		this.setupTowerDragController();
-
-		this.onHudBuy = () => this.handleBuyTower();
-
-		this.createHUD();
 
 		this.onSelectTower = (data) => {
+			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
+			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+			this.renderPlaceableHighlights();
 		};
 		this.onClearTowerSelection = () => {
 			this.selectedTowerId = null;
+			this.selectionGraphics.clear();
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
 			this.currentSlotDef = WAVE_DEFS[data.slotIndex - 1] ?? WAVE_DEFS[0];
 			soundGenerator.playWaveStart();
-			this.updateHUD();
 		};
 
 		this.onBossWarning = () => {
@@ -176,7 +154,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 
 		EventBus.emit('game-ready');
-		EventBus.emit('gold-changed', { gold: this.gold });
+		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
+		EventBus.emit('deck-loaded', { cards: this.playerDeck.getCards() });
 		EventBus.emit('current-scene-ready', this);
 
 		void this.prefetchOptionalAssets();
@@ -288,7 +267,10 @@ export class GameScene extends Phaser.Scene {
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(this.playerGrid.orthoTile, this.playerGrid.orthoTile);
+				sprite.setDisplaySize(
+					this.playerGrid.orthoTile,
+					this.playerGrid.orthoTile,
+				);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(0);
 				if (dark) {
@@ -356,10 +338,6 @@ export class GameScene extends Phaser.Scene {
 
 	private setupInput(): void {
 		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-			if (this.playerTowerDragController?.isDragging()) {
-				return;
-			}
-
 			const gridPos = this.playerGrid.worldToGrid(
 				pointer.worldX,
 				pointer.worldY,
@@ -393,120 +371,23 @@ export class GameScene extends Phaser.Scene {
 		});
 	}
 
-	private createHUD(): void {
-		const cw = this.scale.width;
-		const ch = this.scale.height;
-		const HUD_HEIGHT = 88;
-		const hudY = ch - HUD_HEIGHT / 2;
+	private renderPlaceableHighlights(): void {
+		this.selectionGraphics.clear();
+		if (!this.selectedTowerId) return;
 
-		this.hudBuyBtn = this.add
-			.text(
-				cw / 2,
-				hudY,
-				`타워 구매 ${RANDOM_TOWER_COST}G`,
-				{
-					fontFamily: 'monospace',
-					fontSize: '14px',
-					color: '#f0d060',
-					backgroundColor: '#2a1f0a',
-					padding: { x: 24, y: 12 },
-				},
-			)
-			.setOrigin(0.5)
-			.setDepth(100)
-			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', this.onHudBuy);
-
-		this.hudRolledInfo = this.add
-			.text(cw / 2, ch - HUD_HEIGHT - 4, '', {
-				fontFamily: 'monospace',
-				fontSize: '8px',
-				color: '#f0d060',
-				align: 'center',
-			})
-			.setOrigin(0.5, 1)
-			.setDepth(100);
-
-		this.feedbackText = this.add
-			.text(cw / 2, ch - HUD_HEIGHT - 16, '', {
-				fontFamily: 'monospace',
-				fontSize: '8px',
-				color: '#e53170',
-				align: 'center',
-			})
-			.setOrigin(0.5, 1)
-			.setDepth(100);
-	}
-
-	private handleBuyTower(): void {
-		if (this.gold < RANDOM_TOWER_COST) return;
-		if (this.playerWaves.getPhase() === 'ended') return;
-		if (this.buyCooldownRemainingMs > 0) return;
-		if (this.selectedTowerId) return;
-
-		const rolledTower = this.playerRandomTower.rollRandomTower();
-		this.selectedTowerId = rolledTower.id;
-		this.spendGold(RANDOM_TOWER_COST);
-		this.setBuyCooldown(GLOBAL_BUY_COOLDOWN_MS);
-		this.hudRolledInfo.setText(`배치 대기: ${rolledTower.name}`);
-		EventBus.emit('random-tower-rolled', {
-			towerId: rolledTower.id,
-			towerDef: rolledTower,
-			source: 'owned_pool',
-			asCard: true,
-		});
-		this.updateHUD();
-	}
-
-	private updateHUD(): void {
-		const phase = this.playerWaves.getPhase();
-		const canBuy =
-			phase !== 'ended' &&
-			this.gold >= RANDOM_TOWER_COST &&
-			!this.selectedTowerId &&
-			this.buyCooldownRemainingMs <= 0;
-		this.hudBuyBtn.setAlpha(canBuy ? 1 : 0.4);
-
-		if (!this.selectedTowerId) {
-			this.hudRolledInfo.setText('');
-		}
-	}
-
-	private renderMergeHighlights(
-		fromPos: { x: number; y: number },
-		currentGridPos: { x: number; y: number },
-	): void {
-		this.mergeHighlights.clear();
-
-		for (const tower of this.playerTowers.getTowers()) {
-			if (tower.position.x === fromPos.x && tower.position.y === fromPos.y) {
-				continue;
+		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
+			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+				if (this.playerGrid.canPlaceTower(x, y)) {
+					this.playerGrid.fillTileRect(
+						this.selectionGraphics,
+						x,
+						y,
+						0x7f5af0,
+						0.12,
+					);
+				}
 			}
-			if (!this.playerMerge.canMerge(fromPos, tower.position)) continue;
-
-			const isHover =
-				tower.position.x === currentGridPos.x &&
-				tower.position.y === currentGridPos.y;
-			this.playerGrid.fillTileRect(
-				this.mergeHighlights,
-				tower.position.x,
-				tower.position.y,
-				0x2cb67d,
-				isHover ? 0.4 : 0.15,
-			);
 		}
-	}
-
-	private spendGold(amount: number): boolean {
-		if (this.gold < amount) return false;
-		this.gold -= amount;
-		EventBus.emit('gold-changed', { gold: this.gold });
-		return true;
-	}
-
-	private earnGold(amount: number): void {
-		this.gold += amount;
-		EventBus.emit('gold-changed', { gold: this.gold });
 	}
 
 	private emitGameOver(payload: {
@@ -519,52 +400,31 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('game-over', payload);
 	}
 
-	private showFeedback(msg: string): void {
-		this.feedbackText.setText(msg);
-		this.time.delayedCall(2000, () => {
-			if (this.feedbackText.text === msg) this.feedbackText.setText('');
-		});
-	}
-
-	private setBuyCooldown(remainingMs: number): void {
-		this.buyCooldownRemainingMs = Math.max(0, remainingMs);
-		this.emitBuyCooldown();
-	}
-
-	private tickBuyCooldown(delta: number): void {
-		if (this.buyCooldownRemainingMs <= 0) return;
-		this.buyCooldownRemainingMs = Math.max(
-			0,
-			this.buyCooldownRemainingMs - delta,
-		);
-		this.emitBuyCooldown();
-	}
-
-	private emitBuyCooldown(): void {
-		const roundedMs =
-			this.buyCooldownRemainingMs <= 0
-				? 0
-				: Math.ceil(this.buyCooldownRemainingMs / 100) * 100;
-		if (roundedMs === this.lastEmittedBuyCooldownMs) return;
-		this.lastEmittedBuyCooldownMs = roundedMs;
-		EventBus.emit('buy-cooldown-updated', { remainingMs: roundedMs });
-	}
-
 	private handlePlaceTower(
 		gridX: number,
 		gridY: number,
 		towerDefId: string,
 	): void {
+		const card = this.playerDeck.getCardByTowerId(towerDefId);
+		if (!card) return;
+
+		const energyCost = card.energyCost;
+		if (!this.energySystem.canAfford(energyCost)) {
+			EventBus.emit('tower-placed', {
+				col: gridX,
+				row: gridY,
+				towerId: towerDefId,
+				success: false,
+				reason: 'insufficient_energy',
+			});
+			return;
+		}
+
 		const guardFailure = getPlacementGuardFailure({
 			phase: this.playerWaves.getPhase(),
-			gold: this.gold,
-			towerCost: 0,
 		});
 
 		if (guardFailure) {
-			this.showFeedback(
-				guardFailure === 'combat_phase' ? '경기 종료' : '배치 불가',
-			);
 			EventBus.emit('tower-placed', {
 				col: gridX,
 				row: gridY,
@@ -577,9 +437,6 @@ export class GameScene extends Phaser.Scene {
 
 		const placed = this.playerTowers.placeTower(gridX, gridY, towerDefId);
 		if (!placed.success) {
-			this.showFeedback(
-				placed.reason === 'blocked_path' ? '경로 차단' : '배치 불가',
-			);
 			EventBus.emit('tower-placed', {
 				col: gridX,
 				row: gridY,
@@ -590,14 +447,15 @@ export class GameScene extends Phaser.Scene {
 			return;
 		}
 
+		this.energySystem.spend(energyCost);
 		this.selectedTowerId = null;
-		this.hudRolledInfo.setText('');
-		this.playerTowerDragController?.sync();
+		this.selectionGraphics.clear();
 		EventBus.emit('tower-placed', {
 			col: gridX,
 			row: gridY,
 			towerId: towerDefId,
 			success: true,
+			energySpent: energyCost,
 		});
 		EventBus.emit('player-tower-count', {
 			count: this.playerTowers.getTowers().length,
@@ -605,38 +463,33 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits.setPath(this.currentMap.path);
 		this.renderPath(this.playerGrid);
 		EventBus.emit('path-updated', { path: this.currentMap.path });
-		this.updateHUD();
 	}
 
 	private processCombatField(
 		towerSystem: Pick<TowerSystem, 'update'>,
 		unitSystem: Pick<
 			UnitSystem,
-			'applyDamage' | 'applySlow' | 'getUnitElement' | 'getUnitPositions' | 'update'
+			'applyDamage' | 'applySlow' | 'applyStun' | 'getUnitPositions' | 'update'
 		>,
 		time: number,
 		delta: number,
-		onKill: (info: { unitDefId: string; bounty: number }) => void,
+		onKill: () => void,
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
 
 		for (const evt of damageEvents) {
-			const unitElement = unitSystem.getUnitElement(evt.unitId);
-			const elementMult = getElementDamageMultiplier(
-				evt.towerElement as ElementType,
-				unitElement as ElementType,
-			);
-			const finalDamage = Math.round(evt.damage * elementMult);
-			const result = unitSystem.applyDamage(evt.unitId, finalDamage);
-			if (result?.killed) {
-				onKill({
-					unitDefId: result.unitDefId,
-					bounty: result.bounty,
-				});
+			if (evt.damage > 0) {
+				const result = unitSystem.applyDamage(evt.unitId, evt.damage, evt.armorPierce);
+				if (result?.killed) {
+					onKill();
+				}
 			}
 			if (evt.slow) {
 				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+			}
+			if (evt.stun) {
+				unitSystem.applyStun(evt.unitId, evt.stun.duration);
 			}
 		}
 
@@ -647,16 +500,15 @@ export class GameScene extends Phaser.Scene {
 	update(time: number, delta: number) {
 		if (this.gameOver) return;
 
-		this.playerWaves.update(delta);
-		this.tickBuyCooldown(delta);
+		this.playerWaves.update(delta, this.playerUnits.getActiveCount());
+		this.energySystem.update(delta / 1000);
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,
 			this.playerUnits,
 			time,
 			delta,
-			(info) => {
-				this.earnGold(info.bounty);
+			() => {
 				soundGenerator.playUnitDeath();
 			},
 		);
@@ -699,16 +551,17 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
-		this.playerTowerDragController?.destroy();
-		this.playerTowerDragController = undefined;
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
+
+		this.selectionGraphics.clear();
+		this.pathGraphics?.destroy();
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();
-		this.playerMerge.destroy();
-		this.playerRandomTower.reset();
+		this.playerDeck.reset();
+		this.energySystem.reset();
 
 		unloadAssetSections(
 			this,
@@ -767,86 +620,6 @@ export class GameScene extends Phaser.Scene {
 			return;
 		}
 		registerOptionalCombatAnimations(this, this.optionalAssetManifest);
-	}
-
-	private setupTowerDragController(): void {
-		const dragPlugin: {
-			add: (
-				gameObject: Phaser.GameObjects.Image,
-				_config?: Record<string, unknown>,
-			) => { destroy?: () => void };
-		} = {
-			add: (gameObject) => {
-				this.input.setDraggable(gameObject);
-				return {};
-			},
-		};
-
-		this.playerTowerDragController = new TowerDragController({
-			dragPlugin,
-			gridManager: this.playerGrid,
-			towerSystem: this.playerTowers,
-			canInteract: () =>
-				!this.gameOver &&
-				this.playerWaves.getPhase() !== 'ended' &&
-				this.selectedTowerId === null,
-			onPreview: ({ fromPos, gridPos }) => {
-				this.hoverGraphics.clear();
-				this.dragGhost.clear();
-				if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
-					this.playerGrid.fillTileRect(
-						this.dragGhost,
-						gridPos.x,
-						gridPos.y,
-						0xffffff,
-						0.3,
-					);
-				}
-				this.renderMergeHighlights(fromPos, gridPos);
-			},
-			onDrop: ({ fromPos, toPos }) => {
-				this.dragGhost.clear();
-				this.mergeHighlights.clear();
-
-				if (toPos.x === fromPos.x && toPos.y === fromPos.y) {
-					return;
-				}
-
-				if (this.playerMerge.canMerge(fromPos, toPos)) {
-					const result = this.playerMerge.merge(fromPos, toPos);
-					if (result) {
-						this.playerTowerDragController?.sync();
-						EventBus.emit('tower-merged', {
-							fromPos,
-							toPos,
-							newTowerId: result.id,
-							newTowerDef: result,
-						});
-						EventBus.emit('tower-merge-resolved', {
-							success: true,
-							fromPos,
-							toPos,
-							newTowerId: result.id,
-						});
-						this.playerUnits.setPath(this.currentMap.path);
-						this.renderPath(this.playerGrid);
-						EventBus.emit('path-updated', { path: this.currentMap.path });
-						EventBus.emit('player-tower-count', {
-							count: this.playerTowers.getTowers().length,
-						});
-					}
-					return;
-				}
-
-				EventBus.emit('tower-merge-failed', { reason: 'invalid_merge' });
-				EventBus.emit('tower-merge-resolved', {
-					success: false,
-					fromPos,
-					toPos,
-					failureReason: 'invalid_merge',
-				});
-			},
-		});
 	}
 }
 

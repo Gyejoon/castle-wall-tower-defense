@@ -1,9 +1,6 @@
 import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
-import {
-	DEFAULT_GRID_CONFIG,
-	ORTHO_TILE,
-} from '@gld/shared';
-import Phaser from 'phaser';
+import { DEFAULT_GRID_CONFIG, ORTHO_TILE } from '@gld/shared';
+import type Phaser from 'phaser';
 
 export interface GridManagerOptions {
 	tileSize?: number;
@@ -25,7 +22,10 @@ export class GridManager {
 	private readonly blockedPlacementPointKeys: Set<string>;
 	private readonly pathPointKeys: Set<string>;
 
-	constructor(config: GridConfig = DEFAULT_GRID_CONFIG, options?: GridManagerOptions) {
+	constructor(
+		config: GridConfig = DEFAULT_GRID_CONFIG,
+		options?: GridManagerOptions,
+	) {
 		this.width = config.width;
 		this.height = config.height;
 

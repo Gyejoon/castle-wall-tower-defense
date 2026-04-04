@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { ALL_TOWERS } from '@gld/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-	preloadAssetSection,
 	prefetchAssetSections,
+	preloadAssetSection,
 	unloadAssetSections,
 } from '../src/assets/assetManifest';
 import { PRELOAD_TOWER_IDS } from '../src/constants/preloadAssets';
@@ -47,7 +47,9 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as {
 		frameCount?: number;
 	}>;
 };
-const manifestByKey = new Map(manifest.assets.map((asset) => [asset.key, asset]));
+const manifestByKey = new Map(
+	manifest.assets.map((asset) => [asset.key, asset]),
+);
 
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -196,8 +198,8 @@ describe('field asset preload alignment', () => {
 		);
 
 		expect(image).not.toHaveBeenCalledWith(
-			'ui-pressure-defend',
-			manifestByKey.get('ui-pressure-defend')?.path,
+			'ui-hp-bar',
+			manifestByKey.get('ui-hp-bar')?.path,
 		);
 		expect(spritesheet).not.toHaveBeenCalledWith(
 			'ui-tower-icons',

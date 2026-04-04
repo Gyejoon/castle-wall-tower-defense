@@ -49,10 +49,22 @@ describe('FOREST_GATE_MAP', () => {
 	});
 
 	it('blocked placement에 spawn/exit과 코너 차단 타일이 포함되어야 한다', () => {
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({ x: 3, y: 0 });
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({ x: 4, y: 17 });
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({ x: 0, y: 0 });
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({ x: 7, y: 17 });
+		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
+			x: 3,
+			y: 0,
+		});
+		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
+			x: 4,
+			y: 17,
+		});
+		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
+			x: 0,
+			y: 0,
+		});
+		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
+			x: 7,
+			y: 17,
+		});
 	});
 
 	it('buildable points가 경로 및 blocked placement와 겹치지 않아야 한다', () => {

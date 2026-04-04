@@ -1,10 +1,11 @@
 import type {
+	ElementType,
 	PlacedTower,
 	PlacementFailureReason,
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS, TIER_NAMES } from '@gld/shared';
+import { ALL_TOWERS, CC_AURA_CONFIGS, getElementMultiplier, TIER_NAMES } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -18,6 +19,7 @@ interface TowerInstance {
 	sprite: Phaser.GameObjects.Image;
 	rarityFrame?: Phaser.GameObjects.Image;
 	lastAttackTime: number;
+	lastAuraTime: number;
 }
 
 export type TowerPlacementResult =
@@ -28,6 +30,7 @@ export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
 	private lastSoundTime: Map<string, number> = new Map();
 	private static readonly SOUND_THROTTLE_MS = 200;
+	private static readonly SPLASH_RADIUS_SQ = 2.25; // 1.5^2
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
 	private pathfinding: PathfindingSystem;
@@ -128,9 +131,14 @@ export class TowerSystem {
 			sprite,
 			rarityFrame,
 			lastAttackTime: 0,
+			lastAuraTime: 0,
 		});
 
 		return { success: true, tower: towerData };
+	}
+
+	private static parseHexColor(hex: string): number {
+		return parseInt(hex.replace('#', ''), 16);
 	}
 
 	private renderTowerBase(
@@ -138,7 +146,7 @@ export class TowerSystem {
 		pos: Position,
 		def: TowerDef,
 	): void {
-		const color = parseInt(def.color.replace('#', ''), 16);
+		const color = TowerSystem.parseHexColor(def.color);
 		graphics.clear();
 
 		const baseSize = this.gridManager.orthoTile * 0.45;
@@ -169,23 +177,27 @@ export class TowerSystem {
 	private damageEventsBuffer: Array<{
 		unitId: string;
 		damage: number;
-		towerElement: string;
+		armorPierce?: boolean;
 		slow?: { factor: number; duration: number };
+		stun?: { duration: number };
 	}> = [];
 
-	private getBoostMultiplier(gridX: number, gridY: number): number {
-		let boostCount = 0;
-		for (const tower of this.towers.values()) {
-			const special = tower.def.stats.special;
-			if (!special?.startsWith('boost_adjacent')) continue;
-			const dx = Math.abs(tower.data.position.x - gridX);
-			const dy = Math.abs(tower.data.position.y - gridY);
-			if (dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0)) {
-				const match = special.match(/boost_adjacent_(\d+)%/);
-				if (match) boostCount += parseInt(match[1], 10) / 100;
-			}
-		}
-		return 1 + boostCount;
+	private parseSlowFactor(special: string): number {
+		const match = special.match(/slow_(\d+)%/);
+		if (!match) return 0.7;
+		return 1 - parseInt(match[1], 10) / 100;
+	}
+
+	private hasSplash(special?: string): boolean {
+		return special === 'splash' || (special?.endsWith('_splash') ?? false);
+	}
+
+	private isStunSpecial(special?: string): boolean {
+		return special?.startsWith('stun') ?? false;
+	}
+
+	private isSlowSpecial(special?: string): boolean {
+		return special?.startsWith('slow_') ?? false;
 	}
 
 	update(
@@ -196,12 +208,14 @@ export class TowerSystem {
 			x: number;
 			y: number;
 			hp: number;
+			element: ElementType;
 		}>,
 	): Array<{
 		unitId: string;
 		damage: number;
-		towerElement: string;
+		armorPierce?: boolean;
 		slow?: { factor: number; duration: number };
+		stun?: { duration: number };
 	}> {
 		this.damageEventsBuffer.length = 0;
 
@@ -235,25 +249,76 @@ export class TowerSystem {
 
 			if (closestUnit) {
 				tower.lastAttackTime = time;
-				const boostMult = this.getBoostMultiplier(
-					data.position.x,
-					data.position.y,
+				const elementMult = getElementMultiplier(
+					def.element,
+					closestUnit.element,
 				);
-				const boostedDamage = Math.round(def.stats.damage * boostMult);
+				const baseDamage = Math.round(def.stats.damage * elementMult);
 				const special = def.stats.special;
 
-				const slowEffect = special?.startsWith('slow_')
-					? { factor: 0.7, duration: 2000 }
-					: undefined;
+				const slowEffect =
+					this.isSlowSpecial(special) && special
+						? { factor: this.parseSlowFactor(special), duration: 2000 }
+						: undefined;
+				// 집중 공격형 (no special) → armor pierce
+				const armorPierce = !special;
 				this.damageEventsBuffer.push({
 					unitId: closestUnit.instanceId,
-					damage: boostedDamage,
-					towerElement: def.element,
+					damage: baseDamage,
+					armorPierce,
 					slow: slowEffect,
 				});
 
-				if (special === 'splash') {
-					const splashRadiusSq = 1.5 * 1.5;
+				// AoE slow: apply slow to all units in range (e.g. world_tree slow_40%_aoe)
+				if (slowEffect && special?.includes('_aoe')) {
+					for (const unit of unitPositions) {
+						if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0)
+							continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						if (gdx * gdx + gdy * gdy <= rangeSq) {
+							this.damageEventsBuffer.push({
+								unitId: unit.instanceId,
+								damage: 0,
+								slow: slowEffect,
+							});
+						}
+					}
+				}
+
+				if (this.isStunSpecial(special) && special) {
+					const configKey = special.replace(/%/g, '');
+					const stunDuration =
+						CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					if (special.includes('aoe')) {
+						for (const unit of unitPositions) {
+							if (unit.hp <= 0) continue;
+							const unitGrid = this.gridManager.worldToGridFloat(
+								unit.x,
+								unit.y,
+							);
+							const gdx = data.position.x - unitGrid.x;
+							const gdy = data.position.y - unitGrid.y;
+							if (gdx * gdx + gdy * gdy <= rangeSq) {
+								this.damageEventsBuffer.push({
+									unitId: unit.instanceId,
+									damage: 0,
+									stun: { duration: stunDuration },
+								});
+							}
+						}
+					} else {
+						this.damageEventsBuffer.push({
+							unitId: closestUnit.instanceId,
+							damage: 0,
+							stun: { duration: stunDuration },
+						});
+					}
+				}
+
+				if (this.hasSplash(special)) {
+					const splashRadiusSq = TowerSystem.SPLASH_RADIUS_SQ;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
 						closestUnit.y,
@@ -265,16 +330,20 @@ export class TowerSystem {
 						const sdx = closestGrid.x - sUnitGrid.x;
 						const sdy = closestGrid.y - sUnitGrid.y;
 						if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
+							const splashElementMult = getElementMultiplier(
+								def.element,
+								unit.element,
+							);
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
-								damage: Math.round(boostedDamage * 0.5),
-								towerElement: def.element,
+								damage: Math.round(def.stats.damage * splashElementMult * 0.5),
+								slow: slowEffect,
 							});
 						}
 					}
 				}
 
-				const color = parseInt(def.color.replace('#', ''), 16);
+				const color = TowerSystem.parseHexColor(def.color);
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,
@@ -285,7 +354,7 @@ export class TowerSystem {
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position);
 				this.spawnImpactVfx(
-					special === 'splash' ? 'vfx-explosion-sm' : 'projectile-hit-flash',
+					this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
 					closestUnit.x,
 					closestUnit.y,
 				);
@@ -294,6 +363,77 @@ export class TowerSystem {
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
 					soundGenerator.playTowerAttack(def.type);
 					this.lastSoundTime.set(def.type, time);
+				}
+			}
+		}
+
+		// Passive CC aura (attackSpeed=0 towers)
+		for (const tower of this.towers.values()) {
+			const { def, data } = tower;
+			if (def.stats.attackSpeed > 0) continue;
+			const special = def.stats.special;
+			if (!special) continue;
+
+			const configKey = special.replace(/%/g, '');
+			const config = CC_AURA_CONFIGS[configKey];
+			if (!config) continue;
+
+			if (time - tower.lastAuraTime < config.cooldownMs) continue;
+			tower.lastAuraTime = time;
+
+			const rangeSq = def.stats.range ** 2;
+
+			if (this.isStunSpecial(special)) {
+				if (config.aoe) {
+					for (const unit of unitPositions) {
+						if (unit.hp <= 0) continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						if (gdx * gdx + gdy * gdy <= rangeSq) {
+							this.damageEventsBuffer.push({
+								unitId: unit.instanceId,
+								damage: 0,
+								stun: { duration: config.durationMs },
+							});
+						}
+					}
+				} else {
+					let closest: (typeof unitPositions)[0] | null = null;
+					let closestDist = Infinity;
+					for (const unit of unitPositions) {
+						if (unit.hp <= 0) continue;
+						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+						const gdx = data.position.x - unitGrid.x;
+						const gdy = data.position.y - unitGrid.y;
+						const d = gdx * gdx + gdy * gdy;
+						if (d <= rangeSq && d < closestDist) {
+							closestDist = d;
+							closest = unit;
+						}
+					}
+					if (closest) {
+						this.damageEventsBuffer.push({
+							unitId: closest.instanceId,
+							damage: 0,
+							stun: { duration: config.durationMs },
+						});
+					}
+				}
+			} else if (this.isSlowSpecial(special)) {
+				const factor = this.parseSlowFactor(special);
+				for (const unit of unitPositions) {
+					if (unit.hp <= 0) continue;
+					const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+					const gdx = data.position.x - unitGrid.x;
+					const gdy = data.position.y - unitGrid.y;
+					if (gdx * gdx + gdy * gdy <= rangeSq) {
+						this.damageEventsBuffer.push({
+							unitId: unit.instanceId,
+							damage: 0,
+							slow: { factor, duration: config.durationMs },
+						});
+					}
 				}
 			}
 		}
@@ -411,11 +551,6 @@ export class TowerSystem {
 		return entry
 			? { data: entry.instance.data, def: entry.instance.def }
 			: null;
-	}
-
-	removeTowerAt(gridX: number, gridY: number): boolean {
-		const result = this.sellTower(gridX, gridY);
-		return result.success;
 	}
 
 	getTowers(): PlacedTower[] {

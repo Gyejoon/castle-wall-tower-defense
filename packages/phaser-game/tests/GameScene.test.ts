@@ -61,32 +61,21 @@ describe('GameScene', () => {
 		vi.clearAllMocks();
 	});
 
-	it('spendGold deducts gold and emits the updated total when affordable', () => {
+	it('energySystem spends energy and updates balance', () => {
 		const scene = createScene();
-		scene.gold = 100;
-
-		expect(scene.spendGold(50)).toBe(true);
-		expect(scene.gold).toBe(50);
-		expect(EventBus.emit).toHaveBeenCalledWith('gold-changed', { gold: 50 });
+		// INITIAL_ENERGY is 0, accumulate energy (delta clamped to 5s)
+		scene.energySystem.update(5);
+		scene.energySystem.update(5);
+		scene.energySystem.update(5); // 15 energy total
+		expect(scene.energySystem.canAfford(10)).toBe(true);
+		expect(scene.energySystem.spend(10)).toBe(true);
+		expect(scene.energySystem.getEnergy()).toBe(5); // 15 - 10
 	});
 
-	it('spendGold leaves gold unchanged when funds are insufficient', () => {
+	it('energySystem rejects spend when insufficient', () => {
 		const scene = createScene();
-		scene.gold = 40;
-
-		expect(scene.spendGold(50)).toBe(false);
-		expect(scene.gold).toBe(40);
-		expect(EventBus.emit).not.toHaveBeenCalled();
-	});
-
-	it('earnGold adds gold and emits the updated total', () => {
-		const scene = createScene();
-		scene.gold = 10;
-
-		scene.earnGold(25);
-
-		expect(scene.gold).toBe(35);
-		expect(EventBus.emit).toHaveBeenCalledWith('gold-changed', { gold: 35 });
+		expect(scene.energySystem.spend(100)).toBe(false);
+		expect(scene.energySystem.getEnergy()).toBe(0); // unchanged (initial is 0)
 	});
 
 	it('cleanup unregisters EventBus listeners before destroying systems', () => {
@@ -97,8 +86,8 @@ describe('GameScene', () => {
 		scene.playerTowers = { destroy: vi.fn() };
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
-		scene.playerMerge = { destroy: vi.fn() };
-		scene.playerRandomTower = { reset: vi.fn() };
+		scene.playerDeck = { reset: vi.fn() };
+		scene.selectionGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -137,6 +126,8 @@ describe('GameScene', () => {
 
 	it('emits a PVE victory payload when the final slot ends with no remaining player units', () => {
 		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
 		scene.playerWaves = {
 			update: vi.fn(),
@@ -152,6 +143,7 @@ describe('GameScene', () => {
 			update: vi.fn(() => ({ reachedExit: [] })),
 			hasActiveUnits: vi.fn(() => false),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
 		};
 
 		scene.update(0, 16);
@@ -165,6 +157,8 @@ describe('GameScene', () => {
 
 	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 7 };
 		scene.playerWaves = {
 			update: vi.fn(),
@@ -188,6 +182,7 @@ describe('GameScene', () => {
 			update: vi.fn(() => ({ reachedExit: [] })),
 			hasActiveUnits: vi.fn(() => true),
 			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 1),
 		};
 
 		scene.update(0, 16);
@@ -218,8 +213,8 @@ describe('GameScene', () => {
 		scene.playerTowers = { destroy: vi.fn() };
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
-		scene.playerMerge = { destroy: vi.fn() };
-		scene.playerRandomTower = { reset: vi.fn() };
+		scene.playerDeck = { reset: vi.fn() };
+		scene.selectionGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

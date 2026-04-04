@@ -1,3 +1,5 @@
+export type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
+
 export type TowerType = 'laser' | 'plasma' | 'emp' | 'shield';
 
 export type FusionTowerType =
@@ -33,6 +35,7 @@ export interface TowerDef {
 	tier: number; // 1=common, 2=rare, 3=heroic, 4=legendary, 5=god
 	stats: TowerStats;
 	cost: number;
+	element: ElementType;
 	isPremium: boolean;
 	color: string; // hex color for visual
 	shape: 'diamond' | 'circle' | 'hexagon' | 'shield' | 'star';

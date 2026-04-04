@@ -1,3 +1,5 @@
+import type { ElementType } from './tower';
+
 export type UnitType =
 	| 'scout_drone'
 	| 'battle_robot'
@@ -17,6 +19,7 @@ export interface UnitDef {
 	name: string;
 	type: UnitType;
 	stats: UnitStats;
+	element: ElementType;
 	bounty: number; // gold earned for killing
 	isPremium: boolean;
 }

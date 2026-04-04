@@ -48,6 +48,7 @@ export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
+	ElementType,
 	FusionTowerType,
 	PlacedTower,
 	TowerDef,

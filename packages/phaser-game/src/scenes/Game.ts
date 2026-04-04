@@ -570,7 +570,7 @@ export class GameScene extends Phaser.Scene {
 		>,
 		time: number,
 		delta: number,
-		onKill: (info: { unitDefId: string; bounty: number }) => void,
+		onKill: () => void,
 	): string[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
@@ -578,10 +578,7 @@ export class GameScene extends Phaser.Scene {
 		for (const evt of damageEvents) {
 			const result = unitSystem.applyDamage(evt.unitId, evt.damage);
 			if (result?.killed) {
-				onKill({
-					unitDefId: result.unitDefId,
-					bounty: result.bounty,
-				});
+				onKill();
 			}
 			if (evt.slow) {
 				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
@@ -598,6 +595,7 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.update(delta, this.playerUnits.getActiveCount());
 		this.energySystem.update(delta / 1000);
 		this.tickBuyCooldown(delta);
+		this.updateHUD();
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,

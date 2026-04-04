@@ -258,7 +258,14 @@ export class UnitSystem {
 	}
 
 	getActiveCount(): number {
-		return this.units.size + this.spawnQueue.length;
+		let count = 0;
+		for (const unit of this.units.values()) {
+			if (unit.countsTowardClear) count += 1;
+		}
+		for (const entry of this.spawnQueue) {
+			if (entry.countsTowardClear) count += 1;
+		}
+		return count;
 	}
 
 	private spawnOptionalVfx(

@@ -303,9 +303,11 @@ export function GamePage() {
 							minWidth: 0,
 						})}
 					>
-						{combatHud.phase === 'waiting' && waitCountdown > 0
-							? `다음 ${waitCountdown}s`
-							: formatTimerLabel(combatHud.timerLabel)}
+						{combatHud.bossWarning
+							? '보스 임박'
+							: combatHud.phase === 'waiting' && waitCountdown > 0
+								? `다음 ${waitCountdown}s`
+								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
 					<div
 						data-testid="hud-cooldown"

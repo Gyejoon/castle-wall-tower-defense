@@ -122,6 +122,8 @@ describe('GameScene', () => {
 
 	it('emits a PVE victory payload when the final slot ends with no remaining player units', () => {
 		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
 		scene.playerWaves = {
 			update: vi.fn(),
@@ -150,6 +152,8 @@ describe('GameScene', () => {
 
 	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 7 };
 		scene.playerWaves = {
 			update: vi.fn(),

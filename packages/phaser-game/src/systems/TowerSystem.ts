@@ -225,24 +225,31 @@ export class TowerSystem {
 
 			if (closestUnit) {
 				tower.lastAttackTime = time;
-				const elementMult = getElementMultiplier(def.element, closestUnit.element);
+				const elementMult = getElementMultiplier(
+					def.element,
+					closestUnit.element,
+				);
 				const baseDamage = Math.round(def.stats.damage * elementMult);
 				const special = def.stats.special;
 
-				const slowEffect = this.isSlowSpecial(special)
-					? { factor: this.parseSlowFactor(special!), duration: 2000 }
-					: undefined;
+				const slowEffect =
+					this.isSlowSpecial(special) && special
+						? { factor: this.parseSlowFactor(special), duration: 2000 }
+						: undefined;
 				this.damageEventsBuffer.push({
 					unitId: closestUnit.instanceId,
 					damage: baseDamage,
 					slow: slowEffect,
 				});
 
-				if (this.isStunSpecial(special) && applyStun) {
-					if (special!.includes('aoe')) {
+				if (this.isStunSpecial(special) && special && applyStun) {
+					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
-							const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
+							const unitGrid = this.gridManager.worldToGridFloat(
+								unit.x,
+								unit.y,
+							);
 							const gdx = data.position.x - unitGrid.x;
 							const gdy = data.position.y - unitGrid.y;
 							if (gdx * gdx + gdy * gdy <= rangeSq) {
@@ -267,7 +274,10 @@ export class TowerSystem {
 						const sdx = closestGrid.x - sUnitGrid.x;
 						const sdy = closestGrid.y - sUnitGrid.y;
 						if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
-							const splashElementMult = getElementMultiplier(def.element, unit.element);
+							const splashElementMult = getElementMultiplier(
+								def.element,
+								unit.element,
+							);
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: Math.round(def.stats.damage * splashElementMult * 0.5),

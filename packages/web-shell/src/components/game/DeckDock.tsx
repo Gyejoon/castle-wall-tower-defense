@@ -8,7 +8,7 @@ const ROLE_LABELS: Record<DeckCardDef['role'], string> = {
 	attacker: '공격',
 	splash: '범위',
 	slow: '슬로우',
-	boost: '지원',
+	stun: '스턴',
 };
 
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));

@@ -451,7 +451,7 @@ export class GameScene extends Phaser.Scene {
 
 		for (const evt of damageEvents) {
 			if (evt.damage > 0) {
-				const result = unitSystem.applyDamage(evt.unitId, evt.damage);
+				const result = unitSystem.applyDamage(evt.unitId, evt.damage, evt.armorPierce);
 				if (result?.killed) {
 					onKill();
 				}

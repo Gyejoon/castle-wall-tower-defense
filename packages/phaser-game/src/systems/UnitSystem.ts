@@ -197,6 +197,7 @@ export class UnitSystem {
 	applyDamage(
 		unitId: string,
 		rawDamage: number,
+		armorPierce = false,
 	): {
 		killed: boolean;
 		bounty: number;
@@ -207,7 +208,7 @@ export class UnitSystem {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
 
-		const armor = unit.def.stats.armor;
+		const armor = armorPierce ? 0 : unit.def.stats.armor;
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 

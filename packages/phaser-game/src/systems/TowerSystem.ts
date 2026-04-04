@@ -161,6 +161,7 @@ export class TowerSystem {
 	private damageEventsBuffer: Array<{
 		unitId: string;
 		damage: number;
+		armorPierce?: boolean;
 		slow?: { factor: number; duration: number };
 		stun?: { duration: number };
 	}> = [];
@@ -196,6 +197,7 @@ export class TowerSystem {
 	): Array<{
 		unitId: string;
 		damage: number;
+		armorPierce?: boolean;
 		slow?: { factor: number; duration: number };
 		stun?: { duration: number };
 	}> {
@@ -242,9 +244,12 @@ export class TowerSystem {
 					this.isSlowSpecial(special) && special
 						? { factor: this.parseSlowFactor(special), duration: 2000 }
 						: undefined;
+				// 집중 공격형 (no special) → armor pierce
+				const armorPierce = !special;
 				this.damageEventsBuffer.push({
 					unitId: closestUnit.instanceId,
 					damage: baseDamage,
+					armorPierce,
 					slow: slowEffect,
 				});
 

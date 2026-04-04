@@ -242,6 +242,31 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // Gacha reveal FX (5 tiers, 256x64, 4 frames each)
+  const TIER_COLORS_FOR_FX = [
+    { name: 'common', color: PALETTE.tierCommon },
+    { name: 'rare', color: PALETTE.tierRare },
+    { name: 'heroic', color: PALETTE.tierHeroic },
+    { name: 'legendary', color: PALETTE.tierLegendary },
+    { name: 'god', color: PALETTE.tierGod },
+  ];
+  for (const tier of TIER_COLORS_FOR_FX) {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const r = 6 + f * 8;
+      addGlow(ctx, ox + 32, 32, r, tier.color, 0.5);
+      if (f >= 2) addGlow(ctx, ox + 32, 32, r / 2, PALETTE.white, 0.3);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/gacha-reveal-${tier.name}.png`);
+    entries.push({
+      key: `vfx-gacha-reveal-${tier.name}`, type: 'spritesheet',
+      path: `assets/vfx/gacha-reveal-${tier.name}.png`,
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
   return entries;
 }
 

@@ -523,10 +523,12 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 
 		this.selectionGraphics.clear();
+		this.pathGraphics?.destroy();
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();
 		this.playerDeck.reset();
+		this.energySystem.reset();
 
 		unloadAssetSections(
 			this,

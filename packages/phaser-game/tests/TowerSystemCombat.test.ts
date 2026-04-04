@@ -262,6 +262,48 @@ describe('TowerSystem combat', () => {
 		expect(splashEvt!.slow).toBeDefined();
 	});
 
+	it('focused attacker (no special) sets armorPierce=true', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'laser');
+
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+		const events = towerSystem.update(1000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
+		expect(damageEvt).toBeDefined();
+		expect(damageEvt!.armorPierce).toBe(true);
+	});
+
+	it('splash tower (plasma) does NOT set armorPierce', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'plasma');
+
+		// plasma range=2, place unit on same tile to guarantee in-range
+		// plasma attackSpeed=0.8 → interval 1250ms, need time > 1250
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY);
+		const events = towerSystem.update(2000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
+		expect(damageEvt).toBeDefined();
+		expect(damageEvt!.armorPierce).toBe(false);
+	});
+
 	it('no boost system remains: update has no applyStun callback param', () => {
 		const { towerSystem } = createTowerSystem();
 		// update() takes 3 params (time, delta, unitPositions), not 4

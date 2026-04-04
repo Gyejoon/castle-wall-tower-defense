@@ -58,7 +58,6 @@ describe('gameStore', () => {
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 9,
 			phase: 'boss',
-			buyCooldownMs: 900,
 			bossWarning: true,
 			timerLabel: 'Boss 9',
 		});
@@ -66,7 +65,6 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().combatHud).toEqual({
 			currentSlot: 9,
 			phase: 'boss',
-			buyCooldownMs: 900,
 			bossWarning: true,
 			timerLabel: 'Boss 9',
 		});
@@ -84,6 +82,26 @@ describe('gameStore', () => {
 
 		useGameStore.getState().clearToast();
 		expect(useGameStore.getState().toast).toBeNull();
+	});
+
+	it('initializes deck cards from DEFAULT_DECK and tracks selection', () => {
+		const { deckCards, selectedCardIndex } = useGameStore.getState();
+		expect(deckCards).toHaveLength(4);
+		expect(deckCards[0].towerDefId).toBe('laser');
+		expect(selectedCardIndex).toBeNull();
+
+		useGameStore.getState().setSelectedCardIndex(2);
+		expect(useGameStore.getState().selectedCardIndex).toBe(2);
+
+		useGameStore.getState().setSelectedCardIndex(null);
+		expect(useGameStore.getState().selectedCardIndex).toBeNull();
+	});
+
+	it('resets deck state on resetRun', () => {
+		useGameStore.getState().setSelectedCardIndex(3);
+		useGameStore.getState().resetRun();
+		expect(useGameStore.getState().selectedCardIndex).toBeNull();
+		expect(useGameStore.getState().deckCards).toHaveLength(4);
 	});
 
 	it('tracks player tower count only', () => {
@@ -156,7 +174,6 @@ describe('gameStore', () => {
 		useGameStore.getState().patchCombatHud({
 			currentSlot: 18,
 			phase: 'boss',
-			buyCooldownMs: 700,
 			bossWarning: true,
 			timerLabel: 'Boss 18',
 		});
@@ -181,7 +198,6 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().combatHud).toEqual({
 			currentSlot: 1,
 			phase: 'combat',
-			buyCooldownMs: 0,
 			bossWarning: false,
 			timerLabel: 'Slot 1',
 		});

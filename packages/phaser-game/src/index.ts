@@ -6,10 +6,9 @@ export type { GameEventMap } from './EventBus';
 export { EventBus } from './EventBus';
 export { getPlacementGuardFailure } from './placementRules';
 // Re-export systems for testing
+export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';
-export { MergeSystem } from './systems/MergeSystem';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
-export { RandomTowerSystem } from './systems/RandomTowerSystem';
 export { WaveSystem } from './systems/WaveSystem';
 
 export function startGame(parentElement?: string | HTMLElement): Phaser.Game {

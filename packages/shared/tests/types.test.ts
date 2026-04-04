@@ -22,7 +22,6 @@ type Expect<T extends true> = T;
 type ExpectedCombatHudState = {
 	currentSlot: number;
 	phase: WavePhase;
-	buyCooldownMs: number;
 	bossWarning: boolean;
 	timerLabel: string;
 };
@@ -32,13 +31,18 @@ type _CombatHudStateMatchesPveContract = Expect<
 >;
 
 // @ts-expect-error GameToReactEvent was removed from the shared barrel
-	type RemovedGameToReactEvent = import('../src/index').GameToReactEvent;
+type RemovedGameToReactEvent = import('../src/index').GameToReactEvent;
 // @ts-expect-error ReactToGameEvent was removed from the shared barrel
-	type RemovedReactToGameEvent = import('../src/index').ReactToGameEvent;
+type RemovedReactToGameEvent = import('../src/index').ReactToGameEvent;
 // @ts-expect-error WaveStartedEventPayload was removed from the shared barrel
-	type RemovedWaveStartedEventPayload = import('../src/index').WaveStartedEventPayload;
+type RemovedWaveStartedEventPayload =
+	import('../src/index').WaveStartedEventPayload;
 
-void (0 as RemovedGameToReactEvent | RemovedReactToGameEvent | RemovedWaveStartedEventPayload | 0);
+void (0 as
+	| RemovedGameToReactEvent
+	| RemovedReactToGameEvent
+	| RemovedWaveStartedEventPayload
+	| 0);
 void (0 as _CombatHudStateMatchesPveContract | 0);
 
 describe('Grid constants', () => {
@@ -86,7 +90,6 @@ describe('Shared contracts', () => {
 		const hud: ExpectedCombatHudState = {
 			currentSlot: 10,
 			phase: 'boss',
-			buyCooldownMs: 900,
 			bossWarning: true,
 			timerLabel: 'Boss 00:30',
 		};
@@ -94,7 +97,6 @@ describe('Shared contracts', () => {
 		expect(Object.keys(hud)).toEqual([
 			'currentSlot',
 			'phase',
-			'buyCooldownMs',
 			'bossWarning',
 			'timerLabel',
 		]);

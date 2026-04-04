@@ -1,3 +1,17 @@
+export type {
+	AssetManifest,
+	AssetManifestEntry,
+	AssetManifestSection,
+	AssetManifestType,
+} from './assets/manifest';
+export {
+	inferAssetManifestSection,
+	withManifestSection,
+	withManifestSections,
+} from './assets/manifest';
+export type { DeckCardDef } from './constants/deck';
+export { DEFAULT_DECK } from './constants/deck';
+export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
 export {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
@@ -8,15 +22,8 @@ export {
 	ORTHO_CANVAS_W,
 	ORTHO_TILE,
 	TILE_SIZE,
-
 } from './constants/grid';
-export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
 export { FOREST_GATE_MAP } from './constants/maps';
-export {
-	PITY_THRESHOLD,
-	RANDOM_TOWER_COST,
-	TIER_PROBABILITIES,
-} from './constants/random-tower';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,
@@ -36,8 +43,6 @@ export {
 	TOTAL_WAVES,
 	WAVE_DEFS,
 } from './constants/waves';
-export type { AssetManifest, AssetManifestEntry, AssetManifestSection, AssetManifestType } from './assets/manifest';
-export { inferAssetManifestSection, withManifestSection, withManifestSections } from './assets/manifest';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';

@@ -1,10 +1,11 @@
 import { EventBus } from '@gld/phaser-game';
 import {
+	type DeckCardDef,
 	ENERGY_CAP,
 	type PlacementFailureReason,
-	type TowerDef,
 } from '@gld/shared';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
@@ -66,7 +67,8 @@ export function GamePage() {
 	const setLives = useGameStore((s) => s.setLives);
 	const setEnergy = useGameStore((s) => s.setEnergy);
 	const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
-	const setRolledTower = useGameStore((s) => s.setRolledTower);
+	const setDeckCards = useGameStore((s) => s.setDeckCards);
+	const setSelectedCardIndex = useGameStore((s) => s.setSelectedCardIndex);
 	const setPlayerTowerCount = useGameStore((s) => s.setPlayerTowerCount);
 	const patchCombatHud = useGameStore((s) => s.patchCombatHud);
 	const pushToast = useGameStore((s) => s.pushToast);
@@ -115,13 +117,14 @@ export function GamePage() {
 			reason?: PlacementFailureReason;
 		}) => {
 			setPlacementFeedback(data.success ? null : (data.reason ?? 'occupied'));
-			if (data.success) setRolledTower(null);
+			if (data.success) {
+				setSelectedCardIndex(null);
+			} else if (data.reason === 'insufficient_energy') {
+				pushToast('에너지 부족', 'warning');
+			}
 		};
-		const onRandomTowerRolled = (data: {
-			towerId: string;
-			towerDef: TowerDef;
-		}) => {
-			setRolledTower(data.towerDef);
+		const onDeckLoaded = (data: { cards: readonly DeckCardDef[] }) => {
+			setDeckCards(data.cards);
 		};
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
@@ -155,25 +158,17 @@ export function GamePage() {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			pushToast('보스 경고', 'warning');
 		};
-		const onBuyCooldownUpdated = (data: { remainingMs: number }) => {
-			patchCombatHud({ buyCooldownMs: data.remainingMs });
-		};
-		const onTowerMergeResolved = (data: { success: boolean }) => {
-			if (!data.success) pushToast('합성 실패', 'error');
-		};
 
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
-		EventBus.on('random-tower-rolled', onRandomTowerRolled);
+		EventBus.on('deck-loaded', onDeckLoaded);
 		EventBus.on('player-tower-count', onPlayerTowerCount);
 		EventBus.on('request-reset-run', onResetRun);
 		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
-		EventBus.on('buy-cooldown-updated', onBuyCooldownUpdated);
-		EventBus.on('tower-merge-resolved', onTowerMergeResolved);
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
@@ -182,23 +177,22 @@ export function GamePage() {
 			EventBus.off('game-over', onGameOver);
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
-			EventBus.off('random-tower-rolled', onRandomTowerRolled);
+			EventBus.off('deck-loaded', onDeckLoaded);
 			EventBus.off('player-tower-count', onPlayerTowerCount);
 			EventBus.off('request-reset-run', onResetRun);
 			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
-			EventBus.off('buy-cooldown-updated', onBuyCooldownUpdated);
-			EventBus.off('tower-merge-resolved', onTowerMergeResolved);
 		};
 	}, [
 		patchCombatHud,
 		pushToast,
 		resetRun,
+		setDeckCards,
 		setEnergy,
 		setLives,
 		setPlacementFeedback,
 		setPlayerTowerCount,
-		setRolledTower,
+		setSelectedCardIndex,
 		setRunStatus,
 	]);
 
@@ -308,25 +302,6 @@ export function GamePage() {
 							: combatHud.phase === 'waiting' && waitCountdown > 0
 								? `다음 ${waitCountdown}s`
 								: formatTimerLabel(combatHud.timerLabel)}
-					</div>
-					<div
-						data-testid="hud-cooldown"
-						style={getHudChipStyle({
-							color:
-								combatHud.buyCooldownMs > 0
-									? colors.info
-									: colors.textSecondary,
-							background:
-								combatHud.buyCooldownMs > 0
-									? 'rgba(91,200,232,0.16)'
-									: 'rgba(42,32,16,0.82)',
-							minWidth: 0,
-						})}
-					>
-						구매{' '}
-						{combatHud.buyCooldownMs > 0
-							? `${(combatHud.buyCooldownMs / 1000).toFixed(1)}s`
-							: '준비'}
 					</div>
 				</div>
 
@@ -452,6 +427,8 @@ export function GamePage() {
 						</div>
 					)}
 				</div>
+
+				<DeckDock />
 			</div>
 		</div>
 	);

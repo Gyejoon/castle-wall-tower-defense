@@ -428,7 +428,7 @@ export function GamePage() {
 					)}
 				</div>
 
-				<DeckDock />
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}
 			</div>
 		</div>
 	);

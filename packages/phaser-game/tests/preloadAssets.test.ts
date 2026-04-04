@@ -224,8 +224,8 @@ describe('field asset preload alignment', () => {
 		preloadAssetSection(scene as never, manifest, 'ui', false);
 
 		expect(image).toHaveBeenCalledWith(
-			'ui-pressure-defend',
-			manifestByKey.get('ui-pressure-defend')?.path,
+			'ui-hp-bar',
+			manifestByKey.get('ui-hp-bar')?.path,
 		);
 		expect(spritesheet).toHaveBeenCalledWith(
 			'ui-stat-icons',
@@ -249,7 +249,7 @@ describe('field asset preload alignment', () => {
 			callback();
 		});
 		const start = vi.fn();
-		const exists = vi.fn((key: string) => key === 'ui-pressure-defend');
+		const exists = vi.fn((key: string) => key === 'ui-hp-bar');
 		const scene = {
 			load: {
 				image,
@@ -271,8 +271,8 @@ describe('field asset preload alignment', () => {
 		await prefetchAssetSections(scene as never, manifest, ['ui', 'vfx'], false);
 
 		expect(image).not.toHaveBeenCalledWith(
-			'ui-pressure-defend',
-			manifestByKey.get('ui-pressure-defend')?.path,
+			'ui-hp-bar',
+			manifestByKey.get('ui-hp-bar')?.path,
 		);
 		expect(spritesheet).toHaveBeenCalledWith(
 			'vfx-explosion-sm',
@@ -308,7 +308,7 @@ describe('field asset preload alignment', () => {
 
 		unloadAssetSections(scene as never, manifest, ['ui', 'preload']);
 
-		expect(removeTexture).toHaveBeenCalledWith('ui-pressure-defend');
+		expect(removeTexture).toHaveBeenCalledWith('ui-hp-bar');
 		expect(removeTexture).toHaveBeenCalledWith(
 			TINY_SWORDS_TILESET_ASSETS[0].key,
 		);

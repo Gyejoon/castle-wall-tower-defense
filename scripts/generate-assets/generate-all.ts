@@ -8,7 +8,6 @@ import { convertToWebP } from './convert-webp';
 import { generate as generateIcons } from './generate-icons';
 import { generateMap } from './generate-map';
 import { generate as generateMatchUi } from './generate-match-ui';
-import { generate as generatePressureUi } from './generate-pressure-ui';
 import { generate as generateProjectiles } from './generate-projectiles';
 import type { ManifestEntry } from './shared';
 import { generate as generateTowers } from './generate-towers';
@@ -59,7 +58,6 @@ export async function generateAllAssets() {
 		projectiles,
 		vfx,
 		ui,
-		pressureUi,
 		matchUi,
 		icons,
 		map,
@@ -88,10 +86,6 @@ export async function generateAllAssets() {
 			console.log('[ui] done');
 			return result;
 		}),
-		generatePressureUi().then((result) => {
-			console.log('[pressure-ui] done');
-			return result;
-		}),
 		generateMatchUi().then((result) => {
 			console.log('[match-ui] done');
 			return result;
@@ -113,7 +107,6 @@ export async function generateAllAssets() {
 		...projectiles,
 		...vfx,
 		...ui,
-		...pressureUi,
 		...matchUi,
 		...icons,
 		...map,

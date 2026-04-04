@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-01T16:07:54.256Z",
+  "generated": "2026-04-04T13:18:36.373Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -566,30 +566,6 @@
       "key": "ui-cursor-place",
       "type": "image",
       "path": "assets/ui/cursor-place.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-pressure-defend",
-      "type": "image",
-      "path": "assets/ui/pressure-defend.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-pressure-attack",
-      "type": "image",
-      "path": "assets/ui/pressure-attack.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-pressure-invest",
-      "type": "image",
-      "path": "assets/ui/pressure-invest.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-pressure-panel-bg",
-      "type": "image",
-      "path": "assets/ui/pressure-panel-bg.png",
       "section": "ui"
     },
     {

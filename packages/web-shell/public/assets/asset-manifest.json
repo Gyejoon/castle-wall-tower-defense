@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T14:42:17.882Z",
+  "generated": "2026-04-04T15:32:43.597Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -482,13 +482,13 @@
       "key": "unit-titan-boss",
       "type": "image",
       "path": "assets/units/titan-boss.png",
-      "section": "preload"
+      "section": "boss"
     },
     {
       "key": "unit-titan-boss-rage",
       "type": "image",
       "path": "assets/units/titan-boss-rage.png",
-      "section": "preload"
+      "section": "boss"
     },
     {
       "key": "projectile-laser-beam",
@@ -632,19 +632,19 @@
       "key": "vfx-boss-warning",
       "type": "image",
       "path": "assets/vfx/boss-warning.png",
-      "section": "vfx"
+      "section": "boss"
     },
     {
       "key": "vfx-boss-final",
       "type": "image",
       "path": "assets/vfx/boss-final.png",
-      "section": "vfx"
+      "section": "boss"
     },
     {
       "key": "vfx-boss-telegraph",
       "type": "image",
       "path": "assets/vfx/boss-telegraph.png",
-      "section": "vfx"
+      "section": "boss"
     },
     {
       "key": "vfx-boss-death-fx",
@@ -653,7 +653,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "boss"
     },
     {
       "key": "vfx-upgrade-success-fx",
@@ -680,7 +680,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "gacha"
     },
     {
       "key": "vfx-gacha-reveal-rare",
@@ -689,7 +689,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "gacha"
     },
     {
       "key": "vfx-gacha-reveal-heroic",
@@ -698,7 +698,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "gacha"
     },
     {
       "key": "vfx-gacha-reveal-legendary",
@@ -707,7 +707,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "gacha"
     },
     {
       "key": "vfx-gacha-reveal-god",
@@ -716,7 +716,7 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "vfx"
+      "section": "gacha"
     },
     {
       "key": "ui-tower-icons",
@@ -752,7 +752,7 @@
       "key": "ui-boss-hp-bar",
       "type": "image",
       "path": "assets/ui/boss-hp-bar.png",
-      "section": "ui"
+      "section": "boss"
     },
     {
       "key": "ui-energy-gauge",
@@ -902,13 +902,13 @@
       "key": "ui-defense-success",
       "type": "image",
       "path": "assets/ui/defense-success.png",
-      "section": "ui"
+      "section": "reward"
     },
     {
       "key": "ui-defense-fail",
       "type": "image",
       "path": "assets/ui/defense-fail.png",
-      "section": "ui"
+      "section": "reward"
     },
     {
       "key": "icon-192",
@@ -1118,61 +1118,61 @@
       "key": "ui-tutorial-highlight",
       "type": "image",
       "path": "assets/ui/tutorial-highlight.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-tutorial-arrow-up",
       "type": "image",
       "path": "assets/ui/tutorial-arrow-up.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-tutorial-arrow-down",
       "type": "image",
       "path": "assets/ui/tutorial-arrow-down.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-tutorial-arrow-left",
       "type": "image",
       "path": "assets/ui/tutorial-arrow-left.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-tutorial-arrow-right",
       "type": "image",
       "path": "assets/ui/tutorial-arrow-right.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-tutorial-hint-bubble",
       "type": "image",
       "path": "assets/ui/tutorial-hint-bubble.png",
-      "section": "ui"
+      "section": "tutorial"
     },
     {
       "key": "ui-gacha-box-free",
       "type": "image",
       "path": "assets/ui/gacha-box-free.png",
-      "section": "ui"
+      "section": "gacha"
     },
     {
       "key": "ui-gacha-box-ad",
       "type": "image",
       "path": "assets/ui/gacha-box-ad.png",
-      "section": "ui"
+      "section": "gacha"
     },
     {
       "key": "ui-gacha-box-diamond",
       "type": "image",
       "path": "assets/ui/gacha-box-diamond.png",
-      "section": "ui"
+      "section": "gacha"
     },
     {
       "key": "ui-gacha-box-premium",
       "type": "image",
       "path": "assets/ui/gacha-box-premium.png",
-      "section": "ui"
+      "section": "gacha"
     },
     {
       "key": "ui-gacha-box-open",
@@ -1181,13 +1181,13 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frameCount": 4,
-      "section": "ui"
+      "section": "gacha"
     },
     {
       "key": "ui-badge-new",
       "type": "image",
       "path": "assets/ui/badge-new.png",
-      "section": "ui"
+      "section": "gacha"
     }
   ]
 }

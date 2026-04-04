@@ -1,7 +1,37 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, ELEMENT_COLORS, type ElementType, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/vfx';
+
+function drawElementSymbol(ctx: import('@napi-rs/canvas').SKRSContext2D, element: ElementType, cx: number, cy: number): void {
+  const white = PALETTE.white;
+  switch (element) {
+    case 'fire':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx - 1, cy - 1, white);
+      setPixel(ctx, cx + 1, cy - 1, white);
+      setPixel(ctx, cx, cy, white);
+      break;
+    case 'water':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx + 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+    case 'lightning':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx + 1, cy - 1, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+    case 'neutral':
+      setPixel(ctx, cx, cy - 1, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx + 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+  }
+}
 
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -125,6 +155,22 @@ export async function generate(): Promise<ManifestEntry[]> {
 
     saveCanvas(canvas, `${OUTPUT_DIR}/spawn-portal.png`);
     entries.push({ key: 'vfx-spawn-portal', type: 'spritesheet', path: 'assets/vfx/spawn-portal.png', frameWidth: 32, frameHeight: 32, frameCount: 4 });
+  }
+
+  // Element badge overlays (16x16 each)
+  for (const [element, colors] of Object.entries(ELEMENT_COLORS)) {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    fillCircle(ctx, 8, 8, 6, colors.primary);
+    drawCircle(ctx, 8, 8, 7, PALETTE.shadow);
+    drawElementSymbol(ctx, element as ElementType, 8, 8);
+
+    const filename = `element-badge-${element}.png`;
+    saveCanvas(canvas, `${OUTPUT_DIR}/${filename}`);
+    entries.push({
+      key: `vfx-element-badge-${element}`,
+      type: 'image',
+      path: `assets/vfx/${filename}`,
+    });
   }
 
   return entries;

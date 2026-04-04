@@ -204,6 +204,43 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // Stage select thumbnails (128x96 each, 3 stages)
+  const STAGES = [
+    { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageBright },
+    { id: 'lava_fortress', name: 'Lava Fortress', color: PALETTE.fireRed },
+    { id: 'storm_citadel', name: 'Storm Citadel', color: '#4060c0' },
+  ];
+  for (const stage of STAGES) {
+    const { canvas, ctx } = makeCanvas(128, 96);
+    drawRect(ctx, 0, 0, 128, 96, stage.color);
+    drawRect(ctx, 4, 4, 120, 88, hexToRgba(PALETTE.shadow, 0.5));
+    ctx.fillStyle = PALETTE.white;
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(stage.name, 64, 54);
+    saveCanvas(canvas, `${OUTPUT_DIR}/stage-thumb-${stage.id}.png`);
+    entries.push({
+      key: `ui-stage-thumb-${stage.id}`, type: 'image',
+      path: `assets/ui/stage-thumb-${stage.id}.png`,
+    });
+  }
+
+  // Lock/unlock icons (32x32 each)
+  for (const state of ['locked', 'unlocked']) {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    const color = state === 'locked' ? PALETTE.gray : PALETTE.gold;
+    fillCircle(ctx, 16, 16, 12, color);
+    if (state === 'locked') {
+      drawLine(ctx, 10, 10, 22, 22, PALETTE.shadow);
+      drawLine(ctx, 22, 10, 10, 22, PALETTE.shadow);
+    } else {
+      drawLine(ctx, 10, 16, 14, 22, PALETTE.shadow);
+      drawLine(ctx, 14, 22, 24, 10, PALETTE.shadow);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-${state}.png`);
+    entries.push({ key: `ui-icon-${state}`, type: 'image', path: `assets/ui/icon-${state}.png` });
+  }
+
   return entries;
 }
 

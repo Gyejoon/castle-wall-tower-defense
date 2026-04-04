@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from 'fs';
+import { dirname } from 'path';
 import { FOREST_GATE_MAP } from '../../packages/shared/src/index';
 import {
   TINY_SWORDS_DECORATION_ASSETS,
@@ -511,13 +512,61 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   writeFileSync(OUTPUT_PATH, JSON.stringify(tiledMap, null, 2));
   console.log(`  wrote ${OUTPUT_PATH}`);
 
-  return [
+  const entries: ManifestEntry[] = [
     {
       key: 'tilemap-forest-gate',
       type: 'tilemapTiledJSON',
       path: 'assets/maps/forest-gate.json',
     },
   ];
+
+  // Additional stage maps (simplified — same grid size, different path counts)
+  const ADDITIONAL_STAGES = [
+    { id: 'lava-fortress', pathCount: 2 },
+    { id: 'storm-citadel', pathCount: 3 },
+  ];
+
+  for (const stage of ADDITIONAL_STAGES) {
+    const mapData = {
+      width: 8,
+      height: 18,
+      tilewidth: 32,
+      tileheight: 32,
+      orientation: 'orthogonal',
+      layers: [
+        {
+          name: 'ground',
+          type: 'tilelayer',
+          width: 8,
+          height: 18,
+          data: Array(8 * 18).fill(1), // placeholder ground
+        },
+        {
+          name: 'path',
+          type: 'tilelayer',
+          width: 8,
+          height: 18,
+          data: Array(8 * 18).fill(0), // placeholder — paths to be designed later
+        },
+      ],
+      properties: {
+        stageId: stage.id,
+        pathCount: stage.pathCount,
+      },
+    };
+
+    const mapPath = `packages/web-shell/public/assets/maps/${stage.id}.json`;
+    mkdirSync(dirname(mapPath), { recursive: true });
+    writeFileSync(mapPath, JSON.stringify(mapData, null, 2));
+    console.log(`  wrote ${mapPath}`);
+    entries.push({
+      key: `tilemap-${stage.id}`,
+      type: 'tilemapTiledJSON' as const,
+      path: `assets/maps/${stage.id}.json`,
+    });
+  }
+
+  return entries;
 }
 
 if (import.meta.main) {

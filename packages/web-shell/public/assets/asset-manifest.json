@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T13:40:40.026Z",
+  "generated": "2026-04-04T13:42:18.650Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -746,6 +746,36 @@
       "section": "ui"
     },
     {
+      "key": "ui-stage-thumb-forest_gate",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-forest_gate.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-stage-thumb-lava_fortress",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-lava_fortress.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-stage-thumb-storm_citadel",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-storm_citadel.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-locked",
+      "type": "image",
+      "path": "assets/ui/icon-locked.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-unlocked",
+      "type": "image",
+      "path": "assets/ui/icon-unlocked.png",
+      "section": "ui"
+    },
+    {
       "key": "ui-defense-success",
       "type": "image",
       "path": "assets/ui/defense-success.png",
@@ -779,6 +809,18 @@
       "key": "tilemap-forest-gate",
       "type": "tilemapTiledJSON",
       "path": "assets/maps/forest-gate.json",
+      "section": "preload"
+    },
+    {
+      "key": "tilemap-lava-fortress",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/lava-fortress.json",
+      "section": "preload"
+    },
+    {
+      "key": "tilemap-storm-citadel",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/storm-citadel.json",
       "section": "preload"
     },
     {

@@ -302,8 +302,11 @@ export class UnitSystem {
 		);
 	}
 
+	private reachedExitBuffer: string[] = [];
+
 	update(_time: number, delta: number): { reachedExit: string[] } {
-		const reachedExit: string[] = [];
+		const reachedExit = this.reachedExitBuffer;
+		reachedExit.length = 0;
 
 		this.spawnTimer += delta;
 		if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
@@ -391,6 +394,14 @@ export class UnitSystem {
 		return { reachedExit };
 	}
 
+	private unitPositionsBuffer: Array<{
+		instanceId: string;
+		x: number;
+		y: number;
+		hp: number;
+		element: ElementType;
+	}> = [];
+
 	getUnitPositions(): Array<{
 		instanceId: string;
 		x: number;
@@ -398,13 +409,17 @@ export class UnitSystem {
 		hp: number;
 		element: ElementType;
 	}> {
-		return Array.from(this.units.values()).map((unit) => ({
-			instanceId: unit.data.instanceId,
-			x: unit.worldX,
-			y: unit.worldY,
-			hp: unit.data.hp,
-			element: unit.def.element,
-		}));
+		this.unitPositionsBuffer.length = 0;
+		for (const unit of this.units.values()) {
+			this.unitPositionsBuffer.push({
+				instanceId: unit.data.instanceId,
+				x: unit.worldX,
+				y: unit.worldY,
+				hp: unit.data.hp,
+				element: unit.def.element,
+			});
+		}
+		return this.unitPositionsBuffer;
 	}
 
 	destroy(): void {

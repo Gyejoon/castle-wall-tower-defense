@@ -143,7 +143,7 @@ export const LAVA_FORTRESS_MAP: MapLayout = {
 	buildablePoints: FOREST_GATE_BUILDABLE_POINTS,
 	spawnPoint: { x: 3, y: 0 },
 	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-lava-fortress',
+	tilemapKey: 'tilemap-lava_fortress',
 	tilesetKey: 'tileset',
 };
 
@@ -158,7 +158,7 @@ export const STORM_CITADEL_MAP: MapLayout = {
 	buildablePoints: FOREST_GATE_BUILDABLE_POINTS,
 	spawnPoint: { x: 3, y: 0 },
 	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-storm-citadel',
+	tilemapKey: 'tilemap-storm_citadel',
 	tilesetKey: 'tileset',
 };
 

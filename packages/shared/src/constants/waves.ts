@@ -308,7 +308,13 @@ export const WAVE_REGISTRY: Record<string, WaveDef[]> = {
 };
 
 export function getWavesForMap(mapId: string): WaveDef[] {
-	return WAVE_REGISTRY[mapId] ?? WAVE_DEFS;
+	const waves = WAVE_REGISTRY[mapId];
+	if (!waves && mapId !== 'forest_gate') {
+		console.warn(
+			`[getWavesForMap] No wave definitions for map "${mapId}", falling back to forest_gate`,
+		);
+	}
+	return waves ?? WAVE_DEFS;
 }
 
 export const TOTAL_WAVES = WAVE_DEFS.length;

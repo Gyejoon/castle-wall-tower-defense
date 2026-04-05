@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { UNITS } from '../src/constants/units';
-import { TOTAL_WAVES, WAVE_DEFS } from '../src/constants/waves';
+import {
+	getWavesForMap,
+	TOTAL_WAVES,
+	WAVE_DEFS,
+	WAVE_REGISTRY,
+} from '../src/constants/waves';
 
 const validUnitIds = new Set(UNITS.map((u) => u.id));
 
@@ -46,5 +51,31 @@ describe('WAVE_DEFS', () => {
 		for (const slot of WAVE_DEFS) {
 			expect(slot.delayAfterClearSec).toBeGreaterThanOrEqual(0);
 		}
+	});
+});
+
+describe('getWavesForMap', () => {
+	it('forest_gate 맵은 기본 WAVE_DEFS를 반환한다', () => {
+		expect(getWavesForMap('forest_gate')).toBe(WAVE_DEFS);
+	});
+
+	it('알 수 없는 맵은 기본 WAVE_DEFS로 fallback한다', () => {
+		expect(getWavesForMap('unknown_map')).toBe(WAVE_DEFS);
+	});
+
+	it('모든 등록된 맵이 10개 웨이브를 가진다', () => {
+		for (const [mapId, waves] of Object.entries(WAVE_REGISTRY)) {
+			expect(waves).toHaveLength(10);
+			for (let i = 0; i < waves.length; i++) {
+				expect(waves[i].slotIndex).toBe(i + 1);
+			}
+		}
+	});
+
+	it('lava_fortress, storm_citadel 맵이 등록되어 있다', () => {
+		expect(getWavesForMap('lava_fortress')).not.toBe(WAVE_DEFS);
+		expect(getWavesForMap('storm_citadel')).not.toBe(WAVE_DEFS);
+		expect(getWavesForMap('lava_fortress')).toHaveLength(10);
+		expect(getWavesForMap('storm_citadel')).toHaveLength(10);
 	});
 });

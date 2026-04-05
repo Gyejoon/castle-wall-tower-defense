@@ -200,6 +200,25 @@ describe('GamePage', () => {
 		expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
 	});
 
+	it('결과 화면에 획득 XP를 표시한다', () => {
+		const { emitSpy } = getEventBusHarness();
+		const view = render(<GamePage />);
+
+		act(() => {
+			emitSpy('game-over', {
+				result: 'victory',
+				stats: {
+					wavesCleared: 10,
+					towersPlaced: 5,
+					timeSurvivedSec: 180,
+					goldEarned: 200,
+				},
+			});
+		});
+
+		expect(view.getByText(/획득 XP/)).toBeTruthy();
+	});
+
 	it('handles game-over only through the result payload contract', () => {
 		const { emitSpy } = getEventBusHarness();
 		render(<GamePage />);

@@ -160,6 +160,9 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		const mapWaves = getWavesForMap(mapId);
+		if (mapWaves.length === 0) {
+			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
+		}
 		this.currentSlotDef = mapWaves[0];
 		this.playerWaves = new WaveSystem(this.playerUnits, undefined, mapId);
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;

@@ -75,6 +75,8 @@ interface GameStoreState {
 	bossHp: BossHpState;
 	bossWarningVisible: boolean;
 	gameOverStats: GameOverStats | null;
+	tutorialStep: number | null;
+	tutorialMessage: string | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -105,6 +107,8 @@ interface GameStoreState {
 	setBossHp: (bossHp: BossHpState) => void;
 	setBossWarningVisible: (v: boolean) => void;
 	setGameOverStats: (stats: GameOverStats | null) => void;
+	setTutorialStep: (step: number | null) => void;
+	setTutorialMessage: (msg: string | null) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -132,6 +136,8 @@ const createRunState = () => ({
 	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
 	bossWarningVisible: false,
 	gameOverStats: null,
+	tutorialStep: null,
+	tutorialMessage: null,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -227,4 +233,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setBossHp: (bossHp) => set({ bossHp }),
 	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
 	setGameOverStats: (stats) => set({ gameOverStats: stats }),
+	setTutorialStep: (step) => set({ tutorialStep: step }),
+	setTutorialMessage: (msg) => set({ tutorialMessage: msg }),
 }));

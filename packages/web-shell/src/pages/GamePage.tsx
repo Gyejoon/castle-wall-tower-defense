@@ -97,6 +97,7 @@ export function GamePage() {
 				wavesCleared: number;
 				towersPlaced: number;
 				timeSurvivedSec: number;
+				goldEarned: number;
 			};
 		}) => {
 			setRunStatus(data.result);

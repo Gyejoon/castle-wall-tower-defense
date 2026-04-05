@@ -187,7 +187,12 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'victory',
-				stats: { wavesCleared: 10, towersPlaced: 5, timeSurvivedSec: 180, goldEarned: 200 },
+				stats: {
+					wavesCleared: 10,
+					towersPlaced: 5,
+					timeSurvivedSec: 180,
+					goldEarned: 200,
+				},
 			});
 		});
 
@@ -202,7 +207,12 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'defeat',
-				stats: { wavesCleared: 5, towersPlaced: 3, timeSurvivedSec: 90, goldEarned: 80 },
+				stats: {
+					wavesCleared: 5,
+					towersPlaced: 3,
+					timeSurvivedSec: 90,
+					goldEarned: 80,
+				},
 			});
 		});
 

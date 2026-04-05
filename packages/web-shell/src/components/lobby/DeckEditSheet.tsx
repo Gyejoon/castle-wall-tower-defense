@@ -72,9 +72,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 			<div className="w-full max-w-[430px] flex flex-col bg-bg">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-border bg-panel shrink-0">
-					<span className="font-pixel text-base text-gold">
-						덱 편집
-					</span>
+					<span className="font-pixel text-base text-gold">덱 편집</span>
 					<button
 						type="button"
 						aria-label="닫기"
@@ -111,7 +109,9 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												isSelected
 													? 'bg-[rgba(240,208,96,0.12)] border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
 													: 'bg-panel border-border shadow-none',
-												isFull ? 'cursor-not-allowed opacity-35' : 'cursor-pointer opacity-100',
+												isFull
+													? 'cursor-not-allowed opacity-35'
+													: 'cursor-pointer opacity-100',
 											)}
 										>
 											{isSelected && (

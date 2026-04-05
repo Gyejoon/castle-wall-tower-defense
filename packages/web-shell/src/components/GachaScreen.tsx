@@ -98,9 +98,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 
 	return (
 		<div className="fixed inset-0 z-10 bg-[rgba(10,8,4,0.92)] flex flex-col items-center justify-center gap-4 p-5">
-			<h2 className="text-gold font-pixel text-lg">
-				소환의 제단
-			</h2>
+			<h2 className="text-gold font-pixel text-lg">소환의 제단</h2>
 
 			{phase === 'opening' && (
 				<div className="w-[120px] h-[120px] flex items-center justify-center">
@@ -167,13 +165,9 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 									alt={box.label}
 									className="w-12 h-12 [image-rendering:pixelated]"
 								/>
-								<p className="font-pixel text-xs text-text mt-1">
-									{box.label}
-								</p>
+								<p className="font-pixel text-xs text-text mt-1">{box.label}</p>
 								{box.cost > 0 && (
-									<p className="font-pixel text-[11px] text-gold">
-										{box.cost}
-									</p>
+									<p className="font-pixel text-[11px] text-gold">{box.cost}</p>
 								)}
 							</div>
 						))}

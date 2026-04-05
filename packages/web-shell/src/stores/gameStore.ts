@@ -115,9 +115,7 @@ interface GameStoreState {
 	setSelectedDeck: (deck: string[]) => void;
 	setBossHp: (bossHp: BossHpState) => void;
 	setBossWarningVisible: (v: boolean) => void;
-	setGameOverStats: (
-		stats: GameOverStats | null,
-	) => void;
+	setGameOverStats: (stats: GameOverStats | null) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({

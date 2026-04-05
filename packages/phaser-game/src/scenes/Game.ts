@@ -148,10 +148,14 @@ export class GameScene extends Phaser.Scene {
 			canvasHeight: canvasH,
 		});
 		this.playerPathfinding = new PathfindingSystem();
+		const collection = this.game.registry.get('collection') as
+			| import('@gld/shared').OwnedTower[]
+			| undefined;
 		this.playerTowers = new TowerSystem(
 			this,
 			this.playerGrid,
 			this.playerPathfinding,
+			collection,
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels

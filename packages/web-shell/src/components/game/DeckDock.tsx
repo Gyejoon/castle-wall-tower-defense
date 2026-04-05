@@ -1,23 +1,11 @@
 import { EventBus } from '@gld/phaser-game';
-import { ALL_TOWERS, type DeckCardDef, ENERGY_PER_SEC } from '@gld/shared';
+import { ALL_TOWERS, type DeckCardDef } from '@gld/shared';
 import type { CSSProperties } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { colors, fonts } from '../../styles/tokens';
 
-const ROLE_LABELS: Record<DeckCardDef['role'], string> = {
-	attacker: '공격',
-	splash: '범위',
-	slow: '슬로우',
-	stun: '스턴',
-};
-
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
-
-function estimateSeconds(energy: number, cost: number): number {
-	const deficit = cost - energy;
-	if (deficit <= 0) return 0;
-	return Math.ceil(deficit / ENERGY_PER_SEC);
-}
+const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
 
 export function DeckDock() {
 	const deckCards = useGameStore((s) => s.deckCards);
@@ -54,8 +42,6 @@ export function DeckDock() {
 			{deckCards.map((card, i) => {
 				const isSelected = selectedCardIndex === i;
 				const canAfford = energy >= card.energyCost;
-				const waitSec = estimateSeconds(energy, card.energyCost);
-
 				return (
 					<button
 						key={card.towerDefId}
@@ -64,32 +50,34 @@ export function DeckDock() {
 						onClick={() => handleCardTap(i, card)}
 						style={cardStyle(isSelected, canAfford)}
 					>
-						<span
-							style={{
-								fontSize: '8px',
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-							}}
-						>
-							{ROLE_LABELS[card.role]}
-						</span>
+						<img
+							src={`assets/towers/${TOWER_TYPE_MAP.get(card.towerDefId) ?? card.towerDefId}.webp`}
+							alt={TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
+							width={32}
+							height={32}
+							style={{ imageRendering: 'pixelated' }}
+						/>
 						<span
 							style={{
 								fontSize: '9px',
 								color: colors.text,
 								fontFamily: fonts.pixel,
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+								maxWidth: '100%',
 							}}
 						>
 							{TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 						</span>
 						<span
 							style={{
-								fontSize: '10px',
-								color: canAfford ? colors.gold : colors.textSecondary,
+								fontSize: '11px',
+								color: canAfford ? colors.gold : colors.danger,
 								fontFamily: fonts.pixel,
 							}}
 						>
-							{canAfford ? `⚡${card.energyCost}` : `~${waitSec}s`}
+							⚡{card.energyCost}
 						</span>
 					</button>
 				);
@@ -100,7 +88,8 @@ export function DeckDock() {
 
 function cardStyle(isSelected: boolean, canAfford: boolean): CSSProperties {
 	return {
-		width: '80px',
+		flex: 1,
+		minWidth: 0,
 		height: '86px',
 		background: colors.panel,
 		border: `2px solid ${isSelected ? colors.gold : colors.border}`,

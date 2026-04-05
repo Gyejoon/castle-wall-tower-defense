@@ -39,7 +39,7 @@ export function BossHpBar() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '8px',
+						fontSize: '12px',
 						color: bossHp.phase === 2 ? colors.danger : colors.gold,
 					}}
 				>
@@ -48,7 +48,7 @@ export function BossHpBar() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '7px',
+						fontSize: '11px',
 						color: colors.textSecondary,
 					}}
 				>
@@ -80,7 +80,7 @@ export function BossHpBar() {
 			<div
 				style={{
 					fontFamily: fonts.pixel,
-					fontSize: '7px',
+					fontSize: '11px',
 					color: colors.textSecondary,
 					textAlign: 'right',
 				}}

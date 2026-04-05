@@ -83,7 +83,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 							className="tab-label"
 							style={{
 								fontFamily: fonts.pixel,
-								fontSize: '7px',
+								fontSize: '11px',
 								color: isActive ? colors.gold : colors.textSecondary,
 								transition: 'color 0.15s',
 							}}

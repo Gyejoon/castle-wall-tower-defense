@@ -47,7 +47,7 @@ export function SettingsTab() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '10px',
+						fontSize: '14px',
 						color: colors.text,
 					}}
 				>
@@ -105,7 +105,7 @@ function SettingsSection({
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '7px',
+						fontSize: '11px',
 						color: colors.accent,
 					}}
 				>
@@ -145,7 +145,11 @@ function ToggleRow({
 			}}
 		>
 			<span
-				style={{ fontFamily: fonts.pixel, fontSize: '8px', color: colors.text }}
+				style={{
+					fontFamily: fonts.pixel,
+					fontSize: '12px',
+					color: colors.text,
+				}}
 			>
 				{label}
 			</span>
@@ -186,14 +190,18 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 			}}
 		>
 			<span
-				style={{ fontFamily: fonts.pixel, fontSize: '8px', color: colors.text }}
+				style={{
+					fontFamily: fonts.pixel,
+					fontSize: '12px',
+					color: colors.text,
+				}}
 			>
 				{label}
 			</span>
 			<span
 				style={{
 					fontFamily: fonts.pixel,
-					fontSize: '7px',
+					fontSize: '11px',
 					color: colors.textSecondary,
 				}}
 			>

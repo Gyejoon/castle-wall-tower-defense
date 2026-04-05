@@ -2,13 +2,13 @@ import { EventBus, startGame } from '@gld/phaser-game';
 import type Phaser from 'phaser';
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaStore } from '../stores/metaStore';
 
 export function PhaserGame() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const gameRef = useRef<Phaser.Game | null>(null);
 	const setGameReady = useGameStore((s) => s.setGameReady);
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
-	const selectedDeck = useGameStore((s) => s.selectedDeck);
 
 	useEffect(() => {
 		if (!containerRef.current) return;
@@ -23,7 +23,9 @@ export function PhaserGame() {
 		const onReady = () => setGameReady(true);
 		EventBus.on('game-ready', onReady);
 		const game = startGame(container, { mapId: selectedMapId });
-		game.registry.set('deckIds', selectedDeck);
+		const metaState = useMetaStore.getState();
+		game.registry.set('deckIds', metaState.selectedDeck);
+		game.registry.set('collection', metaState.collection);
 		gameRef.current = game;
 
 		return () => {

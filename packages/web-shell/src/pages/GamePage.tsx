@@ -1,5 +1,6 @@
 import { EventBus } from '@gld/phaser-game';
 import {
+	battleXp,
 	type DeckCardDef,
 	ENERGY_CAP,
 	type PlacementFailureReason,
@@ -10,6 +11,7 @@ import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaStore } from '../stores/metaStore';
 import { colors, fonts } from '../styles/tokens';
 
 function formatTimerLabel(rawLabel: string) {
@@ -46,7 +48,7 @@ function getHudChipStyle({
 		background,
 		color,
 		fontFamily: fonts.pixel,
-		fontSize: '10px',
+		fontSize: '14px',
 		border: `1px solid ${colors.border}`,
 		boxShadow: `2px 2px 0px rgba(0,0,0,0.25)`,
 		flexShrink: 0,
@@ -103,6 +105,14 @@ export function GamePage() {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
 			setGameOverStats(data.stats);
+			const meta = useMetaStore.getState();
+			meta.addGold(data.stats.goldEarned);
+			meta.addXp(battleXp(data.stats.wavesCleared, data.result === 'victory'));
+			meta.recordBattle(data.result);
+			meta.updateHighestWave(
+				useGameStore.getState().selectedMapId,
+				data.stats.wavesCleared,
+			);
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -385,7 +395,7 @@ export function GamePage() {
 							<div
 								style={{
 									fontFamily: fonts.pixel,
-									fontSize: '20px',
+									fontSize: '24px',
 									color: '#ff4444',
 									textAlign: 'center',
 									animation: 'pulse 0.5s ease-in-out infinite',
@@ -413,7 +423,7 @@ export function GamePage() {
 								justifyContent: 'center',
 								color: colors.textSecondary,
 								fontFamily: fonts.pixel,
-								fontSize: '9px',
+								fontSize: '13px',
 								zIndex: 2,
 							}}
 						>
@@ -435,7 +445,7 @@ export function GamePage() {
 								background: toastStyle.background,
 								color: toastStyle.color,
 								fontFamily: fonts.pixel,
-								fontSize: '8px',
+								fontSize: '12px',
 								maxWidth: 'min(80vw, 280px)',
 								textAlign: 'center',
 							}}
@@ -489,7 +499,7 @@ export function GamePage() {
 										color:
 											runStatus === 'victory' ? colors.success : colors.danger,
 										fontFamily: fonts.pixel,
-										fontSize: '12px',
+										fontSize: '16px',
 										fontWeight: 400,
 									}}
 								>
@@ -499,7 +509,7 @@ export function GamePage() {
 									style={{
 										color: colors.textSecondary,
 										fontFamily: fonts.pixel,
-										fontSize: '8px',
+										fontSize: '12px',
 										lineHeight: 1.8,
 									}}
 								>
@@ -518,7 +528,7 @@ export function GamePage() {
 										style={{
 											color: colors.textSecondary,
 											fontFamily: fonts.pixel,
-											fontSize: '8px',
+											fontSize: '12px',
 										}}
 									>
 										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
@@ -527,7 +537,7 @@ export function GamePage() {
 										style={{
 											color: colors.textSecondary,
 											fontFamily: fonts.pixel,
-											fontSize: '8px',
+											fontSize: '12px',
 										}}
 									>
 										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
@@ -536,7 +546,7 @@ export function GamePage() {
 										style={{
 											color: colors.textSecondary,
 											fontFamily: fonts.pixel,
-											fontSize: '8px',
+											fontSize: '12px',
 										}}
 									>
 										생존 시간:{' '}
@@ -549,7 +559,7 @@ export function GamePage() {
 										style={{
 											color: colors.gold,
 											fontFamily: fonts.pixel,
-											fontSize: '10px',
+											fontSize: '14px',
 											marginTop: '4px',
 										}}
 									>

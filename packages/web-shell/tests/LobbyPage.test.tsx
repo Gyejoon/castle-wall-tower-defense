@@ -12,17 +12,17 @@ describe('LobbyPage', () => {
 		cleanup();
 	});
 
-	it('renders the home tab as a single-player PVE start screen', () => {
+	it('renders the home tab as a single-player start screen', () => {
 		const view = render(<LobbyPage />);
 
-		expect(view.getByText('기사단장')).toBeTruthy();
+		expect(view.getByText('Commander')).toBeTruthy();
 
 		const tabs = view.getAllByRole('tab');
 		expect(tabs).toHaveLength(3);
 		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
 
-		expect(view.getByText('PVE 생존')).toBeTruthy();
-		expect(view.getByText('즉시 시작')).toBeTruthy();
+		expect(view.getByText('성벽 막기')).toBeTruthy();
+		expect(view.getByText('게임 시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 		expect(view.queryByText('상대를 찾는 중...')).toBeNull();
 	});
@@ -49,7 +49,7 @@ describe('LobbyPage', () => {
 
 	it('starts the run immediately', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('즉시 시작'));
+		fireEvent.click(view.getByText('게임 시작'));
 
 		expect(useGameStore.getState().runStatus).toBe('building');
 	});
@@ -67,7 +67,7 @@ describe('LobbyPage', () => {
 		fireEvent.click(collectionTab);
 
 		expect(view.getByText('보유 타워')).toBeTruthy();
-		expect(view.getByText('화염 포탑')).toBeTruthy();
+		expect(view.getByText('궁수 탑')).toBeTruthy();
 	});
 
 	it('shows settings tab with toggles', () => {

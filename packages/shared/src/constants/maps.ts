@@ -1,74 +1,64 @@
 import type { Position } from '../types/grid';
 import type { MapLayout } from '../types/map';
 
+// Forest Gate: wide S-curve with tower placement pockets between bends
+//   0 1 2 3 4 5 6 7
+// 0       S                ← spawn
+// 1       ·
+// 2   · · ·
+// 3   ·
+// 4   · · · · ·
+// 5               ·
+// 6       · · · · ·
+// 7       ·
+// 8   · · ·
+// 9   ·
+//10   · · · · ·
+//11               ·
+//12       · · · · ·
+//13       ·
+//14   · · ·
+//15   ·
+//16   · · · ·
+//17           E            ← exit
 const FOREST_GATE_PATH: Position[] = [
 	{ x: 3, y: 0 },
 	{ x: 3, y: 1 },
-	{ x: 4, y: 1 },
-	{ x: 4, y: 2 },
 	{ x: 3, y: 2 },
 	{ x: 2, y: 2 },
-	{ x: 2, y: 3 },
-	{ x: 3, y: 3 },
-	{ x: 4, y: 3 },
-	{ x: 5, y: 3 },
-	{ x: 5, y: 4 },
-	{ x: 4, y: 4 },
-	{ x: 3, y: 4 },
-	{ x: 2, y: 4 },
+	{ x: 1, y: 2 },
+	{ x: 1, y: 3 },
 	{ x: 1, y: 4 },
-	{ x: 1, y: 5 },
-	{ x: 2, y: 5 },
-	{ x: 3, y: 5 },
-	{ x: 4, y: 5 },
+	{ x: 2, y: 4 },
+	{ x: 3, y: 4 },
+	{ x: 4, y: 4 },
+	{ x: 5, y: 4 },
 	{ x: 5, y: 5 },
-	{ x: 6, y: 5 },
-	{ x: 6, y: 6 },
 	{ x: 5, y: 6 },
 	{ x: 4, y: 6 },
 	{ x: 3, y: 6 },
-	{ x: 2, y: 6 },
-	{ x: 2, y: 7 },
 	{ x: 3, y: 7 },
-	{ x: 4, y: 7 },
-	{ x: 5, y: 7 },
-	{ x: 5, y: 8 },
-	{ x: 4, y: 8 },
 	{ x: 3, y: 8 },
 	{ x: 2, y: 8 },
 	{ x: 1, y: 8 },
 	{ x: 1, y: 9 },
-	{ x: 2, y: 9 },
-	{ x: 3, y: 9 },
-	{ x: 4, y: 9 },
-	{ x: 5, y: 9 },
-	{ x: 6, y: 9 },
-	{ x: 6, y: 10 },
-	{ x: 5, y: 10 },
-	{ x: 4, y: 10 },
-	{ x: 3, y: 10 },
+	{ x: 1, y: 10 },
 	{ x: 2, y: 10 },
-	{ x: 2, y: 11 },
-	{ x: 3, y: 11 },
-	{ x: 4, y: 11 },
+	{ x: 3, y: 10 },
+	{ x: 4, y: 10 },
+	{ x: 5, y: 10 },
 	{ x: 5, y: 11 },
 	{ x: 5, y: 12 },
 	{ x: 4, y: 12 },
 	{ x: 3, y: 12 },
-	{ x: 2, y: 12 },
-	{ x: 1, y: 12 },
-	{ x: 1, y: 13 },
-	{ x: 2, y: 13 },
 	{ x: 3, y: 13 },
-	{ x: 4, y: 13 },
-	{ x: 5, y: 13 },
-	{ x: 6, y: 13 },
-	{ x: 6, y: 14 },
-	{ x: 5, y: 14 },
-	{ x: 4, y: 14 },
 	{ x: 3, y: 14 },
-	{ x: 3, y: 15 },
-	{ x: 4, y: 15 },
+	{ x: 2, y: 14 },
+	{ x: 1, y: 14 },
+	{ x: 1, y: 15 },
+	{ x: 1, y: 16 },
+	{ x: 2, y: 16 },
+	{ x: 3, y: 16 },
 	{ x: 4, y: 16 },
 	{ x: 4, y: 17 },
 ];
@@ -118,8 +108,8 @@ const FOREST_GATE_BUILDABLE_POINTS = buildBuildablePoints({
 });
 
 export const FOREST_GATE_MAP: MapLayout = {
-	id: 'forest-gate',
-	name: 'Forest Gate',
+	id: 'forest_gate',
+	name: '숲의 성문',
 	width: 8,
 	height: 18,
 	tileSize: 32,
@@ -131,3 +121,268 @@ export const FOREST_GATE_MAP: MapLayout = {
 	tilemapKey: 'tilemap-forest-gate',
 	tilesetKey: 'tileset',
 };
+
+// --- Lava Fortress: 2-lane map ---
+// Lane A (left): spawn top-left, zigzags left side
+const LAVA_LANE_A: Position[] = [
+	{ x: 1, y: 0 },
+	{ x: 1, y: 1 },
+	{ x: 1, y: 2 },
+	{ x: 2, y: 2 },
+	{ x: 3, y: 2 },
+	{ x: 3, y: 3 },
+	{ x: 3, y: 4 },
+	{ x: 2, y: 4 },
+	{ x: 1, y: 4 },
+	{ x: 1, y: 5 },
+	{ x: 1, y: 6 },
+	{ x: 2, y: 6 },
+	{ x: 3, y: 6 },
+	{ x: 3, y: 7 },
+	{ x: 3, y: 8 },
+	{ x: 2, y: 8 },
+	{ x: 1, y: 8 },
+	{ x: 1, y: 9 },
+	{ x: 1, y: 10 },
+	{ x: 2, y: 10 },
+	{ x: 3, y: 10 },
+	{ x: 3, y: 11 },
+	{ x: 3, y: 12 },
+	{ x: 2, y: 12 },
+	{ x: 1, y: 12 },
+	{ x: 1, y: 13 },
+	{ x: 1, y: 14 },
+	{ x: 2, y: 14 },
+	{ x: 3, y: 14 },
+	{ x: 3, y: 15 },
+	{ x: 3, y: 16 },
+	{ x: 3, y: 17 },
+];
+
+// Lane B (right): spawn top-right, zigzags right side
+const LAVA_LANE_B: Position[] = [
+	{ x: 6, y: 0 },
+	{ x: 6, y: 1 },
+	{ x: 6, y: 2 },
+	{ x: 5, y: 2 },
+	{ x: 4, y: 2 },
+	{ x: 4, y: 3 },
+	{ x: 4, y: 4 },
+	{ x: 5, y: 4 },
+	{ x: 6, y: 4 },
+	{ x: 6, y: 5 },
+	{ x: 6, y: 6 },
+	{ x: 5, y: 6 },
+	{ x: 4, y: 6 },
+	{ x: 4, y: 7 },
+	{ x: 4, y: 8 },
+	{ x: 5, y: 8 },
+	{ x: 6, y: 8 },
+	{ x: 6, y: 9 },
+	{ x: 6, y: 10 },
+	{ x: 5, y: 10 },
+	{ x: 4, y: 10 },
+	{ x: 4, y: 11 },
+	{ x: 4, y: 12 },
+	{ x: 5, y: 12 },
+	{ x: 6, y: 12 },
+	{ x: 6, y: 13 },
+	{ x: 6, y: 14 },
+	{ x: 5, y: 14 },
+	{ x: 4, y: 14 },
+	{ x: 4, y: 15 },
+	{ x: 4, y: 16 },
+	{ x: 4, y: 17 },
+];
+
+const LAVA_ALL_PATH_CELLS = [...LAVA_LANE_A, ...LAVA_LANE_B];
+
+const LAVA_BLOCKED: Position[] = [
+	{ x: 1, y: 0 },
+	{ x: 6, y: 0 },
+	{ x: 3, y: 17 },
+	{ x: 4, y: 17 },
+];
+
+const LAVA_BUILDABLE = buildBuildablePoints({
+	width: 8,
+	height: 18,
+	path: LAVA_ALL_PATH_CELLS,
+	blockedPlacementPoints: LAVA_BLOCKED,
+});
+
+export const LAVA_FORTRESS_MAP: MapLayout = {
+	id: 'lava_fortress',
+	name: '용암 요새',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: LAVA_LANE_A,
+	paths: [LAVA_LANE_A, LAVA_LANE_B],
+	blockedPlacementPoints: LAVA_BLOCKED,
+	buildablePoints: LAVA_BUILDABLE,
+	spawnPoint: { x: 1, y: 0 },
+	exitPoint: { x: 4, y: 17 },
+	tilemapKey: 'tilemap-lava_fortress',
+	tilesetKey: 'tileset',
+};
+
+// --- Storm Citadel: 3-lane map ---
+// Lane A (left)
+const STORM_LANE_A: Position[] = [
+	{ x: 0, y: 0 },
+	{ x: 0, y: 1 },
+	{ x: 0, y: 2 },
+	{ x: 0, y: 3 },
+	{ x: 1, y: 3 },
+	{ x: 1, y: 4 },
+	{ x: 1, y: 5 },
+	{ x: 0, y: 5 },
+	{ x: 0, y: 6 },
+	{ x: 0, y: 7 },
+	{ x: 1, y: 7 },
+	{ x: 1, y: 8 },
+	{ x: 1, y: 9 },
+	{ x: 0, y: 9 },
+	{ x: 0, y: 10 },
+	{ x: 0, y: 11 },
+	{ x: 1, y: 11 },
+	{ x: 1, y: 12 },
+	{ x: 1, y: 13 },
+	{ x: 1, y: 14 },
+	{ x: 2, y: 14 },
+	{ x: 2, y: 15 },
+	{ x: 3, y: 15 },
+	{ x: 3, y: 16 },
+	{ x: 3, y: 17 },
+];
+
+// Lane B (center)
+const STORM_LANE_B: Position[] = [
+	{ x: 3, y: 0 },
+	{ x: 3, y: 1 },
+	{ x: 3, y: 2 },
+	{ x: 3, y: 3 },
+	{ x: 3, y: 4 },
+	{ x: 4, y: 4 },
+	{ x: 4, y: 5 },
+	{ x: 4, y: 6 },
+	{ x: 3, y: 6 },
+	{ x: 3, y: 7 },
+	{ x: 3, y: 8 },
+	{ x: 4, y: 8 },
+	{ x: 4, y: 9 },
+	{ x: 4, y: 10 },
+	{ x: 3, y: 10 },
+	{ x: 3, y: 11 },
+	{ x: 3, y: 12 },
+	{ x: 4, y: 12 },
+	{ x: 4, y: 13 },
+	{ x: 4, y: 14 },
+	{ x: 4, y: 15 },
+	{ x: 4, y: 16 },
+	{ x: 4, y: 17 },
+];
+
+// Lane C (right)
+const STORM_LANE_C: Position[] = [
+	{ x: 7, y: 0 },
+	{ x: 7, y: 1 },
+	{ x: 7, y: 2 },
+	{ x: 7, y: 3 },
+	{ x: 6, y: 3 },
+	{ x: 6, y: 4 },
+	{ x: 6, y: 5 },
+	{ x: 7, y: 5 },
+	{ x: 7, y: 6 },
+	{ x: 7, y: 7 },
+	{ x: 6, y: 7 },
+	{ x: 6, y: 8 },
+	{ x: 6, y: 9 },
+	{ x: 7, y: 9 },
+	{ x: 7, y: 10 },
+	{ x: 7, y: 11 },
+	{ x: 6, y: 11 },
+	{ x: 6, y: 12 },
+	{ x: 6, y: 13 },
+	{ x: 6, y: 14 },
+	{ x: 5, y: 14 },
+	{ x: 5, y: 15 },
+	{ x: 5, y: 16 },
+	{ x: 5, y: 17 },
+];
+
+const STORM_ALL_PATH_CELLS = [
+	...STORM_LANE_A,
+	...STORM_LANE_B,
+	...STORM_LANE_C,
+];
+
+const STORM_BLOCKED: Position[] = [
+	{ x: 0, y: 0 },
+	{ x: 3, y: 0 },
+	{ x: 7, y: 0 },
+	{ x: 3, y: 17 },
+	{ x: 4, y: 17 },
+	{ x: 5, y: 17 },
+];
+
+const STORM_BUILDABLE = buildBuildablePoints({
+	width: 8,
+	height: 18,
+	path: STORM_ALL_PATH_CELLS,
+	blockedPlacementPoints: STORM_BLOCKED,
+});
+
+export const STORM_CITADEL_MAP: MapLayout = {
+	id: 'storm_citadel',
+	name: '폭풍 성채',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: STORM_LANE_A,
+	paths: [STORM_LANE_A, STORM_LANE_B, STORM_LANE_C],
+	blockedPlacementPoints: STORM_BLOCKED,
+	buildablePoints: STORM_BUILDABLE,
+	spawnPoint: { x: 0, y: 0 },
+	exitPoint: { x: 4, y: 17 },
+	tilemapKey: 'tilemap-storm_citadel',
+	tilesetKey: 'tileset',
+};
+
+export const MAP_REGISTRY: Record<string, MapLayout> = {
+	forest_gate: FOREST_GATE_MAP,
+	lava_fortress: LAVA_FORTRESS_MAP,
+	storm_citadel: STORM_CITADEL_MAP,
+};
+
+export const DEFAULT_MAP_ID = 'forest_gate';
+
+export function getMapById(mapId: string): MapLayout {
+	const map = MAP_REGISTRY[mapId];
+	if (!map) throw new Error(`Unknown map ID: ${mapId}`);
+	return map;
+}
+
+/** Returns all lanes for a map. Falls back to [map.path] for single-lane maps. */
+export function getMapPaths(map: MapLayout): Position[][] {
+	return map.paths ?? [map.path];
+}
+
+/** Returns all path cells across all lanes (deduplicated). */
+export function getAllPathCells(map: MapLayout): Position[] {
+	const paths = getMapPaths(map);
+	if (paths.length === 1) return paths[0];
+	const seen = new Set<string>();
+	const result: Position[] = [];
+	for (const lane of paths) {
+		for (const p of lane) {
+			const key = `${p.x},${p.y}`;
+			if (!seen.has(key)) {
+				seen.add(key);
+				result.push(p);
+			}
+		}
+	}
+	return result;
+}

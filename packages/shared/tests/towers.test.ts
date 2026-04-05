@@ -34,7 +34,16 @@ describe('Tower definitions', () => {
 	});
 
 	it('attack towers cost 10, CC towers cost 20', () => {
-		const ccSpecials = ['stun', 'stun_aoe', 'stun_aoe_extended', 'stun_aoe_global', 'slow_30%', 'slow_30%_aoe', 'slow_40%_aoe', 'slow_50%_splash'];
+		const ccSpecials = [
+			'stun',
+			'stun_aoe',
+			'stun_aoe_extended',
+			'stun_aoe_global',
+			'slow_30%',
+			'slow_30%_aoe',
+			'slow_40%_aoe',
+			'slow_50%_splash',
+		];
 		for (const t of ALL_TOWERS) {
 			const isCc = ccSpecials.some((s) => t.stats.special === s);
 			if (isCc) {

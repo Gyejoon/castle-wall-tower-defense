@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'fs';
-import { FOREST_GATE_MAP } from '../../packages/shared/src/index';
+import { FOREST_GATE_MAP, LAVA_FORTRESS_MAP, STORM_CITADEL_MAP, getAllPathCells, getMapPaths } from '../../packages/shared/src/index';
+import type { MapLayout } from '../../packages/shared/src/types/map';
 import {
   TINY_SWORDS_DECORATION_ASSETS,
   TINY_SWORDS_PRIMARY_TILESET,
@@ -511,13 +512,205 @@ export async function generateMap(): Promise<ManifestEntry[]> {
   writeFileSync(OUTPUT_PATH, JSON.stringify(tiledMap, null, 2));
   console.log(`  wrote ${OUTPUT_PATH}`);
 
-  return [
+  const entries: ManifestEntry[] = [
     {
       key: 'tilemap-forest-gate',
       type: 'tilemapTiledJSON',
       path: 'assets/maps/forest-gate.json',
     },
   ];
+
+  // Additional stage maps — real path data from map constants
+  const ADDITIONAL_MAPS: MapLayout[] = [LAVA_FORTRESS_MAP, STORM_CITADEL_MAP];
+
+  for (const stageMap of ADDITIONAL_MAPS) {
+    const allPathCells = getAllPathCells(stageMap);
+    const allPathSet = new Set<string>(allPathCells.map(p => keyOf(p)));
+    const paths = getMapPaths(stageMap);
+
+    // Build ground layer
+    const stageGroundData = makeEmptyLayer(stageMap.width, stageMap.height);
+    for (let y = 0; y < stageMap.height; y++) {
+      for (let x = 0; x < stageMap.width; x++) {
+        stageGroundData[cellIndex(x, y, stageMap.width)] = (x + y) % 2 === 0
+          ? GID.GROUND_LIGHT
+          : GID.GROUND_DARK;
+      }
+    }
+
+    // Build path layer from all lanes
+    const stagePathData = makeEmptyLayer(stageMap.width, stageMap.height);
+    // Track spawn/exit points across all lanes
+    const spawnSet = new Set<string>();
+    const exitSet = new Set<string>();
+    for (const lane of paths) {
+      if (lane.length > 0) {
+        spawnSet.add(keyOf(lane[0]));
+        exitSet.add(keyOf(lane[lane.length - 1]));
+      }
+    }
+
+    for (const lane of paths) {
+      for (let i = 0; i < lane.length; i++) {
+        const current = lane[i];
+        const key = keyOf(current);
+        const idx = cellIndex(current.x, current.y, stageMap.width);
+        if (stagePathData[idx] !== GID.EMPTY) continue; // already set by another lane
+
+        let gid = GID.PATH;
+        if (spawnSet.has(key)) {
+          gid = GID.PATH_SPAWN;
+        } else if (exitSet.has(key)) {
+          gid = GID.PATH_EXIT;
+        } else if (i > 0 && i < lane.length - 1) {
+          const prev = lane[i - 1];
+          const next = lane[i + 1];
+          const dx1 = current.x - prev.x;
+          const dy1 = current.y - prev.y;
+          const dx2 = next.x - current.x;
+          const dy2 = next.y - current.y;
+          if (dx1 !== dx2 || dy1 !== dy2) {
+            gid = GID.PATH_CORNER;
+          }
+        }
+
+        stagePathData[idx] = gid;
+      }
+    }
+
+    // Build placement objects
+    const stagePlacementObjects: TiledObject[] = stageMap.buildablePoints.map((point, index) => ({
+      id: index + 1,
+      name: `pp_${index}`,
+      type: 'placement_point',
+      x: point.x * stageMap.tileSize,
+      y: point.y * stageMap.tileSize,
+      width: stageMap.tileSize,
+      height: stageMap.tileSize,
+    }));
+
+    // Build decorations for the stage
+    const stageDecorObjects: TiledObject[] = [];
+    let stageObjId = 10_000;
+    const stagePathProtection = allPathSet;
+    const stagePathAdjProtection = buildAdjacencyProtection(allPathCells, stageMap.width, stageMap.height);
+    const stageLandmarkProtection = buildAdjacencyProtection(
+      [...Array.from(spawnSet), ...Array.from(exitSet)].map(k => {
+        const [x, y] = k.split(',').map(Number);
+        return { x, y };
+      }),
+      stageMap.width,
+      stageMap.height,
+    );
+    const stageOccupied = new Set<string>();
+
+    // Place some decorations in non-path cells
+    for (let y = 0; y < stageMap.height; y++) {
+      for (let x = 0; x < stageMap.width; x++) {
+        const cell = { x, y };
+        const key = keyOf(cell);
+        if (stagePathProtection.has(key) || stageLandmarkProtection.has(key)) continue;
+        if (stagePathAdjProtection.has(key)) continue;
+        if (stageOccupied.has(key)) continue;
+        // Deterministic sparse placement
+        if ((x * 7 + y * 11) % 5 !== 0) continue;
+
+        const asset = smallPool[(x + y) % smallPool.length];
+        stageOccupied.add(key);
+        stageDecorObjects.push({
+          id: stageObjId++,
+          name: `decor_${stageDecorObjects.length}`,
+          type: 'decoration',
+          x: cell.x * stageMap.tileSize,
+          y: cell.y * stageMap.tileSize,
+          width: stageMap.tileSize,
+          height: stageMap.tileSize,
+          properties: buildDecorationProperties(asset),
+        });
+      }
+    }
+
+    const stageFileName = stageMap.id.replace('_', '-');
+    const stageTiledMap: TiledMap = {
+      width: stageMap.width,
+      height: stageMap.height,
+      tilewidth: stageMap.tileSize,
+      tileheight: stageMap.tileSize,
+      orientation: 'orthogonal',
+      renderorder: 'right-down',
+      type: 'map',
+      version: '1.10',
+      tiledversion: '1.10.2',
+      tilesets: [
+        {
+          firstgid: 1,
+          name: 'tiny-swords-primary-tileset',
+          image: '../vendor/tiny-swords/terrain/tileset/Tilemap_color1.png',
+          imagewidth: TINY_SWORDS_PRIMARY_TILESET.pixelWidth,
+          imageheight: TINY_SWORDS_PRIMARY_TILESET.pixelHeight,
+          tilewidth: TINY_SWORDS_TILE_SIZE,
+          tileheight: TINY_SWORDS_TILE_SIZE,
+          tilecount: TINY_SWORDS_PRIMARY_TILESET.frameCount,
+          columns: TINY_SWORDS_PRIMARY_TILESET.pixelWidth / TINY_SWORDS_TILE_SIZE,
+          margin: 0,
+          spacing: 0,
+        },
+      ],
+      layers: [
+        {
+          name: 'ground',
+          type: 'tilelayer',
+          width: stageMap.width,
+          height: stageMap.height,
+          data: stageGroundData,
+          visible: true,
+          opacity: 1,
+          x: 0,
+          y: 0,
+        },
+        {
+          name: 'path',
+          type: 'tilelayer',
+          width: stageMap.width,
+          height: stageMap.height,
+          data: stagePathData,
+          visible: true,
+          opacity: 1,
+          x: 0,
+          y: 0,
+        },
+        {
+          name: 'decorations',
+          type: 'objectgroup',
+          objects: stageDecorObjects,
+          visible: true,
+          opacity: 1,
+          x: 0,
+          y: 0,
+        },
+        {
+          name: 'objects',
+          type: 'objectgroup',
+          objects: stagePlacementObjects,
+          visible: true,
+          opacity: 1,
+          x: 0,
+          y: 0,
+        },
+      ],
+    };
+
+    const mapFilePath = `packages/web-shell/public/assets/maps/${stageFileName}.json`;
+    writeFileSync(mapFilePath, JSON.stringify(stageTiledMap, null, 2));
+    console.log(`  wrote ${mapFilePath}`);
+    entries.push({
+      key: `tilemap-${stageMap.id.replace('_', '_')}`,
+      type: 'tilemapTiledJSON',
+      path: `assets/maps/${stageFileName}.json`,
+    });
+  }
+
+  return entries;
 }
 
 if (import.meta.main) {

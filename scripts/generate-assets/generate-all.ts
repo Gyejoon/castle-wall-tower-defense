@@ -7,12 +7,17 @@ import {
 import { convertToWebP } from './convert-webp';
 import { generate as generateIcons } from './generate-icons';
 import { generateMap } from './generate-map';
+import { generate as generateResultUi } from './generate-result-ui';
 import { generate as generateProjectiles } from './generate-projectiles';
 import type { ManifestEntry } from './shared';
 import { generate as generateTowers } from './generate-towers';
 import { generate as generateUi } from './generate-ui';
 import { generate as generateUnits } from './generate-units';
 import { generate as generateVfx } from './generate-vfx';
+import { generate as generateRarityFrames } from './generate-rarity-frames';
+import { generate as generateTiles } from './generate-tiles';
+import { generate as generateTutorialUi } from './generate-tutorial-ui';
+import { generate as generateGachaUi } from './generate-gacha-ui';
 
 export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 	const staticEntries = [
@@ -57,8 +62,13 @@ export async function generateAllAssets() {
 		projectiles,
 		vfx,
 		ui,
+		resultUi,
 		icons,
 		map,
+		rarityFrames,
+		tiles,
+		tutorialUi,
+		gachaUi,
 	] = await Promise.all([
 		Promise.resolve(collectStaticFieldAssetEntries()).then((result) => {
 			console.log('[vendor-field-assets] done');
@@ -84,12 +94,32 @@ export async function generateAllAssets() {
 			console.log('[ui] done');
 			return result;
 		}),
-generateIcons().then((result) => {
+		generateResultUi().then((result) => {
+			console.log('[result-ui] done');
+			return result;
+		}),
+		generateIcons().then((result) => {
 			console.log('[icons] done');
 			return result;
 		}),
 		generateMap().then((result) => {
 			console.log('[map] done');
+			return result;
+		}),
+		generateRarityFrames().then((result) => {
+			console.log('[rarity-frames] done');
+			return result;
+		}),
+		generateTiles().then((result) => {
+			console.log('[tiles] done');
+			return result;
+		}),
+		generateTutorialUi().then((result) => {
+			console.log('[tutorial-ui] done');
+			return result;
+		}),
+		generateGachaUi().then((result) => {
+			console.log('[gacha-ui] done');
 			return result;
 		}),
 	]);
@@ -101,9 +131,22 @@ generateIcons().then((result) => {
 		...projectiles,
 		...vfx,
 		...ui,
+		...resultUi,
 		...icons,
 		...map,
+		...rarityFrames,
+		...tiles,
+		...tutorialUi,
+		...gachaUi,
 	]);
+
+	const seen = new Set<string>();
+	for (const entry of allEntries) {
+		if (seen.has(entry.key)) {
+			throw new Error(`Duplicate manifest key: '${entry.key}'`);
+		}
+		seen.add(entry.key);
+	}
 
 	const manifest = {
 		generated: new Date().toISOString(),

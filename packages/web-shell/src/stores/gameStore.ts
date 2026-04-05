@@ -31,6 +31,7 @@ interface GameStoreState {
 	gameReady: boolean;
 	energy: number;
 	lives: number;
+	selectedMapId: string;
 	selectedTowerId: string | null;
 	deckCards: readonly DeckCardDef[];
 	selectedCardIndex: number | null;
@@ -51,6 +52,7 @@ interface GameStoreState {
 	setGameReady: (ready: boolean) => void;
 	setEnergy: (energy: number) => void;
 	setLives: (lives: number) => void;
+	setSelectedMapId: (mapId: string) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setDeckCards: (cards: readonly DeckCardDef[]) => void;
 	setSelectedCardIndex: (index: number | null) => void;
@@ -98,6 +100,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
+	selectedMapId: 'forest_gate',
 	lobbyTab: 'home',
 	soundEnabled: true,
 	screenShake: true,
@@ -108,6 +111,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setGameReady: (ready) => set({ gameReady: ready }),
 	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),
+	setSelectedMapId: (mapId) => set({ selectedMapId: mapId }),
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setDeckCards: (cards) => set({ deckCards: cards }),
 	setSelectedCardIndex: (index) => set({ selectedCardIndex: index }),

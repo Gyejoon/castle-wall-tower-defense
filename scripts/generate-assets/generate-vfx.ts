@@ -1,7 +1,41 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, addGlow, ELEMENT_COLORS, type ElementType, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/vfx';
+
+function drawElementSymbol(ctx: import('@napi-rs/canvas').SKRSContext2D, element: ElementType, cx: number, cy: number): void {
+  const white = PALETTE.white;
+  switch (element) {
+    case 'fire':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx - 1, cy - 1, white);
+      setPixel(ctx, cx + 1, cy - 1, white);
+      setPixel(ctx, cx, cy, white);
+      break;
+    case 'water':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx + 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+    case 'lightning':
+      setPixel(ctx, cx, cy - 2, white);
+      setPixel(ctx, cx + 1, cy - 1, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+    case 'neutral':
+      setPixel(ctx, cx, cy - 1, white);
+      setPixel(ctx, cx - 1, cy, white);
+      setPixel(ctx, cx + 1, cy, white);
+      setPixel(ctx, cx, cy + 1, white);
+      break;
+    default: {
+      const _exhaustive: never = element;
+      throw new Error(`Unknown element: ${_exhaustive}`);
+    }
+  }
+}
 
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -125,6 +159,118 @@ export async function generate(): Promise<ManifestEntry[]> {
 
     saveCanvas(canvas, `${OUTPUT_DIR}/spawn-portal.png`);
     entries.push({ key: 'vfx-spawn-portal', type: 'spritesheet', path: 'assets/vfx/spawn-portal.png', frameWidth: 32, frameHeight: 32, frameCount: 4 });
+  }
+
+  // Element badge overlays (16x16 each)
+  for (const [element, colors] of Object.entries(ELEMENT_COLORS)) {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    fillCircle(ctx, 8, 8, 6, colors.primary);
+    drawCircle(ctx, 8, 8, 7, PALETTE.shadow);
+    drawElementSymbol(ctx, element as ElementType, 8, 8);
+
+    const filename = `element-badge-${element}.png`;
+    saveCanvas(canvas, `${OUTPUT_DIR}/${filename}`);
+    entries.push({
+      key: `vfx-element-badge-${element}`,
+      type: 'image',
+      path: `assets/vfx/${filename}`,
+    });
+  }
+
+  // Boss warning text — "WARNING" (256x64)
+  {
+    const { canvas, ctx } = makeCanvas(256, 64);
+    ctx.fillStyle = PALETTE.fireRed;
+    ctx.font = '32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WARNING', 128, 42);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-warning.png`);
+    entries.push({ key: 'vfx-boss-warning', type: 'image', path: 'assets/vfx/boss-warning.png', section: 'boss' as const });
+  }
+
+  // "FINAL BOSS" text (256x64)
+  {
+    const { canvas, ctx } = makeCanvas(256, 64);
+    ctx.fillStyle = PALETTE.gold;
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('FINAL BOSS', 128, 42);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-final.png`);
+    entries.push({ key: 'vfx-boss-final', type: 'image', path: 'assets/vfx/boss-final.png', section: 'boss' as const });
+  }
+
+  // Boss telegraph marker (64x64, danger zone)
+  {
+    const { canvas, ctx } = makeCanvas(64, 64);
+    fillCircle(ctx, 32, 32, 28, hexToRgba(PALETTE.fireRed, 0.4));
+    drawLine(ctx, 8, 8, 56, 56, PALETTE.fireRed);
+    drawLine(ctx, 56, 8, 8, 56, PALETTE.fireRed);
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-telegraph.png`);
+    entries.push({ key: 'vfx-boss-telegraph', type: 'image', path: 'assets/vfx/boss-telegraph.png', section: 'boss' as const });
+  }
+
+  // Boss death FX (256x64, 4 frames)
+  {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const radius = 10 + f * 8;
+      fillCircle(ctx, ox + 32, 32, radius, PALETTE.fireOrange);
+      addGlow(ctx, ox + 32, 32, radius + 4, PALETTE.gold, 0.5 - f * 0.1);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-death-fx.png`);
+    entries.push({
+      key: 'vfx-boss-death-fx', type: 'spritesheet',
+      path: 'assets/vfx/boss-death-fx.png',
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'boss' as const,
+    });
+  }
+
+  // Upgrade success/fail effects (256x64, 4 frames each)
+  for (const result of ['success', 'fail']) {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    const color = result === 'success' ? PALETTE.gold : PALETTE.fireRed;
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const r = 8 + f * 6;
+      fillCircle(ctx, ox + 32, 32, r, color);
+      addGlow(ctx, ox + 32, 32, r + 4, PALETTE.white, 0.3 - f * 0.07);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/upgrade-${result}-fx.png`);
+    entries.push({
+      key: `vfx-upgrade-${result}-fx`, type: 'spritesheet',
+      path: `assets/vfx/upgrade-${result}-fx.png`,
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
+  // Gacha reveal FX (5 tiers, 256x64, 4 frames each)
+  const TIER_COLORS_FOR_FX = [
+    { name: 'common', color: PALETTE.tierCommon },
+    { name: 'rare', color: PALETTE.tierRare },
+    { name: 'heroic', color: PALETTE.tierHeroic },
+    { name: 'legendary', color: PALETTE.tierLegendary },
+    { name: 'god', color: PALETTE.tierGod },
+  ];
+  for (const tier of TIER_COLORS_FOR_FX) {
+    const FW = 64, FH = 64, FRAMES = 4;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const r = 6 + f * 8;
+      addGlow(ctx, ox + 32, 32, r, tier.color, 0.5);
+      if (f >= 2) addGlow(ctx, ox + 32, 32, r / 2, PALETTE.white, 0.3);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/gacha-reveal-${tier.name}.png`);
+    entries.push({
+      key: `vfx-gacha-reveal-${tier.name}`, type: 'spritesheet',
+      path: `assets/vfx/gacha-reveal-${tier.name}.png`,
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'gacha' as const,
+    });
   }
 
   return entries;

@@ -202,11 +202,11 @@ describe('field asset preload alignment', () => {
 			manifestByKey.get('ui-hp-bar')?.path,
 		);
 		expect(spritesheet).not.toHaveBeenCalledWith(
-			'ui-stat-icons',
-			manifestByKey.get('ui-stat-icons')?.path,
+			'ui-tower-icons',
+			manifestByKey.get('ui-tower-icons')?.path,
 			{
-				frameWidth: 16,
-				frameHeight: 16,
+				frameWidth: 32,
+				frameHeight: 32,
 			},
 		);
 	});
@@ -230,11 +230,11 @@ describe('field asset preload alignment', () => {
 			manifestByKey.get('ui-hp-bar')?.path,
 		);
 		expect(spritesheet).toHaveBeenCalledWith(
-			'ui-stat-icons',
-			manifestByKey.get('ui-stat-icons')?.path,
+			'ui-tower-icons',
+			manifestByKey.get('ui-tower-icons')?.path,
 			{
-				frameWidth: 16,
-				frameHeight: 16,
+				frameWidth: 32,
+				frameHeight: 32,
 			},
 		);
 		expect(image).not.toHaveBeenCalledWith(

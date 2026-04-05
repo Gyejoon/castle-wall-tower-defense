@@ -273,8 +273,7 @@ export class TowerSystem {
 
 				if (this.isStunSpecial(special) && special) {
 					const configKey = special.replace(/%/g, '');
-					const stunDuration =
-						CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const stunDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
@@ -302,7 +301,6 @@ export class TowerSystem {
 				}
 
 				if (this.hasSplash(special)) {
-					const splashRadiusSq = TowerSystem.SPLASH_RADIUS_SQ;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
 						closestUnit.y,
@@ -313,7 +311,7 @@ export class TowerSystem {
 						const sUnitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
 						const sdx = closestGrid.x - sUnitGrid.x;
 						const sdy = closestGrid.y - sUnitGrid.y;
-						if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
+						if (sdx * sdx + sdy * sdy <= TowerSystem.SPLASH_RADIUS_SQ) {
 							const splashElementMult = getElementMultiplier(
 								def.element,
 								unit.element,

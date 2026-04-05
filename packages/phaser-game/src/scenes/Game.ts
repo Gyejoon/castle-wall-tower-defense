@@ -1,7 +1,11 @@
 import {
 	type AssetManifest,
-	FOREST_GATE_MAP,
+	DEFAULT_MAP_ID,
+	getAllPathCells,
+	getMapById,
+	getMapPaths,
 	INITIAL_PLAYER_HP,
+	type MapLayout,
 	WAVE_DEFS,
 	type WaveDef,
 	type WavePhase,
@@ -23,12 +27,55 @@ import {
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
+
+/** Per-map theme palette for ground tiles, path overlay, and decorations */
+interface MapTheme {
+	groundTint: number;
+	decorTint: number;
+	pathColor: number;
+	spawnColor: number;
+	exitColor: number;
+	pathLineColor: number;
+}
+
+const MAP_THEMES: Record<string, MapTheme> = {
+	forest_gate: {
+		groundTint: 0xffffff, // no tint — natural green/brown
+		decorTint: 0xffffff,
+		pathColor: 0x9f8258,
+		spawnColor: 0x486133,
+		exitColor: 0xb0914f,
+		pathLineColor: 0xb8956a,
+	},
+	lava_fortress: {
+		groundTint: 0xd4a070, // warm orange/brown cast
+		decorTint: 0xc89060,
+		pathColor: 0xb05030,
+		spawnColor: 0x8b3020,
+		exitColor: 0xd06030,
+		pathLineColor: 0xc06040,
+	},
+	storm_citadel: {
+		groundTint: 0x8898c0, // cool blue/purple cast
+		decorTint: 0x7888b0,
+		pathColor: 0x5060a0,
+		spawnColor: 0x405080,
+		exitColor: 0x7080c0,
+		pathLineColor: 0x6070b0,
+	},
+};
+
+function getMapTheme(mapId: string): MapTheme {
+	return MAP_THEMES[mapId] ?? MAP_THEMES.forest_gate;
+}
+
 import { getPlacementGuardFailure } from '../placementRules';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { TowerSystem } from '../systems/TowerSystem';
+import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
@@ -60,6 +107,12 @@ export class GameScene extends Phaser.Scene {
 		kind: WaveDef['kind'];
 		startAtSec: number;
 	}) => void;
+	private onBossWarning!: (data: {
+		slotIndex: number;
+		bossSlotIndex: number;
+		startAtSec: number;
+	}) => void;
+	private bossPrefetched = false;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -70,17 +123,24 @@ export class GameScene extends Phaser.Scene {
 	}> | null = null;
 	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
 	private isCleaningUp = false;
+	private tutorial?: TutorialSystem;
+	private currentMap!: MapLayout;
 
 	constructor() {
 		super('Game');
 	}
 
-	create() {
+	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
+		const mapId =
+			data?.mapId ??
+			(this.game.registry.get('mapId') as string | undefined) ??
+			DEFAULT_MAP_ID;
+		this.currentMap = getMapById(mapId);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
-		this.playerGrid = new GridManager(FOREST_GATE_MAP, {
+		this.playerGrid = new GridManager(this.currentMap, {
 			canvasWidth: canvasW,
 			canvasHeight: canvasH,
 		});
@@ -103,7 +163,7 @@ export class GameScene extends Phaser.Scene {
 		this.selectionGraphics = this.add.graphics();
 		this.selectionGraphics.setDepth(15);
 
-		this.playerUnits.setPath(FOREST_GATE_MAP.path);
+		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
 
 		this.setupInput();
@@ -124,9 +184,18 @@ export class GameScene extends Phaser.Scene {
 			soundGenerator.playWaveStart();
 		};
 
+		this.onBossWarning = () => {
+			if (!this.bossPrefetched) {
+				this.bossPrefetched = true;
+				void this.prefetchBossAssets();
+			}
+			this.showBossWarningOverlay();
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
+		EventBus.on('boss-warning', this.onBossWarning);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -134,11 +203,15 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('current-scene-ready', this);
 
 		void this.prefetchOptionalAssets();
+		if (TutorialSystem.shouldShowTutorial()) {
+			this.tutorial = new TutorialSystem(this, this.optionalAssetManifest);
+			void this.tutorial.start();
+		}
 		this.playerWaves.start();
 	}
 
 	private cacheDecorationData(): void {
-		const tilemap = this.make.tilemap({ key: 'tilemap-forest-gate' });
+		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
 		const decorLayer = tilemap.getObjectLayer?.('decorations');
 		if (!decorLayer) {
 			this.decorationTiles = [];
@@ -171,8 +244,8 @@ export class GameScene extends Phaser.Scene {
 				const objectY = typeof object.y === 'number' ? object.y : 0;
 
 				return {
-					x: Math.round(objectX / FOREST_GATE_MAP.tileSize),
-					y: Math.round(objectY / FOREST_GATE_MAP.tileSize),
+					x: Math.round(objectX / this.currentMap.tileSize),
+					y: Math.round(objectY / this.currentMap.tileSize),
 					assetKey,
 					kind: kind as TinySwordsDecorationKind,
 					variant,
@@ -183,11 +256,13 @@ export class GameScene extends Phaser.Scene {
 
 	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
 		const graphics = this.add.graphics();
-		const pathColor = dark ? 0x5c6585 : 0x9f8258;
-		const spawnColor = dark ? 0x40556f : 0x486133;
-		const exitColor = dark ? 0x7e8aa8 : 0xb0914f;
+		const theme = getMapTheme(this.currentMap.id);
+		const pathColor = dark ? 0x5c6585 : theme.pathColor;
+		const spawnColor = dark ? 0x40556f : theme.spawnColor;
+		const exitColor = dark ? 0x7e8aa8 : theme.exitColor;
 
-		for (const point of FOREST_GATE_MAP.path) {
+		const allCells = getAllPathCells(this.currentMap);
+		for (const point of allCells) {
 			grid.fillTileRect(
 				graphics,
 				point.x,
@@ -197,55 +272,65 @@ export class GameScene extends Phaser.Scene {
 			);
 		}
 
-		grid.fillTileRect(
-			graphics,
-			FOREST_GATE_MAP.spawnPoint.x,
-			FOREST_GATE_MAP.spawnPoint.y,
-			spawnColor,
-			dark ? 0.58 : 0.68,
-		);
-		grid.fillTileRect(
-			graphics,
-			FOREST_GATE_MAP.exitPoint.x,
-			FOREST_GATE_MAP.exitPoint.y,
-			exitColor,
-			dark ? 0.58 : 0.68,
-		);
+		// Render spawn points for all lanes
+		const paths = getMapPaths(this.currentMap);
+		for (const lane of paths) {
+			if (lane.length === 0) continue;
+			const sp = lane[0];
+			grid.fillTileRect(graphics, sp.x, sp.y, spawnColor, dark ? 0.58 : 0.68);
+			const spWorld = grid.gridToWorld(sp.x, sp.y);
+			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
+			graphics.fillCircle(spWorld.x, spWorld.y - 6, 7);
 
-		const spawnWorld = grid.gridToWorld(
-			FOREST_GATE_MAP.spawnPoint.x,
-			FOREST_GATE_MAP.spawnPoint.y,
-		);
-		const exitWorld = grid.gridToWorld(
-			FOREST_GATE_MAP.exitPoint.x,
-			FOREST_GATE_MAP.exitPoint.y,
-		);
-
-		graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
-		graphics.fillCircle(spawnWorld.x, spawnWorld.y - 6, 7);
-		graphics.fillCircle(exitWorld.x, exitWorld.y - 6, 7);
+			const ep = lane[lane.length - 1];
+			grid.fillTileRect(graphics, ep.x, ep.y, exitColor, dark ? 0.58 : 0.68);
+			const epWorld = grid.gridToWorld(ep.x, ep.y);
+			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
+			graphics.fillCircle(epWorld.x, epWorld.y - 6, 7);
+		}
 	}
 
 	private renderField(grid: GridManager, dark: boolean): void {
-		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
-			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+		const theme = getMapTheme(this.currentMap.id);
+		const tile = this.playerGrid.orthoTile;
+		const canvasW = this.scale.width;
+		const canvasH = this.scale.height;
+
+		// Calculate how many extra tiles needed to fill the canvas beyond the grid
+		const gridPixelW = tile * this.currentMap.width;
+		const gridPixelH = tile * this.currentMap.height;
+		const extraLeft = Math.ceil((canvasW - gridPixelW) / 2 / tile) + 1;
+		const extraRight = extraLeft;
+		const extraTop = Math.ceil((canvasH - gridPixelH) / 2 / tile) + 1;
+		const extraBottom = extraTop;
+
+		const startX = -extraLeft;
+		const endX = this.currentMap.width + extraRight;
+		const startY = -extraTop;
+		const endY = this.currentMap.height + extraBottom;
+
+		for (let y = startY; y < endY; y++) {
+			for (let x = startX; x < endX; x++) {
 				const world = grid.gridToWorld(x, y);
 				const frame =
-					TINY_SWORDS_GROUND_FRAMES[(x + y) % TINY_SWORDS_GROUND_FRAMES.length];
+					TINY_SWORDS_GROUND_FRAMES[
+						((((x % 2) + 2) % 2) + (((y % 2) + 2) % 2)) %
+							TINY_SWORDS_GROUND_FRAMES.length
+					];
 				const sprite = this.add.sprite(
 					world.x,
 					world.y,
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(
-					this.playerGrid.orthoTile,
-					this.playerGrid.orthoTile,
-				);
+				sprite.setDisplaySize(tile, tile);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(0);
+
 				if (dark) {
 					sprite.setTint(0x6b7899);
+				} else if (theme.groundTint !== 0xffffff) {
+					sprite.setTint(theme.groundTint);
 				}
 			}
 		}
@@ -256,6 +341,7 @@ export class GameScene extends Phaser.Scene {
 
 	private renderDecorations(grid: GridManager, dark: boolean): void {
 		if (!this.decorationTiles) return;
+		const theme = getMapTheme(this.currentMap.id);
 
 		for (const { x, y, assetKey } of this.decorationTiles) {
 			const asset = TINY_SWORDS_DECORATION_BY_KEY[assetKey];
@@ -268,43 +354,53 @@ export class GameScene extends Phaser.Scene {
 			sprite.setDepth(3 + x + y + asset.depthOffset);
 			if (dark) {
 				sprite.setTint(0x66758f);
+			} else if (theme.decorTint !== 0xffffff) {
+				sprite.setTint(theme.decorTint);
 			}
 		}
 	}
 
 	private renderPath(grid: GridManager): void {
-		const path = FOREST_GATE_MAP.path;
 		if (!this.pathGraphics) this.pathGraphics = this.add.graphics();
 		const graphics = this.pathGraphics;
 		graphics.clear();
-		if (path.length < 2) return;
 
-		const lineColor = 0xb8956a;
+		const theme = getMapTheme(this.currentMap.id);
+		const lineColor = theme.pathLineColor;
+		const paths = getMapPaths(this.currentMap);
 
-		graphics.lineStyle(4, lineColor, 0.08);
-		graphics.beginPath();
-		const first = grid.gridToWorld(path[0].x, path[0].y);
-		graphics.moveTo(first.x, first.y);
-		for (let i = 1; i < path.length; i++) {
-			const pt = grid.gridToWorld(path[i].x, path[i].y);
-			graphics.lineTo(pt.x, pt.y);
-		}
-		graphics.strokePath();
+		for (const path of paths) {
+			if (path.length < 2) continue;
 
-		graphics.fillStyle(lineColor, 0.4);
-		for (let i = 0; i < path.length - 1; i++) {
-			const a = grid.gridToWorld(path[i].x, path[i].y);
-			const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);
-			for (let s = 0; s < 4; s += 2) {
-				const t = s / 4;
-				graphics.fillCircle(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, 1.5);
+			graphics.lineStyle(4, lineColor, 0.08);
+			graphics.beginPath();
+			const first = grid.gridToWorld(path[0].x, path[0].y);
+			graphics.moveTo(first.x, first.y);
+			for (let i = 1; i < path.length; i++) {
+				const pt = grid.gridToWorld(path[i].x, path[i].y);
+				graphics.lineTo(pt.x, pt.y);
 			}
+			graphics.strokePath();
+
+			graphics.fillStyle(lineColor, 0.4);
+			for (let i = 0; i < path.length - 1; i++) {
+				const a = grid.gridToWorld(path[i].x, path[i].y);
+				const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);
+				for (let s = 0; s < 4; s += 2) {
+					const t = s / 4;
+					graphics.fillCircle(
+						a.x + (b.x - a.x) * t,
+						a.y + (b.y - a.y) * t,
+						1.5,
+					);
+				}
+			}
+			const last = grid.gridToWorld(
+				path[path.length - 1].x,
+				path[path.length - 1].y,
+			);
+			graphics.fillCircle(last.x, last.y, 1.5);
 		}
-		const last = grid.gridToWorld(
-			path[path.length - 1].x,
-			path[path.length - 1].y,
-		);
-		graphics.fillCircle(last.x, last.y, 1.5);
 	}
 
 	private setupInput(): void {
@@ -346,8 +442,8 @@ export class GameScene extends Phaser.Scene {
 		this.selectionGraphics.clear();
 		if (!this.selectedTowerId) return;
 
-		for (let y = 0; y < FOREST_GATE_MAP.height; y++) {
-			for (let x = 0; x < FOREST_GATE_MAP.width; x++) {
+		for (let y = 0; y < this.currentMap.height; y++) {
+			for (let x = 0; x < this.currentMap.width; x++) {
 				if (this.playerGrid.canPlaceTower(x, y)) {
 					this.playerGrid.fillTileRect(
 						this.selectionGraphics,
@@ -431,9 +527,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('player-tower-count', {
 			count: this.playerTowers.getTowers().length,
 		});
-		this.playerUnits.setPath(FOREST_GATE_MAP.path);
+		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
-		EventBus.emit('path-updated', { path: FOREST_GATE_MAP.path });
 	}
 
 	private processCombatField(
@@ -451,7 +546,11 @@ export class GameScene extends Phaser.Scene {
 
 		for (const evt of damageEvents) {
 			if (evt.damage > 0) {
-				const result = unitSystem.applyDamage(evt.unitId, evt.damage, evt.armorPierce);
+				const result = unitSystem.applyDamage(
+					evt.unitId,
+					evt.damage,
+					evt.armorPierce,
+				);
 				if (result?.killed) {
 					onKill();
 				}
@@ -521,6 +620,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
+		EventBus.off('boss-warning', this.onBossWarning);
+
+		this.tutorial?.destroy();
+		this.tutorial = undefined;
 
 		this.selectionGraphics.clear();
 		this.pathGraphics?.destroy();
@@ -535,6 +638,40 @@ export class GameScene extends Phaser.Scene {
 			this.optionalAssetManifest,
 			OPTIONAL_ASSET_SECTIONS,
 		);
+		if (this.bossPrefetched) {
+			unloadAssetSections(this, this.optionalAssetManifest, ['boss']);
+		}
+	}
+
+	private async prefetchBossAssets(): Promise<void> {
+		await prefetchAssetSections(
+			this,
+			this.optionalAssetManifest,
+			['boss'],
+			shouldUseWebPTextures(),
+		);
+		if (!this.isCleaningUp) {
+			registerOptionalCombatAnimations(this, this.optionalAssetManifest);
+		}
+	}
+
+	private showBossWarningOverlay(): void {
+		this.cameras.main.shake(300, 0.005);
+		const overlay = this.add.rectangle(
+			this.scale.width / 2,
+			this.scale.height / 2,
+			this.scale.width,
+			this.scale.height,
+			0xff0000,
+			0.15,
+		);
+		overlay.setDepth(90);
+		this.tweens.add({
+			targets: overlay,
+			alpha: 0,
+			duration: 2000,
+			onComplete: () => overlay.destroy(),
+		});
 	}
 
 	private async prefetchOptionalAssets(): Promise<void> {

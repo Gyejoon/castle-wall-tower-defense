@@ -1,4 +1,4 @@
-import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawPolygon, drawStar, addGlow, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, hexToRgba, drawRect, fillCircle, drawCircle, setPixel, drawLine, drawStar, addGlow, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/ui';
@@ -152,6 +152,176 @@ export async function generate(): Promise<ManifestEntry[]> {
     addGlow(ctx, 16, 16, 10, PALETTE.gold, 0.08);
     saveCanvas(canvas, `${OUTPUT_DIR}/cursor-place.png`);
     entries.push({ key: 'ui-cursor-place', type: 'image', path: 'assets/ui/cursor-place.png' });
+  }
+
+  // Boss HP bar (256x16)
+  {
+    const { canvas, ctx } = makeCanvas(256, 16);
+    drawRect(ctx, 0, 0, 256, 16, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 252, 12, PALETTE.fireRed);
+    drawRect(ctx, 2, 2, 252, 4, hexToRgba(PALETTE.white, 0.2));
+    saveCanvas(canvas, `${OUTPUT_DIR}/boss-hp-bar.png`);
+    entries.push({ key: 'ui-boss-hp-bar', type: 'image', path: 'assets/ui/boss-hp-bar.png', section: 'boss' as const });
+  }
+
+  // Energy gauge (128x16)
+  {
+    const { canvas, ctx } = makeCanvas(128, 16);
+    drawRect(ctx, 0, 0, 128, 16, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 124, 12, PALETTE.magicBlue);
+    drawRect(ctx, 2, 2, 124, 4, hexToRgba(PALETTE.white, 0.2));
+    saveCanvas(canvas, `${OUTPUT_DIR}/energy-gauge.png`);
+    entries.push({ key: 'ui-energy-gauge', type: 'image', path: 'assets/ui/energy-gauge.png' });
+  }
+
+  // Upgrade button (120x40, 3 states: available/unavailable/complete)
+  const BUTTON_STATES = [
+    { name: 'available', bg: PALETTE.gold, text: PALETTE.shadow },
+    { name: 'unavailable', bg: PALETTE.gray, text: PALETTE.shadow },
+    { name: 'complete', bg: '#2ecc71', text: PALETTE.white },
+  ];
+  for (const state of BUTTON_STATES) {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, state.bg);
+    drawRect(ctx, 2, 2, 116, 8, hexToRgba(PALETTE.white, 0.15));
+    saveCanvas(canvas, `${OUTPUT_DIR}/upgrade-btn-${state.name}.png`);
+    entries.push({
+      key: `ui-upgrade-btn-${state.name}`, type: 'image',
+      path: `assets/ui/upgrade-btn-${state.name}.png`,
+    });
+  }
+
+  // Promotion button (120x40, 2 states)
+  for (const state of [{ name: 'available', bg: PALETTE.tierHeroic }, { name: 'unavailable', bg: PALETTE.gray }]) {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, state.bg);
+    saveCanvas(canvas, `${OUTPUT_DIR}/promote-btn-${state.name}.png`);
+    entries.push({
+      key: `ui-promote-btn-${state.name}`, type: 'image',
+      path: `assets/ui/promote-btn-${state.name}.png`,
+    });
+  }
+
+  // Stage select thumbnails (128x96 each, 3 stages)
+  const STAGES = [
+    { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageBright },
+    { id: 'lava_fortress', name: 'Lava Fortress', color: PALETTE.fireRed },
+    { id: 'storm_citadel', name: 'Storm Citadel', color: '#4060c0' },
+  ];
+  for (const stage of STAGES) {
+    const { canvas, ctx } = makeCanvas(128, 96);
+    drawRect(ctx, 0, 0, 128, 96, stage.color);
+    drawRect(ctx, 4, 4, 120, 88, hexToRgba(PALETTE.shadow, 0.5));
+    ctx.fillStyle = PALETTE.white;
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(stage.name, 64, 54);
+    saveCanvas(canvas, `${OUTPUT_DIR}/stage-thumb-${stage.id}.png`);
+    entries.push({
+      key: `ui-stage-thumb-${stage.id}`, type: 'image',
+      path: `assets/ui/stage-thumb-${stage.id}.png`,
+    });
+  }
+
+  // Lock/unlock icons (32x32 each)
+  for (const state of ['locked', 'unlocked']) {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    const color = state === 'locked' ? PALETTE.gray : PALETTE.gold;
+    fillCircle(ctx, 16, 16, 12, color);
+    if (state === 'locked') {
+      drawLine(ctx, 10, 10, 22, 22, PALETTE.shadow);
+      drawLine(ctx, 22, 10, 10, 22, PALETTE.shadow);
+    } else {
+      drawLine(ctx, 10, 16, 14, 22, PALETTE.shadow);
+      drawLine(ctx, 14, 22, 24, 10, PALETTE.shadow);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-${state}.png`);
+    entries.push({ key: `ui-icon-${state}`, type: 'image', path: `assets/ui/icon-${state}.png` });
+  }
+
+  // Gold icon (32x32)
+  {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    fillCircle(ctx, 16, 16, 12, PALETTE.gold);
+    fillCircle(ctx, 16, 16, 8, PALETTE.tierGodBright);
+    ctx.fillStyle = PALETTE.shadow;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('G', 16, 20);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-gold.png`);
+    entries.push({ key: 'ui-icon-gold', type: 'image', path: 'assets/ui/icon-gold.png' });
+  }
+
+  // Diamond icon (32x32)
+  {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    fillCircle(ctx, 16, 16, 12, PALETTE.tierRare);
+    fillCircle(ctx, 16, 16, 8, PALETTE.white);
+    ctx.fillStyle = PALETTE.shadow;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('D', 16, 20);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-diamond.png`);
+    entries.push({ key: 'ui-icon-diamond', type: 'image', path: 'assets/ui/icon-diamond.png' });
+  }
+
+  // Offer card backgrounds (160x200, 3 price tiers)
+  for (const tier of [{ name: 'basic', color: PALETTE.wood }, { name: 'premium', color: PALETTE.tierRare }, { name: 'legendary', color: PALETTE.tierGod }]) {
+    const { canvas, ctx } = makeCanvas(160, 200);
+    drawRect(ctx, 0, 0, 160, 200, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 156, 196, tier.color);
+    drawRect(ctx, 4, 4, 152, 192, hexToRgba(PALETTE.shadow, 0.7));
+    saveCanvas(canvas, `${OUTPUT_DIR}/offer-card-${tier.name}.png`);
+    entries.push({ key: `ui-offer-card-${tier.name}`, type: 'image', path: `assets/ui/offer-card-${tier.name}.png` });
+  }
+
+  // Buy button (120x40, 2 states)
+  for (const state of [{ name: 'available', bg: '#2ecc71' }, { name: 'unavailable', bg: PALETTE.gray }]) {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, state.bg);
+    saveCanvas(canvas, `${OUTPUT_DIR}/buy-btn-${state.name}.png`);
+    entries.push({ key: `ui-buy-btn-${state.name}`, type: 'image', path: `assets/ui/buy-btn-${state.name}.png` });
+  }
+
+  // Mission icons (32x32 each, 4 types)
+  const MISSIONS = [
+    { name: 'daily', color: PALETTE.gold, symbol: 'D' },
+    { name: 'weekly', color: PALETTE.tierRare, symbol: 'W' },
+    { name: 'kill', color: PALETTE.fireRed, symbol: 'K' },
+    { name: 'build', color: PALETTE.foliageBright, symbol: 'B' },
+  ];
+  for (const mission of MISSIONS) {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    fillCircle(ctx, 16, 16, 14, mission.color);
+    fillCircle(ctx, 16, 16, 10, hexToRgba(PALETTE.shadow, 0.5));
+    ctx.fillStyle = PALETTE.white;
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mission.symbol, 16, 21);
+    saveCanvas(canvas, `${OUTPUT_DIR}/mission-icon-${mission.name}.png`);
+    entries.push({ key: `ui-mission-icon-${mission.name}`, type: 'image', path: `assets/ui/mission-icon-${mission.name}.png` });
+  }
+
+  // Complete checkmark (32x32)
+  {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    fillCircle(ctx, 16, 16, 14, '#2ecc71');
+    drawLine(ctx, 8, 16, 14, 22, PALETTE.white);
+    drawLine(ctx, 14, 22, 24, 10, PALETTE.white);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-complete.png`);
+    entries.push({ key: 'ui-icon-complete', type: 'image', path: 'assets/ui/icon-complete.png' });
+  }
+
+  // Ad button (120x40)
+  {
+    const { canvas, ctx } = makeCanvas(120, 40);
+    drawRect(ctx, 0, 0, 120, 40, PALETTE.shadow);
+    drawRect(ctx, 2, 2, 116, 36, PALETTE.magicBlue);
+    saveCanvas(canvas, `${OUTPUT_DIR}/ad-btn.png`);
+    entries.push({ key: 'ui-ad-btn', type: 'image', path: 'assets/ui/ad-btn.png' });
   }
 
   return entries;

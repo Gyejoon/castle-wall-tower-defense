@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('phaser', () => ({
@@ -249,9 +249,11 @@ describe('optional combat vfx', () => {
 		};
 
 		const unitSystem = new UnitSystem(scene as never, gridManager as never);
-		unitSystem.setPath([
-			{ x: 0, y: 0 },
-			{ x: 1, y: 0 },
+		unitSystem.setPaths([
+			[
+				{ x: 0, y: 0 },
+				{ x: 1, y: 0 },
+			],
 		]);
 		unitSystem.queueUnits('scout_drone', 1);
 		unitSystem.update(0, 300);

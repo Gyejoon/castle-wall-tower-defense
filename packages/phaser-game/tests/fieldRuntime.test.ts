@@ -144,6 +144,7 @@ describe('GameScene field runtime', () => {
 		const scene = new GameScene();
 
 		Object.assign(scene, {
+			game: { registry: { get: vi.fn(() => undefined), set: vi.fn() } },
 			scale: { width: 424, height: 960 },
 			add: {
 				image: addImage,
@@ -193,7 +194,10 @@ describe('GameScene field runtime', () => {
 		const floorCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_PRIMARY_TILESET.key,
 		).length;
-		expect(floorCount).toBe(FOREST_GATE_MAP.width * FOREST_GATE_MAP.height);
+		// Floor tiles now extend beyond the grid to fill the canvas
+		expect(floorCount).toBeGreaterThanOrEqual(
+			FOREST_GATE_MAP.width * FOREST_GATE_MAP.height,
+		);
 
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,

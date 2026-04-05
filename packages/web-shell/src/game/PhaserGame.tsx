@@ -7,6 +7,7 @@ export function PhaserGame() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const gameRef = useRef<Phaser.Game | null>(null);
 	const setGameReady = useGameStore((s) => s.setGameReady);
+	const selectedMapId = useGameStore((s) => s.selectedMapId);
 
 	useEffect(() => {
 		if (!containerRef.current) return;
@@ -20,7 +21,7 @@ export function PhaserGame() {
 		const container = containerRef.current;
 		const onReady = () => setGameReady(true);
 		EventBus.on('game-ready', onReady);
-		gameRef.current = startGame(container);
+		gameRef.current = startGame(container, { mapId: selectedMapId });
 
 		return () => {
 			EventBus.off('game-ready', onReady);
@@ -33,7 +34,7 @@ export function PhaserGame() {
 				setGameReady(false);
 			}
 		};
-	}, [setGameReady]);
+	}, [setGameReady, selectedMapId]);
 
 	return (
 		<div

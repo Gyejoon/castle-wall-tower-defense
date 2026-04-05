@@ -286,9 +286,11 @@ describe('runtime safety fixes', () => {
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
 		const unitSystem = new UnitSystem(scene as never, gridManager as never);
-		unitSystem.setPath([
-			{ x: 0, y: 0 },
-			{ x: 1, y: 0 },
+		unitSystem.setPaths([
+			[
+				{ x: 0, y: 0 },
+				{ x: 1, y: 0 },
+			],
 		]);
 
 		unitSystem.queueUnits('scout_drone', 1);

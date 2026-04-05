@@ -110,6 +110,7 @@ export function registerOptionalCombatAnimations(
 	for (const asset of dedupeAssets([
 		...getManifestSectionEntries(manifest, 'vfx'),
 		...getManifestSectionEntries(manifest, 'projectiles'),
+		...getManifestSectionEntries(manifest, 'boss'),
 	])) {
 		if (asset.type !== 'spritesheet') continue;
 		if (!asset.frameCount || !asset.frameWidth || !asset.frameHeight) continue;

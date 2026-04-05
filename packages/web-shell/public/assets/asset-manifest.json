@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-01T16:07:54.256Z",
+  "generated": "2026-04-04T17:52:57.769Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -479,6 +479,18 @@
       "section": "preload"
     },
     {
+      "key": "unit-titan-boss",
+      "type": "image",
+      "path": "assets/units/titan-boss.png",
+      "section": "boss"
+    },
+    {
+      "key": "unit-titan-boss-rage",
+      "type": "image",
+      "path": "assets/units/titan-boss-rage.png",
+      "section": "boss"
+    },
+    {
       "key": "projectile-laser-beam",
       "type": "image",
       "path": "assets/projectiles/laser-beam.png",
@@ -500,6 +512,60 @@
       "key": "projectile-hit-flash",
       "type": "spritesheet",
       "path": "assets/projectiles/hit-flash.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-fire-bolt",
+      "type": "spritesheet",
+      "path": "assets/projectiles/fire-bolt.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-ice-shard",
+      "type": "spritesheet",
+      "path": "assets/projectiles/ice-shard.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-spark-chain",
+      "type": "spritesheet",
+      "path": "assets/projectiles/spark-chain.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-fire",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-fire.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-water",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-water.png",
+      "frameWidth": 16,
+      "frameHeight": 16,
+      "frameCount": 4,
+      "section": "projectiles"
+    },
+    {
+      "key": "projectile-hit-flash-lightning",
+      "type": "spritesheet",
+      "path": "assets/projectiles/hit-flash-lightning.png",
       "frameWidth": 16,
       "frameHeight": 16,
       "frameCount": 4,
@@ -539,6 +605,120 @@
       "section": "vfx"
     },
     {
+      "key": "vfx-element-badge-fire",
+      "type": "image",
+      "path": "assets/vfx/element-badge-fire.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-element-badge-water",
+      "type": "image",
+      "path": "assets/vfx/element-badge-water.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-element-badge-lightning",
+      "type": "image",
+      "path": "assets/vfx/element-badge-lightning.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-element-badge-neutral",
+      "type": "image",
+      "path": "assets/vfx/element-badge-neutral.png",
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-boss-warning",
+      "type": "image",
+      "path": "assets/vfx/boss-warning.png",
+      "section": "boss"
+    },
+    {
+      "key": "vfx-boss-final",
+      "type": "image",
+      "path": "assets/vfx/boss-final.png",
+      "section": "boss"
+    },
+    {
+      "key": "vfx-boss-telegraph",
+      "type": "image",
+      "path": "assets/vfx/boss-telegraph.png",
+      "section": "boss"
+    },
+    {
+      "key": "vfx-boss-death-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/boss-death-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "boss"
+    },
+    {
+      "key": "vfx-upgrade-success-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/upgrade-success-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-upgrade-fail-fx",
+      "type": "spritesheet",
+      "path": "assets/vfx/upgrade-fail-fx.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "vfx"
+    },
+    {
+      "key": "vfx-gacha-reveal-common",
+      "type": "spritesheet",
+      "path": "assets/vfx/gacha-reveal-common.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
+      "key": "vfx-gacha-reveal-rare",
+      "type": "spritesheet",
+      "path": "assets/vfx/gacha-reveal-rare.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
+      "key": "vfx-gacha-reveal-heroic",
+      "type": "spritesheet",
+      "path": "assets/vfx/gacha-reveal-heroic.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
+      "key": "vfx-gacha-reveal-legendary",
+      "type": "spritesheet",
+      "path": "assets/vfx/gacha-reveal-legendary.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
+      "key": "vfx-gacha-reveal-god",
+      "type": "spritesheet",
+      "path": "assets/vfx/gacha-reveal-god.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
       "key": "ui-tower-icons",
       "type": "spritesheet",
       "path": "assets/ui/tower-icons.png",
@@ -569,88 +749,166 @@
       "section": "ui"
     },
     {
-      "key": "ui-pressure-defend",
+      "key": "ui-boss-hp-bar",
       "type": "image",
-      "path": "assets/ui/pressure-defend.png",
-      "section": "ui"
+      "path": "assets/ui/boss-hp-bar.png",
+      "section": "boss"
     },
     {
-      "key": "ui-pressure-attack",
+      "key": "ui-energy-gauge",
       "type": "image",
-      "path": "assets/ui/pressure-attack.png",
+      "path": "assets/ui/energy-gauge.png",
       "section": "ui"
     },
     {
-      "key": "ui-pressure-invest",
+      "key": "ui-upgrade-btn-available",
       "type": "image",
-      "path": "assets/ui/pressure-invest.png",
+      "path": "assets/ui/upgrade-btn-available.png",
       "section": "ui"
     },
     {
-      "key": "ui-pressure-panel-bg",
+      "key": "ui-upgrade-btn-unavailable",
       "type": "image",
-      "path": "assets/ui/pressure-panel-bg.png",
+      "path": "assets/ui/upgrade-btn-unavailable.png",
       "section": "ui"
     },
     {
-      "key": "ui-match-victory",
+      "key": "ui-upgrade-btn-complete",
       "type": "image",
-      "path": "assets/ui/match-victory.png",
+      "path": "assets/ui/upgrade-btn-complete.png",
       "section": "ui"
     },
     {
-      "key": "ui-match-defeat",
+      "key": "ui-promote-btn-available",
       "type": "image",
-      "path": "assets/ui/match-defeat.png",
+      "path": "assets/ui/promote-btn-available.png",
       "section": "ui"
     },
     {
-      "key": "ui-match-draw",
+      "key": "ui-promote-btn-unavailable",
       "type": "image",
-      "path": "assets/ui/match-draw.png",
+      "path": "assets/ui/promote-btn-unavailable.png",
       "section": "ui"
     },
     {
-      "key": "ui-ghost-avatar",
+      "key": "ui-stage-thumb-forest_gate",
       "type": "image",
-      "path": "assets/ui/ghost-avatar.png",
+      "path": "assets/ui/stage-thumb-forest_gate.png",
       "section": "ui"
     },
     {
-      "key": "ui-stat-icons",
-      "type": "spritesheet",
-      "path": "assets/ui/stat-icons.png",
-      "frameWidth": 16,
-      "frameHeight": 16,
-      "frameCount": 3,
+      "key": "ui-stage-thumb-lava_fortress",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-lava_fortress.png",
       "section": "ui"
     },
     {
-      "key": "ui-pressure-attack-effect",
-      "type": "spritesheet",
-      "path": "assets/ui/pressure-attack-effect.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
-      "frameCount": 4,
+      "key": "ui-stage-thumb-storm_citadel",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-storm_citadel.png",
       "section": "ui"
     },
     {
-      "key": "ui-ghost-spawn",
-      "type": "spritesheet",
-      "path": "assets/ui/ghost-spawn.png",
-      "frameWidth": 32,
-      "frameHeight": 32,
-      "frameCount": 4,
+      "key": "ui-icon-locked",
+      "type": "image",
+      "path": "assets/ui/icon-locked.png",
       "section": "ui"
     },
     {
-      "key": "ui-victory-confetti",
-      "type": "spritesheet",
-      "path": "assets/ui/victory-confetti.png",
-      "frameWidth": 32,
-      "frameHeight": 64,
-      "frameCount": 4,
+      "key": "ui-icon-unlocked",
+      "type": "image",
+      "path": "assets/ui/icon-unlocked.png",
       "section": "ui"
+    },
+    {
+      "key": "ui-icon-gold",
+      "type": "image",
+      "path": "assets/ui/icon-gold.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-diamond",
+      "type": "image",
+      "path": "assets/ui/icon-diamond.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-basic",
+      "type": "image",
+      "path": "assets/ui/offer-card-basic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-premium",
+      "type": "image",
+      "path": "assets/ui/offer-card-premium.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-offer-card-legendary",
+      "type": "image",
+      "path": "assets/ui/offer-card-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-buy-btn-available",
+      "type": "image",
+      "path": "assets/ui/buy-btn-available.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-buy-btn-unavailable",
+      "type": "image",
+      "path": "assets/ui/buy-btn-unavailable.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-daily",
+      "type": "image",
+      "path": "assets/ui/mission-icon-daily.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-weekly",
+      "type": "image",
+      "path": "assets/ui/mission-icon-weekly.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-kill",
+      "type": "image",
+      "path": "assets/ui/mission-icon-kill.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-mission-icon-build",
+      "type": "image",
+      "path": "assets/ui/mission-icon-build.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-complete",
+      "type": "image",
+      "path": "assets/ui/icon-complete.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-ad-btn",
+      "type": "image",
+      "path": "assets/ui/ad-btn.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-defense-success",
+      "type": "image",
+      "path": "assets/ui/defense-success.png",
+      "section": "reward"
+    },
+    {
+      "key": "ui-defense-fail",
+      "type": "image",
+      "path": "assets/ui/defense-fail.png",
+      "section": "reward"
     },
     {
       "key": "icon-192",
@@ -675,6 +933,261 @@
       "type": "tilemapTiledJSON",
       "path": "assets/maps/forest-gate.json",
       "section": "preload"
+    },
+    {
+      "key": "tilemap-lava_fortress",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/lava-fortress.json",
+      "section": "preload"
+    },
+    {
+      "key": "tilemap-storm_citadel",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/storm-citadel.json",
+      "section": "preload"
+    },
+    {
+      "key": "ui-rarity-frame-common",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-common.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-rare",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-heroic",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-legendary",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-rarity-frame-god",
+      "type": "image",
+      "path": "assets/ui/rarity-frame-god.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-common",
+      "type": "image",
+      "path": "assets/ui/tower-card-common.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-rare",
+      "type": "image",
+      "path": "assets/ui/tower-card-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-heroic",
+      "type": "image",
+      "path": "assets/ui/tower-card-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-legendary",
+      "type": "image",
+      "path": "assets/ui/tower-card-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-tower-card-god",
+      "type": "image",
+      "path": "assets/ui/tower-card-god.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-rare",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-rare.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-heroic",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-heroic.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-promotion-glow-legendary",
+      "type": "image",
+      "path": "assets/ui/promotion-glow-legendary.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-level-badge",
+      "type": "image",
+      "path": "assets/ui/level-badge.png",
+      "section": "ui"
+    },
+    {
+      "key": "grid-floor",
+      "type": "image",
+      "path": "assets/tiles/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "path-tile",
+      "type": "image",
+      "path": "assets/tiles/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-tile",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "exit-tile",
+      "type": "image",
+      "path": "assets/tiles/exit-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "grid-floor-dark",
+      "type": "image",
+      "path": "assets/tiles/grid-floor-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "path-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/path-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/spawn-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "exit-tile-dark",
+      "type": "image",
+      "path": "assets/tiles/exit-tile-dark.png",
+      "section": "preload"
+    },
+    {
+      "key": "forest_gate-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/forest_gate/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "forest_gate-path-tile",
+      "type": "image",
+      "path": "assets/tiles/forest_gate/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "lava_fortress-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/lava_fortress/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "lava_fortress-path-tile",
+      "type": "image",
+      "path": "assets/tiles/lava_fortress/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "storm_citadel-grid-floor",
+      "type": "image",
+      "path": "assets/tiles/storm_citadel/grid-floor.png",
+      "section": "preload"
+    },
+    {
+      "key": "storm_citadel-path-tile",
+      "type": "image",
+      "path": "assets/tiles/storm_citadel/path-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "ui-tutorial-highlight",
+      "type": "image",
+      "path": "assets/ui/tutorial-highlight.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-tutorial-arrow-up",
+      "type": "image",
+      "path": "assets/ui/tutorial-arrow-up.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-tutorial-arrow-down",
+      "type": "image",
+      "path": "assets/ui/tutorial-arrow-down.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-tutorial-arrow-left",
+      "type": "image",
+      "path": "assets/ui/tutorial-arrow-left.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-tutorial-arrow-right",
+      "type": "image",
+      "path": "assets/ui/tutorial-arrow-right.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-tutorial-hint-bubble",
+      "type": "image",
+      "path": "assets/ui/tutorial-hint-bubble.png",
+      "section": "tutorial"
+    },
+    {
+      "key": "ui-gacha-box-free",
+      "type": "image",
+      "path": "assets/ui/gacha-box-free.png",
+      "section": "gacha"
+    },
+    {
+      "key": "ui-gacha-box-ad",
+      "type": "image",
+      "path": "assets/ui/gacha-box-ad.png",
+      "section": "gacha"
+    },
+    {
+      "key": "ui-gacha-box-diamond",
+      "type": "image",
+      "path": "assets/ui/gacha-box-diamond.png",
+      "section": "gacha"
+    },
+    {
+      "key": "ui-gacha-box-premium",
+      "type": "image",
+      "path": "assets/ui/gacha-box-premium.png",
+      "section": "gacha"
+    },
+    {
+      "key": "ui-gacha-box-open",
+      "type": "spritesheet",
+      "path": "assets/ui/gacha-box-open.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "section": "gacha"
+    },
+    {
+      "key": "ui-badge-new",
+      "type": "image",
+      "path": "assets/ui/badge-new.png",
+      "section": "gacha"
     }
   ]
 }

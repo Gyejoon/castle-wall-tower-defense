@@ -6,7 +6,8 @@ export interface MapLayout {
 	width: number;
 	height: number;
 	tileSize: number;
-	path: Position[]; // ordered lane tiles from spawn to exit
+	path: Position[]; // primary lane (lane 0) from spawn to exit
+	paths?: Position[][]; // all lanes including primary — if omitted, [path] is used
 	blockedPlacementPoints: Position[]; // non-buildable terrain blocked from tower placement
 	buildablePoints: Position[]; // valid tower placement tiles derived from board contract
 	spawnPoint: Position;

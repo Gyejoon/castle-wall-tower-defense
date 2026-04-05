@@ -1,5 +1,11 @@
-import type { ActiveUnit, ElementType, Position, UnitDef } from '@gld/shared';
-import { UNITS } from '@gld/shared';
+import {
+	type ActiveUnit,
+	ELEMENT_TINT_COLORS,
+	type ElementType,
+	type Position,
+	UNITS,
+	type UnitDef,
+} from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
@@ -28,6 +34,7 @@ interface UnitInstance {
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
+	laneIndex: number; // which lane this unit follows
 }
 
 interface QueueUnitsOptions {
@@ -42,7 +49,10 @@ export class UnitSystem {
 	private gridManager: GridManager;
 	private currentPath: Position[] = [];
 	private currentPathWorld: Position[] = [];
+	private lanes: Position[][] = [];
+	private lanesWorld: Position[][] = [];
 	private nextId = 0;
+	private nextLane = 0;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
@@ -52,30 +62,31 @@ export class UnitSystem {
 		this.gridManager = gridManager;
 	}
 
-	setPath(path: Position[]): void {
-		if (path === this.currentPath) return;
-		const oldPath = this.currentPath;
-		this.currentPath = path;
-		this.currentPathWorld = path.map((p) =>
-			this.gridManager.gridToWorld(p.x, p.y),
+	setPaths(paths: Position[][]): void {
+		this.lanes = paths;
+		this.lanesWorld = paths.map((lane) =>
+			lane.map((p) => this.gridManager.gridToWorld(p.x, p.y)),
 		);
+		this.currentPath = paths[0] ?? [];
+		this.currentPathWorld = this.lanesWorld[0] ?? [];
+		this.nextLane = 0;
 
-		if (oldPath.length > 0 && path.length > 0) {
-			for (const unit of this.units.values()) {
-				const unitGrid = unit.data.position;
-				let bestIdx = 0;
-				let bestDist = Infinity;
-				for (let i = 0; i < path.length; i++) {
-					const dx = path[i].x - unitGrid.x;
-					const dy = path[i].y - unitGrid.y;
-					const d = dx * dx + dy * dy;
-					if (d < bestDist) {
-						bestDist = d;
-						bestIdx = i;
-					}
+		// Reassign existing units to their closest point on their lane
+		for (const unit of this.units.values()) {
+			const lane = this.lanes[unit.laneIndex] ?? this.currentPath;
+			const unitGrid = unit.data.position;
+			let bestIdx = 0;
+			let bestDist = Infinity;
+			for (let i = 0; i < lane.length; i++) {
+				const dx = lane[i].x - unitGrid.x;
+				const dy = lane[i].y - unitGrid.y;
+				const d = dx * dx + dy * dy;
+				if (d < bestDist) {
+					bestDist = d;
+					bestIdx = i;
 				}
-				unit.data.pathIndex = Math.min(bestIdx, path.length - 2);
 			}
+			unit.data.pathIndex = Math.min(bestIdx, lane.length - 2);
 		}
 	}
 
@@ -96,11 +107,18 @@ export class UnitSystem {
 	}
 
 	private spawnUnit(entry: SpawnQueueEntry): void {
-		if (this.currentPath.length === 0) return;
+		if (this.lanes.length === 0 && this.currentPath.length === 0) return;
+
+		// Round-robin lane assignment
+		const laneIndex =
+			this.lanes.length > 1 ? this.nextLane++ % this.lanes.length : 0;
+		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
+		const lanePathWorld = this.lanesWorld[laneIndex] ?? this.currentPathWorld;
+		if (lanePath.length === 0) return;
 
 		const instanceId = `unit_${this.nextId++}`;
-		const startGrid = this.currentPath[0];
-		const startWorld = this.currentPathWorld[0];
+		const startGrid = lanePath[0];
+		const startWorld = lanePathWorld[0];
 
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
@@ -120,6 +138,9 @@ export class UnitSystem {
 		sprite.setDisplaySize(40, 48);
 		sprite.play(`${entry.def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
+		if (entry.def.element !== 'neutral') {
+			sprite.setTint(ELEMENT_TINT_COLORS[entry.def.element]);
+		}
 		this.spawnOptionalVfx(
 			'vfx-spawn-portal',
 			startWorld.x,
@@ -150,6 +171,7 @@ export class UnitSystem {
 			bounty: entry.bounty,
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
+			laneIndex,
 		});
 	}
 
@@ -323,8 +345,11 @@ export class UnitSystem {
 		const dt = delta / 1000;
 
 		for (const [id, unit] of this.units) {
+			const unitLane = this.lanes[unit.laneIndex] ?? this.currentPath;
+			const unitLaneWorld =
+				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
 			const pathIdx = unit.data.pathIndex;
-			if (pathIdx >= this.currentPath.length - 1) {
+			if (pathIdx >= unitLane.length - 1) {
 				reachedExit.push(id);
 				unit.sprite.destroy();
 				unit.hpBar.destroy();
@@ -356,8 +381,8 @@ export class UnitSystem {
 				continue; // skip movement while stunned
 			}
 
-			const nextGrid = this.currentPath[pathIdx + 1];
-			const targetWorld = this.currentPathWorld[pathIdx + 1];
+			const nextGrid = unitLane[pathIdx + 1];
+			const targetWorld = unitLaneWorld[pathIdx + 1];
 			const speed =
 				unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
 
@@ -421,6 +446,11 @@ export class UnitSystem {
 			});
 		}
 		return this.unitPositionsBuffer;
+	}
+
+	getUnitElement(unitId: string): string {
+		const unit = this.units.get(unitId);
+		return unit?.def.element ?? 'neutral';
 	}
 
 	destroy(): void {

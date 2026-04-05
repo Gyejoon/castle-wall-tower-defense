@@ -137,6 +137,7 @@ describe('GameScene', () => {
 		scene.playerTowers = { update: vi.fn(() => []) };
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),
+			getUnitElement: vi.fn(() => 'neutral'),
 			applyDamage: vi.fn(),
 			applySlow: vi.fn(),
 			update: vi.fn(() => ({ reachedExit: [] })),
@@ -165,10 +166,13 @@ describe('GameScene', () => {
 			getElapsedMs: vi.fn(() => 0),
 		};
 		scene.playerTowers = {
-			update: vi.fn(() => [{ unitId: 'unit-1', damage: 99 }]),
+			update: vi.fn(() => [
+				{ unitId: 'unit-1', damage: 99, towerElement: 'neutral' },
+			]),
 		};
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),
+			getUnitElement: vi.fn(() => 'neutral'),
 			applyDamage: vi.fn(() => ({
 				killed: true,
 				unitDefId: 'scout_drone',

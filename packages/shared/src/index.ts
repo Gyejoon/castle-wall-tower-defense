@@ -9,14 +9,15 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export type { DeckCardDef } from './constants/deck';
+export { DEFAULT_DECK } from './constants/deck';
+export type { CcAuraConfig, ElementType } from './constants/elements';
 export {
 	CC_AURA_CONFIGS,
 	ELEMENT_MATCHUP,
+	ELEMENT_TINT_COLORS,
 	getElementMultiplier,
 } from './constants/elements';
-export type { CcAuraConfig } from './constants/elements';
-export type { DeckCardDef } from './constants/deck';
-export { DEFAULT_DECK } from './constants/deck';
 export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
 export {
 	BOARD_TOP_PADDING,
@@ -29,7 +30,16 @@ export {
 	ORTHO_TILE,
 	TILE_SIZE,
 } from './constants/grid';
-export { FOREST_GATE_MAP } from './constants/maps';
+export {
+	DEFAULT_MAP_ID,
+	FOREST_GATE_MAP,
+	getAllPathCells,
+	getMapById,
+	getMapPaths,
+	LAVA_FORTRESS_MAP,
+	MAP_REGISTRY,
+	STORM_CITADEL_MAP,
+} from './constants/maps';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,
@@ -54,7 +64,6 @@ export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
-	ElementType,
 	FusionTowerType,
 	PlacedTower,
 	TowerDef,

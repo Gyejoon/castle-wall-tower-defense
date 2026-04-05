@@ -1,6 +1,5 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
-	getWavesForMap,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -27,10 +26,10 @@ export class WaveSystem {
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 
-	constructor(unitSystem: UnitSystem, maxWaves?: number, mapId?: string) {
+	constructor(unitSystem: UnitSystem, waves: WaveDef[], maxWaves?: number) {
 		this.unitSystem = unitSystem;
-		this.waves = getWavesForMap(mapId ?? 'forest_gate');
-		this.maxWaves = Math.max(1, Math.min(maxWaves ?? this.waves.length, this.waves.length));
+		this.waves = waves;
+		this.maxWaves = Math.max(1, Math.min(maxWaves ?? waves.length, waves.length));
 	}
 
 	setMaxWaves(count: number): void {

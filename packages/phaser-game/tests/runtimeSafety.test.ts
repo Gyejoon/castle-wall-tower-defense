@@ -106,6 +106,7 @@ describe('runtime safety fixes', () => {
 
 		const waveSystem = new WaveSystem(
 			unitSystem as never,
+			WAVE_DEFS,
 			WAVE_DEFS.length + 5,
 		);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
@@ -126,7 +127,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never);
+		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
 		waveSystem.start();
 
 		// Wave 1 starts immediately
@@ -169,7 +170,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never);
+		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
 		waveSystem.start();
 
 		// Advance through waves 1-3 (clear immediately since activeCount=0)

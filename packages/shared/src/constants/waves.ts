@@ -317,4 +317,8 @@ export function getWavesForMap(mapId: string): WaveDef[] {
 	return waves ?? WAVE_DEFS;
 }
 
+export function getTotalWavesForMap(mapId: string): number {
+	return getWavesForMap(mapId).length;
+}
+
 export const TOTAL_WAVES = WAVE_DEFS.length;

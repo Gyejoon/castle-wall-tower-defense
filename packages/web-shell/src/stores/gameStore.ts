@@ -35,6 +35,7 @@ export interface BossHpState {
 	visible: boolean;
 }
 
+/** Phaser emits wavesCleared~goldEarned; xpEarned is computed in the React layer via battleXp(). */
 export interface GameOverStats {
 	wavesCleared: number;
 	towersPlaced: number;

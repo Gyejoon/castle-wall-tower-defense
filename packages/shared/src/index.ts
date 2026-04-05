@@ -70,6 +70,7 @@ export type {
 	WaveSlotKind,
 } from './constants/waves';
 export {
+	getTotalWavesForMap,
 	getWavesForMap,
 	TOTAL_WAVES,
 	WAVE_DEFS,

@@ -164,7 +164,7 @@ export class GameScene extends Phaser.Scene {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
 		}
 		this.currentSlotDef = mapWaves[0];
-		this.playerWaves = new WaveSystem(this.playerUnits, undefined, mapId);
+		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves);
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
@@ -479,6 +479,8 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
+		EventBus.off('wave-started', this.onWaveStartedLifecycle);
+		EventBus.off('boss-warning', this.onBossWarning);
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 		EventBus.emit('game-over', {

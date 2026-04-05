@@ -137,6 +137,7 @@ describe('GameScene', () => {
 		scene.playerTowers = {
 			update: vi.fn(() => []),
 			getTowers: vi.fn(() => []),
+			destroy: vi.fn(),
 		};
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),

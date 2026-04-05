@@ -153,6 +153,7 @@ export class GameScene extends Phaser.Scene {
 			this.playerPathfinding,
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
+		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		this.playerWaves = new WaveSystem(this.playerUnits);
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;

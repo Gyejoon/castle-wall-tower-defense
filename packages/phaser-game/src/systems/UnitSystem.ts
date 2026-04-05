@@ -6,6 +6,7 @@ import {
 	type Position,
 	UNITS,
 	type UnitDef,
+	scaleUnitStats,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -44,6 +45,7 @@ interface UnitInstance {
 	invulnerableMs: number;
 	maxHp: number;
 	baseSpeed: number;
+	baseArmor: number;
 	ccImmunityChance: number;
 	waveSlot: number;
 }
@@ -67,6 +69,7 @@ export class UnitSystem {
 	private lanesWorld: Position[][] = [];
 	private nextId = 0;
 	private nextLane = 0;
+	private stageLevel = 1;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
@@ -74,6 +77,10 @@ export class UnitSystem {
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
+	}
+
+	setStageLevel(level: number): void {
+		this.stageLevel = level;
 	}
 
 	setPaths(paths: Position[][]): void {
@@ -139,7 +146,8 @@ export class UnitSystem {
 
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
-		const finalHp = entry.def.stats.hp * entry.hpMultiplier;
+		const scaled = scaleUnitStats(entry.def.stats, this.stageLevel);
+		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1);
 
 		const unitData: ActiveUnit = {
 			instanceId,
@@ -173,7 +181,7 @@ export class UnitSystem {
 			hpBar,
 			startWorld.x,
 			startWorld.y,
-			entry.def,
+			finalHp,
 			finalHp,
 		);
 
@@ -195,8 +203,9 @@ export class UnitSystem {
 			bossPhase: 1,
 			invulnerableMs: 0,
 			maxHp: finalHp,
-			baseSpeed: entry.def.stats.speed,
-			ccImmunityChance: 0,
+			baseSpeed: scaled.speed,
+			baseArmor: scaled.armor,
+			ccImmunityChance: scaled.ccImmunityChance,
 			waveSlot: entry.waveSlot,
 		});
 	}
@@ -205,7 +214,7 @@ export class UnitSystem {
 		graphics: Phaser.GameObjects.Graphics,
 		x: number,
 		y: number,
-		def: UnitDef,
+		maxHp: number,
 		hp: number,
 	): void {
 		graphics.clear();
@@ -219,7 +228,7 @@ export class UnitSystem {
 			barWidth + 2,
 			barHeight + 2,
 		);
-		const hpRatio = Math.max(0, hp / def.stats.hp);
+		const hpRatio = Math.max(0, hp / maxHp);
 		const barColor =
 			hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
 		graphics.fillStyle(barColor, 1);
@@ -229,6 +238,9 @@ export class UnitSystem {
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		if (unit.ccImmunityChance > 0 && Math.random() < unit.ccImmunityChance) {
+			return; // CC resisted
+		}
 		// Keep the stronger slow (lower factor = slower)
 		unit.slowFactor = Math.min(unit.slowFactor, factor);
 		unit.slowRemaining = Math.max(unit.slowRemaining, durationMs);
@@ -238,6 +250,9 @@ export class UnitSystem {
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		if (unit.ccImmunityChance > 0 && Math.random() < unit.ccImmunityChance) {
+			return; // CC resisted
+		}
 		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
 		unit.sprite.setTint(0xffff44);
 	}
@@ -260,7 +275,7 @@ export class UnitSystem {
 			return { killed: false, bounty: 0, unitDefId: unit.def.id, countsTowardClear: unit.countsTowardClear, source: unit.source };
 		}
 
-		const armor = armorPierce ? 0 : unit.def.stats.armor;
+		const armor = armorPierce ? 0 : unit.baseArmor;
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 
@@ -321,7 +336,7 @@ export class UnitSystem {
 			unit.hpBar,
 			unit.worldX,
 			unit.worldY,
-			unit.def,
+			unit.maxHp,
 			unit.data.hp,
 		);
 		return {
@@ -467,7 +482,7 @@ export class UnitSystem {
 				unit.hpBar,
 				unit.worldX,
 				unit.worldY,
-				unit.def,
+				unit.maxHp,
 				unit.data.hp,
 			);
 		}

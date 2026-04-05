@@ -83,6 +83,7 @@ export function GamePage() {
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
@@ -165,7 +166,11 @@ export function GamePage() {
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			setBossWarningVisible(true);
-			setTimeout(() => setBossWarningVisible(false), 1500);
+			if (bossWarningTimerRef.current) clearTimeout(bossWarningTimerRef.current);
+			bossWarningTimerRef.current = setTimeout(() => {
+				setBossWarningVisible(false);
+				bossWarningTimerRef.current = null;
+			}, 1500);
 		};
 		const onBossHpUpdate = (data: { hp: number; maxHp: number; phase: 1 | 2 }) => {
 			setBossHp({ ...data, visible: true });
@@ -194,6 +199,7 @@ export function GamePage() {
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+			if (bossWarningTimerRef.current) clearTimeout(bossWarningTimerRef.current);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);

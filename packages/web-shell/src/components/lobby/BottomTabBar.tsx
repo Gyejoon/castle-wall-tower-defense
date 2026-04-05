@@ -21,6 +21,12 @@ const tabs: Array<{
 		inactiveIcon: uiMobileArt.collectionTabIconInactive,
 	},
 	{
+		id: 'missions',
+		label: '임무',
+		activeIcon: uiMobileArt.collectionTabIconActive,
+		inactiveIcon: uiMobileArt.collectionTabIconInactive,
+	},
+	{
 		id: 'settings',
 		label: '영주실',
 		activeIcon: uiMobileArt.settingsTabIconActive,

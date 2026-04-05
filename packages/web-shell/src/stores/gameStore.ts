@@ -16,7 +16,7 @@ import { useMetaStore } from './metaStore';
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
-export type LobbyTab = 'home' | 'collection' | 'settings';
+export type LobbyTab = 'home' | 'collection' | 'missions' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {

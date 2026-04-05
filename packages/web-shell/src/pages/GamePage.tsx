@@ -544,6 +544,16 @@ export function GamePage() {
 											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
 										).padStart(2, '0')}
 									</p>
+									<p
+										style={{
+											color: colors.gold,
+											fontFamily: fonts.pixel,
+											fontSize: '10px',
+											marginTop: '4px',
+										}}
+									>
+										획득 골드: {gameOverStats?.goldEarned ?? 0}G
+									</p>
 								</div>
 								<PixelButton
 									variant="gold"

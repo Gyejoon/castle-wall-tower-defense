@@ -59,6 +59,7 @@ export interface GameOverStats {
 	wavesCleared: number;
 	towersPlaced: number;
 	timeSurvivedSec: number;
+	goldEarned: number;
 }
 
 interface GameStoreState {

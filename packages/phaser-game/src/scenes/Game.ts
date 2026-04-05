@@ -93,6 +93,7 @@ export class GameScene extends Phaser.Scene {
 	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
+	private goldEarned = 0;
 	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -475,6 +476,7 @@ export class GameScene extends Phaser.Scene {
 				wavesCleared: payload.finalSlot,
 				towersPlaced: this.playerTowers.getTowers().length,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
+				goldEarned: this.goldEarned,
 			},
 		});
 	}
@@ -564,6 +566,7 @@ export class GameScene extends Phaser.Scene {
 					evt.armorPierce,
 				);
 				if (result?.killed) {
+					this.goldEarned += result.bounty;
 					onKill();
 				}
 			}

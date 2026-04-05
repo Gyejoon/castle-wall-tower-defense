@@ -29,6 +29,7 @@ export interface GameEventMap {
 			wavesCleared: number;
 			towersPlaced: number;
 			timeSurvivedSec: number;
+			goldEarned: number;
 		};
 	};
 	'energy-changed': { energy: number };

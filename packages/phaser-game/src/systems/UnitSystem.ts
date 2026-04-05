@@ -195,7 +195,7 @@ export class UnitSystem {
 			slowFactor: 1.0,
 			slowRemaining: 0,
 			stunRemaining: 0,
-			bounty: entry.bounty,
+			bounty: Math.round(entry.bounty * scaled.bountyMultiplier),
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
 			laneIndex,

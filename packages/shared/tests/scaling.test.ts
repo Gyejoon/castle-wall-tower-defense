@@ -28,6 +28,7 @@ describe('scaleUnitStats', () => {
 			hp: 100,
 			speed: 2.0,
 			armor: 5,
+			bountyMultiplier: 1,
 			ccImmunityChance: 0,
 		});
 	});
@@ -37,6 +38,7 @@ describe('scaleUnitStats', () => {
 		expect(result.hp).toBe(800);
 		expect(result.armor).toBe(25);
 		expect(result.speed).toBeCloseTo(2.4);
+		expect(result.bountyMultiplier).toBe(3);
 		expect(result.ccImmunityChance).toBe(0.1);
 	});
 
@@ -45,6 +47,7 @@ describe('scaleUnitStats', () => {
 		expect(result.hp).toBe(5000);
 		expect(result.armor).toBe(100);
 		expect(result.speed).toBeCloseTo(3.0);
+		expect(result.bountyMultiplier).toBe(8);
 		expect(result.ccImmunityChance).toBe(0.2);
 	});
 });

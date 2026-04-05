@@ -159,6 +159,7 @@ describe('GameScene', () => {
 				wavesCleared: 20,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
+				goldEarned: 0,
 			},
 		});
 	});

@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { colors, fonts } from '../../styles/tokens';
+import { colors } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: 'primary' | 'secondary' | 'danger' | 'gold';
@@ -14,6 +15,7 @@ const variantColors = {
 
 export function PixelButton({
 	variant = 'primary',
+	className,
 	style,
 	children,
 	...props
@@ -23,17 +25,14 @@ export function PixelButton({
 
 	return (
 		<button
+			className={cn(
+				'font-pixel text-sm px-6 py-3 bg-panel text-text border-2 text-center transition-[transform,box-shadow] duration-100',
+				disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+				className,
+			)}
 			style={{
-				fontFamily: fonts.pixel,
-				fontSize: '14px',
-				padding: '12px 24px',
-				background: colors.panel,
-				color: colors.text,
-				border: `2px solid ${color}`,
+				borderColor: color,
 				boxShadow: `4px 4px 0px ${color}`,
-				cursor: disabled ? 'not-allowed' : 'pointer',
-				opacity: disabled ? 0.6 : 1,
-				transition: 'transform 0.1s, box-shadow 0.1s',
 				...style,
 			}}
 			onMouseEnter={(e) => {

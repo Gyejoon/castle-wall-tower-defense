@@ -1,6 +1,6 @@
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { type LobbyTab, useGameStore } from '../../stores/gameStore';
-import { colors, fonts } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 const tabs: Array<{
 	id: LobbyTab;
@@ -36,13 +36,9 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 		<div
 			role="tablist"
 			aria-label="로비 탭"
+			className="flex justify-around items-center bg-[rgba(26,18,8,0.95)] border-t border-border"
 			style={{
-				display: 'flex',
-				justifyContent: 'space-around',
-				alignItems: 'center',
 				padding: '6px 0 calc(6px + env(safe-area-inset-bottom, 0px))',
-				background: 'rgba(26, 18, 8, 0.95)',
-				borderTop: `1px solid ${colors.border}`,
 			}}
 		>
 			{tabs.map((tab) => {
@@ -57,36 +53,26 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						aria-controls={`tabpanel-${tab.id}`}
 						disabled={disabled}
 						onClick={() => !disabled && setLobbyTab(tab.id)}
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-							gap: '3px',
-							padding: '6px 16px',
-							background: 'none',
-							border: 'none',
-							cursor: disabled ? 'not-allowed' : 'pointer',
-							minWidth: '60px',
-							touchAction: 'manipulation',
-							opacity: disabled ? 0.5 : 1,
-						}}
+						className={cn(
+							'flex flex-col items-center gap-[3px] px-4 py-1.5 bg-transparent border-none min-w-[60px] touch-manipulation',
+							disabled
+								? 'cursor-not-allowed opacity-50'
+								: 'cursor-pointer opacity-100',
+						)}
 					>
 						<img
 							src={isActive ? tab.activeIcon : tab.inactiveIcon}
 							alt=""
 							width={24}
 							height={24}
-							style={{ imageRendering: 'pixelated' }}
+							className="[image-rendering:pixelated]"
 							aria-hidden="true"
 						/>
 						<span
-							className="tab-label"
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '11px',
-								color: isActive ? colors.gold : colors.textSecondary,
-								transition: 'color 0.15s',
-							}}
+							className={cn(
+								'tab-label font-pixel text-[11px] transition-colors duration-150',
+								isActive ? 'text-gold' : 'text-text-secondary',
+							)}
 						>
 							{tab.label}
 						</span>

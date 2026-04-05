@@ -38,6 +38,8 @@ export {
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
+	getSpawnExitPairs,
+	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
 	STORM_CITADEL_MAP,
@@ -70,6 +72,8 @@ export type {
 	WaveSlotKind,
 } from './constants/waves';
 export {
+	getTotalWavesForMap,
+	getWavesForMap,
 	TOTAL_WAVES,
 	WAVE_DEFS,
 } from './constants/waves';

@@ -175,9 +175,9 @@ describe('GamePage', () => {
 		const view = render(<GamePage />);
 		const hud = view.getByTestId('top-hud') as HTMLDivElement;
 
-		expect(hud.style.flexWrap).toBe('nowrap');
-		expect(hud.style.whiteSpace).toBe('nowrap');
-		expect(hud.style.overflow).toBe('hidden');
+		expect(hud.className).toContain('flex-nowrap');
+		expect(hud.className).toContain('whitespace-nowrap');
+		expect(hud.className).toContain('overflow-hidden');
 	});
 
 	it('shows victory state when local player wins', () => {
@@ -187,12 +187,36 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'victory',
-				stats: { wavesCleared: 10, towersPlaced: 5, timeSurvivedSec: 180, goldEarned: 200 },
+				stats: {
+					wavesCleared: 10,
+					towersPlaced: 5,
+					timeSurvivedSec: 180,
+					goldEarned: 200,
+				},
 			});
 		});
 
 		expect(useGameStore.getState().runStatus).toBe('victory');
 		expect(view.getByRole('button', { name: /다시 시작/i })).toBeTruthy();
+	});
+
+	it('결과 화면에 획득 XP를 표시한다', () => {
+		const { emitSpy } = getEventBusHarness();
+		const view = render(<GamePage />);
+
+		act(() => {
+			emitSpy('game-over', {
+				result: 'victory',
+				stats: {
+					wavesCleared: 10,
+					towersPlaced: 5,
+					timeSurvivedSec: 180,
+					goldEarned: 200,
+				},
+			});
+		});
+
+		expect(view.getByText(/획득 XP/)).toBeTruthy();
 	});
 
 	it('handles game-over only through the result payload contract', () => {
@@ -202,7 +226,12 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'defeat',
-				stats: { wavesCleared: 5, towersPlaced: 3, timeSurvivedSec: 90, goldEarned: 80 },
+				stats: {
+					wavesCleared: 5,
+					towersPlaced: 3,
+					timeSurvivedSec: 90,
+					goldEarned: 80,
+				},
 			});
 		});
 

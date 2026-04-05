@@ -41,7 +41,9 @@ export class TowerSystem {
 	private gridManager: GridManager;
 	private pathfinding: PathfindingSystem;
 	private collection: OwnedTower[];
+	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
+	private destroyed = false;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -57,11 +59,13 @@ export class TowerSystem {
 		gridManager: GridManager,
 		pathfinding: PathfindingSystem,
 		collection?: OwnedTower[],
+		spawnExitPairs: Array<{ spawn: Position; exit: Position }> = [],
 	) {
 		this.scene = scene;
 		this.gridManager = gridManager;
 		this.pathfinding = pathfinding;
 		this.collection = collection ?? [];
+		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
 	}
@@ -87,13 +91,16 @@ export class TowerSystem {
 
 		this.pathfinding.invalidateCache();
 		const walkGrid = this.gridManager.getWalkabilityGrid();
-		const path = this.pathfinding.findPath(
-			walkGrid,
-			this.gridManager.spawnPoint,
-			this.gridManager.exitPoint,
-		);
+		const allClear =
+			this.spawnExitPairs.length > 0
+				? this.pathfinding.validateAllPaths(walkGrid, this.spawnExitPairs)
+				: this.pathfinding.findPath(
+						walkGrid,
+						this.gridManager.spawnPoint,
+						this.gridManager.exitPoint,
+					) !== null;
 
-		if (!path) {
+		if (!allClear) {
 			this.gridManager.removeTower(gridX, gridY);
 			this.pathfinding.invalidateCache();
 			return { success: false, reason: 'blocked_path' };
@@ -564,6 +571,8 @@ export class TowerSystem {
 	}
 
 	destroy(): void {
+		if (this.destroyed) return;
+		this.destroyed = true;
 		for (const tower of this.towers.values()) {
 			tower.base.destroy();
 			tower.sprite.destroy();

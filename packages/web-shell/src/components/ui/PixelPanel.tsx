@@ -1,20 +1,19 @@
 import type { HTMLAttributes } from 'react';
-import { colors } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 export function PixelPanel({
+	className,
 	style,
 	children,
 	...props
 }: HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
-			style={{
-				background: colors.panel,
-				border: `2px solid ${colors.border}`,
-				boxShadow: `4px 4px 0px ${colors.border}`,
-				padding: '16px',
-				...style,
-			}}
+			className={cn(
+				'p-4 bg-panel border-2 border-border shadow-[4px_4px_0px_var(--color-border)]',
+				className,
+			)}
+			style={style}
 			{...props}
 		>
 			{children}

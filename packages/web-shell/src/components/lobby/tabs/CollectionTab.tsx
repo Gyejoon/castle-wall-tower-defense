@@ -13,7 +13,8 @@ import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
-import { colors, fonts } from '../../../styles/tokens';
+import { colors } from '../../../styles/tokens';
+import { cn } from '../../../utils/cn';
 import { PixelButton } from '../../ui/PixelButton';
 import { TabBackground } from '../TabBackground';
 
@@ -64,13 +65,7 @@ export function CollectionTab() {
 			id="tabpanel-collection"
 			role="tabpanel"
 			aria-label="전쟁탁자"
-			style={{
-				position: 'relative',
-				flex: 1,
-				overflow: 'hidden',
-				display: 'flex',
-				flexDirection: 'column',
-			}}
+			className="relative flex flex-1 flex-col overflow-hidden"
 		>
 			<TabBackground
 				src={uiMobileArt.wartableBg}
@@ -78,41 +73,10 @@ export function CollectionTab() {
 				overlayOpacity={0.3}
 			/>
 
-			<div
-				style={{
-					position: 'relative',
-					zIndex: 1,
-					flex: 1,
-					overflow: 'auto',
-					padding: '12px',
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '12px',
-				}}
-			>
-				<div
-					style={{
-						display: 'flex',
-						alignItems: 'baseline',
-						justifyContent: 'space-between',
-					}}
-				>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '14px',
-							color: colors.text,
-						}}
-					>
-						보유 타워
-					</span>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '11px',
-							color: colors.textSecondary,
-						}}
-					>
+			<div className="relative z-[1] flex flex-1 flex-col gap-3 overflow-auto p-3">
+				<div className="flex items-baseline justify-between">
+					<span className="font-pixel text-sm text-text">보유 타워</span>
+					<span className="font-pixel text-[11px] text-text-secondary">
 						{ownedTowers.length}/{ALL_TOWERS.length}
 					</span>
 				</div>
@@ -120,13 +84,7 @@ export function CollectionTab() {
 				{ownedTowers.length === 0 ? (
 					<EmptyState />
 				) : (
-					<div
-						style={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-							gap: '8px',
-						}}
-					>
+					<div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-2">
 						{ownedTowers.map((def) => {
 							const owned = collection.find((t) => t.defId === def.id);
 							return (
@@ -143,23 +101,10 @@ export function CollectionTab() {
 
 				{lockedTowers.length > 0 && (
 					<>
-						<span
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '12px',
-								color: colors.textSecondary,
-								marginTop: '4px',
-							}}
-						>
+						<span className="mt-1 font-pixel text-xs text-text-secondary">
 							미획득
 						</span>
-						<div
-							style={{
-								display: 'grid',
-								gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-								gap: '8px',
-							}}
-						>
+						<div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-2">
 							{lockedTowers.map((def) => (
 								<TowerGridCard
 									key={def.id}
@@ -200,33 +145,24 @@ function TowerGridCard({
 		<button
 			type="button"
 			onClick={onClick}
+			className={cn(
+				'flex cursor-pointer flex-col items-center gap-1 px-1.5 py-2.5 touch-manipulation',
+				locked && 'opacity-50',
+			)}
 			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				gap: '4px',
-				padding: '10px 6px',
 				background: locked ? 'rgba(26, 18, 8, 0.7)' : 'rgba(42, 32, 16, 0.85)',
 				border: `1px solid ${locked ? colors.border : gradeBorder}`,
-				opacity: locked ? 0.5 : 1,
-				cursor: 'pointer',
-				touchAction: 'manipulation',
 				boxShadow:
 					owned?.grade === 'epic'
 						? `0 0 8px ${GRADE_BORDER.epic}44`
 						: undefined,
 			}}
 		>
-			<div style={{ display: 'flex', gap: '3px' }}>
+			<div className="flex gap-[3px]">
 				{TIER_DOT_KEYS.slice(0, def.tier).map((dotKey) => (
 					<span
 						key={`${def.id}-tier-${dotKey}`}
-						style={{
-							width: 5,
-							height: 5,
-							background: colors.gold,
-							display: 'block',
-						}}
+						className="block h-[5px] w-[5px] bg-gold"
 					/>
 				))}
 			</div>
@@ -235,33 +171,23 @@ function TowerGridCard({
 				alt={def.name}
 				width={40}
 				height={40}
+				className="[image-rendering:pixelated]"
 				style={{
-					imageRendering: 'pixelated',
 					filter: locked ? 'brightness(0.4) grayscale(0.6)' : undefined,
 				}}
 			/>
 			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '10px',
-					color: locked ? colors.textSecondary : colors.text,
-					textAlign: 'center',
-					lineHeight: 1.3,
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-					width: '100%',
-				}}
+				className={cn(
+					'w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-pixel text-[10px] leading-[1.3]',
+					locked ? 'text-text-secondary' : 'text-text',
+				)}
 			>
 				{def.name}
 			</span>
 			{owned && (
 				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '9px',
-						color: GRADE_BORDER[owned.grade],
-					}}
+					className="font-pixel text-[9px]"
+					style={{ color: GRADE_BORDER[owned.grade] }}
 				>
 					Lv.{owned.level}
 				</span>
@@ -341,66 +267,35 @@ function TowerBottomSheet({
 
 	return (
 		<div
+			className="absolute bottom-0 left-0 right-0 z-5 flex flex-col gap-2.5 p-4 animate-[slideUp_0.2s_ease-out]"
 			style={{
-				position: 'absolute',
-				bottom: 0,
-				left: 0,
-				right: 0,
-				zIndex: 5,
 				background: 'rgba(26, 18, 8, 0.96)',
 				borderTop: `2px solid ${owned ? GRADE_BORDER[grade] : elementColor}`,
-				padding: '16px',
-				display: 'flex',
-				flexDirection: 'column',
-				gap: '10px',
-				animation: 'slideUp 0.2s ease-out',
 			}}
 		>
 			{/* Header */}
-			<div
-				style={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'center',
-				}}
-			>
-				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-2">
 					<img
 						src={`assets/towers/${def.type}.webp`}
 						alt={def.name}
 						width={32}
 						height={32}
-						style={{ imageRendering: 'pixelated' }}
+						className="[image-rendering:pixelated]"
 					/>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '14px',
-							color: colors.text,
-						}}
-					>
-						{def.name}
-					</span>
-					<div style={{ display: 'flex', gap: '2px' }}>
+					<span className="font-pixel text-sm text-text">{def.name}</span>
+					<div className="flex gap-0.5">
 						{TIER_DOT_KEYS.slice(0, def.tier).map((dotKey) => (
 							<span
 								key={`${def.id}-detail-${dotKey}`}
-								style={{
-									width: 5,
-									height: 5,
-									background: colors.gold,
-									display: 'block',
-								}}
+								className="block h-[5px] w-[5px] bg-gold"
 							/>
 						))}
 					</div>
 					{owned && (
 						<span
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '11px',
-								color: GRADE_BORDER[grade],
-							}}
+							className="font-pixel text-[11px]"
+							style={{ color: GRADE_BORDER[grade] }}
 						>
 							{grade.toUpperCase()} Lv.{level}
 						</span>
@@ -409,22 +304,14 @@ function TowerBottomSheet({
 				<button
 					type="button"
 					onClick={onClose}
-					style={{
-						background: 'none',
-						border: 'none',
-						cursor: 'pointer',
-						fontFamily: fonts.pixel,
-						fontSize: '14px',
-						color: colors.textSecondary,
-						padding: '4px 8px',
-					}}
+					className="cursor-pointer border-none bg-transparent px-2 py-1 font-pixel text-sm text-text-secondary"
 				>
 					X
 				</button>
 			</div>
 
 			{/* Stats */}
-			<div style={{ display: 'flex', gap: '16px' }}>
+			<div className="flex gap-4">
 				<StatDisplay
 					label="공격력"
 					value={effectiveDmg.toFixed(1)}
@@ -448,14 +335,7 @@ function TowerBottomSheet({
 			</div>
 
 			{def.stats.special && (
-				<p
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '11px',
-						color: colors.accent,
-						lineHeight: 1.6,
-					}}
-				>
+				<p className="font-pixel text-[11px] leading-[1.6] text-accent">
 					특수: {translateSpecial(def.stats.special)}
 				</p>
 			)}
@@ -463,28 +343,18 @@ function TowerBottomSheet({
 			{/* Enhancement section */}
 			{owned && (
 				<div
+					className="flex flex-col gap-2 p-2"
 					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '8px',
-						padding: '8px',
 						background: 'rgba(42,32,16,0.6)',
 						border: `1px solid ${colors.border}`,
 					}}
 				>
 					{level < MAX_TOWER_LEVEL ? (
 						<>
-							<div
-								style={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									fontFamily: fonts.pixel,
-									fontSize: '11px',
-								}}
-							>
-								<span style={{ color: colors.textSecondary }}>
+							<div className="flex justify-between font-pixel text-[11px]">
+								<span className="text-text-secondary">
 									공격력: {effectiveDmg.toFixed(1)} →{' '}
-									<span style={{ color: colors.success }}>
+									<span className="text-success">
 										{nextLevelDmg.toFixed(1)}
 									</span>
 								</span>
@@ -499,14 +369,7 @@ function TowerBottomSheet({
 							</PixelButton>
 						</>
 					) : (
-						<span
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '11px',
-								color: colors.gold,
-								textAlign: 'center',
-							}}
-						>
+						<span className="text-center font-pixel text-[11px] text-gold">
 							최대 레벨
 						</span>
 					)}
@@ -516,11 +379,8 @@ function TowerBottomSheet({
 			{/* Promotion section */}
 			{owned && promoConfig.nextGrade && (
 				<div
+					className="flex flex-col gap-2 p-2"
 					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '8px',
-						padding: '8px',
 						background: 'rgba(42,32,16,0.6)',
 						border: `1px solid ${GRADE_BORDER[grade]}`,
 						animation:
@@ -533,15 +393,8 @@ function TowerBottomSheet({
 										: undefined,
 					}}
 				>
-					<div
-						style={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							fontFamily: fonts.pixel,
-							fontSize: '11px',
-						}}
-					>
-						<span style={{ color: colors.textSecondary }}>
+					<div className="flex justify-between font-pixel text-[11px]">
+						<span className="text-text-secondary">
 							등급: <span style={{ color: GRADE_BORDER[grade] }}>{grade}</span>{' '}
 							→{' '}
 							<span
@@ -552,7 +405,7 @@ function TowerBottomSheet({
 								{promoConfig.nextGrade}
 							</span>
 						</span>
-						<span style={{ color: colors.textSecondary }}>
+						<span className="text-text-secondary">
 							성공률 {(promoConfig.successRate * 100).toFixed(0)}%
 						</span>
 					</div>
@@ -568,13 +421,10 @@ function TowerBottomSheet({
 			)}
 
 			{owned && !promoConfig.nextGrade && (
-				<div style={{ padding: '8px', textAlign: 'center' }}>
+				<div className="p-2 text-center">
 					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '11px',
-							color: GRADE_BORDER.epic,
-						}}
+						className="font-pixel text-[11px]"
+						style={{ color: GRADE_BORDER.epic }}
 					>
 						최고 등급
 					</span>
@@ -582,34 +432,10 @@ function TowerBottomSheet({
 			)}
 
 			{!owned && (
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '11px',
-						color: colors.textSecondary,
-						textAlign: 'center',
-					}}
-				>
+				<span className="text-center font-pixel text-[11px] text-text-secondary">
 					전투에서 타워를 획득하세요!
 				</span>
 			)}
-
-			<style>{`
-				@keyframes promotionRoll {
-					0%, 100% { opacity: 1; }
-					50% { opacity: 0.3; }
-				}
-				@keyframes promotionSuccess {
-					0% { transform: scale(1); }
-					50% { transform: scale(1.02); }
-					100% { transform: scale(1); }
-				}
-				@keyframes promotionFail {
-					0%, 100% { transform: translateX(0); }
-					25% { transform: translateX(-4px); }
-					75% { transform: translateX(4px); }
-				}
-			`}</style>
 		</div>
 	);
 }
@@ -624,17 +450,11 @@ function StatDisplay({
 	color: string;
 }) {
 	return (
-		<div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '10px',
-					color: colors.textSecondary,
-				}}
-			>
+		<div className="flex flex-col gap-0.5">
+			<span className="font-pixel text-[10px] text-text-secondary">
 				{label}
 			</span>
-			<span style={{ fontFamily: fonts.pixel, fontSize: '13px', color }}>
+			<span className="font-pixel text-[13px]" style={{ color }}>
 				{value}
 			</span>
 		</div>
@@ -643,26 +463,8 @@ function StatDisplay({
 
 function EmptyState() {
 	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				justifyContent: 'center',
-				flex: 1,
-				gap: '10px',
-				padding: '40px 20px',
-			}}
-		>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '13px',
-					color: colors.textSecondary,
-					textAlign: 'center',
-					lineHeight: 1.8,
-				}}
-			>
+		<div className="flex flex-1 flex-col items-center justify-center gap-2.5 px-5 py-10">
+			<span className="text-center font-pixel text-[13px] leading-[1.8] text-text-secondary">
 				아직 타워가 없습니다.
 				<br />
 				전투에서 타워를 획득하세요!

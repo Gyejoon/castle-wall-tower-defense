@@ -3,10 +3,13 @@ import {
 	FOREST_GATE_MAP,
 	getAllPathCells,
 	getMapPaths,
+	getSpawnExitPairs,
+	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
 	STORM_CITADEL_MAP,
 } from '../src/constants/maps';
+import type { MapLayout } from '../src/types/map';
 
 function countTurns(path: Array<{ x: number; y: number }>): number {
 	let turns = 0;
@@ -248,5 +251,66 @@ describe('MAP_REGISTRY', () => {
 		expect(Object.keys(MAP_REGISTRY)).toEqual(
 			expect.arrayContaining(['forest_gate', 'lava_fortress', 'storm_citadel']),
 		);
+	});
+});
+
+describe('getSpawnExitPairs', () => {
+	it('단일 경로 맵은 1개 pair를 반환한다', () => {
+		const pairs = getSpawnExitPairs(FOREST_GATE_MAP);
+		expect(pairs).toHaveLength(1);
+		expect(pairs[0].spawn).toEqual(FOREST_GATE_MAP.path[0]);
+		expect(pairs[0].exit).toEqual(
+			FOREST_GATE_MAP.path[FOREST_GATE_MAP.path.length - 1],
+		);
+	});
+
+	it('2경로 맵(lava)은 2개 pair를 반환한다', () => {
+		const pairs = getSpawnExitPairs(LAVA_FORTRESS_MAP);
+		expect(pairs).toHaveLength(2);
+		// Lane A: spawn (1,0) → exit (3,17)
+		expect(pairs[0].spawn).toEqual({ x: 1, y: 0 });
+		expect(pairs[0].exit).toEqual({ x: 3, y: 17 });
+		// Lane B: spawn (6,0) → exit (4,17)
+		expect(pairs[1].spawn).toEqual({ x: 6, y: 0 });
+		expect(pairs[1].exit).toEqual({ x: 4, y: 17 });
+	});
+
+	it('3경로 맵(storm)은 3개 pair를 반환한다', () => {
+		const pairs = getSpawnExitPairs(STORM_CITADEL_MAP);
+		expect(pairs).toHaveLength(3);
+	});
+
+	it('빈 lane은 필터링된다', () => {
+		const fakeMap: MapLayout = {
+			...FOREST_GATE_MAP,
+			paths: [FOREST_GATE_MAP.path, [], [{ x: 0, y: 0 }]],
+		};
+		const pairs = getSpawnExitPairs(fakeMap);
+		// 빈 lane과 1포인트 lane은 제외
+		expect(pairs).toHaveLength(1);
+	});
+});
+
+describe('isMapUnlocked', () => {
+	it('unlockLevel이 없으면 항상 해금', () => {
+		expect(isMapUnlocked(FOREST_GATE_MAP, 1)).toBe(true);
+		expect(isMapUnlocked(FOREST_GATE_MAP, 0)).toBe(true);
+	});
+
+	it('레벨이 unlockLevel 미만이면 잠금', () => {
+		expect(isMapUnlocked(LAVA_FORTRESS_MAP, 1)).toBe(false);
+		expect(isMapUnlocked(LAVA_FORTRESS_MAP, 2)).toBe(false);
+	});
+
+	it('레벨이 unlockLevel 이상이면 해금', () => {
+		expect(isMapUnlocked(LAVA_FORTRESS_MAP, 3)).toBe(true);
+		expect(isMapUnlocked(LAVA_FORTRESS_MAP, 10)).toBe(true);
+		expect(isMapUnlocked(STORM_CITADEL_MAP, 7)).toBe(true);
+	});
+
+	it('unlockLevel: 0 은 falsy 트랩 없이 레벨 0 이상이면 해금', () => {
+		const mapWithZero: MapLayout = { ...FOREST_GATE_MAP, unlockLevel: 0 };
+		expect(isMapUnlocked(mapWithZero, 0)).toBe(true);
+		expect(isMapUnlocked(mapWithZero, 1)).toBe(true);
 	});
 });

@@ -1,6 +1,7 @@
 import { ALL_TOWERS, TIER_NAMES } from '@gld/shared';
 import { useCallback, useState } from 'react';
-import { colors, fonts } from '../styles/tokens';
+import { colors } from '../styles/tokens';
+import { cn } from '../utils/cn';
 import { PixelButton } from './ui/PixelButton';
 
 const GACHA_BOXES = [
@@ -96,120 +97,47 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 	}, []);
 
 	return (
-		<div
-			style={{
-				position: 'fixed',
-				inset: 0,
-				zIndex: 10,
-				background: 'rgba(10, 8, 4, 0.92)',
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				justifyContent: 'center',
-				gap: '16px',
-				padding: '20px',
-			}}
-		>
-			<h2
-				style={{
-					color: colors.gold,
-					fontFamily: fonts.pixel,
-					fontSize: '18px',
-				}}
-			>
-				소환의 제단
-			</h2>
+		<div className="fixed inset-0 z-10 bg-[rgba(10,8,4,0.92)] flex flex-col items-center justify-center gap-4 p-5">
+			<h2 className="text-gold font-pixel text-lg">소환의 제단</h2>
 
 			{phase === 'opening' && (
-				<div
-					style={{
-						width: '120px',
-						height: '120px',
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-					}}
-				>
+				<div className="w-[120px] h-[120px] flex items-center justify-center">
 					<img
 						src="assets/ui/gacha-box-open.png"
 						alt="Opening"
-						style={{
-							width: '64px',
-							height: '64px',
-							imageRendering: 'pixelated',
-							animation: 'pulse 0.5s ease-in-out infinite',
-						}}
+						className="w-16 h-16 [image-rendering:pixelated] animate-[gachaPulse_0.5s_ease-in-out_infinite]"
 					/>
 				</div>
 			)}
 
 			{phase === 'reveal' && revealed && (
-				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						gap: '12px',
-						animation: 'fadeIn 500ms ease-out',
-					}}
-				>
-					<div style={{ position: 'relative' }}>
+				<div className="flex flex-col items-center gap-3 animate-[fadeIn_500ms_ease-out]">
+					<div className="relative">
 						<img
 							src={`assets/ui/rarity-frame-${revealed.tierName}.png`}
 							alt={revealed.tierName}
-							style={{
-								width: '80px',
-								height: '80px',
-								imageRendering: 'pixelated',
-								position: 'absolute',
-								top: '-8px',
-								left: '-8px',
-							}}
+							className="w-20 h-20 [image-rendering:pixelated] absolute -top-2 -left-2"
 						/>
 						<img
 							src={`assets/towers/${revealed.id}.png`}
 							alt={revealed.name}
-							style={{
-								width: '64px',
-								height: '64px',
-								imageRendering: 'pixelated',
-								position: 'relative',
-								zIndex: 1,
-							}}
+							className="w-16 h-16 [image-rendering:pixelated] relative z-1"
 						/>
 						{revealed.isNew && (
 							<img
 								src="assets/ui/badge-new.png"
 								alt="NEW"
-								style={{
-									width: '24px',
-									height: '24px',
-									imageRendering: 'pixelated',
-									position: 'absolute',
-									top: '-6px',
-									right: '-6px',
-									zIndex: 2,
-								}}
+								className="w-6 h-6 [image-rendering:pixelated] absolute -top-1.5 -right-1.5 z-2"
 							/>
 						)}
 					</div>
 					<p
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '14px',
-							color: TIER_COLORS[revealed.tierName] ?? colors.text,
-						}}
+						className="font-pixel text-sm"
+						style={{ color: TIER_COLORS[revealed.tierName] ?? colors.text }}
 					>
 						{revealed.name}
 					</p>
-					<p
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '11px',
-							color: colors.textSecondary,
-							textTransform: 'uppercase',
-						}}
-					>
+					<p className="font-pixel text-[11px] text-text-secondary uppercase">
 						{revealed.tierName}
 					</p>
 					<PixelButton variant="gold" onClick={handleCollect}>
@@ -220,63 +148,32 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 
 			{phase === 'select' && (
 				<>
-					<div
-						style={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(2, 1fr)',
-							gap: '12px',
-						}}
-					>
+					<div className="grid grid-cols-2 gap-3">
 						{GACHA_BOXES.map((box) => (
 							<div
 								key={box.id}
 								onClick={() => setSelectedBox(box.id)}
-								style={{
-									padding: '8px',
-									border: `2px solid ${selectedBox === box.id ? colors.gold : colors.border}`,
-									background:
-										selectedBox === box.id
-											? 'rgba(240,208,96,0.1)'
-											: 'rgba(42,32,16,0.9)',
-									cursor: 'pointer',
-									textAlign: 'center',
-								}}
+								className={cn(
+									'p-2 border-2 cursor-pointer text-center',
+									selectedBox === box.id
+										? 'border-gold bg-[rgba(240,208,96,0.1)]'
+										: 'border-border bg-[rgba(42,32,16,0.9)]',
+								)}
 							>
 								<img
 									src={box.image}
 									alt={box.label}
-									style={{
-										width: '48px',
-										height: '48px',
-										imageRendering: 'pixelated',
-									}}
+									className="w-12 h-12 [image-rendering:pixelated]"
 								/>
-								<p
-									style={{
-										fontFamily: fonts.pixel,
-										fontSize: '12px',
-										color: colors.text,
-										marginTop: '4px',
-									}}
-								>
-									{box.label}
-								</p>
+								<p className="font-pixel text-xs text-text mt-1">{box.label}</p>
 								{box.cost > 0 && (
-									<p
-										style={{
-											fontFamily: fonts.pixel,
-											fontSize: '11px',
-											color: colors.gold,
-										}}
-									>
-										{box.cost}
-									</p>
+									<p className="font-pixel text-[11px] text-gold">{box.cost}</p>
 								)}
 							</div>
 						))}
 					</div>
 
-					<div style={{ display: 'flex', gap: '8px' }}>
+					<div className="flex gap-2">
 						<PixelButton
 							variant="gold"
 							onClick={handleOpen}

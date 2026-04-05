@@ -214,6 +214,7 @@ const LAVA_BUILDABLE = buildBuildablePoints({
 export const LAVA_FORTRESS_MAP: MapLayout = {
 	id: 'lava_fortress',
 	name: '용암 요새',
+	unlockLevel: 3,
 	width: 8,
 	height: 18,
 	tileSize: 32,
@@ -337,6 +338,7 @@ const STORM_BUILDABLE = buildBuildablePoints({
 export const STORM_CITADEL_MAP: MapLayout = {
 	id: 'storm_citadel',
 	name: '폭풍 성채',
+	unlockLevel: 7,
 	width: 8,
 	height: 18,
 	tileSize: 32,
@@ -367,6 +369,24 @@ export function getMapById(mapId: string): MapLayout {
 /** Returns all lanes for a map. Falls back to [map.path] for single-lane maps. */
 export function getMapPaths(map: MapLayout): Position[][] {
 	return map.paths ?? [map.path];
+}
+
+/** Check if a map is unlocked for the given player level. */
+export function isMapUnlocked(map: MapLayout, playerLevel: number): boolean {
+	return map.unlockLevel === undefined || playerLevel >= map.unlockLevel;
+}
+
+/** Returns spawn→exit pairs for each lane (used for multi-path tower placement validation). */
+export function getSpawnExitPairs(
+	map: MapLayout,
+): Array<{ spawn: Position; exit: Position }> {
+	const paths = getMapPaths(map);
+	return paths
+		.filter((lane) => lane.length >= 2)
+		.map((lane) => ({
+			spawn: lane[0],
+			exit: lane[lane.length - 1],
+		}));
 }
 
 /** Returns all path cells across all lanes (deduplicated). */

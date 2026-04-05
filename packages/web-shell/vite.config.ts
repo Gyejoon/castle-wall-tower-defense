@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import type { OutputBundle, Plugin as RollupPlugin } from 'rollup';
 import { defineConfig } from 'vite';
@@ -25,6 +26,7 @@ const createNonPhaserChunkBudgetWarning = (): RollupPlugin => ({
 
 export default defineConfig({
 	plugins: [
+		tailwindcss(),
 		react(),
 		createNonPhaserChunkBudgetWarning(),
 		VitePWA({

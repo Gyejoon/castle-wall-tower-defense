@@ -2,7 +2,8 @@ import { ALL_TOWERS } from '@gld/shared';
 import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { useMetaStore } from '../../stores/metaStore';
-import { colors, fonts } from '../../styles/tokens';
+import { colors } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 import { PixelButton } from '../ui/PixelButton';
 
 interface DeckEditSheetProps {
@@ -67,95 +68,32 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 	};
 
 	return (
-		<div
-			style={{
-				position: 'fixed',
-				inset: 0,
-				zIndex: 200,
-				display: 'flex',
-				justifyContent: 'center',
-				background: 'rgba(10, 8, 4, 1)',
-			}}
-		>
-			<div
-				style={{
-					width: '100%',
-					maxWidth: '430px',
-					display: 'flex',
-					flexDirection: 'column',
-					background: colors.bg,
-				}}
-			>
+		<div className="fixed inset-0 z-200 flex justify-center bg-[rgba(10,8,4,1)]">
+			<div className="w-full max-w-[430px] flex flex-col bg-bg">
 				{/* Header */}
-				<div
-					style={{
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-						padding: '14px 16px 10px',
-						borderBottom: `1px solid ${colors.border}`,
-						background: colors.panel,
-						flexShrink: 0,
-					}}
-				>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '16px',
-							color: colors.gold,
-						}}
-					>
-						덱 편집
-					</span>
+				<div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-border bg-panel shrink-0">
+					<span className="font-pixel text-base text-gold">덱 편집</span>
 					<button
 						type="button"
 						aria-label="닫기"
 						onClick={handleClose}
-						style={{
-							background: 'none',
-							border: `1px solid ${colors.border}`,
-							color: colors.textSecondary,
-							fontFamily: fonts.pixel,
-							fontSize: '14px',
-							cursor: 'pointer',
-							padding: '4px 8px',
-						}}
+						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1"
 					>
 						✕
 					</button>
 				</div>
 
 				{/* Tower list */}
-				<div
-					style={{
-						flex: 1,
-						overflowY: 'auto',
-						padding: '12px 16px',
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '16px',
-					}}
-				>
+				<div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
 					{towersByTier.map(({ tier, towers }) => (
 						<div key={tier}>
 							<div
-								style={{
-									fontFamily: fonts.pixel,
-									fontSize: '12px',
-									color: TIER_COLORS[tier],
-									marginBottom: '8px',
-									letterSpacing: '1px',
-								}}
+								className="font-pixel text-xs mb-2 tracking-[1px]"
+								style={{ color: TIER_COLORS[tier] }}
 							>
 								T{tier} {TIER_LABELS[tier]}
 							</div>
-							<div
-								style={{
-									display: 'grid',
-									gridTemplateColumns: 'repeat(2, 1fr)',
-									gap: '6px',
-								}}
-							>
+							<div className="grid grid-cols-2 gap-1.5">
 								{towers.map((tower) => {
 									const isSelected = selected.includes(tower.id);
 									const slotNum = selected.indexOf(tower.id) + 1;
@@ -166,35 +104,18 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											key={tower.id}
 											type="button"
 											onClick={() => !isFull && toggle(tower.id)}
-											style={{
-												position: 'relative',
-												display: 'flex',
-												alignItems: 'center',
-												gap: '8px',
-												padding: '8px 10px',
-												background: isSelected
-													? 'rgba(240,208,96,0.12)'
-													: colors.panel,
-												border: `2px solid ${isSelected ? colors.gold : colors.border}`,
-												boxShadow: isSelected
-													? `0 0 6px rgba(240,208,96,0.3)`
-													: 'none',
-												cursor: isFull ? 'not-allowed' : 'pointer',
-												opacity: isFull ? 0.35 : 1,
-												textAlign: 'left',
-											}}
+											className={cn(
+												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left',
+												isSelected
+													? 'bg-[rgba(240,208,96,0.12)] border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
+													: 'bg-panel border-border shadow-none',
+												isFull
+													? 'cursor-not-allowed opacity-35'
+													: 'cursor-pointer opacity-100',
+											)}
 										>
 											{isSelected && (
-												<span
-													style={{
-														position: 'absolute',
-														top: 3,
-														right: 5,
-														fontFamily: fonts.pixel,
-														fontSize: '12px',
-														color: colors.gold,
-													}}
-												>
+												<span className="absolute top-[3px] right-[5px] font-pixel text-xs text-gold">
 													{slotNum}
 												</span>
 											)}
@@ -203,38 +124,18 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												alt={tower.name}
 												width={28}
 												height={28}
-												style={{
-													imageRendering: 'pixelated',
-													flexShrink: 0,
-												}}
+												className="[image-rendering:pixelated] shrink-0"
 											/>
-											<div
-												style={{
-													display: 'flex',
-													flexDirection: 'column',
-													gap: '2px',
-													minWidth: 0,
-												}}
-											>
+											<div className="flex flex-col gap-0.5 min-w-0">
 												<span
-													style={{
-														fontFamily: fonts.pixel,
-														fontSize: '12px',
-														color: isSelected ? colors.gold : colors.text,
-														whiteSpace: 'nowrap',
-														overflow: 'hidden',
-														textOverflow: 'ellipsis',
-													}}
+													className={cn(
+														'font-pixel text-xs whitespace-nowrap overflow-hidden text-ellipsis',
+														isSelected ? 'text-gold' : 'text-text',
+													)}
 												>
 													{tower.name}
 												</span>
-												<span
-													style={{
-														fontFamily: fonts.pixel,
-														fontSize: '11px',
-														color: colors.textSecondary,
-													}}
-												>
+												<span className="font-pixel text-[11px] text-text-secondary">
 													⚡{tower.cost}
 												</span>
 											</div>
@@ -247,25 +148,9 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 				</div>
 
 				{/* Bottom preview + confirm */}
-				<div
-					style={{
-						flexShrink: 0,
-						padding: '12px 16px',
-						background: colors.panel,
-						borderTop: `2px solid ${colors.border}`,
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '10px',
-					}}
-				>
+				<div className="shrink-0 px-4 py-3 bg-panel border-t-2 border-border flex flex-col gap-2.5">
 					{/* 4 slot preview */}
-					<div
-						style={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(4, 1fr)',
-							gap: '6px',
-						}}
-					>
+					<div className="grid grid-cols-4 gap-1.5">
 						{Array.from({ length: 4 }, (_, i) => {
 							const towerId = selected[i];
 							const tower = towerId
@@ -274,19 +159,12 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							return (
 								<div
 									key={i}
-									style={{
-										height: '52px',
-										border: `2px solid ${tower ? colors.gold : colors.border}`,
-										background: tower
-											? 'rgba(240,208,96,0.08)'
-											: 'rgba(42,32,16,0.6)',
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center',
-										justifyContent: 'center',
-										gap: '4px',
-										padding: '4px',
-									}}
+									className={cn(
+										'h-[52px] border-2 flex flex-col items-center justify-center gap-1 p-1',
+										tower
+											? 'border-gold bg-[rgba(240,208,96,0.08)]'
+											: 'border-border bg-[rgba(42,32,16,0.6)]',
+									)}
 								>
 									{tower ? (
 										<>
@@ -295,31 +173,14 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												alt={tower.name}
 												width={24}
 												height={24}
-												style={{ imageRendering: 'pixelated' }}
+												className="[image-rendering:pixelated]"
 											/>
-											<span
-												style={{
-													fontFamily: fonts.pixel,
-													fontSize: '10px',
-													color: colors.gold,
-													textAlign: 'center',
-													overflow: 'hidden',
-													maxWidth: '100%',
-													whiteSpace: 'nowrap',
-													textOverflow: 'ellipsis',
-												}}
-											>
+											<span className="font-pixel text-[10px] text-gold text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 												{tower.name}
 											</span>
 										</>
 									) : (
-										<span
-											style={{
-												fontFamily: fonts.pixel,
-												fontSize: '12px',
-												color: colors.border,
-											}}
-										>
+										<span className="font-pixel text-xs text-border">
 											{i + 1}
 										</span>
 									)}

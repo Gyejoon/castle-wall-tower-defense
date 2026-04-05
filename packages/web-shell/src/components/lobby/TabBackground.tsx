@@ -14,23 +14,15 @@ export function TabBackground({
 	const [loaded, setLoaded] = useState(false);
 
 	return (
-		<div style={{ position: 'absolute', inset: 0 }}>
-			<div style={{ position: 'absolute', inset: 0, background: gradient }} />
+		<div className="absolute inset-0">
+			<div className="absolute inset-0" style={{ background: gradient }} />
 			<img
 				src={src}
 				alt=""
 				onLoad={() => setLoaded(true)}
 				onError={() => setLoaded(false)}
-				style={{
-					position: 'absolute',
-					inset: 0,
-					width: '100%',
-					height: '100%',
-					objectFit: 'cover',
-					imageRendering: 'pixelated',
-					opacity: loaded ? overlayOpacity : 0,
-					transition: 'opacity 0.3s',
-				}}
+				className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated] transition-opacity duration-300"
+				style={{ opacity: loaded ? overlayOpacity : 0 }}
 			/>
 		</div>
 	);

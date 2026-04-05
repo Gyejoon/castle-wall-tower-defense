@@ -139,4 +139,18 @@ export class PathfindingSystem {
 	getCachedPath(): Position[] | null {
 		return this.cachedPath;
 	}
+
+	/**
+	 * Validate that ALL spawn→exit pairs have a walkable path.
+	 * Used for multi-lane maps where blocking any single lane should prevent tower placement.
+	 * Note: does NOT use cachedPath — calls standalone findPath directly per pair.
+	 */
+	validateAllPaths(
+		grid: number[][],
+		pairs: Array<{ spawn: Position; exit: Position }>,
+	): boolean {
+		return pairs.every(
+			(pair) => findPath(grid, pair.spawn, pair.exit) !== null,
+		);
+	}
 }

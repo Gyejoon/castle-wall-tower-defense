@@ -1,5 +1,5 @@
 import { useGameStore } from '../../stores/gameStore';
-import { colors, fonts } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 export function BossHpBar() {
 	const bossHp = useGameStore((s) => s.bossHp);
@@ -13,63 +13,31 @@ export function BossHpBar() {
 
 	return (
 		<div
-			style={{
-				position: 'absolute',
-				top: '6px',
-				left: '50%',
-				transform: 'translateX(-50%)',
-				zIndex: 3,
-				width: 'min(80vw, 300px)',
-				background: 'rgba(26,18,8,0.88)',
-				border: `1px solid ${colors.border}`,
-				boxShadow: '2px 2px 0px rgba(0,0,0,0.4)',
-				padding: '5px 8px',
-				display: 'flex',
-				flexDirection: 'column',
-				gap: '3px',
-			}}
+			className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] w-[min(80vw,300px)] border border-border shadow-[2px_2px_0px_rgba(0,0,0,0.4)] px-2 py-1.5 flex flex-col gap-[3px]"
+			style={{ background: 'rgba(26,18,8,0.88)' }}
 		>
-			<div
-				style={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'center',
-				}}
-			>
+			<div className="flex justify-between items-center">
 				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '12px',
-						color: bossHp.phase === 2 ? colors.danger : colors.gold,
-					}}
+					className={cn(
+						'font-pixel text-xs',
+						bossHp.phase === 2 ? 'text-danger' : 'text-gold',
+					)}
 				>
 					고대 드래곤
 				</span>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '11px',
-						color: colors.textSecondary,
-					}}
-				>
+				<span className="font-pixel text-[11px] text-text-secondary">
 					{phaseLabel}
 				</span>
 			</div>
 			<div
-				style={{
-					width: '100%',
-					height: '8px',
-					background: 'rgba(0,0,0,0.5)',
-					border: `1px solid ${colors.border}`,
-					overflow: 'hidden',
-				}}
+				className="w-full h-2 border border-border overflow-hidden"
+				style={{ background: 'rgba(0,0,0,0.5)' }}
 			>
 				<div
+					className="h-full transition-[width] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
 					style={{
 						width: `${pct}%`,
-						height: '100%',
 						background: barColor,
-						transition: 'width 0.2s ease',
 						animation:
 							bossHp.phase === 2
 								? 'bossBarPulse 0.8s ease-in-out infinite'
@@ -77,22 +45,9 @@ export function BossHpBar() {
 					}}
 				/>
 			</div>
-			<div
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '11px',
-					color: colors.textSecondary,
-					textAlign: 'right',
-				}}
-			>
+			<div className="font-pixel text-[11px] text-text-secondary text-right">
 				{bossHp.hp}/{bossHp.maxHp}
 			</div>
-			<style>{`
-				@keyframes bossBarPulse {
-					0%, 100% { opacity: 1; }
-					50% { opacity: 0.6; }
-				}
-			`}</style>
 		</div>
 	);
 }

@@ -1,8 +1,7 @@
 import { EventBus } from '@gld/phaser-game';
 import { ALL_TOWERS, type DeckCardDef } from '@gld/shared';
-import type { CSSProperties } from 'react';
 import { useGameStore } from '../../stores/gameStore';
-import { colors, fonts } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
 const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
@@ -26,17 +25,10 @@ export function DeckDock() {
 	return (
 		<div
 			data-testid="deck-dock"
+			className="h-[110px] shrink-0 border-t border-border px-3 pt-2 flex items-center justify-center gap-2"
 			style={{
-				height: '110px',
-				flexShrink: 0,
 				background: 'rgba(26, 18, 8, 0.95)',
-				borderTop: `1px solid ${colors.border}`,
-				padding: '8px 12px',
 				paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
-				gap: '8px',
 			}}
 		>
 			{deckCards.map((card, i) => {
@@ -48,34 +40,29 @@ export function DeckDock() {
 						type="button"
 						data-testid={`deck-card-${i}`}
 						onClick={() => handleCardTap(i, card)}
-						style={cardStyle(isSelected, canAfford)}
+						className={cn(
+							'flex-1 min-w-0 h-[86px] bg-panel flex flex-col items-center justify-center gap-1 cursor-pointer p-0 border-2 transition-[border-color,box-shadow,opacity] duration-150',
+							isSelected
+								? 'border-gold shadow-[0_0_8px_var(--color-gold)]'
+								: 'border-border shadow-[2px_2px_0px_var(--color-border)]',
+							!canAfford && 'opacity-40',
+						)}
 					>
 						<img
 							src={`assets/towers/${TOWER_TYPE_MAP.get(card.towerDefId) ?? card.towerDefId}.webp`}
 							alt={TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 							width={32}
 							height={32}
-							style={{ imageRendering: 'pixelated' }}
+							className="[image-rendering:pixelated]"
 						/>
-						<span
-							style={{
-								fontSize: '9px',
-								color: colors.text,
-								fontFamily: fonts.pixel,
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-								maxWidth: '100%',
-							}}
-						>
+						<span className="text-[9px] text-text font-pixel overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
 							{TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 						</span>
 						<span
-							style={{
-								fontSize: '11px',
-								color: canAfford ? colors.gold : colors.danger,
-								fontFamily: fonts.pixel,
-							}}
+							className={cn(
+								'text-[11px] font-pixel',
+								canAfford ? 'text-gold' : 'text-danger',
+							)}
 						>
 							⚡{card.energyCost}
 						</span>
@@ -84,26 +71,4 @@ export function DeckDock() {
 			})}
 		</div>
 	);
-}
-
-function cardStyle(isSelected: boolean, canAfford: boolean): CSSProperties {
-	return {
-		flex: 1,
-		minWidth: 0,
-		height: '86px',
-		background: colors.panel,
-		border: `2px solid ${isSelected ? colors.gold : colors.border}`,
-		boxShadow: isSelected
-			? `0 0 8px ${colors.gold}`
-			: `2px 2px 0px ${colors.border}`,
-		display: 'flex',
-		flexDirection: 'column',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: '4px',
-		cursor: 'pointer',
-		opacity: canAfford ? 1 : 0.4,
-		padding: 0,
-		transition: 'border-color 0.15s, box-shadow 0.15s, opacity 0.2s',
-	};
 }

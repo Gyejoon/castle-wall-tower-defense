@@ -1,10 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #1a1208;
+  --color-panel: #2a2010;
+  --color-border: #4a3a20;
+  --color-accent: #c8a04a;
+  --color-success: #7ab648;
+  --color-danger: #c03020;
+  --color-gold: #f0d060;
+  --color-info: #5bc8e8;
+  --color-text: #f0e8d8;
+  --color-text-secondary: #a09070;
+
+  --font-pixel: 'Galmuri11', 'Press Start 2P', cursive;
 }
+
+/* Tailwind v4 preflight (@layer base) already resets margin/padding/box-sizing.
+   An unlayered * rule would override @layer utilities, breaking p-*, m-* classes. */
 
 html, body, #root {
   width: 100%;
@@ -156,6 +170,40 @@ body {
   0% { content: '.'; }
   33% { content: '..'; }
   66% { content: '...'; }
+}
+
+/* Boss HP bar pulse */
+@keyframes bossBarPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Gacha box opening pulse */
+@keyframes gachaPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Promotion animations */
+@keyframes promotionRoll {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes promotionSuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+@keyframes promotionFail {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Warning pulse */
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
 }
 
 /* Responsive: small screens (320px) */

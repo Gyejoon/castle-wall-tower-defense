@@ -468,7 +468,14 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
-		EventBus.emit('game-over', payload);
+		EventBus.emit('game-over', {
+			...payload,
+			stats: {
+				wavesCleared: payload.finalSlot,
+				towersPlaced: this.playerTowers.getTowers().length,
+				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
+			},
+		});
 	}
 
 	private handlePlaceTower(

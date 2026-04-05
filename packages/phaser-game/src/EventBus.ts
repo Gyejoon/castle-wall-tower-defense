@@ -25,6 +25,11 @@ export interface GameEventMap {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
+		stats: {
+			wavesCleared: number;
+			towersPlaced: number;
+			timeSurvivedSec: number;
+		};
 	};
 	'energy-changed': { energy: number };
 	'wave-started': {

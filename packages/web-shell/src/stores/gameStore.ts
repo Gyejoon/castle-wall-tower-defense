@@ -73,6 +73,7 @@ interface GameStoreState {
 	selectedDeck: string[];
 	bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean };
 	bossWarningVisible: boolean;
+	gameOverStats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -100,6 +101,7 @@ interface GameStoreState {
 	setSelectedDeck: (deck: string[]) => void;
 	setBossHp: (bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean }) => void;
 	setBossWarningVisible: (v: boolean) => void;
+	setGameOverStats: (stats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } | null) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -126,6 +128,7 @@ const createRunState = () => ({
 	toast: null,
 	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
 	bossWarningVisible: false,
+	gameOverStats: null,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -195,4 +198,5 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	},
 	setBossHp: (bossHp) => set({ bossHp }),
 	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
+	setGameOverStats: (stats) => set({ gameOverStats: stats }),
 }));

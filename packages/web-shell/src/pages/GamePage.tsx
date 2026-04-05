@@ -79,6 +79,8 @@ export function GamePage() {
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
 	const setBossHp = useGameStore((s) => s.setBossHp);
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
+	const gameOverStats = useGameStore((s) => s.gameOverStats);
+	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	useEffect(() => {
@@ -86,9 +88,10 @@ export function GamePage() {
 			setLives(data.remainingHp);
 		const onEnergyChanged = (data: { energy: number }) =>
 			setEnergy(data.energy);
-		const onGameOver = (data: { result: 'victory' | 'defeat' }) => {
+		const onGameOver = (data: { result: 'victory' | 'defeat'; stats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } }) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			setGameOverStats(data.stats);
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -218,6 +221,7 @@ export function GamePage() {
 		setRunStatus,
 		setBossHp,
 		setBossWarningVisible,
+		setGameOverStats,
 	]);
 
 	useEffect(() => {
@@ -471,19 +475,21 @@ export function GamePage() {
 										lineHeight: 1.8,
 									}}
 								>
-									{runStatus === 'victory'
-										? '왕국을 지켜냈습니다!'
-										: '방어선이 무너졌습니다.'}
+									{runStatus === 'defeat'
+										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
+										: '왕국을 지켜냈습니다!'}
 								</p>
-								<p
-									style={{
-										color: colors.gold,
-										fontFamily: fonts.pixel,
-										fontSize: '10px',
-									}}
-								>
-									획득 골드: 0G
-								</p>
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
+										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
+									</p>
+									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
+										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
+									</p>
+									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
+										생존 시간: {Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:{String((gameOverStats?.timeSurvivedSec ?? 0) % 60).padStart(2, '0')}
+									</p>
+								</div>
 								<PixelButton
 									variant="gold"
 									style={{ width: '100%' }}

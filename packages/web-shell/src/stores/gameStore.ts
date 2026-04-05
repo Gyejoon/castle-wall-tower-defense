@@ -40,6 +40,7 @@ export interface GameOverStats {
 	towersPlaced: number;
 	timeSurvivedSec: number;
 	goldEarned: number;
+	xpEarned: number;
 }
 
 interface GameStoreState {

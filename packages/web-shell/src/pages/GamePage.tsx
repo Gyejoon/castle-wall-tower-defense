@@ -81,10 +81,11 @@ export function GamePage() {
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
-			setGameOverStats(data.stats);
+			const xpEarned = battleXp(data.stats.wavesCleared, data.result === 'victory');
+			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();
 			meta.addGold(data.stats.goldEarned);
-			meta.addXp(battleXp(data.stats.wavesCleared, data.result === 'victory'));
+			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
 			meta.updateHighestWave(
 				useGameStore.getState().selectedMapId,
@@ -388,6 +389,9 @@ export function GamePage() {
 									</p>
 									<p className="mt-1 font-pixel text-sm text-gold">
 										획득 골드: {gameOverStats?.goldEarned ?? 0}G
+									</p>
+									<p className="mt-0.5 font-pixel text-sm text-info">
+										획득 XP: {gameOverStats?.xpEarned ?? 0}
 									</p>
 								</div>
 								<PixelButton

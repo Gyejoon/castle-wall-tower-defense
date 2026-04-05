@@ -4,12 +4,16 @@ import {
 	enhancementCost,
 	generateDailyMissions,
 	generateWeeklyMissions,
+	GACHA_COSTS,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
+	rollGacha,
+	rollGacha10,
 	SAVE_STORAGE_KEY,
 	SAVE_VERSION,
 	shouldResetDaily,
 	shouldResetWeekly,
+	type GachaResult,
 	type MissionType,
 	type SaveData,
 	type TowerGrade,
@@ -39,6 +43,10 @@ interface MetaActions {
 	refreshMissions: () => void;
 	progressMission: (type: MissionType, amount: number) => void;
 	claimMission: (missionId: string, period: 'daily' | 'weekly') => 'success' | 'not_ready' | 'not_found';
+	openGacha: (
+		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
+		rng?: () => number,
+	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
 }
 
 type MetaState = SaveData & MetaActions;
@@ -422,6 +430,106 @@ export const useMetaStore = create<MetaState>()(
 
 				debouncedSave(get());
 				return 'success';
+			},
+
+			openGacha: (boxType, rng = Math.random) => {
+				const s = get();
+				const progress = s.progress;
+				const now = new Date();
+
+				// 비용/쿨다운/데일리 제한 검증
+				if (boxType === 'free') {
+					if (progress.dailyFreeBoxClaimedAt) {
+						const last = new Date(progress.dailyFreeBoxClaimedAt);
+						if (now.getTime() - last.getTime() < GACHA_COSTS.free.cooldownMs) {
+							return 'cooldown';
+						}
+					}
+				} else if (boxType === 'ad') {
+					// 새 날인지 확인하여 count 리셋 여부 결정
+					let effectiveAdBoxCount = progress.dailyAdBoxCount;
+					if (progress.dailyResetAt) {
+						const last = new Date(progress.dailyResetAt);
+						const lastUTCDay = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate());
+						const nowUTCDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+						if (nowUTCDay > lastUTCDay) {
+							effectiveAdBoxCount = 0;
+						}
+					}
+					if (effectiveAdBoxCount >= GACHA_COSTS.ad.dailyLimit) {
+						return 'daily_limit';
+					}
+				} else if (boxType === 'diamond_single') {
+					if (s.profile.diamond < GACHA_COSTS.diamond_single.diamond) return 'no_diamond';
+				} else if (boxType === 'diamond_ten') {
+					if (s.profile.diamond < GACHA_COSTS.diamond_ten.diamond) return 'no_diamond';
+				}
+
+				// 롤
+				const ownedIds = s.collection.map((t) => t.defId);
+				let results: GachaResult[];
+				let newPityCount: number;
+
+				if (boxType === 'diamond_ten') {
+					const roll = rollGacha10(progress.gachaPityCount, ownedIds, rng);
+					results = roll.results;
+					newPityCount = roll.newPityCount;
+				} else {
+					const roll = rollGacha(progress.gachaPityCount, ownedIds, rng);
+					results = [roll.result];
+					newPityCount = roll.newPityCount;
+				}
+
+				// 컬렉션 업데이트 (Amendment D: 중복 → 골드 50)
+				let goldGained = 0;
+				const newCollection = [...s.collection];
+				for (const r of results) {
+					const alreadyOwned = newCollection.some((t) => t.defId === r.towerId);
+					if (alreadyOwned) {
+						goldGained += 50;
+					} else {
+						newCollection.push({
+							defId: r.towerId,
+							level: 1,
+							grade: 'normal',
+							acquiredAt: Date.now(),
+						});
+					}
+				}
+
+				// 다이아몬드/골드 차감 및 progress 업데이트
+				set((s) => {
+					const cost =
+						boxType === 'diamond_single' ? GACHA_COSTS.diamond_single.diamond :
+						boxType === 'diamond_ten' ? GACHA_COSTS.diamond_ten.diamond : 0;
+
+					const newProfile = {
+						...s.profile,
+						diamond: s.profile.diamond - cost,
+						gold: s.profile.gold + goldGained,
+						totalGoldEarned: s.profile.totalGoldEarned + goldGained,
+					};
+
+					const nowIso = now.toISOString();
+					const newProgress = {
+						...s.progress,
+						gachaPityCount: newPityCount,
+						...(boxType === 'free' ? { dailyFreeBoxClaimedAt: nowIso } : {}),
+						...(boxType === 'ad' ? {
+							dailyAdBoxCount: s.progress.dailyAdBoxCount + 1,
+							dailyResetAt: nowIso,
+						} : {}),
+					};
+
+					return {
+						profile: newProfile,
+						progress: newProgress,
+						collection: newCollection,
+					};
+				});
+
+				debouncedSave(get());
+				return results;
 			},
 		};
 	}),

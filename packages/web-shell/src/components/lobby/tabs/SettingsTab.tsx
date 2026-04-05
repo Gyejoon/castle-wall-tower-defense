@@ -1,6 +1,6 @@
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
-import { colors, fonts } from '../../../styles/tokens';
+import { colors } from '../../../styles/tokens';
 import { TabBackground } from '../TabBackground';
 
 export function SettingsTab() {
@@ -16,13 +16,7 @@ export function SettingsTab() {
 			id="tabpanel-settings"
 			role="tabpanel"
 			aria-label="영주실"
-			style={{
-				position: 'relative',
-				flex: 1,
-				overflow: 'hidden',
-				display: 'flex',
-				flexDirection: 'column',
-			}}
+			className="relative flex-1 overflow-hidden flex flex-col"
 		>
 			{/* Background */}
 			<TabBackground
@@ -32,25 +26,8 @@ export function SettingsTab() {
 			/>
 
 			{/* Content */}
-			<div
-				style={{
-					position: 'relative',
-					zIndex: 1,
-					flex: 1,
-					overflow: 'auto',
-					padding: '16px',
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '16px',
-				}}
-			>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '14px',
-						color: colors.text,
-					}}
-				>
+			<div className="relative z-[1] flex-1 overflow-auto p-4 flex flex-col gap-4">
+				<span className="font-pixel text-sm text-text">
 					설정
 				</span>
 
@@ -93,22 +70,11 @@ function SettingsSection({
 }) {
 	return (
 		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				gap: '1px',
-				background: `rgba(42, 32, 16, 0.7)`,
-				border: `1px solid ${colors.border}`,
-			}}
+			className="flex flex-col gap-px border border-border"
+			style={{ background: 'rgba(42, 32, 16, 0.7)' }}
 		>
-			<div style={{ padding: '8px 12px', background: 'rgba(42, 32, 16, 0.9)' }}>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '11px',
-						color: colors.accent,
-					}}
-				>
+			<div className="px-3 py-2" style={{ background: 'rgba(42, 32, 16, 0.9)' }}>
+				<span className="font-pixel text-[11px] text-accent">
 					{title}
 				</span>
 			</div>
@@ -133,45 +99,19 @@ function ToggleRow({
 			aria-checked={checked}
 			aria-label={label}
 			onClick={onChange}
-			style={{
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'center',
-				padding: '10px 12px',
-				background: 'rgba(26, 18, 8, 0.8)',
-				border: 'none',
-				cursor: 'pointer',
-				touchAction: 'manipulation',
-			}}
+			className="flex justify-between items-center px-3 py-2.5 border-none cursor-pointer touch-manipulation"
+			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
 		>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '12px',
-					color: colors.text,
-				}}
-			>
+			<span className="font-pixel text-xs text-text">
 				{label}
 			</span>
 			<div
-				style={{
-					width: 36,
-					height: 18,
-					background: checked ? colors.success : colors.border,
-					position: 'relative',
-					transition: 'background 0.15s',
-				}}
+				className="relative w-9 h-[18px] transition-[background] duration-150"
+				style={{ background: checked ? colors.success : colors.border }}
 			>
 				<div
-					style={{
-						position: 'absolute',
-						top: 2,
-						left: checked ? 20 : 2,
-						width: 14,
-						height: 14,
-						background: colors.text,
-						transition: 'left 0.15s',
-					}}
+					className="absolute top-0.5 w-3.5 h-3.5 bg-text transition-[left] duration-150"
+					style={{ left: checked ? 20 : 2 }}
 				/>
 			</div>
 		</button>
@@ -181,30 +121,13 @@ function ToggleRow({
 function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div
-			style={{
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'center',
-				padding: '10px 12px',
-				background: 'rgba(26, 18, 8, 0.8)',
-			}}
+			className="flex justify-between items-center px-3 py-2.5"
+			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
 		>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '12px',
-					color: colors.text,
-				}}
-			>
+			<span className="font-pixel text-xs text-text">
 				{label}
 			</span>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '11px',
-					color: colors.textSecondary,
-				}}
-			>
+			<span className="font-pixel text-[11px] text-text-secondary">
 				{value}
 			</span>
 		</div>

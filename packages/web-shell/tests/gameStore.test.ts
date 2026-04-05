@@ -138,16 +138,24 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('home');
 	});
 
-	it('toggles sound and accessibility feedback flags', () => {
-		expect(useGameStore.getState().soundEnabled).toBe(true);
+	it('tracks volume settings for BGM and SFX', () => {
+		expect(useGameStore.getState().bgmVolume).toBe(0.7);
+		expect(useGameStore.getState().sfxVolume).toBe(0.8);
+
+		useGameStore.getState().setBgmVolume(0);
+		expect(useGameStore.getState().bgmVolume).toBe(0);
+
+		useGameStore.getState().setSfxVolume(0.5);
+		expect(useGameStore.getState().sfxVolume).toBe(0.5);
+	});
+
+	it('toggles accessibility feedback flags', () => {
 		expect(useGameStore.getState().screenShake).toBe(true);
 		expect(useGameStore.getState().showDamageNumbers).toBe(true);
 
-		useGameStore.getState().toggleSound();
 		useGameStore.getState().toggleScreenShake();
 		useGameStore.getState().toggleDamageNumbers();
 
-		expect(useGameStore.getState().soundEnabled).toBe(false);
 		expect(useGameStore.getState().screenShake).toBe(false);
 		expect(useGameStore.getState().showDamageNumbers).toBe(false);
 	});

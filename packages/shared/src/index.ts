@@ -54,6 +54,13 @@ export {
 	PROMOTION_CONFIG,
 	xpToNextLevel,
 } from './constants/meta';
+export {
+	generateDailyMissions,
+	generateWeeklyMissions,
+	MISSION_LABELS,
+	shouldResetDaily,
+	shouldResetWeekly,
+} from './constants/missions';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {

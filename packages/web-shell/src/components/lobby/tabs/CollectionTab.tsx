@@ -33,23 +33,13 @@ const GRADE_BORDER: Record<TowerGrade, string> = {
 
 const TIER_DOT_KEYS = [1, 2, 3, 4, 5] as const;
 
-interface SelectedTower {
-	def: TowerDef;
-	owned: OwnedTower | undefined;
-}
-
 export function CollectionTab() {
-	const [selected, setSelected] = useState<SelectedTower | null>(null);
+	const [selectedDef, setSelectedDef] = useState<TowerDef | null>(null);
 	const collection = useMetaStore((s) => s.collection);
 	const ownedIds = new Set(collection.map((t) => t.defId));
 
 	const ownedTowers = ALL_TOWERS.filter((t) => ownedIds.has(t.id));
 	const lockedTowers = ALL_TOWERS.filter((t) => !ownedIds.has(t.id));
-
-	const handleSelect = (def: TowerDef) => {
-		const owned = collection.find((t) => t.defId === def.id);
-		setSelected({ def, owned });
-	};
 
 	return (
 		<div
@@ -126,7 +116,7 @@ export function CollectionTab() {
 									key={def.id}
 									def={def}
 									owned={owned}
-									onClick={() => handleSelect(def)}
+									onClick={() => setSelectedDef(def)}
 								/>
 							);
 						})}
@@ -157,7 +147,7 @@ export function CollectionTab() {
 									key={def.id}
 									def={def}
 									locked
-									onClick={() => handleSelect(def)}
+									onClick={() => setSelectedDef(def)}
 								/>
 							))}
 						</div>
@@ -165,11 +155,10 @@ export function CollectionTab() {
 				)}
 			</div>
 
-			{selected && (
+			{selectedDef && (
 				<TowerBottomSheet
-					def={selected.def}
-					owned={selected.owned}
-					onClose={() => setSelected(null)}
+					def={selectedDef}
+					onClose={() => setSelectedDef(null)}
 				/>
 			)}
 		</div>
@@ -277,15 +266,16 @@ function TowerGridCard({
 
 function TowerBottomSheet({
 	def,
-	owned,
 	onClose,
 }: {
 	def: TowerDef;
-	owned: OwnedTower | undefined;
 	onClose: () => void;
 }) {
 	const elementColor = ELEMENT_COLORS[def.element];
 	const profile = useMetaStore((s) => s.profile);
+	const owned = useMetaStore((s) =>
+		s.collection.find((t) => t.defId === def.id),
+	);
 	const enhanceTower = useMetaStore((s) => s.enhanceTower);
 	const promoteTower = useMetaStore((s) => s.promoteTower);
 	const pushToast = useGameStore((s) => s.pushToast);

@@ -1,8 +1,10 @@
 import {
 	type ActiveUnit,
+	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
 	type Position,
+	scaleUnitStats,
 	UNITS,
 	type UnitDef,
 } from '@gld/shared';
@@ -19,6 +21,9 @@ interface SpawnQueueEntry {
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
+	isBoss: boolean;
+	hpMultiplier: number;
+	waveSlot: number;
 }
 
 interface UnitInstance {
@@ -35,12 +40,23 @@ interface UnitInstance {
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
 	laneIndex: number; // which lane this unit follows
+	isBoss: boolean;
+	bossPhase: 1 | 2;
+	invulnerableMs: number;
+	maxHp: number;
+	baseSpeed: number;
+	baseArmor: number;
+	ccImmunityChance: number;
+	waveSlot: number;
 }
 
 interface QueueUnitsOptions {
 	bountyOverride?: number;
 	countsTowardClear?: boolean;
 	source?: UnitSpawnSource;
+	isBoss?: boolean;
+	hpMultiplier?: number;
+	waveSlot?: number;
 }
 
 export class UnitSystem {
@@ -53,6 +69,8 @@ export class UnitSystem {
 	private lanesWorld: Position[][] = [];
 	private nextId = 0;
 	private nextLane = 0;
+	private stageLevel = 1;
+	private rng: () => number = Math.random;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
@@ -60,6 +78,15 @@ export class UnitSystem {
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
+	}
+
+	/** Inject RNG for testability (CC immunity) */
+	setRng(rng: () => number): void {
+		this.rng = rng;
+	}
+
+	setStageLevel(level: number): void {
+		this.stageLevel = level;
 	}
 
 	setPaths(paths: Position[][]): void {
@@ -103,6 +130,9 @@ export class UnitSystem {
 			bounty: options.bountyOverride ?? def.bounty,
 			countsTowardClear: options.countsTowardClear ?? true,
 			source: options.source ?? 'base',
+			isBoss: options.isBoss ?? false,
+			hpMultiplier: options.hpMultiplier ?? 1,
+			waveSlot: options.waveSlot ?? 0,
 		});
 	}
 
@@ -122,11 +152,14 @@ export class UnitSystem {
 
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
+		const scaled = scaleUnitStats(entry.def.stats, this.stageLevel);
+		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1);
+
 		const unitData: ActiveUnit = {
 			instanceId,
 			defId: entry.def.id,
 			position: { x: startGrid.x, y: startGrid.y },
-			hp: entry.def.stats.hp,
+			hp: finalHp,
 			pathIndex: 0,
 		};
 
@@ -150,13 +183,7 @@ export class UnitSystem {
 		);
 
 		const hpBar = this.scene.add.graphics();
-		this.renderHpBar(
-			hpBar,
-			startWorld.x,
-			startWorld.y,
-			entry.def,
-			entry.def.stats.hp,
-		);
+		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
 		this.units.set(instanceId, {
 			data: unitData,
@@ -168,10 +195,18 @@ export class UnitSystem {
 			slowFactor: 1.0,
 			slowRemaining: 0,
 			stunRemaining: 0,
-			bounty: entry.bounty,
+			bounty: Math.round(entry.bounty * scaled.bountyMultiplier),
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
 			laneIndex,
+			isBoss: entry.isBoss,
+			bossPhase: 1,
+			invulnerableMs: 0,
+			maxHp: finalHp,
+			baseSpeed: scaled.speed,
+			baseArmor: scaled.armor,
+			ccImmunityChance: scaled.ccImmunityChance,
+			waveSlot: entry.waveSlot,
 		});
 	}
 
@@ -179,7 +214,7 @@ export class UnitSystem {
 		graphics: Phaser.GameObjects.Graphics,
 		x: number,
 		y: number,
-		def: UnitDef,
+		maxHp: number,
 		hp: number,
 	): void {
 		graphics.clear();
@@ -193,16 +228,27 @@ export class UnitSystem {
 			barWidth + 2,
 			barHeight + 2,
 		);
-		const hpRatio = Math.max(0, hp / def.stats.hp);
+		const hpRatio = Math.max(0, hp / maxHp);
 		const barColor =
 			hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
 		graphics.fillStyle(barColor, 1);
 		graphics.fillRect(x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
 	}
 
+	private restoreUnitTint(unit: UnitInstance): void {
+		if (unit.isBoss && unit.bossPhase === 2) {
+			unit.sprite.setTint(BOSS_CONFIG.phase2Tint);
+		} else {
+			unit.sprite.clearTint();
+		}
+	}
+
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
+			return; // CC resisted
+		}
 		// Keep the stronger slow (lower factor = slower)
 		unit.slowFactor = Math.min(unit.slowFactor, factor);
 		unit.slowRemaining = Math.max(unit.slowRemaining, durationMs);
@@ -212,6 +258,9 @@ export class UnitSystem {
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
+			return; // CC resisted
+		}
 		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
 		unit.sprite.setTint(0xffff44);
 	}
@@ -230,11 +279,43 @@ export class UnitSystem {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
 
-		const armor = armorPierce ? 0 : unit.def.stats.armor;
+		if (unit.invulnerableMs > 0) {
+			return {
+				killed: false,
+				bounty: 0,
+				unitDefId: unit.def.id,
+				countsTowardClear: unit.countsTowardClear,
+				source: unit.source,
+			};
+		}
+
+		const armor = armorPierce ? 0 : unit.baseArmor;
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 
+		// Boss phase transition check — only if still alive (hp > 0)
+		if (
+			unit.isBoss &&
+			unit.bossPhase === 1 &&
+			unit.data.hp > 0 &&
+			unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio
+		) {
+			unit.bossPhase = 2;
+			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
+			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
+			EventBus.emit('boss-phase-change', {
+				phase: 2,
+				unitId: unit.data.instanceId,
+			});
+		}
+
 		if (unit.data.hp <= 0) {
+			if (unit.isBoss) {
+				EventBus.emit('boss-defeated', {
+					unitId: unit.data.instanceId,
+					waveSlot: unit.waveSlot,
+				});
+			}
 			unit.sprite.destroy();
 			unit.hpBar.destroy();
 			const deathFx = this.scene.add.sprite(
@@ -266,11 +347,19 @@ export class UnitSystem {
 			};
 		}
 
+		if (unit.isBoss && unit.data.hp > 0) {
+			EventBus.emit('boss-hp-update', {
+				hp: Math.max(0, unit.data.hp),
+				maxHp: unit.maxHp,
+				phase: unit.bossPhase,
+			});
+		}
+
 		this.renderHpBar(
 			unit.hpBar,
 			unit.worldX,
 			unit.worldY,
-			unit.def,
+			unit.maxHp,
 			unit.data.hp,
 		);
 		return {
@@ -345,6 +434,10 @@ export class UnitSystem {
 		const dt = delta / 1000;
 
 		for (const [id, unit] of this.units) {
+			if (unit.invulnerableMs > 0) {
+				unit.invulnerableMs -= delta;
+			}
+
 			const unitLane = this.lanes[unit.laneIndex] ?? this.currentPath;
 			const unitLaneWorld =
 				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
@@ -363,7 +456,7 @@ export class UnitSystem {
 					unit.slowFactor = 1.0;
 					unit.slowRemaining = 0;
 					if (unit.stunRemaining <= 0) {
-						unit.sprite.clearTint();
+						this.restoreUnitTint(unit);
 					}
 				}
 			}
@@ -373,7 +466,7 @@ export class UnitSystem {
 				if (unit.stunRemaining <= 0) {
 					unit.stunRemaining = 0;
 					if (unit.slowRemaining <= 0) {
-						unit.sprite.clearTint();
+						this.restoreUnitTint(unit);
 					} else {
 						unit.sprite.setTint(0x88ccff);
 					}
@@ -383,8 +476,15 @@ export class UnitSystem {
 
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
+			const phase2Mult =
+				unit.isBoss && unit.bossPhase === 2
+					? BOSS_CONFIG.phase2SpeedMultiplier
+					: 1;
 			const speed =
-				unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
+				unit.baseSpeed *
+				phase2Mult *
+				this.gridManager.orthoTile *
+				unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;
@@ -412,7 +512,7 @@ export class UnitSystem {
 				unit.hpBar,
 				unit.worldX,
 				unit.worldY,
-				unit.def,
+				unit.maxHp,
 				unit.data.hp,
 			);
 		}

@@ -134,7 +134,10 @@ describe('GameScene', () => {
 			getPhase: vi.fn(() => 'ended'),
 			getElapsedMs: vi.fn(() => 0),
 		};
-		scene.playerTowers = { update: vi.fn(() => []) };
+		scene.playerTowers = {
+			update: vi.fn(() => []),
+			getTowers: vi.fn(() => []),
+		};
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),
 			getUnitElement: vi.fn(() => 'neutral'),
@@ -152,6 +155,12 @@ describe('GameScene', () => {
 			result: 'victory',
 			reason: 'all_waves_cleared',
 			finalSlot: 20,
+			stats: {
+				wavesCleared: 20,
+				towersPlaced: 0,
+				timeSurvivedSec: 0,
+				goldEarned: 0,
+			},
 		});
 	});
 

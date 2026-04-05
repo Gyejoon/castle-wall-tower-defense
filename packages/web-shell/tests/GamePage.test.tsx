@@ -222,7 +222,7 @@ describe('GamePage', () => {
 				startAtSec: 210,
 			});
 		});
-		expect(view.getByText('보스 경고')).toBeTruthy();
+		expect(view.getByText('⚠ WARNING ⚠')).toBeTruthy();
 
 		act(() => {
 			emitSpy('tower-placed', {

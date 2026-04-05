@@ -25,6 +25,12 @@ export interface GameEventMap {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
+		stats: {
+			wavesCleared: number;
+			towersPlaced: number;
+			timeSurvivedSec: number;
+			goldEarned: number;
+		};
 	};
 	'energy-changed': { energy: number };
 	'wave-started': {
@@ -46,6 +52,9 @@ export interface GameEventMap {
 		bossSlotIndex: number;
 		startAtSec: number;
 	};
+	'boss-phase-change': { phase: 1 | 2; unitId: string };
+	'boss-hp-update': { hp: number; maxHp: number; phase: 1 | 2 };
+	'boss-defeated': { unitId: string; waveSlot: number };
 	'player-tower-count': { count: number };
 	'wave-preview': {
 		wave: number;

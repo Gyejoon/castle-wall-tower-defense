@@ -5,6 +5,7 @@ import {
 	type PlacementFailureReason,
 } from '@gld/shared';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { BossHpBar } from '../components/game/BossHpBar';
 import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
@@ -75,15 +76,33 @@ export function GamePage() {
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
+	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
+	const setBossHp = useGameStore((s) => s.setBossHp);
+	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
+	const gameOverStats = useGameStore((s) => s.gameOverStats);
+	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
 		const onEnergyChanged = (data: { energy: number }) =>
 			setEnergy(data.energy);
-		const onGameOver = (data: { result: 'victory' | 'defeat' }) => {
+		const onGameOver = (data: {
+			result: 'victory' | 'defeat';
+			stats: {
+				wavesCleared: number;
+				towersPlaced: number;
+				timeSurvivedSec: number;
+				goldEarned: number;
+			};
+		}) => {
 			setRunStatus(data.result);
+			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			setGameOverStats(data.stats);
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -156,7 +175,27 @@ export function GamePage() {
 		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
-			pushToast('보스 경고', 'warning');
+			setBossWarningVisible(true);
+			if (bossWarningTimerRef.current)
+				clearTimeout(bossWarningTimerRef.current);
+			bossWarningTimerRef.current = setTimeout(() => {
+				setBossWarningVisible(false);
+				bossWarningTimerRef.current = null;
+			}, 1500);
+		};
+		const onBossHpUpdate = (data: {
+			hp: number;
+			maxHp: number;
+			phase: 1 | 2;
+		}) => {
+			setBossHp({ ...data, visible: true });
+		};
+		const onBossDefeated = () => {
+			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			pushToast('BOSS CLEAR!', 'success');
+		};
+		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
+			if (data.phase === 2) pushToast('보스 분노!', 'warning');
 		};
 
 		EventBus.on('player-damaged', onDamaged);
@@ -169,9 +208,14 @@ export function GamePage() {
 		EventBus.on('request-reset-run', onResetRun);
 		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
+		EventBus.on('boss-hp-update', onBossHpUpdate);
+		EventBus.on('boss-defeated', onBossDefeated);
+		EventBus.on('boss-phase-change', onBossPhaseChange);
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
+			if (bossWarningTimerRef.current)
+				clearTimeout(bossWarningTimerRef.current);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
@@ -182,6 +226,9 @@ export function GamePage() {
 			EventBus.off('request-reset-run', onResetRun);
 			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
+			EventBus.off('boss-hp-update', onBossHpUpdate);
+			EventBus.off('boss-defeated', onBossDefeated);
+			EventBus.off('boss-phase-change', onBossPhaseChange);
 		};
 	}, [
 		patchCombatHud,
@@ -194,6 +241,9 @@ export function GamePage() {
 		setPlayerTowerCount,
 		setSelectedCardIndex,
 		setRunStatus,
+		setBossHp,
+		setBossWarningVisible,
+		setGameOverStats,
 	]);
 
 	useEffect(() => {
@@ -318,6 +368,40 @@ export function GamePage() {
 				>
 					<PhaserGame key={runId} />
 
+					<BossHpBar />
+
+					{bossWarningVisible && (
+						<div
+							style={{
+								position: 'absolute',
+								inset: 0,
+								zIndex: 5,
+								background: 'rgba(0,0,0,0.6)',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+							}}
+						>
+							<div
+								style={{
+									fontFamily: fonts.pixel,
+									fontSize: '20px',
+									color: '#ff4444',
+									textAlign: 'center',
+									animation: 'pulse 0.5s ease-in-out infinite',
+								}}
+							>
+								⚠ WARNING ⚠
+								<style>{`
+									@keyframes pulse {
+										0%, 100% { opacity: 1; transform: scale(1); }
+										50% { opacity: 0.5; transform: scale(1.05); }
+									}
+								`}</style>
+							</div>
+						</div>
+					)}
+
 					{!gameReady && (
 						<div
 							style={{
@@ -419,19 +503,59 @@ export function GamePage() {
 										lineHeight: 1.8,
 									}}
 								>
-									{runStatus === 'victory'
-										? '왕국을 지켜냈습니다!'
-										: '방어선이 무너졌습니다.'}
+									{runStatus === 'defeat'
+										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
+										: '왕국을 지켜냈습니다!'}
 								</p>
-								<p
+								<div
 									style={{
-										color: colors.gold,
-										fontFamily: fonts.pixel,
-										fontSize: '10px',
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '6px',
 									}}
 								>
-									획득 골드: 0G
-								</p>
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
+										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
+									</p>
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
+										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
+									</p>
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
+										생존 시간:{' '}
+										{Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:
+										{String(
+											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
+										).padStart(2, '0')}
+									</p>
+									<p
+										style={{
+											color: colors.gold,
+											fontFamily: fonts.pixel,
+											fontSize: '10px',
+											marginTop: '4px',
+										}}
+									>
+										획득 골드: {gameOverStats?.goldEarned ?? 0}G
+									</p>
+								</div>
 								<PixelButton
 									variant="gold"
 									style={{ width: '100%' }}

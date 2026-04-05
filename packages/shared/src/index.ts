@@ -9,8 +9,10 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export type { BossPhaseConfig } from './constants/boss';
+export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';
-export { DEFAULT_DECK } from './constants/deck';
+export { buildDeckCards, DEFAULT_DECK, towerToRole } from './constants/deck';
 export type { CcAuraConfig, ElementType } from './constants/elements';
 export {
 	CC_AURA_CONFIGS,
@@ -40,6 +42,8 @@ export {
 	MAP_REGISTRY,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
+export type { ScaledUnitStats } from './constants/scaling';
+export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,

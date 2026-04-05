@@ -1,4 +1,5 @@
 import {
+	FINAL_BOSS_HP_MULTIPLIER,
 	TOTAL_WAVES,
 	WAVE_DEFS,
 	type WaveDef,
@@ -152,9 +153,15 @@ export class WaveSystem {
 
 		// Spawn units
 		for (const group of wave.groups) {
+			const isBoss = group.unitId === 'titan';
+			const hpMultiplier =
+				isBoss && wave.slotIndex === 10 ? FINAL_BOSS_HP_MULTIPLIER : 1;
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',
 				countsTowardClear: true,
+				isBoss,
+				hpMultiplier,
+				waveSlot: wave.slotIndex,
 			});
 		}
 		this.hasSpawnedCurrentWave = true;

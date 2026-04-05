@@ -1,9 +1,11 @@
-import { MAP_REGISTRY } from '@gld/shared';
+import { ALL_TOWERS, MAP_REGISTRY } from '@gld/shared';
+import { useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { MOCK_PROFILE } from '../../../data/mockLobbyData';
 import { useGameStore } from '../../../stores/gameStore';
 import { colors, fonts } from '../../../styles/tokens';
 import { PixelButton } from '../../ui/PixelButton';
+import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
 
 const STAGE_THUMBNAILS: Record<string, string> = {
@@ -16,6 +18,8 @@ export function HomeTab() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
+	const selectedDeck = useGameStore((s) => s.selectedDeck);
+	const [showDeckEdit, setShowDeckEdit] = useState(false);
 
 	return (
 		<div
@@ -143,6 +147,71 @@ export function HomeTab() {
 					))}
 				</div>
 
+				{/* Deck preview */}
+				<div
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '6px',
+						padding: '8px 10px',
+						background: 'rgba(42, 32, 16, 0.85)',
+						border: `1px solid ${colors.border}`,
+					}}
+				>
+					<div
+						style={{
+							display: 'flex',
+							gap: '4px',
+							flex: 1,
+						}}
+					>
+						{selectedDeck.map((id) => {
+							const tower = ALL_TOWERS.find((t) => t.id === id);
+							if (!tower) return null;
+							return (
+								<div
+									key={id}
+									style={{
+										flex: 1,
+										padding: '4px',
+										background: colors.panel,
+										border: `1px solid ${colors.border}`,
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										gap: '3px',
+									}}
+								>
+									<span style={{ fontSize: '10px' }}>
+										{shapeChar(tower.shape, tower.color)}
+									</span>
+									<span
+										style={{
+											fontFamily: fonts.pixel,
+											fontSize: '5px',
+											color: colors.textSecondary,
+											textAlign: 'center',
+											overflow: 'hidden',
+											maxWidth: '100%',
+											whiteSpace: 'nowrap',
+											textOverflow: 'ellipsis',
+										}}
+									>
+										{tower.name}
+									</span>
+								</div>
+							);
+						})}
+					</div>
+					<PixelButton
+						variant="secondary"
+						style={{ fontSize: '7px', padding: '6px 8px', flexShrink: 0 }}
+						onClick={() => setShowDeckEdit(true)}
+					>
+						덱 편집
+					</PixelButton>
+				</div>
+
 				{/* Battle CTA card */}
 				<div
 					style={{
@@ -231,8 +300,27 @@ export function HomeTab() {
 				<OverlayIcon label="우편" badge={3} />
 				<OverlayIcon label="공지" badge={1} />
 			</div>
+
+			<DeckEditSheet
+				open={showDeckEdit}
+				onClose={() => setShowDeckEdit(false)}
+			/>
 		</div>
 	);
+}
+
+function shapeChar(
+	shape: 'diamond' | 'circle' | 'hexagon' | 'shield' | 'star',
+	color: string,
+): JSX.Element {
+	const chars: Record<string, string> = {
+		diamond: '◆',
+		circle: '●',
+		hexagon: '⬡',
+		shield: '🛡',
+		star: '★',
+	};
+	return <span style={{ color, fontSize: '10px' }}>{chars[shape] ?? '■'}</span>;
 }
 
 function StatBadge({

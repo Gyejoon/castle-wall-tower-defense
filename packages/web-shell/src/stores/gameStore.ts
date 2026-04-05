@@ -1,4 +1,5 @@
 import {
+	ALL_TOWERS,
 	type CombatHudState,
 	DEFAULT_DECK,
 	type DeckCardDef,
@@ -8,6 +9,28 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
+
+const DECK_STORAGE_KEY = 'gld-selected-deck';
+const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
+
+function loadDeck(): string[] {
+	try {
+		const raw = localStorage.getItem(DECK_STORAGE_KEY);
+		if (!raw) return DEFAULT_DECK_IDS;
+		const parsed = JSON.parse(raw);
+		if (
+			Array.isArray(parsed) &&
+			parsed.length === 4 &&
+			new Set(parsed).size === 4 &&
+			parsed.every((id: string) => ALL_TOWERS.some((t) => t.id === id))
+		) {
+			return parsed;
+		}
+	} catch {
+		/* ignore */
+	}
+	return DEFAULT_DECK_IDS;
+}
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'settings';
@@ -24,6 +47,20 @@ type WavePreviewGroup = {
 	unitName: string;
 	count: number;
 };
+
+export interface BossHpState {
+	hp: number;
+	maxHp: number;
+	phase: 1 | 2;
+	visible: boolean;
+}
+
+export interface GameOverStats {
+	wavesCleared: number;
+	towersPlaced: number;
+	timeSurvivedSec: number;
+	goldEarned: number;
+}
 
 interface GameStoreState {
 	runId: number;
@@ -47,6 +84,10 @@ interface GameStoreState {
 	playerTowerCount: number;
 	combatHud: CombatHudState;
 	toast: UiToast | null;
+	selectedDeck: string[];
+	bossHp: BossHpState;
+	bossWarningVisible: boolean;
+	gameOverStats: GameOverStats | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -71,6 +112,10 @@ interface GameStoreState {
 	toggleSound: () => void;
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
+	setSelectedDeck: (deck: string[]) => void;
+	setBossHp: (bossHp: BossHpState) => void;
+	setBossWarningVisible: (v: boolean) => void;
+	setGameOverStats: (stats: GameOverStats | null) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -95,6 +140,9 @@ const createRunState = () => ({
 	playerTowerCount: 0,
 	combatHud: createCombatHud(),
 	toast: null,
+	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
+	bossWarningVisible: false,
+	gameOverStats: null,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -105,6 +153,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	soundEnabled: true,
 	screenShake: true,
 	showDamageNumbers: true,
+	selectedDeck: loadDeck(),
 	...createRunState(),
 
 	setRunStatus: (status) => set({ runStatus: status }),
@@ -157,4 +206,11 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		set((state) => ({ screenShake: !state.screenShake })),
 	toggleDamageNumbers: () =>
 		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
+	setSelectedDeck: (deck) => {
+		localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+		set({ selectedDeck: deck });
+	},
+	setBossHp: (bossHp) => set({ bossHp }),
+	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
+	setGameOverStats: (stats) => set({ gameOverStats: stats }),
 }));

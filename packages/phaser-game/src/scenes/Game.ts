@@ -1,5 +1,7 @@
 import {
 	type AssetManifest,
+	buildDeckCards,
+	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
 	getAllPathCells,
 	getMapById,
@@ -91,6 +93,7 @@ export class GameScene extends Phaser.Scene {
 	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
+	private goldEarned = 0;
 	private currentSlotDef: WaveDef = WAVE_DEFS[0];
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -151,8 +154,11 @@ export class GameScene extends Phaser.Scene {
 			this.playerPathfinding,
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
+		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		this.playerWaves = new WaveSystem(this.playerUnits);
-		this.playerDeck = new DeckSystem();
+		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
+		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
+		this.playerDeck = new DeckSystem(deckCards);
 
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -464,7 +470,15 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
-		EventBus.emit('game-over', payload);
+		EventBus.emit('game-over', {
+			...payload,
+			stats: {
+				wavesCleared: payload.finalSlot,
+				towersPlaced: this.playerTowers.getTowers().length,
+				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
+				goldEarned: this.goldEarned,
+			},
+		});
 	}
 
 	private handlePlaceTower(
@@ -552,6 +566,7 @@ export class GameScene extends Phaser.Scene {
 					evt.armorPierce,
 				);
 				if (result?.killed) {
+					this.goldEarned += result.bounty;
 					onKill();
 				}
 			}

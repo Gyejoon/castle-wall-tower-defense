@@ -1,5 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #1a1208;
+  --color-panel: #2a2010;
+  --color-border: #4a3a20;
+  --color-accent: #c8a04a;
+  --color-success: #7ab648;
+  --color-danger: #c03020;
+  --color-gold: #f0d060;
+  --color-info: #5bc8e8;
+  --color-text: #f0e8d8;
+  --color-text-secondary: #a09070;
+
+  --font-pixel: 'Galmuri11', 'Press Start 2P', cursive;
+}
+
 * {
   margin: 0;
   padding: 0;

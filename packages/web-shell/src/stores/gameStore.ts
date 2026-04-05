@@ -71,6 +71,8 @@ interface GameStoreState {
 	combatHud: CombatHudState;
 	toast: UiToast | null;
 	selectedDeck: string[];
+	bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean };
+	bossWarningVisible: boolean;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -96,6 +98,8 @@ interface GameStoreState {
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
+	setBossHp: (bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean }) => void;
+	setBossWarningVisible: (v: boolean) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -120,6 +124,8 @@ const createRunState = () => ({
 	playerTowerCount: 0,
 	combatHud: createCombatHud(),
 	toast: null,
+	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
+	bossWarningVisible: false,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -187,4 +193,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
 		set({ selectedDeck: deck });
 	},
+	setBossHp: (bossHp) => set({ bossHp }),
+	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
 }));

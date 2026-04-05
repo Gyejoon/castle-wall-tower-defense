@@ -5,6 +5,7 @@ import {
 	type PlacementFailureReason,
 } from '@gld/shared';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { BossHpBar } from '../components/game/BossHpBar';
 import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
@@ -75,6 +76,9 @@ export function GamePage() {
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
+	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
+	const setBossHp = useGameStore((s) => s.setBossHp);
+	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	useEffect(() => {
@@ -84,6 +88,7 @@ export function GamePage() {
 			setEnergy(data.energy);
 		const onGameOver = (data: { result: 'victory' | 'defeat' }) => {
 			setRunStatus(data.result);
+			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -156,7 +161,18 @@ export function GamePage() {
 		};
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
-			pushToast('보스 경고', 'warning');
+			setBossWarningVisible(true);
+			setTimeout(() => setBossWarningVisible(false), 1500);
+		};
+		const onBossHpUpdate = (data: { hp: number; maxHp: number; phase: 1 | 2 }) => {
+			setBossHp({ ...data, visible: true });
+		};
+		const onBossDefeated = () => {
+			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			pushToast('BOSS CLEAR!', 'success');
+		};
+		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
+			if (data.phase === 2) pushToast('보스 분노!', 'warning');
 		};
 
 		EventBus.on('player-damaged', onDamaged);
@@ -169,6 +185,9 @@ export function GamePage() {
 		EventBus.on('request-reset-run', onResetRun);
 		EventBus.on('wave-completed', onWaveCompleted);
 		EventBus.on('boss-warning', onBossWarning);
+		EventBus.on('boss-hp-update', onBossHpUpdate);
+		EventBus.on('boss-defeated', onBossDefeated);
+		EventBus.on('boss-phase-change', onBossPhaseChange);
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
@@ -182,6 +201,9 @@ export function GamePage() {
 			EventBus.off('request-reset-run', onResetRun);
 			EventBus.off('wave-completed', onWaveCompleted);
 			EventBus.off('boss-warning', onBossWarning);
+			EventBus.off('boss-hp-update', onBossHpUpdate);
+			EventBus.off('boss-defeated', onBossDefeated);
+			EventBus.off('boss-phase-change', onBossPhaseChange);
 		};
 	}, [
 		patchCombatHud,
@@ -194,6 +216,8 @@ export function GamePage() {
 		setPlayerTowerCount,
 		setSelectedCardIndex,
 		setRunStatus,
+		setBossHp,
+		setBossWarningVisible,
 	]);
 
 	useEffect(() => {
@@ -317,6 +341,34 @@ export function GamePage() {
 					}}
 				>
 					<PhaserGame key={runId} />
+
+					<BossHpBar />
+
+					{bossWarningVisible && (
+						<div
+							style={{
+								position: 'absolute',
+								inset: 0,
+								zIndex: 5,
+								background: 'rgba(0,0,0,0.6)',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+							}}
+						>
+							<div
+								style={{
+									fontFamily: fonts.pixel,
+									fontSize: '20px',
+									color: '#ff4444',
+									textAlign: 'center',
+									animation: 'pulse 0.5s ease-in-out infinite',
+								}}
+							>
+								⚠ WARNING ⚠
+							</div>
+						</div>
+					)}
 
 					{!gameReady && (
 						<div

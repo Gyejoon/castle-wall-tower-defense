@@ -2,7 +2,7 @@ import { xpToNextLevel } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
-import { colors, fonts } from '../../styles/tokens';
+
 
 function useAnimatedGold() {
 	const gold = useMetaStore((s) => s.profile.gold);
@@ -39,14 +39,8 @@ export function ProfileBar() {
 
 	return (
 		<div
-			style={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: '10px',
-				padding: '10px 14px',
-				background: 'rgba(42, 32, 16, 0.85)',
-				borderBottom: `1px solid ${colors.border}`,
-			}}
+			className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border"
+			style={{ background: 'rgba(42, 32, 16, 0.85)' }}
 		>
 			{/* Avatar + Nickname + XP bar */}
 			<img
@@ -54,83 +48,34 @@ export function ProfileBar() {
 				alt="profile"
 				width={36}
 				height={36}
-				style={{ imageRendering: 'pixelated', flexShrink: 0 }}
+				className="shrink-0 [image-rendering:pixelated]"
 			/>
-			<div
-				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '2px',
-					minWidth: 0,
-					flex: '1 1 0',
-				}}
-			>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '13px',
-						color: colors.text,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap',
-					}}
-				>
+			<div className="flex flex-col gap-0.5 min-w-0 flex-1">
+				<span className="font-pixel text-[13px] text-text overflow-hidden text-ellipsis whitespace-nowrap">
 					{profile.nickname}
 				</span>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '11px',
-						color: colors.textSecondary,
-					}}
-				>
+				<span className="font-pixel text-[11px] text-text-secondary">
 					Lv.{profile.level}
 				</span>
 				{/* XP progress bar */}
-				<div
-					style={{
-						width: '100%',
-						height: '3px',
-						background: 'rgba(0,0,0,0.3)',
-						borderRadius: '1px',
-						overflow: 'hidden',
-					}}
-				>
+				<div className="w-full h-[3px] rounded-sm overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
 					<div
-						style={{
-							width: `${Math.min(100, xpProgress * 100)}%`,
-							height: '100%',
-							background: colors.gold,
-							transition: 'width 0.3s ease',
-						}}
+						className="h-full bg-gold transition-[width] duration-300 ease-out"
+						style={{ width: `${Math.min(100, xpProgress * 100)}%` }}
 					/>
 				</div>
 			</div>
 
 			{/* Gold */}
-			<div
-				className="profile-currency"
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '4px',
-					flexShrink: 0,
-				}}
-			>
+			<div className="profile-currency flex items-center gap-1 shrink-0">
 				<img
 					src={uiMobileArt.coinIcon}
 					alt="gold"
 					width={18}
 					height={18}
-					style={{ imageRendering: 'pixelated' }}
+					className="[image-rendering:pixelated]"
 				/>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '12px',
-						color: colors.gold,
-					}}
-				>
+				<span className="font-pixel text-xs text-gold">
 					{displayGold.toLocaleString()}
 				</span>
 			</div>

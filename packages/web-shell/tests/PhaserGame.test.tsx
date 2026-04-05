@@ -30,7 +30,11 @@ vi.mock('@gld/phaser-game', () => {
 	const listeners = new Map<string, Set<EventHandler>>();
 	const emitSpy = vi.fn();
 	const destroySpy = vi.fn();
-	const startGameSpy = vi.fn(() => ({ destroy: destroySpy }));
+	const registrySetSpy = vi.fn();
+	const startGameSpy = vi.fn(() => ({
+		destroy: destroySpy,
+		registry: { set: registrySetSpy },
+	}));
 	const offSpy = vi.fn((event: string, handler: EventHandler) => {
 		listeners.get(event)?.delete(handler);
 	});

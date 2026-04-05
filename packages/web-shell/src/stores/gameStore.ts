@@ -1,4 +1,5 @@
 import {
+	ALL_TOWERS,
 	type CombatHudState,
 	DEFAULT_DECK,
 	type DeckCardDef,
@@ -8,6 +9,28 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
+
+const DECK_STORAGE_KEY = 'gld-selected-deck';
+const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
+
+function loadDeck(): string[] {
+	try {
+		const raw = localStorage.getItem(DECK_STORAGE_KEY);
+		if (!raw) return DEFAULT_DECK_IDS;
+		const parsed = JSON.parse(raw);
+		if (
+			Array.isArray(parsed) &&
+			parsed.length === 4 &&
+			new Set(parsed).size === 4 &&
+			parsed.every((id: string) => ALL_TOWERS.some((t) => t.id === id))
+		) {
+			return parsed;
+		}
+	} catch {
+		/* ignore */
+	}
+	return DEFAULT_DECK_IDS;
+}
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'settings';
@@ -47,6 +70,7 @@ interface GameStoreState {
 	playerTowerCount: number;
 	combatHud: CombatHudState;
 	toast: UiToast | null;
+	selectedDeck: string[];
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -71,6 +95,7 @@ interface GameStoreState {
 	toggleSound: () => void;
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
+	setSelectedDeck: (deck: string[]) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -105,6 +130,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	soundEnabled: true,
 	screenShake: true,
 	showDamageNumbers: true,
+	selectedDeck: loadDeck(),
 	...createRunState(),
 
 	setRunStatus: (status) => set({ runStatus: status }),
@@ -157,4 +183,8 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		set((state) => ({ screenShake: !state.screenShake })),
 	toggleDamageNumbers: () =>
 		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
+	setSelectedDeck: (deck) => {
+		localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+		set({ selectedDeck: deck });
+	},
 }));

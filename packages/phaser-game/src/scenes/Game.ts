@@ -1,5 +1,7 @@
 import {
 	type AssetManifest,
+	buildDeckCards,
+	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
 	getAllPathCells,
 	getMapById,
@@ -152,7 +154,9 @@ export class GameScene extends Phaser.Scene {
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerWaves = new WaveSystem(this.playerUnits);
-		this.playerDeck = new DeckSystem();
+		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
+		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
+		this.playerDeck = new DeckSystem(deckCards);
 
 		this.events.on('shutdown', this.cleanup, this);
 

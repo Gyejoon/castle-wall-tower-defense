@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { cn } from '../../utils/cn';
 import { colors } from '../../styles/tokens';
+import { cn } from '../../utils/cn';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: 'primary' | 'secondary' | 'danger' | 'gold';

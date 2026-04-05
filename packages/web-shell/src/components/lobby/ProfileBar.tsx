@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
 
-
 function useAnimatedGold() {
 	const gold = useMetaStore((s) => s.profile.gold);
 	const [display, setDisplay] = useState(gold);
@@ -58,7 +57,10 @@ export function ProfileBar() {
 					Lv.{profile.level}
 				</span>
 				{/* XP progress bar */}
-				<div className="w-full h-[3px] rounded-sm overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
+				<div
+					className="w-full h-[3px] rounded-sm overflow-hidden"
+					style={{ background: 'rgba(0,0,0,0.3)' }}
+				>
 					<div
 						className="h-full bg-gold transition-[width] duration-300 ease-out"
 						style={{ width: `${Math.min(100, xpProgress * 100)}%` }}

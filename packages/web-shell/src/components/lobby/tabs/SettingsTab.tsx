@@ -27,9 +27,7 @@ export function SettingsTab() {
 
 			{/* Content */}
 			<div className="relative z-[1] flex-1 overflow-auto p-4 flex flex-col gap-4">
-				<span className="font-pixel text-sm text-text">
-					설정
-				</span>
+				<span className="font-pixel text-sm text-text">설정</span>
 
 				<SettingsSection title="사운드">
 					<ToggleRow
@@ -73,10 +71,11 @@ function SettingsSection({
 			className="flex flex-col gap-px border border-border"
 			style={{ background: 'rgba(42, 32, 16, 0.7)' }}
 		>
-			<div className="px-3 py-2" style={{ background: 'rgba(42, 32, 16, 0.9)' }}>
-				<span className="font-pixel text-[11px] text-accent">
-					{title}
-				</span>
+			<div
+				className="px-3 py-2"
+				style={{ background: 'rgba(42, 32, 16, 0.9)' }}
+			>
+				<span className="font-pixel text-[11px] text-accent">{title}</span>
 			</div>
 			{children}
 		</div>
@@ -102,9 +101,7 @@ function ToggleRow({
 			className="flex justify-between items-center px-3 py-2.5 border-none cursor-pointer touch-manipulation"
 			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
 		>
-			<span className="font-pixel text-xs text-text">
-				{label}
-			</span>
+			<span className="font-pixel text-xs text-text">{label}</span>
 			<div
 				className="relative w-9 h-[18px] transition-[background] duration-150"
 				style={{ background: checked ? colors.success : colors.border }}
@@ -124,9 +121,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 			className="flex justify-between items-center px-3 py-2.5"
 			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
 		>
-			<span className="font-pixel text-xs text-text">
-				{label}
-			</span>
+			<span className="font-pixel text-xs text-text">{label}</span>
 			<span className="font-pixel text-[11px] text-text-secondary">
 				{value}
 			</span>

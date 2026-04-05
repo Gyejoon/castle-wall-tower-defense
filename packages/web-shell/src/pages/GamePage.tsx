@@ -81,7 +81,10 @@ export function GamePage() {
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
-			const xpEarned = battleXp(data.stats.wavesCleared, data.result === 'victory');
+			const xpEarned = battleXp(
+				data.stats.wavesCleared,
+				data.result === 'victory',
+			);
 			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();
 			meta.addGold(data.stats.goldEarned);
@@ -242,8 +245,7 @@ export function GamePage() {
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
-	const isBossPhase =
-		combatHud.bossWarning || combatHud.phase === 'boss';
+	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
@@ -265,7 +267,10 @@ export function GamePage() {
 						style={{ background: 'rgba(240,208,96,0.16)' }}
 					>
 						<span>⚡{energy}</span>
-						<div className="flex-1 overflow-hidden rounded-sm" style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}>
+						<div
+							className="flex-1 overflow-hidden rounded-sm"
+							style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}
+						>
 							<div
 								className={cn(
 									'h-full transition-[width] duration-300 ease-out',
@@ -310,7 +315,10 @@ export function GamePage() {
 					<BossHpBar />
 
 					{bossWarningVisible && (
-						<div className="absolute inset-0 z-5 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+						<div
+							className="absolute inset-0 z-5 flex items-center justify-center"
+							style={{ background: 'rgba(0,0,0,0.6)' }}
+						>
 							<div className="text-center font-pixel text-2xl text-[#ff4444] animate-[pulse_0.5s_ease-in-out_infinite]">
 								⚠ WARNING ⚠
 							</div>
@@ -340,7 +348,10 @@ export function GamePage() {
 					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
-						<div className="absolute inset-0 z-[3] flex items-center justify-center p-5" style={{ background: 'rgba(10, 8, 4, 0.82)' }}>
+						<div
+							className="absolute inset-0 z-[3] flex items-center justify-center p-5"
+							style={{ background: 'rgba(10, 8, 4, 0.82)' }}
+						>
 							<div
 								className="flex w-[min(100%,360px)] flex-col gap-3.5 p-5 text-center"
 								style={{
@@ -361,9 +372,7 @@ export function GamePage() {
 								<h2
 									className={cn(
 										'font-pixel text-base font-normal',
-										runStatus === 'victory'
-											? 'text-success'
-											: 'text-danger',
+										runStatus === 'victory' ? 'text-success' : 'text-danger',
 									)}
 								>
 									{resultTitle}

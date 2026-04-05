@@ -376,6 +376,12 @@ export function GamePage() {
 								}}
 							>
 								⚠ WARNING ⚠
+								<style>{`
+									@keyframes pulse {
+										0%, 100% { opacity: 1; transform: scale(1); }
+										50% { opacity: 0.5; transform: scale(1.05); }
+									}
+								`}</style>
 							</div>
 						</div>
 					)}

@@ -452,8 +452,9 @@ export class UnitSystem {
 
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
+			const phase2Mult = unit.isBoss && unit.bossPhase === 2 ? BOSS_CONFIG.phase2SpeedMultiplier : 1;
 			const speed =
-				unit.def.stats.speed * this.gridManager.orthoTile * unit.slowFactor;
+				unit.baseSpeed * phase2Mult * this.gridManager.orthoTile * unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;

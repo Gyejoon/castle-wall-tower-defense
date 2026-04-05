@@ -109,4 +109,206 @@ export const WAVE_DEFS: WaveDef[] = [
 	},
 ];
 
+/** lava_fortress: higher counts, heavier units early (×1.2 difficulty concept) */
+export const LAVA_FORTRESS_WAVES: WaveDef[] = [
+	{
+		slotIndex: 1,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [{ unitId: 'scout_drone', count: 8 }],
+	},
+	{
+		slotIndex: 2,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'battle_robot', count: 4 },
+			{ unitId: 'scout_drone', count: 4 },
+		],
+	},
+	{
+		slotIndex: 3,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'battle_robot', count: 3 },
+		],
+	},
+	{
+		slotIndex: 4,
+		kind: 'pre_boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'stealth_drone', count: 4 },
+		],
+	},
+	{
+		slotIndex: 5,
+		kind: 'boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'titan', count: 1 },
+			{ unitId: 'heavy_walker', count: 3 },
+		],
+	},
+	{
+		slotIndex: 6,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 4 },
+		],
+	},
+	{
+		slotIndex: 7,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'stealth_drone', count: 5 },
+			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'battle_robot', count: 3 },
+		],
+	},
+	{
+		slotIndex: 8,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'heavy_walker', count: 5 },
+			{ unitId: 'stealth_drone', count: 5 },
+		],
+	},
+	{
+		slotIndex: 9,
+		kind: 'pre_boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'heavy_walker', count: 5 },
+			{ unitId: 'battle_robot', count: 5 },
+			{ unitId: 'stealth_drone', count: 5 },
+		],
+	},
+	{
+		slotIndex: 10,
+		kind: 'boss',
+		delayAfterClearSec: 0,
+		groups: [
+			{ unitId: 'titan', count: 1 },
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'stealth_drone', count: 5 },
+		],
+	},
+];
+
+/** storm_citadel: ×1.5 difficulty — fast swarms + heavy bosses */
+export const STORM_CITADEL_WAVES: WaveDef[] = [
+	{
+		slotIndex: 1,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'scout_drone', count: 8 },
+			{ unitId: 'battle_robot', count: 2 },
+		],
+	},
+	{
+		slotIndex: 2,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'battle_robot', count: 5 },
+			{ unitId: 'stealth_drone', count: 3 },
+		],
+	},
+	{
+		slotIndex: 3,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 4 },
+		],
+	},
+	{
+		slotIndex: 4,
+		kind: 'pre_boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'heavy_walker', count: 5 },
+			{ unitId: 'stealth_drone', count: 5 },
+		],
+	},
+	{
+		slotIndex: 5,
+		kind: 'boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'titan', count: 1 },
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 3 },
+		],
+	},
+	{
+		slotIndex: 6,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'stealth_drone', count: 6 },
+			{ unitId: 'heavy_walker', count: 4 },
+		],
+	},
+	{
+		slotIndex: 7,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 5 },
+			{ unitId: 'stealth_drone', count: 4 },
+		],
+	},
+	{
+		slotIndex: 8,
+		kind: 'normal',
+		delayAfterClearSec: 3,
+		groups: [
+			{ unitId: 'stealth_drone', count: 7 },
+			{ unitId: 'heavy_walker', count: 5 },
+		],
+	},
+	{
+		slotIndex: 9,
+		kind: 'pre_boss',
+		delayAfterClearSec: 5,
+		groups: [
+			{ unitId: 'heavy_walker', count: 6 },
+			{ unitId: 'battle_robot', count: 6 },
+			{ unitId: 'stealth_drone', count: 6 },
+		],
+	},
+	{
+		slotIndex: 10,
+		kind: 'boss',
+		delayAfterClearSec: 0,
+		groups: [
+			{ unitId: 'titan', count: 2 },
+			{ unitId: 'heavy_walker', count: 5 },
+			{ unitId: 'stealth_drone', count: 5 },
+		],
+	},
+];
+
+export const WAVE_REGISTRY: Record<string, WaveDef[]> = {
+	forest_gate: WAVE_DEFS,
+	lava_fortress: LAVA_FORTRESS_WAVES,
+	storm_citadel: STORM_CITADEL_WAVES,
+};
+
+export function getWavesForMap(mapId: string): WaveDef[] {
+	return WAVE_REGISTRY[mapId] ?? WAVE_DEFS;
+}
+
 export const TOTAL_WAVES = WAVE_DEFS.length;

@@ -1,7 +1,6 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
-	TOTAL_WAVES,
-	WAVE_DEFS,
+	getWavesForMap,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -20,20 +19,22 @@ import type { UnitSystem } from './UnitSystem';
 export class WaveSystem {
 	private unitSystem: UnitSystem;
 	private maxWaves: number;
+	private waves: WaveDef[];
 
-	private currentWaveIndex = -1; // index into WAVE_DEFS (0-based)
+	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
 	private waitTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 
-	constructor(unitSystem: UnitSystem, maxWaves?: number) {
+	constructor(unitSystem: UnitSystem, maxWaves?: number, mapId?: string) {
 		this.unitSystem = unitSystem;
-		this.maxWaves = Math.max(1, Math.min(maxWaves ?? TOTAL_WAVES, TOTAL_WAVES));
+		this.waves = getWavesForMap(mapId ?? 'forest_gate');
+		this.maxWaves = Math.max(1, Math.min(maxWaves ?? this.waves.length, this.waves.length));
 	}
 
 	setMaxWaves(count: number): void {
-		this.maxWaves = Math.max(1, Math.min(count, TOTAL_WAVES));
+		this.maxWaves = Math.max(1, Math.min(count, this.waves.length));
 	}
 
 	start(): void {
@@ -81,7 +82,7 @@ export class WaveSystem {
 
 				// Emit boss warning when pre_boss wave is cleared
 				if (currentWave.kind === 'pre_boss') {
-					const nextWave = WAVE_DEFS[this.currentWaveIndex + 1];
+					const nextWave = this.waves[this.currentWaveIndex + 1];
 					if (nextWave) {
 						EventBus.emit('boss-warning', {
 							slotIndex: currentWave.slotIndex,
@@ -113,7 +114,7 @@ export class WaveSystem {
 	}
 
 	getCurrentSlot(): WaveDef {
-		return this.getCurrentWaveDef() ?? WAVE_DEFS[0];
+		return this.getCurrentWaveDef() ?? this.waves[0];
 	}
 
 	getElapsedMs(): number {
@@ -127,11 +128,11 @@ export class WaveSystem {
 	private getCurrentWaveDef(): WaveDef | undefined {
 		if (
 			this.currentWaveIndex < 0 ||
-			this.currentWaveIndex >= WAVE_DEFS.length
+			this.currentWaveIndex >= this.waves.length
 		) {
 			return undefined;
 		}
-		return WAVE_DEFS[this.currentWaveIndex];
+		return this.waves[this.currentWaveIndex];
 	}
 
 	private advanceToNextWave(): void {
@@ -142,7 +143,7 @@ export class WaveSystem {
 			return;
 		}
 
-		const wave = WAVE_DEFS[this.currentWaveIndex];
+		const wave = this.waves[this.currentWaveIndex];
 		if (!wave) {
 			this.phase = 'ended';
 			return;

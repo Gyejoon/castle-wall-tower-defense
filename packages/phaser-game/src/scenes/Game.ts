@@ -6,9 +6,9 @@ import {
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
+	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
-	WAVE_DEFS,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -94,7 +94,7 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
-	private currentSlotDef: WaveDef = WAVE_DEFS[0];
+	private currentSlotDef!: WaveDef;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
@@ -159,7 +159,9 @@ export class GameScene extends Phaser.Scene {
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
-		this.playerWaves = new WaveSystem(this.playerUnits);
+		const mapWaves = getWavesForMap(mapId);
+		this.currentSlotDef = mapWaves[0];
+		this.playerWaves = new WaveSystem(this.playerUnits, undefined, mapId);
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
@@ -190,7 +192,7 @@ export class GameScene extends Phaser.Scene {
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
-			this.currentSlotDef = WAVE_DEFS[data.slotIndex - 1] ?? WAVE_DEFS[0];
+			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
 			soundGenerator.playWaveStart();
 		};
 

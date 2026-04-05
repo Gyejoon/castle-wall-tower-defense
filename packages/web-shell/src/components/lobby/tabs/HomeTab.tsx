@@ -2,7 +2,7 @@ import { ALL_TOWERS, MAP_REGISTRY } from '@gld/shared';
 import { useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
-import { colors, fonts } from '../../../styles/tokens';
+import { cn } from '../../../utils/cn';
 import { PixelButton } from '../../ui/PixelButton';
 import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
@@ -25,7 +25,7 @@ export function HomeTab() {
 			id="tabpanel-home"
 			role="tabpanel"
 			aria-label="마당"
-			style={{ position: 'relative', flex: 1, overflow: 'hidden' }}
+			className="relative flex-1 overflow-hidden"
 		>
 			{/* Background scene */}
 			<TabBackground
@@ -40,28 +40,14 @@ export function HomeTab() {
 
 			{/* Content overlay */}
 			<div
+				className="relative z-1 flex flex-col justify-end h-full p-4 gap-3"
 				style={{
-					position: 'relative',
-					zIndex: 1,
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'flex-end',
-					height: '100%',
-					padding: '16px',
-					gap: '12px',
 					background:
 						'linear-gradient(180deg, transparent 0%, transparent 40%, rgba(26,18,8,0.7) 70%, rgba(26,18,8,0.92) 100%)',
 				}}
 			>
 				{/* Stage selection */}
-				<div
-					style={{
-						display: 'flex',
-						gap: '6px',
-						overflowX: 'auto',
-						padding: '2px',
-					}}
-				>
+				<div className="flex gap-1.5 overflow-x-auto p-0.5">
 					{Object.values(MAP_REGISTRY).map((map) => (
 						<div
 							key={map.id}
@@ -76,36 +62,23 @@ export function HomeTab() {
 									setSelectedMapId(map.id);
 								}
 							}}
-							style={{
-								flex: '0 0 auto',
-								width: '90px',
-								padding: '6px',
-								background:
-									selectedMapId === map.id
-										? 'rgba(240,208,96,0.15)'
-										: 'rgba(42,32,16,0.8)',
-								border: `2px solid ${selectedMapId === map.id ? colors.gold : colors.border}`,
-								cursor: 'pointer',
-								textAlign: 'center',
-							}}
+							className={cn(
+								'flex-none w-[90px] p-1.5 cursor-pointer text-center border-2',
+								selectedMapId === map.id
+									? 'bg-[rgba(240,208,96,0.15)] border-gold'
+									: 'bg-[rgba(42,32,16,0.8)] border-border',
+							)}
 						>
 							<img
 								src={STAGE_THUMBNAILS[map.id]}
 								alt={map.name}
-								style={{
-									width: '78px',
-									height: '44px',
-									objectFit: 'cover',
-									imageRendering: 'pixelated',
-								}}
+								className="w-[78px] h-[44px] object-cover [image-rendering:pixelated]"
 							/>
 							<p
-								style={{
-									fontFamily: fonts.pixel,
-									fontSize: '11px',
-									color: selectedMapId === map.id ? colors.gold : colors.text,
-									marginTop: '3px',
-								}}
+								className={cn(
+									'font-pixel text-[11px] mt-0.5',
+									selectedMapId === map.id ? 'text-gold' : 'text-text',
+								)}
 							>
 								{map.name}
 							</p>
@@ -114,59 +87,24 @@ export function HomeTab() {
 				</div>
 
 				{/* Deck preview */}
-				<div
-					style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: '6px',
-						padding: '8px 10px',
-						background: 'rgba(42, 32, 16, 0.85)',
-						border: `1px solid ${colors.border}`,
-					}}
-				>
-					<div
-						style={{
-							display: 'flex',
-							gap: '4px',
-							flex: 1,
-						}}
-					>
+				<div className="flex items-center gap-1.5 px-2.5 py-2 bg-[rgba(42,32,16,0.85)] border border-border">
+					<div className="flex gap-1 flex-1">
 						{selectedDeck.map((id) => {
 							const tower = ALL_TOWERS.find((t) => t.id === id);
 							if (!tower) return null;
 							return (
 								<div
 									key={id}
-									style={{
-										flex: 1,
-										padding: '4px',
-										background: colors.panel,
-										border: `1px solid ${colors.border}`,
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center',
-										gap: '3px',
-									}}
+									className="flex-1 p-1 bg-panel border border-border flex flex-col items-center gap-0.5"
 								>
 									<img
 										src={`assets/towers/${tower.type}.webp`}
 										alt={tower.name}
 										width={32}
 										height={32}
-										style={{ imageRendering: 'pixelated' }}
+										className="[image-rendering:pixelated]"
 									/>
-									<span
-										style={{
-											fontFamily: fonts.pixel,
-											fontSize: '9px',
-											color: colors.textSecondary,
-											textAlign: 'center',
-											overflow: 'hidden',
-											maxWidth: '100%',
-											whiteSpace: 'nowrap',
-											textOverflow: 'ellipsis',
-										}}
-									>
+									<span className="font-pixel text-[9px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 										{tower.name}
 									</span>
 								</div>
@@ -184,23 +122,9 @@ export function HomeTab() {
 
 				{/* Battle CTA card */}
 				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: '8px',
-						padding: '14px',
-						background: 'rgba(42, 32, 16, 0.9)',
-						border: `2px solid ${colors.gold}`,
-						boxShadow: `0 0 20px rgba(240, 208, 96, 0.15), 4px 4px 0px ${colors.border}`,
-					}}
+					className="flex flex-col gap-2 p-3.5 bg-[rgba(42,32,16,0.9)] border-2 border-gold shadow-[0_0_20px_rgba(240,208,96,0.15),4px_4px_0px_#4a3a20]"
 				>
-					<span
-						style={{
-							fontFamily: fonts.pixel,
-							fontSize: '15px',
-							color: colors.text,
-						}}
-					>
+					<span className="font-pixel text-[15px] text-text">
 						성벽 막기
 					</span>
 
@@ -213,7 +137,7 @@ export function HomeTab() {
 							width: '100%',
 							padding: '14px 20px',
 							fontSize: '15px',
-							boxShadow: `0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)`,
+							boxShadow: '0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
 						}}
 					>
 						게임 시작

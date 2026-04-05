@@ -5,14 +5,15 @@ import {
 	ENERGY_CAP,
 	type PlacementFailureReason,
 } from '@gld/shared';
-import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
-import { colors, fonts } from '../styles/tokens';
+import { colors } from '../styles/tokens';
+import { cn } from '../utils/cn';
 
 function formatTimerLabel(rawLabel: string) {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');
@@ -32,30 +33,6 @@ const TOAST_COLOR_MAP: Record<string, string> = {
 function getToastStyle(tone: 'info' | 'success' | 'warning' | 'error') {
 	const accent = TOAST_COLOR_MAP[tone] ?? colors.info;
 	return { color: accent, background: TOAST_BG, border: accent };
-}
-
-function getHudChipStyle({
-	color,
-	background,
-	minWidth,
-}: {
-	color: string;
-	background: string;
-	minWidth?: CSSProperties['minWidth'];
-}): CSSProperties {
-	return {
-		padding: '5px 7px',
-		background,
-		color,
-		fontFamily: fonts.pixel,
-		fontSize: '14px',
-		border: `1px solid ${colors.border}`,
-		boxShadow: `2px 2px 0px rgba(0,0,0,0.25)`,
-		flexShrink: 0,
-		minWidth,
-		overflow: 'hidden',
-		textOverflow: 'ellipsis',
-	};
 }
 
 export function GamePage() {
@@ -264,98 +241,52 @@ export function GamePage() {
 
 	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
+	const isBossPhase =
+		combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
-		<div
-			style={{
-				width: '100%',
-				height: '100%',
-				display: 'flex',
-				justifyContent: 'center',
-				background: colors.bg,
-			}}
-		>
-			<div
-				style={{
-					width: '100%',
-					maxWidth: '430px',
-					height: '100dvh',
-					display: 'flex',
-					flexDirection: 'column',
-					background: colors.bg,
-					boxShadow: '0 0 40px rgba(0,0,0,0.5)',
-					overflow: 'hidden',
-				}}
-			>
+		<div className="flex h-full w-full justify-center bg-bg">
+			<div className="flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+				{/* Top HUD */}
 				<div
 					data-testid="top-hud"
-					style={{
-						padding: '10px 12px',
-						display: 'flex',
-						alignItems: 'center',
-						gap: '6px',
-						flexWrap: 'nowrap',
-						whiteSpace: 'nowrap',
-						overflow: 'hidden',
-						background: 'rgba(42, 32, 16, 0.92)',
-						borderBottom: `1px solid ${colors.border}`,
-						flexShrink: 0,
-					}}
+					className="flex shrink-0 flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap border-b border-border px-3 py-2.5"
+					style={{ background: 'rgba(42, 32, 16, 0.92)' }}
 				>
 					<div
-						style={getHudChipStyle({
-							color: colors.danger,
-							background: 'rgba(192,48,32,0.16)',
-						})}
+						className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+						style={{ background: 'rgba(192,48,32,0.16)' }}
 					>
 						HP {lives}
 					</div>
 					<div
-						style={{
-							...getHudChipStyle({
-								color: colors.gold,
-								background: 'rgba(240,208,96,0.16)',
-							}),
-							display: 'flex',
-							alignItems: 'center',
-							gap: '4px',
-							minWidth: '70px',
-						}}
+						className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+						style={{ background: 'rgba(240,208,96,0.16)' }}
 					>
 						<span>⚡{energy}</span>
-						<div
-							style={{
-								flex: 1,
-								height: '4px',
-								background: 'rgba(0,0,0,0.3)',
-								borderRadius: '2px',
-								overflow: 'hidden',
-							}}
-						>
+						<div className="flex-1 overflow-hidden rounded-sm" style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}>
 							<div
+								className={cn(
+									'h-full transition-[width] duration-300 ease-out',
+									energy >= ENERGY_CAP ? 'bg-success' : 'bg-gold',
+								)}
 								style={{
 									width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
-									height: '100%',
-									background:
-										energy >= ENERGY_CAP ? colors.success : colors.gold,
-									transition: 'width 0.3s ease',
 								}}
 							/>
 						</div>
 					</div>
 					<div
 						data-testid="hud-timer"
-						style={getHudChipStyle({
-							color:
-								combatHud.bossWarning || combatHud.phase === 'boss'
-									? colors.gold
-									: colors.text,
-							background:
-								combatHud.bossWarning || combatHud.phase === 'boss'
-									? 'rgba(240,208,96,0.16)'
-									: 'rgba(42,32,16,0.82)',
-							minWidth: 0,
-						})}
+						className={cn(
+							'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+							isBossPhase ? 'text-gold' : 'text-text',
+						)}
+						style={{
+							background: isBossPhase
+								? 'rgba(240,208,96,0.16)'
+								: 'rgba(42,32,16,0.82)',
+						}}
 					>
 						{combatHud.bossWarning
 							? '보스 임박'
@@ -365,13 +296,10 @@ export function GamePage() {
 					</div>
 				</div>
 
+				{/* Game Area */}
 				<div
+					className="relative w-full flex-1 min-h-0 overflow-hidden"
 					style={{
-						width: '100%',
-						flex: 1,
-						minHeight: 0,
-						position: 'relative',
-						overflow: 'hidden',
 						background:
 							'linear-gradient(180deg, rgba(13,26,42,0.48) 0%, rgba(26,18,8,0.4) 100%)',
 					}}
@@ -381,51 +309,17 @@ export function GamePage() {
 					<BossHpBar />
 
 					{bossWarningVisible && (
-						<div
-							style={{
-								position: 'absolute',
-								inset: 0,
-								zIndex: 5,
-								background: 'rgba(0,0,0,0.6)',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-							}}
-						>
-							<div
-								style={{
-									fontFamily: fonts.pixel,
-									fontSize: '24px',
-									color: '#ff4444',
-									textAlign: 'center',
-									animation: 'pulse 0.5s ease-in-out infinite',
-								}}
-							>
+						<div className="absolute inset-0 z-5 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+							<div className="text-center font-pixel text-2xl text-[#ff4444] animate-[pulse_0.5s_ease-in-out_infinite]">
 								⚠ WARNING ⚠
-								<style>{`
-									@keyframes pulse {
-										0%, 100% { opacity: 1; transform: scale(1); }
-										50% { opacity: 0.5; transform: scale(1.05); }
-									}
-								`}</style>
 							</div>
 						</div>
 					)}
 
 					{!gameReady && (
 						<div
-							style={{
-								position: 'absolute',
-								inset: 0,
-								background: 'rgba(26, 18, 8, 0.76)',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								color: colors.textSecondary,
-								fontFamily: fonts.pixel,
-								fontSize: '13px',
-								zIndex: 2,
-							}}
+							className="absolute inset-0 z-[2] flex items-center justify-center font-pixel text-[13px] text-text-secondary"
+							style={{ background: 'rgba(26, 18, 8, 0.76)' }}
 						>
 							그리드 부팅 중...
 						</div>
@@ -433,21 +327,11 @@ export function GamePage() {
 
 					{toast && toastStyle && (
 						<div
+							className="absolute top-3 left-1/2 z-[4] max-w-[min(80vw,280px)] -translate-x-1/2 px-3 py-2 text-center font-pixel text-xs shadow-[3px_3px_0px_rgba(0,0,0,0.28)]"
 							style={{
-								position: 'absolute',
-								top: 12,
-								left: '50%',
-								transform: 'translateX(-50%)',
-								zIndex: 4,
-								padding: '8px 12px',
 								border: `2px solid ${toastStyle.border}`,
-								boxShadow: `3px 3px 0px rgba(0,0,0,0.28)`,
 								background: toastStyle.background,
 								color: toastStyle.color,
-								fontFamily: fonts.pixel,
-								fontSize: '12px',
-								maxWidth: 'min(80vw, 280px)',
-								textAlign: 'center',
 							}}
 						>
 							{toast.message}
@@ -455,29 +339,13 @@ export function GamePage() {
 					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
-						<div
-							style={{
-								position: 'absolute',
-								inset: 0,
-								zIndex: 3,
-								background: 'rgba(10, 8, 4, 0.82)',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								padding: '20px',
-							}}
-						>
+						<div className="absolute inset-0 z-[3] flex items-center justify-center p-5" style={{ background: 'rgba(10, 8, 4, 0.82)' }}>
 							<div
+								className="flex w-[min(100%,360px)] flex-col gap-3.5 p-5 text-center"
 								style={{
-									width: 'min(100%, 360px)',
-									padding: '20px',
 									background: 'rgba(42, 32, 16, 0.96)',
 									border: `2px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
 									boxShadow: `6px 6px 0px ${colors.border}`,
-									display: 'flex',
-									flexDirection: 'column',
-									gap: '14px',
-									textAlign: 'center',
 								}}
 							>
 								<img
@@ -487,82 +355,38 @@ export function GamePage() {
 											: 'assets/ui/defense-fail.png'
 									}
 									alt={resultTitle}
-									style={{
-										width: '200px',
-										height: 'auto',
-										imageRendering: 'pixelated',
-										margin: '0 auto',
-									}}
+									className="mx-auto w-[200px] h-auto [image-rendering:pixelated]"
 								/>
 								<h2
-									style={{
-										color:
-											runStatus === 'victory' ? colors.success : colors.danger,
-										fontFamily: fonts.pixel,
-										fontSize: '16px',
-										fontWeight: 400,
-									}}
+									className={cn(
+										'font-pixel text-base font-normal',
+										runStatus === 'victory'
+											? 'text-success'
+											: 'text-danger',
+									)}
 								>
 									{resultTitle}
 								</h2>
-								<p
-									style={{
-										color: colors.textSecondary,
-										fontFamily: fonts.pixel,
-										fontSize: '12px',
-										lineHeight: 1.8,
-									}}
-								>
+								<p className="font-pixel text-xs leading-[1.8] text-text-secondary">
 									{runStatus === 'defeat'
 										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
 										: '왕국을 지켜냈습니다!'}
 								</p>
-								<div
-									style={{
-										display: 'flex',
-										flexDirection: 'column',
-										gap: '6px',
-									}}
-								>
-									<p
-										style={{
-											color: colors.textSecondary,
-											fontFamily: fonts.pixel,
-											fontSize: '12px',
-										}}
-									>
+								<div className="flex flex-col gap-1.5">
+									<p className="font-pixel text-xs text-text-secondary">
 										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
 									</p>
-									<p
-										style={{
-											color: colors.textSecondary,
-											fontFamily: fonts.pixel,
-											fontSize: '12px',
-										}}
-									>
+									<p className="font-pixel text-xs text-text-secondary">
 										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
 									</p>
-									<p
-										style={{
-											color: colors.textSecondary,
-											fontFamily: fonts.pixel,
-											fontSize: '12px',
-										}}
-									>
+									<p className="font-pixel text-xs text-text-secondary">
 										생존 시간:{' '}
 										{Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:
 										{String(
 											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
 										).padStart(2, '0')}
 									</p>
-									<p
-										style={{
-											color: colors.gold,
-											fontFamily: fonts.pixel,
-											fontSize: '14px',
-											marginTop: '4px',
-										}}
-									>
+									<p className="mt-1 font-pixel text-sm text-gold">
 										획득 골드: {gameOverStats?.goldEarned ?? 0}G
 									</p>
 								</div>

@@ -13,6 +13,13 @@ export type { BossPhaseConfig } from './constants/boss';
 export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';
 export { buildDeckCards, DEFAULT_DECK, towerToRole } from './constants/deck';
+export type { GachaResult } from './constants/gacha';
+export {
+  GACHA_COSTS,
+  PITY_THRESHOLD,
+  rollGacha,
+  rollGacha10,
+} from './constants/gacha';
 export type { CcAuraConfig, ElementType } from './constants/elements';
 export {
 	CC_AURA_CONFIGS,

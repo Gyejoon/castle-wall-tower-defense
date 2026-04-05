@@ -46,6 +46,9 @@ export interface GameEventMap {
 		bossSlotIndex: number;
 		startAtSec: number;
 	};
+	'boss-phase-change': { phase: 1 | 2; unitId: string };
+	'boss-hp-update': { hp: number; maxHp: number; phase: 1 | 2 };
+	'boss-defeated': { unitId: string; waveSlot: number };
 	'player-tower-count': { count: number };
 	'wave-preview': {
 		wave: number;

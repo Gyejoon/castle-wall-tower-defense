@@ -9,6 +9,8 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export type { BossPhaseConfig } from './constants/boss';
+export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';
 export { buildDeckCards, DEFAULT_DECK, towerToRole } from './constants/deck';
 export type { CcAuraConfig, ElementType } from './constants/elements';

@@ -1,5 +1,5 @@
 import { uiMobileArt } from '../../assets/uiMobileArt';
-import { cn } from '../../lib/cn';
+import { cn } from '../../utils/cn';
 import { type LobbyTab, useGameStore } from '../../stores/gameStore';
 
 const tabs: Array<{

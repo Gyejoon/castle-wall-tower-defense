@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { cn } from '../../lib/cn';
+import { cn } from '../../utils/cn';
 import { colors } from '../../styles/tokens';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

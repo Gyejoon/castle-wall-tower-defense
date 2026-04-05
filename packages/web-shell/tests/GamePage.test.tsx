@@ -175,9 +175,9 @@ describe('GamePage', () => {
 		const view = render(<GamePage />);
 		const hud = view.getByTestId('top-hud') as HTMLDivElement;
 
-		expect(hud.style.flexWrap).toBe('nowrap');
-		expect(hud.style.whiteSpace).toBe('nowrap');
-		expect(hud.style.overflow).toBe('hidden');
+		expect(hud.className).toContain('flex-nowrap');
+		expect(hud.className).toContain('whitespace-nowrap');
+		expect(hud.className).toContain('overflow-hidden');
 	});
 
 	it('shows victory state when local player wins', () => {

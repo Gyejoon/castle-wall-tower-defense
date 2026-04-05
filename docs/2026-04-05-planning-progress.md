@@ -36,8 +36,8 @@
 | 보스 행동 시스템 | titan 이동/공격/페이즈 전환, 호위 동반 스폰 | ✅ **완료** | `UnitSystem.ts` (2페이즈 전환, 무적 1s, phase2 속도 1.3x), `WaveSystem.ts` (isBoss/hpMultiplier), `boss.ts` (BOSS_CONFIG) |
 | 보스 경고 연출 | WARNING 텍스트, 화면 어둡게 | ✅ **완료** | `GamePage.tsx` (WARNING 오버레이 1.5s + @keyframes pulse) |
 | 보스 체력바 | 보스 전용 HP bar UI | ✅ **완료** | `BossHpBar.tsx` (phase 1 주황/phase 2 빨간+pulse, 이름+HP바+phase 표시) |
-| 결과 화면 | 방어 성공/실패 + 통계 + 재도전/로비 | ✅ **완료** | `GamePage.tsx` (wavesCleared/towersPlaced/timeSurvivedSec 3줄 통계), `EventBus.ts` (game-over stats payload) |
-| 적 스케일링 | 스테이지 레벨 구간별 HP/armor/speed 배율 | ✅ **완료** | `scaling.ts` (scaleUnitStats 순수함수), `UnitSystem.ts` (setStageLevel + CC immunity with injectable RNG) |
+| 결과 화면 | 방어 성공/실패 + 골드 요약 + 재도전/로비 | ✅ **완료** | `GamePage.tsx` (wavesCleared/towersPlaced/timeSurvivedSec + goldEarned 골드 요약), `Game.ts` (bounty→goldEarned 누적) |
+| 적 스케일링 | 스테이지 레벨 구간별 HP/armor/speed/bounty 배율 | ✅ **완료** | `scaling.ts` (scaleUnitStats + bountyMultiplier), `UnitSystem.ts` (setStageLevel + CC immunity + bounty 스케일링) |
 
 ### 추가 구현 (Planning 문서에 없지만 구현된 것)
 
@@ -45,6 +45,8 @@
 |------|------|
 | 덱 빌드 유틸 | `buildDeckCards()`, `towerToRole()` — 타워 ID → DeckCardDef 변환 |
 | 보스 이벤트 | `boss-phase-change`, `boss-hp-update`, `boss-defeated` EventBus 이벤트 |
+| 골드 추적 | 적 처치 bounty → goldEarned 누적, 결과 화면에 "획득 골드: {N}G" 표시 |
+| bounty 스케일링 | GDD 6-2-1: LV.1-10 x1, LV.11-20 x3, LV.21-30 x8 bounty 배율 적용 |
 | 웨이브 10 보스 HP x2 | `FINAL_BOSS_HP_MULTIPLIER = 2` 적용 |
 | 보스 1샷 불사 방지 | phase 전환은 `hp > 0`일 때만 발생, 원킬 허용 |
 | 보스 CC 틴트 보존 | slow/stun 해제 시 phase 2 빨간 틴트 유지 (`restoreUnitTint`) |

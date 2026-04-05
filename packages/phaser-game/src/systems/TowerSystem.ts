@@ -42,6 +42,7 @@ export class TowerSystem {
 	private pathfinding: PathfindingSystem;
 	private collection: OwnedTower[];
 	private nextId = 0;
+	private destroyed = false;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -564,6 +565,8 @@ export class TowerSystem {
 	}
 
 	destroy(): void {
+		if (this.destroyed) return;
+		this.destroyed = true;
 		for (const tower of this.towers.values()) {
 			tower.base.destroy();
 			tower.sprite.destroy();

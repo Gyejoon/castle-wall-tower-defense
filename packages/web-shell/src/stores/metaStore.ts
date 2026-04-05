@@ -43,6 +43,7 @@ interface MetaActions {
 	refreshMissions: () => void;
 	progressMission: (type: MissionType, amount: number) => void;
 	claimMission: (missionId: string, period: 'daily' | 'weekly') => 'success' | 'not_ready' | 'not_found';
+	updateProgress: (patch: Partial<SaveData['progress']>) => void;
 	openGacha: (
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
 		rng?: () => number,
@@ -430,6 +431,11 @@ export const useMetaStore = create<MetaState>()(
 
 				debouncedSave(get());
 				return 'success';
+			},
+
+			updateProgress: (patch) => {
+				set((s) => ({ progress: { ...s.progress, ...patch } }));
+				debouncedSave(get());
 			},
 
 			openGacha: (boxType, rng = Math.random) => {

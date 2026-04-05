@@ -8,6 +8,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { DeckDock } from '../components/game/DeckDock';
+import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
@@ -313,6 +314,8 @@ export function GamePage() {
 					<PhaserGame key={runId} />
 
 					<BossHpBar />
+
+					<TutorialOverlay />
 
 					{bossWarningVisible && (
 						<div

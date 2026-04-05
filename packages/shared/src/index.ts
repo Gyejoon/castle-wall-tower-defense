@@ -21,8 +21,6 @@ export {
 	getElementMultiplier,
 } from './constants/elements';
 export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
-export { getLevelBand, scaleUnitStats } from './constants/scaling';
-export type { ScaledUnitStats } from './constants/scaling';
 export {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
@@ -44,6 +42,8 @@ export {
 	MAP_REGISTRY,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
+export type { ScaledUnitStats } from './constants/scaling';
+export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,

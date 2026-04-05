@@ -4,8 +4,8 @@ import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { MOCK_PROFILE } from '../../../data/mockLobbyData';
 import { useGameStore } from '../../../stores/gameStore';
 import { colors, fonts } from '../../../styles/tokens';
-import { DeckEditSheet } from '../DeckEditSheet';
 import { PixelButton } from '../../ui/PixelButton';
+import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
 
 const STAGE_THUMBNAILS: Record<string, string> = {
@@ -301,7 +301,10 @@ export function HomeTab() {
 				<OverlayIcon label="공지" badge={1} />
 			</div>
 
-			<DeckEditSheet open={showDeckEdit} onClose={() => setShowDeckEdit(false)} />
+			<DeckEditSheet
+				open={showDeckEdit}
+				onClose={() => setShowDeckEdit(false)}
+			/>
 		</div>
 	);
 }
@@ -317,9 +320,7 @@ function shapeChar(
 		shield: '🛡',
 		star: '★',
 	};
-	return (
-		<span style={{ color, fontSize: '10px' }}>{chars[shape] ?? '■'}</span>
-	);
+	return <span style={{ color, fontSize: '10px' }}>{chars[shape] ?? '■'}</span>;
 }
 
 function StatBadge({

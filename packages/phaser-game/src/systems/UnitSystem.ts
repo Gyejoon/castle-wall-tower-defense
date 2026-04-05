@@ -4,9 +4,9 @@ import {
 	ELEMENT_TINT_COLORS,
 	type ElementType,
 	type Position,
+	scaleUnitStats,
 	UNITS,
 	type UnitDef,
-	scaleUnitStats,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -177,13 +177,7 @@ export class UnitSystem {
 		);
 
 		const hpBar = this.scene.add.graphics();
-		this.renderHpBar(
-			hpBar,
-			startWorld.x,
-			startWorld.y,
-			finalHp,
-			finalHp,
-		);
+		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
 		this.units.set(instanceId, {
 			data: unitData,
@@ -272,7 +266,13 @@ export class UnitSystem {
 		if (!unit) return null;
 
 		if (unit.invulnerableMs > 0) {
-			return { killed: false, bounty: 0, unitDefId: unit.def.id, countsTowardClear: unit.countsTowardClear, source: unit.source };
+			return {
+				killed: false,
+				bounty: 0,
+				unitDefId: unit.def.id,
+				countsTowardClear: unit.countsTowardClear,
+				source: unit.source,
+			};
 		}
 
 		const armor = armorPierce ? 0 : unit.baseArmor;
@@ -280,17 +280,27 @@ export class UnitSystem {
 		unit.data.hp -= damage;
 
 		// Boss phase transition check — only if still alive (hp > 0)
-		if (unit.isBoss && unit.bossPhase === 1 && unit.data.hp > 0 &&
-				unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio) {
+		if (
+			unit.isBoss &&
+			unit.bossPhase === 1 &&
+			unit.data.hp > 0 &&
+			unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio
+		) {
 			unit.bossPhase = 2;
 			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
 			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
-			EventBus.emit('boss-phase-change', { phase: 2, unitId: unit.data.instanceId });
+			EventBus.emit('boss-phase-change', {
+				phase: 2,
+				unitId: unit.data.instanceId,
+			});
 		}
 
 		if (unit.data.hp <= 0) {
 			if (unit.isBoss) {
-				EventBus.emit('boss-defeated', { unitId: unit.data.instanceId, waveSlot: unit.waveSlot });
+				EventBus.emit('boss-defeated', {
+					unitId: unit.data.instanceId,
+					waveSlot: unit.waveSlot,
+				});
 			}
 			unit.sprite.destroy();
 			unit.hpBar.destroy();
@@ -452,9 +462,15 @@ export class UnitSystem {
 
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
-			const phase2Mult = unit.isBoss && unit.bossPhase === 2 ? BOSS_CONFIG.phase2SpeedMultiplier : 1;
+			const phase2Mult =
+				unit.isBoss && unit.bossPhase === 2
+					? BOSS_CONFIG.phase2SpeedMultiplier
+					: 1;
 			const speed =
-				unit.baseSpeed * phase2Mult * this.gridManager.orthoTile * unit.slowFactor;
+				unit.baseSpeed *
+				phase2Mult *
+				this.gridManager.orthoTile *
+				unit.slowFactor;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;

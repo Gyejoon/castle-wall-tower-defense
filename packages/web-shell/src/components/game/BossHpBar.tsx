@@ -6,7 +6,8 @@ export function BossHpBar() {
 
 	if (!bossHp.visible) return null;
 
-	const pct = bossHp.maxHp > 0 ? Math.max(0, bossHp.hp / bossHp.maxHp) * 100 : 0;
+	const pct =
+		bossHp.maxHp > 0 ? Math.max(0, bossHp.hp / bossHp.maxHp) * 100 : 0;
 	const barColor = bossHp.phase === 2 ? '#c03020' : '#c87020';
 	const phaseLabel = bossHp.phase === 2 ? 'Phase 2' : 'Phase 1';
 
@@ -69,7 +70,10 @@ export function BossHpBar() {
 						height: '100%',
 						background: barColor,
 						transition: 'width 0.2s ease',
-						animation: bossHp.phase === 2 ? 'bossBarPulse 0.8s ease-in-out infinite' : undefined,
+						animation:
+							bossHp.phase === 2
+								? 'bossBarPulse 0.8s ease-in-out infinite'
+								: undefined,
 					}}
 				/>
 			</div>

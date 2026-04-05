@@ -83,13 +83,22 @@ export function GamePage() {
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
 			setLives(data.remainingHp);
 		const onEnergyChanged = (data: { energy: number }) =>
 			setEnergy(data.energy);
-		const onGameOver = (data: { result: 'victory' | 'defeat'; stats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } }) => {
+		const onGameOver = (data: {
+			result: 'victory' | 'defeat';
+			stats: {
+				wavesCleared: number;
+				towersPlaced: number;
+				timeSurvivedSec: number;
+			};
+		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
 			setGameOverStats(data.stats);
@@ -166,13 +175,18 @@ export function GamePage() {
 		const onBossWarning = () => {
 			patchCombatHud({ bossWarning: true, timerLabel: 'Boss Soon' });
 			setBossWarningVisible(true);
-			if (bossWarningTimerRef.current) clearTimeout(bossWarningTimerRef.current);
+			if (bossWarningTimerRef.current)
+				clearTimeout(bossWarningTimerRef.current);
 			bossWarningTimerRef.current = setTimeout(() => {
 				setBossWarningVisible(false);
 				bossWarningTimerRef.current = null;
 			}, 1500);
 		};
-		const onBossHpUpdate = (data: { hp: number; maxHp: number; phase: 1 | 2 }) => {
+		const onBossHpUpdate = (data: {
+			hp: number;
+			maxHp: number;
+			phase: 1 | 2;
+		}) => {
 			setBossHp({ ...data, visible: true });
 		};
 		const onBossDefeated = () => {
@@ -199,7 +213,8 @@ export function GamePage() {
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
-			if (bossWarningTimerRef.current) clearTimeout(bossWarningTimerRef.current);
+			if (bossWarningTimerRef.current)
+				clearTimeout(bossWarningTimerRef.current);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
@@ -491,15 +506,43 @@ export function GamePage() {
 										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
 										: '왕국을 지켜냈습니다!'}
 								</p>
-								<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
+								<div
+									style={{
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '6px',
+									}}
+								>
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
 										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
 									</p>
-									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
 										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
 									</p>
-									<p style={{ color: colors.textSecondary, fontFamily: fonts.pixel, fontSize: '8px' }}>
-										생존 시간: {Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:{String((gameOverStats?.timeSurvivedSec ?? 0) % 60).padStart(2, '0')}
+									<p
+										style={{
+											color: colors.textSecondary,
+											fontFamily: fonts.pixel,
+											fontSize: '8px',
+										}}
+									>
+										생존 시간:{' '}
+										{Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:
+										{String(
+											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
+										).padStart(2, '0')}
 									</p>
 								</div>
 								<PixelButton

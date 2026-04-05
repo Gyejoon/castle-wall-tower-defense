@@ -1,5 +1,5 @@
-import { ALL_TOWERS } from './towers';
 import type { TowerDef } from '../types/tower';
+import { ALL_TOWERS } from './towers';
 
 export function towerToRole(tower: TowerDef): DeckCardDef['role'] {
 	const s = tower.stats.special ?? '';

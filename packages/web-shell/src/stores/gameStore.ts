@@ -73,7 +73,11 @@ interface GameStoreState {
 	selectedDeck: string[];
 	bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean };
 	bossWarningVisible: boolean;
-	gameOverStats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } | null;
+	gameOverStats: {
+		wavesCleared: number;
+		towersPlaced: number;
+		timeSurvivedSec: number;
+	} | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -99,9 +103,20 @@ interface GameStoreState {
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
-	setBossHp: (bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean }) => void;
+	setBossHp: (bossHp: {
+		hp: number;
+		maxHp: number;
+		phase: 1 | 2;
+		visible: boolean;
+	}) => void;
 	setBossWarningVisible: (v: boolean) => void;
-	setGameOverStats: (stats: { wavesCleared: number; towersPlaced: number; timeSurvivedSec: number } | null) => void;
+	setGameOverStats: (
+		stats: {
+			wavesCleared: number;
+			towersPlaced: number;
+			timeSurvivedSec: number;
+		} | null,
+	) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({

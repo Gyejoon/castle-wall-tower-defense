@@ -1,5 +1,5 @@
-import { type Position } from '@gld/shared';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import type { Position } from '@gld/shared';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -167,9 +167,18 @@ describe('UnitSystem', () => {
 
 		it('distributes units across 3 lanes', () => {
 			// Use longer lanes so units don't exit during spawning
-			const longA: Position[] = Array.from({ length: 10 }, (_, i) => ({ x: i, y: 0 }));
-			const longB: Position[] = Array.from({ length: 10 }, (_, i) => ({ x: i, y: 2 }));
-			const longC: Position[] = Array.from({ length: 10 }, (_, i) => ({ x: i, y: 4 }));
+			const longA: Position[] = Array.from({ length: 10 }, (_, i) => ({
+				x: i,
+				y: 0,
+			}));
+			const longB: Position[] = Array.from({ length: 10 }, (_, i) => ({
+				x: i,
+				y: 2,
+			}));
+			const longC: Position[] = Array.from({ length: 10 }, (_, i) => ({
+				x: i,
+				y: 4,
+			}));
 			system.setPaths([longA, longB, longC]);
 			system.queueUnits('scout_drone', 6);
 

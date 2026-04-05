@@ -88,12 +88,12 @@ function TowerShape({
 	}
 }
 
-const TOWERS_BY_TIER: Array<{ tier: number; towers: TowerDef[] }> = [1, 2, 3, 4, 5].map(
-	(tier) => ({
-		tier,
-		towers: ALL_TOWERS.filter((t) => t.tier === tier),
-	}),
-);
+const TOWERS_BY_TIER: Array<{ tier: number; towers: TowerDef[] }> = [
+	1, 2, 3, 4, 5,
+].map((tier) => ({
+	tier,
+	towers: ALL_TOWERS.filter((t) => t.tier === tier),
+}));
 
 export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 	const savedDeck = useGameStore((s) => s.selectedDeck);
@@ -247,7 +247,11 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												{slotNum}
 											</span>
 										)}
-										<TowerShape shape={tower.shape} color={tower.color} size={18} />
+										<TowerShape
+											shape={tower.shape}
+											color={tower.color}
+											size={18}
+										/>
 										<div
 											style={{
 												display: 'flex',
@@ -308,14 +312,18 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 				>
 					{Array.from({ length: 4 }, (_, i) => {
 						const towerId = selected[i];
-						const tower = towerId ? ALL_TOWERS.find((t) => t.id === towerId) : null;
+						const tower = towerId
+							? ALL_TOWERS.find((t) => t.id === towerId)
+							: null;
 						return (
 							<div
 								key={i}
 								style={{
 									height: '52px',
 									border: `2px solid ${tower ? colors.gold : colors.border}`,
-									background: tower ? 'rgba(240,208,96,0.08)' : 'rgba(42,32,16,0.6)',
+									background: tower
+										? 'rgba(240,208,96,0.08)'
+										: 'rgba(42,32,16,0.6)',
 									display: 'flex',
 									flexDirection: 'column',
 									alignItems: 'center',
@@ -326,7 +334,11 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							>
 								{tower ? (
 									<>
-										<TowerShape shape={tower.shape} color={tower.color} size={16} />
+										<TowerShape
+											shape={tower.shape}
+											color={tower.color}
+											size={16}
+										/>
 										<span
 											style={{
 												fontFamily: fonts.pixel,

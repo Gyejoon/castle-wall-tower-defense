@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect } from 'react';
 import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
-import { colors } from './styles/tokens';
 
 const GamePage = lazy(async () =>
 	import('./pages/GamePage').then((module) => ({ default: module.GamePage })),
@@ -11,14 +10,8 @@ const GamePage = lazy(async () =>
 function LoadingScreen() {
 	return (
 		<div
-			style={{
-				minHeight: '100vh',
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
-				color: colors.textSecondary,
-				letterSpacing: '0.12em',
-			}}
+			className="min-h-screen flex items-center justify-center text-text-secondary"
+			style={{ letterSpacing: '0.12em' }}
 		>
 			그리드 로딩 중...
 		</div>

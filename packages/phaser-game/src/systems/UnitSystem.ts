@@ -235,6 +235,14 @@ export class UnitSystem {
 		graphics.fillRect(x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
 	}
 
+	private restoreUnitTint(unit: UnitInstance): void {
+		if (unit.isBoss && unit.bossPhase === 2) {
+			unit.sprite.setTint(BOSS_CONFIG.phase2Tint);
+		} else {
+			unit.sprite.clearTint();
+		}
+	}
+
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
@@ -448,7 +456,7 @@ export class UnitSystem {
 					unit.slowFactor = 1.0;
 					unit.slowRemaining = 0;
 					if (unit.stunRemaining <= 0) {
-						unit.sprite.clearTint();
+						this.restoreUnitTint(unit);
 					}
 				}
 			}
@@ -458,7 +466,7 @@ export class UnitSystem {
 				if (unit.stunRemaining <= 0) {
 					unit.stunRemaining = 0;
 					if (unit.slowRemaining <= 0) {
-						unit.sprite.clearTint();
+						this.restoreUnitTint(unit);
 					} else {
 						unit.sprite.setTint(0x88ccff);
 					}

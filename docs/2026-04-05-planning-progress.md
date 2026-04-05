@@ -28,20 +28,50 @@
 
 ---
 
-## Phase 1: 핵심 전투 완성 — 🔨 진행 예정
+## Phase 1: 핵심 전투 완성 — ✅ 완료 (2026-04-05)
 
-| 항목 | 상태 | 구현 계획 |
-|------|------|----------|
-| 4타워 덱 시스템 | ❌ 부분 (DEFAULT_DECK 고정) | Task 2-3 |
-| 보스 행동 시스템 | ❌ (titan은 고HP 일반유닛) | Task 4-5 |
-| 보스 경고 연출 | ❌ (toast만) | Task 6 |
-| 보스 체력바 | ❌ | Task 6 |
-| 결과 화면 | ⚠️ 기본 (통계 없음, 하드코딩 0G) | Task 7 |
-| 적 스케일링 | ❌ | Task 1, 8 |
+| 항목 | Planning 항목 | 실제 상태 | 구현 파일 |
+|------|-------------|----------|----------|
+| 4타워 덱 시스템 | 로비 덱 빌더 UI, DeckStore, 전투 씬에 덱 제한 적용 | ✅ **완료** | `DeckEditSheet.tsx`, `gameStore.ts` (selectedDeck + localStorage), `HomeTab.tsx` (프리뷰), `Game.ts` (buildDeckCards 연동) |
+| 보스 행동 시스템 | titan 이동/공격/페이즈 전환, 호위 동반 스폰 | ✅ **완료** | `UnitSystem.ts` (2페이즈 전환, 무적 1s, phase2 속도 1.3x), `WaveSystem.ts` (isBoss/hpMultiplier), `boss.ts` (BOSS_CONFIG) |
+| 보스 경고 연출 | WARNING 텍스트, 화면 어둡게 | ✅ **완료** | `GamePage.tsx` (WARNING 오버레이 1.5s + @keyframes pulse) |
+| 보스 체력바 | 보스 전용 HP bar UI | ✅ **완료** | `BossHpBar.tsx` (phase 1 주황/phase 2 빨간+pulse, 이름+HP바+phase 표시) |
+| 결과 화면 | 방어 성공/실패 + 통계 + 재도전/로비 | ✅ **완료** | `GamePage.tsx` (wavesCleared/towersPlaced/timeSurvivedSec 3줄 통계), `EventBus.ts` (game-over stats payload) |
+| 적 스케일링 | 스테이지 레벨 구간별 HP/armor/speed 배율 | ✅ **완료** | `scaling.ts` (scaleUnitStats 순수함수), `UnitSystem.ts` (setStageLevel + CC immunity with injectable RNG) |
+
+### 추가 구현 (Planning 문서에 없지만 구현된 것)
+
+| 항목 | 설명 |
+|------|------|
+| 덱 빌드 유틸 | `buildDeckCards()`, `towerToRole()` — 타워 ID → DeckCardDef 변환 |
+| 보스 이벤트 | `boss-phase-change`, `boss-hp-update`, `boss-defeated` EventBus 이벤트 |
+| 웨이브 10 보스 HP x2 | `FINAL_BOSS_HP_MULTIPLIER = 2` 적용 |
+| 보스 1샷 불사 방지 | phase 전환은 `hp > 0`일 때만 발생, 원킬 허용 |
+| 보스 CC 틴트 보존 | slow/stun 해제 시 phase 2 빨간 틴트 유지 (`restoreUnitTint`) |
+| CC 면역 테스트 가능 | `setRng()` 주입으로 `Math.random` 대체 |
+
+### 테스트 커버리지
+
+- shared: 76 tests PASS (scaling 6 + deckBuilder 8 + 기존 62)
+- phaser-game: 127 tests PASS (boss phase 5 + CC immunity 3 + 기존 119)
+- web-shell: GamePage 6 tests PASS
+- QA 브라우저 테스트: 로비→덱편집→게임→패배→결과→로비 전체 플로우 통과, 콘솔 에러 0
 
 ---
 
-## Phase 2~5: 미착수
+## Phase 2: 메타 성장 루프 — 🔨 다음 단계
 
-Phase 2 (메타 성장 루프), Phase 3 (콘텐츠 확장), Phase 4 (참여 시스템), Phase 5 (수익화) — 미착수.
-단, Phase 3의 "멀티 스테이지" 중 맵 정의는 이미 3개 완료 (forest_gate, lava_fortress, storm_citadel).
+| 항목 | 상태 |
+|------|------|
+| 저장 시스템 (localStorage) | ❌ |
+| 타워 컬렉션 관리 | ❌ (CollectionTab은 mock 데이터) |
+| 타워 강화 (레벨업) | ❌ |
+| 타워 승급 (등급 변환) | ❌ |
+| 프로필 성장 (레벨, XP) | ❌ |
+| 골드 경제 | ❌ |
+
+## Phase 3~5: 미착수
+
+- Phase 3 (콘텐츠 확장): 맵 정의 3개 완료, 스테이지 선택 UI 완료, 웨이브 구성/해금 조건 미구현
+- Phase 4 (참여 시스템): 튜토리얼 기본 구현됨 (TutorialSystem.ts), 가챠 스켈레톤 존재 (GachaScreen.tsx)
+- Phase 5 (수익화): 미착수

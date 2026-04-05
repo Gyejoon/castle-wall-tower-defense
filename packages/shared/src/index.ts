@@ -10,7 +10,7 @@ export {
 	withManifestSections,
 } from './assets/manifest';
 export type { DeckCardDef } from './constants/deck';
-export { DEFAULT_DECK } from './constants/deck';
+export { buildDeckCards, DEFAULT_DECK, towerToRole } from './constants/deck';
 export type { CcAuraConfig, ElementType } from './constants/elements';
 export {
 	CC_AURA_CONFIGS,

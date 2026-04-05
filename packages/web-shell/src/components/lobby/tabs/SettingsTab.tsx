@@ -4,8 +4,6 @@ import { colors } from '../../../styles/tokens';
 import { TabBackground } from '../TabBackground';
 
 export function SettingsTab() {
-	const soundEnabled = useGameStore((s) => s.soundEnabled);
-	const toggleSound = useGameStore((s) => s.toggleSound);
 	const screenShake = useGameStore((s) => s.screenShake);
 	const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
 	const showDamageNumbers = useGameStore((s) => s.showDamageNumbers);
@@ -28,14 +26,6 @@ export function SettingsTab() {
 			{/* Content */}
 			<div className="relative z-[1] flex-1 overflow-auto p-4 flex flex-col gap-4">
 				<span className="font-pixel text-sm text-text">설정</span>
-
-				<SettingsSection title="사운드">
-					<ToggleRow
-						label="효과음"
-						checked={soundEnabled}
-						onChange={toggleSound}
-					/>
-				</SettingsSection>
 
 				<SettingsSection title="화면">
 					<ToggleRow

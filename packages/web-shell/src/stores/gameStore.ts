@@ -63,7 +63,9 @@ interface GameStoreState {
 	placementFeedback: PlacementFailureReason | null;
 	wavePreview: WavePreviewGroup[] | null;
 	lobbyTab: LobbyTab;
-	soundEnabled: boolean;
+	bgmVolume: number;
+	sfxVolume: number;
+	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';
 	screenShake: boolean;
 	showDamageNumbers: boolean;
 	playerTowerCount: number;
@@ -94,7 +96,9 @@ interface GameStoreState {
 	clearToast: () => void;
 	resetRun: () => void;
 	enterLobby: () => void;
-	toggleSound: () => void;
+	setBgmVolume: (v: number) => void;
+	setSfxVolume: (v: number) => void;
+	setColorblindMode: (mode: 'off' | 'protan' | 'deutan' | 'tritan') => void;
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
@@ -135,7 +139,9 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	runStatus: 'lobby',
 	selectedMapId: 'forest_gate',
 	lobbyTab: 'home',
-	soundEnabled: true,
+	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
+	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
+	colorblindMode: useMetaStore.getState().settings?.colorblindMode ?? 'off',
 	screenShake: true,
 	showDamageNumbers: true,
 	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
@@ -198,7 +204,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			lobbyTab: 'home',
 			...createRunState(),
 		})),
-	toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+	setBgmVolume: (v) => {
+		useMetaStore.getState().updateSettings({ bgmVolume: v });
+		set({ bgmVolume: v });
+	},
+	setSfxVolume: (v) => {
+		useMetaStore.getState().updateSettings({ sfxVolume: v });
+		set({ sfxVolume: v });
+	},
+	setColorblindMode: (mode) => {
+		useMetaStore.getState().updateSettings({ colorblindMode: mode });
+		set({ colorblindMode: mode });
+	},
 	toggleScreenShake: () =>
 		set((state) => ({ screenShake: !state.screenShake })),
 	toggleDamageNumbers: () =>

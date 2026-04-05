@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useMissionTracker } from './hooks/useMissionTracker';
 import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
@@ -32,11 +33,14 @@ export function App() {
 
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
+		useMetaStore.getState().refreshMissions();
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
 		window.addEventListener('gld-save-error', onSaveError);
 		return () => window.removeEventListener('gld-save-error', onSaveError);
 	}, [pushToast]);
+
+	useMissionTracker();
 
 	if (runStatus === 'lobby') {
 		return (

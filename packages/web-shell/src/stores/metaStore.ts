@@ -2,10 +2,15 @@ import {
 	ALL_TOWERS,
 	createDefaultSave,
 	enhancementCost,
+	generateDailyMissions,
+	generateWeeklyMissions,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
 	SAVE_STORAGE_KEY,
 	SAVE_VERSION,
+	shouldResetDaily,
+	shouldResetWeekly,
+	type MissionType,
 	type SaveData,
 	type TowerGrade,
 	xpToNextLevel,
@@ -30,6 +35,10 @@ interface MetaActions {
 	) => 'success' | 'fail' | 'max_grade' | 'no_gold' | 'not_found';
 	setSelectedDeck: (deck: string[]) => void;
 	updateSettings: (patch: Partial<SaveData['settings']>) => void;
+	addDiamond: (amount: number) => void;
+	refreshMissions: () => void;
+	progressMission: (type: MissionType, amount: number) => void;
+	claimMission: (missionId: string, period: 'daily' | 'weekly') => 'success' | 'not_ready' | 'not_found';
 }
 
 type MetaState = SaveData & MetaActions;
@@ -330,6 +339,89 @@ export const useMetaStore = create<MetaState>()(
 					settings: { ...s.settings, ...patch },
 				}));
 				debouncedSave(get());
+			},
+
+			addDiamond: (amount) => {
+				set((s) => ({
+					profile: { ...s.profile, diamond: s.profile.diamond + amount },
+				}));
+				debouncedSave(get());
+			},
+
+			refreshMissions: () => {
+				const now = new Date();
+				set((s) => {
+					const progress = s.progress;
+					const needsDailyReset = shouldResetDaily(progress.lastDailyMissionResetAt, now);
+					const needsWeeklyReset = shouldResetWeekly(progress.lastWeeklyMissionResetAt, now);
+
+					if (!needsDailyReset && !needsWeeklyReset) return {};
+
+					return {
+						progress: {
+							...progress,
+							dailyMissions: needsDailyReset ? generateDailyMissions() : progress.dailyMissions,
+							lastDailyMissionResetAt: needsDailyReset ? now.toISOString() : progress.lastDailyMissionResetAt,
+							weeklyMissions: needsWeeklyReset ? generateWeeklyMissions() : progress.weeklyMissions,
+							lastWeeklyMissionResetAt: needsWeeklyReset ? now.toISOString() : progress.lastWeeklyMissionResetAt,
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			progressMission: (type, amount) => {
+				set((s) => {
+					const updateList = (missions: typeof s.progress.dailyMissions) =>
+						missions.map((m) =>
+							m.type === type && !m.claimed
+								? { ...m, current: Math.min(m.current + amount, m.target) }
+								: m,
+						);
+					return {
+						progress: {
+							...s.progress,
+							dailyMissions: updateList(s.progress.dailyMissions),
+							weeklyMissions: updateList(s.progress.weeklyMissions),
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			claimMission: (missionId, period) => {
+				const s = get();
+				const list = period === 'daily' ? s.progress.dailyMissions : s.progress.weeklyMissions;
+				const mission = list.find((m) => m.id === missionId);
+
+				if (!mission) return 'not_found';
+				if (mission.claimed || mission.current < mission.target) return 'not_ready';
+
+				const updateList = (missions: typeof list) =>
+					missions.map((m) => (m.id === missionId ? { ...m, claimed: true } : m));
+
+				set((s) => ({
+					profile: {
+						...s.profile,
+						gold: mission.reward.type === 'gold'
+							? s.profile.gold + mission.reward.amount
+							: s.profile.gold,
+						totalGoldEarned: mission.reward.type === 'gold'
+							? s.profile.totalGoldEarned + mission.reward.amount
+							: s.profile.totalGoldEarned,
+						diamond: mission.reward.type === 'diamond'
+							? s.profile.diamond + mission.reward.amount
+							: s.profile.diamond,
+					},
+					progress: {
+						...s.progress,
+						dailyMissions: period === 'daily' ? updateList(s.progress.dailyMissions) : s.progress.dailyMissions,
+						weeklyMissions: period === 'weekly' ? updateList(s.progress.weeklyMissions) : s.progress.weeklyMissions,
+					},
+				}));
+
+				debouncedSave(get());
+				return 'success';
 			},
 		};
 	}),

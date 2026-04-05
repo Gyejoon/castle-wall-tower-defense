@@ -279,12 +279,11 @@ export class UnitSystem {
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 
-		// Boss phase transition check
-		if (unit.isBoss && unit.bossPhase === 1 &&
+		// Boss phase transition check — only if still alive (hp > 0)
+		if (unit.isBoss && unit.bossPhase === 1 && unit.data.hp > 0 &&
 				unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio) {
 			unit.bossPhase = 2;
 			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
-			unit.data.hp = Math.max(1, unit.data.hp);
 			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
 			EventBus.emit('boss-phase-change', { phase: 2, unitId: unit.data.instanceId });
 		}

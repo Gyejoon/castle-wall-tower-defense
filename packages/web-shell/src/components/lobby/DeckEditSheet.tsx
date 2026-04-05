@@ -88,7 +88,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 					{towersByTier.map(({ tier, towers }) => (
 						<div key={tier}>
 							<div
-								className="font-pixel text-xs mb-2 tracking-wide"
+								className="font-pixel text-xs mb-2 tracking-[1px]"
 								style={{ color: TIER_COLORS[tier] }}
 							>
 								T{tier} {TIER_LABELS[tier]}
@@ -115,7 +115,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											)}
 										>
 											{isSelected && (
-												<span className="absolute top-0.5 right-1 font-pixel text-xs text-gold">
+												<span className="absolute top-[3px] right-[5px] font-pixel text-xs text-gold">
 													{slotNum}
 												</span>
 											)}

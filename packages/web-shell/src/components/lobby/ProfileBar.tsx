@@ -58,11 +58,11 @@ export function ProfileBar() {
 				</span>
 				{/* XP progress bar */}
 				<div
-					className="w-full h-[3px] rounded-sm overflow-hidden"
+					className="w-full h-[3px] rounded-[1px] overflow-hidden"
 					style={{ background: 'rgba(0,0,0,0.3)' }}
 				>
 					<div
-						className="h-full bg-gold transition-[width] duration-300 ease-out"
+						className="h-full bg-gold transition-[width] duration-300 ease-[ease]"
 						style={{ width: `${Math.min(100, xpProgress * 100)}%` }}
 					/>
 				</div>

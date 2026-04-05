@@ -180,7 +180,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			const level = rawLevel !== undefined ? rawLevel : Infinity;
 			const map = MAP_REGISTRY[state.selectedMapId];
 			const safeMapId =
-				map && !isMapUnlocked(map, level)
+				!map || !isMapUnlocked(map, level)
 					? DEFAULT_MAP_ID
 					: state.selectedMapId;
 			return {

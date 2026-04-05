@@ -319,7 +319,7 @@ export function GamePage() {
 							className="absolute inset-0 z-5 flex items-center justify-center"
 							style={{ background: 'rgba(0,0,0,0.6)' }}
 						>
-							<div className="text-center font-pixel text-2xl text-[#ff4444] animate-[pulse_0.5s_ease-in-out_infinite]">
+							<div className="text-center font-pixel text-2xl text-[#ff4444] animate-[warningPulse_0.5s_ease-in-out_infinite]">
 								⚠ WARNING ⚠
 							</div>
 						</div>

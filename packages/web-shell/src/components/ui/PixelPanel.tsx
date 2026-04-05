@@ -10,7 +10,7 @@ export function PixelPanel({
 	return (
 		<div
 			className={cn(
-				'p-4 bg-panel border-2 border-border shadow-[4px_4px_0px_#4a3a20]',
+				'p-4 bg-panel border-2 border-border shadow-[4px_4px_0px_var(--color-border)]',
 				className,
 			)}
 			style={style}

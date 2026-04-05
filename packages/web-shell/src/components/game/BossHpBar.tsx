@@ -34,7 +34,7 @@ export function BossHpBar() {
 				style={{ background: 'rgba(0,0,0,0.5)' }}
 			>
 				<div
-					className="h-full transition-[width] duration-200 ease-out"
+					className="h-full transition-[width] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
 					style={{
 						width: `${pct}%`,
 						background: barColor,

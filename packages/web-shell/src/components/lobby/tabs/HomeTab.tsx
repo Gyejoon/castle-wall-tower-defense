@@ -98,7 +98,7 @@ export function HomeTab() {
 								className={cn(
 									'relative flex-none w-[90px] p-1.5 text-center border-2',
 									{
-										'bg-[rgba(240,208,96,0.15)] border-gold':
+										'bg-[rgba(240,208,96,0.15)] border-gold cursor-pointer':
 											!locked && selected,
 										'bg-[rgba(42,32,16,0.8)] border-border cursor-pointer':
 											!locked && !selected,
@@ -122,7 +122,7 @@ export function HomeTab() {
 									)}
 								</div>
 								<p
-									className={cn('font-pixel text-[11px] mt-0.5', {
+									className={cn('font-pixel text-[11px] mt-[3px]', {
 										'text-gold': !locked && selected,
 										'text-text': !locked && !selected,
 										'text-text-secondary': locked,
@@ -130,7 +130,7 @@ export function HomeTab() {
 								>
 									{map.name}
 								</p>
-								<p className="font-pixel text-[8px] text-text-secondary mt-0.5">
+								<p className="font-pixel text-[8px] text-text-secondary mt-[3px]">
 									{'★'.repeat(stars)}
 									{'☆'.repeat(3 - stars)}
 								</p>
@@ -148,7 +148,7 @@ export function HomeTab() {
 							return (
 								<div
 									key={id}
-									className="flex-1 p-1 bg-panel border border-border flex flex-col items-center gap-0.5"
+									className="flex-1 p-1 bg-panel border border-border flex flex-col items-center gap-[3px]"
 								>
 									<img
 										src={`assets/towers/${tower.type}.webp`}

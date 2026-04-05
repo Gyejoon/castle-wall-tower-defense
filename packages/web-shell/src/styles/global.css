@@ -17,11 +17,8 @@
   --font-pixel: 'Galmuri11', 'Press Start 2P', cursive;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Tailwind v4 preflight (@layer base) already resets margin/padding/box-sizing.
+   An unlayered * rule would override @layer utilities, breaking p-*, m-* classes. */
 
 html, body, #root {
   width: 100%;

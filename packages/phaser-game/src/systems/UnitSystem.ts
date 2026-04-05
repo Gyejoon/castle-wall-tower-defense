@@ -70,6 +70,7 @@ export class UnitSystem {
 	private nextId = 0;
 	private nextLane = 0;
 	private stageLevel = 1;
+	private rng: () => number = Math.random;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
@@ -77,6 +78,11 @@ export class UnitSystem {
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
+	}
+
+	/** Inject RNG for testability (CC immunity) */
+	setRng(rng: () => number): void {
+		this.rng = rng;
 	}
 
 	setStageLevel(level: number): void {
@@ -232,7 +238,7 @@ export class UnitSystem {
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		if (unit.ccImmunityChance > 0 && Math.random() < unit.ccImmunityChance) {
+		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}
 		// Keep the stronger slow (lower factor = slower)
@@ -244,7 +250,7 @@ export class UnitSystem {
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		if (unit.ccImmunityChance > 0 && Math.random() < unit.ccImmunityChance) {
+		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}
 		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);

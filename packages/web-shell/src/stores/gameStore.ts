@@ -48,6 +48,19 @@ type WavePreviewGroup = {
 	count: number;
 };
 
+export interface BossHpState {
+	hp: number;
+	maxHp: number;
+	phase: 1 | 2;
+	visible: boolean;
+}
+
+export interface GameOverStats {
+	wavesCleared: number;
+	towersPlaced: number;
+	timeSurvivedSec: number;
+}
+
 interface GameStoreState {
 	runId: number;
 	runStatus: RunStatus;
@@ -71,13 +84,9 @@ interface GameStoreState {
 	combatHud: CombatHudState;
 	toast: UiToast | null;
 	selectedDeck: string[];
-	bossHp: { hp: number; maxHp: number; phase: 1 | 2; visible: boolean };
+	bossHp: BossHpState;
 	bossWarningVisible: boolean;
-	gameOverStats: {
-		wavesCleared: number;
-		towersPlaced: number;
-		timeSurvivedSec: number;
-	} | null;
+	gameOverStats: GameOverStats | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -103,19 +112,10 @@ interface GameStoreState {
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
-	setBossHp: (bossHp: {
-		hp: number;
-		maxHp: number;
-		phase: 1 | 2;
-		visible: boolean;
-	}) => void;
+	setBossHp: (bossHp: BossHpState) => void;
 	setBossWarningVisible: (v: boolean) => void;
 	setGameOverStats: (
-		stats: {
-			wavesCleared: number;
-			towersPlaced: number;
-			timeSurvivedSec: number;
-		} | null,
+		stats: GameOverStats | null,
 	) => void;
 }
 

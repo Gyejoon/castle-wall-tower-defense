@@ -18,10 +18,17 @@ function LoadingScreen() {
 	);
 }
 
+const COLORBLIND_FILTERS: Record<string, string> = {
+	off: 'none',
+	protan: 'url(#protan-filter)',
+	deutan: 'url(#deutan-filter)',
+	tritan: 'url(#tritan-filter)',
+};
+
 export function App() {
 	const runStatus = useGameStore((s) => s.runStatus);
-
 	const pushToast = useGameStore((s) => s.pushToast);
+	const colorblindMode = useGameStore((s) => s.colorblindMode);
 
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
@@ -32,12 +39,24 @@ export function App() {
 	}, [pushToast]);
 
 	if (runStatus === 'lobby') {
-		return <LobbyPage />;
+		return (
+			<div
+				className="w-full h-full"
+				style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
+			>
+				<LobbyPage />
+			</div>
+		);
 	}
 
 	return (
-		<Suspense fallback={<LoadingScreen />}>
-			<GamePage />
-		</Suspense>
+		<div
+			className="w-full h-full"
+			style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
+		>
+			<Suspense fallback={<LoadingScreen />}>
+				<GamePage />
+			</Suspense>
+		</div>
 	);
 }

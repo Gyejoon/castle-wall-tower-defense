@@ -6,6 +6,7 @@ import {
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
+	getSpawnExitPairs,
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
@@ -156,6 +157,7 @@ export class GameScene extends Phaser.Scene {
 			this.playerGrid,
 			this.playerPathfinding,
 			collection,
+			getSpawnExitPairs(this.currentMap),
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels

@@ -1,11 +1,23 @@
-import { ALL_TOWERS, MAP_REGISTRY } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	DEFAULT_MAP_ID,
+	isMapUnlocked,
+	MAP_REGISTRY,
+} from '@gld/shared';
 import { useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
+import { useMetaStore } from '../../../stores/metaStore';
 import { cn } from '../../../utils/cn';
 import { PixelButton } from '../../ui/PixelButton';
 import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
+
+const STAGE_DIFFICULTY: Record<string, number> = {
+	forest_gate: 1,
+	lava_fortress: 2,
+	storm_citadel: 3,
+};
 
 const STAGE_THUMBNAILS: Record<string, string> = {
 	forest_gate: 'assets/ui/stage-thumb-forest_gate.png',
@@ -18,7 +30,15 @@ export function HomeTab() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
+	const playerLevel = useMetaStore((s) => s.profile.level) ?? 0;
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
+
+	// Derive safe map id synchronously — no flicker from useEffect
+	const selectedMap = MAP_REGISTRY[selectedMapId];
+	const effectiveMapId =
+		selectedMap && !isMapUnlocked(selectedMap, playerLevel)
+			? DEFAULT_MAP_ID
+			: selectedMapId;
 
 	return (
 		<div
@@ -48,42 +68,75 @@ export function HomeTab() {
 			>
 				{/* Stage selection */}
 				<div className="flex gap-1.5 overflow-x-auto p-0.5">
-					{Object.values(MAP_REGISTRY).map((map) => (
-						<div
-							key={map.id}
-							role="button"
-							tabIndex={0}
-							aria-pressed={selectedMapId === map.id}
-							aria-label={`스테이지 ${map.name}`}
-							onClick={() => setSelectedMapId(map.id)}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									setSelectedMapId(map.id);
+					{Object.values(MAP_REGISTRY).map((map) => {
+						const locked = !isMapUnlocked(map, playerLevel);
+						const selected = effectiveMapId === map.id;
+						const stars = STAGE_DIFFICULTY[map.id] ?? 1;
+						return (
+							<div
+								key={map.id}
+								role="button"
+								tabIndex={locked ? -1 : 0}
+								aria-pressed={!locked && selected}
+								aria-disabled={locked || undefined}
+								aria-label={
+									locked
+										? `${map.name} (Lv.${map.unlockLevel}에서 해금)`
+										: `스테이지 ${map.name}`
 								}
-							}}
-							className={cn(
-								'flex-none w-[90px] p-1.5 cursor-pointer text-center border-2',
-								selectedMapId === map.id
-									? 'bg-[rgba(240,208,96,0.15)] border-gold'
-									: 'bg-[rgba(42,32,16,0.8)] border-border',
-							)}
-						>
-							<img
-								src={STAGE_THUMBNAILS[map.id]}
-								alt={map.name}
-								className="w-[78px] h-[44px] object-cover [image-rendering:pixelated]"
-							/>
-							<p
+								onClick={() => {
+									if (locked) return;
+									setSelectedMapId(map.id);
+								}}
+								onKeyDown={(e) => {
+									if (locked) return;
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										setSelectedMapId(map.id);
+									}
+								}}
 								className={cn(
-									'font-pixel text-[11px] mt-0.5',
-									selectedMapId === map.id ? 'text-gold' : 'text-text',
+									'relative flex-none w-[90px] p-1.5 text-center border-2',
+									{
+										'bg-[rgba(240,208,96,0.15)] border-gold':
+											!locked && selected,
+										'bg-[rgba(42,32,16,0.8)] border-border cursor-pointer':
+											!locked && !selected,
+										'bg-[rgba(42,32,16,0.5)] border-border/50 opacity-60 grayscale':
+											locked,
+									},
 								)}
 							>
-								{map.name}
-							</p>
-						</div>
-					))}
+								<div className="relative">
+									<img
+										src={STAGE_THUMBNAILS[map.id]}
+										alt={map.name}
+										className="w-[78px] h-[44px] object-cover [image-rendering:pixelated]"
+									/>
+									{locked && (
+										<div className="absolute inset-0 flex items-center justify-center bg-black/40">
+											<span className="font-pixel text-[10px] text-gold">
+												Lv.{map.unlockLevel}
+											</span>
+										</div>
+									)}
+								</div>
+								<p
+									className={cn('font-pixel text-[11px] mt-0.5', {
+										'text-gold': !locked && selected,
+										'text-text': !locked && !selected,
+										'text-text-secondary': locked,
+									})}
+								>
+									{map.name}
+								</p>
+								<p className="font-pixel text-[8px] text-text-secondary mt-0.5">
+									{'★'.repeat(stars)}
+									{'☆'.repeat(3 - stars)}
+								</p>
+							</div>
+						);
+					})}
 				</div>
 
 				{/* Deck preview */}

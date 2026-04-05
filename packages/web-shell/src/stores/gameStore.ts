@@ -1,9 +1,12 @@
 import {
 	type CombatHudState,
 	DEFAULT_DECK,
+	DEFAULT_MAP_ID,
 	type DeckCardDef,
 	INITIAL_ENERGY,
 	INITIAL_PLAYER_HP,
+	isMapUnlocked,
+	MAP_REGISTRY,
 	type PlacementFailureReason,
 	type WavePhase,
 } from '@gld/shared';
@@ -170,12 +173,24 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		})),
 	clearToast: () => set({ toast: null }),
 	resetRun: () =>
-		set((state) => ({
-			runId: state.runId + 1,
-			runStatus: 'building',
-			lobbyTab: 'home',
-			...createRunState(),
-		})),
+		set((state) => {
+			// Guard: if selected map is locked, fall back to default
+			// Use Infinity when store is unhydrated so we never accidentally lock maps
+			const rawLevel = useMetaStore.getState().profile?.level;
+			const level = rawLevel !== undefined ? rawLevel : Infinity;
+			const map = MAP_REGISTRY[state.selectedMapId];
+			const safeMapId =
+				map && !isMapUnlocked(map, level)
+					? DEFAULT_MAP_ID
+					: state.selectedMapId;
+			return {
+				runId: state.runId + 1,
+				runStatus: 'building',
+				lobbyTab: 'home',
+				selectedMapId: safeMapId,
+				...createRunState(),
+			};
+		}),
 	enterLobby: () =>
 		set((state) => ({
 			runId: state.runId + 1,

@@ -14,4 +14,5 @@ export interface MapLayout {
 	exitPoint: Position;
 	tilemapKey: string;
 	tilesetKey: string;
+	unlockLevel?: number; // undefined = always unlocked (e.g. forest_gate)
 }

@@ -1,8 +1,8 @@
 import { ALL_TOWERS, MAP_REGISTRY } from '@gld/shared';
 import { useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
-import { MOCK_PROFILE } from '../../../data/mockLobbyData';
 import { useGameStore } from '../../../stores/gameStore';
+import { useMetaStore } from '../../../stores/metaStore';
 import { colors, fonts } from '../../../styles/tokens';
 import { PixelButton } from '../../ui/PixelButton';
 import { DeckEditSheet } from '../DeckEditSheet';
@@ -19,7 +19,12 @@ export function HomeTab() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
+	const profile = useMetaStore((s) => s.profile);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
+	const winRate =
+		profile.wins + profile.losses > 0
+			? ((profile.wins / (profile.wins + profile.losses)) * 100).toFixed(1)
+			: '0.0';
 
 	return (
 		<div
@@ -65,24 +70,12 @@ export function HomeTab() {
 						border: `1px solid ${colors.border}`,
 					}}
 				>
-					<StatBadge
-						label="승"
-						value={MOCK_PROFILE.wins}
-						color={colors.success}
-					/>
-					<StatBadge
-						label="패"
-						value={MOCK_PROFILE.losses}
-						color={colors.danger}
-					/>
-					<StatBadge
-						label="승률"
-						value={`${MOCK_PROFILE.winRate}%`}
-						color={colors.accent}
-					/>
+					<StatBadge label="승" value={profile.wins} color={colors.success} />
+					<StatBadge label="패" value={profile.losses} color={colors.danger} />
+					<StatBadge label="승률" value={`${winRate}%`} color={colors.accent} />
 					<StatBadge
 						label="연승"
-						value={MOCK_PROFILE.winStreak}
+						value={profile.winStreak}
 						color={colors.gold}
 					/>
 				</div>

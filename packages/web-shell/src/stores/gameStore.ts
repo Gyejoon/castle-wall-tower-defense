@@ -1,5 +1,4 @@
 import {
-	ALL_TOWERS,
 	type CombatHudState,
 	DEFAULT_DECK,
 	type DeckCardDef,
@@ -9,28 +8,9 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
+import { useMetaStore } from './metaStore';
 
-const DECK_STORAGE_KEY = 'gld-selected-deck';
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
-
-function loadDeck(): string[] {
-	try {
-		const raw = localStorage.getItem(DECK_STORAGE_KEY);
-		if (!raw) return DEFAULT_DECK_IDS;
-		const parsed = JSON.parse(raw);
-		if (
-			Array.isArray(parsed) &&
-			parsed.length === 4 &&
-			new Set(parsed).size === 4 &&
-			parsed.every((id: string) => ALL_TOWERS.some((t) => t.id === id))
-		) {
-			return parsed;
-		}
-	} catch {
-		/* ignore */
-	}
-	return DEFAULT_DECK_IDS;
-}
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'settings';
@@ -153,7 +133,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	soundEnabled: true,
 	screenShake: true,
 	showDamageNumbers: true,
-	selectedDeck: loadDeck(),
+	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
 	...createRunState(),
 
 	setRunStatus: (status) => set({ runStatus: status }),
@@ -207,7 +187,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	toggleDamageNumbers: () =>
 		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
 	setSelectedDeck: (deck) => {
-		localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+		useMetaStore.getState().setSelectedDeck(deck);
 		set({ selectedDeck: deck });
 	},
 	setBossHp: (bossHp) => set({ bossHp }),

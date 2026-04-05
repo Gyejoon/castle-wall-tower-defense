@@ -42,6 +42,16 @@ export {
 	MAP_REGISTRY,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
+export {
+	battleXp,
+	createDefaultSave,
+	enhancementCost,
+	enhancementStatMultiplier,
+	getEffectiveStats,
+	MAX_TOWER_LEVEL,
+	PROMOTION_CONFIG,
+	xpToNextLevel,
+} from './constants/meta';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {
@@ -67,6 +77,15 @@ export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
+export type {
+	OwnedTower,
+	ProfileData,
+	ProgressData,
+	SaveData,
+	SettingsData,
+	TowerGrade,
+} from './types/save';
+export { SAVE_STORAGE_KEY, SAVE_VERSION, TOWER_GRADES } from './types/save';
 export type {
 	FusionTowerType,
 	PlacedTower,

@@ -1,11 +1,17 @@
 import type {
 	ElementType,
+	OwnedTower,
 	PlacedTower,
 	PlacementFailureReason,
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS, CC_AURA_CONFIGS, getElementMultiplier } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	CC_AURA_CONFIGS,
+	getEffectiveStats,
+	getElementMultiplier,
+} from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -15,6 +21,7 @@ import type { PathfindingSystem } from './PathfindingSystem';
 interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
+	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
 	lastAttackTime: number;
@@ -33,6 +40,7 @@ export class TowerSystem {
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
 	private pathfinding: PathfindingSystem;
+	private collection: OwnedTower[];
 	private nextId = 0;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
@@ -48,10 +56,12 @@ export class TowerSystem {
 		scene: Phaser.Scene,
 		gridManager: GridManager,
 		pathfinding: PathfindingSystem,
+		collection?: OwnedTower[],
 	) {
 		this.scene = scene;
 		this.gridManager = gridManager;
 		this.pathfinding = pathfinding;
+		this.collection = collection ?? [];
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
 	}
@@ -92,11 +102,15 @@ export class TowerSystem {
 		const instanceId = `tower_${this.nextId++}`;
 		const worldPos = this.gridManager.gridToWorld(gridX, gridY);
 
+		const owned = this.collection.find((t) => t.defId === towerDefId);
+		const towerLevel = owned?.level ?? 1;
+		const towerGrade = owned?.grade ?? 'normal';
+
 		const towerData: PlacedTower = {
 			instanceId,
 			defId: towerDefId,
 			position: { x: gridX, y: gridY },
-			level: 1,
+			level: towerLevel,
 		};
 
 		const base = this.scene.add.graphics();
@@ -112,6 +126,11 @@ export class TowerSystem {
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
+			effectiveDamage: getEffectiveStats(
+				def.stats.damage,
+				towerLevel,
+				towerGrade,
+			),
 			base,
 			sprite,
 			lastAttackTime: 0,
@@ -237,7 +256,7 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				const baseDamage = Math.round(def.stats.damage * elementMult);
+				const baseDamage = Math.round(tower.effectiveDamage * elementMult);
 				const special = def.stats.special;
 
 				const slowEffect =
@@ -318,7 +337,9 @@ export class TowerSystem {
 							);
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
-								damage: Math.round(def.stats.damage * splashElementMult * 0.5),
+								damage: Math.round(
+									tower.effectiveDamage * splashElementMult * 0.5,
+								),
 								slow: slowEffect,
 							});
 						}

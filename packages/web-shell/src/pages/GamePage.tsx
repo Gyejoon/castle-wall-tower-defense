@@ -1,5 +1,6 @@
 import { EventBus } from '@gld/phaser-game';
 import {
+	battleXp,
 	type DeckCardDef,
 	ENERGY_CAP,
 	type PlacementFailureReason,
@@ -10,6 +11,7 @@ import { DeckDock } from '../components/game/DeckDock';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaStore } from '../stores/metaStore';
 import { colors, fonts } from '../styles/tokens';
 
 function formatTimerLabel(rawLabel: string) {
@@ -103,6 +105,14 @@ export function GamePage() {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
 			setGameOverStats(data.stats);
+			const meta = useMetaStore.getState();
+			meta.addGold(data.stats.goldEarned);
+			meta.addXp(battleXp(data.stats.wavesCleared, data.result === 'victory'));
+			meta.recordBattle(data.result);
+			meta.updateHighestWave(
+				useGameStore.getState().selectedMapId,
+				data.stats.wavesCleared,
+			);
 		};
 		const onWaveStarted = (data: {
 			wave: number;

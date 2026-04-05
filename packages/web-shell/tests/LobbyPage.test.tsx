@@ -15,7 +15,7 @@ describe('LobbyPage', () => {
 	it('renders the home tab as a single-player PVE start screen', () => {
 		const view = render(<LobbyPage />);
 
-		expect(view.getByText('기사단장')).toBeTruthy();
+		expect(view.getByText('Commander')).toBeTruthy();
 
 		const tabs = view.getAllByRole('tab');
 		expect(tabs).toHaveLength(3);
@@ -67,7 +67,7 @@ describe('LobbyPage', () => {
 		fireEvent.click(collectionTab);
 
 		expect(view.getByText('보유 타워')).toBeTruthy();
-		expect(view.getByText('화염 포탑')).toBeTruthy();
+		expect(view.getByText('궁수 탑')).toBeTruthy();
 	});
 
 	it('shows settings tab with toggles', () => {

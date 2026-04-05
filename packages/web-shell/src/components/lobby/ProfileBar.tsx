@@ -1,8 +1,42 @@
+import { xpToNextLevel } from '@gld/shared';
+import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
-import { MOCK_PROFILE } from '../../data/mockLobbyData';
+import { useMetaStore } from '../../stores/metaStore';
 import { colors, fonts } from '../../styles/tokens';
 
+function useAnimatedGold() {
+	const gold = useMetaStore((s) => s.profile.gold);
+	const [display, setDisplay] = useState(gold);
+	const rafRef = useRef(0);
+	const displayRef = useRef(display);
+	displayRef.current = display;
+
+	useEffect(() => {
+		const from = displayRef.current;
+		if (from === gold) return;
+		const start = performance.now();
+		const duration = 500;
+		const tick = (now: number) => {
+			const t = Math.min((now - start) / duration, 1);
+			const eased = 1 - (1 - t) ** 3; // easeOutCubic
+			const val = Math.round(from + (gold - from) * eased);
+			setDisplay(val);
+			displayRef.current = val;
+			if (t < 1) rafRef.current = requestAnimationFrame(tick);
+		};
+		rafRef.current = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(rafRef.current);
+	}, [gold]);
+
+	return display;
+}
+
 export function ProfileBar() {
+	const profile = useMetaStore((s) => s.profile);
+	const displayGold = useAnimatedGold();
+	const xpNeeded = xpToNextLevel(profile.level);
+	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;
+
 	return (
 		<div
 			style={{
@@ -14,7 +48,7 @@ export function ProfileBar() {
 				borderBottom: `1px solid ${colors.border}`,
 			}}
 		>
-			{/* Avatar + Nickname */}
+			{/* Avatar + Nickname + XP bar */}
 			<img
 				src={uiMobileArt.profileAvatar}
 				alt="profile"
@@ -41,7 +75,7 @@ export function ProfileBar() {
 						whiteSpace: 'nowrap',
 					}}
 				>
-					{MOCK_PROFILE.nickname}
+					{profile.nickname}
 				</span>
 				<span
 					style={{
@@ -50,11 +84,30 @@ export function ProfileBar() {
 						color: colors.textSecondary,
 					}}
 				>
-					Lv.{MOCK_PROFILE.level}
+					Lv.{profile.level}
 				</span>
+				{/* XP progress bar */}
+				<div
+					style={{
+						width: '100%',
+						height: '3px',
+						background: 'rgba(0,0,0,0.3)',
+						borderRadius: '1px',
+						overflow: 'hidden',
+					}}
+				>
+					<div
+						style={{
+							width: `${Math.min(100, xpProgress * 100)}%`,
+							height: '100%',
+							background: colors.gold,
+							transition: 'width 0.3s ease',
+						}}
+					/>
+				</div>
 			</div>
 
-			{/* Trophy */}
+			{/* Wins */}
 			<div
 				className="profile-currency"
 				style={{
@@ -66,7 +119,7 @@ export function ProfileBar() {
 			>
 				<img
 					src={uiMobileArt.trophyIcon}
-					alt="trophy"
+					alt="wins"
 					width={18}
 					height={18}
 					style={{ imageRendering: 'pixelated' }}
@@ -78,7 +131,7 @@ export function ProfileBar() {
 						color: colors.accent,
 					}}
 				>
-					{MOCK_PROFILE.trophies.toLocaleString()}
+					{profile.wins}
 				</span>
 			</div>
 
@@ -106,7 +159,7 @@ export function ProfileBar() {
 						color: colors.gold,
 					}}
 				>
-					{MOCK_PROFILE.gold.toLocaleString()}
+					{displayGold.toLocaleString()}
 				</span>
 			</div>
 		</div>

@@ -440,7 +440,11 @@ function TowerBottomSheet({
 					value={String(def.stats.range)}
 					color={colors.textSecondary}
 				/>
-				<StatDisplay label="속성" value={ELEMENT_NAMES[def.element]} color={elementColor} />
+				<StatDisplay
+					label="속성"
+					value={ELEMENT_NAMES[def.element]}
+					color={elementColor}
+				/>
 			</div>
 
 			{def.stats.special && (

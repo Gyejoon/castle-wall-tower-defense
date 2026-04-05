@@ -12,7 +12,7 @@ describe('LobbyPage', () => {
 		cleanup();
 	});
 
-	it('renders the home tab as a single-player PVE start screen', () => {
+	it('renders the home tab as a single-player start screen', () => {
 		const view = render(<LobbyPage />);
 
 		expect(view.getByText('Commander')).toBeTruthy();
@@ -21,7 +21,7 @@ describe('LobbyPage', () => {
 		expect(tabs).toHaveLength(3);
 		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
 
-		expect(view.getByText('PVE 생존')).toBeTruthy();
+		expect(view.getByText('성벽 막기')).toBeTruthy();
 		expect(view.getByText('게임 시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 		expect(view.queryByText('상대를 찾는 중...')).toBeNull();

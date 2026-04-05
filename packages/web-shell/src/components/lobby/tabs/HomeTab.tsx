@@ -218,10 +218,8 @@ export function HomeTab() {
 					>
 						게임 시작
 					</PixelButton>
-
 				</div>
 			</div>
-
 
 			<DeckEditSheet
 				open={showDeckEdit}
@@ -230,5 +228,3 @@ export function HomeTab() {
 		</div>
 	);
 }
-
-

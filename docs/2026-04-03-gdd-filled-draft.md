@@ -11,8 +11,8 @@
 
 ```markdown
 이 게임은 모바일 세로 게임형 Tower Defense + RPG 게임이며,
-플레이어는 랜덤하게 획득한 타워를 전략적으로 배치해
-20웨이브와 2회의 보스를 버티며 기지를 방어하고,
+플레이어는 덱에서 선택한 타워를 전략적으로 배치해
+10웨이브와 2회의 보스를 버티며 기지를 방어하고,
 전투 보상으로 타워 컬렉션과 성장을 확장해 더 높은 난도에 도전한다.
 ```
 
@@ -28,8 +28,8 @@
 | Input | Touch / Mouse Drag |
 | Session Length | 8~10분 |
 | Core Fantasy | 성문을 지키는 지휘관이 되어 타워를 배치하고 끝까지 생존하는 판타지 |
-| Core Fun | 배치 전략, 랜덤 타워 선택, 웨이브 대응, 성장 보상 |
-| Win Condition | 20웨이브 생존 / 최종 보스 및 sudden death 구간 돌파 / 기지 방어 성공 |
+| Core Fun | 배치 전략, 4타워 덱 선택, 웨이브 대응, 성장 보상 |
+| Win Condition | 10웨이브 생존 / 최종 보스 돌파 / 기지 방어 성공 |
 | Lose Condition | 기지 HP 0 |
 
 ---
@@ -41,7 +41,7 @@
 | 항목 | 질문 |
 | --- | --- |
 | 타깃 유저 | 짧은 세션의 캐주얼 TD를 좋아하면서, 전투 보상과 타워 수집/성장을 함께 원하는 유저 |
-| 플레이 맥락 | 로비에서 즉시 시작해 짧고 밀도 높은 전투를 플레이하고, 종료 후 골드와 성장 보상을 통해 타워 컬렉션을 넓히며 다음 스테이지나 더 높은 난도에 재도전한다. 인게임에서는 랜덤 타워 획득, 배치 위치 선정, 범위/감속/버프 시너지 운영이 핵심이다. |
+| 플레이 맥락 | 로비에서 즉시 시작해 짧고 밀도 높은 전투를 플레이하고, 종료 후 골드와 성장 보상을 통해 타워 컬렉션을 넓히며 다음 스테이지나 더 높은 난도에 재도전한다. 인게임에서는 4타워 덱에서 선택 배치, 위치 선정, 범위/감속/버프 시너지 운영이 핵심이다. |
 | 숙련도 | 캐주얼~미드코어 |
 | 기대 감정 | 시원함, 긴장감, 전략적 만족감, 수집 성취감 |
 | 첫 세션 목표 | 10초 안에 “즉시 시작 → 타워 배치 → 방어” 흐름을 이해하고, 5분 안에 첫 보스 경고와 전투 성취를 경험하게 한다. |
@@ -54,7 +54,7 @@
 ### 3-1. Core Loop
 
 ```markdown
-로비 진입 → 즉시 시작 → 랜덤 타워 획득 → 타워 배치 → 웨이브/보스 대응 → 전투 결과 → 보상 획득
+로비 진입 → 즉시 시작 → 4타워 덱 선택 배치 → 웨이브/보스 대응 → 전투 결과 → 보상 획득
 ```
 
 ### 3-2. Meta Loop
@@ -71,10 +71,10 @@
 | --- | --- | --- |
 | Combat | 타워가 자동 공격하고 적은 고정 경로를 따라 이동하는 실시간 방어 전투 | damage, armor, attackSpeed, hit feedback, target priority |
 | Movement | 적은 spawn에서 exit까지 세로형 레인을 따라 이동하며, 플레이어는 드래그로 타워를 배치 | speed, path rules, collision, blocked path prevention |
-| Spawn/Summon | 전투 중 골드를 사용해 랜덤 타워를 획득하고 buildable tile에 배치 | cost 50, random tier odds, pity 5, placement limits |
+| Spawn/Summon | 전투 전 덱에서 선택한 타워를 에너지를 사용해 buildable tile에 배치 | cost 10/20 energy, 4타워 덱에서 선택 배치, placement limits |
 | Upgrade | 전투 성과와 메타 보상으로 더 높은 티어와 강한 컬렉션을 확보 | level, rarity, tower unlock, stat growth |
 | Progression | 프로필 레벨, 골드, 타워 컬렉션, 전적을 누적해 장기 성장을 만든다 | currency, unlock flow, collection expansion, level cap |
-| Boss/Encounter | 20웨이브 구조에서 2회의 보스와 후반 sudden death 구간이 난도 피크를 만든다 | boss timing, warning telegraph, phase pressure, reward |
+| Boss/Encounter | 10웨이브 구조에서 웨이브 5 중간 보스와 웨이브 10 최종 보스(Titan)가 난도 피크를 만든다 | boss timing, warning telegraph, phase pressure, reward |
 | Failure/Success | HP를 지키면 승리, HP 0이면 실패. 종료 후 재도전 또는 로비 복귀 | retry flow, result screen, clear reward, fail feedback |
 
 ---
@@ -100,7 +100,7 @@
 | tower | tower_base_set | 기본 전투용 타워 18종, 5티어 컬렉션 | 기본 풀 + 전투 보상 확장 | 상 | 코어 콘텐츠 |
 | enemy | enemy_core_family | 정찰형/중장갑/탱커/암살형/보스 적 패밀리 | 기본 제공 | 상 | 웨이브 핵심 |
 | boss | boss_titan_cycle | 2회 보스 경고 후 등장하는 titan 보스 | 중반/후반 웨이브 도달 | 상 | 세션 피크 |
-| wave | wave_20_survival | 20웨이브 + sudden death 생존 구조 | 기본 제공 | 상 | 메인 모드 |
+| wave | wave_10_survival | 10웨이브 생존 구조 (웨이브 5 중간 보스, 웨이브 10 최종 보스) | 기본 제공 | 상 | 메인 모드 |
 
 ---
 
@@ -108,12 +108,12 @@
 
 ### 6-1. Character / Tower / Weapon Master
 
-| id | name | role | hp | atk | atk_speed | range | cost | special |
+| id | name | role | hp | atk | atk_speed | range | cost (energy) | special |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| laser | 궁수 탑 | 기본 단일 딜러 | - | 10 | 1.5 | 3 | 50 | 기본 원거리 공격 |
-| plasma | 투석기 | 범위 딜러 | - | 25 | 0.8 | 2 | 50 | splash |
-| emp | 서리 마탑 | 감속 제어 | - | 5 | 1.0 | 4 | 50 | slow_30% |
-| shield | 성기사 제단 | 버퍼 | - | 0 | 0 | 2 | 50 | boost_adjacent_20% |
+| laser | 궁수 탑 | 기본 단일 딜러 | - | 10 | 1.5 | 3 | 10 | 기본 원거리 공격 |
+| plasma | 투석기 | 범위 딜러 | - | 25 | 0.8 | 2 | 10 | splash |
+| emp | 마탑 | 감속 제어 | - | 5 | 1.0 | 4 | 20 | slow_30% |
+| shield | 성기사 제단 | 버퍼 | - | 0 | 0 | 2 | 20 | boost_adjacent_20% |
 | twin_laser | 쌍궁 탑 | 고속 단일 딜러 | - | 25 | 2.0 | 4 | unlocked | 빠른 연속 공격 |
 | disruptor | 눈보라 탑 | 광역 감속 | - | 15 | 1.2 | 5 | unlocked | slow_50%_splash |
 | nova_cannon | 공성 대포 | 고화력 범위 딜러 | - | 60 | 0.4 | 3 | unlocked | splash |
@@ -158,36 +158,37 @@
 
 | stage_id | theme | objective | hazards | target_duration | difficulty_band |
 | --- | --- | --- | --- | --- | --- |
-| forest_gate | 숲의 성문 | 성문 방어 / 20웨이브 생존 | 좁은 레인, 경로 차단 불가, 후반 러시 | 8~10분 | 입문~중급 |
+| forest_gate | 숲의 성문 | 성문 방어 / 10웨이브 생존 | 좁은 레인, 경로 차단 불가, 후반 러시 | 8~10분 | 입문~중급 |
 
 ### 6-5. Wave / Encounter Sheet
 
 | stage_id | wave | enemy_id | count | spawn_interval | reward | difficulty_target |
 | --- | --- | --- | --- | --- | --- | --- |
-| forest_gate | 1 | scout_drone | 6 | short | low gold | 튜토리얼 전투 이해 |
-| forest_gate | 2 | scout_drone + battle_robot | 8 + 1 | short | low gold | 기본 배치 적응 |
-| forest_gate | 3~7 | battle_robot / heavy_walker / stealth_drone mix | 점진 증가 | medium | medium gold | 역할군 대응 학습 |
-| forest_gate | 8 | stealth_drone + battle_robot | 5 + 8 | medium | medium gold | 보스 전 경고 압박 |
-| forest_gate | 9 | titan | 1 | boss spawn | high gold | 첫 보스 돌파 |
-| forest_gate | 10~14 | mixed mid game wave | 증가 | medium | medium gold | 중반 조합 검증 |
-| forest_gate | 15 | titan + heavy_walker + stealth_drone | 1 + 2 + 4 | boss mix | high gold | 후반 피크 |
-| forest_gate | 16~18 | titan / heavy_walker / battle_robot mix | 대량 | medium | high gold | 고난도 유지 |
-| forest_gate | 19 | sudden_death wave 1 | 55 total | fast | clear near end | 최종 생존 압박 |
-| forest_gate | 20 | sudden_death wave 2 | 37 total incl. titan 4 | fast | clear reward | 최종 클리어 시험 |
+| forest_gate | 1 | scout_drone | 6 | short | low bounty | 튜토리얼 전투 이해 |
+| forest_gate | 2 | scout_drone + battle_robot | 8 + 1 | short | low bounty | 기본 배치 적응 |
+| forest_gate | 3 | battle_robot | 점진 증가 | medium | medium bounty | 역할군 대응 학습 |
+| forest_gate | 4 | battle_robot + heavy_walker mix | 점진 증가 | medium | medium bounty | 고체력 대응 |
+| forest_gate | 5 | titan (중간 보스) | 1 | boss spawn | high bounty | 첫 보스 돌파 |
+| forest_gate | 6 | stealth_drone + battle_robot | 5 + 8 | medium | medium bounty | 보스 후 경고 압박 |
+| forest_gate | 7 | heavy_walker + stealth_drone mix | 점진 증가 | medium | medium bounty | 조합 검증 |
+| forest_gate | 8 | battle_robot + heavy_walker + stealth_drone mix | 대량 | medium | high bounty | 후반 준비 |
+| forest_gate | 9 | stealth_drone + battle_robot rush | 대량 | fast | high bounty | 최종 보스 전 압박 |
+| forest_gate | 10 | titan (최종 보스, HP×2) | 1 | boss spawn | clear reward | 최종 클리어 시험 |
 
 ### 6-6. Economy Source / Sink
 
 | currency | source | amount | sink | amount |
 | --- | --- | --- | --- | --- |
-| gold | 초기 지급 | 200 | 랜덤 타워 구매 | 50 |
-| gold | 적 처치 보상 | 5~60 | 전투 중 추가 전력 확보 | 반복 소비 |
-| gold | 웨이브/보스 돌파 성과 | stage dependent | 메타 성장 / 해금 비용 | 누적 소비 |
+| energy (인게임) | 시간 경과 자동 충전 | 1/sec, cap 100 | 타워 배치 (공격형) | 10 |
+| energy (인게임) | — | — | 타워 배치 (CC/버퍼형) | 20 |
+| gold (메타) | 적 처치 bounty | 5~60 (스테이지 레벨 배율 적용) | 타워 강화 / 승급 / 컬렉션 해금 | 누적 소비 |
+| gold (메타) | 웨이브/보스 돌파 성과 | stage dependent | 메타 성장 비용 | 누적 소비 |
 
 ### 6-7. Difficulty Budget
 
 | stage_id | target_dps | target_survival | expected_gold | allowed_mistakes | clear_rate_target |
 | --- | --- | --- | --- | --- | --- |
-| forest_gate | 초반 단일딜 확보 → 중반 광역/감속/버프 조합 → 후반 집중 화력 필요 | 20웨이브 / HP 20 방어 | 초반 운영 가능 수준의 골드 순환 | 초반 2~3회, 후반 1~2회 실수 허용 | 첫 스테이지 기준 35~45% |
+| forest_gate | 초반 단일딜 확보 → 중반 광역/감속/버프 조합 → 후반 집중 화력 필요 | 10웨이브 / HP 20 방어 | 초반 에너지 운영 가능 수준의 배치 | 초반 2~3회, 후반 1~2회 실수 허용 | 첫 스테이지 기준 35~45% |
 
 ---
 
@@ -195,11 +196,11 @@
 
 | 항목 | 설명 |
 | --- | --- |
-| Objective | 성문이 무너지기 전에 20웨이브와 보스 구간을 생존한다 |
-| Map Structure | 세로형 단일 필드 / 고정 지그재그 레인 / buildable tile 분리 |
-| Danger Points | 빠른 적 러시, 고장갑 탱커, 보스 웨이브, sudden death 대량 압박 |
+| Objective | 성문이 무너지기 전에 10웨이브와 보스 구간을 생존한다 |
+| Map Structure | 8×18 세로 모드 단일 필드 / 고정 지그재그 레인 / buildable tile 분리 |
+| Danger Points | 빠른 적 러시, 고장갑 탱커, 웨이브 5 중간 보스, 웨이브 10 최종 보스(Titan) |
 | Visibility | spawn에서 exit까지 경로가 명확하게 읽히고, 배치 가능 타일이 직관적으로 구분되어야 한다 |
-| Difficulty Spike | 1차 보스 전(8~9 wave), 2차 보스 전후(14~15 wave), sudden death(19~20 wave) |
+| Difficulty Spike | 웨이브 5 중간 보스, 웨이브 9 러시, 웨이브 10 최종 보스 |
 | Checkpoint | 세션 중 체크포인트는 없고, 실패 시 즉시 재도전 또는 로비 복귀 |
 
 ### 레벨 설계 체크리스트
@@ -235,7 +236,7 @@
 - **Inventory / Deck / Build Panel**
   - 보유 타워 컬렉션
   - 티어/속성/설명 확인
-  - 전투 중 랜덤 타워 획득 후 배치
+  - 4타워 덱에서 선택 배치
 - **Result Screen**
   - 방어 성공 / 방어 실패
   - 다시 시작
@@ -275,7 +276,7 @@
 ```markdown
 우리 게임은 일반적인 모바일 TD와 달리
 세로형 single-field에서 즉시 시작되는 짧은 생존 구조와
-랜덤 타워 획득 + 전략 배치 + 메타 컬렉션 확장 루프 때문에
+4타워 덱 전략 배치 + 메타 컬렉션 확장 루프 때문에
 플레이어가 긴장감과 성장 성취를 동시에 강하게 느낀다.
 ```
 
@@ -340,7 +341,7 @@
 | ARPPU | 결제 유저 평균 매출 |
 | Ad Views per DAU | 유저당 광고 시청량 |
 | Boss Reach Rate | 첫 보스 / 두 번째 보스 도달율 |
-| Wave 20 Clear Rate | 최종 클리어율 |
+| Wave 10 Clear Rate | 최종 클리어율 |
 
 ### 12-3. Telemetry Event Map
 
@@ -348,7 +349,7 @@
 | --- | --- | --- | --- |
 | game_start | run 시작 시 | stage_id, mode, run_id | DAU |
 | tower_placed | 타워 배치 시 | tower_id, x, y, wave_slot | core engagement |
-| random_tower_rolled | 랜덤 타워 획득 시 | tower_id, tier, cost | economy / randomness |
+| tower_deck_select | 덱 타워 선택 배치 시 | tower_id, tier, energy_cost | economy / deck usage |
 | boss_warning | 보스 경고 시 | stage_id, slot_index | encounter reach |
 | game_over | 전투 종료 시 | result, reason, final_slot | clear rate |
 | stage_clear | 스테이지 클리어 시 | stage_id, time, hp_remaining | progression |
@@ -361,7 +362,7 @@
 
 ### 기획
 
-- 코어 루프가 한 문장으로 설명되는가: **즉시 시작 → 랜덤 타워 배치 → 20웨이브 생존 → 보상 성장**
+- 코어 루프가 한 문장으로 설명되는가: **즉시 시작 → 4타워 덱 배치 → 10웨이브 생존 → 보상 성장**
 - TD와 RPG 축이 모두 살아 있는가: **전투 전략 + 컬렉션/레벨/보상 성장**
 - 유저 프레임이 분명한가: **짧은 세션을 선호하는 캐주얼~미드코어 TD 유저**
 - 전투 전략과 메타 성장의 연결이 자연스러운가: **전투 보상으로 컬렉션/성장을 확장**
@@ -372,9 +373,9 @@
 
 ### 제작 전 확인
 
-- 시스템 간 용어가 통일됐는가: **wave / boss / sudden death / gold / collection**
+- 시스템 간 용어가 통일됐는가: **wave / boss / energy / gold(메타) / collection**
 - ID 규칙이 정해졌는가: **tower_id, enemy_id, stage_id 기반**
 - 저장 데이터 구조를 고려했는가: **profile / collection / settings / progress**
 - 수집과 육성 UI 흐름이 정리됐는가: **로비 → 컬렉션 → 전투 → 결과 → 성장**
 - rarity / level / stat 성장 규칙이 정의됐는가: **5티어, 프로필 레벨, 타워 컬렉션 성장**
-- KPI 이벤트를 설계했는가: **game_start, tower_placed, random_tower_rolled, game_over, stage_clear 등**
+- KPI 이벤트를 설계했는가: **game_start, tower_placed, tower_deck_select, game_over, stage_clear 등**

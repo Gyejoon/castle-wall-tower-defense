@@ -84,28 +84,65 @@ if (typeof window !== 'undefined') {
 	});
 }
 
-type SaveMigration = (data: Record<string, unknown>) => Record<string, unknown>;
+type SaveMigration = (
+	data: Record<string, unknown>,
+	context?: { tutorialCompleted?: boolean },
+) => Record<string, unknown>;
 
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
-	// Example for future: 1 → 2
-	// 1: (data) => ({ ...data, newField: 'default', version: 2 }),
+	1: (data, context) => {
+		const settings = (data.settings ?? {}) as Record<string, unknown>;
+		const soundWasEnabled = settings.soundEnabled !== false;
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+
+		return {
+			...data,
+			version: 2,
+			profile: {
+				...(data.profile as Record<string, unknown>),
+				diamond: 0,
+			},
+			progress: {
+				...progress,
+				tutorialCompleted: context?.tutorialCompleted ?? false,
+				gachaPityCount: 0,
+				dailyFreeBoxClaimedAt: null,
+				dailyAdBoxCount: 0,
+				dailyResetAt: null,
+				dailyMissions: [],
+				weeklyMissions: [],
+				lastDailyMissionResetAt: null,
+				lastWeeklyMissionResetAt: null,
+			},
+			settings: {
+				bgmVolume: soundWasEnabled ? 0.7 : 0,
+				sfxVolume: soundWasEnabled ? 0.8 : 0,
+				screenShake: settings.screenShake ?? true,
+				showDamageNumbers: settings.showDamageNumbers ?? true,
+				colorblindMode: 'off',
+			},
+		};
+	},
 };
 
-function migrateSave(data: Record<string, unknown>): SaveData | null {
+function migrateSave(
+	data: Record<string, unknown>,
+	context?: { tutorialCompleted?: boolean },
+): SaveData | null {
 	let version = typeof data.version === 'number' ? data.version : 0;
 	let current = data;
 	while (version < SAVE_VERSION) {
 		const migrate = SAVE_MIGRATIONS[version];
 		if (!migrate) return null; // no migration path — reset to default
-		current = migrate(current);
+		current = migrate(current, context);
 		version = typeof current.version === 'number' ? current.version : 0;
 	}
 	return version === SAVE_VERSION ? (current as unknown as SaveData) : null;
 }
 
-function parseSave(): SaveData | null {
+function parseSave(context?: { tutorialCompleted?: boolean }): SaveData | null {
 	try {
 		const raw = localStorage.getItem(SAVE_STORAGE_KEY);
 		if (!raw) return null;
@@ -113,7 +150,7 @@ function parseSave(): SaveData | null {
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (parsed.version === SAVE_VERSION) return parsed as SaveData;
 		// Attempt migration from older version
-		return migrateSave(parsed);
+		return migrateSave(parsed, context);
 	} catch {
 		// corrupt JSON
 	}
@@ -154,11 +191,24 @@ export const useMetaStore = create<MetaState>()(
 			...defaultSave,
 
 			loadSave: () => {
-				let save = parseSave();
+				// Read legacy tutorial_completed key before migration
+				let legacyTutorialCompleted = false;
+				try {
+					legacyTutorialCompleted =
+						localStorage.getItem('tutorial_completed') === 'true';
+				} catch {}
+
+				let save = parseSave({ tutorialCompleted: legacyTutorialCompleted });
 				if (!save) {
 					save = createDefaultSave();
 					save = migrateLegacyDeck(save);
 				}
+
+				// Clean up legacy key
+				try {
+					localStorage.removeItem('tutorial_completed');
+				} catch {}
+
 				set({
 					version: save.version,
 					profile: save.profile,

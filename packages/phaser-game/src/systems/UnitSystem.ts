@@ -1,5 +1,6 @@
 import {
 	type ActiveUnit,
+	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
 	type Position,
@@ -19,6 +20,9 @@ interface SpawnQueueEntry {
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
+	isBoss: boolean;
+	hpMultiplier: number;
+	waveSlot: number;
 }
 
 interface UnitInstance {
@@ -35,12 +39,22 @@ interface UnitInstance {
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
 	laneIndex: number; // which lane this unit follows
+	isBoss: boolean;
+	bossPhase: 1 | 2;
+	invulnerableMs: number;
+	maxHp: number;
+	baseSpeed: number;
+	ccImmunityChance: number;
+	waveSlot: number;
 }
 
 interface QueueUnitsOptions {
 	bountyOverride?: number;
 	countsTowardClear?: boolean;
 	source?: UnitSpawnSource;
+	isBoss?: boolean;
+	hpMultiplier?: number;
+	waveSlot?: number;
 }
 
 export class UnitSystem {
@@ -103,6 +117,9 @@ export class UnitSystem {
 			bounty: options.bountyOverride ?? def.bounty,
 			countsTowardClear: options.countsTowardClear ?? true,
 			source: options.source ?? 'base',
+			isBoss: options.isBoss ?? false,
+			hpMultiplier: options.hpMultiplier ?? 1,
+			waveSlot: options.waveSlot ?? 0,
 		});
 	}
 
@@ -122,11 +139,13 @@ export class UnitSystem {
 
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
+		const finalHp = entry.def.stats.hp * entry.hpMultiplier;
+
 		const unitData: ActiveUnit = {
 			instanceId,
 			defId: entry.def.id,
 			position: { x: startGrid.x, y: startGrid.y },
-			hp: entry.def.stats.hp,
+			hp: finalHp,
 			pathIndex: 0,
 		};
 
@@ -155,7 +174,7 @@ export class UnitSystem {
 			startWorld.x,
 			startWorld.y,
 			entry.def,
-			entry.def.stats.hp,
+			finalHp,
 		);
 
 		this.units.set(instanceId, {
@@ -172,6 +191,13 @@ export class UnitSystem {
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
 			laneIndex,
+			isBoss: entry.isBoss,
+			bossPhase: 1,
+			invulnerableMs: 0,
+			maxHp: finalHp,
+			baseSpeed: entry.def.stats.speed,
+			ccImmunityChance: 0,
+			waveSlot: entry.waveSlot,
 		});
 	}
 
@@ -230,11 +256,28 @@ export class UnitSystem {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
 
+		if (unit.invulnerableMs > 0) {
+			return { killed: false, bounty: 0, unitDefId: unit.def.id, countsTowardClear: unit.countsTowardClear, source: unit.source };
+		}
+
 		const armor = armorPierce ? 0 : unit.def.stats.armor;
 		const damage = Math.max(1, rawDamage - armor);
 		unit.data.hp -= damage;
 
+		// Boss phase transition check
+		if (unit.isBoss && unit.bossPhase === 1 &&
+				unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio) {
+			unit.bossPhase = 2;
+			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
+			unit.data.hp = Math.max(1, unit.data.hp);
+			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
+			EventBus.emit('boss-phase-change', { phase: 2, unitId: unit.data.instanceId });
+		}
+
 		if (unit.data.hp <= 0) {
+			if (unit.isBoss) {
+				EventBus.emit('boss-defeated', { unitId: unit.data.instanceId, waveSlot: unit.waveSlot });
+			}
 			unit.sprite.destroy();
 			unit.hpBar.destroy();
 			const deathFx = this.scene.add.sprite(
@@ -264,6 +307,14 @@ export class UnitSystem {
 				countsTowardClear: unit.countsTowardClear,
 				source: unit.source,
 			};
+		}
+
+		if (unit.isBoss && unit.data.hp > 0) {
+			EventBus.emit('boss-hp-update', {
+				hp: Math.max(0, unit.data.hp),
+				maxHp: unit.maxHp,
+				phase: unit.bossPhase,
+			});
 		}
 
 		this.renderHpBar(
@@ -345,6 +396,10 @@ export class UnitSystem {
 		const dt = delta / 1000;
 
 		for (const [id, unit] of this.units) {
+			if (unit.invulnerableMs > 0) {
+				unit.invulnerableMs -= delta;
+			}
+
 			const unitLane = this.lanes[unit.laneIndex] ?? this.currentPath;
 			const unitLaneWorld =
 				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;

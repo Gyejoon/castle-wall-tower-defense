@@ -1,5 +1,5 @@
 import { type Position } from '@gld/shared';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -355,5 +355,75 @@ describe('UnitSystem', () => {
 			expect(system.hasActiveUnits()).toBe(false);
 			expect(system.hasQueuedUnits()).toBe(false);
 		});
+	});
+});
+
+describe('Boss phase system', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('transitions to phase 2 when HP drops to 50%', () => {
+		// titan: hp=500, armor=10, phase transition at 50% = 250 HP
+		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Deal 251 armorPierce damage: 500 - 251 = 249 (below 250 threshold)
+		const result = system.applyDamage(unitId, 251, true);
+		expect(result).not.toBeNull();
+		expect(result!.killed).toBe(false);
+
+		// HP should be clamped to at least 1 due to phase transition
+		const positions = system.getUnitPositions();
+		expect(positions[0].hp).toBeGreaterThanOrEqual(1);
+
+		// Access bossPhase via a second damage call that should be blocked by invulnerability
+		// Confirm invulnerability is active by dealing more damage and verifying HP didn't change
+		const hpAfterTransition = positions[0].hp;
+		system.applyDamage(unitId, 100, true);
+		const positionsAfterBlock = system.getUnitPositions();
+		expect(positionsAfterBlock[0].hp).toBe(hpAfterTransition);
+	});
+
+	it('blocks damage during invulnerability', () => {
+		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Trigger phase transition (500 * 0.5 = 250 threshold)
+		system.applyDamage(unitId, 251, true); // HP drops to 249 → phase 2, invulnerable
+
+		const hpAfterTransition = system.getUnitPositions()[0].hp;
+
+		// Apply more damage during invulnerability window
+		const blockedResult = system.applyDamage(unitId, 100, true);
+		expect(blockedResult).not.toBeNull();
+		expect(blockedResult!.killed).toBe(false);
+
+		// HP should be unchanged
+		expect(system.getUnitPositions()[0].hp).toBe(hpAfterTransition);
+	});
+
+	it('applies hpMultiplier for wave 10 boss', () => {
+		// titan base hp=500, hpMultiplier=2 → final HP = 1000
+		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 2 });
+		system.update(0, 300); // spawn
+
+		const positions = system.getUnitPositions();
+		expect(positions[0].hp).toBe(1000);
 	});
 });

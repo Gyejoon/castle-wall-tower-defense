@@ -1,7 +1,6 @@
 import type {
 	DeckCardDef,
 	PlacementFailureReason,
-	Position,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -22,7 +21,6 @@ export interface GameEventMap {
 	'deck-loaded': { cards: readonly DeckCardDef[] };
 	'unit-spawned': { unitType: UnitType; count: number };
 	'player-damaged': { playerId: string; damage: number; remainingHp: number };
-	'path-updated': { path: Position[] };
 	'game-over': {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';

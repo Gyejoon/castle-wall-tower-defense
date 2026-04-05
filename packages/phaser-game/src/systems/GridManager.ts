@@ -1,5 +1,10 @@
 import type { Grid, GridConfig, Position, Tile } from '@gld/shared';
-import { DEFAULT_GRID_CONFIG, ORTHO_TILE } from '@gld/shared';
+import {
+	DEFAULT_GRID_CONFIG,
+	getAllPathCells,
+	type MapLayout,
+	ORTHO_TILE,
+} from '@gld/shared';
 import type Phaser from 'phaser';
 
 export interface GridManagerOptions {
@@ -40,11 +45,7 @@ export class GridManager {
 
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
-		const mapConfig = config as GridConfig & {
-			buildablePoints?: Position[];
-			blockedPlacementPoints?: Position[];
-			path?: Position[];
-		};
+		const mapConfig = config as GridConfig & Partial<MapLayout>;
 		this.buildablePointKeys = new Set(
 			(mapConfig.buildablePoints ?? []).map((point) => `${point.x},${point.y}`),
 		);
@@ -53,8 +54,12 @@ export class GridManager {
 				(point) => `${point.x},${point.y}`,
 			),
 		);
+		// Include all path cells from all lanes
+		const allPathCells = mapConfig.paths
+			? getAllPathCells(mapConfig as MapLayout)
+			: (mapConfig.path ?? []);
 		this.pathPointKeys = new Set(
-			(mapConfig.path ?? []).map((point) => `${point.x},${point.y}`),
+			allPathCells.map((point) => `${point.x},${point.y}`),
 		);
 
 		const gridPixelW = this.orthoTile * this.width;

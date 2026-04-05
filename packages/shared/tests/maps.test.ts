@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { FOREST_GATE_MAP } from '../src/constants/maps';
+import {
+	FOREST_GATE_MAP,
+	getAllPathCells,
+	getMapPaths,
+	LAVA_FORTRESS_MAP,
+	MAP_REGISTRY,
+	STORM_CITADEL_MAP,
+} from '../src/constants/maps';
 
 function countTurns(path: Array<{ x: number; y: number }>): number {
 	let turns = 0;
@@ -108,5 +115,138 @@ describe('FOREST_GATE_MAP', () => {
 			expect(pos.y).toBeGreaterThanOrEqual(0);
 			expect(pos.y).toBeLessThan(height);
 		}
+	});
+});
+
+// ── getMapPaths ──────────────────────────────────────────────
+
+describe('getMapPaths', () => {
+	it('single-lane map returns [map.path]', () => {
+		const paths = getMapPaths(FOREST_GATE_MAP);
+		expect(paths).toHaveLength(1);
+		expect(paths[0]).toBe(FOREST_GATE_MAP.path);
+	});
+
+	it('multi-lane map returns map.paths', () => {
+		const lavaPaths = getMapPaths(LAVA_FORTRESS_MAP);
+		expect(lavaPaths).toHaveLength(2);
+
+		const stormPaths = getMapPaths(STORM_CITADEL_MAP);
+		expect(stormPaths).toHaveLength(3);
+	});
+});
+
+// ── getAllPathCells ───────────────────────────────────────────
+
+describe('getAllPathCells', () => {
+	it('single-lane returns same array as path', () => {
+		const cells = getAllPathCells(FOREST_GATE_MAP);
+		expect(cells).toBe(FOREST_GATE_MAP.path);
+	});
+
+	it('multi-lane returns deduplicated cells', () => {
+		const lavaCells = getAllPathCells(LAVA_FORTRESS_MAP);
+		const keys = lavaCells.map((p) => `${p.x},${p.y}`);
+		expect(new Set(keys).size).toBe(keys.length);
+	});
+
+	it('multi-lane includes cells from all lanes', () => {
+		const stormCells = getAllPathCells(STORM_CITADEL_MAP);
+		const cellSet = new Set(stormCells.map((p) => `${p.x},${p.y}`));
+		for (const lane of STORM_CITADEL_MAP.paths!) {
+			for (const p of lane) {
+				expect(cellSet.has(`${p.x},${p.y}`)).toBe(true);
+			}
+		}
+	});
+});
+
+// ── Multi-map data integrity ─────────────────────────────────
+
+function assertPathContinuity(path: Array<{ x: number; y: number }>) {
+	for (let i = 0; i < path.length - 1; i++) {
+		const dx = Math.abs(path[i + 1].x - path[i].x);
+		const dy = Math.abs(path[i + 1].y - path[i].y);
+		expect(dx + dy).toBe(1);
+	}
+}
+
+function assertBounds(
+	positions: Array<{ x: number; y: number }>,
+	width: number,
+	height: number,
+) {
+	for (const p of positions) {
+		expect(p.x).toBeGreaterThanOrEqual(0);
+		expect(p.x).toBeLessThan(width);
+		expect(p.y).toBeGreaterThanOrEqual(0);
+		expect(p.y).toBeLessThan(height);
+	}
+}
+
+describe.each([
+	['lava_fortress', LAVA_FORTRESS_MAP],
+	['storm_citadel', STORM_CITADEL_MAP],
+])('%s map data integrity', (_id, map) => {
+	it('all lanes are continuous (each step adjacent)', () => {
+		const paths = getMapPaths(map);
+		for (const lane of paths) {
+			assertPathContinuity(lane);
+		}
+	});
+
+	it('each lane connects spawn row (y=0) to exit row (y=height-1)', () => {
+		const paths = getMapPaths(map);
+		for (const lane of paths) {
+			expect(lane[0].y).toBe(0);
+			expect(lane[lane.length - 1].y).toBe(map.height - 1);
+		}
+	});
+
+	it('no duplicate path cells across all lanes', () => {
+		const allCells = getAllPathCells(map);
+		const keys = allCells.map((p) => `${p.x},${p.y}`);
+		expect(new Set(keys).size).toBe(keys.length);
+	});
+
+	it('all positions within grid bounds', () => {
+		const allCells = getAllPathCells(map);
+		assertBounds(allCells, map.width, map.height);
+		assertBounds(map.buildablePoints, map.width, map.height);
+		assertBounds(map.blockedPlacementPoints, map.width, map.height);
+	});
+
+	it('buildable points do not overlap path or blocked cells', () => {
+		const pathSet = new Set(getAllPathCells(map).map((p) => `${p.x},${p.y}`));
+		const blockedSet = new Set(
+			map.blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+		);
+		for (const bp of map.buildablePoints) {
+			const key = `${bp.x},${bp.y}`;
+			expect(pathSet.has(key)).toBe(false);
+			expect(blockedSet.has(key)).toBe(false);
+		}
+	});
+
+	it('buildable + path + blocked cover the full grid (no gaps)', () => {
+		const allCells = getAllPathCells(map);
+		const covered = new Set<string>();
+		for (const p of allCells) covered.add(`${p.x},${p.y}`);
+		for (const p of map.buildablePoints) covered.add(`${p.x},${p.y}`);
+		for (const p of map.blockedPlacementPoints) covered.add(`${p.x},${p.y}`);
+		expect(covered.size).toBe(map.width * map.height);
+	});
+
+	it('map is 8x18', () => {
+		expect(map.width).toBe(8);
+		expect(map.height).toBe(18);
+	});
+});
+
+describe('MAP_REGISTRY', () => {
+	it('contains all three maps', () => {
+		expect(Object.keys(MAP_REGISTRY)).toEqual(
+			expect.arrayContaining(['forest_gate', 'lava_fortress', 'storm_citadel']),
+		);
 	});
 });

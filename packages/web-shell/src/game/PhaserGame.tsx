@@ -34,7 +34,7 @@ export function PhaserGame() {
 				setGameReady(false);
 			}
 		};
-	}, [setGameReady]);
+	}, [setGameReady, selectedMapId]);
 
 	return (
 		<div

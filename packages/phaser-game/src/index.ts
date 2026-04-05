@@ -11,7 +11,10 @@ export { GridManager } from './systems/GridManager';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
 export { WaveSystem } from './systems/WaveSystem';
 
-export function startGame(parentElement?: string | HTMLElement, options?: { mapId?: string }): Phaser.Game {
+export function startGame(
+	parentElement?: string | HTMLElement,
+	options?: { mapId?: string },
+): Phaser.Game {
 	let width = gameConfig.width as number;
 	let height = gameConfig.height as number;
 

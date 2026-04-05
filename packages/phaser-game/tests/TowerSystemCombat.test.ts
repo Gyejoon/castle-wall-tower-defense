@@ -115,7 +115,7 @@ describe('TowerSystem combat', () => {
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();
 		// flame_tower damage=40, fire vs fire=1.0x → 40
-		expect(damageEvt!.damage).toBe(40);
+		expect(damageEvt?.damage).toBe(40);
 	});
 
 	it('applies element multiplier: fire tower vs lightning enemy = 1.3x', () => {
@@ -136,7 +136,7 @@ describe('TowerSystem combat', () => {
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();
 		// flame_tower damage=40, fire vs lightning=1.3x → 52
-		expect(damageEvt!.damage).toBe(52);
+		expect(damageEvt?.damage).toBe(52);
 	});
 
 	it('slow tower parses correct factor: emp slow_30% → factor 0.7', () => {
@@ -156,7 +156,7 @@ describe('TowerSystem combat', () => {
 
 		const slowEvt = events.find((e) => e.slow);
 		expect(slowEvt).toBeDefined();
-		expect(slowEvt!.slow!.factor).toBe(0.7);
+		expect(slowEvt?.slow?.factor).toBe(0.7);
 	});
 
 	it('stun tower returns stun event via buffer (not callback)', () => {
@@ -176,7 +176,7 @@ describe('TowerSystem combat', () => {
 
 		const stunEvt = events.find((e) => e.stun);
 		expect(stunEvt).toBeDefined();
-		expect(stunEvt!.stun!.duration).toBe(1000); // CC_AURA_CONFIGS.stun_aoe = 1000ms
+		expect(stunEvt?.stun?.duration).toBe(1000); // CC_AURA_CONFIGS.stun_aoe = 1000ms
 	});
 
 	it('passive stun aura (shield) returns stun event on cooldown', () => {
@@ -197,7 +197,7 @@ describe('TowerSystem combat', () => {
 		]);
 		const stun1 = events1.find((e) => e.stun);
 		expect(stun1).toBeDefined();
-		expect(stun1!.stun!.duration).toBe(1000);
+		expect(stun1?.stun?.duration).toBe(1000);
 
 		// Second call before next cooldown: should NOT stun
 		const events2 = towerSystem.update(4000, 16, [
@@ -248,18 +248,14 @@ describe('TowerSystem combat', () => {
 		]);
 
 		// Primary target gets slow
-		const primarySlow = events.find(
-			(e) => e.unitId === 'u1' && e.slow,
-		);
+		const primarySlow = events.find((e) => e.unitId === 'u1' && e.slow);
 		expect(primarySlow).toBeDefined();
-		expect(primarySlow!.slow!.factor).toBe(0.5); // 50%
+		expect(primarySlow?.slow?.factor).toBe(0.5); // 50%
 
 		// Splash target gets damage + slow
-		const splashEvt = events.find(
-			(e) => e.unitId === 'u2' && e.damage > 0,
-		);
+		const splashEvt = events.find((e) => e.unitId === 'u2' && e.damage > 0);
 		expect(splashEvt).toBeDefined();
-		expect(splashEvt!.slow).toBeDefined();
+		expect(splashEvt?.slow).toBeDefined();
 	});
 
 	it('focused attacker (no special) sets armorPierce=true', () => {
@@ -279,7 +275,7 @@ describe('TowerSystem combat', () => {
 
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();
-		expect(damageEvt!.armorPierce).toBe(true);
+		expect(damageEvt?.armorPierce).toBe(true);
 	});
 
 	it('splash tower (plasma) does NOT set armorPierce', () => {
@@ -301,7 +297,7 @@ describe('TowerSystem combat', () => {
 
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();
-		expect(damageEvt!.armorPierce).toBe(false);
+		expect(damageEvt?.armorPierce).toBe(false);
 	});
 
 	it('no boost system remains: update has no applyStun callback param', () => {

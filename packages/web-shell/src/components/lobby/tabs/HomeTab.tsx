@@ -84,67 +84,66 @@ export function HomeTab() {
 				</div>
 
 				{/* Stage selection */}
-					<div
-						style={{
-							display: 'flex',
-							gap: '6px',
-							overflowX: 'auto',
-							padding: '2px',
-						}}
-					>
-						{Object.values(MAP_REGISTRY).map((map) => (
-							<div
-								key={map.id}
-								role="button"
-								tabIndex={0}
-								aria-pressed={selectedMapId === map.id}
-								aria-label={`스테이지 ${map.name}`}
-								onClick={() => setSelectedMapId(map.id)}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										setSelectedMapId(map.id);
-									}
-								}}
+				<div
+					style={{
+						display: 'flex',
+						gap: '6px',
+						overflowX: 'auto',
+						padding: '2px',
+					}}
+				>
+					{Object.values(MAP_REGISTRY).map((map) => (
+						<div
+							key={map.id}
+							role="button"
+							tabIndex={0}
+							aria-pressed={selectedMapId === map.id}
+							aria-label={`스테이지 ${map.name}`}
+							onClick={() => setSelectedMapId(map.id)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									setSelectedMapId(map.id);
+								}
+							}}
+							style={{
+								flex: '0 0 auto',
+								width: '90px',
+								padding: '6px',
+								background:
+									selectedMapId === map.id
+										? 'rgba(240,208,96,0.15)'
+										: 'rgba(42,32,16,0.8)',
+								border: `2px solid ${selectedMapId === map.id ? colors.gold : colors.border}`,
+								cursor: 'pointer',
+								textAlign: 'center',
+							}}
+						>
+							<img
+								src={STAGE_THUMBNAILS[map.id]}
+								alt={map.name}
 								style={{
-									flex: '0 0 auto',
-									width: '90px',
-									padding: '6px',
-									background:
-										selectedMapId === map.id
-											? 'rgba(240,208,96,0.15)'
-											: 'rgba(42,32,16,0.8)',
-									border: `2px solid ${selectedMapId === map.id ? colors.gold : colors.border}`,
-									cursor: 'pointer',
-									textAlign: 'center',
+									width: '78px',
+									height: '44px',
+									objectFit: 'cover',
+									imageRendering: 'pixelated',
+								}}
+							/>
+							<p
+								style={{
+									fontFamily: fonts.pixel,
+									fontSize: '7px',
+									color: selectedMapId === map.id ? colors.gold : colors.text,
+									marginTop: '3px',
 								}}
 							>
-								<img
-									src={STAGE_THUMBNAILS[map.id]}
-									alt={map.name}
-									style={{
-										width: '78px',
-										height: '44px',
-										objectFit: 'cover',
-										imageRendering: 'pixelated',
-									}}
-								/>
-								<p
-									style={{
-										fontFamily: fonts.pixel,
-										fontSize: '7px',
-										color:
-											selectedMapId === map.id ? colors.gold : colors.text,
-										marginTop: '3px',
-									}}
-								>
-									{map.name}
-								</p>
-							</div>
-						))}
-					</div>
+								{map.name}
+							</p>
+						</div>
+					))}
+				</div>
 
-					{/* Battle CTA card */}
+				{/* Battle CTA card */}
 				<div
 					style={{
 						display: 'flex',

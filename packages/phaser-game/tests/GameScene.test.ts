@@ -166,7 +166,9 @@ describe('GameScene', () => {
 			getElapsedMs: vi.fn(() => 0),
 		};
 		scene.playerTowers = {
-			update: vi.fn(() => [{ unitId: 'unit-1', damage: 99, towerElement: 'neutral' }]),
+			update: vi.fn(() => [
+				{ unitId: 'unit-1', damage: 99, towerElement: 'neutral' },
+			]),
 		};
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),

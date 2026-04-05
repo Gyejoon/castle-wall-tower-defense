@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T15:32:43.597Z",
+  "generated": "2026-04-04T17:52:57.769Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -937,13 +937,13 @@
     {
       "key": "tilemap-lava_fortress",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/lava_fortress.json",
+      "path": "assets/maps/lava-fortress.json",
       "section": "preload"
     },
     {
       "key": "tilemap-storm_citadel",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/storm_citadel.json",
+      "path": "assets/maps/storm-citadel.json",
       "section": "preload"
     },
     {

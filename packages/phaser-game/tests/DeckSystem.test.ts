@@ -24,15 +24,15 @@ describe('DeckSystem', () => {
 		const ds = new DeckSystem();
 		const card = ds.getCardByTowerId('emp');
 		expect(card).not.toBeNull();
-		expect(card!.energyCost).toBe(20);
-		expect(card!.role).toBe('slow');
+		expect(card?.energyCost).toBe(20);
+		expect(card?.role).toBe('slow');
 	});
 
 	it('shield card has stun role', () => {
 		const ds = new DeckSystem();
 		const card = ds.getCardByTowerId('shield');
 		expect(card).not.toBeNull();
-		expect(card!.role).toBe('stun');
+		expect(card?.role).toBe('stun');
 	});
 
 	it('getCardByTowerId returns null for unknown id', () => {
@@ -44,7 +44,7 @@ describe('DeckSystem', () => {
 		const ds = new DeckSystem();
 		const def = ds.getTowerDef('laser');
 		expect(def).not.toBeNull();
-		expect(def!.name).toBe('궁수 탑');
+		expect(def?.name).toBe('궁수 탑');
 	});
 
 	it('getTowerDef returns null for unknown id', () => {

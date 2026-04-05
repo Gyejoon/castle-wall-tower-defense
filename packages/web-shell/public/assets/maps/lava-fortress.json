@@ -187,14 +187,12 @@
       "height": 18,
       "data": [
         0,
-        0,
-        0,
         5,
         0,
         0,
         0,
         0,
-        0,
+        5,
         0,
         0,
         3,
@@ -202,7 +200,12 @@
         0,
         0,
         0,
+        3,
         0,
+        0,
+        4,
+        3,
+        4,
         4,
         3,
         4,
@@ -210,29 +213,8 @@
         0,
         0,
         0,
-        0,
-        3,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        4,
         3,
         3,
-        3,
-        4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        3,
-        0,
         0,
         0,
         0,
@@ -240,9 +222,9 @@
         4,
         3,
         4,
-        0,
-        0,
-        0,
+        4,
+        3,
+        4,
         0,
         0,
         3,
@@ -250,7 +232,12 @@
         0,
         0,
         0,
+        3,
         0,
+        0,
+        4,
+        3,
+        4,
         4,
         3,
         4,
@@ -258,29 +245,8 @@
         0,
         0,
         0,
-        0,
-        3,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        4,
         3,
         3,
-        3,
-        4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        3,
-        0,
         0,
         0,
         0,
@@ -288,9 +254,9 @@
         4,
         3,
         4,
-        0,
-        0,
-        0,
+        4,
+        3,
+        4,
         0,
         0,
         3,
@@ -298,7 +264,12 @@
         0,
         0,
         0,
+        3,
         0,
+        0,
+        4,
+        3,
+        4,
         4,
         3,
         4,
@@ -306,26 +277,55 @@
         0,
         0,
         0,
-        0,
         3,
-        0,
-        0,
-        0,
+        3,
         0,
         0,
         0,
         0,
         4,
         3,
+        4,
+        4,
+        3,
+        4,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        4,
+        3,
+        4,
+        4,
         3,
         4,
         0,
         0,
         0,
         0,
+        3,
+        3,
         0,
         0,
         0,
+        0,
+        0,
+        0,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
         6,
         0,
         0,
@@ -344,155 +344,25 @@
           "id": 10000,
           "name": "decor_0",
           "type": "decoration",
-          "x": 0,
-          "y": 0,
-          "width": 32,
-          "height": 32,
-          "properties": [
-            {
-              "name": "kind",
-              "type": "string",
-              "value": "rock_large"
-            },
-            {
-              "name": "assetKey",
-              "type": "string",
-              "value": "tiny-swords-rock-1"
-            },
-            {
-              "name": "variant",
-              "type": "string",
-              "value": "Rock1.png"
-            }
-          ]
-        },
-        {
-          "id": 10001,
-          "name": "decor_1",
-          "type": "decoration",
-          "x": 0,
-          "y": 192,
-          "width": 32,
-          "height": 32,
-          "properties": [
-            {
-              "name": "kind",
-              "type": "string",
-              "value": "rock_large"
-            },
-            {
-              "name": "assetKey",
-              "type": "string",
-              "value": "tiny-swords-rock-1"
-            },
-            {
-              "name": "variant",
-              "type": "string",
-              "value": "Rock1.png"
-            }
-          ]
-        },
-        {
-          "id": 10002,
-          "name": "decor_2",
-          "type": "decoration",
           "x": 224,
-          "y": 224,
+          "y": 512,
           "width": 32,
           "height": 32,
           "properties": [
             {
               "name": "kind",
               "type": "string",
-              "value": "rock_large"
+              "value": "bush"
             },
             {
               "name": "assetKey",
               "type": "string",
-              "value": "tiny-swords-rock-2"
+              "value": "tiny-swords-bush-4"
             },
             {
               "name": "variant",
               "type": "string",
-              "value": "Rock2.png"
-            }
-          ]
-        },
-        {
-          "id": 10003,
-          "name": "decor_3",
-          "type": "decoration",
-          "x": 0,
-          "y": 384,
-          "width": 32,
-          "height": 32,
-          "properties": [
-            {
-              "name": "kind",
-              "type": "string",
-              "value": "tree_large"
-            },
-            {
-              "name": "assetKey",
-              "type": "string",
-              "value": "tiny-swords-tree-1"
-            },
-            {
-              "name": "variant",
-              "type": "string",
-              "value": "Tree1.png"
-            }
-          ]
-        },
-        {
-          "id": 10004,
-          "name": "decor_4",
-          "type": "decoration",
-          "x": 224,
-          "y": 416,
-          "width": 32,
-          "height": 32,
-          "properties": [
-            {
-              "name": "kind",
-              "type": "string",
-              "value": "tree_large"
-            },
-            {
-              "name": "assetKey",
-              "type": "string",
-              "value": "tiny-swords-tree-2"
-            },
-            {
-              "name": "variant",
-              "type": "string",
-              "value": "Tree2.png"
-            }
-          ]
-        },
-        {
-          "id": 10005,
-          "name": "decor_5",
-          "type": "decoration",
-          "x": 224,
-          "y": 544,
-          "width": 32,
-          "height": 32,
-          "properties": [
-            {
-              "name": "kind",
-              "type": "string",
-              "value": "tree_large"
-            },
-            {
-              "name": "assetKey",
-              "type": "string",
-              "value": "tiny-swords-tree-2"
-            },
-            {
-              "name": "variant",
-              "type": "string",
-              "value": "Tree2.png"
+              "value": "Bushe4.png"
             }
           ]
         }
@@ -510,7 +380,7 @@
           "id": 1,
           "name": "pp_0",
           "type": "placement_point",
-          "x": 32,
+          "x": 0,
           "y": 0,
           "width": 32,
           "height": 32
@@ -528,7 +398,7 @@
           "id": 3,
           "name": "pp_2",
           "type": "placement_point",
-          "x": 128,
+          "x": 96,
           "y": 0,
           "width": 32,
           "height": 32
@@ -537,7 +407,7 @@
           "id": 4,
           "name": "pp_3",
           "type": "placement_point",
-          "x": 160,
+          "x": 128,
           "y": 0,
           "width": 32,
           "height": 32
@@ -546,7 +416,7 @@
           "id": 5,
           "name": "pp_4",
           "type": "placement_point",
-          "x": 192,
+          "x": 160,
           "y": 0,
           "width": 32,
           "height": 32
@@ -573,7 +443,7 @@
           "id": 8,
           "name": "pp_7",
           "type": "placement_point",
-          "x": 32,
+          "x": 64,
           "y": 32,
           "width": 32,
           "height": 32
@@ -582,7 +452,7 @@
           "id": 9,
           "name": "pp_8",
           "type": "placement_point",
-          "x": 64,
+          "x": 96,
           "y": 32,
           "width": 32,
           "height": 32
@@ -609,7 +479,7 @@
           "id": 12,
           "name": "pp_11",
           "type": "placement_point",
-          "x": 192,
+          "x": 224,
           "y": 32,
           "width": 32,
           "height": 32
@@ -618,8 +488,8 @@
           "id": 13,
           "name": "pp_12",
           "type": "placement_point",
-          "x": 224,
-          "y": 32,
+          "x": 0,
+          "y": 64,
           "width": 32,
           "height": 32
         },
@@ -627,7 +497,7 @@
           "id": 14,
           "name": "pp_13",
           "type": "placement_point",
-          "x": 0,
+          "x": 224,
           "y": 64,
           "width": 32,
           "height": 32
@@ -636,8 +506,8 @@
           "id": 15,
           "name": "pp_14",
           "type": "placement_point",
-          "x": 128,
-          "y": 64,
+          "x": 0,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -645,8 +515,8 @@
           "id": 16,
           "name": "pp_15",
           "type": "placement_point",
-          "x": 160,
-          "y": 64,
+          "x": 32,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -654,8 +524,8 @@
           "id": 17,
           "name": "pp_16",
           "type": "placement_point",
-          "x": 192,
-          "y": 64,
+          "x": 64,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -663,8 +533,8 @@
           "id": 18,
           "name": "pp_17",
           "type": "placement_point",
-          "x": 224,
-          "y": 64,
+          "x": 160,
+          "y": 96,
           "width": 32,
           "height": 32
         },
@@ -672,7 +542,7 @@
           "id": 19,
           "name": "pp_18",
           "type": "placement_point",
-          "x": 0,
+          "x": 192,
           "y": 96,
           "width": 32,
           "height": 32
@@ -681,7 +551,7 @@
           "id": 20,
           "name": "pp_19",
           "type": "placement_point",
-          "x": 64,
+          "x": 224,
           "y": 96,
           "width": 32,
           "height": 32
@@ -690,8 +560,8 @@
           "id": 21,
           "name": "pp_20",
           "type": "placement_point",
-          "x": 96,
-          "y": 96,
+          "x": 0,
+          "y": 128,
           "width": 32,
           "height": 32
         },
@@ -699,8 +569,8 @@
           "id": 22,
           "name": "pp_21",
           "type": "placement_point",
-          "x": 128,
-          "y": 96,
+          "x": 224,
+          "y": 128,
           "width": 32,
           "height": 32
         },
@@ -708,8 +578,8 @@
           "id": 23,
           "name": "pp_22",
           "type": "placement_point",
-          "x": 160,
-          "y": 96,
+          "x": 0,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -717,8 +587,8 @@
           "id": 24,
           "name": "pp_23",
           "type": "placement_point",
-          "x": 192,
-          "y": 96,
+          "x": 64,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -726,8 +596,8 @@
           "id": 25,
           "name": "pp_24",
           "type": "placement_point",
-          "x": 224,
-          "y": 96,
+          "x": 96,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -735,8 +605,8 @@
           "id": 26,
           "name": "pp_25",
           "type": "placement_point",
-          "x": 0,
-          "y": 128,
+          "x": 128,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -744,8 +614,8 @@
           "id": 27,
           "name": "pp_26",
           "type": "placement_point",
-          "x": 192,
-          "y": 128,
+          "x": 160,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -754,7 +624,7 @@
           "name": "pp_27",
           "type": "placement_point",
           "x": 224,
-          "y": 128,
+          "y": 160,
           "width": 32,
           "height": 32
         },
@@ -763,7 +633,7 @@
           "name": "pp_28",
           "type": "placement_point",
           "x": 0,
-          "y": 160,
+          "y": 192,
           "width": 32,
           "height": 32
         },
@@ -771,8 +641,8 @@
           "id": 30,
           "name": "pp_29",
           "type": "placement_point",
-          "x": 32,
-          "y": 160,
+          "x": 224,
+          "y": 192,
           "width": 32,
           "height": 32
         },
@@ -780,8 +650,8 @@
           "id": 31,
           "name": "pp_30",
           "type": "placement_point",
-          "x": 64,
-          "y": 160,
+          "x": 0,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -789,8 +659,8 @@
           "id": 32,
           "name": "pp_31",
           "type": "placement_point",
-          "x": 96,
-          "y": 160,
+          "x": 32,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -798,8 +668,8 @@
           "id": 33,
           "name": "pp_32",
           "type": "placement_point",
-          "x": 128,
-          "y": 160,
+          "x": 64,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -807,8 +677,8 @@
           "id": 34,
           "name": "pp_33",
           "type": "placement_point",
-          "x": 192,
-          "y": 160,
+          "x": 160,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -816,8 +686,8 @@
           "id": 35,
           "name": "pp_34",
           "type": "placement_point",
-          "x": 224,
-          "y": 160,
+          "x": 192,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -825,8 +695,8 @@
           "id": 36,
           "name": "pp_35",
           "type": "placement_point",
-          "x": 0,
-          "y": 192,
+          "x": 224,
+          "y": 224,
           "width": 32,
           "height": 32
         },
@@ -834,8 +704,8 @@
           "id": 37,
           "name": "pp_36",
           "type": "placement_point",
-          "x": 32,
-          "y": 192,
+          "x": 0,
+          "y": 256,
           "width": 32,
           "height": 32
         },
@@ -843,8 +713,8 @@
           "id": 38,
           "name": "pp_37",
           "type": "placement_point",
-          "x": 64,
-          "y": 192,
+          "x": 224,
+          "y": 256,
           "width": 32,
           "height": 32
         },
@@ -852,8 +722,8 @@
           "id": 39,
           "name": "pp_38",
           "type": "placement_point",
-          "x": 192,
-          "y": 192,
+          "x": 0,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -861,8 +731,8 @@
           "id": 40,
           "name": "pp_39",
           "type": "placement_point",
-          "x": 224,
-          "y": 192,
+          "x": 64,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -870,8 +740,8 @@
           "id": 41,
           "name": "pp_40",
           "type": "placement_point",
-          "x": 0,
-          "y": 224,
+          "x": 96,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -879,8 +749,8 @@
           "id": 42,
           "name": "pp_41",
           "type": "placement_point",
-          "x": 32,
-          "y": 224,
+          "x": 128,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -888,8 +758,8 @@
           "id": 43,
           "name": "pp_42",
           "type": "placement_point",
-          "x": 64,
-          "y": 224,
+          "x": 160,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -897,8 +767,8 @@
           "id": 44,
           "name": "pp_43",
           "type": "placement_point",
-          "x": 128,
-          "y": 224,
+          "x": 224,
+          "y": 288,
           "width": 32,
           "height": 32
         },
@@ -906,8 +776,8 @@
           "id": 45,
           "name": "pp_44",
           "type": "placement_point",
-          "x": 160,
-          "y": 224,
+          "x": 0,
+          "y": 320,
           "width": 32,
           "height": 32
         },
@@ -915,8 +785,8 @@
           "id": 46,
           "name": "pp_45",
           "type": "placement_point",
-          "x": 192,
-          "y": 224,
+          "x": 224,
+          "y": 320,
           "width": 32,
           "height": 32
         },
@@ -924,8 +794,8 @@
           "id": 47,
           "name": "pp_46",
           "type": "placement_point",
-          "x": 224,
-          "y": 224,
+          "x": 0,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -933,8 +803,8 @@
           "id": 48,
           "name": "pp_47",
           "type": "placement_point",
-          "x": 0,
-          "y": 256,
+          "x": 32,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -942,8 +812,8 @@
           "id": 49,
           "name": "pp_48",
           "type": "placement_point",
-          "x": 128,
-          "y": 256,
+          "x": 64,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -952,7 +822,7 @@
           "name": "pp_49",
           "type": "placement_point",
           "x": 160,
-          "y": 256,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -961,7 +831,7 @@
           "name": "pp_50",
           "type": "placement_point",
           "x": 192,
-          "y": 256,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -970,7 +840,7 @@
           "name": "pp_51",
           "type": "placement_point",
           "x": 224,
-          "y": 256,
+          "y": 352,
           "width": 32,
           "height": 32
         },
@@ -979,7 +849,7 @@
           "name": "pp_52",
           "type": "placement_point",
           "x": 0,
-          "y": 288,
+          "y": 384,
           "width": 32,
           "height": 32
         },
@@ -987,8 +857,8 @@
           "id": 54,
           "name": "pp_53",
           "type": "placement_point",
-          "x": 64,
-          "y": 288,
+          "x": 224,
+          "y": 384,
           "width": 32,
           "height": 32
         },
@@ -996,8 +866,8 @@
           "id": 55,
           "name": "pp_54",
           "type": "placement_point",
-          "x": 96,
-          "y": 288,
+          "x": 0,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1005,8 +875,8 @@
           "id": 56,
           "name": "pp_55",
           "type": "placement_point",
-          "x": 128,
-          "y": 288,
+          "x": 64,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1014,8 +884,8 @@
           "id": 57,
           "name": "pp_56",
           "type": "placement_point",
-          "x": 160,
-          "y": 288,
+          "x": 96,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1023,8 +893,8 @@
           "id": 58,
           "name": "pp_57",
           "type": "placement_point",
-          "x": 192,
-          "y": 288,
+          "x": 128,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1032,8 +902,8 @@
           "id": 59,
           "name": "pp_58",
           "type": "placement_point",
-          "x": 224,
-          "y": 288,
+          "x": 160,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1041,8 +911,8 @@
           "id": 60,
           "name": "pp_59",
           "type": "placement_point",
-          "x": 0,
-          "y": 320,
+          "x": 224,
+          "y": 416,
           "width": 32,
           "height": 32
         },
@@ -1050,8 +920,8 @@
           "id": 61,
           "name": "pp_60",
           "type": "placement_point",
-          "x": 192,
-          "y": 320,
+          "x": 0,
+          "y": 448,
           "width": 32,
           "height": 32
         },
@@ -1060,7 +930,7 @@
           "name": "pp_61",
           "type": "placement_point",
           "x": 224,
-          "y": 320,
+          "y": 448,
           "width": 32,
           "height": 32
         },
@@ -1069,7 +939,7 @@
           "name": "pp_62",
           "type": "placement_point",
           "x": 0,
-          "y": 352,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1078,7 +948,7 @@
           "name": "pp_63",
           "type": "placement_point",
           "x": 32,
-          "y": 352,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1087,7 +957,7 @@
           "name": "pp_64",
           "type": "placement_point",
           "x": 64,
-          "y": 352,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1095,8 +965,8 @@
           "id": 66,
           "name": "pp_65",
           "type": "placement_point",
-          "x": 96,
-          "y": 352,
+          "x": 160,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1104,8 +974,8 @@
           "id": 67,
           "name": "pp_66",
           "type": "placement_point",
-          "x": 128,
-          "y": 352,
+          "x": 192,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1113,8 +983,8 @@
           "id": 68,
           "name": "pp_67",
           "type": "placement_point",
-          "x": 192,
-          "y": 352,
+          "x": 224,
+          "y": 480,
           "width": 32,
           "height": 32
         },
@@ -1122,8 +992,8 @@
           "id": 69,
           "name": "pp_68",
           "type": "placement_point",
-          "x": 224,
-          "y": 352,
+          "x": 0,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1131,8 +1001,8 @@
           "id": 70,
           "name": "pp_69",
           "type": "placement_point",
-          "x": 0,
-          "y": 384,
+          "x": 32,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1140,8 +1010,8 @@
           "id": 71,
           "name": "pp_70",
           "type": "placement_point",
-          "x": 32,
-          "y": 384,
+          "x": 64,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1149,8 +1019,8 @@
           "id": 72,
           "name": "pp_71",
           "type": "placement_point",
-          "x": 64,
-          "y": 384,
+          "x": 160,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1159,7 +1029,7 @@
           "name": "pp_72",
           "type": "placement_point",
           "x": 192,
-          "y": 384,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1168,7 +1038,7 @@
           "name": "pp_73",
           "type": "placement_point",
           "x": 224,
-          "y": 384,
+          "y": 512,
           "width": 32,
           "height": 32
         },
@@ -1177,7 +1047,7 @@
           "name": "pp_74",
           "type": "placement_point",
           "x": 0,
-          "y": 416,
+          "y": 544,
           "width": 32,
           "height": 32
         },
@@ -1186,7 +1056,7 @@
           "name": "pp_75",
           "type": "placement_point",
           "x": 32,
-          "y": 416,
+          "y": 544,
           "width": 32,
           "height": 32
         },
@@ -1195,7 +1065,7 @@
           "name": "pp_76",
           "type": "placement_point",
           "x": 64,
-          "y": 416,
+          "y": 544,
           "width": 32,
           "height": 32
         },
@@ -1203,8 +1073,8 @@
           "id": 78,
           "name": "pp_77",
           "type": "placement_point",
-          "x": 128,
-          "y": 416,
+          "x": 160,
+          "y": 544,
           "width": 32,
           "height": 32
         },
@@ -1212,8 +1082,8 @@
           "id": 79,
           "name": "pp_78",
           "type": "placement_point",
-          "x": 160,
-          "y": 416,
+          "x": 192,
+          "y": 544,
           "width": 32,
           "height": 32
         },
@@ -1221,214 +1091,7 @@
           "id": 80,
           "name": "pp_79",
           "type": "placement_point",
-          "x": 192,
-          "y": 416,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 81,
-          "name": "pp_80",
-          "type": "placement_point",
           "x": 224,
-          "y": 416,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 82,
-          "name": "pp_81",
-          "type": "placement_point",
-          "x": 0,
-          "y": 448,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 83,
-          "name": "pp_82",
-          "type": "placement_point",
-          "x": 128,
-          "y": 448,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 84,
-          "name": "pp_83",
-          "type": "placement_point",
-          "x": 160,
-          "y": 448,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 85,
-          "name": "pp_84",
-          "type": "placement_point",
-          "x": 192,
-          "y": 448,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 86,
-          "name": "pp_85",
-          "type": "placement_point",
-          "x": 224,
-          "y": 448,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 87,
-          "name": "pp_86",
-          "type": "placement_point",
-          "x": 0,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 88,
-          "name": "pp_87",
-          "type": "placement_point",
-          "x": 64,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 89,
-          "name": "pp_88",
-          "type": "placement_point",
-          "x": 96,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 90,
-          "name": "pp_89",
-          "type": "placement_point",
-          "x": 128,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 91,
-          "name": "pp_90",
-          "type": "placement_point",
-          "x": 160,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 92,
-          "name": "pp_91",
-          "type": "placement_point",
-          "x": 192,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 93,
-          "name": "pp_92",
-          "type": "placement_point",
-          "x": 224,
-          "y": 480,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 94,
-          "name": "pp_93",
-          "type": "placement_point",
-          "x": 0,
-          "y": 512,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 95,
-          "name": "pp_94",
-          "type": "placement_point",
-          "x": 160,
-          "y": 512,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 96,
-          "name": "pp_95",
-          "type": "placement_point",
-          "x": 192,
-          "y": 512,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 97,
-          "name": "pp_96",
-          "type": "placement_point",
-          "x": 224,
-          "y": 512,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 98,
-          "name": "pp_97",
-          "type": "placement_point",
-          "x": 0,
-          "y": 544,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 99,
-          "name": "pp_98",
-          "type": "placement_point",
-          "x": 32,
-          "y": 544,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 100,
-          "name": "pp_99",
-          "type": "placement_point",
-          "x": 64,
-          "y": 544,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 101,
-          "name": "pp_100",
-          "type": "placement_point",
-          "x": 96,
-          "y": 544,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 102,
-          "name": "pp_101",
-          "type": "placement_point",
-          "x": 160,
-          "y": 544,
-          "width": 32,
-          "height": 32
-        },
-        {
-          "id": 103,
-          "name": "pp_102",
-          "type": "placement_point",
-          "x": 192,
           "y": 544,
           "width": 32,
           "height": 32

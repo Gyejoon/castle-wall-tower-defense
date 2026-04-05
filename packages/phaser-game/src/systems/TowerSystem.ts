@@ -5,7 +5,7 @@ import type {
 	Position,
 	TowerDef,
 } from '@gld/shared';
-import { ALL_TOWERS, CC_AURA_CONFIGS, getElementMultiplier, TIER_NAMES } from '@gld/shared';
+import { ALL_TOWERS, CC_AURA_CONFIGS, getElementMultiplier } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -17,7 +17,6 @@ interface TowerInstance {
 	def: TowerDef;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
-	rarityFrame?: Phaser.GameObjects.Image;
 	lastAttackTime: number;
 	lastAuraTime: number;
 }
@@ -110,26 +109,11 @@ export class TowerSystem {
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
-		const tierName = TIER_NAMES[def.tier];
-		const rarityFrameKey = tierName ? `ui-rarity-frame-${tierName}` : null;
-		let rarityFrame: Phaser.GameObjects.Image | undefined;
-		if (rarityFrameKey && this.scene.textures.exists(rarityFrameKey)) {
-			rarityFrame = this.scene.add.image(
-				worldPos.x,
-				sprite.y,
-				rarityFrameKey,
-			);
-			rarityFrame.setDisplaySize(sprite.displayWidth + 8, sprite.displayHeight + 8);
-			rarityFrame.setDepth(this.gridManager.getDepth(gridX, gridY) - 0.5);
-			rarityFrame.setAlpha(0.8);
-		}
-
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
 			base,
 			sprite,
-			rarityFrame,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
 		});
@@ -289,8 +273,7 @@ export class TowerSystem {
 
 				if (this.isStunSpecial(special) && special) {
 					const configKey = special.replace(/%/g, '');
-					const stunDuration =
-						CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const stunDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
@@ -318,7 +301,6 @@ export class TowerSystem {
 				}
 
 				if (this.hasSplash(special)) {
-					const splashRadiusSq = TowerSystem.SPLASH_RADIUS_SQ;
 					const closestGrid = this.gridManager.worldToGridFloat(
 						closestUnit.x,
 						closestUnit.y,
@@ -329,7 +311,7 @@ export class TowerSystem {
 						const sUnitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
 						const sdx = closestGrid.x - sUnitGrid.x;
 						const sdy = closestGrid.y - sUnitGrid.y;
-						if (sdx * sdx + sdy * sdy <= splashRadiusSq) {
+						if (sdx * sdx + sdy * sdy <= TowerSystem.SPLASH_RADIUS_SQ) {
 							const splashElementMult = getElementMultiplier(
 								def.element,
 								unit.element,
@@ -534,7 +516,6 @@ export class TowerSystem {
 
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
-		targetInstance.rarityFrame?.destroy();
 		this.towers.delete(targetKey);
 		this.gridManager.removeTower(gridX, gridY);
 		this.pathfinding.invalidateCache();
@@ -565,7 +546,6 @@ export class TowerSystem {
 		for (const tower of this.towers.values()) {
 			tower.base.destroy();
 			tower.sprite.destroy();
-			tower.rarityFrame?.destroy();
 		}
 		this.towers.clear();
 		this.attackGraphics?.destroy();

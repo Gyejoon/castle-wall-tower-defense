@@ -2,7 +2,10 @@ import type { ElementType } from '../types/tower';
 
 export type { ElementType } from '../types/tower';
 
-export const ELEMENT_MATCHUP: Record<ElementType, Record<ElementType, number>> = {
+export const ELEMENT_MATCHUP: Record<
+	ElementType,
+	Record<ElementType, number>
+> = {
 	fire: { fire: 1.0, water: 0.7, lightning: 1.3, neutral: 1.0 },
 	water: { fire: 1.3, water: 1.0, lightning: 0.7, neutral: 1.0 },
 	lightning: { fire: 0.7, water: 1.3, lightning: 1.0, neutral: 1.0 },
@@ -14,14 +17,6 @@ export function getElementMultiplier(
 	defenseElement: ElementType,
 ): number {
 	return ELEMENT_MATCHUP[attackElement][defenseElement];
-}
-
-/** @deprecated Use getElementMultiplier instead */
-export function getElementDamageMultiplier(
-	attackerElement: ElementType,
-	defenderElement: ElementType,
-): number {
-	return ELEMENT_MATCHUP[attackerElement]?.[defenderElement] ?? 1.0;
 }
 
 export const ELEMENT_TINT_COLORS: Record<ElementType, number> = {

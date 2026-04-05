@@ -91,10 +91,10 @@ export function rollGacha10(
       tier: replacement.tier,
       isPityReward: false,
     };
-    // Amendment C: 10연차 보장 교체 후 pity 보정
-    // 교체된 타워가 tier3이면 pity 증가 (tier5 아님)
-    // currentPity는 이미 10연차 계산 반영됨, 추가 보정 불필요
-    // (tier3 교체는 pity 리셋을 유발하지 않음)
+    // Amendment C: 교체된 타워의 tier가 5 이상이면 pity 리셋
+    if (replacement.tier >= 5) {
+      currentPity = 0;
+    }
   }
 
   return { results, newPityCount: currentPity };

@@ -181,6 +181,12 @@ body {
   50% { opacity: 0.7; }
 }
 
+/* Gacha box opening pulse */
+@keyframes gachaPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
 /* Responsive: small screens (320px) */
 @media (max-width: 359px) {
   .profile-currency {

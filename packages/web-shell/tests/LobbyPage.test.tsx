@@ -22,7 +22,7 @@ describe('LobbyPage', () => {
 		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
 
 		expect(view.getByText('PVE 생존')).toBeTruthy();
-		expect(view.getByText('즉시 시작')).toBeTruthy();
+		expect(view.getByText('게임 시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 		expect(view.queryByText('상대를 찾는 중...')).toBeNull();
 	});
@@ -49,7 +49,7 @@ describe('LobbyPage', () => {
 
 	it('starts the run immediately', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('즉시 시작'));
+		fireEvent.click(view.getByText('게임 시작'));
 
 		expect(useGameStore.getState().runStatus).toBe('building');
 	});

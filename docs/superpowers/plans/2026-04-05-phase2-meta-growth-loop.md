@@ -167,37 +167,37 @@ function getEffectiveStats(baseDamage: number, level: number, grade: TowerGrade)
 
 > Note: Obsidian vault 원문은 읽기 전용. repo 내 docs/ 파생 문서만 수정.
 
-- [ ] **Step 1: GDD 정정 — 웨이브 수**
+- [x] **Step 1: GDD 정정 — 웨이브 수**
 
 GDD `1-2 기본 정보 표`와 `6-5 Wave Sheet`에서 20웨이브 → 10웨이브로 정정.
 - Win Condition: "20웨이브 생존" → "10웨이브 생존"
 - Wave Sheet: 10개 웨이브 기준으로 축소 (현재 구현: wave 1-8 일반, wave 5 보스, wave 10 최종보스)
 
-- [ ] **Step 2: GDD 정정 — 속성 체계**
+- [x] **Step 2: GDD 정정 — 속성 체계**
 
 GDD `6-1 Tower Master`에서 속성을 현재 구현과 일치시킨다:
 - 기존(GDD): fire/ice/lightning/nature/dark (5속성)
 - 현재(구현): fire/water/lightning/neutral (4속성)
 - 변경: 전체 GDD에서 ice→water, nature/dark→neutral로 정정
 
-- [ ] **Step 3: GDD 정정 — 비용 체계**
+- [x] **Step 3: GDD 정정 — 비용 체계**
 
 GDD `6-1 Tower Master` 비용 필드를 현재 구현과 일치:
 - 기존: gold cost 50 (랜덤 롤)
 - 현재: energy cost 10/20 (덱 시스템)
 - 변경: cost 열을 에너지 비용으로 정정
 
-- [ ] **Step 4: GDD 정정 — 그리드**
+- [x] **Step 4: GDD 정정 — 그리드**
 
 - 기존: "12×8 그리드"
 - 현재: "8×18 세로 모드 그리드"
 - 변경: 관련 섹션 전체 정정
 
-- [ ] **Step 5: planning-progress.md 업데이트**
+- [x] **Step 5: planning-progress.md 업데이트**
 
 `docs/2026-04-05-planning-progress.md`의 "Planning 문서 '완료' 목록 정정" 섹션에 GDD 정정 완료 기록.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/2026-04-03-gdd-filled-draft.md docs/2026-04-05-planning-progress.md
@@ -214,7 +214,7 @@ git commit -m "docs: align GDD with current implementation (10 waves, 4 elements
 - Modify: `packages/shared/src/index.ts`
 - Test: `packages/shared/tests/meta.test.ts`
 
-- [ ] **Step 1: Write failing tests for meta formulas**
+- [x] **Step 1: Write failing tests for meta formulas**
 
 ```typescript
 // packages/shared/tests/meta.test.ts
@@ -271,20 +271,20 @@ describe('createDefaultSave', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd packages/shared && bun test tests/meta.test.ts`
 Expected: FAIL — modules not found
 
-- [ ] **Step 3: Implement save types**
+- [x] **Step 3: Implement save types**
 
 Create `packages/shared/src/types/save.ts` with the SaveData schema above.
 
-- [ ] **Step 4: Implement meta constants and formulas**
+- [x] **Step 4: Implement meta constants and formulas**
 
 Create `packages/shared/src/constants/meta.ts` with all formulas, PROMOTION_CONFIG, createDefaultSave().
 
-- [ ] **Step 5: Add re-exports to index.ts**
+- [x] **Step 5: Add re-exports to index.ts**
 
 Add to `packages/shared/src/index.ts`:
 ```typescript
@@ -296,12 +296,12 @@ export {
 } from './constants/meta';
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `cd packages/shared && bun test`
 Expected: ALL PASS (기존 76 + 신규 ~12)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/shared/src/types/save.ts packages/shared/src/constants/meta.ts packages/shared/src/index.ts packages/shared/tests/meta.test.ts
@@ -316,7 +316,7 @@ git commit -m "feat: add save data schema and meta growth formulas"
 - Create: `packages/web-shell/src/stores/metaStore.ts`
 - Create: `packages/web-shell/src/stores/__tests__/metaStore.test.ts`
 
-- [ ] **Step 1: Write failing tests for metaStore**
+- [x] **Step 1: Write failing tests for metaStore**
 
 ```typescript
 // packages/web-shell/src/stores/__tests__/metaStore.test.ts
@@ -346,12 +346,12 @@ describe('metaStore', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd packages/web-shell && bun test src/stores/__tests__/metaStore.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: Implement metaStore**
+- [x] **Step 3: Implement metaStore**
 
 ```typescript
 // packages/web-shell/src/stores/metaStore.ts
@@ -376,12 +376,12 @@ Key implementation details:
 - localStorage write를 **try/catch**로 감싸서 quota exceeded 시 toast 경고
 - `promoteTower` accepts optional `rng?: () => number` for testability (default `Math.random`)
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd packages/web-shell && bun test src/stores/__tests__/metaStore.test.ts`
 Expected: ALL PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/web-shell/src/stores/metaStore.ts packages/web-shell/src/stores/__tests__/metaStore.test.ts
@@ -396,11 +396,11 @@ git commit -m "feat: create metaStore with localStorage persistence and migratio
 - Modify: `packages/web-shell/src/pages/GamePage.tsx:94-106`
 - Modify: `packages/web-shell/src/App.tsx` (loadSave 호출)
 
-- [ ] **Step 1: Wire metaStore.loadSave() at app mount**
+- [x] **Step 1: Wire metaStore.loadSave() at app mount**
 
 `App.tsx`에서 앱 초기화 시 `useMetaStore.getState().loadSave()` 호출.
 
-- [ ] **Step 2: Modify onGameOver handler in GamePage.tsx**
+- [x] **Step 2: Modify onGameOver handler in GamePage.tsx**
 
 현재 (라인 94-106):
 ```typescript
@@ -426,12 +426,12 @@ const onGameOver = (data: { result: 'victory' | 'defeat'; stats: { ... } }) => {
 };
 ```
 
-- [ ] **Step 3: Run existing tests + verify no regressions**
+- [x] **Step 3: Run existing tests + verify no regressions**
 
 Run: `bun test` (all packages)
 Expected: ALL PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/web-shell/src/pages/GamePage.tsx packages/web-shell/src/App.tsx
@@ -445,7 +445,7 @@ git commit -m "feat: wire battle rewards to metaStore persistence"
 **Files:**
 - Modify: `packages/web-shell/src/components/lobby/ProfileBar.tsx`
 
-- [ ] **Step 1: Replace MOCK_PROFILE with useMetaStore**
+- [x] **Step 1: Replace MOCK_PROFILE with useMetaStore**
 
 ```typescript
 // Before: import { MOCK_PROFILE } from '../../data/mockLobbyData';
@@ -468,12 +468,12 @@ Lv.1
 [████████░░░░░░░] 34%  ← 높이 3px, gold 색상, 레벨 텍스트 아래
 ```
 
-- [ ] **Step 2: Run tests + visual verification**
+- [x] **Step 2: Run tests + visual verification**
 
 Run: `bun test` + 브라우저에서 로비 확인
 Expected: ProfileBar에 "기사단장 Lv.1 500G" 표시 (초기 저장 값)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/web-shell/src/components/lobby/ProfileBar.tsx
@@ -487,15 +487,15 @@ git commit -m "feat: ProfileBar reads real save data instead of mock"
 **Files:**
 - Modify: `packages/web-shell/src/components/lobby/tabs/HomeTab.tsx`
 
-- [ ] **Step 1: Replace mock data references with useMetaStore**
+- [x] **Step 1: Replace mock data references with useMetaStore**
 
 HomeTab에서 MOCK_PROFILE, MOCK_TOWERS 사용 부분을 metaStore로 교체.
 
-- [ ] **Step 2: Run tests + verify**
+- [x] **Step 2: Run tests + verify**
 
 Run: `bun test`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/web-shell/src/components/lobby/tabs/HomeTab.tsx
@@ -510,7 +510,7 @@ git commit -m "feat: HomeTab reads real save data instead of mock"
 - Modify: `packages/web-shell/src/stores/gameStore.ts`
 - Modify: `packages/web-shell/src/components/lobby/tabs/SettingsTab.tsx` (있을 경우)
 
-- [ ] **Step 1: Remove DECK_STORAGE_KEY and loadDeck from gameStore**
+- [x] **Step 1: Remove DECK_STORAGE_KEY and loadDeck from gameStore**
 
 gameStore의 `setSelectedDeck`를 metaStore 위임으로 변경:
 ```typescript
@@ -520,20 +520,20 @@ setSelectedDeck: (deck) => {
 },
 ```
 
-- [ ] **Step 2: Initialize gameStore.selectedDeck from metaStore**
+- [x] **Step 2: Initialize gameStore.selectedDeck from metaStore**
 
 앱 마운트 시 `gameStore`의 `selectedDeck`을 `metaStore`에서 읽어 초기화.
 
-- [ ] **Step 3: Settings를 metaStore에서 로드**
+- [x] **Step 3: Settings를 metaStore에서 로드**
 
 `soundEnabled`, `screenShake`, `showDamageNumbers`를 metaStore.settings에서 초기화하고, 변경 시 metaStore.updateSettings 호출.
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 Run: `bun test`
 Expected: ALL PASS, `gld-selected-deck` 키 더 이상 사용 안 함
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/web-shell/src/stores/gameStore.ts
@@ -547,7 +547,7 @@ git commit -m "refactor: migrate deck and settings persistence to metaStore"
 **Files:**
 - Modify: `packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx`
 
-- [ ] **Step 1: Replace MOCK_TOWERS with ALL_TOWERS + metaStore**
+- [x] **Step 1: Replace MOCK_TOWERS with ALL_TOWERS + metaStore**
 
 ```typescript
 import { ALL_TOWERS, type ElementType } from '@gld/shared';
@@ -570,26 +570,26 @@ export function CollectionTab() {
 }
 ```
 
-- [ ] **Step 2: Update TowerGridCard for real data**
+- [x] **Step 2: Update TowerGridCard for real data**
 
 - 티어 도트 1-5개로 확장
 - 등급(grade) 표시: 보유 타워의 `ownedData.grade`에 따른 보더 색상
 - 레벨 배지: `Lv.{ownedData.level}` 표시
 - 실제 `tower.color`와 `ElementType` 색상 사용
 
-- [ ] **Step 3: Update TowerBottomSheet for real stats**
+- [x] **Step 3: Update TowerBottomSheet for real stats**
 
 - `tower.stats.damage`, `tower.stats.attackSpeed`, `tower.stats.range` 표시
 - `tower.stats.special` 표시 (있을 경우)
 - 보유 타워: 레벨, 등급, 강화/승급 버튼 자리 마련 (Task 8-9에서 연결)
 - 미보유 타워: 획득 안내 메시지
 
-- [ ] **Step 4: Run tests + visual verification**
+- [x] **Step 4: Run tests + visual verification**
 
 Run: `bun test` + 브라우저에서 CollectionTab 확인
 Expected: 18타워 그리드, 4타워 보유(밝게), 14타워 미보유(어둡게)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx
@@ -603,7 +603,7 @@ git commit -m "feat: CollectionTab shows all 18 real towers with ownership from 
 **Files:**
 - Modify: `packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx` (TowerBottomSheet 확장)
 
-- [ ] **Step 1: Add enhancement section to TowerBottomSheet**
+- [x] **Step 1: Add enhancement section to TowerBottomSheet**
 
 보유 타워 선택 시 바텀시트에 강화 섹션 추가:
 ```
@@ -619,7 +619,7 @@ git commit -m "feat: CollectionTab shows all 18 real towers with ownership from 
 - 골드 부족 시 버튼 비활성
 - MAX_TOWER_LEVEL 도달 시 "최대 레벨" 표시
 
-- [ ] **Step 2: Wire button click to metaStore.enhanceTower + gold counter animation**
+- [x] **Step 2: Wire button click to metaStore.enhanceTower + gold counter animation**
 
 ```typescript
 const handleEnhance = () => {
@@ -650,11 +650,11 @@ function animateGoldCounter(from: number, to: number) {
 }
 ```
 
-- [ ] **Step 3: Run tests + visual verification**
+- [x] **Step 3: Run tests + visual verification**
 
 Run: `bun test`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx
@@ -668,7 +668,7 @@ git commit -m "feat: tower enhancement UI with gold cost and stat preview"
 **Files:**
 - Modify: `packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx` (TowerBottomSheet 확장)
 
-- [ ] **Step 1: Add promotion section to TowerBottomSheet**
+- [x] **Step 1: Add promotion section to TowerBottomSheet**
 
 강화 섹션 아래에 승급 섹션 추가:
 ```
@@ -686,9 +686,9 @@ epic: 버튼 숨김 + "최고 등급" 표시
 - unique: `#9060e0` (보라)
 - epic: `#f0d060` (골드 + 글로우)
 
-- [ ] **Step 2: Wire button click to metaStore.promoteTower**
+- [x] **Step 2: Wire button click to metaStore.promoteTower**
 
-- [ ] **Step 3: Add promotion roll animation**
+- [x] **Step 3: Add promotion roll animation**
 
 승급 버튼 클릭 시:
 1. 버튼 비활성화 + "승급 중..." 텍스트
@@ -712,9 +712,9 @@ epic: 버튼 숨김 + "최고 등급" 표시
 }
 ```
 
-- [ ] **Step 4: Run tests + visual verification**
+- [x] **Step 4: Run tests + visual verification**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/web-shell/src/components/lobby/tabs/CollectionTab.tsx
@@ -729,11 +729,11 @@ git commit -m "feat: tower promotion UI with grade display, probability, and rol
 - Modify: `packages/phaser-game/src/systems/TowerSystem.ts`
 - Modify: `packages/phaser-game/src/scenes/Game.ts`
 
-- [ ] **Step 1: Add getEffectiveStats utility to shared**
+- [x] **Step 1: Add getEffectiveStats utility to shared**
 
 이미 `meta.ts`에 `getEffectiveStats` 구현됨. TowerSystem에서 타워 배치 시 base stats 대신 effective stats를 사용하도록 변경.
 
-- [ ] **Step 2: Pass collection data to Game scene**
+- [x] **Step 2: Pass collection data to Game scene**
 
 Game scene 생성 시 metaStore의 collection 데이터를 전달. EventBus 이벤트 또는 scene data로 전달.
 
@@ -742,7 +742,7 @@ Game scene 생성 시 metaStore의 collection 데이터를 전달. EventBus 이�
 const collection = this.game.registry.get('collection') as OwnedTower[];
 ```
 
-- [ ] **Step 3: TowerSystem에서 effective stats 적용**
+- [x] **Step 3: TowerSystem에서 effective stats 적용**
 
 타워 배치(placeTower) 시:
 ```typescript
@@ -752,12 +752,12 @@ const grade = owned?.grade ?? 'normal';
 const effectiveDamage = getEffectiveStats(towerDef.stats.damage, level, grade);
 ```
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 Run: `bun test` (all packages)
 Expected: ALL PASS — 기존 테스트는 collection 없이 기본값(level 1, normal) 사용
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/shared/src/constants/meta.ts packages/phaser-game/src/systems/TowerSystem.ts packages/phaser-game/src/scenes/Game.ts
@@ -772,20 +772,20 @@ git commit -m "feat: apply enhancement and promotion stats to combat towers"
 - Delete: `packages/web-shell/src/data/mockLobbyData.ts`
 - Modify: 남은 import 참조 제거
 
-- [ ] **Step 1: Delete mockLobbyData.ts**
+- [x] **Step 1: Delete mockLobbyData.ts**
 
 모든 참조가 이미 교체되었으므로 파일 삭제.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run: `bun test` (all packages)
 Expected: ALL PASS
 
-- [ ] **Step 3: Run lint**
+- [x] **Step 3: Run lint**
 
 Run: `bun run lint` or `biome check`
 
-- [ ] **Step 4: E2E 수동 검증**
+- [x] **Step 4: E2E 수동 검증**
 
 브라우저에서 전체 플로우 확인:
 1. 로비 → ProfileBar에 Lv.1, 500G 표시
@@ -797,7 +797,7 @@ Run: `bun run lint` or `biome check`
 7. 로비 복귀 → ProfileBar에 골드/XP 반영 확인
 8. 새로고침 → 저장 데이터 복원 확인
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -906,3 +906,53 @@ High findings:
 - Finding 7 (대안 메타): Phase 3에서 맵 modifier, Phase 4에서 해금 시퀀스 예정. 현 Phase 2 스코프 변경 불필요.
 
 **VERDICT:** REVIEWED — Codex raised valid strategic concerns. Plan proceeds as infrastructure for Phases 3-5, with economy tuning flagged for post-implementation playtesting.
+
+---
+
+## Implementation Status: COMPLETE
+
+**All tasks (0-11) implemented and verified.**
+
+### Post-Plan Additions (리뷰 및 QA 후 추가 구현)
+
+| 항목 | 상태 | 설명 |
+|------|------|------|
+| Gold counter tick-down | ✅ | ProfileBar에 useAnimatedGold 훅 (rAF + easeOutCubic 500ms) |
+| enhanceTower reason string | ✅ | boolean → 'success' \| 'max_level' \| 'no_gold' \| 'not_found' |
+| Save migration pipeline | ✅ | SAVE_MIGRATIONS 레지스트리 + migrateSave 체인 |
+| Quota exceeded 통보 | ✅ | gld-save-error CustomEvent + App.tsx toast 수신 |
+| PhaserGame deps 수정 | ✅ | selectedDeck를 useMetaStore.getState()로 직접 읽기 |
+| PVP 잔재 제거 | ✅ | 승패 스트립, AI연습/전적 버튼, 우편/공지, trophy 아이콘 제거 |
+| UI 텍스트 한글화 | ✅ | PVE생존→성벽 막기, 즉시 시작→게임 시작, 속성/특수 한글 번역 |
+| 폰트 크기 전역 +4px | ✅ | 모든 fontSize +4px, body 기본 17px |
+| 실제 에셋 이미지 적용 | ✅ | CollectionTab, HomeTab 덱 프리뷰, DeckEditSheet — tower asset .webp |
+| 덱 편집 보유 타워만 표시 | ✅ | 미보유 타워 목록 제외, 꼬인 데이터(미보유 ID) 자동 필터링 |
+| 덱 편집 전체화면 수정 | ✅ | 불투명 배경 + maxWidth 430px |
+| DESIGN.md UX Writing | ✅ | 사용자 대면 텍스트 영어 금지 룰 추가 |
+| 바텀시트 스탯 즉시 반영 | ✅ | QA ISSUE-001 — owned를 metaStore에서 직접 구독 |
+
+### QA 결과
+
+- **Health Score:** 95/100
+- **이슈 발견:** 1건 (바텀시트 스탯 미갱신) → 수정 완료
+- **콘솔 에러:** 0
+- **검증 플로우:** 13개 전체 통과
+- **리포트:** `.gstack/qa-reports/qa-report-localhost-2026-04-05.md`
+
+### RAL Review 결과
+
+```
+Runtime Stability:   10/10
+Spec Alignment:       9/10
+Test Coverage:       10/10
+Independent Review:   8/10
+Adversarial Review:   8/10
+Total:              45/50
+Status:             PASS
+```
+
+### 테스트 현황
+
+- shared: 94 tests passing
+- web-shell: 50 tests passing
+- **총 144 tests**

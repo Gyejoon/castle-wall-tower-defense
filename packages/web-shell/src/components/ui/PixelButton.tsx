@@ -25,7 +25,7 @@ export function PixelButton({
 		<button
 			style={{
 				fontFamily: fonts.pixel,
-				fontSize: '10px',
+				fontSize: '14px',
 				padding: '12px 24px',
 				background: colors.panel,
 				color: colors.text,

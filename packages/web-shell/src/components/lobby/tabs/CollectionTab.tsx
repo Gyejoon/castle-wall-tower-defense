@@ -24,6 +24,24 @@ const ELEMENT_COLORS: Record<ElementType, string> = {
 	neutral: '#a09070',
 };
 
+const ELEMENT_NAMES: Record<ElementType, string> = {
+	fire: '화염',
+	water: '냉기',
+	lightning: '번개',
+	neutral: '무속성',
+};
+
+function translateSpecial(special: string): string {
+	return special
+		.replace(/splash/g, '범위 공격')
+		.replace(/slow_(\d+)%_aoe/g, '광역 감속 $1%')
+		.replace(/slow_(\d+)%/g, '감속 $1%')
+		.replace(/stun_aoe_global/g, '전역 기절')
+		.replace(/stun_aoe_extended/g, '광역 기절(강화)')
+		.replace(/stun_aoe/g, '광역 기절')
+		.replace(/stun/g, '기절');
+}
+
 const GRADE_BORDER: Record<TowerGrade, string> = {
 	normal: colors.border,
 	rare: '#5bc8e8',
@@ -82,7 +100,7 @@ export function CollectionTab() {
 					<span
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '10px',
+							fontSize: '14px',
 							color: colors.text,
 						}}
 					>
@@ -91,7 +109,7 @@ export function CollectionTab() {
 					<span
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '7px',
+							fontSize: '11px',
 							color: colors.textSecondary,
 						}}
 					>
@@ -128,7 +146,7 @@ export function CollectionTab() {
 						<span
 							style={{
 								fontFamily: fonts.pixel,
-								fontSize: '8px',
+								fontSize: '12px',
 								color: colors.textSecondary,
 								marginTop: '4px',
 							}}
@@ -176,7 +194,6 @@ function TowerGridCard({
 	locked?: boolean;
 	onClick: () => void;
 }) {
-	const elementColor = ELEMENT_COLORS[def.element];
 	const gradeBorder = owned ? GRADE_BORDER[owned.grade] : colors.border;
 
 	return (
@@ -213,31 +230,20 @@ function TowerGridCard({
 					/>
 				))}
 			</div>
-			<div
+			<img
+				src={`assets/towers/${def.type}.webp`}
+				alt={def.name}
+				width={40}
+				height={40}
 				style={{
-					width: 32,
-					height: 32,
-					background: `radial-gradient(circle, ${elementColor}44, transparent)`,
-					border: `1px solid ${elementColor}66`,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
+					imageRendering: 'pixelated',
+					filter: locked ? 'brightness(0.4) grayscale(0.6)' : undefined,
 				}}
-			>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '6px',
-						color: elementColor,
-					}}
-				>
-					{def.element.charAt(0).toUpperCase()}
-				</span>
-			</div>
+			/>
 			<span
 				style={{
 					fontFamily: fonts.pixel,
-					fontSize: '6px',
+					fontSize: '10px',
 					color: locked ? colors.textSecondary : colors.text,
 					textAlign: 'center',
 					lineHeight: 1.3,
@@ -253,7 +259,7 @@ function TowerGridCard({
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '5px',
+						fontSize: '9px',
 						color: GRADE_BORDER[owned.grade],
 					}}
 				>
@@ -359,10 +365,17 @@ function TowerBottomSheet({
 				}}
 			>
 				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<img
+						src={`assets/towers/${def.type}.webp`}
+						alt={def.name}
+						width={32}
+						height={32}
+						style={{ imageRendering: 'pixelated' }}
+					/>
 					<span
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '10px',
+							fontSize: '14px',
 							color: colors.text,
 						}}
 					>
@@ -385,7 +398,7 @@ function TowerBottomSheet({
 						<span
 							style={{
 								fontFamily: fonts.pixel,
-								fontSize: '7px',
+								fontSize: '11px',
 								color: GRADE_BORDER[grade],
 							}}
 						>
@@ -401,7 +414,7 @@ function TowerBottomSheet({
 						border: 'none',
 						cursor: 'pointer',
 						fontFamily: fonts.pixel,
-						fontSize: '10px',
+						fontSize: '14px',
 						color: colors.textSecondary,
 						padding: '4px 8px',
 					}}
@@ -427,19 +440,19 @@ function TowerBottomSheet({
 					value={String(def.stats.range)}
 					color={colors.textSecondary}
 				/>
-				<StatDisplay label="속성" value={def.element} color={elementColor} />
+				<StatDisplay label="속성" value={ELEMENT_NAMES[def.element]} color={elementColor} />
 			</div>
 
 			{def.stats.special && (
 				<p
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '7px',
+						fontSize: '11px',
 						color: colors.accent,
 						lineHeight: 1.6,
 					}}
 				>
-					특수: {def.stats.special}
+					특수: {translateSpecial(def.stats.special)}
 				</p>
 			)}
 
@@ -462,7 +475,7 @@ function TowerBottomSheet({
 									display: 'flex',
 									justifyContent: 'space-between',
 									fontFamily: fonts.pixel,
-									fontSize: '7px',
+									fontSize: '11px',
 								}}
 							>
 								<span style={{ color: colors.textSecondary }}>
@@ -474,7 +487,7 @@ function TowerBottomSheet({
 							</div>
 							<PixelButton
 								variant="gold"
-								style={{ width: '100%', fontSize: '8px' }}
+								style={{ width: '100%', fontSize: '12px' }}
 								onClick={handleEnhance}
 								disabled={!canEnhance}
 							>
@@ -485,7 +498,7 @@ function TowerBottomSheet({
 						<span
 							style={{
 								fontFamily: fonts.pixel,
-								fontSize: '7px',
+								fontSize: '11px',
 								color: colors.gold,
 								textAlign: 'center',
 							}}
@@ -521,7 +534,7 @@ function TowerBottomSheet({
 							display: 'flex',
 							justifyContent: 'space-between',
 							fontFamily: fonts.pixel,
-							fontSize: '7px',
+							fontSize: '11px',
 						}}
 					>
 						<span style={{ color: colors.textSecondary }}>
@@ -541,7 +554,7 @@ function TowerBottomSheet({
 					</div>
 					<PixelButton
 						variant="secondary"
-						style={{ width: '100%', fontSize: '8px' }}
+						style={{ width: '100%', fontSize: '12px' }}
 						onClick={handlePromote}
 						disabled={promoting || profile.gold < promoConfig.goldCost}
 					>
@@ -555,7 +568,7 @@ function TowerBottomSheet({
 					<span
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '7px',
+							fontSize: '11px',
 							color: GRADE_BORDER.epic,
 						}}
 					>
@@ -568,7 +581,7 @@ function TowerBottomSheet({
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '7px',
+						fontSize: '11px',
 						color: colors.textSecondary,
 						textAlign: 'center',
 					}}
@@ -611,13 +624,13 @@ function StatDisplay({
 			<span
 				style={{
 					fontFamily: fonts.pixel,
-					fontSize: '6px',
+					fontSize: '10px',
 					color: colors.textSecondary,
 				}}
 			>
 				{label}
 			</span>
-			<span style={{ fontFamily: fonts.pixel, fontSize: '9px', color }}>
+			<span style={{ fontFamily: fonts.pixel, fontSize: '13px', color }}>
 				{value}
 			</span>
 		</div>
@@ -640,7 +653,7 @@ function EmptyState() {
 			<span
 				style={{
 					fontFamily: fonts.pixel,
-					fontSize: '9px',
+					fontSize: '13px',
 					color: colors.textSecondary,
 					textAlign: 'center',
 					lineHeight: 1.8,

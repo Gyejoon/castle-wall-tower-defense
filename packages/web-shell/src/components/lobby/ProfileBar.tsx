@@ -68,7 +68,7 @@ export function ProfileBar() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '9px',
+						fontSize: '13px',
 						color: colors.text,
 						overflow: 'hidden',
 						textOverflow: 'ellipsis',
@@ -80,7 +80,7 @@ export function ProfileBar() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '7px',
+						fontSize: '11px',
 						color: colors.textSecondary,
 					}}
 				>
@@ -107,34 +107,6 @@ export function ProfileBar() {
 				</div>
 			</div>
 
-			{/* Wins */}
-			<div
-				className="profile-currency"
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '4px',
-					flexShrink: 0,
-				}}
-			>
-				<img
-					src={uiMobileArt.trophyIcon}
-					alt="wins"
-					width={18}
-					height={18}
-					style={{ imageRendering: 'pixelated' }}
-				/>
-				<span
-					style={{
-						fontFamily: fonts.pixel,
-						fontSize: '8px',
-						color: colors.accent,
-					}}
-				>
-					{profile.wins}
-				</span>
-			</div>
-
 			{/* Gold */}
 			<div
 				className="profile-currency"
@@ -155,7 +127,7 @@ export function ProfileBar() {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '8px',
+						fontSize: '12px',
 						color: colors.gold,
 					}}
 				>

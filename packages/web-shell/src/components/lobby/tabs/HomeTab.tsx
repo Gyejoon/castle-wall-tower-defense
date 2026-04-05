@@ -2,7 +2,6 @@ import { ALL_TOWERS, MAP_REGISTRY } from '@gld/shared';
 import { useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
-import { useMetaStore } from '../../../stores/metaStore';
 import { colors, fonts } from '../../../styles/tokens';
 import { PixelButton } from '../../ui/PixelButton';
 import { DeckEditSheet } from '../DeckEditSheet';
@@ -19,12 +18,7 @@ export function HomeTab() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
-	const profile = useMetaStore((s) => s.profile);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
-	const winRate =
-		profile.wins + profile.losses > 0
-			? ((profile.wins / (profile.wins + profile.losses)) * 100).toFixed(1)
-			: '0.0';
 
 	return (
 		<div
@@ -59,27 +53,6 @@ export function HomeTab() {
 						'linear-gradient(180deg, transparent 0%, transparent 40%, rgba(26,18,8,0.7) 70%, rgba(26,18,8,0.92) 100%)',
 				}}
 			>
-				{/* Record strip */}
-				<div
-					style={{
-						display: 'flex',
-						justifyContent: 'center',
-						gap: '16px',
-						padding: '8px 12px',
-						background: 'rgba(42, 32, 16, 0.8)',
-						border: `1px solid ${colors.border}`,
-					}}
-				>
-					<StatBadge label="승" value={profile.wins} color={colors.success} />
-					<StatBadge label="패" value={profile.losses} color={colors.danger} />
-					<StatBadge label="승률" value={`${winRate}%`} color={colors.accent} />
-					<StatBadge
-						label="연승"
-						value={profile.winStreak}
-						color={colors.gold}
-					/>
-				</div>
-
 				{/* Stage selection */}
 				<div
 					style={{
@@ -129,7 +102,7 @@ export function HomeTab() {
 							<p
 								style={{
 									fontFamily: fonts.pixel,
-									fontSize: '7px',
+									fontSize: '11px',
 									color: selectedMapId === map.id ? colors.gold : colors.text,
 									marginTop: '3px',
 								}}
@@ -175,13 +148,17 @@ export function HomeTab() {
 										gap: '3px',
 									}}
 								>
-									<span style={{ fontSize: '10px' }}>
-										{shapeChar(tower.shape, tower.color)}
-									</span>
+									<img
+										src={`assets/towers/${tower.type}.webp`}
+										alt={tower.name}
+										width={32}
+										height={32}
+										style={{ imageRendering: 'pixelated' }}
+									/>
 									<span
 										style={{
 											fontFamily: fonts.pixel,
-											fontSize: '5px',
+											fontSize: '9px',
 											color: colors.textSecondary,
 											textAlign: 'center',
 											overflow: 'hidden',
@@ -198,7 +175,7 @@ export function HomeTab() {
 					</div>
 					<PixelButton
 						variant="secondary"
-						style={{ fontSize: '7px', padding: '6px 8px', flexShrink: 0 }}
+						style={{ fontSize: '11px', padding: '6px 8px', flexShrink: 0 }}
 						onClick={() => setShowDeckEdit(true)}
 					>
 						덱 편집
@@ -217,32 +194,15 @@ export function HomeTab() {
 						boxShadow: `0 0 20px rgba(240, 208, 96, 0.15), 4px 4px 0px ${colors.border}`,
 					}}
 				>
-					<div
+					<span
 						style={{
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'space-between',
+							fontFamily: fonts.pixel,
+							fontSize: '15px',
+							color: colors.text,
 						}}
 					>
-						<span
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '11px',
-								color: colors.text,
-							}}
-						>
-							PVE 생존
-						</span>
-						<span
-							style={{
-								fontFamily: fonts.pixel,
-								fontSize: '7px',
-								color: colors.textSecondary,
-							}}
-						>
-							싱글 플레이
-						</span>
-					</div>
+						성벽 막기
+					</span>
 
 					<PixelButton
 						variant="gold"
@@ -252,47 +212,16 @@ export function HomeTab() {
 						style={{
 							width: '100%',
 							padding: '14px 20px',
-							fontSize: '11px',
+							fontSize: '15px',
 							boxShadow: `0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)`,
 						}}
 					>
-						즉시 시작
+						게임 시작
 					</PixelButton>
 
-					{/* Sub buttons */}
-					<div style={{ display: 'flex', gap: '8px' }}>
-						<PixelButton
-							variant="secondary"
-							style={{ flex: 1, fontSize: '7px', padding: '8px 10px' }}
-							disabled
-						>
-							AI 연습
-						</PixelButton>
-						<PixelButton
-							variant="secondary"
-							style={{ flex: 1, fontSize: '7px', padding: '8px 10px' }}
-							disabled
-						>
-							전적
-						</PixelButton>
-					</div>
 				</div>
 			</div>
 
-			{/* Overlay icons (mock) */}
-			<div
-				style={{
-					position: 'absolute',
-					top: '12px',
-					right: '12px',
-					zIndex: 2,
-					display: 'flex',
-					gap: '8px',
-				}}
-			>
-				<OverlayIcon label="우편" badge={3} />
-				<OverlayIcon label="공지" badge={1} />
-			</div>
 
 			<DeckEditSheet
 				open={showDeckEdit}
@@ -302,99 +231,4 @@ export function HomeTab() {
 	);
 }
 
-function shapeChar(
-	shape: 'diamond' | 'circle' | 'hexagon' | 'shield' | 'star',
-	color: string,
-): JSX.Element {
-	const chars: Record<string, string> = {
-		diamond: '◆',
-		circle: '●',
-		hexagon: '⬡',
-		shield: '🛡',
-		star: '★',
-	};
-	return <span style={{ color, fontSize: '10px' }}>{chars[shape] ?? '■'}</span>;
-}
 
-function StatBadge({
-	label,
-	value,
-	color,
-}: {
-	label: string;
-	value: string | number;
-	color: string;
-}) {
-	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				gap: '2px',
-			}}
-		>
-			<span style={{ fontFamily: fonts.pixel, fontSize: '10px', color }}>
-				{value}
-			</span>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '6px',
-					color: colors.textSecondary,
-				}}
-			>
-				{label}
-			</span>
-		</div>
-	);
-}
-
-function OverlayIcon({ label, badge }: { label: string; badge?: number }) {
-	return (
-		<div
-			style={{
-				position: 'relative',
-				width: 36,
-				height: 36,
-				background: 'rgba(42, 32, 16, 0.8)',
-				border: `1px solid ${colors.border}`,
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
-				cursor: 'pointer',
-			}}
-		>
-			<span
-				style={{
-					fontFamily: fonts.pixel,
-					fontSize: '6px',
-					color: colors.textSecondary,
-				}}
-			>
-				{label}
-			</span>
-			{badge != null && badge > 0 && (
-				<span
-					style={{
-						position: 'absolute',
-						top: -4,
-						right: -4,
-						minWidth: 14,
-						height: 14,
-						background: colors.danger,
-						color: '#fff',
-						fontFamily: fonts.pixel,
-						fontSize: '6px',
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						padding: '0 2px',
-					}}
-				>
-					{badge}
-				</span>
-			)}
-		</div>
-	);
-}

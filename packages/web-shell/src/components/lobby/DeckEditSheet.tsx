@@ -1,6 +1,7 @@
 import { ALL_TOWERS, type TowerDef } from '@gld/shared';
 import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { useMetaStore } from '../../stores/metaStore';
 import { colors, fonts } from '../../styles/tokens';
 import { PixelButton } from '../ui/PixelButton';
 
@@ -25,80 +26,18 @@ const TIER_COLORS: Record<number, string> = {
 	5: '#ffe870',
 };
 
-function TowerShape({
-	shape,
-	color,
-	size = 16,
-}: {
-	shape: TowerDef['shape'];
-	color: string;
-	size?: number;
-}) {
-	const half = size / 2;
-	switch (shape) {
-		case 'circle':
-			return (
-				<svg width={size} height={size} style={{ flexShrink: 0 }}>
-					<circle cx={half} cy={half} r={half - 1} fill={color} />
-				</svg>
-			);
-		case 'hexagon': {
-			const pts = Array.from({ length: 6 }, (_, i) => {
-				const a = (Math.PI / 3) * i - Math.PI / 6;
-				return `${half + (half - 1) * Math.cos(a)},${half + (half - 1) * Math.sin(a)}`;
-			}).join(' ');
-			return (
-				<svg width={size} height={size} style={{ flexShrink: 0 }}>
-					<polygon points={pts} fill={color} />
-				</svg>
-			);
-		}
-		case 'shield':
-			return (
-				<svg width={size} height={size} style={{ flexShrink: 0 }}>
-					<path
-						d={`M${half},2 L${size - 2},${size * 0.35} L${size - 2},${size * 0.6} L${half},${size - 1} L2,${size * 0.6} L2,${size * 0.35} Z`}
-						fill={color}
-					/>
-				</svg>
-			);
-		case 'star': {
-			const outerR = half - 1;
-			const innerR = outerR * 0.45;
-			const starPts = Array.from({ length: 10 }, (_, i) => {
-				const a = (Math.PI / 5) * i - Math.PI / 2;
-				const r = i % 2 === 0 ? outerR : innerR;
-				return `${half + r * Math.cos(a)},${half + r * Math.sin(a)}`;
-			}).join(' ');
-			return (
-				<svg width={size} height={size} style={{ flexShrink: 0 }}>
-					<polygon points={starPts} fill={color} />
-				</svg>
-			);
-		}
-		default: // diamond
-			return (
-				<svg width={size} height={size} style={{ flexShrink: 0 }}>
-					<polygon
-						points={`${half},1 ${size - 1},${half} ${half},${size - 1} 1,${half}`}
-						fill={color}
-					/>
-				</svg>
-			);
-	}
-}
-
-const TOWERS_BY_TIER: Array<{ tier: number; towers: TowerDef[] }> = [
-	1, 2, 3, 4, 5,
-].map((tier) => ({
-	tier,
-	towers: ALL_TOWERS.filter((t) => t.tier === tier),
-}));
-
 export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 	const savedDeck = useGameStore((s) => s.selectedDeck);
 	const setSelectedDeck = useGameStore((s) => s.setSelectedDeck);
-	const [selected, setSelected] = useState<string[]>([...savedDeck]);
+	const collection = useMetaStore((s) => s.collection);
+	const ownedIds = new Set(collection.map((t) => t.defId));
+	const ownedTowers = ALL_TOWERS.filter((t) => ownedIds.has(t.id));
+	const towersByTier = [1, 2, 3, 4, 5]
+		.map((tier) => ({ tier, towers: ownedTowers.filter((t) => t.tier === tier) }))
+		.filter(({ towers }) => towers.length > 0);
+	const [selected, setSelected] = useState<string[]>(
+		savedDeck.filter((id) => ownedIds.has(id)),
+	);
 
 	if (!open) return null;
 
@@ -120,7 +59,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 	};
 
 	const handleClose = () => {
-		setSelected([...savedDeck]);
+		setSelected(savedDeck.filter((id) => ownedIds.has(id)));
 		onClose();
 	};
 
@@ -130,9 +69,18 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 				position: 'fixed',
 				inset: 0,
 				zIndex: 200,
-				background: 'rgba(10, 8, 4, 0.88)',
+				display: 'flex',
+				justifyContent: 'center',
+				background: 'rgba(10, 8, 4, 1)',
+			}}
+		>
+		<div
+			style={{
+				width: '100%',
+				maxWidth: '430px',
 				display: 'flex',
 				flexDirection: 'column',
+				background: colors.bg,
 			}}
 		>
 			{/* Header */}
@@ -150,7 +98,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 				<span
 					style={{
 						fontFamily: fonts.pixel,
-						fontSize: '12px',
+						fontSize: '16px',
 						color: colors.gold,
 					}}
 				>
@@ -165,7 +113,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 						border: `1px solid ${colors.border}`,
 						color: colors.textSecondary,
 						fontFamily: fonts.pixel,
-						fontSize: '10px',
+						fontSize: '14px',
 						cursor: 'pointer',
 						padding: '4px 8px',
 					}}
@@ -185,12 +133,12 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 					gap: '16px',
 				}}
 			>
-				{TOWERS_BY_TIER.map(({ tier, towers }) => (
+				{towersByTier.map(({ tier, towers }) => (
 					<div key={tier}>
 						<div
 							style={{
 								fontFamily: fonts.pixel,
-								fontSize: '8px',
+								fontSize: '12px',
 								color: TIER_COLORS[tier],
 								marginBottom: '8px',
 								letterSpacing: '1px',
@@ -229,7 +177,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												? `0 0 6px rgba(240,208,96,0.3)`
 												: 'none',
 											cursor: isFull ? 'not-allowed' : 'pointer',
-											opacity: isFull ? 0.4 : 1,
+											opacity: isFull ? 0.35 : 1,
 											textAlign: 'left',
 										}}
 									>
@@ -240,17 +188,22 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 													top: 3,
 													right: 5,
 													fontFamily: fonts.pixel,
-													fontSize: '8px',
+													fontSize: '12px',
 													color: colors.gold,
 												}}
 											>
 												{slotNum}
 											</span>
 										)}
-										<TowerShape
-											shape={tower.shape}
-											color={tower.color}
-											size={18}
+										<img
+											src={`assets/towers/${tower.type}.webp`}
+											alt={tower.name}
+											width={28}
+											height={28}
+											style={{
+												imageRendering: 'pixelated',
+												flexShrink: 0,
+											}}
 										/>
 										<div
 											style={{
@@ -263,7 +216,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											<span
 												style={{
 													fontFamily: fonts.pixel,
-													fontSize: '8px',
+													fontSize: '12px',
 													color: isSelected ? colors.gold : colors.text,
 													whiteSpace: 'nowrap',
 													overflow: 'hidden',
@@ -275,7 +228,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											<span
 												style={{
 													fontFamily: fonts.pixel,
-													fontSize: '7px',
+													fontSize: '11px',
 													color: colors.textSecondary,
 												}}
 											>
@@ -334,15 +287,17 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							>
 								{tower ? (
 									<>
-										<TowerShape
-											shape={tower.shape}
-											color={tower.color}
-											size={16}
+										<img
+											src={`assets/towers/${tower.type}.webp`}
+											alt={tower.name}
+											width={24}
+											height={24}
+											style={{ imageRendering: 'pixelated' }}
 										/>
 										<span
 											style={{
 												fontFamily: fonts.pixel,
-												fontSize: '6px',
+												fontSize: '10px',
 												color: colors.gold,
 												textAlign: 'center',
 												overflow: 'hidden',
@@ -358,7 +313,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 									<span
 										style={{
 											fontFamily: fonts.pixel,
-											fontSize: '8px',
+											fontSize: '12px',
 											color: colors.border,
 										}}
 									>
@@ -374,11 +329,12 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 					variant="gold"
 					disabled={selected.length !== 4}
 					onClick={handleConfirm}
-					style={{ width: '100%', fontSize: '10px', padding: '12px' }}
+					style={{ width: '100%', fontSize: '14px', padding: '12px' }}
 				>
 					확인 ({selected.length}/4)
 				</PixelButton>
 			</div>
+		</div>
 		</div>
 	);
 }

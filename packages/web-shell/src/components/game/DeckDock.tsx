@@ -66,7 +66,7 @@ export function DeckDock() {
 					>
 						<span
 							style={{
-								fontSize: '8px',
+								fontSize: '12px',
 								color: colors.textSecondary,
 								fontFamily: fonts.pixel,
 							}}
@@ -75,7 +75,7 @@ export function DeckDock() {
 						</span>
 						<span
 							style={{
-								fontSize: '9px',
+								fontSize: '13px',
 								color: colors.text,
 								fontFamily: fonts.pixel,
 							}}
@@ -84,7 +84,7 @@ export function DeckDock() {
 						</span>
 						<span
 							style={{
-								fontSize: '10px',
+								fontSize: '14px',
 								color: canAfford ? colors.gold : colors.textSecondary,
 								fontFamily: fonts.pixel,
 							}}

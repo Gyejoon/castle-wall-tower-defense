@@ -114,7 +114,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 				style={{
 					color: colors.gold,
 					fontFamily: fonts.pixel,
-					fontSize: '14px',
+					fontSize: '18px',
 				}}
 			>
 				소환의 제단
@@ -196,7 +196,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 					<p
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '10px',
+							fontSize: '14px',
 							color: TIER_COLORS[revealed.tierName] ?? colors.text,
 						}}
 					>
@@ -205,7 +205,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 					<p
 						style={{
 							fontFamily: fonts.pixel,
-							fontSize: '7px',
+							fontSize: '11px',
 							color: colors.textSecondary,
 							textTransform: 'uppercase',
 						}}
@@ -254,7 +254,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 								<p
 									style={{
 										fontFamily: fonts.pixel,
-										fontSize: '8px',
+										fontSize: '12px',
 										color: colors.text,
 										marginTop: '4px',
 									}}
@@ -265,7 +265,7 @@ export function GachaScreen({ onClose }: GachaScreenProps) {
 									<p
 										style={{
 											fontFamily: fonts.pixel,
-											fontSize: '7px',
+											fontSize: '11px',
 											color: colors.gold,
 										}}
 									>

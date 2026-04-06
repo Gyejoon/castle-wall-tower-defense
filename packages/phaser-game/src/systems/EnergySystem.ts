@@ -36,6 +36,11 @@ export class EnergySystem {
 		return true;
 	}
 
+	add(amount: number): void {
+		this.energy = Math.min(this.energy + amount, ENERGY_CAP);
+		this.emitIfChanged();
+	}
+
 	getEnergy(): number {
 		return Math.floor(this.energy);
 	}

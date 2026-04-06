@@ -100,4 +100,16 @@ describe('EnergySystem', () => {
 		system.reset(20);
 		expect(system.getEnergy()).toBe(20);
 	});
+
+	it('add() increases energy up to cap', () => {
+		const system = new EnergySystem(0);
+		system.add(5);
+		expect(system.getEnergy()).toBe(5);
+	});
+
+	it('add() does not exceed ENERGY_CAP', () => {
+		const system = new EnergySystem(99);
+		system.add(10);
+		expect(system.getEnergy()).toBe(100);
+	});
 });

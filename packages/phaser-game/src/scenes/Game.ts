@@ -3,6 +3,8 @@ import {
 	buildDeckCards,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
@@ -588,6 +590,8 @@ export class GameScene extends Phaser.Scene {
 				);
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
+					const energyReward = result.isBoss ? ENERGY_PER_BOSS_KILL : ENERGY_PER_KILL;
+					this.energySystem.add(energyReward);
 					onKill();
 				}
 			}

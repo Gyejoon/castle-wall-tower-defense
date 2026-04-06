@@ -44,9 +44,9 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 랜덤 롤 경제, 이벤트 기반 10웨이브 진행, 결과 오버레이, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
+**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 덱 경제(시작 10, 킬 +2, 보스킬 +5), 이벤트 기반 10웨이브 진행, 보스 HP바, 결과 오버레이(스탯 그리드), 3맵 선택(난이도/보상 배율 차등), 2배속 토글(첫 클리어 후 해금), 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
 
-**아직 구현되지 않은 것:** 속성 시스템, 보스 페이즈, 4타워 덱, 메타 성장/저장, 멀티 스테이지. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
+**아직 구현되지 않은 것:** 속성 시스템 전투 적용, 난이도별 밸런스 조정, 메타 성장/컬렉션. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
 ## Local Skills
 
@@ -78,7 +78,7 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 
 | 방향 | 접두사 | 예시 |
 |------|--------|------|
-| React → Game | `request-*` | `request-place-tower`, `request-sell-tower`, `request-select-tower` |
+| React → Game | `request-*` | `request-place-tower`, `request-sell-tower`, `request-select-tower`, `request-set-speed` |
 | Game → React | 서술형 | `tower-placed`, `tower-sold`, `wave-preview` |
 
 이벤트 타입을 추가/변경하면 `shared/src/types/events.ts`와 `phaser-game/src/EventBus.ts`의 `GameEventMap`을 반드시 함께 업데이트해야 한다.
@@ -97,7 +97,7 @@ lobby → building → running → victory | defeat → lobby
 
 ### 에너지 경제
 
-에너지가 초당 1씩 자동 축적된다 (최대 100). 타워 랜덤 롤에 에너지 10을 소비. 킬 보상은 에너지로 변환되지 않음 (순수 시간 기반 경제).
+에너지가 초당 1씩 자동 축적된다 (최대 100). 시작 에너지 10. 타워 랜덤 롤에 에너지 10을 소비. 일반 유닛 처치 시 +2, 보스 처치 시 +5 에너지 보상.
 
 ## 하이시그널 파일
 

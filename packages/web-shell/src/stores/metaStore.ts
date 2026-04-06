@@ -1,6 +1,7 @@
 import {
 	ALL_TOWERS,
 	createDefaultSave,
+	DAILY_MISSION_TYPES,
 	enhancementCost,
 	GACHA_COSTS,
 	type GachaResult,
@@ -17,6 +18,7 @@ import {
 	shouldResetDaily,
 	shouldResetWeekly,
 	type TowerGrade,
+	WEEKLY_MISSION_TYPES,
 	xpToNextLevel,
 } from '@gld/shared';
 import { create } from 'zustand';
@@ -373,22 +375,33 @@ export const useMetaStore = create<MetaState>()(
 						progress.lastWeeklyMissionResetAt,
 						now,
 					);
+					// 미션 타입이 추가/변경된 경우 강제 재생성 (앱 업데이트 대응)
+					const dailyStale =
+						needsDailyReset ||
+						DAILY_MISSION_TYPES.some(
+							(type) => !progress.dailyMissions.some((m) => m.type === type),
+						);
+					const weeklyStale =
+						needsWeeklyReset ||
+						WEEKLY_MISSION_TYPES.some(
+							(type) => !progress.weeklyMissions.some((m) => m.type === type),
+						);
 
-					if (!needsDailyReset && !needsWeeklyReset) return {};
+					if (!dailyStale && !weeklyStale) return {};
 
 					return {
 						progress: {
 							...progress,
-							dailyMissions: needsDailyReset
+							dailyMissions: dailyStale
 								? generateDailyMissions()
 								: progress.dailyMissions,
-							lastDailyMissionResetAt: needsDailyReset
+							lastDailyMissionResetAt: dailyStale
 								? now.toISOString()
 								: progress.lastDailyMissionResetAt,
-							weeklyMissions: needsWeeklyReset
+							weeklyMissions: weeklyStale
 								? generateWeeklyMissions()
 								: progress.weeklyMissions,
-							lastWeeklyMissionResetAt: needsWeeklyReset
+							lastWeeklyMissionResetAt: weeklyStale
 								? now.toISOString()
 								: progress.lastWeeklyMissionResetAt,
 						},

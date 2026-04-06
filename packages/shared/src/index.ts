@@ -62,12 +62,14 @@ export {
 	xpToNextLevel,
 } from './constants/meta';
 export {
+	DAILY_MISSION_TYPES,
 	generateDailyMissions,
 	generateWeeklyMissions,
 	KST_OFFSET_MS,
 	MISSION_LABELS,
 	shouldResetDaily,
 	shouldResetWeekly,
+	WEEKLY_MISSION_TYPES,
 } from './constants/missions';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';

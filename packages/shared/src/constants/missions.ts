@@ -2,80 +2,44 @@ import type { MissionProgress, MissionType } from '../types/save';
 
 interface MissionTemplate {
 	type: MissionType;
-	targetRange: [number, number]; // min~max에서 랜덤 선택
+	target: number; // 고정값 (10 단위)
 	reward: { type: 'diamond' | 'gold'; amount: number };
 }
 
-// reach_wave: 런마다 새로운 최고 웨이브 갱신 시 누적 카운트 (+1/wave)
-// 1판 10웨이브 클리어 시 최대 10 획득 → [50, 80] = 약 5~8판 필요
 const DAILY_TEMPLATES: MissionTemplate[] = [
-	{
-		type: 'reach_wave',
-		targetRange: [50, 80],
-		reward: { type: 'diamond', amount: 15 },
-	},
-	{
-		type: 'place_towers',
-		targetRange: [100, 200],
-		reward: { type: 'diamond', amount: 10 },
-	},
-	{
-		type: 'defeat_boss',
-		targetRange: [10, 10],
-		reward: { type: 'diamond', amount: 30 },
-	},
-	{
-		type: 'attendance',
-		targetRange: [1, 1],
-		reward: { type: 'diamond', amount: 5 },
-	},
+	{ type: 'reach_wave', target: 50, reward: { type: 'diamond', amount: 15 } },
+	{ type: 'place_towers', target: 100, reward: { type: 'diamond', amount: 10 } },
+	{ type: 'defeat_boss', target: 10, reward: { type: 'diamond', amount: 30 } },
+	{ type: 'attendance', target: 1, reward: { type: 'diamond', amount: 5 } },
 ];
 
-// 주간: 7일 기준 꾸준한 플레이 전제 (하루 2~3판)
-// place_towers: 10x = 500~1000으로 무리 → [200, 300]으로 상한 캡
 const WEEKLY_TEMPLATES: MissionTemplate[] = [
-	{
-		type: 'clear_stage',
-		targetRange: [30, 50],
-		reward: { type: 'diamond', amount: 80 },
-	},
-	{
-		type: 'place_towers',
-		targetRange: [200, 300],
-		reward: { type: 'diamond', amount: 50 },
-	},
-	{
-		type: 'defeat_boss',
-		targetRange: [30, 50],
-		reward: { type: 'diamond', amount: 100 },
-	},
-	{
-		type: 'attendance',
-		targetRange: [5, 5],
-		reward: { type: 'diamond', amount: 30 },
-	},
+	{ type: 'clear_stage', target: 30, reward: { type: 'diamond', amount: 80 } },
+	{ type: 'place_towers', target: 200, reward: { type: 'diamond', amount: 50 } },
+	{ type: 'defeat_boss', target: 30, reward: { type: 'diamond', amount: 100 } },
+	{ type: 'attendance', target: 5, reward: { type: 'diamond', amount: 30 } },
 ];
 
-export function generateDailyMissions(rng = Math.random): MissionProgress[] {
+// 구조 변경 감지용 — refreshMissions에서 기존 저장 데이터와 비교
+export const DAILY_MISSION_TYPES: readonly MissionType[] = DAILY_TEMPLATES.map((t) => t.type);
+export const WEEKLY_MISSION_TYPES: readonly MissionType[] = WEEKLY_TEMPLATES.map((t) => t.type);
+
+export function generateDailyMissions(): MissionProgress[] {
 	return DAILY_TEMPLATES.map((t, i) => ({
 		id: `daily-${i}`,
 		type: t.type,
-		target:
-			t.targetRange[0] +
-			Math.floor(rng() * (t.targetRange[1] - t.targetRange[0] + 1)),
+		target: t.target,
 		current: 0,
 		reward: t.reward,
 		claimed: false,
 	}));
 }
 
-export function generateWeeklyMissions(rng = Math.random): MissionProgress[] {
+export function generateWeeklyMissions(): MissionProgress[] {
 	return WEEKLY_TEMPLATES.map((t, i) => ({
 		id: `weekly-${i}`,
 		type: t.type,
-		target:
-			t.targetRange[0] +
-			Math.floor(rng() * (t.targetRange[1] - t.targetRange[0] + 1)),
+		target: t.target,
 		current: 0,
 		reward: t.reward,
 		claimed: false,

@@ -121,6 +121,7 @@ export class GameScene extends Phaser.Scene {
 	}) => void;
 	private bossPrefetched = false;
 	private speedMultiplier: 1 | 2 = 1;
+	private scaledGameTime = 0;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
 	private decorationTiles: Array<{
@@ -141,6 +142,7 @@ export class GameScene extends Phaser.Scene {
 
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
+		this.scaledGameTime = 0;
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
@@ -501,6 +503,7 @@ export class GameScene extends Phaser.Scene {
 		this.gameOver = true;
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		EventBus.off('request-set-speed', this.onSetSpeed);
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 		EventBus.emit('game-over', {
@@ -623,9 +626,10 @@ export class GameScene extends Phaser.Scene {
 		return reachedExit;
 	}
 
-	update(time: number, delta: number) {
+	update(_time: number, delta: number) {
 		if (this.gameOver) return;
 		const scaledDelta = delta * this.speedMultiplier;
+		this.scaledGameTime += scaledDelta;
 
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		this.energySystem.update(scaledDelta / 1000);
@@ -633,7 +637,7 @@ export class GameScene extends Phaser.Scene {
 		const playerExits = this.processCombatField(
 			this.playerTowers,
 			this.playerUnits,
-			time,
+			this.scaledGameTime,
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();

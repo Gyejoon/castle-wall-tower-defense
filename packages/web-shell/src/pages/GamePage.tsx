@@ -89,6 +89,11 @@ export function GamePage() {
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			setBossWarningVisible(false);
+			if (bossWarningTimerRef.current) {
+				clearTimeout(bossWarningTimerRef.current);
+				bossWarningTimerRef.current = null;
+			}
 			const xpEarned = Math.round(
 				battleXp(
 					data.stats.wavesCleared,
@@ -386,7 +391,7 @@ export function GamePage() {
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
   <div
-    className="absolute inset-0 z-[3] flex items-center justify-center p-5"
+    className="absolute inset-0 z-[10] flex items-center justify-center p-5"
     style={{ background: 'rgba(10, 8, 4, 0.88)' }}
   >
     <div

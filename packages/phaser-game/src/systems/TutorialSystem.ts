@@ -64,7 +64,12 @@ export class TutorialSystem {
 		if (!this.overlay) return;
 		this.overlay.clear();
 		this.overlay.fillStyle(0x000000, 0.4);
-		this.overlay.fillRect(0, 0, this.scene.scale.width, this.scene.scale.height);
+		this.overlay.fillRect(
+			0,
+			0,
+			this.scene.scale.width,
+			this.scene.scale.height,
+		);
 	}
 
 	private clearOverlay(): void {

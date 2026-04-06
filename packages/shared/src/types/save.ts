@@ -34,7 +34,8 @@ export type MissionType =
 	| 'place_towers'
 	| 'defeat_boss'
 	| 'clear_stage'
-	| 'use_element';
+	| 'use_element'
+	| 'attendance';
 
 export interface MissionProgress {
 	id: string;

@@ -34,6 +34,14 @@ export function App() {
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.getState().refreshMissions();
+		// 하루 첫 오픈 시 출석 체크 자동 달성 (current=0일 때만 진행 → 중복 방지)
+		const meta = useMetaStore.getState();
+		const dailyAttendance = meta.progress.dailyMissions.find(
+			(m) => m.type === 'attendance',
+		);
+		if (dailyAttendance && dailyAttendance.current === 0) {
+			meta.progressMission('attendance', 1);
+		}
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
 		window.addEventListener('gld-save-error', onSaveError);

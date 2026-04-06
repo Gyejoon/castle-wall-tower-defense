@@ -8,9 +8,9 @@ import {
 } from '../src/index';
 
 describe('generateDailyMissions', () => {
-	it('3개 미션 반환', () => {
+	it('4개 미션 반환', () => {
 		const missions = generateDailyMissions();
-		expect(missions).toHaveLength(3);
+		expect(missions).toHaveLength(4);
 	});
 
 	it('id가 daily-{i} 형식', () => {
@@ -39,9 +39,9 @@ describe('generateDailyMissions', () => {
 });
 
 describe('generateWeeklyMissions', () => {
-	it('3개 미션 반환', () => {
+	it('4개 미션 반환', () => {
 		const missions = generateWeeklyMissions();
-		expect(missions).toHaveLength(3);
+		expect(missions).toHaveLength(4);
 	});
 
 	it('id가 weekly-{i} 형식', () => {

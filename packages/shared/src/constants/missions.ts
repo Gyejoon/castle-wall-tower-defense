@@ -24,6 +24,11 @@ const DAILY_TEMPLATES: MissionTemplate[] = [
 		targetRange: [10, 10],
 		reward: { type: 'diamond', amount: 30 },
 	},
+	{
+		type: 'attendance',
+		targetRange: [1, 1],
+		reward: { type: 'diamond', amount: 5 },
+	},
 ];
 
 // 주간: 7일 기준 꾸준한 플레이 전제 (하루 2~3판)
@@ -43,6 +48,11 @@ const WEEKLY_TEMPLATES: MissionTemplate[] = [
 		type: 'defeat_boss',
 		targetRange: [30, 50],
 		reward: { type: 'diamond', amount: 100 },
+	},
+	{
+		type: 'attendance',
+		targetRange: [5, 5],
+		reward: { type: 'diamond', amount: 30 },
 	},
 ];
 
@@ -120,4 +130,5 @@ export const MISSION_LABELS: Record<MissionType, string> = {
 	defeat_boss: '보스 처치',
 	clear_stage: '스테이지 클리어',
 	use_element: '속성 타워 사용',
+	attendance: '출석 체크',
 };

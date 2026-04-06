@@ -80,8 +80,12 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 		>
 			<div className="flex justify-between items-start gap-2">
 				<span className="font-pixel text-xs text-text flex-1">
-					{MISSION_LABELS[mission.type]} {mission.target}
-					{mission.type === 'reach_wave' ? '웨이브' : '회'}
+					{MISSION_LABELS[mission.type]}{' '}
+					{mission.type === 'attendance'
+						? `${mission.target}일`
+						: mission.type === 'reach_wave'
+							? `${mission.target}웨이브`
+							: `${mission.target}회`}
 				</span>
 				<div className="flex items-center gap-1 shrink-0">
 					<span className="font-pixel text-[11px] text-gold">

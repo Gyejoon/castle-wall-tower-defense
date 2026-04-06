@@ -265,7 +265,6 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
-	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
@@ -383,78 +382,84 @@ export function GamePage() {
 					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
-						<div
-							className="absolute inset-0 z-[3] flex items-center justify-center p-5"
-							style={{ background: 'rgba(10, 8, 4, 0.82)' }}
-						>
-							<div
-								className="flex w-[min(100%,360px)] flex-col gap-3.5 p-5 text-center"
-								style={{
-									background: 'rgba(42, 32, 16, 0.96)',
-									border: `2px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
-									boxShadow: `6px 6px 0px ${colors.border}`,
-								}}
-							>
-								<img
-									src={
-										runStatus === 'victory'
-											? 'assets/ui/defense-success.png'
-											: 'assets/ui/defense-fail.png'
-									}
-									alt={resultTitle}
-									className="mx-auto w-[200px] h-auto [image-rendering:pixelated]"
-								/>
-								<h2
-									className={cn(
-										'font-pixel text-base font-normal',
-										runStatus === 'victory' ? 'text-success' : 'text-danger',
-									)}
-								>
-									{resultTitle}
-								</h2>
-								<p className="font-pixel text-xs leading-[1.8] text-text-secondary">
-									{runStatus === 'defeat'
-										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
-										: '왕국을 지켜냈습니다!'}
-								</p>
-								<div className="flex flex-col gap-1.5">
-									<p className="font-pixel text-xs text-text-secondary">
-										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
-									</p>
-									<p className="font-pixel text-xs text-text-secondary">
-										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
-									</p>
-									<p className="font-pixel text-xs text-text-secondary">
-										생존 시간:{' '}
-										{Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:
-										{String(
-											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
-										).padStart(2, '0')}
-									</p>
-									<p className="mt-1 font-pixel text-sm text-gold">
-										획득 골드: {gameOverStats?.goldEarned ?? 0}G
-									</p>
-									<p className="mt-0.5 font-pixel text-sm text-info">
-										획득 XP: {gameOverStats?.xpEarned ?? 0}
-									</p>
-								</div>
-								<PixelButton
-									variant="gold"
-									style={{ width: '100%' }}
-									onClick={resetRun}
-								>
-									다시 시작
-								</PixelButton>
-								<PixelButton
-									variant="secondary"
-									style={{ width: '100%' }}
-									onClick={enterLobby}
-								>
-									로비로 돌아가기
-								</PixelButton>
-							</div>
-						</div>
-					)}
+  <div
+    className="absolute inset-0 z-[3] flex items-center justify-center p-5"
+    style={{ background: 'rgba(10, 8, 4, 0.88)' }}
+  >
+    <div
+      className="flex w-[min(100%,360px)] flex-col gap-4 p-5 text-center"
+      style={{
+        background: 'rgba(26, 14, 6, 0.98)',
+        border: `2px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+        boxShadow: `0 0 24px ${runStatus === 'victory' ? 'rgba(80,200,80,0.3)' : 'rgba(200,60,60,0.3)'}, 6px 6px 0px ${colors.border}`,
+      }}
+    >
+      {/* 배너 */}
+      <div
+        className={`py-3 -mx-5 -mt-5 flex flex-col items-center gap-1${runStatus === 'victory' ? ' animate-bounce' : ''}`}
+        style={{
+          background: runStatus === 'victory' ? 'rgba(40,80,40,0.8)' : 'rgba(80,20,20,0.8)',
+          borderBottom: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+        }}
+      >
+        <span className="font-pixel text-2xl" style={{ color: runStatus === 'victory' ? colors.success : colors.danger }}>
+          {runStatus === 'victory' ? '⚔ 방어 성공 ⚔' : '✕ 방어 실패 ✕'}
+        </span>
+        <span className="font-pixel text-[11px] text-text-secondary">
+          {runStatus === 'defeat'
+            ? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
+            : gameOverStats?.wavesCleared === 10
+              ? '✨ 완벽한 방어! 왕국을 성공적으로 지켜냈습니다!'
+              : '왕국을 성공적으로 지켜냈습니다!'}
+        </span>
+      </div>
+
+      {/* 스탯 그리드 */}
+      <div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 text-left">
+        <div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span className="font-pixel text-[10px] text-text-secondary">클리어 웨이브</span>
+          <span className="font-pixel text-sm text-text">{gameOverStats?.wavesCleared ?? 0} / 10</span>
+        </div>
+        <div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span className="font-pixel text-[10px] text-text-secondary">배치한 타워</span>
+          <span className="font-pixel text-sm text-text">{gameOverStats?.towersPlaced ?? 0}</span>
+        </div>
+        <div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span className="font-pixel text-[10px] text-text-secondary">생존 시간</span>
+          <span className="font-pixel text-sm text-text">
+            {(() => {
+              const s = gameOverStats?.timeSurvivedSec ?? 0;
+              const h = Math.floor(s / 3600);
+              const m = Math.floor((s % 3600) / 60);
+              const sec = s % 60;
+              return h > 0
+                ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+                : `${m}:${String(sec).padStart(2,'0')}`;
+            })()}
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span className="font-pixel text-[10px] text-text-secondary">획득 골드</span>
+          <span className="font-pixel text-sm text-gold">{gameOverStats?.goldEarned ?? 0}G</span>
+        </div>
+      </div>
+
+      {/* XP */}
+      <div className="flex items-center justify-center gap-2 py-1.5" style={{ background: 'rgba(20,30,80,0.5)', border: '1px solid rgba(100,150,255,0.2)' }}>
+        <span className="font-pixel text-[11px] text-text-secondary">획득 XP</span>
+        <span className="font-pixel text-base text-info">+{gameOverStats?.xpEarned ?? 0}</span>
+      </div>
+
+      {/* 버튼 */}
+      <PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
+        다시 시작
+      </PixelButton>
+      <PixelButton variant="secondary" style={{ width: '100%' }} onClick={enterLobby}>
+        로비로 돌아가기
+      </PixelButton>
+    </div>
+  </div>
+)}
 				</div>
 
 				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}

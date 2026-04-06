@@ -59,6 +59,7 @@ export function GamePage() {
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
 	const setBossHp = useGameStore((s) => s.setBossHp);
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
+	const bossHp = useGameStore((s) => s.bossHp);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
@@ -312,6 +313,7 @@ export function GamePage() {
 								? `다음 ${waitCountdown}s`
 								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
+					{bossHp.visible && <BossHpBar />}
 				</div>
 
 				{/* Game Area */}
@@ -324,11 +326,10 @@ export function GamePage() {
 				>
 					<PhaserGame key={runId} />
 
-					<BossHpBar />
-
 					{runStatus !== 'victory' && runStatus !== 'defeat' && (
 						<TutorialOverlay />
 					)}
+
 
 					{bossWarningVisible && (
 						<div

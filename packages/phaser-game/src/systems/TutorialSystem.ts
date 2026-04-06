@@ -121,7 +121,8 @@ export class TutorialSystem {
 		};
 	}
 
-	private _cleanup?: () => void;
+	// start() 전 destroy() 호출에 대비해 no-op으로 초기화
+	private _cleanup: () => void = () => {};
 
 	private complete(): void {
 		this.active = false;
@@ -131,8 +132,8 @@ export class TutorialSystem {
 
 	destroy(): void {
 		this.active = false;
-		this._cleanup?.();
-		this._cleanup = undefined;
+		this._cleanup();
+		this._cleanup = () => {};
 		this.overlay?.destroy();
 		this.overlay = undefined;
 	}

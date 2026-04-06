@@ -399,38 +399,39 @@ export const useMetaStore = create<MetaState>()(
 			},
 
 			claimMission: (missionId, period) => {
-				const s = get();
-				const list = period === 'daily' ? s.progress.dailyMissions : s.progress.weeklyMissions;
-				const mission = list.find((m) => m.id === missionId);
+				// guard는 set() 내부에서 원자적으로 수행 (double-tap 방지)
+				let outcome: 'success' | 'not_ready' | 'not_found' = 'not_found';
+				set((s) => {
+					const list = period === 'daily' ? s.progress.dailyMissions : s.progress.weeklyMissions;
+					const mission = list.find((m) => m.id === missionId);
+					if (!mission) { outcome = 'not_found'; return s; }
+					if (mission.claimed || mission.current < mission.target) { outcome = 'not_ready'; return s; }
 
-				if (!mission) return 'not_found';
-				if (mission.claimed || mission.current < mission.target) return 'not_ready';
-
-				const updateList = (missions: typeof list) =>
-					missions.map((m) => (m.id === missionId ? { ...m, claimed: true } : m));
-
-				set((s) => ({
-					profile: {
-						...s.profile,
-						gold: mission.reward.type === 'gold'
-							? s.profile.gold + mission.reward.amount
-							: s.profile.gold,
-						totalGoldEarned: mission.reward.type === 'gold'
-							? s.profile.totalGoldEarned + mission.reward.amount
-							: s.profile.totalGoldEarned,
-						diamond: mission.reward.type === 'diamond'
-							? s.profile.diamond + mission.reward.amount
-							: s.profile.diamond,
-					},
-					progress: {
-						...s.progress,
-						dailyMissions: period === 'daily' ? updateList(s.progress.dailyMissions) : s.progress.dailyMissions,
-						weeklyMissions: period === 'weekly' ? updateList(s.progress.weeklyMissions) : s.progress.weeklyMissions,
-					},
-				}));
-
-				debouncedSave(get());
-				return 'success';
+					outcome = 'success';
+					const updateList = (missions: typeof list) =>
+						missions.map((m) => (m.id === missionId ? { ...m, claimed: true } : m));
+					return {
+						profile: {
+							...s.profile,
+							gold: mission.reward.type === 'gold'
+								? s.profile.gold + mission.reward.amount
+								: s.profile.gold,
+							totalGoldEarned: mission.reward.type === 'gold'
+								? s.profile.totalGoldEarned + mission.reward.amount
+								: s.profile.totalGoldEarned,
+							diamond: mission.reward.type === 'diamond'
+								? s.profile.diamond + mission.reward.amount
+								: s.profile.diamond,
+						},
+						progress: {
+							...s.progress,
+							dailyMissions: period === 'daily' ? updateList(s.progress.dailyMissions) : s.progress.dailyMissions,
+							weeklyMissions: period === 'weekly' ? updateList(s.progress.weeklyMissions) : s.progress.weeklyMissions,
+						},
+					};
+				});
+				if (outcome === 'success') debouncedSave(get());
+				return outcome;
 			},
 
 			updateProgress: (patch) => {

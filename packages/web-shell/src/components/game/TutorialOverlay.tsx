@@ -26,6 +26,7 @@ export function TutorialOverlay() {
     };
 
     const onComplete = () => {
+      // tutorialCompleted 영속화 (handleSkip 경로에서도 호출될 수 있으나 updateProgress는 멱등)
       useMetaStore.getState().updateProgress({ tutorialCompleted: true });
       setTutorialStep(null);
       setTutorialMessage(null);
@@ -47,13 +48,9 @@ export function TutorialOverlay() {
   }, [setTutorialStep, setTutorialMessage]);
 
   const handleSkip = () => {
-    // tutorialCompleted=true 저장
-    useMetaStore.getState().updateProgress({ tutorialCompleted: true });
-    // 튜토리얼 건너뛰기 요청
+    // request-tutorial-advance → TutorialSystem.complete() → tutorial-completed emit
+    // → onComplete()에서 updateProgress 호출. 여기서 중복 호출하지 않음.
     EventBus.emit('request-tutorial-advance');
-    setTutorialStep(null);
-    setTutorialMessage(null);
-    setShowSkip(false);
   };
 
   if (tutorialStep === null) return null;

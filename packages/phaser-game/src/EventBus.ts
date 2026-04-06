@@ -75,6 +75,7 @@ export interface GameEventMap {
 	'request-pause': undefined;
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
+	'request-set-speed': { multiplier: 1 | 2 };
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;

@@ -119,6 +119,8 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
+	private speedMultiplier: 1 | 2 = 1;
+	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -211,10 +213,16 @@ export class GameScene extends Phaser.Scene {
 			this.showBossWarningOverlay();
 		};
 
+		this.onSetSpeed = ({ multiplier }) => {
+			this.speedMultiplier = multiplier;
+			this.time.timeScale = multiplier;
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
+		EventBus.on('request-set-speed', this.onSetSpeed);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -609,15 +617,16 @@ export class GameScene extends Phaser.Scene {
 
 	update(time: number, delta: number) {
 		if (this.gameOver) return;
+		const scaledDelta = delta * this.speedMultiplier;
 
-		this.playerWaves.update(delta, this.playerUnits.getActiveCount());
-		this.energySystem.update(delta / 1000);
+		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
+		this.energySystem.update(scaledDelta / 1000);
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,
 			this.playerUnits,
 			time,
-			delta,
+			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
 			},
@@ -662,6 +671,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		soundGenerator.reset();
+		EventBus.off('request-set-speed', this.onSetSpeed);
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;

@@ -62,6 +62,11 @@ export function GamePage() {
 	const bossHp = useGameStore((s) => s.bossHp);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
+	const gameSpeed = useGameStore((s) => s.gameSpeed);
+	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
+	const selectedMapId = useGameStore((s) => s.selectedMapId);
+	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -96,6 +101,10 @@ export function GamePage() {
 				useGameStore.getState().selectedMapId,
 				data.stats.wavesCleared,
 			);
+			if (data.result === 'victory') {
+				const mapId = useGameStore.getState().selectedMapId;
+				meta.recordStageClear(mapId);
+			}
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -314,6 +323,15 @@ export function GamePage() {
 								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
 					{bossHp.visible && <BossHpBar />}
+					{runStatus === 'running' && speed2xUnlocked && (
+						<button
+							className="ml-auto font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
+							style={{ background: gameSpeed === 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)' }}
+							onClick={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
+						>
+							{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+						</button>
+					)}
 				</div>
 
 				{/* Game Area */}

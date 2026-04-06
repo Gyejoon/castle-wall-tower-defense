@@ -53,6 +53,7 @@ interface MetaActions {
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
+	recordStageClear: (mapId: string) => void;
 }
 
 type MetaState = SaveData & MetaActions;
@@ -425,6 +426,19 @@ export const useMetaStore = create<MetaState>()(
 							...s.progress,
 							dailyMissions: updateList(s.progress.dailyMissions),
 							weeklyMissions: updateList(s.progress.weeklyMissions),
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			recordStageClear: (mapId) => {
+				set((s) => {
+					if (s.progress.stagesCleared.includes(mapId)) return s;
+					return {
+						progress: {
+							...s.progress,
+							stagesCleared: [...s.progress.stagesCleared, mapId],
 						},
 					};
 				});

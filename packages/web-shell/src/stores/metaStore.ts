@@ -506,10 +506,12 @@ export const useMetaStore = create<MetaState>()(
 				}
 
 				// 다이아몬드/골드 차감 및 progress 업데이트
+				// set() 내부에서 최신 state 기준으로 차감 (TOCTOU 방어)
 				set((s) => {
 					const cost =
 						boxType === 'diamond_single' ? GACHA_COSTS.diamond_single.diamond :
 						boxType === 'diamond_ten' ? GACHA_COSTS.diamond_ten.diamond : 0;
+					if (cost > 0 && s.profile.diamond < cost) return {};
 
 					const newProfile = {
 						...s.profile,

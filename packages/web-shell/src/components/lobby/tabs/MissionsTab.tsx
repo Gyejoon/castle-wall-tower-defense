@@ -100,7 +100,6 @@ interface MissionSectionProps {
   period: 'daily' | 'weekly';
   countdown: string;
   onClaim: (id: string, period: 'daily' | 'weekly') => void;
-  accentColor?: string;
   isWeekly?: boolean;
 }
 

@@ -100,6 +100,7 @@ export class TutorialSystem {
 		const onWaveStarted = (d: { wave: number }) => {
 			if (!this.active) return;
 			if (this.currentStep === 2 && d.wave === 1) {
+				this.towerPlacedCount = 0; // step 3용 카운터 리셋
 				this.showStep(3);
 			} else if (this.currentStep === 4 && d.wave >= 3) {
 				this.complete();

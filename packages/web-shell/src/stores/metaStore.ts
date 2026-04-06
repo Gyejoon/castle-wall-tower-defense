@@ -400,7 +400,8 @@ export const useMetaStore = create<MetaState>()(
 
 			claimMission: (missionId, period) => {
 				// guard는 set() 내부에서 원자적으로 수행 (double-tap 방지)
-				let outcome: 'success' | 'not_ready' | 'not_found' = 'not_found';
+				// eslint-disable-next-line prefer-const -- TS가 클로저 내 mutation을 추적 못해 as 캐스트 필요
+				let outcome = 'not_found' as 'success' | 'not_ready' | 'not_found';
 				set((s) => {
 					const list = period === 'daily' ? s.progress.dailyMissions : s.progress.weeklyMissions;
 					const mission = list.find((m) => m.id === missionId);

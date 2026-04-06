@@ -375,14 +375,16 @@ export const useMetaStore = create<MetaState>()(
 						progress.lastWeeklyMissionResetAt,
 						now,
 					);
-					// 미션 타입이 추가/변경된 경우 강제 재생성 (앱 업데이트 대응)
+					// 미션 타입 추가/제거 모두 감지 — 개수 불일치 or 타입 누락 시 강제 재생성
 					const dailyStale =
 						needsDailyReset ||
+						progress.dailyMissions.length !== DAILY_MISSION_TYPES.length ||
 						DAILY_MISSION_TYPES.some(
 							(type) => !progress.dailyMissions.some((m) => m.type === type),
 						);
 					const weeklyStale =
 						needsWeeklyReset ||
+						progress.weeklyMissions.length !== WEEKLY_MISSION_TYPES.length ||
 						WEEKLY_MISSION_TYPES.some(
 							(type) => !progress.weeklyMissions.some((m) => m.type === type),
 						);

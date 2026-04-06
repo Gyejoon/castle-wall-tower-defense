@@ -31,7 +31,8 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 	const dailyFreeBoxClaimedAt = useMetaStore((s) => s.progress.dailyFreeBoxClaimedAt);
 	const dailyAdBoxCount = useMetaStore((s) => s.progress.dailyAdBoxCount);
 	const openGacha = useMetaStore((s) => s.openGacha);
-	const collectionIds = useMetaStore((s) => s.collection.map((t) => t.defId));
+	const collection = useMetaStore((s) => s.collection);
+	const collectionIds = collection.map((t) => t.defId);
 	const setLobbyTab = useGameStore((s) => s.setLobbyTab);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
 

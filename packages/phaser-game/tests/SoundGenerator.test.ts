@@ -71,6 +71,7 @@ function createMockAudioContext() {
 		sampleRate = 44100;
 		state: AudioContextState = 'running';
 		resume = vi.fn().mockResolvedValue(undefined);
+		close = vi.fn().mockResolvedValue(undefined);
 
 		createOscillator() {
 			return oscillator;

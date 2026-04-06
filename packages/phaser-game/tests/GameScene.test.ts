@@ -47,6 +47,7 @@ vi.mock('../src/audio/SoundGenerator', () => ({
 	soundGenerator: {
 		playUnitDeath: vi.fn(),
 		playWaveStart: vi.fn(),
+		reset: vi.fn(),
 	},
 }));
 

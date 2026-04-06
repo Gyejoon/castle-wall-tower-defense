@@ -2,20 +2,20 @@ import {
 	ALL_TOWERS,
 	createDefaultSave,
 	enhancementCost,
+	GACHA_COSTS,
+	type GachaResult,
 	generateDailyMissions,
 	generateWeeklyMissions,
-	GACHA_COSTS,
 	MAX_TOWER_LEVEL,
+	type MissionType,
 	PROMOTION_CONFIG,
 	rollGacha,
 	rollGacha10,
 	SAVE_STORAGE_KEY,
 	SAVE_VERSION,
+	type SaveData,
 	shouldResetDaily,
 	shouldResetWeekly,
-	type GachaResult,
-	type MissionType,
-	type SaveData,
 	type TowerGrade,
 	xpToNextLevel,
 } from '@gld/shared';
@@ -42,7 +42,10 @@ interface MetaActions {
 	addDiamond: (amount: number) => void;
 	refreshMissions: () => void;
 	progressMission: (type: MissionType, amount: number) => void;
-	claimMission: (missionId: string, period: 'daily' | 'weekly') => 'success' | 'not_ready' | 'not_found';
+	claimMission: (
+		missionId: string,
+		period: 'daily' | 'weekly',
+	) => 'success' | 'not_ready' | 'not_found';
 	updateProgress: (patch: Partial<SaveData['progress']>) => void;
 	openGacha: (
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
@@ -96,10 +99,11 @@ function flushSave() {
 }
 
 if (typeof window !== 'undefined') {
-	window.addEventListener('beforeunload', flushSave);
-	document.addEventListener('visibilitychange', () => {
+	const handleVisibilityForSave = () => {
 		if (document.visibilityState === 'hidden') flushSave();
-	});
+	};
+	window.addEventListener('beforeunload', flushSave);
+	document.addEventListener('visibilitychange', handleVisibilityForSave);
 }
 
 type SaveMigration = (
@@ -361,18 +365,32 @@ export const useMetaStore = create<MetaState>()(
 				const now = new Date();
 				set((s) => {
 					const progress = s.progress;
-					const needsDailyReset = shouldResetDaily(progress.lastDailyMissionResetAt, now);
-					const needsWeeklyReset = shouldResetWeekly(progress.lastWeeklyMissionResetAt, now);
+					const needsDailyReset = shouldResetDaily(
+						progress.lastDailyMissionResetAt,
+						now,
+					);
+					const needsWeeklyReset = shouldResetWeekly(
+						progress.lastWeeklyMissionResetAt,
+						now,
+					);
 
 					if (!needsDailyReset && !needsWeeklyReset) return {};
 
 					return {
 						progress: {
 							...progress,
-							dailyMissions: needsDailyReset ? generateDailyMissions() : progress.dailyMissions,
-							lastDailyMissionResetAt: needsDailyReset ? now.toISOString() : progress.lastDailyMissionResetAt,
-							weeklyMissions: needsWeeklyReset ? generateWeeklyMissions() : progress.weeklyMissions,
-							lastWeeklyMissionResetAt: needsWeeklyReset ? now.toISOString() : progress.lastWeeklyMissionResetAt,
+							dailyMissions: needsDailyReset
+								? generateDailyMissions()
+								: progress.dailyMissions,
+							lastDailyMissionResetAt: needsDailyReset
+								? now.toISOString()
+								: progress.lastDailyMissionResetAt,
+							weeklyMissions: needsWeeklyReset
+								? generateWeeklyMissions()
+								: progress.weeklyMissions,
+							lastWeeklyMissionResetAt: needsWeeklyReset
+								? now.toISOString()
+								: progress.lastWeeklyMissionResetAt,
 						},
 					};
 				});
@@ -403,31 +421,51 @@ export const useMetaStore = create<MetaState>()(
 				// eslint-disable-next-line prefer-const -- TS가 클로저 내 mutation을 추적 못해 as 캐스트 필요
 				let outcome = 'not_found' as 'success' | 'not_ready' | 'not_found';
 				set((s) => {
-					const list = period === 'daily' ? s.progress.dailyMissions : s.progress.weeklyMissions;
+					const list =
+						period === 'daily'
+							? s.progress.dailyMissions
+							: s.progress.weeklyMissions;
 					const mission = list.find((m) => m.id === missionId);
-					if (!mission) { outcome = 'not_found'; return s; }
-					if (mission.claimed || mission.current < mission.target) { outcome = 'not_ready'; return s; }
+					if (!mission) {
+						outcome = 'not_found';
+						return s;
+					}
+					if (mission.claimed || mission.current < mission.target) {
+						outcome = 'not_ready';
+						return s;
+					}
 
 					outcome = 'success';
 					const updateList = (missions: typeof list) =>
-						missions.map((m) => (m.id === missionId ? { ...m, claimed: true } : m));
+						missions.map((m) =>
+							m.id === missionId ? { ...m, claimed: true } : m,
+						);
 					return {
 						profile: {
 							...s.profile,
-							gold: mission.reward.type === 'gold'
-								? s.profile.gold + mission.reward.amount
-								: s.profile.gold,
-							totalGoldEarned: mission.reward.type === 'gold'
-								? s.profile.totalGoldEarned + mission.reward.amount
-								: s.profile.totalGoldEarned,
-							diamond: mission.reward.type === 'diamond'
-								? s.profile.diamond + mission.reward.amount
-								: s.profile.diamond,
+							gold:
+								mission.reward.type === 'gold'
+									? s.profile.gold + mission.reward.amount
+									: s.profile.gold,
+							totalGoldEarned:
+								mission.reward.type === 'gold'
+									? s.profile.totalGoldEarned + mission.reward.amount
+									: s.profile.totalGoldEarned,
+							diamond:
+								mission.reward.type === 'diamond'
+									? s.profile.diamond + mission.reward.amount
+									: s.profile.diamond,
 						},
 						progress: {
 							...s.progress,
-							dailyMissions: period === 'daily' ? updateList(s.progress.dailyMissions) : s.progress.dailyMissions,
-							weeklyMissions: period === 'weekly' ? updateList(s.progress.weeklyMissions) : s.progress.weeklyMissions,
+							dailyMissions:
+								period === 'daily'
+									? updateList(s.progress.dailyMissions)
+									: s.progress.dailyMissions,
+							weeklyMissions:
+								period === 'weekly'
+									? updateList(s.progress.weeklyMissions)
+									: s.progress.weeklyMissions,
 						},
 					};
 				});
@@ -458,8 +496,16 @@ export const useMetaStore = create<MetaState>()(
 					let effectiveAdBoxCount = progress.dailyAdBoxCount;
 					if (progress.dailyResetAt) {
 						const last = new Date(progress.dailyResetAt);
-						const lastUTCDay = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate());
-						const nowUTCDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+						const lastUTCDay = Date.UTC(
+							last.getUTCFullYear(),
+							last.getUTCMonth(),
+							last.getUTCDate(),
+						);
+						const nowUTCDay = Date.UTC(
+							now.getUTCFullYear(),
+							now.getUTCMonth(),
+							now.getUTCDate(),
+						);
 						if (nowUTCDay > lastUTCDay) {
 							effectiveAdBoxCount = 0;
 						}
@@ -468,9 +514,11 @@ export const useMetaStore = create<MetaState>()(
 						return 'daily_limit';
 					}
 				} else if (boxType === 'diamond_single') {
-					if (s.profile.diamond < GACHA_COSTS.diamond_single.diamond) return 'no_diamond';
+					if (s.profile.diamond < GACHA_COSTS.diamond_single.diamond)
+						return 'no_diamond';
 				} else if (boxType === 'diamond_ten') {
-					if (s.profile.diamond < GACHA_COSTS.diamond_ten.diamond) return 'no_diamond';
+					if (s.profile.diamond < GACHA_COSTS.diamond_ten.diamond)
+						return 'no_diamond';
 				}
 
 				// 롤
@@ -509,8 +557,11 @@ export const useMetaStore = create<MetaState>()(
 				// set() 내부에서 최신 state 기준으로 차감 (TOCTOU 방어)
 				set((s) => {
 					const cost =
-						boxType === 'diamond_single' ? GACHA_COSTS.diamond_single.diamond :
-						boxType === 'diamond_ten' ? GACHA_COSTS.diamond_ten.diamond : 0;
+						boxType === 'diamond_single'
+							? GACHA_COSTS.diamond_single.diamond
+							: boxType === 'diamond_ten'
+								? GACHA_COSTS.diamond_ten.diamond
+								: 0;
 					if (cost > 0 && s.profile.diamond < cost) return {};
 
 					const newProfile = {
@@ -525,10 +576,12 @@ export const useMetaStore = create<MetaState>()(
 						...s.progress,
 						gachaPityCount: newPityCount,
 						...(boxType === 'free' ? { dailyFreeBoxClaimedAt: nowIso } : {}),
-						...(boxType === 'ad' ? {
-							dailyAdBoxCount: s.progress.dailyAdBoxCount + 1,
-							dailyResetAt: nowIso,
-						} : {}),
+						...(boxType === 'ad'
+							? {
+									dailyAdBoxCount: s.progress.dailyAdBoxCount + 1,
+									dailyResetAt: nowIso,
+								}
+							: {}),
 					};
 
 					return {

@@ -22,11 +22,6 @@ export class TutorialSystem {
 		this.scene = scene;
 	}
 
-	// React가 게이트킵: tutorialCompleted 체크 후 이 메서드 호출
-	static shouldShowTutorial(): boolean {
-		return true; // 항상 start() 호출 가능, React가 진입 여부 결정
-	}
-
 	async start(): Promise<void> {
 		this.active = true;
 		this.currentStep = 0;
@@ -42,6 +37,7 @@ export class TutorialSystem {
 	}
 
 	private showStep(step: number): void {
+		if (!this.active) return;
 		if (step >= TOTAL_STEPS) {
 			this.complete();
 			return;

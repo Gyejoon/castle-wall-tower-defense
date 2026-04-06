@@ -1,14 +1,14 @@
 import {
 	GACHA_COSTS,
+	type GachaResult,
 	PITY_THRESHOLD,
 	TIER_NAMES,
-	type GachaResult,
 } from '@gld/shared';
-import { useCallback, useState } from 'react';
-import { colors } from '../styles/tokens';
-import { cn } from '../utils/cn';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
+import { colors } from '../styles/tokens';
+import { cn } from '../utils/cn';
 import { PixelButton } from './ui/PixelButton';
 
 type BoxType = 'free' | 'ad' | 'diamond_single' | 'diamond_ten';
@@ -28,13 +28,23 @@ const TIER_COLORS: Record<number, string> = {
 export function GachaScreen({ onClose }: { onClose: () => void }) {
 	const diamond = useMetaStore((s) => s.profile.diamond);
 	const pityCount = useMetaStore((s) => s.progress.gachaPityCount);
-	const dailyFreeBoxClaimedAt = useMetaStore((s) => s.progress.dailyFreeBoxClaimedAt);
+	const dailyFreeBoxClaimedAt = useMetaStore(
+		(s) => s.progress.dailyFreeBoxClaimedAt,
+	);
 	const dailyAdBoxCount = useMetaStore((s) => s.progress.dailyAdBoxCount);
 	const openGacha = useMetaStore((s) => s.openGacha);
 	const collection = useMetaStore((s) => s.collection);
 	const collectionIds = collection.map((t) => t.defId);
 	const setLobbyTab = useGameStore((s) => s.setLobbyTab);
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
+
+	const gachaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (gachaTimerRef.current) clearTimeout(gachaTimerRef.current);
+		};
+	}, []);
 
 	const [selectedBox, setSelectedBox] = useState<BoxType>('free');
 	const [is10Pull, setIs10Pull] = useState(false);
@@ -46,7 +56,8 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 	// 쿨다운/한도 체크
 	const isFreeOnCooldown =
 		!!dailyFreeBoxClaimedAt &&
-		Date.now() - new Date(dailyFreeBoxClaimedAt).getTime() < GACHA_COSTS.free.cooldownMs;
+		Date.now() - new Date(dailyFreeBoxClaimedAt).getTime() <
+			GACHA_COSTS.free.cooldownMs;
 	const isAdLimitReached = dailyAdBoxCount >= GACHA_COSTS.ad.dailyLimit;
 	const isTenPullDisabled = diamond < GACHA_COSTS.diamond_ten.diamond;
 
@@ -58,13 +69,15 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 		// 컬렉션 스냅샷 캡처 (openGacha 호출 전)
 		const currentCollectionSnapshot = new Set(collectionIds);
 
-		setTimeout(() => {
+		gachaTimerRef.current = setTimeout(() => {
+			gachaTimerRef.current = null;
 			const res = openGacha(boxType);
 			if (typeof res === 'string') {
 				setPhase('select');
 				if (res === 'no_diamond') setErrorMsg('다이아몬드가 부족합니다');
 				else if (res === 'cooldown') setErrorMsg('쿨다운 중입니다');
-				else if (res === 'daily_limit') setErrorMsg('오늘 광고 상자를 모두 사용했습니다');
+				else if (res === 'daily_limit')
+					setErrorMsg('오늘 광고 상자를 모두 사용했습니다');
 				return;
 			}
 			const revealedResults: RevealedResult[] = res.map((r) => ({
@@ -99,8 +112,12 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 			{/* Amendment G: Pity 진행 바 */}
 			<div className="w-full max-w-[320px]">
 				<div className="flex justify-between items-center mb-1">
-					<span className="font-pixel text-[10px] text-text-secondary">전설 보장</span>
-					<span className="font-pixel text-[10px] text-gold">{pityCount}/{PITY_THRESHOLD}</span>
+					<span className="font-pixel text-[10px] text-text-secondary">
+						전설 보장
+					</span>
+					<span className="font-pixel text-[10px] text-gold">
+						{pityCount}/{PITY_THRESHOLD}
+					</span>
 				</div>
 				<div className="w-full h-1.5 bg-border rounded-[1px] overflow-hidden">
 					<div
@@ -131,10 +148,14 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 								{TIER_NAMES[results[0].tier] ?? '일반'}
 							</p>
 							{results[0].isPityReward && (
-								<span className="font-pixel text-[10px] text-gold">★ 천장 보장</span>
+								<span className="font-pixel text-[10px] text-gold">
+									★ 천장 보장
+								</span>
 							)}
 							{results[0].isDuplicate && (
-								<span className="font-pixel text-[11px] text-text-secondary">보유 중 → +50G 전환</span>
+								<span className="font-pixel text-[11px] text-text-secondary">
+									보유 중 → +50G 전환
+								</span>
 							)}
 						</div>
 					) : (
@@ -144,7 +165,9 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 								<button
 									key={i}
 									type="button"
-									onClick={() => setFlippedCards((prev) => new Set([...prev, i]))}
+									onClick={() =>
+										setFlippedCards((prev) => new Set([...prev, i]))
+									}
 									className={cn(
 										'aspect-square border-2 flex flex-col items-center justify-center p-1 transition-all duration-200',
 										flippedCards.has(i)
@@ -161,11 +184,15 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 												{r.towerName}
 											</span>
 											{r.isDuplicate && (
-												<span className="font-pixel text-[7px] text-text-secondary">+50G</span>
+												<span className="font-pixel text-[7px] text-text-secondary">
+													+50G
+												</span>
 											)}
 										</>
 									) : (
-										<span className="font-pixel text-[10px] text-text-secondary">?</span>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											?
+										</span>
 									)}
 								</button>
 							))}
@@ -207,14 +234,23 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 							const isDisabled =
 								(id === 'free' && isFreeOnCooldown) ||
 								(id === 'ad' && isAdLimitReached) ||
-								(id === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond);
+								(id === 'diamond_single' &&
+									diamond < GACHA_COSTS.diamond_single.diamond);
 							const disabledReason =
-								id === 'free' && isFreeOnCooldown ? '쿨다운 중' :
-								id === 'ad' && isAdLimitReached ? '오늘 한도 초과' :
-								id === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond ? '다이아 부족' :
-								null;
+								id === 'free' && isFreeOnCooldown
+									? '쿨다운 중'
+									: id === 'ad' && isAdLimitReached
+										? '오늘 한도 초과'
+										: id === 'diamond_single' &&
+												diamond < GACHA_COSTS.diamond_single.diamond
+											? '다이아 부족'
+											: null;
 							const label =
-								id === 'free' ? '무료 상자' : id === 'ad' ? '광고 상자' : '다이아 상자';
+								id === 'free'
+									? '무료 상자'
+									: id === 'ad'
+										? '광고 상자'
+										: '다이아 상자';
 
 							return (
 								<div
@@ -234,17 +270,26 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 												: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
 									)}
 								>
-									<p className={cn('font-pixel text-xs', isDisabled ? 'text-text-secondary' : 'text-text')}>
+									<p
+										className={cn(
+											'font-pixel text-xs',
+											isDisabled ? 'text-text-secondary' : 'text-text',
+										)}
+									>
 										{label}
 									</p>
 									{disabledReason ? (
-										<p className="font-pixel text-[10px] text-error/70">{disabledReason}</p>
+										<p className="font-pixel text-[10px] text-error/70">
+											{disabledReason}
+										</p>
 									) : GACHA_COSTS[id].diamond > 0 ? (
 										<p className="font-pixel text-[11px] text-gold">
 											{GACHA_COSTS[id].diamond} 💎
 										</p>
 									) : (
-										<p className="font-pixel text-[11px] text-text-secondary">무료</p>
+										<p className="font-pixel text-[11px] text-text-secondary">
+											무료
+										</p>
 									)}
 								</div>
 							);
@@ -266,11 +311,22 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 										: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
 							)}
 						>
-							<p className={cn('font-pixel text-xs', isTenPullDisabled ? 'text-text-secondary' : 'text-text')}>10연차</p>
+							<p
+								className={cn(
+									'font-pixel text-xs',
+									isTenPullDisabled ? 'text-text-secondary' : 'text-text',
+								)}
+							>
+								10연차
+							</p>
 							{isTenPullDisabled ? (
-								<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>
+								<p className="font-pixel text-[10px] text-error/70">
+									다이아 부족
+								</p>
 							) : (
-								<p className="font-pixel text-[11px] text-gold">{GACHA_COSTS.diamond_ten.diamond} 💎</p>
+								<p className="font-pixel text-[11px] text-gold">
+									{GACHA_COSTS.diamond_ten.diamond} 💎
+								</p>
 							)}
 						</div>
 					</div>
@@ -287,7 +343,9 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 								(is10Pull && isTenPullDisabled) ||
 								(!is10Pull && selectedBox === 'free' && isFreeOnCooldown) ||
 								(!is10Pull && selectedBox === 'ad' && isAdLimitReached) ||
-								(!is10Pull && selectedBox === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond)
+								(!is10Pull &&
+									selectedBox === 'diamond_single' &&
+									diamond < GACHA_COSTS.diamond_single.diamond)
 							}
 						>
 							열기

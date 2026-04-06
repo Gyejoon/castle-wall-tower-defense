@@ -1,4 +1,4 @@
-import { EventBus } from '@gld/phaser-game';
+import { EventBus, soundGenerator } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
@@ -237,6 +237,17 @@ export function GamePage() {
 		setBossWarningVisible,
 		setGameOverStats,
 	]);
+
+	useEffect(() => {
+		const handleVisibility = () => {
+			if (document.visibilityState === 'visible') {
+				soundGenerator.unlock();
+			}
+		};
+		document.addEventListener('visibilitychange', handleVisibility);
+		return () =>
+			document.removeEventListener('visibilitychange', handleVisibility);
+	}, []);
 
 	useEffect(() => {
 		if (!toast) return;

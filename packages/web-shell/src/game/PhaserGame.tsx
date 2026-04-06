@@ -26,6 +26,10 @@ export function PhaserGame() {
 		const metaState = useMetaStore.getState();
 		game.registry.set('deckIds', metaState.selectedDeck);
 		game.registry.set('collection', metaState.collection);
+		game.registry.set(
+			'tutorialCompleted',
+			metaState.progress.tutorialCompleted ?? false,
+		);
 		gameRef.current = game;
 
 		return () => {

@@ -315,7 +315,9 @@ export function GamePage() {
 
 					<BossHpBar />
 
-					<TutorialOverlay />
+					{runStatus !== 'victory' && runStatus !== 'defeat' && (
+						<TutorialOverlay />
+					)}
 
 					{bossWarningVisible && (
 						<div

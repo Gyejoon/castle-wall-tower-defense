@@ -32,7 +32,6 @@ function useAnimatedGold() {
 
 export function ProfileBar() {
 	const profile = useMetaStore((s) => s.profile);
-	const diamond = useMetaStore((s) => s.profile.diamond);
 	const displayGold = useAnimatedGold();
 	const xpNeeded = xpToNextLevel(profile.level);
 	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;
@@ -86,7 +85,7 @@ export function ProfileBar() {
 				<div className="flex items-center gap-1">
 					<span className="text-[12px] leading-none">💎</span>
 					<span className="font-pixel text-[11px] text-[#5bc8e8]">
-						{diamond.toLocaleString()}
+						{profile.diamond.toLocaleString()}
 					</span>
 				</div>
 			</div>

@@ -8,21 +8,31 @@ interface MissionTemplate {
 
 const DAILY_TEMPLATES: MissionTemplate[] = [
 	{ type: 'reach_wave', target: 50, reward: { type: 'diamond', amount: 15 } },
-	{ type: 'place_towers', target: 100, reward: { type: 'diamond', amount: 10 } },
+	{
+		type: 'place_towers',
+		target: 100,
+		reward: { type: 'diamond', amount: 10 },
+	},
 	{ type: 'defeat_boss', target: 10, reward: { type: 'diamond', amount: 30 } },
-	{ type: 'attendance', target: 1, reward: { type: 'diamond', amount: 5 } },
 ];
 
 const WEEKLY_TEMPLATES: MissionTemplate[] = [
 	{ type: 'clear_stage', target: 30, reward: { type: 'diamond', amount: 80 } },
-	{ type: 'place_towers', target: 200, reward: { type: 'diamond', amount: 50 } },
+	{
+		type: 'place_towers',
+		target: 200,
+		reward: { type: 'diamond', amount: 50 },
+	},
 	{ type: 'defeat_boss', target: 30, reward: { type: 'diamond', amount: 100 } },
 	{ type: 'attendance', target: 5, reward: { type: 'diamond', amount: 30 } },
 ];
 
 // 구조 변경 감지용 — refreshMissions에서 기존 저장 데이터와 비교
-export const DAILY_MISSION_TYPES: readonly MissionType[] = DAILY_TEMPLATES.map((t) => t.type);
-export const WEEKLY_MISSION_TYPES: readonly MissionType[] = WEEKLY_TEMPLATES.map((t) => t.type);
+export const DAILY_MISSION_TYPES: readonly MissionType[] = DAILY_TEMPLATES.map(
+	(t) => t.type,
+);
+export const WEEKLY_MISSION_TYPES: readonly MissionType[] =
+	WEEKLY_TEMPLATES.map((t) => t.type);
 
 export function generateDailyMissions(): MissionProgress[] {
 	return DAILY_TEMPLATES.map((t, i) => ({

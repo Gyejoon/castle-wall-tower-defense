@@ -5,12 +5,13 @@ import {
 	MISSION_LABELS,
 	shouldResetDaily,
 	shouldResetWeekly,
+	WEEKLY_MISSION_TYPES,
 } from '../src/index';
 
 describe('generateDailyMissions', () => {
-	it('4개 미션 반환', () => {
+	it('3개 미션 반환', () => {
 		const missions = generateDailyMissions();
-		expect(missions).toHaveLength(4);
+		expect(missions).toHaveLength(3);
 	});
 
 	it('id가 daily-{i} 형식', () => {
@@ -28,13 +29,16 @@ describe('generateDailyMissions', () => {
 		}
 	});
 
-	it('target이 targetRange 내에 있음', () => {
-		const rng = () => 0; // 항상 min
-		const missions = generateDailyMissions(rng);
-		// reach_wave: min=50
-		expect(missions[0].target).toBe(50);
-		// place_towers: min=100
-		expect(missions[1].target).toBe(100);
+	it('target 고정값 검증', () => {
+		const missions = generateDailyMissions();
+		expect(missions[0].target).toBe(50); // reach_wave
+		expect(missions[1].target).toBe(100); // place_towers
+		expect(missions[2].target).toBe(10); // defeat_boss
+	});
+
+	it('일일 미션에 attendance 없음 (주간 전용)', () => {
+		const missions = generateDailyMissions();
+		expect(missions.some((m) => m.type === 'attendance')).toBe(false);
 	});
 });
 
@@ -47,6 +51,17 @@ describe('generateWeeklyMissions', () => {
 	it('id가 weekly-{i} 형식', () => {
 		const missions = generateWeeklyMissions();
 		expect(missions[0].id).toBe('weekly-0');
+	});
+
+	it('attendance 미션 포함 (target=5)', () => {
+		const missions = generateWeeklyMissions();
+		const att = missions.find((m) => m.type === 'attendance');
+		expect(att).toBeDefined();
+		expect(att?.target).toBe(5);
+	});
+
+	it('WEEKLY_MISSION_TYPES에 attendance 포함', () => {
+		expect(WEEKLY_MISSION_TYPES).toContain('attendance');
 	});
 });
 
@@ -103,11 +118,12 @@ describe('shouldResetWeekly', () => {
 });
 
 describe('MISSION_LABELS', () => {
-	it('5개 타입 모두 라벨 존재', () => {
+	it('6개 타입 모두 라벨 존재', () => {
 		expect(MISSION_LABELS.reach_wave).toBeTruthy();
 		expect(MISSION_LABELS.place_towers).toBeTruthy();
 		expect(MISSION_LABELS.defeat_boss).toBeTruthy();
 		expect(MISSION_LABELS.clear_stage).toBeTruthy();
 		expect(MISSION_LABELS.use_element).toBeTruthy();
+		expect(MISSION_LABELS.attendance).toBeTruthy();
 	});
 });

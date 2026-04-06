@@ -69,23 +69,30 @@ export function generateWeeklyMissions(rng = Math.random): MissionProgress[] {
 	}));
 }
 
+export const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+function toKSTDate(d: Date): Date {
+	return new Date(d.getTime() + KST_OFFSET_MS);
+}
+
 export function shouldResetDaily(
 	lastResetAt: string | null,
 	now: Date,
 ): boolean {
 	if (!lastResetAt) return true;
-	const last = new Date(lastResetAt);
-	const lastUTCDay = Date.UTC(
-		last.getUTCFullYear(),
-		last.getUTCMonth(),
-		last.getUTCDate(),
+	const lastKST = toKSTDate(new Date(lastResetAt));
+	const nowKST = toKSTDate(now);
+	const lastDay = Date.UTC(
+		lastKST.getUTCFullYear(),
+		lastKST.getUTCMonth(),
+		lastKST.getUTCDate(),
 	);
-	const nowUTCDay = Date.UTC(
-		now.getUTCFullYear(),
-		now.getUTCMonth(),
-		now.getUTCDate(),
+	const nowDay = Date.UTC(
+		nowKST.getUTCFullYear(),
+		nowKST.getUTCMonth(),
+		nowKST.getUTCDate(),
 	);
-	return nowUTCDay > lastUTCDay;
+	return nowDay > lastDay;
 }
 
 export function shouldResetWeekly(
@@ -93,14 +100,15 @@ export function shouldResetWeekly(
 	now: Date,
 ): boolean {
 	if (!lastResetAt) return true;
-	const last = new Date(lastResetAt);
-	// 월요일 0시 UTC 기준
-	const getMonday = (d: Date) => {
+	const lastKST = toKSTDate(new Date(lastResetAt));
+	const nowKST = toKSTDate(now);
+	// 월요일 KST 0시 기준
+	const getMondayKST = (d: Date) => {
 		const day = d.getUTCDay();
 		const diff = day === 0 ? 6 : day - 1;
 		return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - diff);
 	};
-	return getMonday(now) > getMonday(last);
+	return getMondayKST(nowKST) > getMondayKST(lastKST);
 }
 
 export const MISSION_LABELS: Record<MissionType, string> = {

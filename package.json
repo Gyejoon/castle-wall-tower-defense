@@ -13,7 +13,8 @@
     "test:web": "bun run --filter web-shell test",
     "lint": "bun run --filter '*' lint",
     "lint:check": "bunx biome check .",
-    "generate:assets": "bun run scripts/generate-assets/generate-all.ts"
+    "generate:assets": "bun run scripts/generate-assets/generate-all.ts",
+    "comfyui-harness": "bun run scripts/comfyui-harness/harness.ts"
   },
   "engines": {
     "node": ">=22"
@@ -22,6 +23,7 @@
     "@biomejs/biome": "^2.4.9",
     "@napi-rs/canvas": "^0.1.97",
     "phaser3spectorjs": "^0.0.8",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "yaml": "^2.8.3"
   }
 }

@@ -167,6 +167,49 @@ describe('GameScene', () => {
 		});
 	});
 
+	it('emits defeat with wavesCleared=finalSlot-1 when base HP depletes', () => {
+		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.currentSlotDef = { slotIndex: 5 };
+		scene.playerHp = 1; // one more hit defeats
+		scene.playerWaves = {
+			update: vi.fn(),
+			getPhase: vi.fn(() => 'running'),
+			getElapsedMs: vi.fn(() => 0),
+		};
+		scene.playerTowers = {
+			update: vi.fn(() => []),
+			getTowers: vi.fn(() => []),
+			destroy: vi.fn(),
+		};
+		scene.playerUnits = {
+			getUnitPositions: vi.fn(() => []),
+			getUnitElement: vi.fn(() => 'neutral'),
+			applyDamage: vi.fn(),
+			applySlow: vi.fn(),
+			update: vi.fn(() => ({ reachedExit: ['unit-1'] })), // triggers damage
+			hasActiveUnits: vi.fn(() => true),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 1),
+		};
+
+		scene.update(0, 16);
+
+		expect(EventBus.emit).toHaveBeenCalledWith('game-over', {
+			result: 'defeat',
+			reason: 'base_hp_depleted',
+			finalSlot: 5,
+			stats: {
+				wavesCleared: 4, // finalSlot-1
+				towersPlaced: 0,
+				timeSurvivedSec: 0,
+				goldEarned: 0,
+				rewardMultiplier: 1,
+			},
+		});
+	});
+
 	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };

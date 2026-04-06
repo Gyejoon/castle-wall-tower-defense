@@ -112,4 +112,11 @@ describe('EnergySystem', () => {
 		system.add(10);
 		expect(system.getEnergy()).toBe(100);
 	});
+
+	it('add() ignores non-positive amounts', () => {
+		const system = new EnergySystem(50);
+		system.add(0);
+		system.add(-5);
+		expect(system.getEnergy()).toBe(50);
+	});
 });

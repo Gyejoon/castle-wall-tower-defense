@@ -220,6 +220,7 @@ export class GameScene extends Phaser.Scene {
 		this.onSetSpeed = ({ multiplier }) => {
 			this.speedMultiplier = multiplier;
 			this.time.timeScale = multiplier;
+			this.anims.globalTimeScale = multiplier;
 		};
 
 		EventBus.on('request-select-tower', this.onSelectTower);
@@ -682,6 +683,7 @@ export class GameScene extends Phaser.Scene {
 		this.tutorial = undefined;
 
 		this.selectionGraphics.clear();
+		this.hoverGraphics?.destroy();
 		this.pathGraphics?.destroy();
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();

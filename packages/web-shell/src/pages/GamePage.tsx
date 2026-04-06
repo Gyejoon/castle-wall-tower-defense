@@ -1,4 +1,4 @@
-import { EventBus } from '@gld/phaser-game';
+import { EventBus, soundGenerator } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
@@ -8,6 +8,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { DeckDock } from '../components/game/DeckDock';
+import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { PixelButton } from '../components/ui/PixelButton';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameStore } from '../stores/gameStore';
@@ -238,6 +239,17 @@ export function GamePage() {
 	]);
 
 	useEffect(() => {
+		const handleVisibility = () => {
+			if (document.visibilityState === 'visible') {
+				soundGenerator.unlock();
+			}
+		};
+		document.addEventListener('visibilitychange', handleVisibility);
+		return () =>
+			document.removeEventListener('visibilitychange', handleVisibility);
+	}, []);
+
+	useEffect(() => {
 		if (!toast) return;
 		const timeout = window.setTimeout(() => clearToast(), 1800);
 		return () => window.clearTimeout(timeout);
@@ -313,6 +325,10 @@ export function GamePage() {
 					<PhaserGame key={runId} />
 
 					<BossHpBar />
+
+					{runStatus !== 'victory' && runStatus !== 'defeat' && (
+						<TutorialOverlay />
+					)}
 
 					{bossWarningVisible && (
 						<div

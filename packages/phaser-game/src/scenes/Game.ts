@@ -220,8 +220,11 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('current-scene-ready', this);
 
 		void this.prefetchOptionalAssets();
-		if (TutorialSystem.shouldShowTutorial()) {
-			this.tutorial = new TutorialSystem(this, this.optionalAssetManifest);
+		const tutorialCompleted = this.game.registry.get('tutorialCompleted') as
+			| boolean
+			| undefined;
+		if (!tutorialCompleted) {
+			this.tutorial = new TutorialSystem(this);
 			void this.tutorial.start();
 		}
 		this.playerWaves.start();
@@ -651,6 +654,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		soundGenerator.reset();
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;

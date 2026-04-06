@@ -16,6 +16,10 @@ export const uiMobileArt = {
 		'/assets/ui-mobile/settings-tab-icon-active-v20260331-a.webp',
 	settingsTabIconInactive:
 		'/assets/ui-mobile/settings-tab-icon-inactive-v20260331-a.webp',
+	missionTabIconActive:
+		'/assets/ui-mobile/mission-tab-icon-active-v20260406-i.png',
+	missionTabIconInactive:
+		'/assets/ui-mobile/mission-tab-icon-inactive-v20260406-i.png',
 	profileAvatar: '/assets/ui-mobile/profile-avatar-v20260331-a.webp',
 	coinIcon: '/assets/ui-mobile/coin-icon-v20260331-a.webp',
 	trophyIcon: '/assets/ui-mobile/trophy-icon-v20260331-a.webp',

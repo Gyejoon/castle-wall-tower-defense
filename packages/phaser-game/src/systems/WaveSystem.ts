@@ -29,7 +29,10 @@ export class WaveSystem {
 	constructor(unitSystem: UnitSystem, waves: WaveDef[], maxWaves?: number) {
 		this.unitSystem = unitSystem;
 		this.waves = waves;
-		this.maxWaves = Math.max(1, Math.min(maxWaves ?? waves.length, waves.length));
+		this.maxWaves = Math.max(
+			1,
+			Math.min(maxWaves ?? waves.length, waves.length),
+		);
 	}
 
 	setMaxWaves(count: number): void {

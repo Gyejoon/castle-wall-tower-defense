@@ -129,6 +129,12 @@ export class SoundGenerator {
 			clearTimeout(timer);
 		}
 		this.pendingTimers.clear();
+		if (this.audioContext) {
+			void this.audioContext.close();
+			this.audioContext = null;
+			this.masterGainNode = null;
+			this.compressorNode = null;
+		}
 	}
 
 	private schedule(delayMs: number, action: () => void): void {

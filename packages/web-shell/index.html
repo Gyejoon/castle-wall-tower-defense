@@ -15,6 +15,38 @@
     <title>Palace 개랜타디</title>
   </head>
   <body>
+    <!-- Colorblind compensation SVG filters (Daltonize T = I + M·(I−S)) -->
+    <!-- 대각선에 1을 더해 원본 신호를 보존하면서 손실 채널을 다른 채널로 보상 -->
+    <div style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Protanopia: R 손실 → G/B 채널로 보상 (R-R 대각 = 1) -->
+          <filter id="protan-filter">
+            <feColorMatrix type="matrix" values="
+              1     2.02344  -2.52581  0 0
+              0     1        0         0 0
+              0     0        1         0 0
+              0     0        0         1 0"/>
+          </filter>
+          <!-- Deuteranopia: G 손실 → R/B 채널로 보상 (G-G 대각 = 1) -->
+          <filter id="deutan-filter">
+            <feColorMatrix type="matrix" values="
+              1     0        0         0 0
+              0.494207  1  1.24827    0 0
+              0     0        1         0 0
+              0     0        0         1 0"/>
+          </filter>
+          <!-- Tritanopia: B 손실 → R/G 채널로 보상 (B-B 대각 = 1) -->
+          <filter id="tritan-filter">
+            <feColorMatrix type="matrix" values="
+              1     0        0         0 0
+              0     1        0         0 0
+              -0.395913  0.801109  1  0 0
+              0     0        0         1 0"/>
+          </filter>
+        </defs>
+      </svg>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

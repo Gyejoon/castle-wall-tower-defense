@@ -61,6 +61,10 @@ export interface GameEventMap {
 		groups: Array<{ unitId: string; unitName: string; count: number }>;
 	};
 	'tower-sold': { col: number; row: number; refund: number };
+	'tutorial-step': { step: number; message: string };
+	'tutorial-highlight-tiles': { tiles: Array<{ col: number; row: number }> };
+	'tutorial-action-completed': { step: number };
+	'tutorial-completed': undefined;
 	// React → Game
 	'request-select-tower': { towerDefId: string };
 	'request-clear-tower-selection': undefined;
@@ -70,6 +74,7 @@ export interface GameEventMap {
 	'request-reset-run': undefined;
 	'request-pause': undefined;
 	'request-resume': undefined;
+	'request-tutorial-advance': undefined;
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;

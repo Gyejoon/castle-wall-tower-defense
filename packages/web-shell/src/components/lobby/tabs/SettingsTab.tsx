@@ -3,13 +3,24 @@ import { useGameStore } from '../../../stores/gameStore';
 import { colors } from '../../../styles/tokens';
 import { TabBackground } from '../TabBackground';
 
+const COLORBLIND_OPTIONS = [
+	{ value: 'off' as const, label: '없음' },
+	{ value: 'protan' as const, label: '적색약' },
+	{ value: 'deutan' as const, label: '녹색약' },
+	{ value: 'tritan' as const, label: '청색약' },
+];
+
 export function SettingsTab() {
-	const soundEnabled = useGameStore((s) => s.soundEnabled);
-	const toggleSound = useGameStore((s) => s.toggleSound);
 	const screenShake = useGameStore((s) => s.screenShake);
 	const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
 	const showDamageNumbers = useGameStore((s) => s.showDamageNumbers);
 	const toggleDamageNumbers = useGameStore((s) => s.toggleDamageNumbers);
+	const bgmVolume = useGameStore((s) => s.bgmVolume);
+	const sfxVolume = useGameStore((s) => s.sfxVolume);
+	const colorblindMode = useGameStore((s) => s.colorblindMode);
+	const setBgmVolume = useGameStore((s) => s.setBgmVolume);
+	const setSfxVolume = useGameStore((s) => s.setSfxVolume);
+	const setColorblindMode = useGameStore((s) => s.setColorblindMode);
 
 	return (
 		<div
@@ -30,11 +41,8 @@ export function SettingsTab() {
 				<span className="font-pixel text-sm text-text">설정</span>
 
 				<SettingsSection title="사운드">
-					<ToggleRow
-						label="효과음"
-						checked={soundEnabled}
-						onChange={toggleSound}
-					/>
+					<SliderRow label="BGM" value={bgmVolume} onChange={setBgmVolume} />
+					<SliderRow label="SFX" value={sfxVolume} onChange={setSfxVolume} />
 				</SettingsSection>
 
 				<SettingsSection title="화면">
@@ -47,6 +55,15 @@ export function SettingsTab() {
 						label="데미지 숫자"
 						checked={showDamageNumbers}
 						onChange={toggleDamageNumbers}
+					/>
+				</SettingsSection>
+
+				<SettingsSection title="접근성">
+					<SelectRow
+						label="색각이상 모드"
+						value={colorblindMode}
+						options={COLORBLIND_OPTIONS}
+						onChange={setColorblindMode}
 					/>
 				</SettingsSection>
 
@@ -112,6 +129,70 @@ function ToggleRow({
 				/>
 			</div>
 		</button>
+	);
+}
+
+function SliderRow({
+	label,
+	value,
+	onChange,
+}: {
+	label: string;
+	value: number;
+	onChange: (v: number) => void;
+}) {
+	return (
+		<div
+			className="flex justify-between items-center px-3 py-2.5 gap-3"
+			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
+		>
+			<span className="font-pixel text-xs text-text shrink-0">{label}</span>
+			<input
+				type="range"
+				min={0}
+				max={100}
+				value={Math.round(value * 100)}
+				onChange={(e) => onChange(Number(e.target.value) / 100)}
+				className="flex-1 h-2 appearance-none bg-border accent-gold cursor-pointer"
+				aria-label={label}
+			/>
+			<span className="font-pixel text-[11px] text-text-secondary w-8 text-right">
+				{Math.round(value * 100)}
+			</span>
+		</div>
+	);
+}
+
+function SelectRow<T extends string>({
+	label,
+	value,
+	options,
+	onChange,
+}: {
+	label: string;
+	value: T;
+	options: { value: T; label: string }[];
+	onChange: (v: T) => void;
+}) {
+	return (
+		<div
+			className="flex justify-between items-center px-3 py-2.5"
+			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
+		>
+			<span className="font-pixel text-xs text-text">{label}</span>
+			<select
+				value={value}
+				onChange={(e) => onChange(e.target.value as T)}
+				className="font-pixel text-[11px] text-text bg-panel border border-border px-2 py-1 cursor-pointer"
+				aria-label={label}
+			>
+				{options.map((o) => (
+					<option key={o.value} value={o.value}>
+						{o.label}
+					</option>
+				))}
+			</select>
+		</div>
 	);
 }
 

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useMissionTracker } from './hooks/useMissionTracker';
 import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
@@ -18,26 +19,58 @@ function LoadingScreen() {
 	);
 }
 
+const COLORBLIND_FILTERS: Record<string, string> = {
+	off: 'none',
+	protan: 'url(#protan-filter)',
+	deutan: 'url(#deutan-filter)',
+	tritan: 'url(#tritan-filter)',
+};
+
 export function App() {
 	const runStatus = useGameStore((s) => s.runStatus);
-
 	const pushToast = useGameStore((s) => s.pushToast);
+	const colorblindMode = useGameStore((s) => s.colorblindMode);
 
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
+		useMetaStore.getState().refreshMissions();
+		// 하루 첫 오픈 시 출석 체크 자동 달성
+		// Zustand set()은 동기적으로 상태 반영 → refreshMissions() 직후 getState()는 최신 상태 보장
+		// current=0 가드: 오늘 이미 달성(current=1)이면 skip, 주간 attendance도 함께 누적됨(의도된 동작)
+		const meta = useMetaStore.getState();
+		const dailyAttendance = meta.progress.dailyMissions.find(
+			(m) => m.type === 'attendance',
+		);
+		if (dailyAttendance && dailyAttendance.current === 0) {
+			meta.progressMission('attendance', 1);
+		}
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
 		window.addEventListener('gld-save-error', onSaveError);
 		return () => window.removeEventListener('gld-save-error', onSaveError);
 	}, [pushToast]);
 
+	useMissionTracker();
+
 	if (runStatus === 'lobby') {
-		return <LobbyPage />;
+		return (
+			<div
+				className="w-full h-full"
+				style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
+			>
+				<LobbyPage />
+			</div>
+		);
 	}
 
 	return (
-		<Suspense fallback={<LoadingScreen />}>
-			<GamePage />
-		</Suspense>
+		<div
+			className="w-full h-full"
+			style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
+		>
+			<Suspense fallback={<LoadingScreen />}>
+				<GamePage />
+			</Suspense>
+		</div>
 	);
 }

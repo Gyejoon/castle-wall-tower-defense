@@ -16,7 +16,7 @@ import { useMetaStore } from './metaStore';
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
-export type LobbyTab = 'home' | 'collection' | 'settings';
+export type LobbyTab = 'home' | 'collection' | 'missions' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {
@@ -63,7 +63,9 @@ interface GameStoreState {
 	placementFeedback: PlacementFailureReason | null;
 	wavePreview: WavePreviewGroup[] | null;
 	lobbyTab: LobbyTab;
-	soundEnabled: boolean;
+	bgmVolume: number;
+	sfxVolume: number;
+	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';
 	screenShake: boolean;
 	showDamageNumbers: boolean;
 	playerTowerCount: number;
@@ -73,6 +75,8 @@ interface GameStoreState {
 	bossHp: BossHpState;
 	bossWarningVisible: boolean;
 	gameOverStats: GameOverStats | null;
+	tutorialStep: number | null;
+	tutorialMessage: string | null;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -94,13 +98,17 @@ interface GameStoreState {
 	clearToast: () => void;
 	resetRun: () => void;
 	enterLobby: () => void;
-	toggleSound: () => void;
+	setBgmVolume: (v: number) => void;
+	setSfxVolume: (v: number) => void;
+	setColorblindMode: (mode: 'off' | 'protan' | 'deutan' | 'tritan') => void;
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
 	setBossHp: (bossHp: BossHpState) => void;
 	setBossWarningVisible: (v: boolean) => void;
 	setGameOverStats: (stats: GameOverStats | null) => void;
+	setTutorialStep: (step: number | null) => void;
+	setTutorialMessage: (msg: string | null) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -128,6 +136,8 @@ const createRunState = () => ({
 	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
 	bossWarningVisible: false,
 	gameOverStats: null,
+	tutorialStep: null,
+	tutorialMessage: null,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -135,7 +145,9 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	runStatus: 'lobby',
 	selectedMapId: 'forest_gate',
 	lobbyTab: 'home',
-	soundEnabled: true,
+	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
+	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
+	colorblindMode: useMetaStore.getState().settings?.colorblindMode ?? 'off',
 	screenShake: true,
 	showDamageNumbers: true,
 	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
@@ -198,7 +210,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			lobbyTab: 'home',
 			...createRunState(),
 		})),
-	toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+	setBgmVolume: (v) => {
+		useMetaStore.getState().updateSettings({ bgmVolume: v });
+		set({ bgmVolume: v });
+	},
+	setSfxVolume: (v) => {
+		useMetaStore.getState().updateSettings({ sfxVolume: v });
+		set({ sfxVolume: v });
+	},
+	setColorblindMode: (mode) => {
+		useMetaStore.getState().updateSettings({ colorblindMode: mode });
+		set({ colorblindMode: mode });
+	},
 	toggleScreenShake: () =>
 		set((state) => ({ screenShake: !state.screenShake })),
 	toggleDamageNumbers: () =>
@@ -210,4 +233,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setBossHp: (bossHp) => set({ bossHp }),
 	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
 	setGameOverStats: (stats) => set({ gameOverStats: stats }),
+	setTutorialStep: (step) => set({ tutorialStep: step }),
+	setTutorialMessage: (msg) => set({ tutorialMessage: msg }),
 }));

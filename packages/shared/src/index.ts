@@ -21,6 +21,13 @@ export {
 	getElementMultiplier,
 } from './constants/elements';
 export { ENERGY_CAP, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
+export type { GachaResult } from './constants/gacha';
+export {
+	GACHA_COSTS,
+	PITY_THRESHOLD,
+	rollGacha,
+	rollGacha10,
+} from './constants/gacha';
 export {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
@@ -54,6 +61,16 @@ export {
 	PROMOTION_CONFIG,
 	xpToNextLevel,
 } from './constants/meta';
+export {
+	DAILY_MISSION_TYPES,
+	generateDailyMissions,
+	generateWeeklyMissions,
+	KST_OFFSET_MS,
+	MISSION_LABELS,
+	shouldResetDaily,
+	shouldResetWeekly,
+	WEEKLY_MISSION_TYPES,
+} from './constants/missions';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {
@@ -82,6 +99,8 @@ export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
+	MissionProgress,
+	MissionType,
 	OwnedTower,
 	ProfileData,
 	ProgressData,

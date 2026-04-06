@@ -68,18 +68,26 @@ export function ProfileBar() {
 				</div>
 			</div>
 
-			{/* Gold */}
-			<div className="profile-currency flex items-center gap-1 shrink-0">
-				<img
-					src={uiMobileArt.coinIcon}
-					alt="gold"
-					width={18}
-					height={18}
-					className="[image-rendering:pixelated]"
-				/>
-				<span className="font-pixel text-xs text-gold">
-					{displayGold.toLocaleString()}
-				</span>
+			{/* Currency: Gold + Diamond */}
+			<div className="flex flex-col items-end gap-1 shrink-0">
+				<div className="flex items-center gap-1">
+					<img
+						src={uiMobileArt.coinIcon}
+						alt="gold"
+						width={14}
+						height={14}
+						className="[image-rendering:pixelated]"
+					/>
+					<span className="font-pixel text-[11px] text-gold">
+						{displayGold.toLocaleString()}
+					</span>
+				</div>
+				<div className="flex items-center gap-1">
+					<span className="text-[12px] leading-none">💎</span>
+					<span className="font-pixel text-[11px] text-[#5bc8e8]">
+						{profile.diamond.toLocaleString()}
+					</span>
+				</div>
 			</div>
 		</div>
 	);

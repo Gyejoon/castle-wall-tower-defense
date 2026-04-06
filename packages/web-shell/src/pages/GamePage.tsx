@@ -404,7 +404,7 @@ export function GamePage() {
     >
       {/* 배너 */}
       <div
-        className={`py-3 -mx-5 -mt-5 flex flex-col items-center gap-1${runStatus === 'victory' ? ' animate-bounce' : ''}`}
+        className="py-3 -mx-5 -mt-5 flex flex-col items-center gap-1"
         style={{
           background: runStatus === 'victory' ? 'rgba(40,80,40,0.8)' : 'rgba(80,20,20,0.8)',
           borderBottom: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,

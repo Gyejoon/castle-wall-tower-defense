@@ -63,6 +63,16 @@ description: Use when reviewing non-trivial code changes in this repository befo
 
 여기서는 동작을 바꾸지 않는 수정만 한다.
 
+### Tailwind 마이그레이션 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
+
+Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본다.
+
+- **의미 차이 유틸리티**: `h-dvh` vs `h-full`, `bg-none` vs `bg-transparent`, `rounded-sm` vs 정확한 값 — 의도와 다른 유틸리티를 쓰고 있으면 교정한다
+- **픽셀 정확도**: Tailwind 기본 스텝값(`.5` = 2px, `1` = 4px)이 원래 임의값(`3px`, `5px`)과 다르면 `gap-[3px]`처럼 임의값으로 교정한다
+- **하드코딩된 색상**: `#4a3a20` 등 리터럴 색상이 `var(--color-*)` 토큰으로 교체 가능하면 교체한다
+- **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름과 겹치면 고유 이름으로 바꾼다
+- **이징 함수 정확도**: `ease-out`이 원래 `ease` 또는 커스텀 `cubic-bezier`였으면 `ease-[ease]`처럼 명시한다
+
 ## Phase 2: Phaser 런타임 안정성 검사
 
 프로젝트의 [`phaser-best-practices`](../phaser-best-practices/SKILL.md) 기준으로 변경 코드를 본다. 해당 항목이 변경 코드에 실제로 적용될 때만 점수에 반영한다.
@@ -81,6 +91,9 @@ description: Use when reviewing non-trivial code changes in this repository befo
 | 8 | 시스템 간 통신이 직접 mutation 대신 반환값/이벤트 기반 | 다른 시스템 내부를 직접 수정 |
 | 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 |
 | 10 | React 쪽 unmount cleanup 완전성 | Phaser destroy 후 listener 잔존 |
+| 11 | `useEffect` 의존성 배열에 모든 외부 참조 포함 | `selectedMapId` 캡처 후 deps 누락 → 맵 변경 무시 |
+| 12 | `setTimeout`/`setInterval` 반환값을 저장하고 `destroy()`에서 clearTimeout/clearInterval | 매 게임마다 타이머 누적 |
+| 13 | Web Audio API 노드(`OscillatorNode`, `GainNode`)가 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 → 메모리 누수 |
 
 ### 점수
 
@@ -127,11 +140,20 @@ description: Use when reviewing non-trivial code changes in this repository befo
 - 단순 EventBus 와이어링
 - Scene lifecycle 메서드 자체
 
+### 테스트 검증 정확도
+
+테스트가 존재해도 실제 시나리오를 검증하지 않는 경우 감점한다.
+
+- 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
+- emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
+- 테스트가 예상 frameCount/tilesets 배열 등 에셋 메타데이터를 검증하지 않는 경우
+
 ### 점수
 
 - 필수 대상 커버 비율로 최대 8점
 - 테스트 실행 통과 시 +2
 - 테스트 실패 시 최종 점수는 최대 5점으로 캡
+- 테스트 검증 부정확 (명칭과 동작 불일치): -1/건
 
 ## Phase 5: 독립 리뷰
 
@@ -166,6 +188,7 @@ description: Use when reviewing non-trivial code changes in this repository befo
 - cleanup 순서가 반례에서 깨지지 않는지
 - 테스트가 happy path만 덮고 있지 않은지
 - 사용자의 실제 행동에서 state drift가 나는지
+- 루프 종료 조건이 경계값(예: `maxWaves < TOTAL_WAVES`)에서 도달 불가해 데드락이 나는지
 
 Codex에서는 두 번째 리뷰 서브에이전트를 띄워도 되고, 직접 반대 입장에서 검토해도 된다. 다만 동일한 근거를 재진술하는 수준이면 안 된다.
 

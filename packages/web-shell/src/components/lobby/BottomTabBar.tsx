@@ -23,8 +23,8 @@ const tabs: Array<{
 	{
 		id: 'missions',
 		label: '임무',
-		activeIcon: uiMobileArt.collectionTabIconActive,
-		inactiveIcon: uiMobileArt.collectionTabIconInactive,
+		activeIcon: uiMobileArt.missionTabIconActive,
+		inactiveIcon: uiMobileArt.missionTabIconInactive,
 	},
 	{
 		id: 'settings',

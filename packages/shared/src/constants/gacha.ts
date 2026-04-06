@@ -25,7 +25,8 @@ export function rollGacha(
 	_ownedTowerIds: string[], // 향후 보유하지 않은 타워 우선 롤 기능용 (현재 미사용)
 	rng = Math.random,
 ): { result: GachaResult; newPityCount: number } {
-	// 천장: 50연속 tier4 이하 → tier5 확정
+	// 천장: 50회 연속 tier4 이하 후 다음 상자에서 tier5 확정 (GDD 11-3)
+	// pityCount=50이 되면 forceTier5 → 실질적으로 51번째 롤에서 발동 (의도된 동작)
 	const forceTier5 = pityCount >= PITY_THRESHOLD;
 
 	let targetTier: number;

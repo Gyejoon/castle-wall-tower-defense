@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-	SAVE_VERSION,
 	battleXp,
 	createDefaultSave,
 	enhancementCost,
 	enhancementStatMultiplier,
 	getEffectiveStats,
+	SAVE_VERSION,
 	xpToNextLevel,
 } from '../src/index';
 

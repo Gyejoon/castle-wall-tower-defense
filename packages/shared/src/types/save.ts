@@ -61,8 +61,8 @@ export interface ProgressData {
 }
 
 export interface SettingsData {
-	bgmVolume: number;       // 0~1, default 0.7
-	sfxVolume: number;       // 0~1, default 0.8
+	bgmVolume: number; // 0~1, default 0.7
+	sfxVolume: number; // 0~1, default 0.8
 	screenShake: boolean;
 	showDamageNumbers: boolean;
 	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';

@@ -207,6 +207,11 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 								(id === 'free' && isFreeOnCooldown) ||
 								(id === 'ad' && isAdLimitReached) ||
 								(id === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond);
+							const disabledReason =
+								id === 'free' && isFreeOnCooldown ? '쿨다운 중' :
+								id === 'ad' && isAdLimitReached ? '오늘 한도 초과' :
+								id === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond ? '다이아 부족' :
+								null;
 							const label =
 								id === 'free' ? '무료 상자' : id === 'ad' ? '광고 상자' : '다이아 상자';
 
@@ -222,14 +227,18 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 									className={cn(
 										'p-2 border-2 text-center',
 										isDisabled
-											? 'border-border opacity-50 cursor-not-allowed'
+											? 'border-border bg-[rgba(20,14,6,0.8)] cursor-not-allowed'
 											: selectedBox === id && !is10Pull
 												? 'border-gold bg-[rgba(240,208,96,0.1)] cursor-pointer'
 												: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
 									)}
 								>
-									<p className="font-pixel text-xs text-text">{label}</p>
-									{GACHA_COSTS[id].diamond > 0 ? (
+									<p className={cn('font-pixel text-xs', isDisabled ? 'text-text-secondary' : 'text-text')}>
+										{label}
+									</p>
+									{disabledReason ? (
+										<p className="font-pixel text-[10px] text-error/70">{disabledReason}</p>
+									) : GACHA_COSTS[id].diamond > 0 ? (
 										<p className="font-pixel text-[11px] text-gold">
 											{GACHA_COSTS[id].diamond} 💎
 										</p>
@@ -240,25 +249,34 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 							);
 						})}
 						{/* 10연차 버튼 (diamond_ten) */}
-						<div
-							onClick={() => {
-								if (diamond >= GACHA_COSTS.diamond_ten.diamond) {
-									setIs10Pull(true);
-									setSelectedBox('diamond_single');
-								}
-							}}
-							className={cn(
-								'p-2 border-2 text-center',
-								diamond < GACHA_COSTS.diamond_ten.diamond
-									? 'border-border opacity-50 cursor-not-allowed'
-									: is10Pull
-										? 'border-gold bg-[rgba(240,208,96,0.1)] cursor-pointer'
-										: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
-							)}
-						>
-							<p className="font-pixel text-xs text-text">10연차</p>
-							<p className="font-pixel text-[11px] text-gold">{GACHA_COSTS.diamond_ten.diamond} 💎</p>
-						</div>
+						{(() => {
+							const tenDisabled = diamond < GACHA_COSTS.diamond_ten.diamond;
+							return (
+								<div
+									onClick={() => {
+										if (!tenDisabled) {
+											setIs10Pull(true);
+											setSelectedBox('diamond_single');
+										}
+									}}
+									className={cn(
+										'p-2 border-2 text-center',
+										tenDisabled
+											? 'border-border bg-[rgba(20,14,6,0.8)] cursor-not-allowed'
+											: is10Pull
+												? 'border-gold bg-[rgba(240,208,96,0.1)] cursor-pointer'
+												: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
+									)}
+								>
+									<p className={cn('font-pixel text-xs', tenDisabled ? 'text-text-secondary' : 'text-text')}>10연차</p>
+									{tenDisabled ? (
+										<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>
+									) : (
+										<p className="font-pixel text-[11px] text-gold">{GACHA_COSTS.diamond_ten.diamond} 💎</p>
+									)}
+								</div>
+							);
+						})()}
 					</div>
 
 					{/* 다이아몬드 잔액 */}

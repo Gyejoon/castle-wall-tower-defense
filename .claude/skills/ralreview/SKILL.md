@@ -92,6 +92,8 @@ Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본
 | 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 |
 | 10 | React 쪽 unmount cleanup 완전성 | Phaser destroy 후 listener 잔존 |
 | 11 | `useEffect` 의존성 배열에 모든 외부 참조 포함 | `selectedMapId` 캡처 후 deps 누락 → 맵 변경 무시 |
+| 12 | `setTimeout`/`setInterval` 반환값을 저장하고 `destroy()`에서 clearTimeout/clearInterval | 매 게임마다 타이머 누적 |
+| 13 | Web Audio API 노드(`OscillatorNode`, `GainNode`)가 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 → 메모리 누수 |
 
 ### 점수
 
@@ -138,11 +140,20 @@ Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본
 - 단순 EventBus 와이어링
 - Scene lifecycle 메서드 자체
 
+### 테스트 검증 정확도
+
+테스트가 존재해도 실제 시나리오를 검증하지 않는 경우 감점한다.
+
+- 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
+- emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
+- 테스트가 예상 frameCount/tilesets 배열 등 에셋 메타데이터를 검증하지 않는 경우
+
 ### 점수
 
 - 필수 대상 커버 비율로 최대 8점
 - 테스트 실행 통과 시 +2
 - 테스트 실패 시 최종 점수는 최대 5점으로 캡
+- 테스트 검증 부정확 (명칭과 동작 불일치): -1/건
 
 ## Phase 5: 독립 리뷰
 

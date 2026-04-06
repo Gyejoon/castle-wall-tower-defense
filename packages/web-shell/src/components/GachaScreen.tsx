@@ -43,11 +43,12 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 	const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-	// 쿨다운 체크
+	// 쿨다운/한도 체크
 	const isFreeOnCooldown =
 		!!dailyFreeBoxClaimedAt &&
 		Date.now() - new Date(dailyFreeBoxClaimedAt).getTime() < GACHA_COSTS.free.cooldownMs;
 	const isAdLimitReached = dailyAdBoxCount >= GACHA_COSTS.ad.dailyLimit;
+	const isTenPullDisabled = diamond < GACHA_COSTS.diamond_ten.diamond;
 
 	const handleOpen = useCallback(() => {
 		const boxType: BoxType = is10Pull ? 'diamond_ten' : selectedBox;
@@ -249,34 +250,29 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 							);
 						})}
 						{/* 10연차 버튼 (diamond_ten) */}
-						{(() => {
-							const tenDisabled = diamond < GACHA_COSTS.diamond_ten.diamond;
-							return (
-								<div
-									onClick={() => {
-										if (!tenDisabled) {
-											setIs10Pull(true);
-											setSelectedBox('diamond_single');
-										}
-									}}
-									className={cn(
-										'p-2 border-2 text-center',
-										tenDisabled
-											? 'border-border bg-[rgba(20,14,6,0.8)] cursor-not-allowed'
-											: is10Pull
-												? 'border-gold bg-[rgba(240,208,96,0.1)] cursor-pointer'
-												: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
-									)}
-								>
-									<p className={cn('font-pixel text-xs', tenDisabled ? 'text-text-secondary' : 'text-text')}>10연차</p>
-									{tenDisabled ? (
-										<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>
-									) : (
-										<p className="font-pixel text-[11px] text-gold">{GACHA_COSTS.diamond_ten.diamond} 💎</p>
-									)}
-								</div>
-							);
-						})()}
+						<div
+							onClick={() => {
+								if (!isTenPullDisabled) {
+									setIs10Pull(true);
+									setSelectedBox('diamond_single');
+								}
+							}}
+							className={cn(
+								'p-2 border-2 text-center',
+								isTenPullDisabled
+									? 'border-border bg-[rgba(20,14,6,0.8)] cursor-not-allowed'
+									: is10Pull
+										? 'border-gold bg-[rgba(240,208,96,0.1)] cursor-pointer'
+										: 'border-border bg-[rgba(42,32,16,0.9)] cursor-pointer',
+							)}
+						>
+							<p className={cn('font-pixel text-xs', isTenPullDisabled ? 'text-text-secondary' : 'text-text')}>10연차</p>
+							{isTenPullDisabled ? (
+								<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>
+							) : (
+								<p className="font-pixel text-[11px] text-gold">{GACHA_COSTS.diamond_ten.diamond} 💎</p>
+							)}
+						</div>
 					</div>
 
 					{/* 다이아몬드 잔액 */}
@@ -288,12 +284,10 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 							variant="gold"
 							onClick={handleOpen}
 							disabled={
-								(is10Pull && diamond < GACHA_COSTS.diamond_ten.diamond) ||
+								(is10Pull && isTenPullDisabled) ||
 								(!is10Pull && selectedBox === 'free' && isFreeOnCooldown) ||
 								(!is10Pull && selectedBox === 'ad' && isAdLimitReached) ||
-								(!is10Pull &&
-									selectedBox === 'diamond_single' &&
-									diamond < GACHA_COSTS.diamond_single.diamond)
+								(!is10Pull && selectedBox === 'diamond_single' && diamond < GACHA_COSTS.diamond_single.diamond)
 							}
 						>
 							열기

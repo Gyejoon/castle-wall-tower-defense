@@ -221,7 +221,7 @@ export class GameScene extends Phaser.Scene {
 
 		void this.prefetchOptionalAssets();
 		if (TutorialSystem.shouldShowTutorial()) {
-			this.tutorial = new TutorialSystem(this, this.optionalAssetManifest);
+			this.tutorial = new TutorialSystem(this);
 			void this.tutorial.start();
 		}
 		this.playerWaves.start();

@@ -1,4 +1,3 @@
-import type { AssetManifest } from '@gld/shared';
 import type Phaser from 'phaser';
 import { EventBus } from '../EventBus';
 
@@ -14,16 +13,13 @@ const TOTAL_STEPS = TUTORIAL_MESSAGES.length;
 
 export class TutorialSystem {
 	private scene: Phaser.Scene;
-	private manifest: AssetManifest;
 	private currentStep = 0;
 	private overlay?: Phaser.GameObjects.Graphics;
 	private active = false;
-	// step 3을 위한 tower-placed 카운트
 	private towerPlacedCount = 0;
 
-	constructor(scene: Phaser.Scene, manifest: AssetManifest) {
+	constructor(scene: Phaser.Scene) {
 		this.scene = scene;
-		this.manifest = manifest;
 	}
 
 	// React가 게이트킵: tutorialCompleted 체크 후 이 메서드 호출

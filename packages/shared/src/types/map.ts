@@ -17,4 +17,6 @@ export interface MapLayout {
 	unlockLevel?: number; // undefined = always unlocked (e.g. forest_gate)
 	/** Gold and XP reward multiplier. forest_gate=1, lava_fortress=2, storm_citadel=3 */
 	rewardMultiplier: number;
+	/** HP multiplier applied to all spawned units. Default 1. */
+	difficultyHpMult: number;
 }

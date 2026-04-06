@@ -172,7 +172,9 @@ export class GameScene extends Phaser.Scene {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
 		}
 		this.currentSlotDef = mapWaves[0];
-		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves);
+		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
+			difficultyHpMult: this.currentMap.difficultyHpMult,
+		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);

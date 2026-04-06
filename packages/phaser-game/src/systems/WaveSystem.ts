@@ -19,6 +19,7 @@ export class WaveSystem {
 	private unitSystem: UnitSystem;
 	private maxWaves: number;
 	private waves: WaveDef[];
+	private difficultyHpMult: number;
 
 	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
@@ -26,13 +27,19 @@ export class WaveSystem {
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 
-	constructor(unitSystem: UnitSystem, waves: WaveDef[], maxWaves?: number) {
+	constructor(
+		unitSystem: UnitSystem,
+		waves: WaveDef[],
+		maxWaves?: number,
+		options?: { difficultyHpMult?: number },
+	) {
 		this.unitSystem = unitSystem;
 		this.waves = waves;
 		this.maxWaves = Math.max(
 			1,
 			Math.min(maxWaves ?? waves.length, waves.length),
 		);
+		this.difficultyHpMult = options?.difficultyHpMult ?? 1;
 	}
 
 	setMaxWaves(count: number): void {
@@ -158,7 +165,8 @@ export class WaveSystem {
 		for (const group of wave.groups) {
 			const isBoss = group.unitId === 'titan';
 			const hpMultiplier =
-				isBoss && wave.slotIndex === 10 ? FINAL_BOSS_HP_MULTIPLIER : 1;
+				(isBoss && wave.slotIndex === 10 ? FINAL_BOSS_HP_MULTIPLIER : 1) *
+				this.difficultyHpMult;
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',
 				countsTowardClear: true,

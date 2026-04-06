@@ -31,10 +31,10 @@ describe('generateDailyMissions', () => {
 	it('target이 targetRange 내에 있음', () => {
 		const rng = () => 0; // 항상 min
 		const missions = generateDailyMissions(rng);
-		// reach_wave: min=5
-		expect(missions[0].target).toBe(5);
-		// place_towers: min=10
-		expect(missions[1].target).toBe(10);
+		// reach_wave: min=50
+		expect(missions[0].target).toBe(50);
+		// place_towers: min=100
+		expect(missions[1].target).toBe(100);
 	});
 });
 

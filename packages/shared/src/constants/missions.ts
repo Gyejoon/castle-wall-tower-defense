@@ -6,39 +6,42 @@ interface MissionTemplate {
 	reward: { type: 'diamond' | 'gold'; amount: number };
 }
 
-// reach_wave: 단일 런에서 웨이브 N에 도달 (누적 아님)
+// reach_wave: 런마다 새로운 최고 웨이브 갱신 시 누적 카운트 (+1/wave)
+// 1판 10웨이브 클리어 시 최대 10 획득 → [50, 80] = 약 5~8판 필요
 const DAILY_TEMPLATES: MissionTemplate[] = [
 	{
 		type: 'reach_wave',
-		targetRange: [5, 8],
+		targetRange: [50, 80],
 		reward: { type: 'diamond', amount: 15 },
 	},
 	{
 		type: 'place_towers',
-		targetRange: [10, 20],
+		targetRange: [100, 200],
 		reward: { type: 'diamond', amount: 10 },
 	},
 	{
 		type: 'defeat_boss',
-		targetRange: [1, 1],
+		targetRange: [10, 10],
 		reward: { type: 'diamond', amount: 30 },
 	},
 ];
 
+// 주간: 7일 기준 꾸준한 플레이 전제 (하루 2~3판)
+// place_towers: 10x = 500~1000으로 무리 → [200, 300]으로 상한 캡
 const WEEKLY_TEMPLATES: MissionTemplate[] = [
 	{
 		type: 'clear_stage',
-		targetRange: [3, 5],
+		targetRange: [30, 50],
 		reward: { type: 'diamond', amount: 80 },
 	},
 	{
 		type: 'place_towers',
-		targetRange: [50, 100],
+		targetRange: [200, 300],
 		reward: { type: 'diamond', amount: 50 },
 	},
 	{
 		type: 'defeat_boss',
-		targetRange: [3, 5],
+		targetRange: [30, 50],
 		reward: { type: 'diamond', amount: 100 },
 	},
 ];

@@ -15,30 +15,33 @@
     <title>Palace 개랜타디</title>
   </head>
   <body>
-    <!-- Colorblind correction SVG filters -->
+    <!-- Colorblind compensation SVG filters (Daltonize correction — Fidaner et al.) -->
     <div style="display:none">
       <svg xmlns="http://www.w3.org/2000/svg">
         <defs>
+          <!-- Protanopia correction: boost red channel from green/blue -->
           <filter id="protan-filter">
             <feColorMatrix type="matrix" values="
-              0.567 0.433 0     0 0
-              0.558 0.442 0     0 0
-              0     0.242 0.758 0 0
-              0     0     0     1 0"/>
+              0     2.02344  -2.52581  0 0
+              0     1        0         0 0
+              0     0        1         0 0
+              0     0        0         1 0"/>
           </filter>
+          <!-- Deuteranopia correction: boost green channel from red/blue -->
           <filter id="deutan-filter">
             <feColorMatrix type="matrix" values="
-              0.625 0.375 0     0 0
-              0.7   0.3   0     0 0
-              0     0.3   0.7   0 0
-              0     0     0     1 0"/>
+              1     0        0         0 0
+              0.494207  0  1.24827    0 0
+              0     0        1         0 0
+              0     0        0         1 0"/>
           </filter>
+          <!-- Tritanopia correction: boost blue channel from red/green -->
           <filter id="tritan-filter">
             <feColorMatrix type="matrix" values="
-              0.95 0.05  0      0 0
-              0    0.433 0.567  0 0
-              0    0.475 0.525  0 0
-              0    0     0      1 0"/>
+              1     0        0         0 0
+              0     1        0         0 0
+              -0.395913  0.801109  0  0 0
+              0     0        0         1 0"/>
           </filter>
         </defs>
       </svg>

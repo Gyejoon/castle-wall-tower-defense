@@ -38,11 +38,10 @@ describe('rollGacha', () => {
 		expect(newPityCount).toBe(6);
 	});
 
-	it('빈 candidates fallback → tier1으로', () => {
-		// tier=99는 존재하지 않으므로 fallback 발동 불가 — 단 pity=50으로 tier5 강제
-		// 이 케이스는 코드 내부 fallback 로직만 검증 (정상 경로)
+	it('rng=0 → tier1 타워 정상 반환', () => {
 		const rng = () => 0;
 		const { result } = rollGacha(0, [], rng);
+		expect(result.tier).toBe(1);
 		expect(result.towerId).toBeTruthy();
 	});
 });

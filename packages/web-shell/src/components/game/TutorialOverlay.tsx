@@ -18,9 +18,10 @@ export function TutorialOverlay() {
       setTutorialMessage(data.message);
       setShowSkip(false);
 
-      // 강제 스텝(0-1)에서 5초 후 건너뛰기 버튼 표시
+      // 강제 스텝(0-1)에서 5초 후 건너뛰기 버튼 표시. 항상 기존 타이머를 먼저 정리.
+      if (skipTimerRef.current) clearTimeout(skipTimerRef.current);
+      skipTimerRef.current = null;
       if (data.step <= 1) {
-        if (skipTimerRef.current) clearTimeout(skipTimerRef.current);
         skipTimerRef.current = setTimeout(() => setShowSkip(true), 5000);
       }
     };

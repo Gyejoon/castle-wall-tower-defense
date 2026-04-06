@@ -483,6 +483,25 @@ export const useMetaStore = create<MetaState>()(
 				const progress = s.progress;
 				const now = new Date();
 
+				// ad 박스 카운트: 새 날이면 0으로 리셋하여 set()에서도 사용
+				let effectiveAdBoxCount = progress.dailyAdBoxCount;
+				if (progress.dailyResetAt) {
+					const last = new Date(progress.dailyResetAt);
+					const lastUTCDay = Date.UTC(
+						last.getUTCFullYear(),
+						last.getUTCMonth(),
+						last.getUTCDate(),
+					);
+					const nowUTCDay = Date.UTC(
+						now.getUTCFullYear(),
+						now.getUTCMonth(),
+						now.getUTCDate(),
+					);
+					if (nowUTCDay > lastUTCDay) {
+						effectiveAdBoxCount = 0;
+					}
+				}
+
 				// 비용/쿨다운/데일리 제한 검증
 				if (boxType === 'free') {
 					if (progress.dailyFreeBoxClaimedAt) {
@@ -492,24 +511,6 @@ export const useMetaStore = create<MetaState>()(
 						}
 					}
 				} else if (boxType === 'ad') {
-					// 새 날인지 확인하여 count 리셋 여부 결정
-					let effectiveAdBoxCount = progress.dailyAdBoxCount;
-					if (progress.dailyResetAt) {
-						const last = new Date(progress.dailyResetAt);
-						const lastUTCDay = Date.UTC(
-							last.getUTCFullYear(),
-							last.getUTCMonth(),
-							last.getUTCDate(),
-						);
-						const nowUTCDay = Date.UTC(
-							now.getUTCFullYear(),
-							now.getUTCMonth(),
-							now.getUTCDate(),
-						);
-						if (nowUTCDay > lastUTCDay) {
-							effectiveAdBoxCount = 0;
-						}
-					}
 					if (effectiveAdBoxCount >= GACHA_COSTS.ad.dailyLimit) {
 						return 'daily_limit';
 					}
@@ -578,7 +579,7 @@ export const useMetaStore = create<MetaState>()(
 						...(boxType === 'free' ? { dailyFreeBoxClaimedAt: nowIso } : {}),
 						...(boxType === 'ad'
 							? {
-									dailyAdBoxCount: s.progress.dailyAdBoxCount + 1,
+									dailyAdBoxCount: effectiveAdBoxCount + 1,
 									dailyResetAt: nowIso,
 								}
 							: {}),

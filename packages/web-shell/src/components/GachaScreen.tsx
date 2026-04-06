@@ -80,10 +80,13 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 					setErrorMsg('오늘 광고 상자를 모두 사용했습니다');
 				return;
 			}
-			const revealedResults: RevealedResult[] = res.map((r) => ({
-				...r,
-				isDuplicate: currentCollectionSnapshot.has(r.towerId),
-			}));
+			// 배치 내 중복도 처리: 앞 결과에서 추가된 타워를 순차적으로 반영
+			const seenInBatch = new Set(currentCollectionSnapshot);
+			const revealedResults: RevealedResult[] = res.map((r) => {
+				const isDuplicate = seenInBatch.has(r.towerId);
+				if (!isDuplicate) seenInBatch.add(r.towerId);
+				return { ...r, isDuplicate };
+			});
 			setResults(revealedResults);
 			setFlippedCards(res.length === 1 ? new Set([0]) : new Set());
 			setPhase('reveal');

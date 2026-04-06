@@ -92,10 +92,7 @@ export function rollGacha10(
 			tier: replacement.tier,
 			isPityReward: false,
 		};
-		// Amendment C: 교체된 타워의 tier가 5 이상이면 pity 리셋
-		if (replacement.tier >= 5) {
-			currentPity = 0;
-		}
+		// tier3Candidates에서 뽑으므로 tier >= 5는 발생하지 않음. pity는 유지.
 	}
 
 	return { results, newPityCount: currentPity };

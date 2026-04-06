@@ -160,7 +160,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 								<div
 									key={i}
 									className={cn(
-										'h-[52px] border-2 flex flex-col items-center justify-center gap-1 p-1',
+										'min-h-[52px] border-2 flex flex-col items-center justify-center gap-1 py-1.5 px-1',
 										tower
 											? 'border-gold bg-[rgba(240,208,96,0.08)]'
 											: 'border-border bg-[rgba(42,32,16,0.6)]',
@@ -173,9 +173,9 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												alt={tower.name}
 												width={24}
 												height={24}
-												className="[image-rendering:pixelated]"
+												className="[image-rendering:pixelated] shrink-0"
 											/>
-											<span className="font-pixel text-[10px] text-gold text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
+											<span className="font-pixel text-[9px] leading-tight text-gold text-center w-full truncate">
 												{tower.name}
 											</span>
 										</>

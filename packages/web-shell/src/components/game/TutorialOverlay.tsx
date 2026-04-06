@@ -26,6 +26,7 @@ export function TutorialOverlay() {
     };
 
     const onComplete = () => {
+      useMetaStore.getState().updateProgress({ tutorialCompleted: true });
       setTutorialStep(null);
       setTutorialMessage(null);
       setShowSkip(false);

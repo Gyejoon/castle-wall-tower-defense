@@ -22,7 +22,7 @@ export interface GachaResult {
 
 export function rollGacha(
   pityCount: number,
-  ownedTowerIds: string[],
+  _ownedTowerIds: string[], // 향후 보유하지 않은 타워 우선 롤 기능용 (현재 미사용)
   rng = Math.random,
 ): { result: GachaResult; newPityCount: number } {
   // 천장: 50연속 tier4 이하 → tier5 확정
@@ -68,14 +68,14 @@ export function rollGacha(
 /** 10연차: tier3+ 1개 보장 */
 export function rollGacha10(
   pityCount: number,
-  ownedTowerIds: string[],
+  _ownedTowerIds: string[], // 향후 보유하지 않은 타워 우선 롤 기능용 (현재 미사용)
   rng = Math.random,
 ): { results: GachaResult[]; newPityCount: number } {
   const results: GachaResult[] = [];
   let currentPity = pityCount;
 
   for (let i = 0; i < 10; i++) {
-    const { result, newPityCount } = rollGacha(currentPity, ownedTowerIds, rng);
+    const { result, newPityCount } = rollGacha(currentPity, [], rng);
     results.push(result);
     currentPity = newPityCount;
   }

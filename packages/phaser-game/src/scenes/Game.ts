@@ -491,7 +491,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.emit('game-over', {
 			...payload,
 			stats: {
-				wavesCleared: payload.finalSlot,
+				wavesCleared:
+					payload.result === 'victory'
+						? payload.finalSlot
+						: Math.max(0, payload.finalSlot - 1),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
 				goldEarned: this.goldEarned,

@@ -2,7 +2,7 @@
 // Migration tests for metaStore v1→v3
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
-import { createDefaultSave, SAVE_STORAGE_KEY, SAVE_VERSION } from '@gld/shared';
+import { createDefaultSave, generateWeeklyMissions, SAVE_STORAGE_KEY, SAVE_VERSION } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -142,6 +142,49 @@ describe('metaStore v1→v3 migration', () => {
 		expect(s.settings.bgmVolume).toBe(0.5);
 		expect(s.progress.lastAttendanceDate).toBeNull();
 
+		vi.unstubAllGlobals();
+	});
+});
+
+describe('recordAttendance', () => {
+	beforeEach(() => {
+		const save = createDefaultSave();
+		save.progress.weeklyMissions = generateWeeklyMissions();
+		useMetaStore.setState(save);
+	});
+
+	it('첫 출석 시 attendance current 1 증가, lastAttendanceDate 기록', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.getState().recordAttendance();
+		const s = useMetaStore.getState();
+		const att = s.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+		expect(s.progress.lastAttendanceDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		vi.unstubAllGlobals();
+	});
+
+	it('같은 날 두 번 호출해도 current 1 유지', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.getState().recordAttendance();
+		useMetaStore.getState().recordAttendance();
+		const att = useMetaStore.getState().progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+		vi.unstubAllGlobals();
+	});
+
+	it('claimed 상태면 카운팅 안 함', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.setState((s) => ({
+			progress: {
+				...s.progress,
+				weeklyMissions: s.progress.weeklyMissions.map((m) =>
+					m.type === 'attendance' ? { ...m, claimed: true } : m,
+				),
+			},
+		}));
+		useMetaStore.getState().recordAttendance();
+		const att = useMetaStore.getState().progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(0);
 		vi.unstubAllGlobals();
 	});
 });

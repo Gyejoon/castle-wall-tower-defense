@@ -17,6 +17,7 @@ import {
 	type SaveData,
 	shouldResetDaily,
 	shouldResetWeekly,
+	toKSTDateStr,
 	type TowerGrade,
 	WEEKLY_MISSION_TYPES,
 	xpToNextLevel,
@@ -54,6 +55,7 @@ interface MetaActions {
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
 	recordStageClear: (mapId: string) => void;
+	recordAttendance: () => void;
 }
 
 type MetaState = SaveData & MetaActions;
@@ -451,6 +453,29 @@ export const useMetaStore = create<MetaState>()(
 						progress: {
 							...s.progress,
 							stagesCleared: [...s.progress.stagesCleared, mapId],
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			recordAttendance: () => {
+				const todayKST = toKSTDateStr(new Date());
+				set((s) => {
+					const att = s.progress.weeklyMissions.find(
+						(m) => m.type === 'attendance',
+					);
+					if (!att || att.claimed || s.progress.lastAttendanceDate === todayKST)
+						return s;
+					return {
+						progress: {
+							...s.progress,
+							lastAttendanceDate: todayKST,
+							weeklyMissions: s.progress.weeklyMissions.map((m) =>
+								m.type === 'attendance' && !m.claimed
+									? { ...m, current: Math.min(m.current + 1, m.target) }
+									: m,
+							),
 						},
 					};
 				});

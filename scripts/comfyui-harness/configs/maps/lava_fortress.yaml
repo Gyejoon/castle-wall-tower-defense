@@ -1,0 +1,102 @@
+meta:
+  id: lava_fortress
+  name: "용암의 요새"
+  theme: "volcanic fortress, molten lava, obsidian stone, fire and brimstone"
+
+style:
+  prompt_prefix: "pixel art, isometric view, 45 degree angle, volcanic fortress, lava flows"
+  negative: "blurry, modern, sci-fi, neon, realistic, photorealistic, 3D render, smooth gradients, anti-aliased"
+  palette:
+    primary: ["#5a3020", "#3a1a10", "#802010"]
+    accent: ["#e07020", "#c04020", "#ff6030"]
+    highlight: ["#f0d060", "#ffe0a0"]
+  seed: 137
+
+generation:
+  checkpoint: "dreamshaper_8.safetensors"
+  steps: 25
+  cfg_scale: 7
+  width: 512
+  height: 512
+
+animation:
+  motion_module: "mm_sd_v15_v2.ckpt"
+  frames: 8
+  fps: 14
+
+output:
+  base_size: 128
+  format: "png"
+  spritesheet: true
+
+assets:
+  terrain:
+    - id: lava-rock-floor
+      prompt: "lava rock floor tile, seamless, dark volcanic stone, cracked surface with faint orange glow seeping through cracks"
+      frames: 1
+      tileable: true
+      workflow_override: tileable
+
+    - id: obsidian-path
+      prompt: "obsidian path tile, seamless, glossy black volcanic glass, sharp reflective surface, faint heat shimmer"
+      frames: 1
+      tileable: true
+      workflow_override: tileable
+
+    - id: cracked-stone
+      prompt: "cracked volcanic stone tile, seamless, deep fissures with ember glow, scorched dark gray surface"
+      frames: 1
+      tileable: true
+      workflow_override: tileable
+
+    - id: lava-flow
+      prompt: "flowing molten lava tile, bright orange-red liquid rock, glowing surface, slow churning motion, heat ripple"
+      frames: 8
+
+  structures:
+    - id: obsidian-pillar
+      prompt: "tall obsidian pillar, glossy black volcanic glass, angular faceted surface, faint heat glow at base"
+      frames: 1
+
+    - id: lava-bridge
+      prompt: "stone bridge over lava, scorched rock construction, glowing cracks underneath, molten drips along edges"
+      frames: 1
+      size: 256
+
+    - id: fire-gate
+      prompt: "massive fortress gate wreathed in fire, iron-bound obsidian doors, roaring flame columns on either side, flickering orange light"
+      frames: 8
+      size: 256
+
+    - id: volcanic-vent
+      prompt: "volcanic vent in rock floor, billowing orange-red gas and embers, pulsing glow, smoke rising from deep crack"
+      frames: 8
+
+    - id: ruined-wall
+      prompt: "ruined volcanic fortress wall, scorched obsidian blocks, crumbled sections, lava stains down the surface"
+      frames: 1
+
+    - id: magma-crystal
+      prompt: "magma crystal formation, jagged red-orange crystalline spires, inner glow pulsing with heat, ember particles floating"
+      frames: 4
+
+  decorations:
+    - id: ember-particles
+      prompt: "floating ember particles, small glowing orange-red sparks drifting upward, fading glow trails"
+      frames: 8
+
+    - id: skull-pile
+      prompt: "pile of charred skulls and bones, blackened by extreme heat, faint ember glow in eye sockets"
+      frames: 1
+
+    - id: lava-geyser
+      prompt: "lava geyser eruption, molten rock shooting upward, bright orange splash, cooling dark crust on edges"
+      frames: 8
+
+    - id: charred-tree
+      prompt: "charred dead tree, blackened trunk and bare branches, glowing ember cracks, no leaves, still smoldering"
+      frames: 1
+
+    - id: fire-brazier
+      prompt: "iron brazier on stone pedestal, roaring fire inside, intense orange flame, glowing heat distortion above"
+      frames: 8

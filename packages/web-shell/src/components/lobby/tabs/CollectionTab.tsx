@@ -15,6 +15,7 @@ import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 import { colors } from '../../../styles/tokens';
 import { cn } from '../../../utils/cn';
+import { GachaScreen } from '../../GachaScreen';
 import { PixelButton } from '../../ui/PixelButton';
 import { TabBackground } from '../TabBackground';
 
@@ -54,6 +55,7 @@ const TIER_DOT_KEYS = [1, 2, 3, 4, 5] as const;
 
 export function CollectionTab() {
 	const [selectedDef, setSelectedDef] = useState<TowerDef | null>(null);
+	const [showGacha, setShowGacha] = useState(false);
 	const collection = useMetaStore((s) => s.collection);
 	const ownedIds = new Set(collection.map((t) => t.defId));
 
@@ -74,11 +76,16 @@ export function CollectionTab() {
 			/>
 
 			<div className="relative z-[1] flex flex-1 flex-col gap-3 overflow-auto p-3">
-				<div className="flex items-baseline justify-between">
+				<div className="flex items-center justify-between">
 					<span className="font-pixel text-sm text-text">보유 타워</span>
-					<span className="font-pixel text-[11px] text-text-secondary">
-						{ownedTowers.length}/{ALL_TOWERS.length}
-					</span>
+					<div className="flex items-center gap-2">
+						<span className="font-pixel text-[11px] text-text-secondary">
+							{ownedTowers.length}/{ALL_TOWERS.length}
+						</span>
+						<PixelButton variant="gold" onClick={() => setShowGacha(true)}>
+							소환의 제단
+						</PixelButton>
+					</div>
 				</div>
 
 				{ownedTowers.length === 0 ? (
@@ -123,6 +130,10 @@ export function CollectionTab() {
 					def={selectedDef}
 					onClose={() => setSelectedDef(null)}
 				/>
+			)}
+
+			{showGacha && (
+				<GachaScreen onClose={() => setShowGacha(false)} />
 			)}
 		</div>
 	);

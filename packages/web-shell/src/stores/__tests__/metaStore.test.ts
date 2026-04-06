@@ -170,8 +170,8 @@ describe('metaStore', () => {
 
 	it('updateSettings merges partial settings', () => {
 		useMetaStore.getState().loadSave();
-		useMetaStore.getState().updateSettings({ soundEnabled: false });
-		expect(useMetaStore.getState().settings.soundEnabled).toBe(false);
+		useMetaStore.getState().updateSettings({ bgmVolume: 0 });
+		expect(useMetaStore.getState().settings.bgmVolume).toBe(0);
 		expect(useMetaStore.getState().settings.screenShake).toBe(true);
 	});
 });

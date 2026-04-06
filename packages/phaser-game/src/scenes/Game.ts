@@ -97,6 +97,7 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
+	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -145,6 +146,7 @@ export class GameScene extends Phaser.Scene {
 			(this.game.registry.get('mapId') as string | undefined) ??
 			DEFAULT_MAP_ID;
 		this.currentMap = getMapById(mapId);
+		this.rewardMultiplier = this.currentMap.rewardMultiplier;
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
@@ -507,7 +509,8 @@ export class GameScene extends Phaser.Scene {
 						: Math.max(0, payload.finalSlot - 1),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned,
+				goldEarned: this.goldEarned * this.rewardMultiplier,
+				rewardMultiplier: this.rewardMultiplier,
 			},
 		});
 	}

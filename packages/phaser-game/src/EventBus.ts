@@ -30,6 +30,7 @@ export interface GameEventMap {
 			towersPlaced: number;
 			timeSurvivedSec: number;
 			goldEarned: number;
+			rewardMultiplier: number;
 		};
 	};
 	'energy-changed': { energy: number };

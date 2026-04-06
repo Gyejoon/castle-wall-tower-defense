@@ -84,13 +84,16 @@ export function GamePage() {
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
+				rewardMultiplier: number;
 			};
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
-			const xpEarned = battleXp(
-				data.stats.wavesCleared,
-				data.result === 'victory',
+			const xpEarned = Math.round(
+				battleXp(
+					data.stats.wavesCleared,
+					data.result === 'victory',
+				) * data.stats.rewardMultiplier
 			);
 			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();

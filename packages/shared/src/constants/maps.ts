@@ -120,6 +120,7 @@ export const FOREST_GATE_MAP: MapLayout = {
 	exitPoint: { x: 4, y: 17 },
 	tilemapKey: 'tilemap-forest-gate',
 	tilesetKey: 'tileset',
+	rewardMultiplier: 1,
 };
 
 // --- Lava Fortress: 2-lane map ---
@@ -226,6 +227,7 @@ export const LAVA_FORTRESS_MAP: MapLayout = {
 	exitPoint: { x: 4, y: 17 },
 	tilemapKey: 'tilemap-lava_fortress',
 	tilesetKey: 'tileset',
+	rewardMultiplier: 2,
 };
 
 // --- Storm Citadel: 3-lane map ---
@@ -350,6 +352,7 @@ export const STORM_CITADEL_MAP: MapLayout = {
 	exitPoint: { x: 4, y: 17 },
 	tilemapKey: 'tilemap-storm_citadel',
 	tilesetKey: 'tileset',
+	rewardMultiplier: 3,
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {

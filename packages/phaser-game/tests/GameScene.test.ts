@@ -162,6 +162,7 @@ describe('GameScene', () => {
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
+				rewardMultiplier: 1,
 			},
 		});
 	});

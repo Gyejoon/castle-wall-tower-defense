@@ -76,6 +76,15 @@ export class DeckDockUI {
 		this.container = scene.add.container(0, 0, [dockBg, borderLine]);
 		this.container.setDepth(100);
 
+		// Read initial deck from registry (deck-loaded event may fire before UIScene subscribes)
+		const initialDeck = scene.game.registry.get('initialDeck') as
+			| readonly DeckCardDef[]
+			| undefined;
+		if (initialDeck && initialDeck.length > 0) {
+			this.deckCards = initialDeck;
+			this.buildCards();
+		}
+
 		// Bind event handlers
 		this.onDeckLoaded = (data) => {
 			this.deckCards = data.cards;

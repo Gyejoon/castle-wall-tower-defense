@@ -1,6 +1,6 @@
 import { EventBus } from '@gld/phaser-game';
 import { battleXp, type PlacementFailureReason } from '@gld/shared';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 
@@ -11,6 +11,7 @@ export function useGameEvents(): void {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
+	const bossWarningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
 		const onGameOver = (data: {
@@ -70,8 +71,10 @@ export function useGameEvents(): void {
 
 		const onBossWarning = () => {
 			setBossWarningVisible(true);
-			setTimeout(() => {
+			if (bossWarningTimer.current) clearTimeout(bossWarningTimer.current);
+			bossWarningTimer.current = setTimeout(() => {
 				setBossWarningVisible(false);
+				bossWarningTimer.current = null;
 			}, 1500);
 		};
 
@@ -99,6 +102,7 @@ export function useGameEvents(): void {
 			EventBus.off('boss-warning', onBossWarning);
 			EventBus.off('boss-defeated', onBossDefeated);
 			EventBus.off('boss-phase-change', onBossPhaseChange);
+			if (bossWarningTimer.current) clearTimeout(bossWarningTimer.current);
 		};
 	}, [
 		pushToast,

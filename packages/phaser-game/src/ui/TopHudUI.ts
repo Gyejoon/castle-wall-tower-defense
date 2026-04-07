@@ -17,10 +17,7 @@ const TEXT_RESOLUTION = 1;
 const COL_PANEL = 0x2a2010;
 const COL_BORDER = 0x4a3a20;
 const COL_GOLD = 0xf0d060;
-const _COL_DANGER = 0xc03020;
 const COL_SUCCESS = 0x7ab648;
-const _COL_TEXT = 0xf0e8d8;
-const _COL_TEXT_SEC = 0xa09070;
 
 function formatTimerLabel(rawLabel: string): string {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');

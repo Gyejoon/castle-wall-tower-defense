@@ -161,23 +161,23 @@ describe('GamePage', () => {
 			});
 		});
 
-		// HP/energy/timer are now rendered by Phaser UIScene; React layer
-		// only tracks run status and structural UI elements.
+		// HP/energy/timer/deck are now rendered by Phaser UIScene; React layer
+		// only tracks run status. PvP-era pressure widgets are gone.
 		expect(useGameStore.getState().runStatus).toBe('running');
-		expect(view.getByTestId('top-hud')).toBeTruthy();
-		expect(view.getByTestId('deck-dock')).toBeTruthy();
+		expect(view.queryByTestId('top-hud')).toBeNull();
+		expect(view.queryByTestId('deck-dock')).toBeNull();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
 		expect(view.queryByText('AI')).toBeNull();
 	});
 
-	it('gstack UI/UX: mobile HUD container stays on one line without wrap', () => {
+	it('gstack UI/UX: game-page wrapper uses full height layout', () => {
 		const view = render(<GamePage />);
-		const hudRow = view.getByTestId('top-hud-row') as HTMLDivElement;
+		const gamePage = view.container.querySelector('.game-page') as HTMLDivElement;
 
-		expect(hudRow.className).toContain('flex-nowrap');
-		expect(hudRow.className).toContain('whitespace-nowrap');
-		expect(hudRow.className).toContain('overflow-hidden');
+		expect(gamePage).toBeTruthy();
+		expect(gamePage.className).toContain('h-full');
+		expect(gamePage.className).toContain('w-full');
 	});
 
 	it('shows victory state when local player wins', () => {

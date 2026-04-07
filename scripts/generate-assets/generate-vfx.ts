@@ -342,6 +342,34 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // spawn-smoke.png (192x32, 8 frames x 24x32) — 스폰 연기
+  {
+    const FW = 24, FH = 32, FRAMES = 8;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const cx = 12, cy = 10;
+      // Smoke descends y +1~+3px per frame (downward, spawn direction)
+      const descent = 1 + (f % 3);
+      // Alpha cycle: 0.15→0.45→0.15 (breathing)
+      const t = f / (FRAMES - 1);
+      const alpha = 0.15 + 0.30 * Math.sin(t * Math.PI);
+      // Cloud radius varies 6~10
+      const radius = 6 + Math.round(4 * Math.sin(t * Math.PI));
+      // Main smoke cloud (dark reddish)
+      fillCircle(ctx, ox + cx, cy + descent, radius, `rgba(120,60,40,${alpha.toFixed(2)})`);
+      // Secondary smaller cloud
+      fillCircle(ctx, ox + cx + 3, cy + descent + 2, Math.max(3, radius - 3), `rgba(80,40,30,${(alpha * 0.7).toFixed(2)})`);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/spawn-smoke.png`);
+    entries.push({
+      key: 'vfx-spawn-smoke', type: 'spritesheet',
+      path: 'assets/vfx/spawn-smoke.png',
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'preload' as const,
+    });
+  }
+
   return entries;
 }
 

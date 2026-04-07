@@ -14,6 +14,7 @@ import { generate as generateTowers } from './generate-towers';
 import { generate as generateUi } from './generate-ui';
 import { generate as generateUnits } from './generate-units';
 import { generate as generateCastleWall } from './generate-castle-wall';
+import { generate as generateSpawnHut } from './generate-spawn-hut';
 import { generate as generateVfx } from './generate-vfx';
 import { generate as generateRarityFrames } from './generate-rarity-frames';
 import { generate as generateTiles } from './generate-tiles';
@@ -62,6 +63,7 @@ export async function generateAllAssets() {
 		units,
 		projectiles,
 		castleWall,
+		spawnHut,
 		vfx,
 		ui,
 		resultUi,
@@ -90,6 +92,10 @@ export async function generateAllAssets() {
 		}),
 		generateCastleWall().then((result) => {
 			console.log('[castle-wall] done');
+			return result;
+		}),
+		generateSpawnHut().then((result) => {
+			console.log('[spawn-hut] done');
 			return result;
 		}),
 		generateVfx().then((result) => {
@@ -136,6 +142,7 @@ export async function generateAllAssets() {
 		...units,
 		...projectiles,
 		...castleWall,
+		...spawnHut,
 		...vfx,
 		...ui,
 		...resultUi,

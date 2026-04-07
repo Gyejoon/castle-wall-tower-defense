@@ -89,6 +89,12 @@ export const PALETTE = {
     joint: '#3c4f51', shadow: '#283d40', merlon: '#76868a',
     moss: '#3d5a3e', gate: '#0d1117',
   },
+  // Spawn hut wood
+  spawnHut: {
+    woodDark: '#3a2a1a', woodMid: '#2a1f15', woodLight: '#4a3828',
+    thatch: '#8a7a50', bone: '#c8c0b0', door: '#0a0a0a',
+    shadow: '#1a1210', accent: '#c04020', flagPole: '#5a4a3a',
+  },
 } as const;
 
 export const ELEMENT_COLORS = {

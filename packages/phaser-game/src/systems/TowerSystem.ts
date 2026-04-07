@@ -355,7 +355,9 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
-				const style = this.hasSplash(special) ? 'arc' as const : 'beam' as const;
+				const style = this.hasSplash(special)
+					? ('arc' as const)
+					: ('beam' as const);
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,

@@ -10,7 +10,14 @@ import { useMetaStore } from './metaStore';
 
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
 
-export type RunStatus = 'lobby' | 'stageSelect' | 'stageDetail' | 'building' | 'running' | 'victory' | 'defeat';
+export type RunStatus =
+	| 'lobby'
+	| 'stageSelect'
+	| 'stageDetail'
+	| 'building'
+	| 'running'
+	| 'victory'
+	| 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'missions' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 

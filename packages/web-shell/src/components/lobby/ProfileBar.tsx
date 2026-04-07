@@ -1,8 +1,8 @@
 import { xpToNextLevel } from '@gld/shared';
-import { DiamondIcon } from '../ui/CurrencyIcon';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
+import { DiamondIcon } from '../ui/CurrencyIcon';
 
 function useAnimatedGold() {
 	const gold = useMetaStore((s) => s.profile.gold);

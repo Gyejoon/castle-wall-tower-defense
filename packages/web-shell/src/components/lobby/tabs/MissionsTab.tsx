@@ -3,10 +3,10 @@ import {
 	MISSION_LABELS,
 	type MissionProgress,
 } from '@gld/shared';
-import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';
 import { useEffect, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useMetaStore } from '../../../stores/metaStore';
+import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';
 import { PixelButton } from '../../ui/PixelButton';
 import { TabBackground } from '../TabBackground';
 

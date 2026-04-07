@@ -80,6 +80,12 @@ export interface GameEventMap {
 
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
+	// Stage select
+	'stage-select-ready': undefined;
+	'request-enter-lobby': undefined;
+	'request-start-game-from-stage': { mapId: string };
+	'request-deck-edit': undefined;
+
 	// Internal
 	'current-scene-ready': Phaser.Scene;
 }

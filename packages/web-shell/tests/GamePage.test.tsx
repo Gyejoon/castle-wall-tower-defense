@@ -163,7 +163,7 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('⚡60')).toBeTruthy();
+		expect(view.getByText('60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
 		expect(view.getByTestId('deck-dock')).toBeTruthy();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();

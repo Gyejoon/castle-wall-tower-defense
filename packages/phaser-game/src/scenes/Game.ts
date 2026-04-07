@@ -630,8 +630,8 @@ export class GameScene extends Phaser.Scene {
 					evt.damage,
 					evt.armorPierce,
 				);
-				if (pos) {
-					this.damageNumbers.show(pos.x, pos.y, evt.damage);
+				if (pos && result) {
+					this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
 				}
 				if (result?.killed) {
 					this.goldEarned += result.bounty;

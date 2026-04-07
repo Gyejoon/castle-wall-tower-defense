@@ -17,10 +17,10 @@ description: Use when reviewing non-trivial code changes in this repository befo
 ## 빠른 시작
 
 ```text
-/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 50/60 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
+/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 58/70 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
 ```
 
-ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50/60 미만이면 같은 절차를 다시 돈다. 최대 5회.
+ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58/70 미만이면 같은 절차를 다시 돈다. 최대 5회.
 
 ## Phase 0: Init
 
@@ -45,6 +45,7 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - 기존 유틸리티/상수 재사용
 - 이름 명확화, 과한 중첩 완화
 - 테스트에서만 필요한 보조 코드가 런타임 코드에 섞여 있는지 점검
+- **공유 타입 속성 접근**: `@gld/shared` 타입의 속성을 사용할 때 추측하지 않고 실제 타입 정의를 확인한다. dev 서버에선 에러가 안 나도 CI `tsc`에서 터진다
 
 ### Tailwind 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
 
@@ -53,6 +54,12 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - **하드코딩 색상**: `#4a3a20` 등 → `var(--color-*)` 토큰 교체
 - **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름 회피
 - **이징 함수 정확도**: CSS `ease` ≠ `ease-out` — 명시적 값으로 교정
+
+### 에셋 경로 컨벤션 (변경 파일에 에셋 참조가 있을 때만)
+
+- **경로 형식 일관성**: 프로젝트 내 기존 에셋 경로 패턴(상대 `assets/` vs 절대 `/assets/`)을 확인하고 통일한다. 새 파일에서 다른 형식을 쓰면 base URL 변경 시 일부만 깨진다
+- **에셋 존재 여부**: `src="assets/ui/icon-*.webp"` 등 참조하는 파일이 실제로 `public/assets/` 하위에 존재하는지 확인한다. 생성 스크립트를 돌리지 않으면 빠질 수 있다
+- **webp 변환 누락**: PNG만 생성하고 webp 변환을 안 했거나, 코드에서 `.webp`를 참조하는데 `.png`만 있으면 404
 
 ## Phase 2: Phaser 런타임 안정성 검사
 
@@ -79,6 +86,9 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 10 | `setTimeout`/`setInterval` 정리 | 매 게임마다 타이머 누적 | -2 |
 | 11 | Web Audio 노드 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 | -2 |
 | 12 | `game.registry.events` 리스너도 named ref + cleanup off() | 익명 함수로 `changedata-*` 등록 → 씬 재시작마다 누적 | -2 |
+| 13 | 산술 연산에서 0 나눗셈 가드 | `Math.floor(dist / N)`이 0일 때 `i / steps`가 NaN | -1 |
+| 14 | tween 중복 방지 | pointer in/out에서 `killTweensOf` 없이 `tweens.add` 반복 → jitter | -1 |
+| 15 | 인터랙티브 요소 간 겹침 | 버튼/텍스트가 동일 좌표에 배치되어 클릭 충돌 | -1 |
 
 기본 10점, 위반별 감점, 최소 0점.
 
@@ -106,10 +116,37 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 9 | 무거운 컴포넌트 lazy loading | React.lazy 미사용 | -1 |
 | 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
 | 11 | StrictMode phantom cleanup 안전성 | `useEffect` cleanup에서 구독 해제가 `isConnected` 가드 밖에 있으면 StrictMode 재마운트 시 구독 유실 | -2 |
+| 12 | `key` prop으로 인한 DOM 재생성과 useEffect 불일치 | `key={runId}`로 DOM이 바뀌는데 effect deps가 안정적이라 Phaser 재초기화 안 됨 | -2 |
 
-기본 10점, 항목 1-4,11 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-12 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
-## Phase 4: 스펙 정합성 검사
+## Phase 4: Design Quality 검사
+
+[`frontend-design`](../frontend-design/SKILL.md) 기준으로 변경 코드의 시각적 품질을 본다.
+
+### 조건부 활성화
+
+- diff에 React 파일(`web-shell/**/*.tsx`)이 없으면 10/10과 `"React 변경 없음"` 노트를 남긴다.
+- React 파일이 있으면 아래 체크리스트를 적용한다.
+
+### 체크리스트
+
+| # | 검사 항목 | 위반 예시 | 감점 |
+|---|---|---|---|
+| 1 | 과사용 폰트 회피 | Inter, Roboto, Arial, Open Sans, 시스템 기본 폰트 사용 | -2 |
+| 2 | 타이포그래피 위계 존재 | 모든 텍스트가 비슷한 크기/굵기, 시각적 위계 없음 | -1 |
+| 3 | 모노스페이스 남용 금지 | "기술적 느낌"용으로 모노스페이스를 장식적으로 사용 | -1 |
+| 4 | 하드코딩 색상 금지 | `#4a3a20` 등 리터럴 색상값, CSS 변수/토큰 미사용 | -2 |
+| 5 | AI 클리셰 팔레트 회피 | 다크 배경 + 시안/네온, 퍼플-투-블루 그라데이션 | -1 |
+| 6 | 순수 #000/#fff 회피 | 색조 없는 순수 흑백 사용 | -1 |
+| 7 | 카드 중첩 금지 | 카드 안에 카드, 동일 카드 그리드 반복 | -1 |
+| 8 | 글래스모피즘/장식 남용 금지 | 목적 없는 blur, 글로우 보더, 장식용 스파크라인 | -1 |
+| 9 | 모달 남용 금지 | 더 나은 대안이 있는데 모달로 처리 | -1 |
+| 10 | AI 양산형 종합 테스트 | "AI가 만들었다"고 하면 즉시 믿을 수 있는 수준 | -2 |
+
+기본 10점, 항목 1,4,10 Critical(-2), 항목 2,3,5,6,7,8,9 Non-critical(-1), 최소 0점.
+
+## Phase 5: 스펙 정합성 검사
 
 1. 최신 스펙 파일을 찾는다: `docs/superpowers/specs/*.md`
 2. 스펙이 없으면 10/10과 `"스펙 문서 없음"` 노트를 남긴다.
@@ -120,7 +157,7 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 
 기본 10점, 최소 0점.
 
-## Phase 5: 테스트 커버리지 검사
+## Phase 6: 테스트 커버리지 검사
 
 1. 변경된 소스 파일 중 테스트 필수 대상을 식별한다.
 2. 대응 테스트 파일 존재 여부를 본다.
@@ -147,6 +184,16 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
 - emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
 - 에셋 메타데이터(frameCount, tilesets 배열 등)를 검증하지 않는 경우
+- **동어반복 테스트**: expected 값을 production 코드와 같은 함수로 계산하면 regression을 잡지 못한다. 하드코딩된 스냅샷 값으로 assert한다
+
+### 기존 테스트 깨짐 검사
+
+변경 코드가 기존 테스트의 가정을 깨뜨리는지 반드시 확인한다.
+
+- **렌더 텍스트 변경**: 이모지/텍스트를 img 태그로 교체하면 `getByText('⚡60')` 같은 매처가 깨진다. 변경 파일과 관련된 기존 테스트를 grep하여 매처를 동기화한다.
+- **상태 흐름 변경**: `runStatus` 등 enum 값이나 상태 전환 순서가 바뀌면 기존 테스트의 기대값이 틀어진다.
+- **컴포넌트 구조 변경**: 버튼 텍스트, DOM 구조, role 속성이 바뀌면 `getByText`, `getByRole` 매처가 깨진다.
+- **검증 방법**: 변경한 컴포넌트의 테스트 파일을 실행하여 통과 여부를 확인한 뒤에 점수를 매긴다.
 
 ### 점수
 
@@ -155,7 +202,7 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - 테스트 실패 시 최종 점수는 최대 5점으로 캡
 - 테스트 검증 부정확: -1/건
 
-## Phase 6: 독립 리뷰
+## Phase 7: 독립 리뷰
 
 현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다. 리뷰어는 diff만 보고 판단해야 하며, 이전 Phase의 결과를 참조하지 않는다.
 
@@ -180,9 +227,9 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | fail, high severity | 5-6 |
 | fail, critical severity | 0-4 |
 
-## Phase 7: 적대적 리뷰
+## Phase 8: 적대적 리뷰
 
-"무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다. Phase 6과 다른 관점이어야 하며, 동일한 근거를 재진술하는 수준이면 안 된다.
+"무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다. Phase 7과 다른 관점이어야 하며, 동일한 근거를 재진술하는 수준이면 안 된다.
 
 검증 대상:
 
@@ -204,11 +251,11 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | reviewer unavailable | 7 |
 | fail, critical severity | 0-4 |
 
-## Phase 8: 최종 정리 & 판정
+## Phase 9: 최종 정리 & 판정
 
 ### 최종 Simplify
 
-Phase 2-7에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, naming 정리, 리뷰 대응 중 생긴 임시 분기 제거.
+Phase 2-8에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, naming 정리, 리뷰 대응 중 생긴 임시 분기 제거.
 
 ### 스코어카드
 
@@ -216,18 +263,19 @@ Phase 2-7에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, na
 RAL REVIEW SCORECARD
 Runtime Stability:     X/10
 React Best Practices:  X/10
+Design Quality:        X/10
 Spec Alignment:        X/10
 Test Coverage:         X/10
 Independent Review:    X/10
 Adversarial Review:    X/10
-Total:                XX/60
+Total:                XX/70
 Status:               PASS | FAIL
 ```
 
 ### 통과 기준
 
-- `PASS`: 총점 50/60 이상
-- `FAIL`: 총점 50 미만
+- `PASS`: 총점 58/70 이상
+- `FAIL`: 총점 58 미만
 
 ### FAIL일 때
 
@@ -238,7 +286,7 @@ Status:               PASS | FAIL
 
 ### 루프 중단 조건
 
-- 총점 50/60 이상
+- 총점 58/70 이상
 - 5회 반복 도달
 - 두 번 연속으로 유의미한 개선이 없고 남은 이슈가 REPORT뿐일 때
 
@@ -264,9 +312,13 @@ bunx biome check .
 | memoization 추가 | 컴포넌트 구조 재설계 |
 | Zustand selector 세분화 | 새 store 도입 |
 | barrel → 직접 import 교체 | 패키지 구조 변경 |
+| 하드코딩 색상 → CSS 변수 교체 | 폰트 체계 전면 교체 |
+| 순수 #000/#fff → 색조 입힌 값 교체 | 레이아웃 구조 재설계 |
+| | 디자인 톤/컨셉 변경 |
 
 ## 참고 문서
 
 - [`scoring-rubric.md`](./references/scoring-rubric.md)
 - [`phaser-best-practices`](../phaser-best-practices/SKILL.md)
 - [`vercel-react-best-practices`](../vercel-react-best-practices/SKILL.md)
+- [`frontend-design`](../frontend-design/SKILL.md)

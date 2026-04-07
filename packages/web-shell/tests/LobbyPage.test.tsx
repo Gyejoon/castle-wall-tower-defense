@@ -31,7 +31,6 @@ describe('LobbyPage', () => {
 		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
 
 		expect(view.getByText('성벽 막기')).toBeTruthy();
-		expect(view.getByText('게임 시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 		expect(view.queryByText('상대를 찾는 중...')).toBeNull();
 	});
@@ -61,11 +60,11 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('starts the run immediately', () => {
+	it('enters stage select on button click', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('게임 시작'));
+		fireEvent.click(view.getByText('성벽 막기'));
 
-		expect(useGameStore.getState().runStatus).toBe('building');
+		expect(useGameStore.getState().runStatus).toBe('stageSelect');
 	});
 
 	it('shows collection tab with tower grid', () => {

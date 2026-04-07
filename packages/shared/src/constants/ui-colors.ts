@@ -19,6 +19,7 @@ export const UI_COLORS = {
 	gradeUnique: '#9060e0',
 	tierBright: '#ffe870',
 	bossPhase1: '#c87020',
+	armorPierce: '#a0a8b0',
 } as const;
 
 /** Same palette as UI_COLORS but in Phaser-compatible 0x number format */
@@ -36,4 +37,5 @@ export const PHASER_COLORS = {
 	gradeUnique: 0x9060e0,
 	tierBright: 0xffe870,
 	bossPhase1: 0xc87020,
+	armorPierce: 0xa0a8b0,
 } as const;

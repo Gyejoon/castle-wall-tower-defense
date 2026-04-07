@@ -78,6 +78,7 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 | -1 |
 | 10 | `setTimeout`/`setInterval` 정리 | 매 게임마다 타이머 누적 | -2 |
 | 11 | Web Audio 노드 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 | -2 |
+| 12 | `game.registry.events` 리스너도 named ref + cleanup off() | 익명 함수로 `changedata-*` 등록 → 씬 재시작마다 누적 | -2 |
 
 기본 10점, 위반별 감점, 최소 0점.
 
@@ -104,8 +105,9 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 8 | barrel import 회피 | `import { X } from '@gld/shared'` | -1 |
 | 9 | 무거운 컴포넌트 lazy loading | React.lazy 미사용 | -1 |
 | 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
+| 11 | StrictMode phantom cleanup 안전성 | `useEffect` cleanup에서 구독 해제가 `isConnected` 가드 밖에 있으면 StrictMode 재마운트 시 구독 유실 | -2 |
 
-기본 10점, 항목 1-4 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: 스펙 정합성 검사
 

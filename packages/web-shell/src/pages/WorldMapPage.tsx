@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { isMapUnlocked, MAP_REGISTRY } from '@gld/shared';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
@@ -30,6 +31,7 @@ const PATH_CONNECTIONS = [
 ];
 
 export function WorldMapPage() {
+	const [lockImgError, setLockImgError] = useState(false);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
@@ -193,12 +195,23 @@ export function WorldMapPage() {
 										/>
 										<div className="absolute inset-0 bg-gradient-to-t from-panel via-transparent to-transparent" />
 
-										{/* Lock icon — pixel text, not emoji */}
+										{/* Lock icon */}
 										{locked && (
 											<div className="absolute inset-0 flex items-center justify-center">
-												<span className="font-pixel text-[20px] text-text-secondary/70 select-none">
-													✕
-												</span>
+												{lockImgError ? (
+													<span className="font-pixel text-[20px] text-text-secondary/70 select-none">
+														✕
+													</span>
+												) : (
+													<img
+														src="assets/ui/icon-locked.webp"
+														alt="잠김"
+														width={24}
+														height={24}
+														className="[image-rendering:pixelated] opacity-70 select-none"
+														onError={() => setLockImgError(true)}
+													/>
+												)}
 											</div>
 										)}
 

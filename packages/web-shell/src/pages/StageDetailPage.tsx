@@ -217,7 +217,7 @@ export function StageDetailPage() {
 												height={10}
 												className="[image-rendering:pixelated]"
 											/>
-											{tower.energyCost}
+											{tower.cost}
 										</span>
 									</div>
 								);

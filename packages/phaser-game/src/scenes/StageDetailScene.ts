@@ -227,7 +227,7 @@ export class StageDetailScene extends Phaser.Scene {
 					.setOrigin(0.5, 0);
 
 				this.add
-					.text(sx + slotW / 2, yOffset + slotH - 4, `⚡${tower.energyCost}`, {
+					.text(sx + slotW / 2, yOffset + slotH - 4, `⚡${tower.cost}`, {
 						fontFamily: '"Press Start 2P"',
 						fontSize: '7px',
 						color: '#c8a04a',

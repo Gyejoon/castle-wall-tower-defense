@@ -194,7 +194,7 @@ export class WorldMapScene extends Phaser.Scene {
 		const dx = x2 - x1;
 		const dy = y2 - y1;
 		const dist = Math.sqrt(dx * dx + dy * dy);
-		const steps = Math.floor(dist / 24);
+		const steps = Math.max(1, Math.floor(dist / 24));
 
 		for (let i = 0; i <= steps; i++) {
 			const t = i / steps;

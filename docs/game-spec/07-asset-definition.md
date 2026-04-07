@@ -194,6 +194,8 @@ sin 기반 8프레임 워크 사이클:
 | 덱 | `deck-slot` |
 | 가챠 | `box-free`, `box-ad`, `box-diamond`, `box-premium`, `gacha-chest` (개봉 애니용) |
 | 튜토리얼 | `highlight-frame`, `arrow-indicator`, `hint-bubble` |
+| 스테이지 선택 | `icon-energy` (번개), `icon-sword` (검), `icon-arrow-left` (화살표), `icon-edit` (연필) — 16×16 픽셀 아이콘 |
+| 스테이지 썸네일 | `stage-thumb-forest_gate`, `stage-thumb-lava_fortress`, `stage-thumb-storm_citadel` — 맵 미리보기 |
 
 ---
 

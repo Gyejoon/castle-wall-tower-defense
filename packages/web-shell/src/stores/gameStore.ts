@@ -16,7 +16,7 @@ import { useMetaStore } from './metaStore';
 
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
 
-export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
+export type RunStatus = 'lobby' | 'stageSelect' | 'stageDetail' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'missions' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
@@ -112,6 +112,8 @@ interface GameStoreState {
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
 	setGameSpeed: (speed: 1 | 2) => void;
+	enterStageSelect: () => void;
+	enterStageDetail: (mapId: string) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -247,4 +249,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		set({ gameSpeed: speed });
 		EventBus.emit('request-set-speed', { multiplier: speed });
 	},
+	enterStageSelect: () => set({ runStatus: 'stageSelect', lobbyTab: 'home' }),
+	enterStageDetail: (mapId: string) =>
+		set({ runStatus: 'stageDetail', selectedMapId: mapId }),
 }));

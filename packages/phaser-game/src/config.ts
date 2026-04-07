@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { GameScene } from './scenes/Game';
 import { Preloader } from './scenes/Preloader';
+import { StageDetailScene } from './scenes/StageDetailScene';
+import { WorldMapScene } from './scenes/WorldMapScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -17,5 +19,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 		mode: Phaser.Scale.FIT,
 		autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
 	},
-	scene: [Boot, Preloader, GameScene],
+	scene: [Boot, Preloader, GameScene, WorldMapScene, StageDetailScene],
 };

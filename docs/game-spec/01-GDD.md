@@ -46,7 +46,7 @@
 
 **Core Loop**
 ```
-로비 진입 → 즉시 시작 → 에너지 축적 → 4타워 중 선택 배치 → 웨이브/보스 대응 → 전투 결과 → 보상 획득
+로비 진입 → 성벽 막기 → 월드맵(스테이지 선택) → 스테이지 상세(덱 확인) → 게임 시작 → 에너지 축적 → 4타워 중 선택 배치 → 웨이브/보스 대응 → 전투 결과 → 보상 획득
 ```
 
 **Meta Loop**
@@ -186,7 +186,9 @@
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
   - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
-- **Lobby**: Home 탭 (즉시 시작 CTA), Collection 탭, Missions 탭, Settings 탭
+- **Lobby**: Home 탭 (단일 "성벽 막기" 골드 버튼), Collection 탭, Missions 탭, Settings 탭
+- **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금/클리어 상태 표시, 권장 레벨 뱃지
+- **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 출전 덱 4슬롯 미리보기 + 게임 시작
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
 - **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀
 - **Tutorial Overlay**: 첫 세션 5단계 (step 1~2만 강제)

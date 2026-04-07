@@ -8,6 +8,11 @@ vi.mock('phaser', () => ({
 				ANIMATION_COMPLETE: 'animationcomplete',
 			},
 		},
+		GameObjects: {
+			Events: {
+				DESTROY: 'destroy',
+			},
+		},
 	},
 }));
 

@@ -530,10 +530,14 @@ export class TowerSystem {
 		effect.setDisplaySize(64, 80);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
+		const restoreVisibility = () => {
+			if (towerSprite.active) towerSprite.setVisible(true);
+		};
 		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
 			effect.destroy();
-			if (towerSprite.active) towerSprite.setVisible(true);
+			restoreVisibility();
 		});
+		effect.once(Phaser.GameObjects.Events.DESTROY, restoreVisibility);
 	}
 
 	private spawnImpactVfx(textureKey: string, x: number, y: number): void {

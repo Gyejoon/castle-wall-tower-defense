@@ -161,6 +161,10 @@ export class CastleWallSystem {
 	}
 
 	destroy(): void {
+		for (const tween of this.flashTweens.values()) {
+			tween.stop();
+		}
+		this.flashTweens.clear();
 		for (const { wall, smoke, fires } of this.walls) {
 			wall.destroy();
 			smoke.destroy();
@@ -169,6 +173,5 @@ export class CastleWallSystem {
 			}
 		}
 		this.walls.length = 0;
-		this.flashTweens.clear();
 	}
 }

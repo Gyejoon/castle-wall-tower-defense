@@ -297,6 +297,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'vfx-wall-smoke', type: 'spritesheet',
       path: 'assets/vfx/wall-smoke.png',
       frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'preload' as const,
     });
   }
 
@@ -337,6 +338,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       key: 'vfx-wall-fire', type: 'spritesheet',
       path: 'assets/vfx/wall-fire.png',
       frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+      section: 'preload' as const,
     });
   }
 

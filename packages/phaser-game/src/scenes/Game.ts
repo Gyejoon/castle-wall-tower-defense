@@ -679,14 +679,14 @@ export class GameScene extends Phaser.Scene {
 				damage: 1,
 				remainingHp: this.playerHp,
 			});
-			EventBus.emit('base-hp-changed', {
-				hp: this.playerHp,
-				maxHp: INITIAL_PLAYER_HP,
-				laneIndex: 0,
-			});
-			this.castleWall.update(this.playerHp);
-			this.castleWall.onHit();
 			if (this.playerHp <= 0) {
+				EventBus.emit('base-hp-changed', {
+					hp: 0,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(0);
+				this.castleWall.onHit();
 				this.emitGameOver({
 					result: 'defeat',
 					reason: 'base_hp_depleted',
@@ -694,6 +694,16 @@ export class GameScene extends Phaser.Scene {
 				});
 				return;
 			}
+		}
+
+		if (playerExits.length > 0) {
+			EventBus.emit('base-hp-changed', {
+				hp: this.playerHp,
+				maxHp: INITIAL_PLAYER_HP,
+				laneIndex: 0,
+			});
+			this.castleWall.update(this.playerHp);
+			this.castleWall.onHit();
 		}
 
 		if (

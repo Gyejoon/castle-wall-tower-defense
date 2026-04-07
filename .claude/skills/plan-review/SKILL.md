@@ -4,8 +4,9 @@ description: |
   프로젝트 전용 Plan 리뷰 파이프라인. gstack autoplan(CEO+Design+Eng 순차 리뷰)과
   frontend-design(AI slop 방지 미학 기준), game-ui-design(Phaser+React 하이브리드 패턴)을
   결합하여 전략-디자인-엔지니어링을 한 번에 리뷰한다.
-  autoplan의 Design 페이즈에 프로젝트 고유의 미학 평가 축 6개를 주입하여,
-  구현 전에 디자인 방향을 확정하고 AI slop을 예방한다.
+  autoplan의 Design 페이즈에 프로젝트 고유의 미학 평가 축 6개를 주입하고,
+  모든 페이즈에서 docs/game-spec 문서를 근거로 스펙 정합성을 검증한다.
+  스펙 충돌(CONFLICT)은 하드 블로커로 처리하여 구현 전에 정합성을 보장한다.
   Use when asked to "plan review", "plan-review", "플랜 리뷰", "리뷰해줘",
   "계획 리뷰", "전체 리뷰", "구현 전 리뷰", or when a plan file exists and
   the user wants a comprehensive review before implementation.
@@ -17,27 +18,29 @@ argument-hint: "[plan file path]"
 
 # /plan-review — 통합 Plan 리뷰 파이프라인
 
-autoplan(CEO → Design → Eng 순차 리뷰)을 실행하되, Design 페이즈에
-이 프로젝트 고유의 미학 평가를 추가한다.
+autoplan(CEO → Design → Eng 순차 리뷰)을 실행하되, 두 가지 프로젝트 고유 레이어를 추가한다:
 
-autoplan만으로는 "UI가 전략적으로 타당한가"는 점검하지만 "UI가 이 프로젝트의
-미학 방향과 일치하는가"는 점검하지 않는다. Plan 단계에서 미학 방향을 확정해야
-구현자가 AI slop에 빠지지 않고 일관된 결과물을 만들 수 있다.
+1. **스펙 검증 (하드 게이트)**: 모든 Phase에서 `docs/game-spec/` 문서를 근거로 Plan의 정합성을 검증한다. 스펙과 직접 모순(CONFLICT)되면 다음 Phase로 진행할 수 없다.
+2. **미학 평가 (어드바이저리)**: Design Phase에서 `.impeccable.md` + `game-ui-design` 기준으로 미학을 점수화한다. 블로킹하지 않는다.
+
+autoplan만으로는 "전략적으로 타당한가"는 점검하지만 "게임 스펙 문서와 일치하는가"는
+점검하지 않는다. Plan 단계에서 스펙 정합성과 미학 방향을 확정해야 구현자가
+잘못된 수치나 AI slop에 빠지지 않고 일관된 결과물을 만들 수 있다.
 
 ---
 
 ## 실행 흐름
 
 ```
-Step 0: 컨텍스트 수집 (Plan 파일 + .impeccable.md + UI 스코프 감지)
+Step 0: 컨텍스트 수집 (Plan 파일 + .impeccable.md + UI 스코프 + 스펙 스코프)
     ↓
-Step 1: autoplan 로드 → Phase 1 (CEO) 그대로 실행
-    ↓
-Step 2: Phase 2 (Design) 실행 + 미학 리뷰 주입  ← 이 스킬의 핵심
-    ↓
-Step 3: Phase 3 (Eng) 그대로 실행
-    ↓
-Step 4: Final Gate에 미학 점수 추가
+Step 1: autoplan Phase 1 (CEO) → CEO 스펙 검증
+    ↓ (CONFLICT → STOP, 사용자 해소 후 재검증)
+Step 2: Phase 2 (Design) + 미학 리뷰 + 디자인 스펙 검증
+    ↓ (CONFLICT → STOP, 사용자 해소 후 재검증)
+Step 3: Phase 3 (Eng) + Eng 스펙 검증
+    ↓ (CONFLICT → STOP, 사용자 해소 후 재검증)
+Step 4: Final Gate (스펙 정합성=하드 게이트 + 미학=어드바이저리)
 ```
 
 ---

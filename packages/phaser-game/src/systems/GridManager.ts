@@ -11,6 +11,7 @@ export interface GridManagerOptions {
 	tileSize?: number;
 	canvasWidth?: number;
 	canvasHeight?: number;
+	yOffset?: number;
 }
 
 export class GridManager {
@@ -67,7 +68,7 @@ export class GridManager {
 		const cw = options?.canvasWidth ?? gridPixelW;
 		const ch = options?.canvasHeight ?? gridPixelH;
 		this.offsetX = Math.floor((cw - gridPixelW) / 2);
-		this.offsetY = Math.floor((ch - gridPixelH) / 2);
+		this.offsetY = Math.floor((ch - gridPixelH) / 2) + (options?.yOffset ?? 0);
 
 		this.grid = this.createGrid();
 	}

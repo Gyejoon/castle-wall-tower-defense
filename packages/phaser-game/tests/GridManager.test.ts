@@ -194,4 +194,13 @@ describe('GridManager', () => {
 		expect(grid[3][2]).toBe(1);
 		expect(grid[0][0]).toBe(0);
 	});
+
+	it('yOffset shifts gridToWorld Y coordinate', () => {
+		const gmBase = new GridManager(TEST_CONFIG);
+		const gmOffset = new GridManager(TEST_CONFIG, { yOffset: 44 });
+		const base = gmBase.gridToWorld(0, 0);
+		const offset = gmOffset.gridToWorld(0, 0);
+		expect(offset.x).toBe(base.x);
+		expect(offset.y).toBe(base.y + 44);
+	});
 });

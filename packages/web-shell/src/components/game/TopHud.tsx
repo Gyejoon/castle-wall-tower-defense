@@ -1,6 +1,26 @@
 import { ENERGY_CAP } from '@gld/shared';
-import { BossHpBar } from './BossHpBar';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
+import { BossHpBar } from './BossHpBar';
+
+/** Increments a counter each time `value` changes, used as a React key to replay CSS animations.
+ *  Returns 0 on initial mount (no animation), 1+ on subsequent changes. */
+function useFlashKey(value: number): number {
+	const prevRef = useRef(value);
+	const mountedRef = useRef(false);
+	const [key, setKey] = useState(0);
+	useEffect(() => {
+		if (!mountedRef.current) {
+			mountedRef.current = true;
+			return;
+		}
+		if (prevRef.current !== value) {
+			prevRef.current = value;
+			setKey((k) => k + 1);
+		}
+	}, [value]);
+	return key;
+}
 
 function formatTimerLabel(rawLabel: string) {
 	if (rawLabel.startsWith('Boss')) return rawLabel.replace('Boss', '보스');
@@ -33,6 +53,8 @@ export function TopHud({
 	onToggleSpeed,
 	bossHpVisible,
 }: TopHudProps) {
+	const hpFlash = useFlashKey(lives);
+
 	return (
 		<div
 			data-testid="top-hud"
@@ -45,7 +67,11 @@ export function TopHud({
 				className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap px-3 py-2.5"
 			>
 				<div
-					className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+					key={`hp-${hpFlash}`}
+					className={cn(
+						'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+						hpFlash > 0 && 'hud-flash',
+					)}
 					style={{ background: 'rgba(192,48,32,0.16)' }}
 				>
 					HP {lives}
@@ -93,9 +119,7 @@ export function TopHud({
 						className="ml-auto font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
 						style={{
 							background:
-								gameSpeed === 2
-									? 'rgba(200,112,32,0.3)'
-									: 'rgba(26,18,8,0.7)',
+								gameSpeed === 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)',
 						}}
 						onClick={onToggleSpeed}
 					>

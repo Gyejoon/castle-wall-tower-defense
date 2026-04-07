@@ -1,4 +1,5 @@
 import { xpToNextLevel } from '@gld/shared';
+import { DiamondIcon } from '../ui/CurrencyIcon';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
@@ -83,8 +84,8 @@ export function ProfileBar() {
 					</span>
 				</div>
 				<div className="flex items-center gap-1">
-					<span className="text-[12px] leading-none">💎</span>
-					<span className="font-pixel text-[11px] text-[#5bc8e8]">
+					<DiamondIcon />
+					<span className="font-pixel text-[11px] text-info">
 						{profile.diamond.toLocaleString()}
 					</span>
 				</div>

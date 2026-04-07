@@ -1,0 +1,26 @@
+{
+  "eval_id": 3,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "6개 차원 점수 테이블이 스킬 포맷을 정확히 따름",
+      "passed": true,
+      "evidence": "정확히 6차원(AI Slop, 타이포, 색상, 레이아웃, 모션, 게임-웹) 테이블 생성"
+    },
+    {
+      "text": ".impeccable.md 구체적 토큰(hex 값, Press Start 2P, 32px) 참조",
+      "passed": true,
+      "evidence": "#c8a04a, #1a1208, #2a2010, #f0d060, #5bc8e8, #7ab648, Press Start 2P, 32px, 8px 리듬 모두 참조"
+    },
+    {
+      "text": "DOM/Canvas 역할 분리를 game-ui-design 기준으로 평가",
+      "passed": true,
+      "evidence": "게임-웹 경계 8/10, EventBus request-* 패턴, z-index, Zustand store 진실 소스 등 상세 평가"
+    },
+    {
+      "text": "Tailwind vs 인라인 스타일 충돌을 감지",
+      "passed": true,
+      "evidence": "'핵심 구조적 문제: Tailwind vs 인라인 스타일 충돌' 섹션에서 .impeccable.md 제약과 Plan 코드의 className 기반 불일치를 정확히 지적"
+    }
+  ]
+}

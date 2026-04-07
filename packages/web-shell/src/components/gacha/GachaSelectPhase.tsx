@@ -1,5 +1,6 @@
 import { GACHA_COSTS } from '@gld/shared';
 import { cn } from '../../utils/cn';
+import { DiamondIcon } from '../ui/CurrencyIcon';
 import { PixelButton } from '../ui/PixelButton';
 
 export interface GachaSelectPhaseProps {
@@ -107,7 +108,7 @@ export function GachaSelectPhase({
 								</p>
 							) : GACHA_COSTS[id].diamond > 0 ? (
 								<p className="font-pixel text-[11px] text-gold">
-									{GACHA_COSTS[id].diamond} 💎
+									{GACHA_COSTS[id].diamond} <DiamondIcon />
 								</p>
 							) : (
 								<p className="font-pixel text-[11px] text-text-secondary">
@@ -146,14 +147,16 @@ export function GachaSelectPhase({
 						<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>
 					) : (
 						<p className="font-pixel text-[11px] text-gold">
-							{GACHA_COSTS.diamond_ten.diamond} 💎
+							{GACHA_COSTS.diamond_ten.diamond} <DiamondIcon />
 						</p>
 					)}
 				</button>
 			</div>
 
 			{/* 다이아몬드 잔액 */}
-			<p className="font-pixel text-xs text-gold">보유: {diamond} 💎</p>
+			<p className="font-pixel text-xs text-gold">
+				보유: {diamond} <DiamondIcon />
+			</p>
 
 			{/* 열기/닫기 버튼 */}
 			<div className="flex gap-2">

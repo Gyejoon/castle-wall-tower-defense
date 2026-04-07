@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "ui-heavy-plan",
+  "prompt": "이 Plan 파일의 미학 리뷰를 수행해줘. .impeccable.md의 디자인 컨텍스트와 game-ui-design 기준으로 6개 차원을 평가하고, 점수 테이블을 포함한 리뷰를 outputs/review.md에 저장해줘.",
+  "assertions": []
+}

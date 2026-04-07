@@ -1,0 +1,26 @@
+{
+  "eval_id": 3,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "6개 차원 점수 테이블이 스킬 포맷을 정확히 따름",
+      "passed": false,
+      "evidence": "자체 차원명 사용 (브랜드 일관성, 한 손 조작, 정보 계층 등). 스킬의 6차원과 다름."
+    },
+    {
+      "text": ".impeccable.md 구체적 토큰(hex 값, Press Start 2P, 32px) 참조",
+      "passed": true,
+      "evidence": ".impeccable.md를 읽고 인라인 스타일 원칙, 32px 그리드 등을 참조함"
+    },
+    {
+      "text": "DOM/Canvas 역할 분리를 game-ui-design 기준으로 평가",
+      "passed": false,
+      "evidence": "game-ui-design 스킬을 읽지 않았으므로 EventBus 패턴, 터치 타겟 44px 등 구체적 기준 없음"
+    },
+    {
+      "text": "Tailwind vs 인라인 스타일 충돌을 감지",
+      "passed": true,
+      "evidence": "Tailwind 사용이 .impeccable.md 원칙과 충돌한다고 올바르게 지적함"
+    }
+  ]
+}

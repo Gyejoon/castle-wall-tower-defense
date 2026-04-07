@@ -160,7 +160,7 @@ export function HomeTab() {
 										height={32}
 										className="[image-rendering:pixelated]"
 									/>
-									<span className="font-pixel text-[9px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
+									<span className="font-pixel text-[10px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 										{tower.name}
 									</span>
 								</div>

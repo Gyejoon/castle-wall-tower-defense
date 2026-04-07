@@ -55,7 +55,7 @@ export function DeckDock() {
 							height={32}
 							className="[image-rendering:pixelated]"
 						/>
-						<span className="text-[9px] text-text font-pixel overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+						<span className="text-[10px] text-text font-pixel overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
 							{TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 						</span>
 						<span

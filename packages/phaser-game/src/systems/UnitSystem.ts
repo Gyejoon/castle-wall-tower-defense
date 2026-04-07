@@ -3,6 +3,7 @@ import {
 	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
+	PHASER_COLORS,
 	type Position,
 	scaleUnitStats,
 	UNITS,
@@ -230,7 +231,11 @@ export class UnitSystem {
 		);
 		const hpRatio = Math.max(0, hp / maxHp);
 		const barColor =
-			hpRatio > 0.5 ? 0x2cb67d : hpRatio > 0.25 ? 0xe2b714 : 0xe53170;
+			hpRatio > 0.5
+				? PHASER_COLORS.success
+				: hpRatio > 0.25
+					? PHASER_COLORS.gold
+					: PHASER_COLORS.danger;
 		graphics.fillStyle(barColor, 1);
 		graphics.fillRect(x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
 	}
@@ -550,6 +555,11 @@ export class UnitSystem {
 			});
 		}
 		return this.unitPositionsBuffer;
+	}
+
+	getUnitWorldPos(unitId: string): { x: number; y: number } | null {
+		const unit = this.units.get(unitId);
+		return unit ? { x: unit.worldX, y: unit.worldY } : null;
 	}
 
 	getUnitElement(unitId: string): string {

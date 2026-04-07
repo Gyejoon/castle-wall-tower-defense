@@ -30,7 +30,20 @@ export function PhaserGame() {
 			'tutorialCompleted',
 			metaState.progress.tutorialCompleted ?? false,
 		);
+		game.registry.set(
+			'showDamageNumbers',
+			useGameStore.getState().showDamageNumbers,
+		);
 		gameRef.current = game;
+
+		// Sync showDamageNumbers setting to Phaser registry in real-time
+		let prevShowDmg = useGameStore.getState().showDamageNumbers;
+		const unsubDmgNumbers = useGameStore.subscribe((state) => {
+			if (state.showDamageNumbers !== prevShowDmg) {
+				prevShowDmg = state.showDamageNumbers;
+				gameRef.current?.registry.set('showDamageNumbers', prevShowDmg);
+			}
+		});
 
 		return () => {
 			EventBus.off('game-ready', onReady);
@@ -38,6 +51,7 @@ export function PhaserGame() {
 			// cleanup, so we keep the game alive. On real unmount (key change
 			// or route change) the container is disconnected and we destroy.
 			if (!container.isConnected) {
+				unsubDmgNumbers();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

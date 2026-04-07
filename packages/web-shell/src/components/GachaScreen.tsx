@@ -122,8 +122,16 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 			</div>
 
 			{phase === 'opening' && (
-				<div className="w-[120px] h-[120px] flex items-center justify-center">
-					<div className="w-16 h-16 border-4 border-gold animate-spin rounded-full" />
+				<div className="flex flex-col items-center justify-center gap-3">
+					<div
+						className="flex h-16 w-16 items-center justify-center border-2 border-gold text-[28px] animate-[gachaPulse_0.8s_ease-in-out_infinite]"
+						style={{ background: 'rgba(240,208,96,0.12)' }}
+					>
+						🗝️
+					</div>
+					<span className="font-pixel text-[10px] text-gold animate-pulse">
+						개봉 중...
+					</span>
 				</div>
 			)}
 

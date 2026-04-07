@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "no-ui-plan",
+  "prompt": "이 Plan 파일의 미학 리뷰를 수행해줘. UI 스코프가 있는지 먼저 판단하고, 결과를 outputs/review.md에 저장해줘.",
+  "assertions": []
+}

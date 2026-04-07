@@ -187,6 +187,7 @@ describe('GameScene', () => {
 		scene.currentSlotDef = { slotIndex: 5 };
 		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
+		scene.spawnHut = { setActive: vi.fn(), destroy: vi.fn() };
 		scene.damageNumbers = {
 			update: vi.fn(),
 			show: vi.fn(),

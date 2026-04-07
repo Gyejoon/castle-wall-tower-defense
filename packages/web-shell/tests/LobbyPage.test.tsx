@@ -1,7 +1,16 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LobbyPage } from '../src/pages/LobbyPage';
 import { useGameStore } from '../src/stores/gameStore';
+
+vi.mock('@gld/phaser-game', () => ({
+	EventBus: {
+		emit: vi.fn(),
+		on: vi.fn(),
+		off: vi.fn(),
+		removeAllListeners: vi.fn(),
+	},
+}));
 
 describe('LobbyPage', () => {
 	beforeEach(() => {

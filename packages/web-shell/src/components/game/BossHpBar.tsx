@@ -13,7 +13,7 @@ export function BossHpBar() {
 
 	return (
 		<div
-			className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] w-[min(80vw,300px)] border border-border shadow-[2px_2px_0px_rgba(0,0,0,0.4)] px-2 py-1.5 flex flex-col gap-[3px]"
+			className="w-full border border-border shadow-[2px_2px_0px_rgba(0,0,0,0.4)] px-2 py-1.5 flex flex-col gap-[3px]"
 			style={{ background: 'rgba(26,18,8,0.88)' }}
 		>
 			<div className="flex justify-between items-center">

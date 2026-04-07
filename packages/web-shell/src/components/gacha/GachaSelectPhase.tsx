@@ -154,8 +154,9 @@ export function GachaSelectPhase({
 			</div>
 
 			{/* 다이아몬드 잔액 */}
-			<p className="font-pixel text-xs text-gold">
-				보유: {diamond} <DiamondIcon />
+			<p className="inline-flex items-center gap-1 font-pixel text-xs text-gold">
+				보유: {diamond}
+				<DiamondIcon />
 			</p>
 
 			{/* 열기/닫기 버튼 */}

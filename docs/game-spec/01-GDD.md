@@ -1,6 +1,6 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-08  
 > **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md`  
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 
@@ -132,29 +132,79 @@
 
 | id | name | element | hp | speed | armor | bounty |
 |----|------|---------|-----|-------|-------|--------|
-| scout_drone | 고블린 정찰병 | 무 | 30 | 3.0 | 0 | 5 |
-| battle_robot | 오크 전사 | 무 | 80 | 1.5 | 2 | 12 |
-| heavy_walker | 돌 트롤 | 화 | 200 | 0.8 | 5 | 25 |
-| stealth_drone | 그림자 암살자 | 번개 | 50 | 2.5 | 0 | 18 |
-| titan | 고대 드래곤 | 화 | 500 | 0.5 | 10 | 60 |
+| id | name | element | hp | speed | armor | bounty | 특성 |
+|----|------|---------|-----|-------|-------|--------|------|
+| scout_drone | 고블린 정찰병 | 무 | 30 | 3.0 | 0 | 5 | — |
+| battle_robot | 오크 전사 | 무 | 80 | 1.5 | 2 | 12 | — |
+| heavy_walker | 돌 트롤 | 화 | 200 | 0.8 | 5 | 25 | — |
+| stealth_drone | 그림자 암살자 | 번개 | 50 | 2.5 | 0 | 18 | — |
+| titan | 고대 드래곤 | 화 | 500 | 0.5 | 10 | 60 | **비행** (충돌 면제) |
 
-### 웨이브 구성 (forest_gate)
+> titan은 `flying: true`로 지상 물리 충돌에서 면제. 다른 유닛을 통과하여 이동.
 
-| wave | kind | 구성 | 의도 |
+### 물리 충돌 시스템
+
+지상 유닛은 서로 겹칠 수 없다. 1D 경로 기반 충돌로 자연스러운 줄 서기와 CC 연쇄가 발생한다.
+
+| 항목 | 값 |
+|------|-----|
+| MIN_SEPARATION | 0.8 타일 |
+| 알고리즘 | Lane-sorted array + front→back sweep (O(n) amortized) |
+| 비행 면제 | `flying: true` 유닛은 충돌 무시 (titan) |
+| 스폰 차단 | 스폰 지점에 2+ 유닛 정체 시 스폰 연기, 최대 2초 후 강제 스폰 |
+| CC 연쇄 | 앞 유닛 stun/slow 시 뒤 유닛이 물리적으로 정체 (별도 CC 전파 없음) |
+| 감속 방식 | lerp 0.3 — 부드러운 감속, 즉각 정지 없음 |
+
+> 코드: `packages/phaser-game/src/systems/UnitSystem.ts` (sweepCollisions, setUnitPathProgress)
+
+### 웨이브 구성 — 아키타입 테마 배치
+
+각 맵은 고유 테마가 있으며, 웨이브마다 명확한 아키타입(속도/탱크/혼합/보스)을 배치한다.
+
+#### forest_gate (입문 — 아키타입 학습)
+
+| wave | kind | 테마 | 구성 | 의도 |
+|------|------|------|------|------|
+| 1 | normal | Scout 소개 | scout_drone × 4 | DPS 체크 |
+| 2 | normal | Speed Rush | scout_drone × 8 | 물량 테스트 |
+| 3 | normal | Tank 소개 | heavy_walker ×1 + battle_robot ×3 + scout_drone ×4 | armor 소개 |
+| 4 | normal | 스텔스 정찰 | stealth_drone ×4 + scout_drone ×3 | 속도+회피 |
+| **5** | **boss** | 미니보스 | **titan × 1** | 단일 보스 체크 |
+| 6 | normal | Speed 러시 | scout_drone ×6 + stealth_drone ×3 | 보스 후 속도 러시 |
+| 7 | normal | 장갑 벽 | heavy_walker ×3 + battle_robot ×2 | 지속 딜+CC |
+| 8 | normal | 혼합 전술 | scout_drone ×4 + battle_robot ×3 + stealth_drone ×2 | 덱 밸런스 |
+| 9 | pre_boss | 최종 돌격 | heavy_walker ×3 + battle_robot ×4 + stealth_drone ×2 | 보스 전 시련 |
+| **10** | **boss** | Dragon's Fury | **titan ×1 + heavy_walker ×2 + battle_robot ×3** | 최종 전투 |
+
+#### lava_fortress (탱크 중심 — 지속 딜/CC 필요)
+
+| wave | kind | 테마 | 구성 |
 |------|------|------|------|
-| 1 | normal | scout_drone × 4 | 성공 경험. 약한 적 소수 |
-| 2 | normal | scout_drone × 6 | 수량 증가, 여전히 쉬움 |
-| 3 | normal | scout_drone × 4 + battle_robot × 2 | 새 몬스터 등장, 방어력 체감 |
-| 4 | normal | battle_robot × 4 + stealth_drone × 2 | 빠른 적 등장 |
-| **5** | **boss** | **titan × 1** | **중간보스. 높은 체력 단일 적** |
-| 6 | normal | scout_drone × 6 + battle_robot × 3 | 물량 증가 |
-| 7 | normal | battle_robot × 4 + heavy_walker × 2 | 고방어 적 등장 |
-| 8 | normal | stealth_drone × 4 + heavy_walker × 3 | 속도+방어 조합 |
-| 9 | pre_boss | battle_robot × 4 + heavy_walker × 2 + stealth_drone × 3 | 혼합 대군 |
-| **10** | **boss** | **titan × 1 + heavy_walker × 2 + battle_robot × 3** | **최종보스 + 호위대** |
+| 1 | normal | 정찰 | scout_drone ×5 |
+| 2 | normal | 철갑 행군 | battle_robot ×4 + heavy_walker ×1 |
+| 3 | normal | Speed 견제 | scout_drone ×5 + stealth_drone ×3 |
+| 4 | normal | 장갑 종대 | heavy_walker ×3 + battle_robot ×3 |
+| **5** | **boss** | 용암 수호자 | **titan ×1 + heavy_walker ×2** |
+| 6 | normal | 그림자 타격 | stealth_drone ×6 + scout_drone ×4 |
+| 7 | normal | 강철 벽 | heavy_walker ×4 + battle_robot ×2 |
+| 8 | normal | 혼돈 파도 | scout ×4 + battle ×3 + heavy ×2 + stealth ×3 |
+| 9 | pre_boss | 마그마 선봉 | heavy_walker ×4 + battle_robot ×4 + stealth_drone ×2 |
+| **10** | **boss** | 분화 | **titan ×1 + heavy_walker ×3 + battle_robot ×4** |
 
-- lava_fortress: 동일 구성, 수량 ×1.2 반올림
-- storm_citadel: 동일 구성, 수량 ×1.5 반올림. Wave 5: titan×2+heavy_walker×2, Wave 10: 추가 호위대
+#### storm_citadel (스피드/스텔스 중심 — 빠른 타게팅 필요)
+
+| wave | kind | 테마 | 구성 |
+|------|------|------|------|
+| 1 | normal | 바람 정찰 | scout_drone ×6 |
+| 2 | normal | 번개 타격 | stealth_drone ×5 + scout_drone ×3 |
+| 3 | normal | 천둥 수비 | battle_robot ×4 + heavy_walker ×1 |
+| 4 | normal | 질풍 | scout_drone ×8 + stealth_drone ×4 |
+| **5** | **boss** | 폭풍 타이탄 | **titan ×2 + stealth_drone ×3** |
+| 6 | normal | 유령 습격 | stealth_drone ×7 + scout_drone ×5 |
+| 7 | normal | 공성 파괴자 | heavy_walker ×3 + battle_robot ×4 |
+| 8 | normal | 폭풍 | scout ×6 + stealth ×4 + battle ×3 |
+| 9 | pre_boss | 폭풍의 눈 | battle ×5 + heavy ×3 + stealth ×4 |
+| **10** | **boss** | 종말 | **titan ×2 + heavy ×3 + battle ×4 + stealth ×3** |
 
 ### 웨이브별 스케일링 (WAVE_SCALING)
 

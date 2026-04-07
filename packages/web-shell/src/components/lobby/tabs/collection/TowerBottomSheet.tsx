@@ -247,7 +247,13 @@ export function TowerBottomSheet({
 					</div>
 					{!meetsLevelReq && (
 						<div className="flex items-center gap-1 font-pixel text-[10px]">
-							<span style={{ color: colors.danger }}>🔒</span>
+							<img
+								src="assets/ui/icon-locked.webp"
+								alt="잠김"
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated]"
+							/>
 							<span style={{ color: colors.danger }}>
 								Lv.{level} / {promoConfig.requiredLevel} —{' '}
 								{promoConfig.requiredLevel - level}레벨 더 필요

@@ -58,7 +58,7 @@ export function WorldMapPage() {
 							돌아가기
 						</span>
 					</button>
-					<span className="font-pixel text-[11px] text-gold">
+					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-[11px] text-gold">
 						스테이지 선택
 					</span>
 					<span className="absolute right-3 font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">

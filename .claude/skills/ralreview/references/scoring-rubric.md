@@ -1,6 +1,6 @@
 # Scoring Rubric
 
-`ralreview`의 기준 점수는 6개 차원, 총 60점 만점이다. 통과선은 50/60.
+`ralreview`의 기준 점수는 7개 차원, 총 70점 만점이다. 통과선은 58/70.
 
 ## 1. Runtime Stability (Phase 2) — /10
 
@@ -60,7 +60,36 @@ diff에 React 파일이 없으면 10/10.
 - 무거운 컴포넌트 lazy loading 미적용
 - 루프/콜백 마이크로 최적화 미흡
 
-## 3. Spec Alignment (Phase 4) — /10
+## 3. Design Quality (Phase 4) — /10
+
+frontend-design 스킬 기준의 시각적 품질. Typography, Color, Layout, AI 양산형 패턴.
+diff에 React 파일이 없으면 10/10.
+
+| 점수 | 기준 |
+|---|---|
+| 10 | 위반 0건 또는 React 변경 없음 |
+| 8-9 | Non-critical 위반 1-2건 |
+| 6-7 | Critical 위반 1건 또는 Non-critical 다수 |
+| 4-5 | Critical 위반 2건 이상 |
+| 0-3 | AI 양산형 테스트 실패 + 다수 위반 |
+
+### Critical 위반 (-2)
+
+- 과사용 폰트 (Inter, Roboto, Arial, Open Sans)
+- 하드코딩 색상값, CSS 변수/토큰 미사용
+- AI 양산형 종합 테스트 실패
+
+### Non-critical 위반 (-1)
+
+- 타이포그래피 위계 부재
+- 모노스페이스 장식적 남용
+- AI 클리셰 팔레트
+- 순수 #000/#fff 사용
+- 카드 중첩/동일 그리드 반복
+- 글래스모피즘/장식 남용
+- 모달 남용
+
+## 4. Spec Alignment (Phase 5) — /10
 
 최신 스펙 대비 구현 충족도.
 
@@ -74,7 +103,7 @@ diff에 React 파일이 없으면 10/10.
 
 감점: 요구사항 누락 -2, 동작 차이 -2, scope creep -1.
 
-## 4. Test Coverage (Phase 5) — /10
+## 5. Test Coverage (Phase 6) — /10
 
 필수 대상 테스트 존재 여부와 실행 통과 여부.
 
@@ -89,7 +118,7 @@ diff에 React 파일이 없으면 10/10.
 
 커버 비율로 최대 8점, 실행 통과 시 +2, 실패 시 최대 5점 캡.
 
-## 5. Independent Review (Phase 6) — /10
+## 6. Independent Review (Phase 7) — /10
 
 구현자와 분리된 독립 리뷰 결과.
 
@@ -102,7 +131,7 @@ diff에 React 파일이 없으면 10/10.
 | 5-6 | high severity 존재 |
 | 0-4 | critical severity 존재 |
 
-## 6. Adversarial Review (Phase 7) — /10
+## 7. Adversarial Review (Phase 8) — /10
 
 설계 가정, 상태 동기화, 반례, cleanup 반례를 깨보는 리뷰.
 
@@ -119,7 +148,7 @@ diff에 React 파일이 없으면 10/10.
 
 | 총점 | 판정 |
 |---|---|
-| 50-60 | PASS |
-| 42-49 | FAIL, 자동 수정 후 재시도 가치 높음 |
-| 30-41 | FAIL, 구조적 이슈 가능성 큼 |
-| 0-29 | FAIL, 수동 개입 우선 |
+| 58-70 | PASS |
+| 49-57 | FAIL, 자동 수정 후 재시도 가치 높음 |
+| 35-48 | FAIL, 구조적 이슈 가능성 큼 |
+| 0-34 | FAIL, 수동 개입 우선 |

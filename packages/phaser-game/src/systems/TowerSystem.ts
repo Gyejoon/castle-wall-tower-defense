@@ -532,7 +532,7 @@ export class TowerSystem {
 		effect.play(animationKey);
 		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
 			effect.destroy();
-			towerSprite.setVisible(true);
+			if (towerSprite.active) towerSprite.setVisible(true);
 		});
 	}
 

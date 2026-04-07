@@ -68,18 +68,19 @@ export function WorldMapPage() {
 					</span>
 				</div>
 
-				{/* Map area */}
-				<div
-					className="relative flex-1 min-h-0 overflow-hidden"
-					style={{
-						background: `
-							radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
-							radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
-							radial-gradient(ellipse at 70% 16%, rgba(40,50,90,0.18), transparent 40%),
-							#1a1208
-						`,
-					}}
-				>
+				{/* Map area — scrollable on small screens */}
+				<div className="flex-1 min-h-0 overflow-auto">
+					<div
+						className="relative min-h-[520px] h-full"
+						style={{
+							background: `
+								radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
+								radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
+								radial-gradient(ellipse at 70% 16%, rgba(40,50,90,0.18), transparent 40%),
+								#1a1208
+							`,
+						}}
+					>
 					{/* Stars */}
 					<div className="stars-overlay" />
 
@@ -264,6 +265,10 @@ export function WorldMapPage() {
 						<span className="font-pixel text-[7px] text-text-secondary/50">
 							스테이지를 선택하세요
 						</span>
+					</div>
+
+					{/* Scroll hint fade — visible only when scrollable */}
+					<div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1a1208] to-transparent" />
 					</div>
 				</div>
 			</div>

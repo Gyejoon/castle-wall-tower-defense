@@ -22,9 +22,9 @@
 
 | 항목 | 값 |
 |------|---|
-| Base Resolution | 64×64px (타워, 유닛, 타일) |
-| 보스 해상도 | 96×96px 또는 128×128px |
-| Spritesheet | 4프레임, 가로 연결 (256×64px) |
+| Base Resolution | 64×80px (타워), 40×48px (유닛), 64×64px (타일) |
+| 보스 해상도 | 96×96px |
+| Spritesheet | 8프레임, 가로 연결 (예: 타워 512×80, 유닛 320×48) |
 | Pivot/Origin | center (0.5, 0.5) |
 | Trim | 불허 — 고정 프레임 크기 유지 |
 | 색상 팔레트 | `scripts/generate-assets/shared.ts`의 PALETTE 상수 |
@@ -58,8 +58,17 @@
 
 | 파일 | 해상도 | 프레임 | 설명 |
 |------|-------|-------|------|
-| `tower-{id}.png` | 64×64 | 1 (static) | 배치 상태 |
-| `tower-{id}-fire.png` | 256×64 | 4 (spritesheet) | 공격 애니메이션 |
+| `tower-{id}.png` | 64×80 | 1 (static) | 배치 상태 |
+| `tower-{id}-fire.png` | 512×80 | 8 (spritesheet) | 공격 애니메이션 (충전→발사→비행→잔상→복귀) |
+
+### 발사체 스타일
+
+| 타입 | 시각 | 사운드 |
+|------|------|--------|
+| beam (laser, emp 등) | 직선 레이저 + 임팩트 플래시 | sawtooth/square 주파수 스윕 |
+| arc (plasma, nova_cannon 등) | 포물선 돌 발사체 + trail dots | 3단계: 퍽(brown noise)→휘이(white bandpass)→쿵(brown noise) |
+
+투석기(splash 타워) 팔 스윙 애니메이션: 180° 회전, 8프레임 (로딩→텐셔닝→발사→최대→반동→복귀)
 
 ### 역할군별 실루엣 규칙
 
@@ -108,13 +117,28 @@
 
 | id | name | 크기 | 파일 | 해상도 |
 |----|------|------|------|-------|
-| scout_drone | 고블린 정찰병 | 작음 | `unit-scout_drone.png` | 256×64 (4프레임) |
-| battle_robot | 오크 전사 | 중간 | `unit-battle_robot.png` | 256×64 |
-| heavy_walker | 돌 트롤 | 큼 | `unit-heavy_walker.png` | 256×64 |
-| stealth_drone | 그림자 암살자 | 가늘음 | `unit-stealth_drone.png` | 256×64 |
-| titan | 고대 드래곤 | 보스급 | `unit-titan.png` | 256×96+ |
+| scout_drone | 고블린 정찰병 | 작음 | `unit-scout_drone.png` | 320×48 (8프레임) |
+| battle_robot | 오크 전사 | 중간 | `unit-battle_robot.png` | 320×48 |
+| heavy_walker | 돌 트롤 | 큼 | `unit-heavy_walker.png` | 320×48 |
+| stealth_drone | 그림자 암살자 | 가늘음 | `unit-stealth_drone.png` | 320×48 |
+| titan | 고대 드래곤 | 보스급 | `unit-titan.png` | 320×48 |
 
-공용: `unit-death.png` (256×64, 4프레임)
+공용: `unit-death.png` (320×48, 8프레임 — 플래시→파편→연기→소멸)
+
+### 걷기 애니메이션 시스템
+
+sin 기반 8프레임 워크 사이클:
+- `bobY`: 상하 바운스 (±1.5px)
+- `legStep`: 다리 교대 길이 변화 (±3px) — 한쪽 디딤/다른쪽 들림
+- `armSwing`: 팔 수직 스윙 (±3px, 다리 반대 방향)
+
+| 유닛 | 특수 모션 |
+|------|----------|
+| 고블린 정찰병 | 단검 흔들림, 빠른 교대 |
+| 오크 전사 | 도끼/방패 수직 스윙 |
+| 돌 트롤 | 짧은 보폭, 스쿼시&스트레치 |
+| 그림자 암살자 | 투명도 펄스 (0.55~0.85), 단검 교차 |
+| 고대 드래곤 | 날개 ±5px 펄럭, 꼬리 스윙, 화염 입김 |
 
 ---
 
@@ -122,10 +146,10 @@
 
 | 상태 | 설명 | 특이사항 |
 |------|------|---------|
-| Phase 1 idle/move | 표준 드래곤 형태 | 96×96 이상 |
-| Phase 2 transition | 분노 표시 — 색상 변화, 파티클 오라 | 시각적으로 명확한 전환 |
+| Phase 1 idle | 768×96 (8프레임 spritesheet), 호흡+날개+화염 | `titan-boss.png` |
+| Phase 2 rage | 동일 + fireRed 틴트 (0.25), 프레임별 절대좌표 적용 | `titan-boss-rage.png` |
 | Weak point | 수 속성 집중 화력에 취약 — 하이라이트 영역 | |
-| Death | 소멸 이펙트 | 보스 전용 |
+| Death | 소멸 이펙트 | 보스 전용 (미구현) |
 
 ---
 
@@ -147,7 +171,18 @@
 
 ---
 
-## 8. UI 에셋 (추가 필요)
+## 8. UI 에셋
+
+### 인라인 SVG (코드 내장)
+
+| 컴포넌트 | 크기 | 색상 출처 | 용도 |
+|---------|------|---------|------|
+| `DiamondIcon` | 12×12 | info (#5bc8e8) 계열 | 다이아몬드 통화 표시 (ProfileBar, MissionsTab) |
+| `CoinIcon` | 12×12 | gold (#f0d060) + accent (#c8a04a) | 골드 통화 표시 (MissionsTab) |
+
+> 코드 위치: `packages/web-shell/src/components/ui/CurrencyIcon.tsx`
+
+### 이미지 에셋 (추가 필요)
 
 | 분류 | 에셋 |
 |------|------|
@@ -157,8 +192,10 @@
 | 로비 | `tower-card-bg` (등급별), `upgrade-button` |
 | 컬렉션 | `rarity-frame` (5종), `level-badge` |
 | 덱 | `deck-slot` |
-| 가챠 | `box-free`, `box-ad`, `box-diamond`, `box-premium` |
+| 가챠 | `box-free`, `box-ad`, `box-diamond`, `box-premium`, `gacha-chest` (개봉 애니용) |
 | 튜토리얼 | `highlight-frame`, `arrow-indicator`, `hint-bubble` |
+| 스테이지 선택 | `icon-energy` (번개), `icon-sword` (검), `icon-arrow-left` (화살표), `icon-edit` (연필) — 16×16 픽셀 아이콘 |
+| 스테이지 썸네일 | `stage-thumb-forest_gate`, `stage-thumb-lava_fortress`, `stage-thumb-storm_citadel` — 맵 미리보기 |
 
 ---
 
@@ -191,8 +228,24 @@ icon-{category}-{id} # 아이콘
 
 ---
 
-## 11. 변경 이력
+## 11. 등급 색상 토큰
+
+> `ui-colors.ts`의 디자인 토큰과 일치해야 한다.
+
+| 등급 | 테두리 색상 | 글로우 |
+|------|----------|-------|
+| normal | border (#4a3a20) | 없음 |
+| rare | info (#5bc8e8) | 없음 |
+| unique | gradeUnique (#9060e0) | 없음 |
+| epic | gold (#f0d060) | `0_0_8px` glow |
+| legendary | tierBright (#ffe870) | `0_0_12px` glow |
+
+---
+
+## 12. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | 게임 에셋 제작 specs 기반 |
+| 2026-04-07 | §8, §11 | CurrencyIcon SVG 추가, 등급 색상 토큰 섹션 신설 |
+| 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |

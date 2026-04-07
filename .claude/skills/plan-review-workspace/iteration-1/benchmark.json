@@ -1,0 +1,87 @@
+{
+  "skill_name": "plan-review",
+  "iteration": 1,
+  "configurations": [
+    {
+      "name": "with_skill",
+      "evals": [
+        {
+          "eval_name": "ui-heavy-plan",
+          "pass_rate": 1.0,
+          "passed": 4,
+          "total": 4,
+          "duration_seconds": 90.9,
+          "total_tokens": 33411
+        },
+        {
+          "eval_name": "no-ui-plan",
+          "pass_rate": 1.0,
+          "passed": 2,
+          "total": 2,
+          "duration_seconds": 52.4,
+          "total_tokens": 26975
+        },
+        {
+          "eval_name": "real-project-plan",
+          "pass_rate": 1.0,
+          "passed": 4,
+          "total": 4,
+          "duration_seconds": 145.6,
+          "total_tokens": 52270
+        }
+      ],
+      "aggregate": {
+        "pass_rate": 1.0,
+        "mean_duration_seconds": 96.3,
+        "mean_tokens": 37552
+      }
+    },
+    {
+      "name": "without_skill",
+      "evals": [
+        {
+          "eval_name": "ui-heavy-plan",
+          "pass_rate": 0.0,
+          "passed": 0,
+          "total": 4,
+          "duration_seconds": 86.0,
+          "total_tokens": 29894
+        },
+        {
+          "eval_name": "no-ui-plan",
+          "pass_rate": 0.5,
+          "passed": 1,
+          "total": 2,
+          "duration_seconds": 40.9,
+          "total_tokens": 26757
+        },
+        {
+          "eval_name": "real-project-plan",
+          "pass_rate": 0.5,
+          "passed": 2,
+          "total": 4,
+          "duration_seconds": 88.7,
+          "total_tokens": 42736
+        }
+      ],
+      "aggregate": {
+        "pass_rate": 0.3,
+        "mean_duration_seconds": 71.9,
+        "mean_tokens": 33129
+      }
+    }
+  ],
+  "delta": {
+    "pass_rate": "+0.7 (1.0 vs 0.3)",
+    "duration": "+24.4s (96.3s vs 71.9s)",
+    "tokens": "+4423 (37552 vs 33129)"
+  },
+  "analyst_observations": [
+    "with_skill achieves 100% pass rate across all 3 evals (10/10 assertions passed)",
+    "without_skill passes only 3/10 assertions (30%) — it can detect obvious issues but lacks structured format and specific token references",
+    "The skill adds ~24s and ~4.4k tokens overhead — acceptable for a plan review that prevents hours of implementation rework",
+    "Eval 2 (no-ui) shows both configs correctly identify no UI scope, but with_skill provides reproducible keyword-matching evidence",
+    "Eval 3 (real plan) is the strongest differentiator: with_skill catches Tailwind/inline-style conflict AND uses .impeccable.md tokens in improvement suggestions",
+    "without_skill sometimes produces good insights (Tailwind conflict detected in Eval 3) but format is inconsistent across runs"
+  ]
+}

@@ -13,6 +13,9 @@
   --color-info: #5bc8e8;
   --color-text: #f0e8d8;
   --color-text-secondary: #a09070;
+  --color-grade-unique: #9060e0;
+  --color-tier-bright: #ffe870;
+  --color-boss-phase1: #c87020;
 
   --color-panel-70: rgba(42, 32, 16, 0.7);
   --color-panel-85: rgba(42, 32, 16, 0.85);
@@ -54,6 +57,17 @@ body {
 }
 .game-page ::-webkit-scrollbar-thumb {
   background: #2e2e3a;
+}
+
+/* HUD value change flash — transform/opacity only for 60fps */
+@keyframes hudFlash {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.hud-flash {
+  animation: hudFlash 250ms ease-out;
 }
 
 /* Lobby animations */
@@ -230,7 +244,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .torch, .castle-flag, .stars-overlay,
   .matchmaking-swords::before, .matchmaking-swords::after,
-  .matchmaking-dots::after {
+  .matchmaking-dots::after,
+  .hud-flash,
+  [class*="gachaPulse"] {
     animation: none;
   }
   @keyframes fadeIn {

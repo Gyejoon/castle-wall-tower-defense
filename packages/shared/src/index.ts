@@ -40,6 +40,8 @@ export {
 	GAME_CANVAS_H,
 	GRID_HEIGHT,
 	GRID_WIDTH,
+	HP_WALL_STAGE_1,
+	HP_WALL_STAGE_2,
 	INITIAL_PLAYER_HP,
 	ORTHO_CANVAS_W,
 	ORTHO_TILE,
@@ -78,6 +80,7 @@ export {
 	toKSTDateStr,
 	WEEKLY_MISSION_TYPES,
 } from './constants/missions';
+export { getMaxGoldForMap, getMaxXpForMap } from './constants/stageInfo';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export {
@@ -89,6 +92,7 @@ export {
 	LEGENDARY_TOWERS,
 	RARE_TOWERS,
 } from './constants/towers';
+export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
 export { UNITS } from './constants/units';
 export type {
 	WaveDef,

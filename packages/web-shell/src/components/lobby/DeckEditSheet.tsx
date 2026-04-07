@@ -73,7 +73,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 						type="button"
 						aria-label="닫기"
 						onClick={handleClose}
-						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1"
+						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1 min-h-[44px] min-w-[44px]"
 					>
 						✕
 					</button>
@@ -132,7 +132,16 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 													{tower.name}
 												</span>
 												<span className="font-pixel text-[11px] text-text-secondary">
-													⚡{tower.cost}
+													<span className="inline-flex items-center gap-[2px]">
+														<img
+															src="assets/ui/icon-energy.webp"
+															alt=""
+															width={10}
+															height={10}
+															className="[image-rendering:pixelated]"
+														/>
+														{tower.cost}
+													</span>
 												</span>
 											</div>
 										</button>

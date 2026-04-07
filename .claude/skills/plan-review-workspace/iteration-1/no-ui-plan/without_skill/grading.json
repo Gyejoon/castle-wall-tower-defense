@@ -1,0 +1,16 @@
+{
+  "eval_id": 2,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "UI 스코프 OFF를 올바르게 판정",
+      "passed": true,
+      "evidence": "UI 스코프: 없음. 올바르게 판정."
+    },
+    {
+      "text": "스킵 근거를 체계적으로 제시 (키워드 매칭 테이블 포함)",
+      "passed": false,
+      "evidence": "직관적 판단('UI 변경 없음' 언급)은 올바르지만, 키워드 매칭 테이블이나 체계적 근거 없음"
+    }
+  ]
+}

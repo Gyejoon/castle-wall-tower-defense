@@ -81,6 +81,13 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
+	it('enterStageSelect sets runStatus to stageSelect', () => {
+		expect(useGameStore.getState().runStatus).toBe('lobby');
+		useGameStore.getState().enterStageSelect();
+		expect(useGameStore.getState().runStatus).toBe('stageSelect');
+		expect(useGameStore.getState().lobbyTab).toBe('home');
+	});
+
 	it('enterLobby resets to lobby', () => {
 		useGameStore.getState().resetRun();
 		useGameStore.getState().setLobbyTab('collection');

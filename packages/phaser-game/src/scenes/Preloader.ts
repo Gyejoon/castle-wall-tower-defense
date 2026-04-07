@@ -19,27 +19,40 @@ export class Preloader extends Phaser.Scene {
 	}
 
 	create() {
+		const manifest = getCachedAssetManifest(this);
+
 		for (const id of getCoreUnitIds()) {
+			const assetKey = `unit-${id}`;
+			const entry = manifest.assets.find((a) => a.key === assetKey);
+			if (!entry) console.warn(`[Preloader] No manifest entry for "${assetKey}", falling back to 8 frames`);
+			const endFrame = (entry?.frameCount ?? 8) - 1;
+
 			this.anims.create({
 				key: `${id}-walk`,
-				frames: this.anims.generateFrameNumbers(`unit-${id}`, {
+				frames: this.anims.generateFrameNumbers(assetKey, {
 					start: 0,
-					end: 3,
+					end: endFrame,
 				}),
-				frameRate: 8,
+				frameRate: 10,
 				repeat: -1,
 			});
 		}
 
-		this.anims.create({
-			key: 'unit-death',
-			frames: this.anims.generateFrameNumbers('unit-death', {
-				start: 0,
-				end: 3,
-			}),
-			frameRate: 10,
-			repeat: 0,
-		});
+		{
+			const entry = manifest.assets.find((a) => a.key === 'unit-death');
+			if (!entry) console.warn('[Preloader] No manifest entry for "unit-death", falling back to 8 frames');
+			const endFrame = (entry?.frameCount ?? 8) - 1;
+
+			this.anims.create({
+				key: 'unit-death',
+				frames: this.anims.generateFrameNumbers('unit-death', {
+					start: 0,
+					end: endFrame,
+				}),
+				frameRate: 12,
+				repeat: 0,
+			});
+		}
 
 		this.scene.start('Game');
 	}

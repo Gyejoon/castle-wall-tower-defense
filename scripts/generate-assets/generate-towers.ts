@@ -400,63 +400,226 @@ function drawTowerShape(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
   }
 }
 
-function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number) {
-  drawTowerShape(ctx, ox, tower);
+const FIRE_FRAME_COUNT = 8;
+
+// Catapult body WITHOUT arm — arm is drawn separately per fire frame
+function drawCatapultBody(ctx: SKRSContext2D, ox: number) {
+  const cx = ox + 32;
+  drawBase(ctx, ox);
+
+  // Wheels
+  fillCircle(ctx, cx - 11, 62, 5, PALETTE.woodDark);
+  fillCircle(ctx, cx - 11, 62, 4, hexToRgba(PALETTE.wood, 0.7));
+  setPixel(ctx, cx - 10, 62, PALETTE.woodDark);
+  fillCircle(ctx, cx + 11, 62, 5, PALETTE.woodDark);
+  fillCircle(ctx, cx + 11, 62, 4, hexToRgba(PALETTE.wood, 0.7));
+  setPixel(ctx, cx + 10, 62, PALETTE.woodDark);
+
+  // Frame body
+  drawIsoCube(ctx, cx, 48, 13, 12,
+    PALETTE.wood, PALETTE.woodDark, hexToRgba(PALETTE.wood, 0.8));
+
+  // Support struts
+  drawLine(ctx, cx - 5, 48, cx - 5, 38, PALETTE.woodDark);
+  drawLine(ctx, cx + 5, 48, cx + 7, 38, PALETTE.woodDark);
+}
+
+// Catapult arm at a given angle (0=loaded/back, 1=fully flung forward)
+function drawCatapultArm(ctx: SKRSContext2D, ox: number, swing: number, showBoulder: boolean) {
+  const cx = ox + 32;
+  const pivotX = cx;
+  const pivotY = 46;
+  const armLen = 28; // longer arm for more visible swing
+
+  // Arm angle: loaded=pointing right-down (-30°), flung=pointing left-up (150°)
+  // Full ~180° sweep for maximum visual drama
+  const angleStart = -0.5; // ~-30° (arm resting right, boulder low)
+  const angleEnd = 2.4;    // ~140° (arm flung far left-up)
+  const angle = angleStart + (angleEnd - angleStart) * swing;
+
+  const tipX = Math.round(pivotX + armLen * Math.cos(angle));
+  const tipY = Math.round(pivotY - armLen * Math.sin(angle));
+
+  // Pivot bolt
+  fillCircle(ctx, pivotX, pivotY, 2, PALETTE.woodDark);
+
+  // Arm shaft (3px thick for visibility)
+  drawLine(ctx, pivotX, pivotY, tipX, tipY, PALETTE.woodDark);
+  drawLine(ctx, pivotX + 1, pivotY, tipX + 1, tipY, PALETTE.wood);
+  drawLine(ctx, pivotX, pivotY + 1, tipX, tipY + 1, PALETTE.woodDark);
+
+  // Sling cup at tip
+  drawRect(ctx, tipX - 3, tipY - 3, 6, 5, PALETTE.woodLight);
+  drawRect(ctx, tipX - 2, tipY - 2, 4, 3, PALETTE.wood);
+
+  // Boulder in sling (only when loaded)
+  if (showBoulder) {
+    fillCircle(ctx, tipX, tipY, 4, PALETTE.stoneDark);
+    fillCircle(ctx, tipX - 1, tipY - 1, 2, PALETTE.stoneLight);
+  }
+}
+
+function drawCatapultFireFrame(ctx: SKRSContext2D, ox: number, _tower: TowerAssetDef, frame: number) {
   const cx = ox + 32;
 
+  // Draw body (no arm — arm drawn separately with animation)
+  drawCatapultBody(ctx, ox);
+
+  // Arm swing timeline — exaggerated for drama:
+  // 0: loaded, arm pointing right-down (boulder low)
+  // 1: tensioning, pulling back slightly more
+  // 2: SNAP! rapid release halfway
+  // 3: fully flung — arm pointing up-left
+  // 4: overshoot bounce
+  // 5: settling back
+  // 6: returning to rest
+  // 7: back to loaded position
+  const swingTable = [0.0, 0.05, 0.6, 1.0, 0.9, 0.4, 0.15, 0.0];
+  const swing = swingTable[frame] ?? 0;
+  const showBoulder = frame <= 1;
+
+  drawCatapultArm(ctx, ox, swing, showBoulder);
+
+  // Recoil shake on release (frames 2-3) — whole body shudders
+  if (frame === 2 || frame === 3) {
+    // Dust cloud at base from impact
+    for (let i = 0; i < 8; i++) {
+      const px = cx - 12 + i * 3;
+      const py = 65 + (i % 3);
+      setPixel(ctx, px, py, hexToRgba(PALETTE.dirtPath, 0.5));
+      setPixel(ctx, px + 1, py + 1, hexToRgba(PALETTE.dirtPath, 0.3));
+    }
+    // Motion lines near pivot for speed feel
+    drawLine(ctx, cx - 4, 42, cx - 8, 38, hexToRgba(PALETTE.wood, 0.3));
+    drawLine(ctx, cx + 2, 40, cx + 6, 36, hexToRgba(PALETTE.wood, 0.3));
+  }
+
+  // Boulder in flight (after release)
+  if (frame >= 3 && frame <= 5) {
+    const bProgress = (frame - 2) / 3; // 0.33 → 1.0
+    const bx = cx + 10 + bProgress * 15;
+    const by = 24 - Math.sin(bProgress * Math.PI) * 18; // arc up then down
+    fillCircle(ctx, Math.round(bx), Math.round(by), 4, PALETTE.stoneDark);
+    setPixel(ctx, Math.round(bx) - 1, Math.round(by) - 2, PALETTE.stoneLight);
+    // Trail
+    if (bProgress > 0.3) {
+      const pt = bProgress - 0.15;
+      const tx = cx + 10 + pt * 15;
+      const ty = 24 - Math.sin(pt * Math.PI) * 18;
+      setPixel(ctx, Math.round(tx), Math.round(ty), hexToRgba(PALETTE.dirtPath, 0.3));
+    }
+  }
+
+  // Impact explosion (frame 6)
+  if (frame === 6) {
+    addGlow(ctx, cx + 24, 22, 8, PALETTE.fireOrange, 0.4);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const d = 5 + (i % 3);
+      setPixel(ctx, Math.round(cx + 24 + d * Math.cos(a)), Math.round(22 + d * Math.sin(a)), PALETTE.fireOrange);
+    }
+    // Debris
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + 0.5;
+      setPixel(ctx, Math.round(cx + 24 + 7 * Math.cos(a)), Math.round(22 + 7 * Math.sin(a)), PALETTE.stoneDark);
+    }
+  }
+
+  // Settling dust (frame 7)
+  if (frame === 7) {
+    addGlow(ctx, cx + 24, 24, 4, PALETTE.dirtPath, 0.15);
+  }
+}
+
+function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number) {
+  // Catapult gets custom body rendering with animated arm
+  if (tower.shape === 'catapult') {
+    drawCatapultFireFrame(ctx, ox, tower, frame);
+    return;
+  }
+
+  drawTowerShape(ctx, ox, tower);
+  const cx = ox + 32;
+  const t = frame / (FIRE_FRAME_COUNT - 1); // 0..1
+
   switch (tower.shape) {
-    case 'archer':
-      if (frame === 1) addGlow(ctx, cx, 40, 6, tower.color, 0.3);
-      if (frame === 2) {
-        // Arrow in flight (exits right side of frame)
-        drawLine(ctx, cx + 10, 44, cx + 20, 44, tower.color);
-        setPixel(ctx, cx + 20, 43, tower.color);
-        setPixel(ctx, cx + 20, 45, tower.color);
+    case 'archer': {
+      // 0: idle tension → 1: pull → 2: release flash → 3-5: arrow flies → 6-7: settle
+      if (frame === 0) { /* idle */ }
+      else if (frame === 1) {
+        addGlow(ctx, cx, 40, 4, tower.color, 0.2); // tension glow
       }
-      if (frame === 3) addGlow(ctx, cx + 18, 44, 4, tower.color, 0.2);
+      else if (frame === 2) {
+        addGlow(ctx, cx + 4, 42, 6, tower.color, 0.5); // release flash
+      }
+      else if (frame >= 3 && frame <= 5) {
+        const dist = (frame - 2) * 7;
+        drawLine(ctx, cx + dist, 44, cx + dist + 6, 44, tower.color);
+        setPixel(ctx, cx + dist + 6, 43, tower.color);
+        setPixel(ctx, cx + dist + 6, 45, tower.color);
+        if (frame === 3) addGlow(ctx, cx + dist, 44, 3, tower.color, 0.3);
+      }
+      else if (frame === 6) addGlow(ctx, cx + 28, 44, 5, tower.color, 0.2);
+      // frame 7: settle back to idle
       break;
+    }
 
     case 'catapult':
-      if (frame === 1) addGlow(ctx, cx + 8, 29, 5, tower.color, 0.3);
-      if (frame === 2) {
-        // Boulder flying up and right
-        fillCircle(ctx, cx + 18, 20, 4, PALETTE.stoneDark);
-        setPixel(ctx, cx + 17, 18, PALETTE.stoneLight);
-        addGlow(ctx, cx + 18, 20, 5, PALETTE.fireOrange, 0.3);
+      break; // handled by drawCatapultFireFrame
+
+    case 'frost': {
+      // 0-1: charge → 2-3: crystal glow expand → 4-5: frost wave → 6-7: fade
+      const glowR = frame <= 3 ? 6 + frame * 2 : 14 - (frame - 3) * 2;
+      const glowA = frame <= 3 ? 0.1 + frame * 0.12 : 0.5 - (frame - 3) * 0.1;
+      addGlow(ctx, cx, 40, Math.max(4, glowR), PALETTE.iceGlow, Math.max(0.05, glowA));
+      if (frame >= 2 && frame <= 4) {
+        drawCircle(ctx, cx, 40, 10 + frame, hexToRgba(PALETTE.ice, 0.4));
       }
       if (frame === 3) {
-        // Impact
-        addGlow(ctx, cx + 20, 22, 6, PALETTE.fireOrange, 0.4);
+        // Ice shards burst
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const d = 12;
+          setPixel(ctx, Math.round(cx + d * Math.cos(a)), Math.round(40 + d * Math.sin(a)), PALETTE.white);
+        }
       }
       break;
+    }
 
-    case 'frost':
-      if (frame === 1) addGlow(ctx, cx, 40, 10, PALETTE.iceGlow, 0.4);
-      if (frame === 2) {
-        drawCircle(ctx, cx, 40, 14, hexToRgba(PALETTE.ice, 0.6));
-        addGlow(ctx, cx, 40, 8, PALETTE.iceGlow, 0.5);
-      }
-      if (frame === 3) addGlow(ctx, cx, 40, 8, PALETTE.ice, 0.2);
-      break;
-
-    case 'paladin':
-      if (frame === 1) addGlow(ctx, cx, 30, 10, PALETTE.gold, 0.4);
-      if (frame === 2) {
-        // Holy light burst
+    case 'paladin': {
+      // 0-1: golden charge → 2-3: holy burst → 4-5: light rays → 6-7: fade
+      if (frame >= 1 && frame <= 2) addGlow(ctx, cx, 30, 8 + frame * 3, PALETTE.gold, 0.2 + frame * 0.1);
+      if (frame === 3) {
         drawCircle(ctx, cx, 30, 16, hexToRgba(PALETTE.gold, 0.5));
-        addGlow(ctx, cx, 30, 10, PALETTE.magicGold, 0.6);
+        addGlow(ctx, cx, 30, 12, PALETTE.magicGold, 0.6);
+        // Light rays
+        for (let i = 0; i < 4; i++) {
+          const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+          drawLine(ctx, cx, 30, Math.round(cx + 18 * Math.cos(a)), Math.round(30 + 18 * Math.sin(a)), hexToRgba(PALETTE.gold, 0.3));
+        }
       }
-      if (frame === 3) addGlow(ctx, cx, 30, 8, PALETTE.gold, 0.2);
+      if (frame >= 4 && frame <= 5) {
+        addGlow(ctx, cx, 30, 14 - (frame - 3) * 2, PALETTE.gold, 0.4 - (frame - 3) * 0.08);
+      }
+      if (frame >= 6) addGlow(ctx, cx, 30, 6, PALETTE.gold, 0.1);
       break;
+    }
 
-    case 'star':
+    case 'star': {
+      // 0-1: charge → 2: muzzle flash → 3-5: projectile fly → 6-7: settle
       if (frame === 1) addGlow(ctx, cx, 34, 9, tower.color, 0.3);
-      if (frame === 2) {
-        addGlow(ctx, cx + 14, 34, 6, PALETTE.white, 0.7);
-        fillCircle(ctx, cx + 15, 34, 3, PALETTE.white);
+      else if (frame === 2) {
+        addGlow(ctx, cx + 6, 34, 8, PALETTE.white, 0.7);
+        fillCircle(ctx, cx + 8, 34, 3, PALETTE.white);
       }
-      if (frame === 3) addGlow(ctx, cx + 12, 34, 5, tower.color, 0.2);
+      else if (frame >= 3 && frame <= 5) {
+        const dist = (frame - 2) * 6;
+        fillCircle(ctx, cx + dist + 6, 34, 2, tower.color);
+        addGlow(ctx, cx + dist + 6, 34, 4, tower.color, 0.4 - (frame - 3) * 0.1);
+      }
+      else if (frame === 6) addGlow(ctx, cx + 24, 34, 4, tower.color, 0.15);
       break;
+    }
   }
 }
 
@@ -489,22 +652,23 @@ export async function generate(): Promise<ManifestEntry[]> {
       entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
     }
 
-    // Fire animation (256x80, 4 frames of 64x80)
+    // Fire animation (8 frames of 64x80)
     {
-      const { canvas, ctx } = makeCanvas(256, 80);
+      const fireW = 64 * FIRE_FRAME_COUNT;
+      const { canvas, ctx } = makeCanvas(fireW, 80);
       renderWithGate(
         canvas,
         ctx,
-        256,
+        fireW,
         80,
         `${tower.id}-fire.png`,
         (drawCtx) => {
-          for (let f = 0; f < 4; f++) {
+          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
             drawFireFrame(drawCtx, f * 64, tower, f);
           }
         },
         (drawCtx) => {
-          for (let f = 0; f < 4; f++) {
+          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
             drawTowerShape(drawCtx, f * 64, tower);
           }
         },
@@ -516,7 +680,7 @@ export async function generate(): Promise<ManifestEntry[]> {
         path: `assets/towers/${tower.id}-fire.png`,
         frameWidth: 64,
         frameHeight: 80,
-        frameCount: 4,
+        frameCount: FIRE_FRAME_COUNT,
       });
     }
   }

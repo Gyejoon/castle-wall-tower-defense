@@ -4,10 +4,18 @@ import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
 
-const StageSelectPage = lazy(async () =>
-	import('./pages/StageSelectPage').then((module) => ({
-		default: module.StageSelectPage,
+const WorldMapPage = lazy(async () =>
+	import('./pages/WorldMapPage').then((m) => ({ default: m.WorldMapPage })),
+);
+
+const StageDetailPage = lazy(async () =>
+	import('./pages/StageDetailPage').then((m) => ({
+		default: m.StageDetailPage,
 	})),
+);
+
+const GamePage = lazy(async () =>
+	import('./pages/GamePage').then((m) => ({ default: m.GamePage })),
 );
 
 function LoadingScreen() {
@@ -36,7 +44,6 @@ export function App() {
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.getState().refreshMissions();
-		// 하루 첫 오픈 시 출석 체크 자동 달성 (주간 미션, KST 기준)
 		useMetaStore.getState().recordAttendance();
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
@@ -46,25 +53,43 @@ export function App() {
 
 	useMissionTracker();
 
-	if (runStatus === 'lobby') {
-		return (
-			<div
-				className="w-full h-full"
-				style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
-			>
-				<LobbyPage />
-			</div>
-		);
+	const filter = COLORBLIND_FILTERS[colorblindMode];
+
+	let content: React.ReactNode;
+	switch (runStatus) {
+		case 'lobby':
+			content = <LobbyPage />;
+			break;
+		case 'stageSelect':
+			content = (
+				<Suspense fallback={<LoadingScreen />}>
+					<WorldMapPage />
+				</Suspense>
+			);
+			break;
+		case 'stageDetail':
+			content = (
+				<Suspense fallback={<LoadingScreen />}>
+					<StageDetailPage />
+				</Suspense>
+			);
+			break;
+		default:
+			// building, running, victory, defeat → GamePage (Phaser)
+			content = (
+				<Suspense fallback={<LoadingScreen />}>
+					<GamePage />
+				</Suspense>
+			);
+			break;
 	}
 
 	return (
 		<div
 			className="w-full h-full"
-			style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
+			style={{ filter, height: '100%' }}
 		>
-			<Suspense fallback={<LoadingScreen />}>
-				<StageSelectPage />
-			</Suspense>
+			{content}
 		</div>
 	);
 }

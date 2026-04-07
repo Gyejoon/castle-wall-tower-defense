@@ -54,7 +54,6 @@ export class Preloader extends Phaser.Scene {
 			});
 		}
 
-		const mode = this.game.registry.get('mode') as string | undefined;
-		this.scene.start(mode === 'stageSelect' ? 'WorldMap' : 'Game');
+		this.scene.start('Game');
 	}
 }

@@ -64,7 +64,16 @@ export function DeckDock() {
 								canAfford ? 'text-gold' : 'text-danger',
 							)}
 						>
-							⚡{card.energyCost}
+							<span className="inline-flex items-center gap-[2px]">
+								<img
+									src="assets/ui/icon-energy.webp"
+									alt=""
+									width={10}
+									height={10}
+									className="[image-rendering:pixelated]"
+								/>
+								{card.energyCost}
+							</span>
 						</span>
 					</button>
 				);

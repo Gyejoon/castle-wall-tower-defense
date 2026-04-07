@@ -3,31 +3,25 @@ import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
 
-const MAP_THEMES: Record<
-	string,
-	{ gradient: string; borderColor: string; thumb: string }
-> = {
+const MAP_THEMES: Record<string, { borderColor: string; thumb: string }> = {
 	forest_gate: {
-		gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
 		borderColor: '#4a8a2a',
 		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
 	},
 	lava_fortress: {
-		gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
 		borderColor: '#c04020',
 		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
 	},
 	storm_citadel: {
-		gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
 		borderColor: '#5a6aaa',
 		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
 	},
 };
 
 const NODE_POSITIONS: Record<string, { top: string; left: string }> = {
-	forest_gate: { top: '66%', left: '50%' },
-	lava_fortress: { top: '40%', left: '28%' },
-	storm_citadel: { top: '14%', left: '68%' },
+	forest_gate: { top: '68%', left: '50%' },
+	lava_fortress: { top: '40%', left: '26%' },
+	storm_citadel: { top: '12%', left: '70%' },
 };
 
 const PATH_CONNECTIONS = [
@@ -47,18 +41,27 @@ export function WorldMapPage() {
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
 				{/* Header */}
-				<div className="flex items-center justify-between px-3 py-2.5 bg-panel border-b border-border z-10">
+				<div className="relative flex items-center justify-center px-3 py-2.5 bg-panel border-b border-border z-10">
 					<button
 						type="button"
-						className="font-pixel text-[9px] text-accent cursor-pointer hover:text-gold transition-colors"
+						className="absolute left-3 font-pixel text-[9px] text-accent cursor-pointer hover:text-gold transition-colors"
 						onClick={enterLobby}
 					>
-						← 돌아가기
+						<span className="inline-flex items-center gap-1">
+							<img
+								src="assets/ui/icon-arrow-left.webp"
+								alt=""
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated]"
+							/>
+							돌아가기
+						</span>
 					</button>
 					<span className="font-pixel text-[11px] text-gold">
 						스테이지 선택
 					</span>
-					<span className="font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
+					<span className="absolute right-3 font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
 						Lv.{playerLevel}
 					</span>
 				</div>
@@ -67,8 +70,12 @@ export function WorldMapPage() {
 				<div
 					className="relative flex-1 min-h-0 overflow-hidden"
 					style={{
-						background:
-							'radial-gradient(ellipse at 50% 70%, rgba(34,80,34,0.12), transparent 60%), radial-gradient(ellipse at 28% 42%, rgba(100,30,10,0.08), transparent 50%), radial-gradient(ellipse at 68% 18%, rgba(40,50,90,0.12), transparent 50%), #1a1208',
+						background: `
+							radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
+							radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
+							radial-gradient(ellipse at 70% 16%, rgba(40,50,90,0.18), transparent 40%),
+							#1a1208
+						`,
 					}}
 				>
 					{/* Stars */}
@@ -87,6 +94,17 @@ export function WorldMapPage() {
 							if (!a || !b) return null;
 							return (
 								<g key={`${from}-${to}`}>
+									{/* Glow */}
+									<line
+										x1={a.left}
+										y1={a.top}
+										x2={b.left}
+										y2={b.top}
+										stroke="#c8a04a"
+										strokeWidth="6"
+										strokeDasharray="4 12"
+										opacity="0.08"
+									/>
 									{/* Shadow */}
 									<line
 										x1={a.left}
@@ -94,21 +112,22 @@ export function WorldMapPage() {
 										x2={b.left}
 										y2={b.top}
 										stroke="#0a0804"
-										strokeWidth="3"
-										strokeDasharray="6 10"
-										opacity="0.4"
+										strokeWidth="4"
+										strokeDasharray="4 12"
+										opacity="0.5"
 										transform="translate(1,1)"
 									/>
-									{/* Main line */}
+									{/* Main path — dot style */}
 									<line
 										x1={a.left}
 										y1={a.top}
 										x2={b.left}
 										y2={b.top}
-										stroke="#4a3a20"
-										strokeWidth="2"
-										strokeDasharray="6 10"
-										opacity="0.6"
+										stroke="#c8a04a"
+										strokeWidth="3"
+										strokeDasharray="3 12"
+										strokeLinecap="round"
+										opacity="0.45"
 									/>
 								</g>
 							);
@@ -131,8 +150,8 @@ export function WorldMapPage() {
 								className={cn(
 									'absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-all duration-200',
 									locked
-										? 'opacity-40 grayscale cursor-not-allowed'
-										: 'cursor-pointer hover:scale-105 hover:-translate-y-[calc(50%+4px)] active:scale-95',
+										? 'opacity-45 grayscale cursor-not-allowed'
+										: 'cursor-pointer hover:scale-[1.06] hover:-translate-y-[calc(50%+3px)] active:scale-95',
 								)}
 								style={{ top: pos.top, left: pos.left }}
 								onClick={() => {
@@ -140,47 +159,59 @@ export function WorldMapPage() {
 									enterStageDetail(map.id);
 								}}
 							>
-								{/* Card frame */}
+								{/* Card */}
 								<div
-									className="relative w-[130px] bg-panel border-2 shadow-[3px_3px_0px_#0a0804] overflow-hidden"
+									className={cn(
+										'relative w-[140px] bg-panel overflow-hidden',
+										locked
+											? 'border-2 border-border shadow-[2px_2px_0px_#0a0804]'
+											: 'border-2 shadow-[3px_3px_0px_#0a0804]',
+									)}
 									style={{
-										borderColor: locked
-											? 'var(--color-border)'
-											: theme?.borderColor,
+										borderColor: locked ? undefined : theme?.borderColor,
 									}}
 								>
-									{/* Thumbnail image */}
-									<div className="relative h-[72px] overflow-hidden">
+									{/* Inner border accent */}
+									{!locked && (
+										<div
+											className="absolute inset-[2px] border pointer-events-none z-20"
+											style={{
+												borderColor: `${theme?.borderColor}30`,
+											}}
+										/>
+									)}
+
+									{/* Thumbnail */}
+									<div className="relative h-[80px] overflow-hidden">
 										<img
 											src={theme?.thumb}
 											alt={map.name}
 											className={cn(
 												'w-full h-full object-cover [image-rendering:pixelated]',
-												locked && 'brightness-50',
+												locked && 'brightness-[0.35]',
 											)}
 										/>
-										{/* Gradient overlay */}
-										<div className="absolute inset-0 bg-gradient-to-t from-panel/90 to-transparent" />
+										<div className="absolute inset-0 bg-gradient-to-t from-panel via-transparent to-transparent" />
 
-										{/* Lock overlay */}
+										{/* Lock icon — pixel text, not emoji */}
 										{locked && (
-											<div className="absolute inset-0 flex items-center justify-center bg-black/30">
-												<span className="font-pixel text-[16px] text-text-secondary">
-													🔒
+											<div className="absolute inset-0 flex items-center justify-center">
+												<span className="font-pixel text-[20px] text-text-secondary/70 select-none">
+													✕
 												</span>
 											</div>
 										)}
 
 										{/* Clear badge */}
 										{cleared && !locked && (
-											<div className="absolute top-1 right-1 bg-gold px-1.5 py-0.5 border border-accent">
+											<div className="absolute top-1 right-1 bg-gold px-1.5 py-0.5 border border-accent shadow-[1px_1px_0px_#0a0804]">
 												<span className="font-pixel text-[7px] text-bg">✓</span>
 											</div>
 										)}
 									</div>
 
 									{/* Info */}
-									<div className="px-2 py-1.5 flex flex-col items-center gap-0.5">
+									<div className="px-2 py-2 flex flex-col items-center gap-1">
 										<span
 											className={cn(
 												'font-pixel text-[9px] text-center leading-tight',
@@ -192,17 +223,17 @@ export function WorldMapPage() {
 
 										<div
 											className={cn(
-												'px-1.5 py-0.5 border text-center mt-0.5',
+												'px-2 py-0.5 border text-center',
 												locked
-													? 'bg-[#301010] border-[#802020]'
+													? 'bg-danger/10 border-danger/30'
 													: 'bg-panel border-border',
 											)}
 										>
 											<span
-												className="font-pixel text-[7px]"
-												style={{
-													color: locked ? '#c03020' : '#c8a04a',
-												}}
+												className={cn(
+													'font-pixel text-[7px]',
+													locked ? 'text-danger' : 'text-accent',
+												)}
 											>
 												{locked
 													? `Lv.${map.unlockLevel} 해금`
@@ -216,8 +247,8 @@ export function WorldMapPage() {
 					})}
 
 					{/* Bottom hint */}
-					<div className="absolute bottom-3 left-0 right-0 text-center">
-						<span className="font-pixel text-[7px] text-text-secondary/60">
+					<div className="absolute bottom-4 left-0 right-0 text-center">
+						<span className="font-pixel text-[7px] text-text-secondary/50">
 							스테이지를 선택하세요
 						</span>
 					</div>

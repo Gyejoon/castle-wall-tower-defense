@@ -83,7 +83,16 @@ export function StageDetailPage() {
 						className="font-pixel text-[9px] text-accent cursor-pointer hover:text-gold transition-colors"
 						onClick={enterStageSelect}
 					>
-						← 월드맵
+						<span className="inline-flex items-center gap-1">
+							<img
+								src="assets/ui/icon-arrow-left.webp"
+								alt=""
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated]"
+							/>
+							월드맵
+						</span>
 					</button>
 					<span className="font-pixel text-[11px] text-gold">
 						스테이지 정보
@@ -92,9 +101,9 @@ export function StageDetailPage() {
 				</div>
 
 				{/* Scrollable content */}
-				<div className="flex-1 min-h-0 overflow-auto">
+				<div className="flex-1 min-h-0 overflow-auto flex flex-col">
 					{/* Hero */}
-					<div className="relative h-[140px] overflow-hidden">
+					<div className="relative h-[140px] overflow-hidden flex-shrink-0">
 						<img
 							src={theme.thumb}
 							alt={map.name}
@@ -169,7 +178,16 @@ export function StageDetailPage() {
 								className="font-pixel text-[8px] text-accent bg-panel border border-border px-2 py-0.5 cursor-pointer hover:text-gold transition-colors"
 								onClick={() => setShowDeckEdit(true)}
 							>
-								편집 ▸
+								<span className="inline-flex items-center gap-1">
+									<img
+										src="assets/ui/icon-edit.webp"
+										alt=""
+										width={10}
+										height={10}
+										className="[image-rendering:pixelated]"
+									/>
+									편집
+								</span>
 							</button>
 						</div>
 						<div className="flex gap-1.5">
@@ -191,31 +209,50 @@ export function StageDetailPage() {
 										<span className="font-pixel text-[6px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 											{tower.name}
 										</span>
-										<span className="font-pixel text-[7px] text-accent">
-											⚡{tower.energyCost}
+										<span className="font-pixel text-[7px] text-accent inline-flex items-center gap-[2px]">
+											<img
+												src="assets/ui/icon-energy.webp"
+												alt=""
+												width={10}
+												height={10}
+												className="[image-rendering:pixelated]"
+											/>
+											{tower.energyCost}
 										</span>
 									</div>
 								);
 							})}
 						</div>
 					</div>
-				</div>
 
-				{/* Game start button (sticky bottom) */}
-				<div className="p-3 border-t border-border bg-bg">
-					<PixelButton
-						variant="gold"
-						onClick={resetRun}
-						style={{
-							width: '100%',
-							padding: '14px 20px',
-							fontSize: '13px',
-							boxShadow:
-								'0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
-						}}
-					>
-						⚔ 게임 시작
-					</PixelButton>
+					{/* Spacer pushes button to bottom when content is short */}
+					<div className="flex-1 min-h-4" />
+
+					{/* Game start button */}
+					<div className="p-3">
+						<PixelButton
+							variant="gold"
+							onClick={resetRun}
+							style={{
+								width: '100%',
+								padding: '14px 20px',
+								fontSize: '13px',
+								boxShadow:
+									'0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
+							}}
+						>
+							<span className="inline-flex items-center gap-1.5">
+								<img
+									src="assets/ui/icon-sword.webp"
+									alt=""
+									width={14}
+									height={14}
+									className="[image-rendering:pixelated]"
+								/>
+								게임 시작
+							</span>
+						</PixelButton>
+					</div>
 				</div>
 
 				{showDeckEdit && (

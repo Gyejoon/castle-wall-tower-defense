@@ -132,7 +132,16 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 													{tower.name}
 												</span>
 												<span className="font-pixel text-[11px] text-text-secondary">
-													⚡{tower.cost}
+													<span className="inline-flex items-center gap-[2px]">
+														<img
+															src="assets/ui/icon-energy.webp"
+															alt=""
+															width={10}
+															height={10}
+															className="[image-rendering:pixelated]"
+														/>
+														{tower.cost}
+													</span>
 												</span>
 											</div>
 										</button>

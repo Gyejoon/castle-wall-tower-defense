@@ -9,6 +9,9 @@ export const colors = {
 	info: '#5bc8e8',
 	text: '#f0e8d8',
 	textSecondary: '#a09070',
+	gradeUnique: '#9060e0',
+	tierBright: '#ffe870',
+	bossPhase1: '#c87020',
 } as const;
 
 export const fonts = {

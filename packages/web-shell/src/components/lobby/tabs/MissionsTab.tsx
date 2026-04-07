@@ -115,7 +115,7 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 					<PixelButton
 						disabled={!isReady}
 						onClick={() => onClaim(mission.id, period)}
-						className="font-pixel text-[10px] px-2 py-1"
+						className="font-pixel text-[10px] px-2 py-1 min-h-[44px] min-w-[44px]"
 					>
 						수령
 					</PixelButton>

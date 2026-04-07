@@ -10,6 +10,7 @@ import {
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	PHASER_COLORS,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -437,7 +438,7 @@ export class GameScene extends Phaser.Scene {
 					this.hoverGraphics,
 					gridPos.x,
 					gridPos.y,
-					canPlace ? 0x7f5af0 : 0xe53170,
+					canPlace ? PHASER_COLORS.accent : PHASER_COLORS.danger,
 					0.2,
 				);
 			}
@@ -469,7 +470,7 @@ export class GameScene extends Phaser.Scene {
 						this.selectionGraphics,
 						x,
 						y,
-						0x7f5af0,
+						PHASER_COLORS.accent,
 						0.12,
 					);
 				}
@@ -696,7 +697,7 @@ export class GameScene extends Phaser.Scene {
 			this.scale.height / 2,
 			this.scale.width,
 			this.scale.height,
-			0xff0000,
+			PHASER_COLORS.danger,
 			0.15,
 		);
 		overlay.setDepth(90);

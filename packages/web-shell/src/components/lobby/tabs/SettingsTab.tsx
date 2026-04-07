@@ -183,7 +183,7 @@ function SelectRow<T extends string>({
 			<select
 				value={value}
 				onChange={(e) => onChange(e.target.value as T)}
-				className="font-pixel text-[11px] text-text bg-panel border border-border px-2 py-1 cursor-pointer"
+				className="font-pixel text-[11px] text-text bg-panel border border-border px-2 py-1 min-h-[44px] cursor-pointer"
 				aria-label={label}
 			>
 				{options.map((o) => (

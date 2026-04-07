@@ -13,6 +13,9 @@
   --color-info: #5bc8e8;
   --color-text: #f0e8d8;
   --color-text-secondary: #a09070;
+  --color-grade-unique: #9060e0;
+  --color-tier-bright: #ffe870;
+  --color-boss-phase1: #c87020;
 
   --font-pixel: 'Galmuri11', 'Press Start 2P', cursive;
 }
@@ -44,6 +47,17 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: #2e2e3a;
+}
+
+/* HUD value change flash — transform/opacity only for 60fps */
+@keyframes hudFlash {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.hud-flash {
+  animation: hudFlash 250ms ease-out;
 }
 
 /* Lobby animations */

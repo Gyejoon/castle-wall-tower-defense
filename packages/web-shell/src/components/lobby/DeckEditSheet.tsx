@@ -77,7 +77,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 						type="button"
 						aria-label="닫기"
 						onClick={handleClose}
-						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1"
+						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1 min-h-[44px] min-w-[44px]"
 					>
 						✕
 					</button>

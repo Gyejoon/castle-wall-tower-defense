@@ -315,7 +315,7 @@ function TowerBottomSheet({
 				<button
 					type="button"
 					onClick={onClose}
-					className="cursor-pointer border-none bg-transparent px-2 py-1 font-pixel text-sm text-text-secondary"
+					className="cursor-pointer border-none bg-transparent px-2 py-1 min-h-[44px] min-w-[44px] font-pixel text-sm text-text-secondary"
 				>
 					X
 				</button>

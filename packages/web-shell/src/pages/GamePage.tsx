@@ -62,6 +62,22 @@ export function GamePage() {
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 	const [waitCountdown, setWaitCountdown] = useState(0);
+	const prevLivesRef = useRef(lives);
+	const [livesFlash, setLivesFlash] = useState(0);
+	const prevEnergyRef = useRef(energy);
+	const [energyFlash, setEnergyFlash] = useState(0);
+	useEffect(() => {
+		if (prevLivesRef.current !== lives) {
+			prevLivesRef.current = lives;
+			setLivesFlash((c) => c + 1);
+		}
+	}, [lives]);
+	useEffect(() => {
+		if (prevEnergyRef.current !== energy) {
+			prevEnergyRef.current = energy;
+			setEnergyFlash((c) => c + 1);
+		}
+	}, [energy]);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
@@ -269,13 +285,15 @@ export function GamePage() {
 					style={{ background: 'rgba(42, 32, 16, 0.92)' }}
 				>
 					<div
-						className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+						key={`hp-${livesFlash}`}
+						className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)] hud-flash"
 						style={{ background: 'rgba(192,48,32,0.16)' }}
 					>
 						HP {lives}
 					</div>
 					<div
-						className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+						key={`energy-${energyFlash}`}
+						className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)] hud-flash"
 						style={{ background: 'rgba(240,208,96,0.16)' }}
 					>
 						<span>⚡{energy}</span>

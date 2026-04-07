@@ -28,6 +28,7 @@ export {
 	rollGacha,
 	rollGacha10,
 } from './constants/gacha';
+export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
 export {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,

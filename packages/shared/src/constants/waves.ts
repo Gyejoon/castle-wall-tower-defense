@@ -15,7 +15,7 @@ export interface WaveDef {
 	delayAfterClearSec: number;
 }
 
-/** GDD 6-5: forest_gate 10-wave composition */
+/** forest_gate: 입문 — 아키타입 학습 */
 export const WAVE_DEFS: WaveDef[] = [
 	{
 		slotIndex: 1,
@@ -27,15 +27,15 @@ export const WAVE_DEFS: WaveDef[] = [
 		slotIndex: 2,
 		kind: 'normal',
 		delayAfterClearSec: 3,
-		groups: [{ unitId: 'scout_drone', count: 6 }],
+		groups: [{ unitId: 'scout_drone', count: 8 }],
 	},
 	{
 		slotIndex: 3,
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'scout_drone', count: 4 },
-			{ unitId: 'battle_robot', count: 2 },
+			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'heavy_walker', count: 1 },
 		],
 	},
 	{
@@ -43,8 +43,8 @@ export const WAVE_DEFS: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
-			{ unitId: 'battle_robot', count: 4 },
-			{ unitId: 'stealth_drone', count: 2 },
+			{ unitId: 'stealth_drone', count: 4 },
+			{ unitId: 'scout_drone', count: 3 },
 		],
 	},
 	{
@@ -59,7 +59,7 @@ export const WAVE_DEFS: WaveDef[] = [
 		delayAfterClearSec: 3,
 		groups: [
 			{ unitId: 'scout_drone', count: 6 },
-			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'stealth_drone', count: 3 },
 		],
 	},
 	{
@@ -67,8 +67,8 @@ export const WAVE_DEFS: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'battle_robot', count: 4 },
-			{ unitId: 'heavy_walker', count: 2 },
+			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'battle_robot', count: 2 },
 		],
 	},
 	{
@@ -76,8 +76,9 @@ export const WAVE_DEFS: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'stealth_drone', count: 4 },
-			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'scout_drone', count: 4 },
+			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'stealth_drone', count: 2 },
 		],
 	},
 	{
@@ -85,9 +86,9 @@ export const WAVE_DEFS: WaveDef[] = [
 		kind: 'pre_boss',
 		delayAfterClearSec: 5,
 		groups: [
+			{ unitId: 'heavy_walker', count: 3 },
 			{ unitId: 'battle_robot', count: 4 },
-			{ unitId: 'heavy_walker', count: 2 },
-			{ unitId: 'stealth_drone', count: 3 },
+			{ unitId: 'stealth_drone', count: 2 },
 		],
 	},
 	{
@@ -102,7 +103,7 @@ export const WAVE_DEFS: WaveDef[] = [
 	},
 ];
 
-/** lava_fortress: forest_gate ×1.2 counts (rounded) */
+/** lava_fortress: 탱크 중심 — 지속 딜/CC 필요 */
 export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 	{
 		slotIndex: 1,
@@ -114,7 +115,10 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		slotIndex: 2,
 		kind: 'normal',
 		delayAfterClearSec: 3,
-		groups: [{ unitId: 'scout_drone', count: 7 }],
+		groups: [
+			{ unitId: 'battle_robot', count: 4 },
+			{ unitId: 'heavy_walker', count: 1 },
+		],
 	},
 	{
 		slotIndex: 3,
@@ -122,7 +126,7 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		delayAfterClearSec: 3,
 		groups: [
 			{ unitId: 'scout_drone', count: 5 },
-			{ unitId: 'battle_robot', count: 2 },
+			{ unitId: 'stealth_drone', count: 3 },
 		],
 	},
 	{
@@ -130,23 +134,26 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
-			{ unitId: 'battle_robot', count: 5 },
-			{ unitId: 'stealth_drone', count: 2 },
+			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'battle_robot', count: 3 },
 		],
 	},
 	{
 		slotIndex: 5,
 		kind: 'boss',
 		delayAfterClearSec: 5,
-		groups: [{ unitId: 'titan', count: 1 }],
+		groups: [
+			{ unitId: 'titan', count: 1 },
+			{ unitId: 'heavy_walker', count: 2 },
+		],
 	},
 	{
 		slotIndex: 6,
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'scout_drone', count: 7 },
-			{ unitId: 'battle_robot', count: 4 },
+			{ unitId: 'stealth_drone', count: 6 },
+			{ unitId: 'scout_drone', count: 4 },
 		],
 	},
 	{
@@ -154,8 +161,8 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'battle_robot', count: 5 },
-			{ unitId: 'heavy_walker', count: 2 },
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 2 },
 		],
 	},
 	{
@@ -163,8 +170,10 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'stealth_drone', count: 5 },
-			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'scout_drone', count: 4 },
+			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'heavy_walker', count: 2 },
+			{ unitId: 'stealth_drone', count: 3 },
 		],
 	},
 	{
@@ -172,9 +181,9 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		kind: 'pre_boss',
 		delayAfterClearSec: 5,
 		groups: [
-			{ unitId: 'battle_robot', count: 5 },
-			{ unitId: 'heavy_walker', count: 2 },
-			{ unitId: 'stealth_drone', count: 4 },
+			{ unitId: 'heavy_walker', count: 4 },
+			{ unitId: 'battle_robot', count: 4 },
+			{ unitId: 'stealth_drone', count: 2 },
 		],
 	},
 	{
@@ -183,13 +192,13 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 		delayAfterClearSec: 0,
 		groups: [
 			{ unitId: 'titan', count: 1 },
-			{ unitId: 'heavy_walker', count: 2 },
+			{ unitId: 'heavy_walker', count: 3 },
 			{ unitId: 'battle_robot', count: 4 },
 		],
 	},
 ];
 
-/** storm_citadel: forest_gate ×1.5 counts (rounded) + extra escorts on boss waves */
+/** storm_citadel: 스피드/스텔스 중심 — 빠른 타게팅 필요 */
 export const STORM_CITADEL_WAVES: WaveDef[] = [
 	{
 		slotIndex: 1,
@@ -201,15 +210,18 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		slotIndex: 2,
 		kind: 'normal',
 		delayAfterClearSec: 3,
-		groups: [{ unitId: 'scout_drone', count: 9 }],
+		groups: [
+			{ unitId: 'stealth_drone', count: 5 },
+			{ unitId: 'scout_drone', count: 3 },
+		],
 	},
 	{
 		slotIndex: 3,
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'scout_drone', count: 6 },
-			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'battle_robot', count: 4 },
+			{ unitId: 'heavy_walker', count: 1 },
 		],
 	},
 	{
@@ -217,8 +229,8 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
-			{ unitId: 'battle_robot', count: 6 },
-			{ unitId: 'stealth_drone', count: 3 },
+			{ unitId: 'scout_drone', count: 8 },
+			{ unitId: 'stealth_drone', count: 4 },
 		],
 	},
 	{
@@ -227,7 +239,7 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'titan', count: 2 },
-			{ unitId: 'heavy_walker', count: 2 },
+			{ unitId: 'stealth_drone', count: 3 },
 		],
 	},
 	{
@@ -235,8 +247,8 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'scout_drone', count: 9 },
-			{ unitId: 'battle_robot', count: 5 },
+			{ unitId: 'stealth_drone', count: 7 },
+			{ unitId: 'scout_drone', count: 5 },
 		],
 	},
 	{
@@ -244,8 +256,8 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'battle_robot', count: 6 },
 			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'battle_robot', count: 4 },
 		],
 	},
 	{
@@ -253,8 +265,9 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'stealth_drone', count: 6 },
-			{ unitId: 'heavy_walker', count: 5 },
+			{ unitId: 'scout_drone', count: 6 },
+			{ unitId: 'stealth_drone', count: 4 },
+			{ unitId: 'battle_robot', count: 3 },
 		],
 	},
 	{
@@ -262,9 +275,9 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'pre_boss',
 		delayAfterClearSec: 5,
 		groups: [
-			{ unitId: 'battle_robot', count: 6 },
+			{ unitId: 'battle_robot', count: 5 },
 			{ unitId: 'heavy_walker', count: 3 },
-			{ unitId: 'stealth_drone', count: 5 },
+			{ unitId: 'stealth_drone', count: 4 },
 		],
 	},
 	{
@@ -274,7 +287,7 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		groups: [
 			{ unitId: 'titan', count: 2 },
 			{ unitId: 'heavy_walker', count: 3 },
-			{ unitId: 'battle_robot', count: 5 },
+			{ unitId: 'battle_robot', count: 4 },
 			{ unitId: 'stealth_drone', count: 3 },
 		],
 	},

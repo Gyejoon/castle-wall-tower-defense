@@ -22,6 +22,7 @@ export interface UnitDef {
 	element: ElementType;
 	bounty: number; // gold earned for killing
 	isPremium: boolean;
+	flying?: boolean; // exempt from ground collision
 }
 
 export interface ActiveUnit {

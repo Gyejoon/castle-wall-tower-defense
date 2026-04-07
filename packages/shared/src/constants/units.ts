@@ -45,5 +45,6 @@ export const UNITS: UnitDef[] = [
 		element: 'fire',
 		bounty: 60,
 		isPremium: false,
+		flying: true,
 	},
 ];

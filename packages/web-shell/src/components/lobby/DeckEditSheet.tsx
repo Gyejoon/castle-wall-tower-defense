@@ -1,10 +1,10 @@
 import { ALL_TOWERS } from '@gld/shared';
-import { CloseButton } from '../ui/CloseButton';
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { useMetaStore } from '../../stores/metaStore';
 import { colors, TIER_LABELS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
+import { CloseButton } from '../ui/CloseButton';
 import { PixelButton } from '../ui/PixelButton';
 
 interface DeckEditSheetProps {

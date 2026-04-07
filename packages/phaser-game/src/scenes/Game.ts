@@ -40,7 +40,6 @@ interface MapTheme {
 	decorTint: number;
 	pathColor: number;
 	spawnColor: number;
-	exitColor: number;
 	pathLineColor: number;
 }
 
@@ -50,7 +49,6 @@ const MAP_THEMES: Record<string, MapTheme> = {
 		decorTint: 0xffffff,
 		pathColor: 0x9f8258,
 		spawnColor: 0x486133,
-		exitColor: 0xb0914f,
 		pathLineColor: 0xb8956a,
 	},
 	lava_fortress: {
@@ -58,7 +56,6 @@ const MAP_THEMES: Record<string, MapTheme> = {
 		decorTint: 0xc89060,
 		pathColor: 0xb05030,
 		spawnColor: 0x8b3020,
-		exitColor: 0xd06030,
 		pathLineColor: 0xc06040,
 	},
 	storm_citadel: {
@@ -66,7 +63,6 @@ const MAP_THEMES: Record<string, MapTheme> = {
 		decorTint: 0x7888b0,
 		pathColor: 0x5060a0,
 		spawnColor: 0x405080,
-		exitColor: 0x7080c0,
 		pathLineColor: 0x6070b0,
 	},
 };

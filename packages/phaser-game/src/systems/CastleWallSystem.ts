@@ -148,9 +148,8 @@ export class CastleWallSystem {
 				this.flashTweens.delete(wall);
 			}
 
-			wall.setTint(0xffffff);
-			const tween = this.scene.tweens.add({
-				targets: wall,
+			wall.setTintFill(0xffffff);
+			const tween = this.scene.tweens.addCounter({
 				duration: 100,
 				onComplete: () => {
 					wall.clearTint();

@@ -208,7 +208,7 @@ describe('GameScene field runtime', () => {
 				create: vi.fn(),
 				generateFrameNumbers: vi.fn(() => []),
 			},
-			tweens: { add: vi.fn() },
+			tweens: { add: vi.fn(), addCounter: vi.fn() },
 		});
 
 		scene.create();

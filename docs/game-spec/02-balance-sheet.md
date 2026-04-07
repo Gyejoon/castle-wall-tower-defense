@@ -158,7 +158,51 @@
 
 ---
 
-## 7. 적 스케일링
+## 7. 적 armor 수치
+
+> 코드 위치: `packages/shared/src/constants/units.ts`
+
+| 유닛 | 이름 | armor | 비고 |
+|------|------|-------|------|
+| scout_drone | 고블린 정찰병 | 0 | 변경 없음 (약한 적) |
+| battle_robot | 오크 전사 | 5 | (구: 2) 초반부터 armor 체감 |
+| heavy_walker | 돌 트롤 | 12 | (구: 5) 중반 armor 체크 역할 |
+| stealth_drone | 그림자 암살자 | 0 | 변경 없음 (속도형) |
+| titan | 고대 드래곤 | 25 | (구: 10) 보스전 방어 무시 필수화 |
+
+### 방어 무시 (Armor Pierce) 메커니즘
+
+> 코드 위치: `packages/phaser-game/src/systems/TowerSystem.ts:275`
+
+- `special`이 없는 공격형 타워 → **방어 무시** (armor를 0으로 취급)
+- `special`이 있는 타워 (splash, slow 등) → armor 감산 적용
+- 데미지 공식: `damage = Math.max(1, rawDamage - armor)`
+
+**방어 무시 대상 타워** (special 없는 공격형):
+
+| Tier | ID | 이름 |
+|------|-----|------|
+| T1 | laser | 궁수 탑 |
+| T2 | twin_laser | 쌍궁 탑 |
+| T3 | flame_tower | 화염 탑 |
+| T3 | wind_spire | 바람의 첨탑 |
+| T3 | earth_golem | 대지 골렘 |
+| T4 | arcane_spire | 비전 첨탑 |
+
+dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클리어 특화, 의도된 디자인).
+
+### Lv.1 기준 DPS 비교 (laser vs plasma)
+
+| 적 | armor | laser DPS (방어 무시) | plasma DPS (armor 적용) |
+|----|-------|---------------------|----------------------|
+| scout_drone | 0 | 15.0 | 20.0 |
+| battle_robot | 5 | 15.0 | 16.0 |
+| heavy_walker | 12 | 15.0 | 10.4 |
+| titan | 25 | 15.0 | 0.8 (min1) |
+
+---
+
+## 8. 적 스케일링
 
 | 구간 | HP 배율 | armor 배율 | speed 배율 | bounty 배율 | 특수효과 면역 |
 |------|--------|----------|---------|-----------|------------|
@@ -168,7 +212,7 @@
 
 ---
 
-## 8. 변경 이력
+## 9. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 | 이유 |
 |------|------|---------|------|
@@ -176,10 +220,13 @@
 | 2026-04-06 | 주간 미션 재설계 | use_element 추가, clear_stage [3,4]→[30,50], defeat_boss [5,7]→[30,50] | 주 3회+ 전제 난이도 |
 | 2026-04-06 | 출석 체크 미션 추가 | 일일 5💎, 주간 30💎 | 앱 오픈 최소 보상 보장 |
 | 2026-04-06 | 전체 미션 10x 상향 | reach_wave→[50,80], place_towers→[100,200] 등 | 기존 1~2판으로 달성 가능 → 너무 쉬움 |
+| 2026-04-07 | 적 armor 상향 | battle_robot 2→5, heavy_walker 5→12, titan 10→25 | splash vs 집중형 전략 선택 발생 |
+| 2026-04-07 | forest_gate 웨이브 3 조정 | heavy_walker ×1 추가, battle_robot ×4→×3 | 웨이브 3에서 armor 체감 학습 유도 |
+| 2026-04-07 | TowerBottomSheet 방어 무시 UI 추가 | 집중 공격형 타워에 "방어 무시 - 적용" 표시 | 방어 무시 메커니즘 인지 개선 |
 
 ---
 
-## 9. 미결 이슈
+## 10. 미결 이슈
 
 - [ ] `missions.ts` — use_element 추가, 범위 조정 코드 반영
 - [ ] use_element 주간 속성 랜덤 지정 기능 (매주 화/수/번개 중 1개)

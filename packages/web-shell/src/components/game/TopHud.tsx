@@ -82,7 +82,16 @@ export function TopHud({
 					className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
 					style={{ background: 'rgba(240,208,96,0.16)' }}
 				>
-					<span>⚡{energy}</span>
+					<span className="inline-flex items-center gap-[2px]">
+						<img
+							src="assets/ui/icon-energy.webp"
+							alt=""
+							width={10}
+							height={10}
+							className="[image-rendering:pixelated]"
+						/>
+						{energy}
+					</span>
 					<div
 						className="flex-1 overflow-hidden rounded-sm"
 						style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}

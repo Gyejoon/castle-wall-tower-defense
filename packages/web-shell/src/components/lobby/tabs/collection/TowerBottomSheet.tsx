@@ -163,6 +163,13 @@ export function TowerBottomSheet({
 					value={ELEMENT_NAMES[def.element]}
 					color={elementColor}
 				/>
+				{!def.stats.special && def.stats.attackSpeed > 0 && (
+					<StatDisplay
+						label="방어 무시"
+						value="적용"
+						color={colors.armorPierce}
+					/>
+				)}
 			</div>
 
 			{def.stats.special && (

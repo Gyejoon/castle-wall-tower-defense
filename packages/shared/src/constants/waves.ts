@@ -220,8 +220,9 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 		kind: 'normal',
 		delayAfterClearSec: 3,
 		groups: [
-			{ unitId: 'battle_robot', count: 4 },
 			{ unitId: 'heavy_walker', count: 1 },
+			{ unitId: 'battle_robot', count: 3 },
+			{ unitId: 'scout_drone', count: 4 },
 		],
 	},
 	{

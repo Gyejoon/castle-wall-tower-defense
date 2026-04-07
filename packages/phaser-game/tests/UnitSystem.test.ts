@@ -311,13 +311,13 @@ describe('UnitSystem', () => {
 
 		it('respects armor reduction', () => {
 			system.setPaths([LANE_A]);
-			// battle_robot: hp=80, armor=2
+			// battle_robot: hp=80, armor=5
 			system.queueUnits('battle_robot', 1);
 			system.update(0, 300);
 
 			const unitId = system.getUnitPositions()[0].instanceId;
-			// damage=5, armor=2 → actual=3
-			const result = system.applyDamage(unitId, 5);
+			// damage=8, armor=5 → actual=3
+			const result = system.applyDamage(unitId, 8);
 			expect(result!.killed).toBe(false);
 
 			// hp should be 80 - 3 = 77

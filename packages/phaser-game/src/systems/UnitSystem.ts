@@ -317,6 +317,7 @@ export class UnitSystem {
 		countsTowardClear: boolean;
 		source: UnitSpawnSource;
 		isBoss: boolean;
+		actualDamage: number;
 	} | null {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
@@ -329,6 +330,7 @@ export class UnitSystem {
 				countsTowardClear: unit.countsTowardClear,
 				source: unit.source,
 				isBoss: unit.isBoss,
+				actualDamage: 0,
 			};
 		}
 
@@ -389,6 +391,7 @@ export class UnitSystem {
 				countsTowardClear: unit.countsTowardClear,
 				source: unit.source,
 				isBoss: unit.isBoss,
+				actualDamage: damage,
 			};
 		}
 
@@ -414,6 +417,7 @@ export class UnitSystem {
 			countsTowardClear: unit.countsTowardClear,
 			source: unit.source,
 			isBoss: unit.isBoss,
+			actualDamage: damage,
 		};
 	}
 

@@ -45,6 +45,7 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - 기존 유틸리티/상수 재사용
 - 이름 명확화, 과한 중첩 완화
 - 테스트에서만 필요한 보조 코드가 런타임 코드에 섞여 있는지 점검
+- **공유 타입 속성 접근**: `@gld/shared` 타입의 속성을 사용할 때 추측하지 않고 실제 타입 정의를 확인한다. dev 서버에선 에러가 안 나도 CI `tsc`에서 터진다
 
 ### Tailwind 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
 
@@ -53,6 +54,12 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - **하드코딩 색상**: `#4a3a20` 등 → `var(--color-*)` 토큰 교체
 - **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름 회피
 - **이징 함수 정확도**: CSS `ease` ≠ `ease-out` — 명시적 값으로 교정
+
+### 에셋 경로 컨벤션 (변경 파일에 에셋 참조가 있을 때만)
+
+- **경로 형식 일관성**: 프로젝트 내 기존 에셋 경로 패턴(상대 `assets/` vs 절대 `/assets/`)을 확인하고 통일한다. 새 파일에서 다른 형식을 쓰면 base URL 변경 시 일부만 깨진다
+- **에셋 존재 여부**: `src="assets/ui/icon-*.webp"` 등 참조하는 파일이 실제로 `public/assets/` 하위에 존재하는지 확인한다. 생성 스크립트를 돌리지 않으면 빠질 수 있다
+- **webp 변환 누락**: PNG만 생성하고 webp 변환을 안 했거나, 코드에서 `.webp`를 참조하는데 `.png`만 있으면 404
 
 ## Phase 2: Phaser 런타임 안정성 검사
 
@@ -79,6 +86,9 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | 10 | `setTimeout`/`setInterval` 정리 | 매 게임마다 타이머 누적 | -2 |
 | 11 | Web Audio 노드 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 | -2 |
 | 12 | `game.registry.events` 리스너도 named ref + cleanup off() | 익명 함수로 `changedata-*` 등록 → 씬 재시작마다 누적 | -2 |
+| 13 | 산술 연산에서 0 나눗셈 가드 | `Math.floor(dist / N)`이 0일 때 `i / steps`가 NaN | -1 |
+| 14 | tween 중복 방지 | pointer in/out에서 `killTweensOf` 없이 `tweens.add` 반복 → jitter | -1 |
+| 15 | 인터랙티브 요소 간 겹침 | 버튼/텍스트가 동일 좌표에 배치되어 클릭 충돌 | -1 |
 
 기본 10점, 위반별 감점, 최소 0점.
 
@@ -106,8 +116,9 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | 9 | 무거운 컴포넌트 lazy loading | React.lazy 미사용 | -1 |
 | 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
 | 11 | StrictMode phantom cleanup 안전성 | `useEffect` cleanup에서 구독 해제가 `isConnected` 가드 밖에 있으면 StrictMode 재마운트 시 구독 유실 | -2 |
+| 12 | `key` prop으로 인한 DOM 재생성과 useEffect 불일치 | `key={runId}`로 DOM이 바뀌는데 effect deps가 안정적이라 Phaser 재초기화 안 됨 | -2 |
 
-기본 10점, 항목 1-4,11 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-12 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: Design Quality 검사
 
@@ -173,6 +184,16 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
 - emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
 - 에셋 메타데이터(frameCount, tilesets 배열 등)를 검증하지 않는 경우
+- **동어반복 테스트**: expected 값을 production 코드와 같은 함수로 계산하면 regression을 잡지 못한다. 하드코딩된 스냅샷 값으로 assert한다
+
+### 기존 테스트 깨짐 검사
+
+변경 코드가 기존 테스트의 가정을 깨뜨리는지 반드시 확인한다.
+
+- **렌더 텍스트 변경**: 이모지/텍스트를 img 태그로 교체하면 `getByText('⚡60')` 같은 매처가 깨진다. 변경 파일과 관련된 기존 테스트를 grep하여 매처를 동기화한다.
+- **상태 흐름 변경**: `runStatus` 등 enum 값이나 상태 전환 순서가 바뀌면 기존 테스트의 기대값이 틀어진다.
+- **컴포넌트 구조 변경**: 버튼 텍스트, DOM 구조, role 속성이 바뀌면 `getByText`, `getByRole` 매처가 깨진다.
+- **검증 방법**: 변경한 컴포넌트의 테스트 파일을 실행하여 통과 여부를 확인한 뒤에 점수를 매긴다.
 
 ### 점수
 

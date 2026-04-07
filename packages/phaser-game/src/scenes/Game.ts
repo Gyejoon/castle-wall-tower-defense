@@ -3,6 +3,8 @@ import {
 	buildDeckCards,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
@@ -98,6 +100,7 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
+	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
@@ -120,6 +123,9 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
+	private speedMultiplier: 1 | 2 = 1;
+	private scaledGameTime = 0;
+	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -139,11 +145,16 @@ export class GameScene extends Phaser.Scene {
 
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
+		this.scaledGameTime = 0;
+		this.speedMultiplier = 1;
+		this.time.timeScale = 1;
+		this.anims.globalTimeScale = 1;
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
 			DEFAULT_MAP_ID;
 		this.currentMap = getMapById(mapId);
+		this.rewardMultiplier = this.currentMap.rewardMultiplier;
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
@@ -169,7 +180,9 @@ export class GameScene extends Phaser.Scene {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
 		}
 		this.currentSlotDef = mapWaves[0];
-		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves);
+		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
+			difficultyHpMult: this.currentMap.difficultyHpMult,
+		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
@@ -217,10 +230,17 @@ export class GameScene extends Phaser.Scene {
 			this.showBossWarningOverlay();
 		};
 
+		this.onSetSpeed = ({ multiplier }) => {
+			this.speedMultiplier = multiplier;
+			this.time.timeScale = multiplier;
+			this.anims.globalTimeScale = multiplier;
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
+		EventBus.on('request-set-speed', this.onSetSpeed);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -494,15 +514,20 @@ export class GameScene extends Phaser.Scene {
 		this.gameOver = true;
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		EventBus.off('request-set-speed', this.onSetSpeed);
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 		EventBus.emit('game-over', {
 			...payload,
 			stats: {
-				wavesCleared: payload.finalSlot,
+				wavesCleared:
+					payload.result === 'victory'
+						? payload.finalSlot
+						: Math.max(0, payload.finalSlot - 1),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned,
+				goldEarned: this.goldEarned * this.rewardMultiplier,
+				rewardMultiplier: this.rewardMultiplier,
 			},
 		});
 	}
@@ -602,6 +627,10 @@ export class GameScene extends Phaser.Scene {
 				}
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
+					const energyReward = result.isBoss
+						? ENERGY_PER_BOSS_KILL
+						: ENERGY_PER_KILL;
+					this.energySystem.add(energyReward);
 					onKill();
 				}
 			}
@@ -617,23 +646,25 @@ export class GameScene extends Phaser.Scene {
 		return reachedExit;
 	}
 
-	update(time: number, delta: number) {
+	update(_time: number, delta: number) {
 		if (this.gameOver) return;
+		const scaledDelta = delta * this.speedMultiplier;
+		this.scaledGameTime += scaledDelta;
 
-		this.playerWaves.update(delta, this.playerUnits.getActiveCount());
-		this.energySystem.update(delta / 1000);
+		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
+		this.energySystem.update(scaledDelta / 1000);
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,
 			this.playerUnits,
-			time,
-			delta,
+			this.scaledGameTime,
+			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
 			},
 		);
 
-		this.damageNumbers.update(time, delta);
+		this.damageNumbers.update(_time, delta);
 
 		for (const _uid of playerExits) {
 			this.playerHp = Math.max(0, this.playerHp - 1);
@@ -673,12 +704,14 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		EventBus.off('request-set-speed', this.onSetSpeed);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
 
 		this.selectionGraphics.clear();
+		this.hoverGraphics?.destroy();
 		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();
 		this.playerTowers.destroy();

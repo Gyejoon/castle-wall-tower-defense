@@ -4,14 +4,17 @@ import {
 	isMapUnlocked,
 	MAP_REGISTRY,
 } from '@gld/shared';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 import { cn } from '../../../utils/cn';
 import { PixelButton } from '../../ui/PixelButton';
-import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
+
+const DeckEditSheet = lazy(() =>
+	import('../DeckEditSheet').then((m) => ({ default: m.DeckEditSheet })),
+);
 
 const STAGE_DIFFICULTY: Record<string, number> = {
 	forest_gate: 1,
@@ -195,10 +198,14 @@ export function HomeTab() {
 				</div>
 			</div>
 
-			<DeckEditSheet
-				open={showDeckEdit}
-				onClose={() => setShowDeckEdit(false)}
-			/>
+			{showDeckEdit && (
+				<Suspense fallback={null}>
+					<DeckEditSheet
+						open={showDeckEdit}
+						onClose={() => setShowDeckEdit(false)}
+					/>
+				</Suspense>
+			)}
 		</div>
 	);
 }

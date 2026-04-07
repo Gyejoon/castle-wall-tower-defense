@@ -5,6 +5,7 @@ import {
 	MISSION_LABELS,
 	shouldResetDaily,
 	shouldResetWeekly,
+	toKSTDateStr,
 	WEEKLY_MISSION_TYPES,
 } from '../src/index';
 
@@ -125,5 +126,25 @@ describe('MISSION_LABELS', () => {
 		expect(MISSION_LABELS.clear_stage).toBeTruthy();
 		expect(MISSION_LABELS.use_element).toBeTruthy();
 		expect(MISSION_LABELS.attendance).toBeTruthy();
+	});
+});
+
+describe('toKSTDateStr', () => {
+	it('UTC 자정을 KST YYYY-MM-DD로 변환', () => {
+		// 2026-04-07 00:00:00 UTC = 2026-04-07 09:00:00 KST
+		const utc = new Date('2026-04-07T00:00:00Z');
+		expect(toKSTDateStr(utc)).toBe('2026-04-07');
+	});
+
+	it('UTC 15:00은 KST 다음날 00:00이 아님 (같은 날)', () => {
+		// 2026-04-07 15:00:00 UTC = 2026-04-08 00:00:00 KST → 다음날
+		const utc = new Date('2026-04-07T15:00:00Z');
+		expect(toKSTDateStr(utc)).toBe('2026-04-08');
+	});
+
+	it('YYYY-MM-DD 형식 (월/일 두 자리)', () => {
+		// 2026-01-05 00:00:00 UTC = 2026-01-05 09:00:00 KST
+		const utc = new Date('2026-01-05T00:00:00Z');
+		expect(toKSTDateStr(utc)).toBe('2026-01-05');
 	});
 });

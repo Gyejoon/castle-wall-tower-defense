@@ -173,11 +173,11 @@ describe('GamePage', () => {
 
 	it('gstack UI/UX: mobile HUD container stays on one line without wrap', () => {
 		const view = render(<GamePage />);
-		const hud = view.getByTestId('top-hud') as HTMLDivElement;
+		const hudRow = view.getByTestId('top-hud-row') as HTMLDivElement;
 
-		expect(hud.className).toContain('flex-nowrap');
-		expect(hud.className).toContain('whitespace-nowrap');
-		expect(hud.className).toContain('overflow-hidden');
+		expect(hudRow.className).toContain('flex-nowrap');
+		expect(hudRow.className).toContain('whitespace-nowrap');
+		expect(hudRow.className).toContain('overflow-hidden');
 	});
 
 	it('shows victory state when local player wins', () => {

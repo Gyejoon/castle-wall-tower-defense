@@ -190,6 +190,8 @@ describe('GameScene field runtime', () => {
 			events: {
 				on: vi.fn(),
 			},
+			time: { timeScale: 1 },
+			anims: { globalTimeScale: 1 },
 		});
 
 		scene.create();

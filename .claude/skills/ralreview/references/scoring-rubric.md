@@ -1,33 +1,66 @@
 # Scoring Rubric
 
-`ralreview`의 기준 점수는 5개 차원, 총 50점 만점이다. 통과선은 42/50.
+`ralreview`의 기준 점수는 6개 차원, 총 60점 만점이다. 통과선은 50/60.
 
-## 1. Runtime Stability — /10
+## 1. Runtime Stability (Phase 2) — /10
 
 Phaser 런타임 안정성, cleanup, 메모리 누수 위험, 핫 루프 품질.
+diff에 Phaser 파일이 없으면 10/10.
 
 | 점수 | 기준 |
 |---|---|
-| 10 | 위반 0건 |
+| 10 | 위반 0건 또는 Phaser 변경 없음 |
 | 8-9 | 경미한 위반 1-2건, 누수 위험 없음 |
 | 6-7 | 위반 3-4건 또는 누수 위험 1건 |
 | 4-5 | 누수 위험 다수 또는 `destroy()` 품질 부족 |
 | 0-3 | cleanup 미구현, listener 누수, 시스템 경계 붕괴 |
 
-### 핵심 위반
+### Critical 위반 (-2)
 
 - `destroy()` 누락 또는 정리 미수행
 - `shutdown` 등록 누락
 - 익명 EventBus 리스너 사용
 - `off()` 전에 `destroy()` 실행
+- `setTimeout`/`setInterval` 미정리
+- Web Audio 노드 미해제
 
-### 경미한 위반
+### Non-critical 위반 (-1)
 
 - Graphics destroy/recreate 패턴
 - 핫 루프의 `filter()` / `Array.find()` 남용
 - 시스템 간 직접 mutation
+- `Phaser.Scene` 대신 구체 타입에 강결합
 
-## 2. Spec Alignment — /10
+## 2. React Best Practices (Phase 3) — /10
+
+React 컴포넌트 성능, Phaser-React 브릿지 패턴, Zustand 사용 품질.
+diff에 React 파일이 없으면 10/10.
+
+| 점수 | 기준 |
+|---|---|
+| 10 | 위반 0건 또는 React 변경 없음 |
+| 8-9 | Non-critical 위반 1-2건 |
+| 6-7 | Critical 위반 1건 또는 Non-critical 다수 |
+| 4-5 | Critical 위반 2건 이상 |
+| 0-3 | EventBus cleanup 누락 + selector 전체 구독 등 복합 |
+
+### Critical 위반 (-2)
+
+- EventBus 리스너 useEffect cleanup 누락
+- Zustand 전체 store 구독
+- 콜백 deps 불필요 리렌더 유발
+- React-Phaser 경계 ref 불안정 콜백
+
+### Non-critical 위반 (-1)
+
+- useMemo 누락 (파생 게임 상태)
+- 정적 JSX 미호이스팅
+- `&&` 연산자로 falsy 0 렌더링
+- barrel import 사용
+- 무거운 컴포넌트 lazy loading 미적용
+- 루프/콜백 마이크로 최적화 미흡
+
+## 3. Spec Alignment (Phase 4) — /10
 
 최신 스펙 대비 구현 충족도.
 
@@ -39,13 +72,9 @@ Phaser 런타임 안정성, cleanup, 메모리 누수 위험, 핫 루프 품질.
 | 4-5 | 요구사항 2개 이상 누락 |
 | 0-3 | 핵심 요구사항 다수 불일치 |
 
-### 감점
+감점: 요구사항 누락 -2, 동작 차이 -2, scope creep -1.
 
-- 요구사항 누락: -2
-- 동작 차이: -2
-- scope creep: -1
-
-## 3. Test Coverage — /10
+## 4. Test Coverage (Phase 5) — /10
 
 필수 대상 테스트 존재 여부와 실행 통과 여부.
 
@@ -58,15 +87,11 @@ Phaser 런타임 안정성, cleanup, 메모리 누수 위험, 핫 루프 품질.
 | 3-4 | 핵심 테스트 누락 다수 |
 | 0-2 | 테스트 거의 없음 |
 
-### 계산 원칙
+커버 비율로 최대 8점, 실행 통과 시 +2, 실패 시 최대 5점 캡.
 
-- 커버 비율로 최대 8점
-- 테스트 실행 통과 시 +2
-- 테스트 실패 시 최종 점수는 최대 5점
+## 5. Independent Review (Phase 6) — /10
 
-## 4. Independent Review — /10
-
-구현자 본인과 분리된 독립 리뷰의 결과.
+구현자와 분리된 독립 리뷰 결과.
 
 | 점수 | 기준 |
 |---|---|
@@ -77,9 +102,9 @@ Phaser 런타임 안정성, cleanup, 메모리 누수 위험, 핫 루프 품질.
 | 5-6 | high severity 존재 |
 | 0-4 | critical severity 존재 |
 
-## 5. Adversarial Review — /10
+## 6. Adversarial Review (Phase 7) — /10
 
-설계 가정, 상태 동기화, 반례, 레이스, cleanup 반례를 깨보는 리뷰.
+설계 가정, 상태 동기화, 반례, cleanup 반례를 깨보는 리뷰.
 
 | 점수 | 기준 |
 |---|---|
@@ -94,7 +119,7 @@ Phaser 런타임 안정성, cleanup, 메모리 누수 위험, 핫 루프 품질.
 
 | 총점 | 판정 |
 |---|---|
-| 42-50 | PASS |
-| 35-41 | FAIL, 자동 수정 후 재시도 가치 높음 |
-| 25-34 | FAIL, 구조적 이슈 가능성 큼 |
-| 0-24 | FAIL, 수동 개입 우선 |
+| 50-60 | PASS |
+| 42-49 | FAIL, 자동 수정 후 재시도 가치 높음 |
+| 30-41 | FAIL, 구조적 이슈 가능성 큼 |
+| 0-29 | FAIL, 수동 개입 우선 |

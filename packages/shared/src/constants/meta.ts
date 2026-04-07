@@ -97,6 +97,7 @@ export function createDefaultSave(): SaveData {
 			weeklyMissions: [],
 			lastDailyMissionResetAt: null,
 			lastWeeklyMissionResetAt: null,
+			lastAttendanceDate: null,
 		},
 		settings: {
 			bgmVolume: 0.7,

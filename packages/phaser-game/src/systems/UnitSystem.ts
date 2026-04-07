@@ -280,6 +280,7 @@ export class UnitSystem {
 		unitDefId: string;
 		countsTowardClear: boolean;
 		source: UnitSpawnSource;
+		isBoss: boolean;
 	} | null {
 		const unit = this.units.get(unitId);
 		if (!unit) return null;
@@ -291,6 +292,7 @@ export class UnitSystem {
 				unitDefId: unit.def.id,
 				countsTowardClear: unit.countsTowardClear,
 				source: unit.source,
+				isBoss: unit.isBoss,
 			};
 		}
 
@@ -349,6 +351,7 @@ export class UnitSystem {
 				unitDefId: unit.def.id,
 				countsTowardClear: unit.countsTowardClear,
 				source: unit.source,
+				isBoss: unit.isBoss,
 			};
 		}
 
@@ -373,6 +376,7 @@ export class UnitSystem {
 			unitDefId: unit.def.id,
 			countsTowardClear: unit.countsTowardClear,
 			source: unit.source,
+			isBoss: unit.isBoss,
 		};
 	}
 

@@ -1,6 +1,15 @@
 import { INITIAL_ENERGY, INITIAL_PLAYER_HP } from '@gld/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from '../src/stores/gameStore';
+
+vi.mock('@gld/phaser-game', () => ({
+	EventBus: {
+		emit: vi.fn(),
+		on: vi.fn(),
+		off: vi.fn(),
+		removeAllListeners: vi.fn(),
+	},
+}));
 
 describe('gameStore', () => {
 	beforeEach(() => {
@@ -158,6 +167,19 @@ describe('gameStore', () => {
 
 		expect(useGameStore.getState().screenShake).toBe(false);
 		expect(useGameStore.getState().showDamageNumbers).toBe(false);
+	});
+
+	it('setGameSpeed updates gameSpeed state', () => {
+		const { setGameSpeed } = useGameStore.getState();
+		setGameSpeed(2);
+		expect(useGameStore.getState().gameSpeed).toBe(2);
+	});
+
+	it('resetRun resets gameSpeed to 1', () => {
+		const { setGameSpeed, resetRun } = useGameStore.getState();
+		setGameSpeed(2);
+		resetRun();
+		expect(useGameStore.getState().gameSpeed).toBe(1);
 	});
 
 	it('resets a run to default single-player combat resources and clears transient state', () => {

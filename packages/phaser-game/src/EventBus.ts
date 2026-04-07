@@ -30,6 +30,7 @@ export interface GameEventMap {
 			towersPlaced: number;
 			timeSurvivedSec: number;
 			goldEarned: number;
+			rewardMultiplier: number;
 		};
 	};
 	'energy-changed': { energy: number };
@@ -75,6 +76,7 @@ export interface GameEventMap {
 	'request-pause': undefined;
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
+	'request-set-speed': { multiplier: 1 | 2 };
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;

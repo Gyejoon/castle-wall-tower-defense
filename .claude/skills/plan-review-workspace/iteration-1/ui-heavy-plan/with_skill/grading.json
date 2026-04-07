@@ -1,0 +1,26 @@
+{
+  "eval_id": 1,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "6개 차원 점수 테이블이 스킬 포맷(AI Slop, 타이포, 색상, 레이아웃, 모션, 게임-웹)을 정확히 따름",
+      "passed": true,
+      "evidence": "정확히 6차원 테이블이 스킬에서 정의한 차원명과 순서로 생성됨"
+    },
+    {
+      "text": "AI slop 레드플래그 3건(적절한 폰트, 깔끔한 카드, 모달) 감지",
+      "passed": true,
+      "evidence": "레드 플래그 3건 적발: '적절한 폰트', '깔끔한 카드', '모달' — 각각 구체적 위반 기준과 수정 방향 제시"
+    },
+    {
+      "text": ".impeccable.md 토큰(#c8a04a, Press Start 2P, 32px 등) 구체적 참조",
+      "passed": true,
+      "evidence": "Press Start 2P, #c03020, #f0d060, #c8a04a, #2a2010, #4a3a20, 32px 그리드 등 모두 참조"
+    },
+    {
+      "text": "7점 미만 항목에 구체적 개선안(파일명/토큰명/수치 수준) 존재",
+      "passed": true,
+      "evidence": "모든 6차원에 px 수치, hex 코드, fontFamily 예시, EventBus 이벤트명 수준의 구체적 개선안"
+    }
+  ]
+}

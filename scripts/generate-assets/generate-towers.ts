@@ -427,29 +427,35 @@ function drawCatapultBody(ctx: SKRSContext2D, ox: number) {
 // Catapult arm at a given angle (0=loaded/back, 1=fully flung forward)
 function drawCatapultArm(ctx: SKRSContext2D, ox: number, swing: number, showBoulder: boolean) {
   const cx = ox + 32;
-  const pivotX = cx - 2;
-  const pivotY = 44;
-  const armLen = 22;
+  const pivotX = cx;
+  const pivotY = 46;
+  const armLen = 28; // longer arm for more visible swing
 
-  // Arm angle: loaded=-45° (back-right), flung=+60° (forward-left up)
-  const angleStart = -0.8; // radians, back position
-  const angleEnd = 1.1;    // radians, flung forward
+  // Arm angle: loaded=pointing right-down (-30°), flung=pointing left-up (150°)
+  // Full ~180° sweep for maximum visual drama
+  const angleStart = -0.5; // ~-30° (arm resting right, boulder low)
+  const angleEnd = 2.4;    // ~140° (arm flung far left-up)
   const angle = angleStart + (angleEnd - angleStart) * swing;
 
   const tipX = Math.round(pivotX + armLen * Math.cos(angle));
   const tipY = Math.round(pivotY - armLen * Math.sin(angle));
 
-  // Arm shaft (2px thick)
+  // Pivot bolt
+  fillCircle(ctx, pivotX, pivotY, 2, PALETTE.woodDark);
+
+  // Arm shaft (3px thick for visibility)
   drawLine(ctx, pivotX, pivotY, tipX, tipY, PALETTE.woodDark);
   drawLine(ctx, pivotX + 1, pivotY, tipX + 1, tipY, PALETTE.wood);
+  drawLine(ctx, pivotX, pivotY + 1, tipX, tipY + 1, PALETTE.woodDark);
 
   // Sling cup at tip
-  drawRect(ctx, tipX - 2, tipY - 2, 5, 4, PALETTE.woodLight);
+  drawRect(ctx, tipX - 3, tipY - 3, 6, 5, PALETTE.woodLight);
+  drawRect(ctx, tipX - 2, tipY - 2, 4, 3, PALETTE.wood);
 
   // Boulder in sling (only when loaded)
   if (showBoulder) {
-    fillCircle(ctx, tipX + 1, tipY, 4, PALETTE.stoneDark);
-    setPixel(ctx, tipX, tipY - 2, PALETTE.stoneLight);
+    fillCircle(ctx, tipX, tipY, 4, PALETTE.stoneDark);
+    fillCircle(ctx, tipX - 1, tipY - 1, 2, PALETTE.stoneLight);
   }
 }
 
@@ -459,29 +465,33 @@ function drawCatapultFireFrame(ctx: SKRSContext2D, ox: number, _tower: TowerAsse
   // Draw body (no arm — arm drawn separately with animation)
   drawCatapultBody(ctx, ox);
 
-  // Arm swing timeline:
-  // 0: loaded (arm back)         swing=0.0
-  // 1: pulling back              swing=0.0
-  // 2: release!                  swing=0.7
-  // 3: fully flung               swing=1.0
-  // 4: recoil back               swing=0.8
-  // 5: settling                  swing=0.3
-  // 6: returning                 swing=0.1
-  // 7: back to loaded            swing=0.0
-  const swingTable = [0.0, 0.0, 0.7, 1.0, 0.8, 0.3, 0.1, 0.0];
+  // Arm swing timeline — exaggerated for drama:
+  // 0: loaded, arm pointing right-down (boulder low)
+  // 1: tensioning, pulling back slightly more
+  // 2: SNAP! rapid release halfway
+  // 3: fully flung — arm pointing up-left
+  // 4: overshoot bounce
+  // 5: settling back
+  // 6: returning to rest
+  // 7: back to loaded position
+  const swingTable = [0.0, 0.05, 0.6, 1.0, 0.9, 0.4, 0.15, 0.0];
   const swing = swingTable[frame] ?? 0;
-  const showBoulder = frame <= 1; // boulder visible until release
+  const showBoulder = frame <= 1;
 
   drawCatapultArm(ctx, ox, swing, showBoulder);
 
-  // Frame body recoil shake on release (frames 2-3)
+  // Recoil shake on release (frames 2-3) — whole body shudders
   if (frame === 2 || frame === 3) {
-    // Dust particles at base from recoil
-    for (let i = 0; i < 4; i++) {
-      const px = cx - 8 + i * 5;
-      const py = 66 + (i % 2);
-      setPixel(ctx, px, py, hexToRgba(PALETTE.dirtPath, 0.4));
+    // Dust cloud at base from impact
+    for (let i = 0; i < 8; i++) {
+      const px = cx - 12 + i * 3;
+      const py = 65 + (i % 3);
+      setPixel(ctx, px, py, hexToRgba(PALETTE.dirtPath, 0.5));
+      setPixel(ctx, px + 1, py + 1, hexToRgba(PALETTE.dirtPath, 0.3));
     }
+    // Motion lines near pivot for speed feel
+    drawLine(ctx, cx - 4, 42, cx - 8, 38, hexToRgba(PALETTE.wood, 0.3));
+    drawLine(ctx, cx + 2, 40, cx + 6, 36, hexToRgba(PALETTE.wood, 0.3));
   }
 
   // Boulder in flight (after release)

@@ -30,6 +30,26 @@ export function PhaserGame() {
 			'tutorialCompleted',
 			metaState.progress.tutorialCompleted ?? false,
 		);
+
+		// Safe area inset for DeckDock bottom padding
+		const _cs =
+			typeof getComputedStyle !== 'undefined'
+				? getComputedStyle(document.documentElement)
+				: null;
+		const safeAreaBottom =
+			parseInt(_cs?.getPropertyValue('--sab') || '0', 10) ||
+			parseInt(
+				_cs?.getPropertyValue('env(safe-area-inset-bottom)') || '0',
+				10,
+			) ||
+			0;
+		game.registry.set('safeAreaBottom', safeAreaBottom);
+
+		// Speed 2x unlock: player has cleared this map before
+		const stagesCleared = metaState.progress.stagesCleared ?? [];
+		const speed2xUnlocked = stagesCleared.includes(selectedMapId);
+		game.registry.set('speed2xUnlocked', speed2xUnlocked);
+
 		gameRef.current = game;
 
 		return () => {

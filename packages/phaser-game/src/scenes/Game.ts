@@ -155,9 +155,12 @@ export class GameScene extends Phaser.Scene {
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
+		const HUD_TOP = 44;
+		const HUD_BOTTOM = 90;
 		this.playerGrid = new GridManager(this.currentMap, {
 			canvasWidth: canvasW,
 			canvasHeight: canvasH,
+			yOffset: Math.floor((HUD_TOP - HUD_BOTTOM) / 2),
 		});
 		this.playerPathfinding = new PathfindingSystem();
 		const collection = this.game.registry.get('collection') as
@@ -234,10 +237,17 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('request-set-speed', this.onSetSpeed);
 
+		// Set HUD-related registry values BEFORE launching UIScene
+		this.game.registry.set('initialEnergy', this.energySystem.getEnergy());
+		this.game.registry.set('initialLives', this.playerHp);
+		this.game.registry.set('initialDeck', this.playerDeck.getCards());
+
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
 		EventBus.emit('deck-loaded', { cards: this.playerDeck.getCards() });
 		EventBus.emit('current-scene-ready', this);
+
+		this.scene.launch('UIScene');
 
 		void this.prefetchOptionalAssets();
 		const tutorialCompleted = this.game.registry.get('tutorialCompleted') as
@@ -699,6 +709,8 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.destroy();
 		this.playerDeck.reset();
 		this.energySystem.reset();
+
+		this.scene.stop('UIScene');
 
 		unloadAssetSections(
 			this,

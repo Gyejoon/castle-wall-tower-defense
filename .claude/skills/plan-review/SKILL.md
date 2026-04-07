@@ -137,7 +137,9 @@ Spec scope:
 
 ---
 
-## Step 1: autoplan 실행
+## Step 1: autoplan Phase 1 (CEO) + CEO 스펙 검증
+
+### 1-1. Phase 1 실행
 
 autoplan 스킬을 읽고 전체 파이프라인을 실행한다:
 
@@ -146,9 +148,55 @@ Read ~/.claude/skills/gstack/autoplan/SKILL.md
 ```
 
 autoplan의 모든 섹션(Preamble, 6 Decision Principles, Decision Audit Trail,
-Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 2뿐이다.
+Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 1 이후 검증, Phase 2 미학 리뷰, Phase 3 이후 검증이다.
 
-**Phase 1 (CEO)**: autoplan 그대로 실행. 변경 없음.
+**Phase 1 (CEO)**: autoplan 그대로 실행.
+
+### 1-2. CEO 스펙 검증
+
+Phase 1 완료 후, Step 0-4에서 Phase 1에 할당된 스펙 문서를 `docs/game-spec/`에서 읽고 검증한다.
+
+#### CEO 검증 차원
+
+| 차원 | 대조 문서 | 검증 내용 |
+|------|---------|---------|
+| 코어 루프 정합 | 01-GDD §3 (Core Loop / Meta Loop) | Plan이 코어 루프(배치→웨이브→보상)나 메타 루프(성장→도전)를 변경/확장하는가? 변경 시 GDD의 정의와 충돌하지 않는가? |
+| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 7대 코어 시스템과 충돌하지 않는가? |
+| 수익화 원칙 | 03-BM §1 (BM 구조) | Plan이 BM 금지선(진입장벽, pay-to-win, 강제 광고, 밸런스 영향 코스메틱)을 위반하는가? |
+| 타임라인 정합 | 06-milestone (출시 전) | Plan의 작업이 현재 Phase 위치와 맞는가? 미래 Phase 기능을 선행하고 있지 않은가? |
+| 게임 정체성 | 01-GDD §10 (Edge Point) | Plan이 게임의 Edge Point(세로형 single-field, 즉시 시작, 10웨이브 밀도, 4타워 에너지 관리)를 희석하는가? |
+
+#### 판정 기준
+
+각 차원에 대해:
+- **PASS**: Plan이 스펙과 일치하거나 스펙이 다루지 않는 영역
+- **CONFLICT**: Plan이 스펙에 명시된 내용과 직접 모순
+- **DRIFT**: Plan이 스펙의 의도에서 벗어나지만 직접 모순은 아님
+
+#### 충돌 리포트
+
+검증 결과를 다음 형식으로 Plan 파일에 기록한다:
+
+```markdown
+## 스펙 검증: Phase 1 (CEO)
+
+| 차원 | 대조 문서 | 결과 |
+|------|---------|------|
+| 코어 루프 정합 | 01-GDD §3 | ✅ PASS |
+| 시스템 범위 | 01-GDD §4 | ❌ CONFLICT |
+| ... | ... | ... |
+```
+
+CONFLICT가 있으면 상세 리포트를 추가한다 (리포트 형식은 Step 4 참조).
+
+**❌ CONFLICT가 1건 이상이면 Phase 2로 진행할 수 없다.**
+사용자에게 두 선택지를 제시한다:
+- **A) Plan 수정**: 해당 부분을 스펙에 맞게 수정
+- **B) 스펙 업데이트**: 스펙이 낡았다면 스펙 문서를 먼저 업데이트
+
+어느 쪽이든 수정 후 해당 Phase의 스펙 검증만 재실행한다 (전체 재실행 불필요).
+
+⚠️ DRIFT는 경고로 기록하되 진행을 막지 않는다.
 
 ---
 

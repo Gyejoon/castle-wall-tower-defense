@@ -46,12 +46,12 @@ export function PhaserGame() {
 		});
 
 		return () => {
-			unsubDmgNumbers();
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
 			// cleanup, so we keep the game alive. On real unmount (key change
 			// or route change) the container is disconnected and we destroy.
 			if (!container.isConnected) {
+				unsubDmgNumbers();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

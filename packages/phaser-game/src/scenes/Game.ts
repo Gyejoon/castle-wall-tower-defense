@@ -94,6 +94,9 @@ export class GameScene extends Phaser.Scene {
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
 	private damageNumbers!: DamageNumberSystem;
+	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
+		this.damageNumbers.setEnabled(value);
+	};
 
 	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
@@ -193,9 +196,7 @@ export class GameScene extends Phaser.Scene {
 		this.damageNumbers.setEnabled(showDmgNumbers !== false);
 		this.game.registry.events.on(
 			'changedata-showDamageNumbers',
-			(_parent: unknown, value: boolean) => {
-				this.damageNumbers.setEnabled(value);
-			},
+			this.onDmgNumbersChange,
 		);
 
 		this.events.on('shutdown', this.cleanup, this);
@@ -711,6 +712,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		this.game.registry.events.off(
+			'changedata-showDamageNumbers',
+			this.onDmgNumbersChange,
+		);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();

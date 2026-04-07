@@ -191,6 +191,12 @@ export class GameScene extends Phaser.Scene {
 			| boolean
 			| undefined;
 		this.damageNumbers.setEnabled(showDmgNumbers !== false);
+		this.game.registry.events.on(
+			'changedata-showDamageNumbers',
+			(_parent: unknown, value: boolean) => {
+				this.damageNumbers.setEnabled(value);
+			},
+		);
 
 		this.events.on('shutdown', this.cleanup, this);
 

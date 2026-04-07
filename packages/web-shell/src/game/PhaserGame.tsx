@@ -36,7 +36,17 @@ export function PhaserGame() {
 		);
 		gameRef.current = game;
 
+		// Sync showDamageNumbers setting to Phaser registry in real-time
+		let prevShowDmg = useGameStore.getState().showDamageNumbers;
+		const unsubDmgNumbers = useGameStore.subscribe((state) => {
+			if (state.showDamageNumbers !== prevShowDmg) {
+				prevShowDmg = state.showDamageNumbers;
+				gameRef.current?.registry.set('showDamageNumbers', prevShowDmg);
+			}
+		});
+
 		return () => {
+			unsubDmgNumbers();
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
 			// cleanup, so we keep the game alive. On real unmount (key change

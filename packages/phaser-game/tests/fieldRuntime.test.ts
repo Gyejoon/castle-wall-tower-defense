@@ -149,7 +149,7 @@ describe('GameScene field runtime', () => {
 		const scene = new GameScene();
 
 		Object.assign(scene, {
-			game: { registry: { get: vi.fn(() => undefined), set: vi.fn() } },
+			game: { registry: { get: vi.fn(() => undefined), set: vi.fn(), events: { on: vi.fn() } } },
 			scale: { width: 424, height: 960 },
 			add: {
 				image: addImage,

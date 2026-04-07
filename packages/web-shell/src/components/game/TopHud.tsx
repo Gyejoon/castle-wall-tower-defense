@@ -3,11 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 import { BossHpBar } from './BossHpBar';
 
-/** Increments a counter each time `value` changes, used as a React key to replay CSS animations */
+/** Increments a counter each time `value` changes, used as a React key to replay CSS animations.
+ *  Returns 0 on initial mount (no animation), 1+ on subsequent changes. */
 function useFlashKey(value: number): number {
 	const prevRef = useRef(value);
+	const mountedRef = useRef(false);
 	const [key, setKey] = useState(0);
 	useEffect(() => {
+		if (!mountedRef.current) {
+			mountedRef.current = true;
+			return;
+		}
 		if (prevRef.current !== value) {
 			prevRef.current = value;
 			setKey((k) => k + 1);
@@ -62,7 +68,10 @@ export function TopHud({
 			>
 				<div
 					key={`hp-${hpFlash}`}
-					className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)] hud-flash"
+					className={cn(
+						'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+						hpFlash > 0 && 'hud-flash',
+					)}
 					style={{ background: 'rgba(192,48,32,0.16)' }}
 				>
 					HP {lives}

@@ -273,6 +273,73 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
+  // wall-smoke.png (192x32, 8 frames x 24x32) — 성벽 연기
+  {
+    const FW = 24, FH = 32, FRAMES = 8;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const cx = 12, cy = 20;
+      // Smoke rises y -1~-3px per frame
+      const rise = -1 - (f % 3);
+      // Alpha cycle: 0.15→0.45→0.15 (breathing)
+      const t = f / (FRAMES - 1);
+      const alpha = 0.15 + 0.30 * Math.sin(t * Math.PI);
+      // Cloud radius varies 6~10
+      const radius = 6 + Math.round(4 * Math.sin(t * Math.PI));
+      // Main smoke cloud
+      fillCircle(ctx, ox + cx, cy + rise, radius, `rgba(180,180,180,${alpha.toFixed(2)})`);
+      // Secondary smaller cloud
+      fillCircle(ctx, ox + cx + 3, cy + rise - 2, Math.max(3, radius - 3), `rgba(160,160,160,${(alpha * 0.7).toFixed(2)})`);
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/wall-smoke.png`);
+    entries.push({
+      key: 'vfx-wall-smoke', type: 'spritesheet',
+      path: 'assets/vfx/wall-smoke.png',
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
+  // wall-fire.png (192x32, 8 frames x 24x32) — 성벽 화염
+  {
+    const FW = 24, FH = 32, FRAMES = 8;
+    const { canvas, ctx } = makeCanvas(FW * FRAMES, FH);
+    for (let f = 0; f < FRAMES; f++) {
+      const ox = f * FW;
+      const cx = 12, cy = 22;
+      // Fire flicker: y variation -1~-5px
+      const flicker = -1 - (f * 7 % 5);
+
+      // Fire tip (outermost, dimmer)
+      fillCircle(ctx, ox + cx, cy + flicker - 4, 3, 'rgba(200,40,10,0.6)');
+
+      // Fire mid
+      fillCircle(ctx, ox + cx, cy + flicker - 1, 4, 'rgba(255,120,20,0.8)');
+
+      // Fire core (brightest, smallest)
+      fillCircle(ctx, ox + cx, cy + 1, 3, 'rgba(255,200,50,0.9)');
+
+      // Fire tongues: 2 triangles (left/right)
+      const tongueY = cy + flicker - 2;
+      // Left tongue
+      for (let ty = 0; ty < 5; ty++) {
+        const tw = Math.max(1, 3 - ty);
+        drawRect(ctx, ox + cx - 5, tongueY - ty, tw, 1, `rgba(255,120,20,${(0.7 - ty * 0.12).toFixed(2)})`);
+      }
+      // Right tongue
+      for (let ty = 0; ty < 5; ty++) {
+        const tw = Math.max(1, 3 - ty);
+        drawRect(ctx, ox + cx + 4, tongueY - ty, tw, 1, `rgba(255,120,20,${(0.7 - ty * 0.12).toFixed(2)})`);
+      }
+    }
+    saveCanvas(canvas, `${OUTPUT_DIR}/wall-fire.png`);
+    entries.push({
+      key: 'vfx-wall-fire', type: 'spritesheet',
+      path: 'assets/vfx/wall-fire.png',
+      frameWidth: FW, frameHeight: FH, frameCount: FRAMES,
+    });
+  }
+
   return entries;
 }
 

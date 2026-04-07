@@ -83,6 +83,12 @@ export const PALETTE = {
   elementLightning: '#f39c12',  // 번개 속성
   elementLightningGlow: '#f7b731', // 번개 속성 글로우
   elementNeutral:   '#c8a04a',  // 무 속성 (기존 laser 색상)
+  // Castle wall stone
+  castleStone: {
+    dark: '#626567', mid: '#717d7e', light: '#8a9698',
+    joint: '#3c4f51', shadow: '#283d40', merlon: '#76868a',
+    moss: '#3d5a3e', gate: '#0d1117',
+  },
 } as const;
 
 export const ELEMENT_COLORS = {

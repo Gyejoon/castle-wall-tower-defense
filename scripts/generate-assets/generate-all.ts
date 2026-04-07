@@ -13,6 +13,7 @@ import type { ManifestEntry } from './shared';
 import { generate as generateTowers } from './generate-towers';
 import { generate as generateUi } from './generate-ui';
 import { generate as generateUnits } from './generate-units';
+import { generate as generateCastleWall } from './generate-castle-wall';
 import { generate as generateVfx } from './generate-vfx';
 import { generate as generateRarityFrames } from './generate-rarity-frames';
 import { generate as generateTiles } from './generate-tiles';
@@ -60,6 +61,7 @@ export async function generateAllAssets() {
 		towers,
 		units,
 		projectiles,
+		castleWall,
 		vfx,
 		ui,
 		resultUi,
@@ -84,6 +86,10 @@ export async function generateAllAssets() {
 		}),
 		generateProjectiles().then((result) => {
 			console.log('[projectiles] done');
+			return result;
+		}),
+		generateCastleWall().then((result) => {
+			console.log('[castle-wall] done');
 			return result;
 		}),
 		generateVfx().then((result) => {
@@ -129,6 +135,7 @@ export async function generateAllAssets() {
 		...towers,
 		...units,
 		...projectiles,
+		...castleWall,
 		...vfx,
 		...ui,
 		...resultUi,

@@ -575,7 +575,12 @@ export class GameScene extends Phaser.Scene {
 		towerSystem: Pick<TowerSystem, 'update'>,
 		unitSystem: Pick<
 			UnitSystem,
-			'applyDamage' | 'applySlow' | 'applyStun' | 'getUnitPositions' | 'getUnitWorldPos' | 'update'
+			| 'applyDamage'
+			| 'applySlow'
+			| 'applyStun'
+			| 'getUnitPositions'
+			| 'getUnitWorldPos'
+			| 'update'
 		>,
 		time: number,
 		delta: number,

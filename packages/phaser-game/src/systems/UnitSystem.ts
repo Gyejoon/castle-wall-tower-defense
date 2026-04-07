@@ -231,7 +231,11 @@ export class UnitSystem {
 		);
 		const hpRatio = Math.max(0, hp / maxHp);
 		const barColor =
-			hpRatio > 0.5 ? PHASER_COLORS.success : hpRatio > 0.25 ? PHASER_COLORS.gold : PHASER_COLORS.danger;
+			hpRatio > 0.5
+				? PHASER_COLORS.success
+				: hpRatio > 0.25
+					? PHASER_COLORS.gold
+					: PHASER_COLORS.danger;
 		graphics.fillStyle(barColor, 1);
 		graphics.fillRect(x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
 	}

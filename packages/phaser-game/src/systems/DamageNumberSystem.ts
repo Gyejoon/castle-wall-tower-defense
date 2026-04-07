@@ -1,5 +1,5 @@
 import { PHASER_COLORS } from '@gld/shared';
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 
 const POOL_SIZE = 24;
 const FLOAT_DURATION = 600; // ms
@@ -7,6 +7,10 @@ const FLOAT_DISTANCE = 24; // px upward
 const FONT_SIZE = '8px';
 const FONT_FAMILY = "'Galmuri11', 'Press Start 2P', cursive";
 const DEPTH = 80; // above units, below UI overlays
+
+function toHexStr(n: number): string {
+	return `#${n.toString(16).padStart(6, '0')}`;
+}
 
 interface FloatingNumber {
 	text: Phaser.GameObjects.Text;
@@ -20,13 +24,13 @@ export class DamageNumberSystem {
 	private pool: FloatingNumber[] = [];
 	private enabled = true;
 
-	constructor(private scene: Phaser.Scene) {
+	constructor(scene: Phaser.Scene) {
 		for (let i = 0; i < POOL_SIZE; i++) {
 			const text = scene.add
 				.text(0, 0, '', {
 					fontFamily: FONT_FAMILY,
 					fontSize: FONT_SIZE,
-					color: `#${PHASER_COLORS.text.toString(16).padStart(6, '0')}`,
+					color: toHexStr(PHASER_COLORS.text),
 					stroke: '#000000',
 					strokeThickness: 2,
 				})
@@ -61,9 +65,7 @@ export class DamageNumberSystem {
 		if (!entry) return; // all slots in use, skip
 
 		const hexColor = isCritical ? PHASER_COLORS.gold : PHASER_COLORS.text;
-		entry.text.setColor(
-			`#${hexColor.toString(16).padStart(6, '0')}`,
-		);
+		entry.text.setColor(toHexStr(hexColor));
 		entry.text.setText(String(damage));
 		entry.text.setPosition(x, y - 16); // offset above unit center
 		entry.text.setVisible(true);

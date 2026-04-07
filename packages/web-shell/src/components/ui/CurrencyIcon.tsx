@@ -1,4 +1,8 @@
-/** Pixel-art currency icons — replaces emoji for cross-platform consistency */
+/**
+ * Pixel-art currency icons — replaces emoji for cross-platform consistency.
+ * Base colors: info (#5bc8e8), gold (#f0d060), accent (#c8a04a) from design tokens.
+ * Highlight/shadow tints (#8dd8f0, #3ab0d8) are derived variants for SVG depth.
+ */
 
 export function DiamondIcon({ size = 12 }: { size?: number }) {
 	return (

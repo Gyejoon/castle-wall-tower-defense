@@ -225,20 +225,173 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
-  // Lock/unlock icons (32x32 each)
-  for (const state of ['locked', 'unlocked']) {
+  // Lock icon (32x32) — medieval iron padlock, pixel art
+  {
     const { canvas, ctx } = makeCanvas(32, 32);
-    const color = state === 'locked' ? PALETTE.gray : PALETTE.gold;
-    fillCircle(ctx, 16, 16, 12, color);
-    if (state === 'locked') {
-      drawLine(ctx, 10, 10, 22, 22, PALETTE.shadow);
-      drawLine(ctx, 22, 10, 10, 22, PALETTE.shadow);
-    } else {
-      drawLine(ctx, 10, 16, 14, 22, PALETTE.shadow);
-      drawLine(ctx, 14, 22, 24, 10, PALETTE.shadow);
+    // Medieval iron palette
+    const iron = '#6a6a72';
+    const ironLight = '#8a8a94';
+    const ironDark = '#3a3a42';
+    const ironDeep = '#24242c';
+    const bronze = '#8a6a3a';
+    const bronzeLight = '#b8944a';
+    const keyholeGold = '#c8a04a';
+    const keyholeDark = '#1a1208';
+
+    // === Shackle (forged iron arch) ===
+    // Outer arch
+    const shacklePixels: [number, number, string][] = [
+      // Top curve
+      [13,3,ironLight],[14,2,ironLight],[15,2,ironLight],[16,2,ironLight],[17,2,ironLight],[18,3,ironLight],
+      [12,4,iron],[19,4,iron],
+      [11,5,iron],[20,5,iron],
+      [11,6,iron],[20,6,iron],
+      [11,7,iron],[20,7,iron],
+      [11,8,iron],[20,8,iron],
+      [11,9,iron],[20,9,iron],
+      [11,10,iron],[20,10,iron],
+      [11,11,iron],[20,11,iron],
+      [11,12,iron],[20,12,iron],
+      // Inner arch highlight
+      [13,4,ironLight],[14,3,ironLight],[15,3,ironLight],[16,3,ironLight],[17,3,ironLight],[18,4,ironLight],
+      // Inner hole
+      [13,5,ironDark],[14,4,ironDark],[15,4,ironDark],[16,4,ironDark],[17,4,ironDark],[18,5,ironDark],
+      [13,6,ironDark],[18,6,ironDark],
+      [13,7,ironDark],[18,7,ironDark],
+      [13,8,ironDark],[18,8,ironDark],
+      [13,9,ironDark],[18,9,ironDark],
+      [13,10,ironDark],[18,10,ironDark],
+      [13,11,ironDark],[18,11,ironDark],
+      [13,12,ironDark],[18,12,ironDark],
+      // Shackle thickness fill
+      [12,5,iron],[12,6,iron],[12,7,iron],[12,8,iron],[12,9,iron],[12,10,iron],[12,11,iron],[12,12,iron],
+      [19,5,iron],[19,6,iron],[19,7,iron],[19,8,iron],[19,9,iron],[19,10,iron],[19,11,iron],[19,12,iron],
+      // Left shadow edge
+      [10,5,ironDark],[10,6,ironDark],[10,7,ironDark],[10,8,ironDark],[10,9,ironDark],[10,10,ironDark],[10,11,ironDark],[10,12,ironDark],
+      // Right highlight
+      [21,5,ironLight],[21,6,ironLight],[21,7,ironLight],[21,8,ironLight],[21,9,ironLight],[21,10,ironLight],[21,11,ironLight],[21,12,ironLight],
+    ];
+    for (const [x, y, c] of shacklePixels) setPixel(ctx, x, y, c);
+
+    // === Body (rounded rectangle with medieval plate feel) ===
+    // Main body fill
+    drawRect(ctx, 7, 13, 18, 14, iron);
+    // Top edge highlight
+    drawRect(ctx, 8, 13, 16, 1, ironLight);
+    // Bottom edge shadow
+    drawRect(ctx, 7, 26, 18, 1, ironDeep);
+    // Left shadow
+    for (let y = 13; y <= 26; y++) setPixel(ctx, 7, y, ironDark);
+    // Right highlight
+    for (let y = 13; y <= 25; y++) setPixel(ctx, 24, y, ironLight);
+    // Rounded corners
+    ctx.clearRect(7, 13, 1, 1);
+    ctx.clearRect(24, 13, 1, 1);
+    ctx.clearRect(7, 26, 1, 1);
+    ctx.clearRect(24, 26, 1, 1);
+
+    // Bronze decorative band (horizontal stripe)
+    drawRect(ctx, 8, 14, 16, 1, bronze);
+    drawRect(ctx, 8, 25, 16, 1, bronze);
+
+    // Bronze corner rivets
+    for (const [rx, ry] of [[9,15],[22,15],[9,24],[22,24]]) {
+      setPixel(ctx, rx, ry, bronzeLight);
     }
-    saveCanvas(canvas, `${OUTPUT_DIR}/icon-${state}.png`);
-    entries.push({ key: `ui-icon-${state}`, type: 'image', path: `assets/ui/icon-${state}.png` });
+
+    // === Keyhole (classic medieval shape) ===
+    // Circle top
+    fillCircle(ctx, 16, 19, 2, keyholeDark);
+    setPixel(ctx, 16, 17, keyholeDark);
+    // Slit bottom
+    setPixel(ctx, 15, 21, keyholeDark);
+    setPixel(ctx, 16, 21, keyholeDark);
+    setPixel(ctx, 15, 22, keyholeDark);
+    setPixel(ctx, 16, 22, keyholeDark);
+    setPixel(ctx, 15, 23, keyholeDark);
+    setPixel(ctx, 16, 23, keyholeDark);
+    // Keyhole gold rim
+    setPixel(ctx, 14, 18, keyholeGold);
+    setPixel(ctx, 18, 18, keyholeGold);
+    setPixel(ctx, 14, 20, keyholeGold);
+    setPixel(ctx, 17, 20, keyholeGold);
+    setPixel(ctx, 14, 21, keyholeGold);
+    setPixel(ctx, 17, 21, keyholeGold);
+
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-locked.png`);
+    entries.push({ key: 'ui-icon-locked', type: 'image', path: 'assets/ui/icon-locked.png' });
+  }
+
+  // Unlock icon (32x32) — same medieval iron padlock, shackle open
+  {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    const iron = '#6a6a72';
+    const ironLight = '#8a8a94';
+    const ironDark = '#3a3a42';
+    const ironDeep = '#24242c';
+    const bronze = '#8a6a3a';
+    const bronzeLight = '#b8944a';
+    const keyholeGold = '#c8a04a';
+
+    // === Open shackle (right side lifted up) ===
+    // Left leg stays attached
+    [10,11,12].forEach(x => {
+      for (let y = 5; y <= 12; y++) {
+        setPixel(ctx, x, y, x === 10 ? ironDark : iron);
+      }
+    });
+    // Arch curves up and right side is lifted
+    const archPixels: [number, number, string][] = [
+      [13,3,ironLight],[14,2,ironLight],[15,2,ironLight],[16,2,ironLight],[17,2,ironLight],[18,3,ironLight],
+      [12,4,iron],[19,4,iron],
+      [13,4,ironLight],[14,3,ironLight],[15,3,ironLight],[16,3,ironLight],[17,3,ironLight],[18,4,ironLight],
+      [13,5,ironDark],[14,4,ironDark],[15,4,ironDark],[16,4,ironDark],[17,4,ironDark],[18,5,ironDark],
+      // Right leg lifted — only goes to y=7
+      [19,5,iron],[20,5,iron],[21,5,ironLight],
+      [19,6,iron],[20,6,iron],[21,6,ironLight],
+      [19,7,iron],[20,7,iron],[21,7,ironLight],
+    ];
+    for (const [x, y, c] of archPixels) setPixel(ctx, x, y, c);
+
+    // === Body (same iron as locked) ===
+    drawRect(ctx, 7, 13, 18, 14, iron);
+    drawRect(ctx, 8, 13, 16, 1, ironLight);
+    drawRect(ctx, 7, 26, 18, 1, ironDeep);
+    for (let y = 13; y <= 26; y++) setPixel(ctx, 7, y, ironDark);
+    for (let y = 13; y <= 25; y++) setPixel(ctx, 24, y, ironLight);
+    ctx.clearRect(7, 13, 1, 1);
+    ctx.clearRect(24, 13, 1, 1);
+    ctx.clearRect(7, 26, 1, 1);
+    ctx.clearRect(24, 26, 1, 1);
+
+    // Bronze bands
+    drawRect(ctx, 8, 14, 16, 1, bronze);
+    drawRect(ctx, 8, 25, 16, 1, bronze);
+
+    // Rivets
+    for (const [rx, ry] of [[9,15],[22,15],[9,24],[22,24]]) {
+      setPixel(ctx, rx, ry, bronzeLight);
+    }
+
+    // Keyhole (same as locked)
+    const keyholeDark = '#1a1208';
+    fillCircle(ctx, 16, 19, 2, keyholeDark);
+    setPixel(ctx, 16, 17, keyholeDark);
+    setPixel(ctx, 15, 21, keyholeDark);
+    setPixel(ctx, 16, 21, keyholeDark);
+    setPixel(ctx, 15, 22, keyholeDark);
+    setPixel(ctx, 16, 22, keyholeDark);
+    setPixel(ctx, 15, 23, keyholeDark);
+    setPixel(ctx, 16, 23, keyholeDark);
+    setPixel(ctx, 14, 18, keyholeGold);
+    setPixel(ctx, 18, 18, keyholeGold);
+    setPixel(ctx, 14, 20, keyholeGold);
+    setPixel(ctx, 17, 20, keyholeGold);
+    setPixel(ctx, 14, 21, keyholeGold);
+    setPixel(ctx, 17, 21, keyholeGold);
+
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-unlocked.png`);
+    entries.push({ key: 'ui-icon-unlocked', type: 'image', path: 'assets/ui/icon-unlocked.png' });
   }
 
   // Close icon (32x32)

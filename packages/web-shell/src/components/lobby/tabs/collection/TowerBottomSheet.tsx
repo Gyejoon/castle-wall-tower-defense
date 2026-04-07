@@ -71,6 +71,11 @@ export function TowerBottomSheet({
 				pushToast('승급 실패... 골드만 소모되었습니다', 'warning');
 			} else if (result === 'no_gold') {
 				pushToast('골드가 부족합니다', 'warning');
+			} else if (result === 'level_too_low') {
+				pushToast(
+					`Lv.${promoConfig.requiredLevel} 이상이어야 승급할 수 있습니다`,
+					'warning',
+				);
 			}
 			const clearTimer = setTimeout(() => setPromotionResult(null), 1500);
 			timersRef.current.push(clearTimer);
@@ -88,6 +93,9 @@ export function TowerBottomSheet({
 	const cost = owned ? enhancementCost(level, def.tier) : 0;
 	const canEnhance = owned && level < MAX_TOWER_LEVEL && profile.gold >= cost;
 	const promoConfig = PROMOTION_CONFIG[grade];
+	const meetsLevelReq = promoConfig.nextGrade
+		? level >= promoConfig.requiredLevel
+		: true;
 
 	return (
 		<div
@@ -237,11 +245,30 @@ export function TowerBottomSheet({
 							성공률 {(promoConfig.successRate * 100).toFixed(0)}%
 						</span>
 					</div>
+					{!meetsLevelReq && (
+						<div className="flex items-center gap-1 font-pixel text-[10px]">
+							<img
+								src="assets/ui/icon-locked.webp"
+								alt="잠김"
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated]"
+							/>
+							<span style={{ color: colors.danger }}>
+								Lv.{level} / {promoConfig.requiredLevel} —{' '}
+								{promoConfig.requiredLevel - level}레벨 더 필요
+							</span>
+						</div>
+					)}
 					<PixelButton
 						variant="secondary"
 						style={{ width: '100%', fontSize: '12px' }}
 						onClick={handlePromote}
-						disabled={promoting || profile.gold < promoConfig.goldCost}
+						disabled={
+							promoting ||
+							profile.gold < promoConfig.goldCost ||
+							!meetsLevelReq
+						}
 					>
 						{promoting ? '승급 중...' : `승급 시도 (${promoConfig.goldCost}G)`}
 					</PixelButton>

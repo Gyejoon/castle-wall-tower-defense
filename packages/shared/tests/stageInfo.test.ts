@@ -21,16 +21,16 @@ describe('stageInfo', () => {
 	});
 
 	describe('getMaxGoldForMap', () => {
-		it('forest_gate returns 1238 gold (all bounties ×1)', () => {
-			expect(getMaxGoldForMap('forest_gate')).toBe(1238);
+		it('forest_gate returns 848 gold (all bounties ×1)', () => {
+			expect(getMaxGoldForMap('forest_gate')).toBe(848);
 		});
 
-		it('lava_fortress returns 3230 gold (×2 multiplier)', () => {
-			expect(getMaxGoldForMap('lava_fortress')).toBe(3230);
+		it('lava_fortress returns 2354 gold (×2 multiplier)', () => {
+			expect(getMaxGoldForMap('lava_fortress')).toBe(2354);
 		});
 
-		it('storm_citadel returns 6279 gold (×3 multiplier)', () => {
-			expect(getMaxGoldForMap('storm_citadel')).toBe(6279);
+		it('storm_citadel returns 4254 gold (×3 multiplier)', () => {
+			expect(getMaxGoldForMap('storm_citadel')).toBe(4254);
 		});
 
 		it('returns 0 for unknown map', () => {

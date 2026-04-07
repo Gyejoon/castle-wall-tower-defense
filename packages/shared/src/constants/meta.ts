@@ -19,7 +19,7 @@ export function enhancementStatMultiplier(level: number): number {
 	return 1 + (level - 1) * 0.03;
 }
 
-export const MAX_TOWER_LEVEL = 30;
+export const MAX_TOWER_LEVEL = 50;
 
 export const PROMOTION_CONFIG = {
 	normal: {
@@ -27,20 +27,29 @@ export const PROMOTION_CONFIG = {
 		goldCost: 500,
 		successRate: 0.8,
 		statBonus: 0.1,
+		requiredLevel: 20,
 	},
 	rare: {
 		nextGrade: 'unique' as TowerGrade,
 		goldCost: 2000,
 		successRate: 0.5,
 		statBonus: 0.15,
+		requiredLevel: 30,
 	},
 	unique: {
 		nextGrade: 'epic' as TowerGrade,
 		goldCost: 8000,
 		successRate: 0.25,
 		statBonus: 0.2,
+		requiredLevel: 50,
 	},
-	epic: { nextGrade: null, goldCost: 0, successRate: 0, statBonus: 0 },
+	epic: {
+		nextGrade: null,
+		goldCost: 0,
+		successRate: 0,
+		statBonus: 0,
+		requiredLevel: 0,
+	},
 } as const;
 
 const GRADE_BONUS: Record<TowerGrade, number> = {

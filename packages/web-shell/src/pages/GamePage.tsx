@@ -1,5 +1,5 @@
-import { soundGenerator } from '@gld/phaser-game';
-import { useEffect } from 'react';
+import { EventBus, soundGenerator } from '@gld/phaser-game';
+import { useCallback, useEffect, useState } from 'react';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
@@ -31,7 +31,26 @@ export function GamePage() {
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
 
-	const { waitCountdown } = useGameEvents();
+	const { waitCountdown, selectedTower } = useGameEvents();
+	const [showExitModal, setShowExitModal] = useState(false);
+
+	// iOS AudioContext unlock on first user gesture
+	useEffect(() => {
+		const unlockAudio = () => {
+			soundGenerator.unlock();
+			document.removeEventListener('pointerdown', unlockAudio);
+			document.removeEventListener('touchstart', unlockAudio);
+			document.removeEventListener('click', unlockAudio);
+		};
+		document.addEventListener('pointerdown', unlockAudio);
+		document.addEventListener('touchstart', unlockAudio);
+		document.addEventListener('click', unlockAudio);
+		return () => {
+			document.removeEventListener('pointerdown', unlockAudio);
+			document.removeEventListener('touchstart', unlockAudio);
+			document.removeEventListener('click', unlockAudio);
+		};
+	}, []);
 
 	useEffect(() => {
 		const handleVisibility = () => {
@@ -50,6 +69,30 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
+	const handleExitRequest = useCallback(() => {
+		if (runStatus !== 'running') return;
+		setShowExitModal(true);
+		EventBus.emit('request-pause');
+	}, [runStatus]);
+
+	const handleExitConfirm = useCallback(() => {
+		setShowExitModal(false);
+		enterLobby();
+	}, [enterLobby]);
+
+	const handleExitCancel = useCallback(() => {
+		setShowExitModal(false);
+		EventBus.emit('request-resume');
+	}, []);
+
+	const handleSellTower = useCallback(() => {
+		if (!selectedTower) return;
+		EventBus.emit('request-sell-tower', {
+			col: selectedTower.col,
+			row: selectedTower.row,
+		});
+	}, [selectedTower]);
+
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
@@ -66,6 +109,7 @@ export function GamePage() {
 					runStatus={runStatus}
 					onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
 					bossHpVisible={bossHp.visible}
+					onExitRequest={handleExitRequest}
 				/>
 
 				{/* Game Area */}
@@ -94,6 +138,76 @@ export function GamePage() {
 					)}
 
 					<ToastNotification toast={toast} />
+
+					{/* Tower Sell Panel */}
+					{selectedTower &&
+						runStatus !== 'victory' &&
+						runStatus !== 'defeat' && (
+							<div
+								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
+								style={{ background: 'rgba(42, 32, 16, 0.95)' }}
+							>
+								<span className="text-text">
+									{selectedTower.towerName}
+								</span>
+								<button
+									className="border border-danger px-2 py-1 text-danger"
+									style={{ background: 'rgba(192,48,32,0.2)' }}
+									onClick={handleSellTower}
+								>
+									판매{' '}
+									<span className="inline-flex items-center gap-[2px]">
+										<img
+											src="assets/ui/icon-energy.webp"
+											alt=""
+											width={10}
+											height={10}
+											className="[image-rendering:pixelated]"
+										/>
+										+{selectedTower.refund}
+									</span>
+								</button>
+							</div>
+						)}
+
+					{/* Exit Confirm Modal */}
+					{showExitModal && runStatus === 'running' && (
+						<div
+							className="absolute inset-0 z-[10] flex items-center justify-center"
+							style={{
+								background: 'rgba(0,0,0,0.6)',
+								animation: 'fadeIn 0.2s ease-out',
+							}}
+						>
+							<div
+								className="flex flex-col items-center gap-4 border border-border px-6 py-5"
+								style={{ background: 'var(--color-panel)' }}
+							>
+								<p className="font-pixel text-[13px] text-text">
+									정말 나가시겠습니까?
+								</p>
+								<p className="font-pixel text-[9px] text-text-secondary">
+									진행 상황이 저장되지 않습니다
+								</p>
+								<div className="flex gap-3">
+									<button
+										className="border border-danger px-4 py-2 font-pixel text-[11px] text-danger"
+										style={{ background: 'rgba(192,48,32,0.2)' }}
+										onClick={handleExitConfirm}
+									>
+										나가기
+									</button>
+									<button
+										className="border border-accent px-4 py-2 font-pixel text-[11px] text-accent"
+										style={{ background: 'rgba(200,160,74,0.2)' }}
+										onClick={handleExitCancel}
+									>
+										계속하기
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
 						<GameOverScreen

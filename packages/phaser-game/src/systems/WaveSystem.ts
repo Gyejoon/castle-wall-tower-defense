@@ -1,5 +1,6 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -162,6 +163,9 @@ export class WaveSystem {
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
 		// Spawn units
+		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
+		const waveHpMult = waveScale?.hp ?? 1;
+		const waveSpeedMult = waveScale?.speed ?? 1;
 		for (const group of wave.groups) {
 			const isBoss = group.unitId === 'titan';
 			const hpMultiplier =
@@ -172,6 +176,8 @@ export class WaveSystem {
 				countsTowardClear: true,
 				isBoss,
 				hpMultiplier,
+				waveHpMult,
+				waveSpeedMult,
 				waveSlot: wave.slotIndex,
 			});
 		}

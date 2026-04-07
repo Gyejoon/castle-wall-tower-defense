@@ -62,6 +62,14 @@ export interface GameEventMap {
 		groups: Array<{ unitId: string; unitName: string; count: number }>;
 	};
 	'tower-sold': { col: number; row: number; refund: number };
+	'tower-selected': {
+		towerDefId: string;
+		towerName: string;
+		col: number;
+		row: number;
+		refund: number;
+	};
+	'tower-deselected': undefined;
 	'tutorial-step': { step: number; message: string };
 	'tutorial-highlight-tiles': { tiles: Array<{ col: number; row: number }> };
 	'tutorial-action-completed': { step: number };

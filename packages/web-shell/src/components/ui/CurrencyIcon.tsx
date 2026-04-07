@@ -17,6 +17,7 @@ export function DiamondIcon({ size = 12 }: { size?: number }) {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"
+			style={{ display: 'inline-block', verticalAlign: 'middle' }}
 		>
 			<path d="M6 1L2 5L6 11L10 5L6 1Z" fill={colors.info} />
 			<path d="M6 1L2 5L6 6L10 5L6 1Z" fill={DIAMOND_HIGHLIGHT} />
@@ -34,6 +35,7 @@ export function CoinIcon({ size = 12 }: { size?: number }) {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"
+			style={{ display: 'inline-block', verticalAlign: 'middle' }}
 		>
 			<circle cx="6" cy="6" r="5" fill={colors.gold} />
 			<circle cx="6" cy="6" r="3.5" fill={colors.accent} />

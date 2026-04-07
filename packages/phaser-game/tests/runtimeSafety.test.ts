@@ -173,20 +173,20 @@ describe('runtime safety fixes', () => {
 		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
 		waveSystem.start();
 
-		// Advance through waves 1-3 (clear immediately since activeCount=0)
-		for (let i = 0; i < 3; i++) {
+		// Advance through waves 1-8 (clear immediately since activeCount=0)
+		for (let i = 0; i < 8; i++) {
 			waveSystem.update(100, 0); // clear current wave
-			waveSystem.update(3100, 0); // wait through delay
+			waveSystem.update(5100, 0); // wait through delay
 		}
 
-		// Now on wave 4 (pre_boss). Clear it.
+		// Now on wave 9 (pre_boss). Clear it.
 		waveSystem.update(100, 0);
 
 		expect(emitSpy).toHaveBeenCalledWith(
 			'boss-warning',
 			expect.objectContaining({
-				slotIndex: 4,
-				bossSlotIndex: 5,
+				slotIndex: 9,
+				bossSlotIndex: 10,
 			}),
 		);
 	});

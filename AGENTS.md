@@ -155,6 +155,8 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 
 활성 스펙과 플랜은 `docs/superpowers/` 아래에서 관리된다.
+`docs/superpowers/specs/`는 브레인스토밍/설계 단계의 드래프트이며, 구현 완료 후 `docs/game-spec/`에 반영해야 한다.
+**"스펙 문서"는 `docs/game-spec/`를 의미한다.** `docs/superpowers/specs/`는 설계 스펙(design spec)이다.
 
 ## 게임 스펙 문서 (`docs/game-spec/`)
 

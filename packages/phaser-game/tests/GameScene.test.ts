@@ -210,7 +210,7 @@ describe('GameScene', () => {
 			getUnitWorldPos: vi.fn(() => null),
 			applyDamage: vi.fn(),
 			applySlow: vi.fn(),
-			update: vi.fn(() => ({ reachedExit: ['unit-1'] })), // triggers damage
+			update: vi.fn(() => ({ reachedExit: [{ id: 'unit-1', isBoss: false }] })), // triggers damage
 			hasActiveUnits: vi.fn(() => true),
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 1),

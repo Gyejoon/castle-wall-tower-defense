@@ -181,10 +181,12 @@
 
 ### UI 구조
 
-- **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이
-  - HP 변화 시 scale flash 애니메이션 (250ms ease-out, 초기 마운트 시 스킵)
+- **Game HUD (Phaser UIScene)**: GameScene과 병렬 실행되는 UIScene에서 캔버스 내부 렌더링
+  - **TopHudUI**: HP(HP ≤ 3 시 blink tween), 에너지바(200ms tween), 웨이브/타이머(한국어 레이블), 2배속 토글(첫 클리어 후 해금)
+  - **BossHpBarUI**: 보스 등장 시 슬라이드인, Phase 1/2 색상 전환, Phase 2 맥박 tween, 처치 시 페이드아웃
+  - **DeckDockUI**: 4장 카드 선택 UI, 금색 glow tween 선택 표시, 에너지 부족 시 opacity 0.4, 터치 전파 차단
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
-  - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
+- **React 오버레이** (DOM): GameOverScreen, TutorialOverlay, BossWarningOverlay, ToastNotification
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
 - **Lobby**: Home 탭 (단일 "성벽 막기" 골드 버튼), Collection 탭, Missions 탭, Settings 탭
 - **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금/클리어 상태 표시, 권장 레벨 뱃지
@@ -293,3 +295,4 @@ SettingsTab (React) → gameStore.toggle*()
 | 2026-04-07 | 최초 작성 | Obsidian GDD 기반 |
 | 2026-04-07 | §8 UI/UX | 디자인 시스템 섹션 신설 (색상 토큰 13종, 타이포 5단계, 터치 타겟, HUD 애니메이션, 데미지 넘버, CurrencyIcon SVG) |
 | 2026-04-07 | §8, §9 | 토큰 아키텍처(단일 원천 + re-export), 설정 런타임 동기화 경로, HUD flash 초기 마운트 스킵 |
+| 2026-04-08 | §8 UI/UX | HUD를 React DOM에서 Phaser UIScene으로 마이그레이션 (TopHudUI, BossHpBarUI, DeckDockUI). React 오버레이는 유지 |

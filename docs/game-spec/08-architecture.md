@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-07
+> **Last Updated:** 2026-04-08
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -38,6 +38,9 @@ GridManager
 DeckSystem    (deckCards)
 DamageNumberSystem  (scene)
 EnergySystem  (standalone)
+registry.set(initialEnergy, initialLives, initialDeck)
+EventBus.emit(game-ready, energy-changed, deck-loaded)
+scene.launch('UIScene')  ─► TopHudUI, BossHpBarUI, DeckDockUI
 TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 
@@ -77,6 +80,7 @@ UnitSystem.destroy()
 WaveSystem.destroy()
 DeckSystem.reset()
 EnergySystem.reset()
+scene.stop('UIScene')  ─► handleShutdown → TopHudUI/BossHpBarUI/DeckDockUI destroy
 옵셔널 에셋 언로드
 ```
 
@@ -86,23 +90,34 @@ EnergySystem.reset()
 
 `EventBus.ts`에 정의된 `TypedEventBus`는 Phaser `Events.EventEmitter`를 래핑해 이벤트 이름과 페이로드를 `GameEventMap`으로 타입 안전하게 만든다.
 
+### Game → UIScene 이벤트 (Phaser 내부)
+
+HUD 관련 이벤트는 UIScene의 UI 컴포넌트가 직접 수신한다 (React를 거치지 않음).
+
+| 이벤트 | 발화 시점 | 주요 수신자 |
+|--------|----------|------------|
+| `energy-changed` | 에너지 변동 | TopHudUI (에너지바 tween) |
+| `player-damaged` | 유닛 exit 도달 | TopHudUI (HP 갱신, ≤3 blink) |
+| `wave-started` | 웨이브 시작 | TopHudUI (타이머/속도 토글) |
+| `wave-completed` | 웨이브 클리어 | TopHudUI (카운트다운) |
+| `deck-loaded` | 씬 초기화 | DeckDockUI (카드 빌드) |
+| `boss-hp-update` | 보스 피격 | BossHpBarUI (HP바 tween) |
+| `boss-phase-change` | 보스 2페이즈 돌입 | BossHpBarUI (Phase 2 pulse) |
+| `boss-defeated` | 보스 사망 | BossHpBarUI (페이드아웃) |
+| `tower-placed` | 배치 성공 | DeckDockUI (선택 해제) |
+| `request-set-speed` | 속도 토글 | TopHudUI (속도 버튼 갱신) |
+
 ### Game → React 이벤트
 
 | 이벤트 | 발화 시점 | 주요 수신자 |
 |--------|----------|------------|
 | `game-ready` | create() 완료 | PhaserGame.tsx → gameStore.setGameReady |
 | `current-scene-ready` | create() 완료 | PhaserGame.tsx |
-| `energy-changed` | 에너지 변동 | useGameEvents → gameStore.setEnergy |
 | `tower-placed` | 배치 시도 결과 | useGameEvents → 피드백 처리 |
-| `deck-loaded` | 씬 초기화 | useGameEvents → gameStore.setDeckCards |
-| `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
-| `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
+| `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running' |
 | `boss-warning` | pre_boss 웨이브 대기 진입 | useGameEvents → bossWarningVisible |
-| `boss-hp-update` | 보스 피격 | useGameEvents → setBossHp |
-| `boss-phase-change` | 보스 2페이즈 돌입 | useGameEvents → 토스트 |
-| `boss-defeated` | 보스 사망 | useGameEvents → setBossHp 초기화 |
-| `player-damaged` | 유닛 exit 도달 | useGameEvents → setLives |
-| `player-tower-count` | 타워 배치/판매 | useGameEvents → setPlayerTowerCount |
+| `boss-defeated` | 보스 사망 | useGameEvents → 토스트 'BOSS CLEAR!' |
+| `boss-phase-change` | 보스 2페이즈 돌입 | useGameEvents → 토스트 '보스 분노!' |
 | `game-over` | 승/패 확정 | useGameEvents → runStatus, 메타 갱신 |
 | `tutorial-step` | 튜토리얼 진행 | 튜토리얼 UI |
 | `tutorial-completed` | 튜토리얼 완료 | metaStore.progress |
@@ -111,13 +126,13 @@ EnergySystem.reset()
 
 | 이벤트 | 발화 주체 | 처리 위치 |
 |--------|----------|----------|
-| `request-select-tower` | DeckDock | Game.ts onSelectTower |
+| `request-select-tower` | DeckDockUI (Phaser) | Game.ts onSelectTower |
 | `request-clear-tower-selection` | UI | Game.ts onClearTowerSelection |
 | `request-place-tower` | UI | Game.ts (pointerdown 대체 경로) |
 | `request-sell-tower` | UI | TowerSystem |
 | `request-start-game` | UI | 씬 전환 |
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
-| `request-set-speed` | SpeedButton | Game.ts onSetSpeed |
+| `request-set-speed` | TopHudUI (Phaser) | Game.ts onSetSpeed |
 | `request-tutorial-advance` | 튜토리얼 UI | TutorialSystem |
 
 ---
@@ -130,7 +145,7 @@ EnergySystem.reset()
 
 | 스토어 | 수명 | 저장 내용 |
 |--------|------|----------|
-| `gameStore` (Zustand) | 런 단위 (resetRun()으로 초기화) | runStatus, 에너지, HP, 웨이브, HUD, 토스트, 덱 카드 |
+| `gameStore` (Zustand) | 런 단위 (resetRun()으로 초기화) | runStatus, 토스트, bossWarningVisible, gameOverStats, 설정 |
 | `metaStore` (Zustand + localStorage) | 세션 영속 | 프로필, 컬렉션, 가챠, 미션, 설정, 덱 ID |
 
 `metaStore`는 `subscribeWithSelector` 미들웨어를 사용하고, `beforeunload` / `visibilitychange`에서 localStorage에 flush한다.
@@ -139,15 +154,16 @@ EnergySystem.reset()
 
 | 저장소 | 내용 |
 |--------|------|
-| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted, showDamageNumbers) |
+| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted, safeAreaBottom, speed2xUnlocked, initialEnergy, initialLives, initialDeck) |
+| UIScene 내부 상태 | TopHudUI(HP, 에너지, 속도), BossHpBarUI(보스 HP/phase), DeckDockUI(덱 카드, 선택 인덱스) |
 | 시스템 내부 상태 | TowerSystem(배치된 타워), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase) |
 
 ### 동기화 규칙
 
 - **React → Phaser 초기값**: `PhaserGame.tsx`에서 `game.registry.set()`으로 전달.
 - **React → Phaser 실시간**: EventBus `request-*` 이벤트.
-- **Phaser → React 실시간**: EventBus 서술형 이벤트 → `useGameEvents` 훅 → Zustand set.
-- **설정값 실시간 동기화 예외**: `showDamageNumbers`는 `useGameStore.subscribe()`로 변경 감지 후 `game.registry.set()` 호출.
+- **Phaser → React 실시간**: EventBus 서술형 이벤트 → `useGameEvents` 훅 → Zustand set (game-over, wave-started, tower-placed, boss-warning/defeated/phase-change).
+- **Phaser 내부 HUD**: EventBus 이벤트 → UIScene UI 컴포넌트가 직접 수신·렌더링. React를 거치지 않음.
 
 ---
 
@@ -224,8 +240,8 @@ EnergySystem.reset()
 End-to-end 시퀀스.
 
 ```
-1. React: DeckDock에서 타워 카드 탭
-2. React → EventBus: emit('request-select-tower', { towerDefId })
+1. Phaser UIScene: DeckDockUI에서 타워 카드 탭 (pointerdown + stopPropagation)
+2. DeckDockUI → EventBus: emit('request-select-tower', { towerDefId })
 3. Game.ts: onSelectTower() → selectedTowerId 설정, 배치 가능 하이라이트 렌더
 4. 사용자: 그리드 셀 탭
 5. Game.ts: pointerdown → handlePlaceTower(gridX, gridY, towerDefId)
@@ -238,8 +254,7 @@ End-to-end 시퀀스.
 6. Game.ts → EventBus: emit('tower-placed', { success: true, energySpent })
              EventBus: emit('energy-changed', { energy })
              EventBus: emit('player-tower-count', { count })
-7. useGameEvents: onTowerPlaced → setSelectedCardIndex(null), 피드백 초기화
-                  onEnergyChanged → gameStore.setEnergy
-                  onPlayerTowerCount → gameStore.setPlayerTowerCount
-8. React: DeckDock 선택 해제, 에너지 HUD 리렌더
+7. UIScene: DeckDockUI.onTowerPlaced → 카드 선택 해제
+            TopHudUI.onEnergyChanged → 에너지바 tween 갱신
+   React: useGameEvents.onTowerPlaced → 피드백 처리
 ```

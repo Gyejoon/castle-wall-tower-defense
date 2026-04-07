@@ -182,7 +182,19 @@ export function useGameEvents() {
 			setSelectedTower(null);
 		};
 		const onTowerSold = (data: { refund: number }) => {
-			pushToast(`E+${data.refund}`, 'success');
+			pushToast(
+				<span className="inline-flex items-center gap-[2px]">
+					<img
+						src="assets/ui/icon-energy.webp"
+						alt=""
+						width={10}
+						height={10}
+						className="[image-rendering:pixelated]"
+					/>
+					+{data.refund}
+				</span>,
+				'success',
+			);
 			setSelectedTower(null);
 		};
 

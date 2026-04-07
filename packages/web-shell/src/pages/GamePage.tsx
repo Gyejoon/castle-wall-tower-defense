@@ -155,7 +155,17 @@ export function GamePage() {
 									style={{ background: 'rgba(192,48,32,0.2)' }}
 									onClick={handleSellTower}
 								>
-									판매 E+{selectedTower.refund}
+									판매{' '}
+									<span className="inline-flex items-center gap-[2px]">
+										<img
+											src="assets/ui/icon-energy.webp"
+											alt=""
+											width={10}
+											height={10}
+											className="[image-rendering:pixelated]"
+										/>
+										+{selectedTower.refund}
+									</span>
 								</button>
 							</div>
 						)}

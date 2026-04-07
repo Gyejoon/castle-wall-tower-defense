@@ -181,12 +181,56 @@
 
 ### UI 구조
 
-- **HUD**: HP, Gold, 웨이브 카운터, 보스 경고, 결과 오버레이
+- **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이
+  - HP/에너지 변화 시 scale flash 애니메이션 (250ms ease-out)
+  - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
-- **Lobby**: Home 탭 (즉시 시작 CTA), Collection 탭, Settings 탭
+- **Lobby**: Home 탭 (즉시 시작 CTA), Collection 탭, Missions 탭, Settings 탭
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
 - **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀
 - **Tutorial Overlay**: 첫 세션 5단계 (step 1~2만 강제)
+
+### 디자인 시스템
+
+> 상세 컨텍스트는 `.impeccable.md` 참조. 아래는 구현 수준 요약.
+
+**색상 토큰** (`packages/shared/src/constants/ui-colors.ts`)
+
+| 토큰 | 값 | 용도 |
+|------|-----|------|
+| bg | #1a1208 | 기본 배경 |
+| panel | #2a2010 | 패널 배경 |
+| border | #4a3a20 | 테두리 |
+| accent | #c8a04a | 주요 액션/강조 |
+| success | #7ab648 | 성공 피드백 |
+| danger | #c03020 | 위험/경고 |
+| gold | #f0d060 | 통화/강조 |
+| info | #5bc8e8 | 정보/수 속성 |
+| text | #f0e8d8 | 기본 텍스트 |
+| textSecondary | #a09070 | 보조 텍스트 |
+| gradeUnique | #9060e0 | unique 등급 |
+| tierBright | #ffe870 | tier 5 라벨 |
+| bossPhase1 | #c87020 | 보스 1페이즈 HP |
+
+React(DOM)는 hex string, Phaser(Canvas)는 `PHASER_COLORS` (0x number) 사용. 단일 진실 원천.
+
+**타이포그래피 스케일** (Press Start 2P / Galmuri11)
+
+| 역할 | 크기 | 용도 |
+|------|------|------|
+| caption | 8px | 부가 정보, 서브라벨 |
+| label | 10px | 통화량, 스탯 값, 작은 라벨 |
+| body | 11px | 기본 본문, 리스트, 설정 |
+| subtitle | 13px | 섹션 제목, 카드 이름 |
+| title | 15px | 화면 제목, 주요 CTA |
+
+**터치 타겟**: 모든 인터랙티브 요소 최소 44×44px. PixelButton, select, close 버튼 포함.
+
+**통화 아이콘**: 이모지 대신 인라인 SVG 픽셀 아이콘 사용 (`CurrencyIcon.tsx`).
+- 다이아몬드: info (#5bc8e8) 계열 12×12 SVG
+- 골드 코인: gold (#f0d060) + accent (#c8a04a) 12×12 SVG
+
+**스타일링**: Tailwind v4 className + @theme 토큰. 동적 값만 inline style prop.
 
 ### 튜토리얼 시퀀스
 
@@ -220,3 +264,12 @@
 - 이 게임을 한 문장으로 기억하게 만드는 포인트가 있는가?
 - 첫 5분 안에 차별점이 체감되는가?
 - 경쟁작 대비 버릴 수 없는 특징이 있는가?
+
+---
+
+## 11. 변경 이력
+
+| 날짜 | 항목 | 변경 내용 |
+|------|------|---------|
+| 2026-04-07 | 최초 작성 | Obsidian GDD 기반 |
+| 2026-04-07 | §8 UI/UX | 디자인 시스템 섹션 신설 (색상 토큰 13종, 타이포 5단계, 터치 타겟, HUD 애니메이션, 데미지 넘버, CurrencyIcon SVG) |

@@ -133,11 +133,11 @@ export function TopHud({
 					)}
 					{runStatus === 'running' && onExitRequest && (
 						<button
-							className="flex h-[30px] w-[30px] items-center justify-center border border-border font-pixel text-[11px] text-text-secondary"
+							className="border border-border px-2 py-0.5 font-pixel text-[11px] text-text-secondary"
 							style={{ background: 'rgba(26,18,8,0.7)' }}
 							onClick={onExitRequest}
 						>
-							✕
+							나가기
 						</button>
 					)}
 				</div>

@@ -16,7 +16,7 @@ function getToastStyle(tone: 'info' | 'success' | 'warning' | 'error') {
 
 interface ToastNotificationProps {
 	toast: {
-		message: string;
+		message: React.ReactNode;
 		tone: 'info' | 'success' | 'warning' | 'error';
 	} | null;
 }

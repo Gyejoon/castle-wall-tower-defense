@@ -585,8 +585,12 @@ export class TowerSystem {
 		this.gridManager.removeTower(gridX, gridY);
 		this.pathfinding.invalidateCache();
 
-		const refund = Math.floor(targetInstance.def.cost * 0.7);
+		const refund = TowerSystem.calcRefund(targetInstance.def.cost);
 		return { success: true, refund };
+	}
+
+	static calcRefund(cost: number): number {
+		return Math.floor(cost * 0.5);
 	}
 
 	getTowerAt(

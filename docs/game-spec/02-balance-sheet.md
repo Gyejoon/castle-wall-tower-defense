@@ -1,6 +1,6 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-08  
 > **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
 > 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
 
@@ -147,6 +147,9 @@
 | LV.1~10 | atk +2/lv | atk +3/lv | cooldown -2%/lv | — |
 | LV.11~20 | atk +5%/lv | splash_radius +3%/lv | slow_duration +3%/lv | — |
 | LV.21~30 | armor_pen +1/lv | atk +8%/lv | target_count +1 @25,30 | — |
+| LV.31~50 | (미정 — 추후 밸런싱) | (미정) | (미정) | — |
+
+> MAX_TOWER_LEVEL = 50. unique→epic 승급에 LV.50 필요.
 
 ### 타워 승급 확률
 
@@ -223,6 +226,11 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | 2026-04-07 | 적 armor 상향 | battle_robot 2→5, heavy_walker 5→12, titan 10→25 | splash vs 집중형 전략 선택 발생 |
 | 2026-04-07 | forest_gate 웨이브 3 조정 | heavy_walker ×1 추가, battle_robot ×4→×3 | 웨이브 3에서 armor 체감 학습 유도 |
 | 2026-04-07 | TowerBottomSheet 방어 무시 UI 추가 | 집중 공격형 타워에 "방어 무시 - 적용" 표시 | 방어 무시 메커니즘 인지 개선 |
+| 2026-04-08 | MAX_TOWER_LEVEL 50 | 30→50 확장, LV.31~50 구간 추가 (구체적 성장은 미정) | unique→epic 승급 게이트(LV.50) 지원 |
+| 2026-04-08 | 승급 레벨 게이트 구현 | 코드에 requiredLevel 20/30/50 체크 추가, UI 잠금 표시 | GDD 스펙 반영 |
+| 2026-04-08 | 물리 충돌 시스템 | 지상 유닛 겹침 방지, CC 연쇄, 비행 면제(titan) | 전술 깊이 증가, CC 타워 가치 상승 |
+| 2026-04-08 | 웨이브 테마 배치 | 3맵 10웨이브를 아키타입 테마로 재구성 (속도/탱크/혼합/보스) | 덱 다양성 요구, 전략적 변주 |
+| 2026-04-08 | 타워 판매 UI 개선 | "E+5" → 에너지 아이콘+숫자 (DeckDock/TopHud 패턴 통일) | 시각적 일관성 |
 
 ---
 

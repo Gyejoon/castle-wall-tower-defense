@@ -12,7 +12,13 @@ export interface MetaActions {
 	promoteTower: (
 		defId: string,
 		rng?: () => number,
-	) => 'success' | 'fail' | 'max_grade' | 'no_gold' | 'not_found';
+	) =>
+		| 'success'
+		| 'fail'
+		| 'max_grade'
+		| 'no_gold'
+		| 'not_found'
+		| 'level_too_low';
 	setSelectedDeck: (deck: string[]) => void;
 	updateSettings: (patch: Partial<SaveData['settings']>) => void;
 	addDiamond: (amount: number) => void;

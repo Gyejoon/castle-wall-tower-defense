@@ -24,6 +24,8 @@ interface SpawnQueueEntry {
 	source: UnitSpawnSource;
 	isBoss: boolean;
 	hpMultiplier: number;
+	waveHpMult: number;
+	waveSpeedMult: number;
 	waveSlot: number;
 }
 
@@ -49,6 +51,7 @@ interface UnitInstance {
 	baseArmor: number;
 	ccImmunityChance: number;
 	waveSlot: number;
+	pathProgress: number; // continuous 1D position along lane path
 }
 
 interface QueueUnitsOptions {
@@ -57,6 +60,8 @@ interface QueueUnitsOptions {
 	source?: UnitSpawnSource;
 	isBoss?: boolean;
 	hpMultiplier?: number;
+	waveHpMult?: number;
+	waveSpeedMult?: number;
 	waveSlot?: number;
 }
 
@@ -75,6 +80,10 @@ export class UnitSystem {
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
+	private readonly MIN_SEPARATION = 0.8; // tiles
+	private readonly SPAWN_BLOCK_TIMEOUT = 2000; // ms
+	private laneUnits: Map<number, UnitInstance[]> = new Map();
+	private spawnBlockTimer = 0;
 
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
@@ -115,6 +124,19 @@ export class UnitSystem {
 				}
 			}
 			unit.data.pathIndex = Math.min(bestIdx, lane.length - 2);
+			unit.pathProgress = unit.data.pathIndex;
+		}
+
+		// Rebuild laneUnits from current units
+		this.laneUnits.clear();
+		for (const unit of this.units.values()) {
+			if (unit.def.flying) continue;
+			let arr = this.laneUnits.get(unit.laneIndex);
+			if (!arr) {
+				arr = [];
+				this.laneUnits.set(unit.laneIndex, arr);
+			}
+			arr.push(unit);
 		}
 	}
 
@@ -133,6 +155,8 @@ export class UnitSystem {
 			source: options.source ?? 'base',
 			isBoss: options.isBoss ?? false,
 			hpMultiplier: options.hpMultiplier ?? 1,
+			waveHpMult: options.waveHpMult ?? 1,
+			waveSpeedMult: options.waveSpeedMult ?? 1,
 			waveSlot: options.waveSlot ?? 0,
 		});
 	}
@@ -154,7 +178,7 @@ export class UnitSystem {
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
 		const scaled = scaleUnitStats(entry.def.stats, this.stageLevel);
-		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1);
+		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1) * entry.waveHpMult;
 
 		const unitData: ActiveUnit = {
 			instanceId,
@@ -186,7 +210,7 @@ export class UnitSystem {
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
-		this.units.set(instanceId, {
+		const instance: UnitInstance = {
 			data: unitData,
 			def: entry.def,
 			sprite,
@@ -204,11 +228,23 @@ export class UnitSystem {
 			bossPhase: 1,
 			invulnerableMs: 0,
 			maxHp: finalHp,
-			baseSpeed: scaled.speed,
+			baseSpeed: scaled.speed * entry.waveSpeedMult,
 			baseArmor: scaled.armor,
 			ccImmunityChance: scaled.ccImmunityChance,
 			waveSlot: entry.waveSlot,
-		});
+			pathProgress: 0,
+		};
+		this.units.set(instanceId, instance);
+
+		// Add to lane-sorted array (end = lowest pathProgress)
+		if (!entry.def.flying) {
+			let arr = this.laneUnits.get(laneIndex);
+			if (!arr) {
+				arr = [];
+				this.laneUnits.set(laneIndex, arr);
+			}
+			arr.push(instance);
+		}
 	}
 
 	private renderHpBar(
@@ -347,6 +383,7 @@ export class UnitSystem {
 				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
 			this.units.delete(unitId);
+			this.removeFromLaneUnits(unit);
 			return {
 				killed: true,
 				bounty: unit.bounty,
@@ -427,9 +464,12 @@ export class UnitSystem {
 		);
 	}
 
-	private reachedExitBuffer: string[] = [];
+	private reachedExitBuffer: { id: string; isBoss: boolean }[] = [];
 
-	update(_time: number, delta: number): { reachedExit: string[] } {
+	update(
+		_time: number,
+		delta: number,
+	): { reachedExit: { id: string; isBoss: boolean }[] } {
 		const reachedExit = this.reachedExitBuffer;
 		reachedExit.length = 0;
 
@@ -437,10 +477,36 @@ export class UnitSystem {
 		if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
 			this.spawnTimer = 0;
 			const front = this.spawnQueue[0];
-			this.spawnUnit(front);
-			front.remaining--;
-			if (front.remaining <= 0) {
-				this.spawnQueue.shift();
+
+			// Spawn blocking: check if a stunned/stuck unit blocks the spawn point
+			let spawnBlocked = false;
+			if (!front.def.flying) {
+				const laneIndex =
+					this.lanes.length > 1 ? this.nextLane % this.lanes.length : 0;
+				const arr = this.laneUnits.get(laneIndex);
+				if (arr) {
+					// Count units near spawn. Block only if 2+ units are piled up at spawn
+					let nearSpawnCount = 0;
+					for (let i = arr.length - 1; i >= 0; i--) {
+						if (arr[i].pathProgress < this.MIN_SEPARATION) {
+							nearSpawnCount++;
+						} else {
+							break; // sorted array, no more near spawn
+						}
+					}
+					if (nearSpawnCount >= 2) spawnBlocked = true;
+				}
+			}
+
+			if (spawnBlocked && this.spawnBlockTimer < this.SPAWN_BLOCK_TIMEOUT) {
+				this.spawnBlockTimer += this.SPAWN_INTERVAL;
+			} else {
+				this.spawnBlockTimer = 0;
+				this.spawnUnit(front);
+				front.remaining--;
+				if (front.remaining <= 0) {
+					this.spawnQueue.shift();
+				}
 			}
 		}
 
@@ -456,10 +522,11 @@ export class UnitSystem {
 				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
 			const pathIdx = unit.data.pathIndex;
 			if (pathIdx >= unitLane.length - 1) {
-				reachedExit.push(id);
+				reachedExit.push({ id, isBoss: unit.isBoss });
 				unit.sprite.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(id);
+				this.removeFromLaneUnits(unit);
 				continue;
 			}
 
@@ -513,6 +580,25 @@ export class UnitSystem {
 				unit.worldY += (dy / dist) * speed * dt;
 			}
 
+			// Compute pathProgress after movement
+			const curIdx = unit.data.pathIndex;
+			if (curIdx < unitLaneWorld.length - 1) {
+				const segStart = unitLaneWorld[curIdx];
+				const segEnd = unitLaneWorld[curIdx + 1];
+				const segDx = segEnd.x - segStart.x;
+				const segDy = segEnd.y - segStart.y;
+				const segLen = Math.sqrt(segDx * segDx + segDy * segDy);
+				if (segLen > 0) {
+					const unitDx = unit.worldX - segStart.x;
+					const unitDy = unit.worldY - segStart.y;
+					const proj = (unitDx * segDx + unitDy * segDy) / segLen;
+					const frac = Math.max(0, Math.min(1, proj / segLen));
+					unit.pathProgress = curIdx + frac;
+				} else {
+					unit.pathProgress = curIdx;
+				}
+			}
+
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
 			const currentGrid = this.gridManager.worldToGrid(
 				unit.worldX,
@@ -529,6 +615,9 @@ export class UnitSystem {
 				unit.data.hp,
 			);
 		}
+
+		// Sweep collisions for ground units
+		this.sweepCollisions();
 
 		return { reachedExit };
 	}
@@ -571,12 +660,82 @@ export class UnitSystem {
 		return unit?.def.element ?? 'neutral';
 	}
 
+	private removeFromLaneUnits(unit: UnitInstance): void {
+		if (unit.def.flying) return;
+		const arr = this.laneUnits.get(unit.laneIndex);
+		if (!arr) return;
+		const idx = arr.indexOf(unit);
+		if (idx !== -1) arr.splice(idx, 1);
+	}
+
+	private readonly COLLISION_LERP = 0.3; // smooth deceleration factor
+
+	private sweepCollisions(): void {
+		for (const arr of this.laneUnits.values()) {
+			if (arr.length < 2) continue;
+			// Sort descending by pathProgress (front first)
+			arr.sort((a, b) => b.pathProgress - a.pathProgress);
+			// Sweep front→back: ensure minimum separation with smooth lerp
+			for (let i = 1; i < arr.length; i++) {
+				const front = arr[i - 1];
+				const rear = arr[i];
+				const sep = front.pathProgress - rear.pathProgress;
+				if (sep < this.MIN_SEPARATION) {
+					const target = front.pathProgress - this.MIN_SEPARATION;
+					const clamped = Math.max(0, target);
+					// Lerp toward target for smooth deceleration instead of instant snap
+					const lerped =
+						rear.pathProgress + (clamped - rear.pathProgress) * this.COLLISION_LERP;
+					this.setUnitPathProgress(rear, Math.max(0, lerped));
+				}
+			}
+		}
+	}
+
+	private setUnitPathProgress(unit: UnitInstance, progress: number): void {
+		const lane = this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
+		const laneGrid = this.lanes[unit.laneIndex] ?? this.currentPath;
+		if (lane.length < 2) return;
+
+		const idx = Math.min(Math.floor(progress), lane.length - 2);
+		const frac = Math.max(0, Math.min(1, progress - idx));
+
+		const startW = lane[idx];
+		const endW = lane[idx + 1];
+		unit.worldX = startW.x + (endW.x - startW.x) * frac;
+		unit.worldY = startW.y + (endW.y - startW.y) * frac;
+
+		unit.data.pathIndex = idx;
+		unit.pathProgress = progress;
+
+		const startG = laneGrid[idx];
+		const endG = laneGrid[idx + 1];
+		unit.data.position = {
+			x: Math.round(startG.x + (endG.x - startG.x) * frac),
+			y: Math.round(startG.y + (endG.y - startG.y) * frac),
+		};
+
+		unit.sprite.setPosition(unit.worldX, unit.worldY);
+		const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
+		unit.sprite.setDepth(
+			this.gridManager.getDepth(currentGrid.x, currentGrid.y),
+		);
+		this.renderHpBar(
+			unit.hpBar,
+			unit.worldX,
+			unit.worldY,
+			unit.maxHp,
+			unit.data.hp,
+		);
+	}
+
 	destroy(): void {
 		for (const unit of this.units.values()) {
 			unit.sprite.destroy();
 			unit.hpBar.destroy();
 		}
 		this.units.clear();
+		this.laneUnits.clear();
 		this.spawnQueue.length = 0;
 	}
 }

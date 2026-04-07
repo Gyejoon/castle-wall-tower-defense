@@ -26,8 +26,7 @@ describe('WAVE_DEFS', () => {
 		expect(WAVE_DEFS[9].slotIndex).toBe(10);
 	});
 
-	it('has pre_boss warnings before each boss', () => {
-		expect(WAVE_DEFS[3].kind).toBe('pre_boss');
+	it('has pre_boss warning before final boss', () => {
 		expect(WAVE_DEFS[8].kind).toBe('pre_boss');
 	});
 

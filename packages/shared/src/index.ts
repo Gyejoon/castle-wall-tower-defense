@@ -104,6 +104,7 @@ export {
 	getWavesForMap,
 	TOTAL_WAVES,
 	WAVE_DEFS,
+	WAVE_SCALING,
 } from './constants/waves';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';

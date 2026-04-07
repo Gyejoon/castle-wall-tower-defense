@@ -124,6 +124,11 @@ describe('metaStore', () => {
 
 	it('promoteTower upgrades grade on success', () => {
 		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			collection: s.collection.map((t) =>
+				t.defId === 'laser' ? { ...t, level: 20 } : t,
+			),
+		}));
 		const result = useMetaStore.getState().promoteTower('laser', () => 0);
 		expect(result).toBe('success');
 		const tower = useMetaStore
@@ -134,6 +139,11 @@ describe('metaStore', () => {
 
 	it('promoteTower deducts gold even on failure', () => {
 		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			collection: s.collection.map((t) =>
+				t.defId === 'laser' ? { ...t, level: 20 } : t,
+			),
+		}));
 		const beforeGold = useMetaStore.getState().profile.gold;
 		useMetaStore.getState().promoteTower('laser', () => 0.99);
 		expect(useMetaStore.getState().profile.gold).toBe(beforeGold - 500);
@@ -156,9 +166,43 @@ describe('metaStore', () => {
 
 	it('promoteTower returns no_gold when insufficient', () => {
 		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({ profile: { ...s.profile, gold: 0 } }));
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 0 },
+			collection: s.collection.map((t) =>
+				t.defId === 'laser' ? { ...t, level: 20 } : t,
+			),
+		}));
 		const result = useMetaStore.getState().promoteTower('laser');
 		expect(result).toBe('no_gold');
+	});
+
+	it('promoteTower returns level_too_low when tower level below required', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 10000 },
+		}));
+		const result = useMetaStore.getState().promoteTower('laser');
+		expect(result).toBe('level_too_low');
+	});
+
+	it('promoteTower boundary: Lv.19 fails, Lv.20 proceeds', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 10000 },
+			collection: s.collection.map((t) =>
+				t.defId === 'laser' ? { ...t, level: 19 } : t,
+			),
+		}));
+		expect(useMetaStore.getState().promoteTower('laser')).toBe('level_too_low');
+
+		useMetaStore.setState((s) => ({
+			collection: s.collection.map((t) =>
+				t.defId === 'laser' ? { ...t, level: 20, grade: 'normal' as const } : t,
+			),
+		}));
+		expect(useMetaStore.getState().promoteTower('laser', () => 0)).toBe(
+			'success',
+		);
 	});
 
 	it('setSelectedDeck updates deck', () => {

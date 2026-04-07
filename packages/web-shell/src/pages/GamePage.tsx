@@ -70,9 +70,10 @@ export function GamePage() {
 	}, [clearToast, toast]);
 
 	const handleExitRequest = useCallback(() => {
+		if (runStatus !== 'running') return;
 		setShowExitModal(true);
 		EventBus.emit('request-pause');
-	}, []);
+	}, [runStatus]);
 
 	const handleExitConfirm = useCallback(() => {
 		setShowExitModal(false);

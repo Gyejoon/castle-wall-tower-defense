@@ -298,7 +298,7 @@ export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 1.0, speed: 1.0 }, // Wave 2  — 여전히 쉬움
 	{ hp: 1.1, speed: 1.0 }, // Wave 3  — 미세 증가
 	{ hp: 1.2, speed: 1.0 }, // Wave 4  — 약간 도전
-	{ hp: 1.5, speed: 1.05 }, // Wave 5  — 중간보스, 본격 상승
+	{ hp: 1.5, speed: 1.05 }, // Wave 5  — 보스, 본격 상승
 	{ hp: 1.8, speed: 1.05 }, // Wave 6
 	{ hp: 2.2, speed: 1.1 }, // Wave 7
 	{ hp: 2.6, speed: 1.1 }, // Wave 8

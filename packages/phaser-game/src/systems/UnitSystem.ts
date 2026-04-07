@@ -497,8 +497,7 @@ export class UnitSystem {
 			if (spawnBlocked && this.spawnBlockTimer < this.SPAWN_BLOCK_TIMEOUT) {
 				this.spawnBlockTimer += delta;
 			} else {
-				// Only reset block timer when a ground unit spawns successfully
-				if (!front.def.flying) this.spawnBlockTimer = 0;
+				this.spawnBlockTimer = 0;
 				this.spawnUnit(front);
 				front.remaining--;
 				if (front.remaining <= 0) {

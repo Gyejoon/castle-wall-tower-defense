@@ -15,6 +15,7 @@
 | [05-operations.md](./05-operations.md) | 운영 스택, LiveOps, 모니터링 | 툴 추가·변경, 운영 정책 변경 |
 | [06-milestone.md](./06-milestone.md) | Phase 로드맵, 단기/중기/장기 계획 | 스프린트 완료, 계획 변경 |
 | [07-asset-definition.md](./07-asset-definition.md) | 에셋 사양, 인벤토리, 파이프라인 | 에셋 추가·변경 |
+| [08-architecture.md](./08-architecture.md) | 코드 아키텍처 레퍼런스 (패키지 구조, 시스템 생명주기, EventBus, 상태머신) | 시스템 구조·의존성 변경 |
 
 ## 운용 원칙
 

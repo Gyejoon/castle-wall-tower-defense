@@ -31,7 +31,7 @@ export function GamePage() {
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
 
-	const { waitCountdown } = useGameEvents();
+	useGameEvents();
 
 	useEffect(() => {
 		const handleVisibility = () => {
@@ -60,7 +60,7 @@ export function GamePage() {
 					energy={energy}
 					isBossPhase={isBossPhase}
 					combatHud={combatHud}
-					waitCountdown={waitCountdown}
+					waitCountdown={0}
 					gameSpeed={gameSpeed}
 					speed2xUnlocked={speed2xUnlocked}
 					runStatus={runStatus}

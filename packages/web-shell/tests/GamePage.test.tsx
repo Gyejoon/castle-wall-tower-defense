@@ -151,7 +151,6 @@ describe('GamePage', () => {
 		const view = render(<GamePage />);
 
 		act(() => {
-			emitSpy('energy-changed', { energy: 60 });
 			emitSpy('wave-started', {
 				wave: 10,
 				totalWaves: 10,
@@ -162,9 +161,10 @@ describe('GamePage', () => {
 			});
 		});
 
-		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('⚡60')).toBeTruthy();
-		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
+		// HP/energy/timer are now rendered by Phaser UIScene; React layer
+		// only tracks run status and structural UI elements.
+		expect(useGameStore.getState().runStatus).toBe('running');
+		expect(view.getByTestId('top-hud')).toBeTruthy();
 		expect(view.getByTestId('deck-dock')).toBeTruthy();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();

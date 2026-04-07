@@ -41,13 +41,19 @@ export function useGameEvents() {
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
+				rewardMultiplier: number;
 			};
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
-			const xpEarned = battleXp(
-				data.stats.wavesCleared,
-				data.result === 'victory',
+			setBossWarningVisible(false);
+			if (bossWarningTimerRef.current) {
+				clearTimeout(bossWarningTimerRef.current);
+				bossWarningTimerRef.current = null;
+			}
+			const xpEarned = Math.round(
+				battleXp(data.stats.wavesCleared, data.result === 'victory') *
+					data.stats.rewardMultiplier,
 			);
 			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();
@@ -58,6 +64,10 @@ export function useGameEvents() {
 				useGameStore.getState().selectedMapId,
 				data.stats.wavesCleared,
 			);
+			if (data.result === 'victory') {
+				const mapId = useGameStore.getState().selectedMapId;
+				meta.recordStageClear(mapId);
+			}
 		};
 		const onWaveStarted = (data: {
 			wave: number;

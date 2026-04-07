@@ -56,6 +56,17 @@ type SaveMigration = (
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	2: (data) => {
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		return {
+			...data,
+			version: 3,
+			progress: {
+				...progress,
+				lastAttendanceDate: null,
+			},
+		};
+	},
 	1: (data, context) => {
 		const settings = (data.settings ?? {}) as Record<string, unknown>;
 		const soundWasEnabled = settings.soundEnabled !== false;
@@ -79,6 +90,7 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				weeklyMissions: [],
 				lastDailyMissionResetAt: null,
 				lastWeeklyMissionResetAt: null,
+				lastAttendanceDate: null,
 			},
 			settings: {
 				bgmVolume: soundWasEnabled ? 0.7 : 0,

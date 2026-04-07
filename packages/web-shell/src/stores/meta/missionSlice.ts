@@ -55,6 +55,9 @@ export const createMissionSlice: SliceCreator<
 					lastWeeklyMissionResetAt: weeklyStale
 						? now.toISOString()
 						: progress.lastWeeklyMissionResetAt,
+					lastAttendanceDate: needsWeeklyReset
+						? null
+						: progress.lastAttendanceDate,
 				},
 			};
 		});

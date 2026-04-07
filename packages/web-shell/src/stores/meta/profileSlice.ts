@@ -1,4 +1,4 @@
-import { type SaveData, xpToNextLevel } from '@gld/shared';
+import { type SaveData, toKSTDateStr, xpToNextLevel } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -14,7 +14,15 @@ function applyLevelUps(profile: SaveData['profile']): SaveData['profile'] {
 }
 
 export const createProfileSlice: SliceCreator<
-	Pick<MetaActions, 'addGold' | 'addXp' | 'recordBattle' | 'updateHighestWave'>
+	Pick<
+		MetaActions,
+		| 'addGold'
+		| 'addXp'
+		| 'recordBattle'
+		| 'updateHighestWave'
+		| 'recordStageClear'
+		| 'recordAttendance'
+	>
 > = (set, get) => ({
 	addGold: (amount) => {
 		set((s) => ({
@@ -65,6 +73,42 @@ export const createProfileSlice: SliceCreator<
 				},
 			},
 		}));
+		debouncedSave(get());
+	},
+
+	recordStageClear: (mapId) => {
+		set((s) => {
+			if (s.progress.stagesCleared.includes(mapId)) return s;
+			return {
+				progress: {
+					...s.progress,
+					stagesCleared: [...s.progress.stagesCleared, mapId],
+				},
+			};
+		});
+		debouncedSave(get());
+	},
+
+	recordAttendance: () => {
+		const todayKST = toKSTDateStr(new Date());
+		set((s) => {
+			const att = s.progress.weeklyMissions.find(
+				(m) => m.type === 'attendance',
+			);
+			if (!att || att.claimed || s.progress.lastAttendanceDate === todayKST)
+				return s;
+			return {
+				progress: {
+					...s.progress,
+					lastAttendanceDate: todayKST,
+					weeklyMissions: s.progress.weeklyMissions.map((m) =>
+						m.type === 'attendance' && !m.claimed
+							? { ...m, current: Math.min(m.current + 1, m.target) }
+							: m,
+					),
+				},
+			};
+		});
 		debouncedSave(get());
 	},
 });

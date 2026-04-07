@@ -27,6 +27,8 @@ export interface MetaActions {
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
+	recordStageClear: (mapId: string) => void;
+	recordAttendance: () => void;
 }
 
 export type MetaState = SaveData & MetaActions;

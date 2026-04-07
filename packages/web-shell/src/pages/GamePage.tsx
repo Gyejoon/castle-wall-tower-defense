@@ -1,6 +1,5 @@
 import { soundGenerator } from '@gld/phaser-game';
 import { useEffect } from 'react';
-import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
@@ -10,6 +9,7 @@ import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaStore } from '../stores/metaStore';
 
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
@@ -23,11 +23,15 @@ export function GamePage() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
+	const bossHp = useGameStore((s) => s.bossHp);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
+	const gameSpeed = useGameStore((s) => s.gameSpeed);
+	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
+	const selectedMapId = useGameStore((s) => s.selectedMapId);
+	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
 
 	const { waitCountdown } = useGameEvents();
-	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
-	const isGameOver = runStatus === 'victory' || runStatus === 'defeat';
 
 	useEffect(() => {
 		const handleVisibility = () => {
@@ -46,6 +50,8 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
+	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
+
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div className="flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
@@ -55,28 +61,43 @@ export function GamePage() {
 					isBossPhase={isBossPhase}
 					combatHud={combatHud}
 					waitCountdown={waitCountdown}
+					gameSpeed={gameSpeed}
+					speed2xUnlocked={speed2xUnlocked}
+					runStatus={runStatus}
+					onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
+					bossHpVisible={bossHp.visible}
 				/>
 
-				<div className="relative w-full flex-1 min-h-0 overflow-hidden bg-[linear-gradient(180deg,rgba(13,26,42,0.48)_0%,rgba(26,18,8,0.4)_100%)]">
+				{/* Game Area */}
+				<div
+					className="relative w-full flex-1 min-h-0 overflow-hidden"
+					style={{
+						background:
+							'linear-gradient(180deg, rgba(13,26,42,0.48) 0%, rgba(26,18,8,0.4) 100%)',
+					}}
+				>
 					<PhaserGame key={runId} />
 
-					<BossHpBar />
-
-					{!isGameOver && <TutorialOverlay />}
+					{runStatus !== 'victory' && runStatus !== 'defeat' && (
+						<TutorialOverlay />
+					)}
 
 					<BossWarningOverlay visible={bossWarningVisible} />
 
 					{!gameReady && (
-						<div className="absolute inset-0 z-[2] flex items-center justify-center bg-bg-76 font-pixel text-[13px] text-text-secondary">
+						<div
+							className="absolute inset-0 z-[2] flex items-center justify-center font-pixel text-[13px] text-text-secondary"
+							style={{ background: 'rgba(26, 18, 8, 0.76)' }}
+						>
 							그리드 부팅 중...
 						</div>
 					)}
 
 					<ToastNotification toast={toast} />
 
-					{isGameOver && (
+					{(runStatus === 'victory' || runStatus === 'defeat') && (
 						<GameOverScreen
-							runStatus={runStatus as 'victory' | 'defeat'}
+							runStatus={runStatus}
 							gameOverStats={gameOverStats}
 							onRestart={resetRun}
 							onLobby={enterLobby}
@@ -84,7 +105,7 @@ export function GamePage() {
 					)}
 				</div>
 
-				{!isGameOver && <DeckDock />}
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}
 			</div>
 		</div>
 	);

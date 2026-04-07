@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v2
+// Migration tests for metaStore v1→v3
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
-import { createDefaultSave, SAVE_STORAGE_KEY, SAVE_VERSION } from '@gld/shared';
+import {
+	createDefaultSave,
+	generateWeeklyMissions,
+	SAVE_STORAGE_KEY,
+	SAVE_VERSION,
+} from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -27,12 +32,12 @@ function makeLocalStorageMock(initial: Record<string, string> = {}): Storage {
 	} as Storage;
 }
 
-describe('metaStore v1→v2 migration', () => {
+describe('metaStore v1→v3 migration', () => {
 	beforeEach(() => {
 		useMetaStore.setState(createDefaultSave());
 	});
 
-	it('v1 정상 데이터 → v2로 마이그레이션', () => {
+	it('v1 정상 데이터 → v3으로 마이그레이션', () => {
 		const v1Save = {
 			version: 1,
 			profile: {
@@ -68,7 +73,7 @@ describe('metaStore v1→v2 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.version).toBe(2);
+		expect(s.version).toBe(3);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
 		expect(s.profile.diamond).toBe(0);
@@ -153,9 +158,10 @@ describe('metaStore v1→v2 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(2);
-		// v1에 없던 새 v2 필드가 기본값으로 채워짐
+		expect(s.version).toBe(3);
+		// v1에 없던 새 필드가 기본값으로 채워짐
 		expect(s.progress.gachaPityCount).toBe(0);
+		expect(s.progress.lastAttendanceDate).toBeNull();
 		expect(s.progress.dailyMissions).toEqual([]);
 		expect(s.settings.screenShake).toBe(false);
 
@@ -179,7 +185,7 @@ describe('metaStore v1→v2 migration', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('이미 v2 데이터 → 마이그레이션 없이 그대로 로드', () => {
+	it('v2 데이터 → v3으로 마이그레이션 (lastAttendanceDate 추가)', () => {
 		const v2Save = {
 			version: 2,
 			profile: {
@@ -226,12 +232,61 @@ describe('metaStore v1→v2 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
+		expect(s.version).toBe(3);
 		expect(s.profile.diamond).toBe(50);
 		expect(s.profile.nickname).toBe('V2User');
 		expect(s.progress.gachaPityCount).toBe(12);
 		expect(s.progress.tutorialCompleted).toBe(true);
 		expect(s.settings.bgmVolume).toBe(0.5);
+		expect(s.progress.lastAttendanceDate).toBeNull();
 
+		vi.unstubAllGlobals();
+	});
+});
+
+describe('recordAttendance', () => {
+	beforeEach(() => {
+		const save = createDefaultSave();
+		save.progress.weeklyMissions = generateWeeklyMissions();
+		useMetaStore.setState(save);
+	});
+
+	it('첫 출석 시 attendance current 1 증가, lastAttendanceDate 기록', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.getState().recordAttendance();
+		const s = useMetaStore.getState();
+		const att = s.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+		expect(s.progress.lastAttendanceDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		vi.unstubAllGlobals();
+	});
+
+	it('같은 날 두 번 호출해도 current 1 유지', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.getState().recordAttendance();
+		useMetaStore.getState().recordAttendance();
+		const att = useMetaStore
+			.getState()
+			.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+		vi.unstubAllGlobals();
+	});
+
+	it('claimed 상태면 카운팅 안 함', () => {
+		vi.stubGlobal('localStorage', makeLocalStorageMock());
+		useMetaStore.setState((s) => ({
+			progress: {
+				...s.progress,
+				weeklyMissions: s.progress.weeklyMissions.map((m) =>
+					m.type === 'attendance' ? { ...m, claimed: true } : m,
+				),
+			},
+		}));
+		useMetaStore.getState().recordAttendance();
+		const att = useMetaStore
+			.getState()
+			.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(0);
 		vi.unstubAllGlobals();
 	});
 });

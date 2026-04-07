@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -59,6 +59,7 @@ export interface ProgressData {
 	weeklyMissions: MissionProgress[];
 	lastDailyMissionResetAt: string | null;
 	lastWeeklyMissionResetAt: string | null;
+	lastAttendanceDate: string | null;
 }
 
 export interface SettingsData {

@@ -62,6 +62,12 @@ function toKSTDate(d: Date): Date {
 	return new Date(d.getTime() + KST_OFFSET_MS);
 }
 
+/** KST 기준 'YYYY-MM-DD' 문자열 반환 */
+export function toKSTDateStr(d: Date): string {
+	const kst = toKSTDate(d);
+	return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth() + 1).padStart(2, '0')}-${String(kst.getUTCDate()).padStart(2, '0')}`;
+}
+
 export function shouldResetDaily(
 	lastResetAt: string | null,
 	now: Date,

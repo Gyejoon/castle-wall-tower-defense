@@ -337,6 +337,28 @@ describe('UnitSystem', () => {
 			const pos = system.getUnitPositions();
 			expect(pos[0].hp).toBe(75); // 80 - 5
 		});
+
+		it('returns isBoss=false for regular unit', () => {
+			system.setPaths([LANE_A]);
+			system.queueUnits('scout_drone', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			const result = system.applyDamage(unitId, 1);
+			expect(result).not.toBeNull();
+			expect(result!.isBoss).toBe(false);
+		});
+
+		it('returns isBoss=true for boss unit', () => {
+			system.setPaths([LANE_A]);
+			system.queueUnits('titan', 1, { isBoss: true });
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			const result = system.applyDamage(unitId, 1, true);
+			expect(result).not.toBeNull();
+			expect(result!.isBoss).toBe(true);
+		});
 	});
 
 	describe('getActiveCount', () => {

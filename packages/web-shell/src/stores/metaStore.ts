@@ -18,6 +18,7 @@ import {
 	shouldResetDaily,
 	shouldResetWeekly,
 	type TowerGrade,
+	toKSTDateStr,
 	WEEKLY_MISSION_TYPES,
 	xpToNextLevel,
 } from '@gld/shared';
@@ -53,6 +54,8 @@ interface MetaActions {
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
+	recordStageClear: (mapId: string) => void;
+	recordAttendance: () => void;
 }
 
 type MetaState = SaveData & MetaActions;
@@ -116,6 +119,17 @@ type SaveMigration = (
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	2: (data) => {
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		return {
+			...data,
+			version: 3,
+			progress: {
+				...progress,
+				lastAttendanceDate: null,
+			},
+		};
+	},
 	1: (data, context) => {
 		const settings = (data.settings ?? {}) as Record<string, unknown>;
 		const soundWasEnabled = settings.soundEnabled !== false;
@@ -139,6 +153,7 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				weeklyMissions: [],
 				lastDailyMissionResetAt: null,
 				lastWeeklyMissionResetAt: null,
+				lastAttendanceDate: null,
 			},
 			settings: {
 				bgmVolume: soundWasEnabled ? 0.7 : 0,
@@ -406,6 +421,9 @@ export const useMetaStore = create<MetaState>()(
 							lastWeeklyMissionResetAt: weeklyStale
 								? now.toISOString()
 								: progress.lastWeeklyMissionResetAt,
+							lastAttendanceDate: needsWeeklyReset
+								? null
+								: progress.lastAttendanceDate,
 						},
 					};
 				});
@@ -425,6 +443,42 @@ export const useMetaStore = create<MetaState>()(
 							...s.progress,
 							dailyMissions: updateList(s.progress.dailyMissions),
 							weeklyMissions: updateList(s.progress.weeklyMissions),
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			recordStageClear: (mapId) => {
+				set((s) => {
+					if (s.progress.stagesCleared.includes(mapId)) return s;
+					return {
+						progress: {
+							...s.progress,
+							stagesCleared: [...s.progress.stagesCleared, mapId],
+						},
+					};
+				});
+				debouncedSave(get());
+			},
+
+			recordAttendance: () => {
+				const todayKST = toKSTDateStr(new Date());
+				set((s) => {
+					const att = s.progress.weeklyMissions.find(
+						(m) => m.type === 'attendance',
+					);
+					if (!att || att.claimed || s.progress.lastAttendanceDate === todayKST)
+						return s;
+					return {
+						progress: {
+							...s.progress,
+							lastAttendanceDate: todayKST,
+							weeklyMissions: s.progress.weeklyMissions.map((m) =>
+								m.type === 'attendance' && !m.claimed
+									? { ...m, current: Math.min(m.current + 1, m.target) }
+									: m,
+							),
 						},
 					};
 				});

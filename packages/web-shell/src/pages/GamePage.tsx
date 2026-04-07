@@ -59,8 +59,14 @@ export function GamePage() {
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
 	const setBossHp = useGameStore((s) => s.setBossHp);
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
+	const bossHp = useGameStore((s) => s.bossHp);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
+	const gameSpeed = useGameStore((s) => s.gameSpeed);
+	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
+	const selectedMapId = useGameStore((s) => s.selectedMapId);
+	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -78,13 +84,19 @@ export function GamePage() {
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
+				rewardMultiplier: number;
 			};
 		}) => {
 			setRunStatus(data.result);
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
-			const xpEarned = battleXp(
-				data.stats.wavesCleared,
-				data.result === 'victory',
+			setBossWarningVisible(false);
+			if (bossWarningTimerRef.current) {
+				clearTimeout(bossWarningTimerRef.current);
+				bossWarningTimerRef.current = null;
+			}
+			const xpEarned = Math.round(
+				battleXp(data.stats.wavesCleared, data.result === 'victory') *
+					data.stats.rewardMultiplier,
 			);
 			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();
@@ -95,6 +107,10 @@ export function GamePage() {
 				useGameStore.getState().selectedMapId,
 				data.stats.wavesCleared,
 			);
+			if (data.result === 'victory') {
+				const mapId = useGameStore.getState().selectedMapId;
+				meta.recordStageClear(mapId);
+			}
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -255,7 +271,6 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
-	const resultTitle = runStatus === 'victory' ? '방어 성공' : '방어 실패';
 	const toastStyle = toast ? getToastStyle(toast.tone) : null;
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
@@ -265,53 +280,79 @@ export function GamePage() {
 				{/* Top HUD */}
 				<div
 					data-testid="top-hud"
-					className="flex shrink-0 flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap border-b border-border px-3 py-2.5"
+					className="flex shrink-0 flex-col border-b border-border"
 					style={{ background: 'rgba(42, 32, 16, 0.92)' }}
 				>
+					{/* 첫 번째 행: 항상 고정 */}
 					<div
-						className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
-						style={{ background: 'rgba(192,48,32,0.16)' }}
+						data-testid="top-hud-row"
+						className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap px-3 py-2.5"
 					>
-						HP {lives}
-					</div>
-					<div
-						className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
-						style={{ background: 'rgba(240,208,96,0.16)' }}
-					>
-						<span>⚡{energy}</span>
 						<div
-							className="flex-1 overflow-hidden rounded-sm"
-							style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}
+							className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+							style={{ background: 'rgba(192,48,32,0.16)' }}
 						>
-							<div
-								className={cn(
-									'h-full transition-[width] duration-300 ease-out',
-									energy >= ENERGY_CAP ? 'bg-success' : 'bg-gold',
-								)}
-								style={{
-									width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
-								}}
-							/>
+							HP {lives}
 						</div>
-					</div>
-					<div
-						data-testid="hud-timer"
-						className={cn(
-							'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
-							isBossPhase ? 'text-gold' : 'text-text',
+						<div
+							className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+							style={{ background: 'rgba(240,208,96,0.16)' }}
+						>
+							<span>⚡{energy}</span>
+							<div
+								className="flex-1 overflow-hidden rounded-sm"
+								style={{ height: '4px', background: 'rgba(0,0,0,0.3)' }}
+							>
+								<div
+									className={cn(
+										'h-full transition-[width] duration-300 ease-out',
+										energy >= ENERGY_CAP ? 'bg-success' : 'bg-gold',
+									)}
+									style={{
+										width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
+									}}
+								/>
+							</div>
+						</div>
+						<div
+							data-testid="hud-timer"
+							className={cn(
+								'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+								isBossPhase ? 'text-gold' : 'text-text',
+							)}
+							style={{
+								background: isBossPhase
+									? 'rgba(240,208,96,0.16)'
+									: 'rgba(42,32,16,0.82)',
+							}}
+						>
+							{combatHud.bossWarning
+								? '보스 임박'
+								: combatHud.phase === 'waiting' && waitCountdown > 0
+									? `다음 ${waitCountdown}s`
+									: formatTimerLabel(combatHud.timerLabel)}
+						</div>
+						{runStatus === 'running' && speed2xUnlocked && (
+							<button
+								className="ml-auto font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
+								style={{
+									background:
+										gameSpeed === 2
+											? 'rgba(200,112,32,0.3)'
+											: 'rgba(26,18,8,0.7)',
+								}}
+								onClick={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
+							>
+								{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+							</button>
 						)}
-						style={{
-							background: isBossPhase
-								? 'rgba(240,208,96,0.16)'
-								: 'rgba(42,32,16,0.82)',
-						}}
-					>
-						{combatHud.bossWarning
-							? '보스 임박'
-							: combatHud.phase === 'waiting' && waitCountdown > 0
-								? `다음 ${waitCountdown}s`
-								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
+					{/* 두 번째 행: 보스 체력바 (나타날 때 첫 행에 영향 없음) */}
+					{bossHp.visible && (
+						<div className="px-3 pb-2">
+							<BossHpBar />
+						</div>
+					)}
 				</div>
 
 				{/* Game Area */}
@@ -323,8 +364,6 @@ export function GamePage() {
 					}}
 				>
 					<PhaserGame key={runId} />
-
-					<BossHpBar />
 
 					{runStatus !== 'victory' && runStatus !== 'defeat' && (
 						<TutorialOverlay />
@@ -365,60 +404,135 @@ export function GamePage() {
 
 					{(runStatus === 'victory' || runStatus === 'defeat') && (
 						<div
-							className="absolute inset-0 z-[3] flex items-center justify-center p-5"
-							style={{ background: 'rgba(10, 8, 4, 0.82)' }}
+							className="absolute inset-0 z-[10] flex items-center justify-center p-5"
+							style={{ background: 'rgba(10, 8, 4, 0.88)' }}
 						>
 							<div
-								className="flex w-[min(100%,360px)] flex-col gap-3.5 p-5 text-center"
+								className="flex w-[min(100%,360px)] flex-col gap-4 p-5 text-center"
 								style={{
-									background: 'rgba(42, 32, 16, 0.96)',
+									background: 'rgba(26, 14, 6, 0.98)',
 									border: `2px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
-									boxShadow: `6px 6px 0px ${colors.border}`,
+									boxShadow: `0 0 24px ${runStatus === 'victory' ? 'rgba(80,200,80,0.3)' : 'rgba(200,60,60,0.3)'}, 6px 6px 0px ${colors.border}`,
 								}}
 							>
-								<img
-									src={
-										runStatus === 'victory'
-											? 'assets/ui/defense-success.png'
-											: 'assets/ui/defense-fail.png'
-									}
-									alt={resultTitle}
-									className="mx-auto w-[200px] h-auto [image-rendering:pixelated]"
-								/>
-								<h2
-									className={cn(
-										'font-pixel text-base font-normal',
-										runStatus === 'victory' ? 'text-success' : 'text-danger',
-									)}
+								{/* 배너 */}
+								<div
+									className="py-3 -mx-5 -mt-5 flex flex-col items-center gap-1"
+									style={{
+										background:
+											runStatus === 'victory'
+												? 'rgba(40,80,40,0.8)'
+												: 'rgba(80,20,20,0.8)',
+										borderBottom: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
+									}}
 								>
-									{resultTitle}
-								</h2>
-								<p className="font-pixel text-xs leading-[1.8] text-text-secondary">
-									{runStatus === 'defeat'
-										? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
-										: '왕국을 지켜냈습니다!'}
-								</p>
-								<div className="flex flex-col gap-1.5">
-									<p className="font-pixel text-xs text-text-secondary">
-										클리어 웨이브: {gameOverStats?.wavesCleared ?? 0}/10
-									</p>
-									<p className="font-pixel text-xs text-text-secondary">
-										배치한 타워: {gameOverStats?.towersPlaced ?? 0}
-									</p>
-									<p className="font-pixel text-xs text-text-secondary">
-										생존 시간:{' '}
-										{Math.floor((gameOverStats?.timeSurvivedSec ?? 0) / 60)}:
-										{String(
-											(gameOverStats?.timeSurvivedSec ?? 0) % 60,
-										).padStart(2, '0')}
-									</p>
-									<p className="mt-1 font-pixel text-sm text-gold">
-										획득 골드: {gameOverStats?.goldEarned ?? 0}G
-									</p>
-									<p className="mt-0.5 font-pixel text-sm text-info">
-										획득 XP: {gameOverStats?.xpEarned ?? 0}
-									</p>
+									<span
+										className="font-pixel text-2xl"
+										style={{
+											color:
+												runStatus === 'victory'
+													? colors.success
+													: colors.danger,
+										}}
+									>
+										{runStatus === 'victory'
+											? '⚔ 방어 성공 ⚔'
+											: '✕ 방어 실패 ✕'}
+									</span>
+									<span className="font-pixel text-[11px] text-text-secondary">
+										{runStatus === 'defeat'
+											? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
+											: gameOverStats?.wavesCleared === 10
+												? '✨ 완벽한 방어! 왕국을 성공적으로 지켜냈습니다!'
+												: '왕국을 성공적으로 지켜냈습니다!'}
+									</span>
 								</div>
+
+								{/* 스탯 그리드 */}
+								<div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 text-left">
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											클리어 웨이브
+										</span>
+										<span className="font-pixel text-sm text-text">
+											{gameOverStats?.wavesCleared ?? 0} / 10
+										</span>
+									</div>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											배치한 타워
+										</span>
+										<span className="font-pixel text-sm text-text">
+											{gameOverStats?.towersPlaced ?? 0}
+										</span>
+									</div>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											생존 시간
+										</span>
+										<span className="font-pixel text-sm text-text">
+											{(() => {
+												const s = gameOverStats?.timeSurvivedSec ?? 0;
+												const h = Math.floor(s / 3600);
+												const m = Math.floor((s % 3600) / 60);
+												const sec = s % 60;
+												return h > 0
+													? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+													: `${m}:${String(sec).padStart(2, '0')}`;
+											})()}
+										</span>
+									</div>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											획득 골드
+										</span>
+										<span className="font-pixel text-sm text-gold">
+											{gameOverStats?.goldEarned ?? 0}G
+										</span>
+									</div>
+								</div>
+
+								{/* XP */}
+								<div
+									className="flex items-center justify-center gap-2 py-1.5"
+									style={{
+										background: 'rgba(20,30,80,0.5)',
+										border: '1px solid rgba(100,150,255,0.2)',
+									}}
+								>
+									<span className="font-pixel text-[11px] text-text-secondary">
+										획득 XP
+									</span>
+									<span className="font-pixel text-base text-info">
+										+{gameOverStats?.xpEarned ?? 0}
+									</span>
+								</div>
+
+								{/* 버튼 */}
 								<PixelButton
 									variant="gold"
 									style={{ width: '100%' }}

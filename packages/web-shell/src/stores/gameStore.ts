@@ -1,3 +1,4 @@
+import { EventBus } from '@gld/phaser-game';
 import {
 	type CombatHudState,
 	DEFAULT_DECK,
@@ -77,6 +78,7 @@ interface GameStoreState {
 	gameOverStats: GameOverStats | null;
 	tutorialStep: number | null;
 	tutorialMessage: string | null;
+	gameSpeed: 1 | 2;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -109,6 +111,7 @@ interface GameStoreState {
 	setGameOverStats: (stats: GameOverStats | null) => void;
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
+	setGameSpeed: (speed: 1 | 2) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -138,6 +141,7 @@ const createRunState = () => ({
 	gameOverStats: null,
 	tutorialStep: null,
 	tutorialMessage: null,
+	gameSpeed: 1 as 1 | 2,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({
@@ -184,7 +188,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			},
 		})),
 	clearToast: () => set({ toast: null }),
-	resetRun: () =>
+	resetRun: () => {
 		set((state) => {
 			// Guard: if selected map is locked, fall back to default
 			// Use Infinity when store is unhydrated so we never accidentally lock maps
@@ -202,14 +206,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 				selectedMapId: safeMapId,
 				...createRunState(),
 			};
-		}),
-	enterLobby: () =>
+		});
+		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
+	enterLobby: () => {
 		set((state) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
 			lobbyTab: 'home',
 			...createRunState(),
-		})),
+		}));
+		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
 	setBgmVolume: (v) => {
 		useMetaStore.getState().updateSettings({ bgmVolume: v });
 		set({ bgmVolume: v });
@@ -235,4 +243,8 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setGameOverStats: (stats) => set({ gameOverStats: stats }),
 	setTutorialStep: (step) => set({ tutorialStep: step }),
 	setTutorialMessage: (msg) => set({ tutorialMessage: msg }),
+	setGameSpeed: (speed) => {
+		set({ gameSpeed: speed });
+		EventBus.emit('request-set-speed', { multiplier: speed });
+	},
 }));

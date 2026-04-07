@@ -30,9 +30,9 @@ describe('EnergySystem', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('starts with INITIAL_ENERGY (0)', () => {
+	it('starts with INITIAL_ENERGY (10)', () => {
 		const system = new EnergySystem();
-		expect(system.getEnergy()).toBe(0);
+		expect(system.getEnergy()).toBe(10);
 	});
 
 	it('accumulates energy at 1/sec', () => {
@@ -99,5 +99,24 @@ describe('EnergySystem', () => {
 		system.spend(30);
 		system.reset(20);
 		expect(system.getEnergy()).toBe(20);
+	});
+
+	it('add() increases energy up to cap', () => {
+		const system = new EnergySystem(0);
+		system.add(5);
+		expect(system.getEnergy()).toBe(5);
+	});
+
+	it('add() does not exceed ENERGY_CAP', () => {
+		const system = new EnergySystem(99);
+		system.add(10);
+		expect(system.getEnergy()).toBe(100);
+	});
+
+	it('add() ignores non-positive amounts', () => {
+		const system = new EnergySystem(50);
+		system.add(0);
+		system.add(-5);
+		expect(system.getEnergy()).toBe(50);
 	});
 });

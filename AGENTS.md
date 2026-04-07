@@ -44,9 +44,9 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 랜덤 롤 경제, 이벤트 기반 10웨이브 진행, 결과 오버레이, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
+**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 덱 경제(시작 10, 킬 +2, 보스킬 +5), 이벤트 기반 10웨이브 진행, 보스 HP바, 결과 오버레이(스탯 그리드), 3맵 선택(난이도/보상 배율 차등), 2배속 토글(첫 클리어 후 해금), 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
 
-**아직 구현되지 않은 것:** 속성 시스템, 보스 페이즈, 4타워 덱, 메타 성장/저장, 멀티 스테이지. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
+**아직 구현되지 않은 것:** 속성 시스템 전투 적용, 난이도별 밸런스 조정, 메타 성장/컬렉션. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
 ## Local Skills
 
@@ -78,7 +78,7 @@ React → EventBus.emit('request-place-tower', { col, row, towerDefId })
 
 | 방향 | 접두사 | 예시 |
 |------|--------|------|
-| React → Game | `request-*` | `request-place-tower`, `request-sell-tower`, `request-select-tower` |
+| React → Game | `request-*` | `request-place-tower`, `request-sell-tower`, `request-select-tower`, `request-set-speed` |
 | Game → React | 서술형 | `tower-placed`, `tower-sold`, `wave-preview` |
 
 이벤트 타입을 추가/변경하면 `shared/src/types/events.ts`와 `phaser-game/src/EventBus.ts`의 `GameEventMap`을 반드시 함께 업데이트해야 한다.
@@ -97,7 +97,7 @@ lobby → building → running → victory | defeat → lobby
 
 ### 에너지 경제
 
-에너지가 초당 1씩 자동 축적된다 (최대 100). 타워 랜덤 롤에 에너지 10을 소비. 킬 보상은 에너지로 변환되지 않음 (순수 시간 기반 경제).
+에너지가 초당 1씩 자동 축적된다 (최대 100). 시작 에너지 10. 타워 랜덤 롤에 에너지 10을 소비. 일반 유닛 처치 시 +2, 보스 처치 시 +5 에너지 보상.
 
 ## 하이시그널 파일
 
@@ -155,3 +155,51 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 
 활성 스펙과 플랜은 `docs/superpowers/` 아래에서 관리된다.
+
+## 게임 스펙 문서 (`docs/game-spec/`)
+
+게임의 모든 설계 결정은 `docs/game-spec/`에서 관리한다.
+
+| 파일 | 역할 |
+|------|------|
+| `01-GDD.md` | 게임 정의, 코어 루프, 시스템, 콘텐츠 플랜, UI |
+| `02-balance-sheet.md` | 화폐 경제, 가챠 확률, 미션, 타워/적 수치 |
+| `03-business-model.md` | BM 구조, 상점, 광고, LiveOps KPI |
+| `04-data-structure.md` | Save Data 스키마, 텔레메트리 이벤트 |
+| `05-operations.md` | 운영 스택, 모니터링, LiveOps 체계 |
+| `06-milestone.md` | Phase 로드맵, 출시 전/후 단기/중기/장기 계획 |
+| `07-asset-definition.md` | 에셋 사양, 인벤토리, 파이프라인 |
+
+### 문서 운용 원칙
+
+- **모든 구현 작업은 `docs/game-spec/`를 기준으로 시작한다.**
+- 게임 변경(수치, 시스템, BM 등)이 생기면 **코드보다 문서를 먼저 업데이트**한다.
+- 구현 후 문서가 코드와 다르면 문서를 교정한다.
+
+### 이슈 처리 워크플로우
+
+사용자가 이슈를 던지면 아래 순서로 처리한다.
+
+```
+1. 컨텍스트 검토
+   - 관련 game-spec 문서 읽기 (설계 의도·현행 수치 파악)
+   - 관련 코드 읽기 (현재 구현 상태 파악)
+   - 필요 시 의사결정 검토 (설계 충돌, 밸런스 영향, 범위 등) → 사용자와 합의
+
+2. 플랜 수립
+   - 검토 결과를 기반으로 구현 계획 작성
+
+3. 구현
+   - 플랜대로 코드 변경
+
+4. 게임 스펙 업데이트
+   - 변경된 내용에 해당하는 game-spec 파일을 업데이트한다
+   - 수치 변경 → 02-balance-sheet.md
+   - 시스템/UI 변경 → 01-GDD.md
+   - BM 변경 → 03-business-model.md
+   - 저장 구조 변경 → 04-data-structure.md
+   - 에셋 변경 → 07-asset-definition.md
+   - 일정/범위 변경 → 06-milestone.md
+```
+
+**의사결정 검토가 필요한 경우**: 이슈가 game-spec 설계와 충돌하거나, 수치 변경이 밸런스에 영향을 주거나, 범위가 불명확할 때 — 구현 전에 사용자와 먼저 합의한다.

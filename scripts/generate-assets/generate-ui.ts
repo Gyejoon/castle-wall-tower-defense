@@ -337,7 +337,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     // Left leg stays attached
     [10,11,12].forEach(x => {
       for (let y = 5; y <= 12; y++) {
-        setPixel(ctx, x, y, x === 10 ? ironDark : x === 11 ? iron : ironDark);
+        setPixel(ctx, x, y, x === 10 ? ironDark : iron);
       }
     });
     // Arch curves up and right side is lifted

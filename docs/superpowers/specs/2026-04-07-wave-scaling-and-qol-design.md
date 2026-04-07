@@ -203,5 +203,5 @@ iOS Safari/Chrome은 사용자 제스처(`pointerdown`, `touchstart`, `click`) �
 4. **덱 편집:** 덱 변경 → 게임 시작 → DeckDock에 변경된 카드 표시
 5. **iOS 사운드:** iPad/iPhone Safari/Chrome에서 첫 탭 후 사운드 재생
 6. **보스 leak:** 보스가 경로 끝 도달 시 즉시 패배 처리
-7. **테스트:** `pnpm test` 341 tests 통과 (134 shared + 141 phaser + 66 web-shell)
+7. **테스트:** `pnpm test` 352 tests 통과 (142 shared + 141 phaser + 69 web-shell)
 8. **빌드:** `pnpm build:web` 성공

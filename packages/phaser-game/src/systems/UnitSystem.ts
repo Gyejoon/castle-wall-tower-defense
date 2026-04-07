@@ -499,7 +499,7 @@ export class UnitSystem {
 			}
 
 			if (spawnBlocked && this.spawnBlockTimer < this.SPAWN_BLOCK_TIMEOUT) {
-				this.spawnBlockTimer += delta;
+				this.spawnBlockTimer += this.SPAWN_INTERVAL;
 			} else {
 				this.spawnBlockTimer = 0;
 				this.spawnUnit(front);

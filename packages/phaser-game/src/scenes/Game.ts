@@ -727,6 +727,13 @@ export class GameScene extends Phaser.Scene {
 
 			// Boss leak = instant defeat
 			if (exit.isBoss) {
+				EventBus.emit('base-hp-changed', {
+					hp: 0,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(0);
+				this.castleWall.onHit();
 				this.emitGameOver({
 					result: 'defeat',
 					reason: 'base_hp_depleted',

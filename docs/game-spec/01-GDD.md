@@ -26,7 +26,7 @@
 | Core Fantasy | 성문을 지키는 지휘관 — 타워 배치 → 끝까지 생존 |
 | Core Fun | 배치 전략, 에너지 관리, 4타워 운영, 웨이브 대응, 성장 보상 |
 | Win Condition | 10웨이브 생존 / 최종 보스(웨이브 10) 돌파 / 기지 방어 성공 |
-| Lose Condition | 기지 HP 0 |
+| Lose Condition | 기지 HP 0 또는 보스 leak (보스가 경로 끝 도달 시 즉시 패배) |
 
 ---
 
@@ -63,6 +63,7 @@
 | Combat | 타워 자동 공격 + 적 고정 경로 이동 실시간 방어 | damage, armor, attackSpeed, target priority |
 | Movement | 적은 spawn→exit 세로 레인 이동, 드래그로 배치 | speed, path rules, blocked path prevention |
 | Placement | 에너지 소비해 4타워 카드 중 1개 선택 → buildable tile 배치 | 에너지 1/sec 자동 축적, 공격형 10 / CC형 20 |
+| Tower Sell | 배치된 타워 탭 → 판매 패널 → 에너지 50% 환급 | `TowerSystem.calcRefund()` 단일 출처 |
 | Element | 화/수/번개/무 속성 상성으로 데미지 배율 적용 | element_type, matchup_multiplier (0.7x/1.0x/1.3x) |
 | Gacha/Box | 상자에서 히든 타워 획득 (무료/광고/다이아) | box_type, cost, rate_table, pity(50회) |
 | Upgrade | 골드 소비 레벨업 + 등급 승급 (확률 기반) | level, grade, stat growth |
@@ -139,18 +140,47 @@
 
 ### 웨이브 구성 (forest_gate)
 
-| wave | 구성 | 골드 보상 |
-|------|------|---------|
-| 1 | scout_drone × 6 | 30 |
-| 2 | scout_drone × 6 + battle_robot × 2 | 50 |
-| 3 | battle_robot × 4 + scout_drone × 4 | 70 |
-| 4 | battle_robot × 4 + stealth_drone × 3 | 90 |
-| **5** | **titan × 1 + battle_robot × 3** | **150** |
-| 6 | heavy_walker × 3 + stealth_drone × 4 | 100 |
-| 7 | battle_robot × 4 + heavy_walker × 2 + scout_drone × 4 | 120 |
-| 8 | stealth_drone × 6 + heavy_walker × 3 | 130 |
-| 9 | heavy_walker × 4 + battle_robot × 4 + stealth_drone × 4 | 150 |
-| **10** | **titan × 1 + heavy_walker × 3 + stealth_drone × 4** | **250 + 클리어 보너스** |
+| wave | kind | 구성 | 의도 |
+|------|------|------|------|
+| 1 | normal | scout_drone × 4 | 성공 경험. 약한 적 소수 |
+| 2 | normal | scout_drone × 6 | 수량 증가, 여전히 쉬움 |
+| 3 | normal | scout_drone × 4 + battle_robot × 2 | 새 몬스터 등장, 방어력 체감 |
+| 4 | normal | battle_robot × 4 + stealth_drone × 2 | 빠른 적 등장 |
+| **5** | **boss** | **titan × 1** | **중간보스. 높은 체력 단일 적** |
+| 6 | normal | scout_drone × 6 + battle_robot × 3 | 물량 증가 |
+| 7 | normal | battle_robot × 4 + heavy_walker × 2 | 고방어 적 등장 |
+| 8 | normal | stealth_drone × 4 + heavy_walker × 3 | 속도+방어 조합 |
+| 9 | pre_boss | battle_robot × 4 + heavy_walker × 2 + stealth_drone × 3 | 혼합 대군 |
+| **10** | **boss** | **titan × 1 + heavy_walker × 2 + battle_robot × 3** | **최종보스 + 호위대** |
+
+- lava_fortress: 동일 구성, 수량 ×1.2 반올림
+- storm_citadel: 동일 구성, 수량 ×1.5 반올림. Wave 5: titan×2+heavy_walker×2, Wave 10: 추가 호위대
+
+### 웨이브별 스케일링 (WAVE_SCALING)
+
+웨이브 진행에 따라 몬스터 HP/속도에 배수 적용. 초반 완만, 후반 가파름.
+
+| Wave | HP 배수 | 속도 배수 |
+|------|---------|----------|
+| 1-2 | 1.0× | 1.0× |
+| 3 | 1.1× | 1.0× |
+| 4 | 1.2× | 1.0× |
+| 5 | 1.5× | 1.05× |
+| 6 | 1.8× | 1.05× |
+| 7 | 2.2× | 1.1× |
+| 8 | 2.6× | 1.1× |
+| 9 | 3.0× | 1.15× |
+| 10 | 3.5× | 1.15× |
+
+### 맵별 난이도 배수 (difficultyHpMult)
+
+| 맵 | HP 배수 | 보상 배수 |
+|----|---------|----------|
+| forest_gate | 1.0× | 1× |
+| lava_fortress | 1.3× | 2× |
+| storm_citadel | 1.6× | 3× |
+
+**HP 적용 순서:** base × Band스케일링 × difficultyHpMult × WAVE_SCALING × FINAL_BOSS(Wave10만 2×)
 
 ---
 
@@ -162,13 +192,14 @@
 | Map Structure | 세로형 단일 필드 / 고정 레인 / buildable tile 분리 |
 | Danger Points | 고속 러시, 고장갑 탱커, 보스 웨이브(5, 10) |
 | Difficulty Spike | 웨이브 5 (1차 보스), 웨이브 8~9 (고밀도), 웨이브 10 (최종 보스) |
+| Boss Leak Rule | 보스가 경로 끝 도달 시 HP 관계없이 즉시 패배 |
 | Checkpoint | 없음 — 실패 시 즉시 재도전 또는 로비 복귀 |
 
 ### 보스 연출 시퀀스
 
 | 타이밍 | 연출 |
 |--------|------|
-| 웨이브 4 클리어 직후 | "WARNING" 1.5초 + 배경 어두워짐 |
+| 웨이브 9 클리어 직후 (pre_boss) | "WARNING" 1.5초 + 배경 어두워짐 |
 | 웨이브 5 보스 스폰 | 등장 연출 + 화면 흔들림 + BGM 전환 |
 | 웨이브 5 보스 처치 | 골드 팝업 + "BOSS CLEAR" |
 | 웨이브 9 클리어 직후 | "FINAL BOSS" + 화면 붉은 전환 |
@@ -181,15 +212,23 @@
 
 ### UI 구조
 
-- **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이
+- **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이, 나가기 버튼, 배속 토글
   - HP 변화 시 scale flash 애니메이션 (250ms ease-out, 초기 마운트 시 스킵)
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
   - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
 - **Lobby**: Home 탭 (즉시 시작 CTA), Collection 탭, Missions 탭, Settings 탭
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
+- **Tower Sell Panel**: 배치된 타워 탭 시 하단 중앙에 표시 (타워 이름 + "판매 E+N" danger 버튼)
+- **Exit Modal**: "나가기" 텍스트 버튼 탭 → 확인 모달 (게임 일시정지, "나가기"/"계속하기")
 - **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀
 - **Tutorial Overlay**: 첫 세션 5단계 (step 1~2만 강제)
+
+### iOS 사운드
+
+iOS Safari/Chrome은 사용자 제스처 없이 AudioContext를 시작할 수 없음.
+첫 `pointerdown`/`touchstart`/`click`에서 `soundGenerator.unlock()` 호출 (1회성).
+`visibilitychange`로 탭 전환 후 복귀 시에도 재개.
 
 ### 디자인 시스템
 
@@ -291,3 +330,4 @@ SettingsTab (React) → gameStore.toggle*()
 | 2026-04-07 | 최초 작성 | Obsidian GDD 기반 |
 | 2026-04-07 | §8 UI/UX | 디자인 시스템 섹션 신설 (색상 토큰 13종, 타이포 5단계, 터치 타겟, HUD 애니메이션, 데미지 넘버, CurrencyIcon SVG) |
 | 2026-04-07 | §8, §9 | 토큰 아키텍처(단일 원천 + re-export), 설정 런타임 동기화 경로, HUD flash 초기 마운트 스킵 |
+| 2026-04-07 | §4, §6, §7, §8 | 웨이브 재설계(초반 완만→후반 가파름), WAVE_SCALING 10단계, difficultyHpMult 맵별 차등(1/1.3/1.6), 타워 판매(50%), 게임 나가기(확인 모달+일시정지), 보스 leak 즉시 패배, iOS AudioContext unlock, 덱 편집 버그 수정 |

@@ -1,0 +1,16 @@
+{
+  "eval_id": 2,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "UI 스코프 OFF를 올바르게 판정",
+      "passed": true,
+      "evidence": "키워드 매칭: 1개(phaser) < 2 threshold → UI scope OFF"
+    },
+    {
+      "text": "스킵 근거를 체계적으로 제시 (키워드 매칭 테이블 포함)",
+      "passed": true,
+      "evidence": "3개 카테고리(Game UI, Web UI, Common)별 키워드 매칭 테이블 + 4가지 스킵 근거 항목"
+    }
+  ]
+}

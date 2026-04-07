@@ -4,14 +4,17 @@ import {
 	isMapUnlocked,
 	MAP_REGISTRY,
 } from '@gld/shared';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 import { cn } from '../../../utils/cn';
 import { PixelButton } from '../../ui/PixelButton';
-import { DeckEditSheet } from '../DeckEditSheet';
 import { TabBackground } from '../TabBackground';
+
+const DeckEditSheet = lazy(() =>
+	import('../DeckEditSheet').then((m) => ({ default: m.DeckEditSheet })),
+);
 
 const STAGE_DIFFICULTY: Record<string, number> = {
 	forest_gate: 1,
@@ -157,7 +160,7 @@ export function HomeTab() {
 										height={32}
 										className="[image-rendering:pixelated]"
 									/>
-									<span className="font-pixel text-[9px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
+									<span className="font-pixel text-[10px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 										{tower.name}
 									</span>
 								</div>
@@ -195,10 +198,14 @@ export function HomeTab() {
 				</div>
 			</div>
 
-			<DeckEditSheet
-				open={showDeckEdit}
-				onClose={() => setShowDeckEdit(false)}
-			/>
+			{showDeckEdit && (
+				<Suspense fallback={null}>
+					<DeckEditSheet
+						open={showDeckEdit}
+						onClose={() => setShowDeckEdit(false)}
+					/>
+				</Suspense>
+			)}
 		</div>
 	);
 }

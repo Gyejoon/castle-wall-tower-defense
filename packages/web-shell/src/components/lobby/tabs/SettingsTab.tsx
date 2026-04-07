@@ -84,14 +84,8 @@ function SettingsSection({
 	children: React.ReactNode;
 }) {
 	return (
-		<div
-			className="flex flex-col gap-px border border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.7)' }}
-		>
-			<div
-				className="px-3 py-2"
-				style={{ background: 'rgba(42, 32, 16, 0.9)' }}
-			>
+		<div className="flex flex-col gap-px border border-border bg-panel-70">
+			<div className="px-3 py-2 bg-panel-90">
 				<span className="font-pixel text-[11px] text-accent">{title}</span>
 			</div>
 			{children}
@@ -115,8 +109,7 @@ function ToggleRow({
 			aria-checked={checked}
 			aria-label={label}
 			onClick={onChange}
-			className="flex justify-between items-center px-3 py-2.5 border-none cursor-pointer touch-manipulation"
-			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
+			className="flex justify-between items-center px-3 py-2.5 border-none cursor-pointer touch-manipulation bg-bg-80"
 		>
 			<span className="font-pixel text-xs text-text">{label}</span>
 			<div
@@ -142,10 +135,7 @@ function SliderRow({
 	onChange: (v: number) => void;
 }) {
 	return (
-		<div
-			className="flex justify-between items-center px-3 py-2.5 gap-3"
-			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
-		>
+		<div className="flex justify-between items-center px-3 py-2.5 gap-3 bg-bg-80">
 			<span className="font-pixel text-xs text-text shrink-0">{label}</span>
 			<input
 				type="range"
@@ -175,15 +165,12 @@ function SelectRow<T extends string>({
 	onChange: (v: T) => void;
 }) {
 	return (
-		<div
-			className="flex justify-between items-center px-3 py-2.5"
-			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
-		>
+		<div className="flex justify-between items-center px-3 py-2.5 bg-bg-80">
 			<span className="font-pixel text-xs text-text">{label}</span>
 			<select
 				value={value}
 				onChange={(e) => onChange(e.target.value as T)}
-				className="font-pixel text-[11px] text-text bg-panel border border-border px-2 py-1 cursor-pointer"
+				className="font-pixel text-[11px] text-text bg-panel border border-border px-2 py-1 min-h-[44px] cursor-pointer"
 				aria-label={label}
 			>
 				{options.map((o) => (
@@ -198,10 +185,7 @@ function SelectRow<T extends string>({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
-		<div
-			className="flex justify-between items-center px-3 py-2.5"
-			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
-		>
+		<div className="flex justify-between items-center px-3 py-2.5 bg-bg-80">
 			<span className="font-pixel text-xs text-text">{label}</span>
 			<span className="font-pixel text-[11px] text-text-secondary">
 				{value}

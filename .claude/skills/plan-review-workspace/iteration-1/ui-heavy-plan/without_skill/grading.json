@@ -1,0 +1,26 @@
+{
+  "eval_id": 1,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "6개 차원 점수 테이블이 스킬 포맷(AI Slop, 타이포, 색상, 레이아웃, 모션, 게임-웹)을 정확히 따름",
+      "passed": false,
+      "evidence": "자체 정의 차원명 사용 (Brand Consistency, Color & Token Usage, Typography & Pixel Grid 등). 스킬 포맷과 다름."
+    },
+    {
+      "text": "AI slop 레드플래그 3건(적절한 폰트, 깔끔한 카드, 모달) 감지",
+      "passed": false,
+      "evidence": "구체적 레드플래그 용어 사용 없음. '기능 구조는 합리적이나 디자인 명세가 부재'라는 일반적 지적만"
+    },
+    {
+      "text": ".impeccable.md 토큰(#c8a04a, Press Start 2P, 32px 등) 구체적 참조",
+      "passed": false,
+      "evidence": ".impeccable.md 토큰 부재를 지적했으나, 구체적 hex 값이나 폰트명을 개선안에 제시하지 않음"
+    },
+    {
+      "text": "7점 미만 항목에 구체적 개선안(파일명/토큰명/수치 수준) 존재",
+      "passed": false,
+      "evidence": "점수는 매겼으나 개선안이 일반적 수준 ('토큰 참조 필요' 정도)"
+    }
+  ]
+}

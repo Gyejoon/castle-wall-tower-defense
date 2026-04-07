@@ -12,6 +12,7 @@ import {
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	PHASER_COLORS,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -75,6 +76,7 @@ function getMapTheme(mapId: string): MapTheme {
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
+import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
@@ -91,6 +93,10 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
+	private damageNumbers!: DamageNumberSystem;
+	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
+		this.damageNumbers.setEnabled(value);
+	};
 
 	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
@@ -183,6 +189,15 @@ export class GameScene extends Phaser.Scene {
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
+		this.damageNumbers = new DamageNumberSystem(this);
+		const showDmgNumbers = this.game.registry.get('showDamageNumbers') as
+			| boolean
+			| undefined;
+		this.damageNumbers.setEnabled(showDmgNumbers !== false);
+		this.game.registry.events.on(
+			'changedata-showDamageNumbers',
+			this.onDmgNumbersChange,
+		);
 
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -457,7 +472,7 @@ export class GameScene extends Phaser.Scene {
 					this.hoverGraphics,
 					gridPos.x,
 					gridPos.y,
-					canPlace ? 0x7f5af0 : 0xe53170,
+					canPlace ? PHASER_COLORS.accent : PHASER_COLORS.danger,
 					0.2,
 				);
 			}
@@ -489,7 +504,7 @@ export class GameScene extends Phaser.Scene {
 						this.selectionGraphics,
 						x,
 						y,
-						0x7f5af0,
+						PHASER_COLORS.accent,
 						0.12,
 					);
 				}
@@ -592,7 +607,12 @@ export class GameScene extends Phaser.Scene {
 		towerSystem: Pick<TowerSystem, 'update'>,
 		unitSystem: Pick<
 			UnitSystem,
-			'applyDamage' | 'applySlow' | 'applyStun' | 'getUnitPositions' | 'update'
+			| 'applyDamage'
+			| 'applySlow'
+			| 'applyStun'
+			| 'getUnitPositions'
+			| 'getUnitWorldPos'
+			| 'update'
 		>,
 		time: number,
 		delta: number,
@@ -603,11 +623,15 @@ export class GameScene extends Phaser.Scene {
 
 		for (const evt of damageEvents) {
 			if (evt.damage > 0) {
+				const pos = unitSystem.getUnitWorldPos(evt.unitId);
 				const result = unitSystem.applyDamage(
 					evt.unitId,
 					evt.damage,
 					evt.armorPierce,
 				);
+				if (pos) {
+					this.damageNumbers.show(pos.x, pos.y, evt.damage);
+				}
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
 					const energyReward = result.isBoss
@@ -646,6 +670,8 @@ export class GameScene extends Phaser.Scene {
 				soundGenerator.playUnitDeath();
 			},
 		);
+
+		this.damageNumbers.update(_time, delta);
 
 		for (const _uid of playerExits) {
 			this.playerHp = Math.max(0, this.playerHp - 1);
@@ -686,6 +712,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		this.game.registry.events.off(
+			'changedata-showDamageNumbers',
+			this.onDmgNumbersChange,
+		);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();
@@ -694,6 +724,7 @@ export class GameScene extends Phaser.Scene {
 		this.selectionGraphics.clear();
 		this.hoverGraphics?.destroy();
 		this.pathGraphics?.destroy();
+		this.damageNumbers.destroy();
 		this.playerTowers.destroy();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();
@@ -729,7 +760,7 @@ export class GameScene extends Phaser.Scene {
 			this.scale.height / 2,
 			this.scale.width,
 			this.scale.height,
-			0xff0000,
+			PHASER_COLORS.danger,
 			0.15,
 		);
 		overlay.setDepth(90);

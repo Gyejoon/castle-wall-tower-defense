@@ -171,7 +171,18 @@ sin 기반 8프레임 워크 사이클:
 
 ---
 
-## 8. UI 에셋 (추가 필요)
+## 8. UI 에셋
+
+### 인라인 SVG (코드 내장)
+
+| 컴포넌트 | 크기 | 색상 출처 | 용도 |
+|---------|------|---------|------|
+| `DiamondIcon` | 12×12 | info (#5bc8e8) 계열 | 다이아몬드 통화 표시 (ProfileBar, MissionsTab) |
+| `CoinIcon` | 12×12 | gold (#f0d060) + accent (#c8a04a) | 골드 통화 표시 (MissionsTab) |
+
+> 코드 위치: `packages/web-shell/src/components/ui/CurrencyIcon.tsx`
+
+### 이미지 에셋 (추가 필요)
 
 | 분류 | 에셋 |
 |------|------|
@@ -181,7 +192,7 @@ sin 기반 8프레임 워크 사이클:
 | 로비 | `tower-card-bg` (등급별), `upgrade-button` |
 | 컬렉션 | `rarity-frame` (5종), `level-badge` |
 | 덱 | `deck-slot` |
-| 가챠 | `box-free`, `box-ad`, `box-diamond`, `box-premium` |
+| 가챠 | `box-free`, `box-ad`, `box-diamond`, `box-premium`, `gacha-chest` (개봉 애니용) |
 | 튜토리얼 | `highlight-frame`, `arrow-indicator`, `hint-bubble` |
 
 ---
@@ -215,9 +226,24 @@ icon-{category}-{id} # 아이콘
 
 ---
 
-## 11. 변경 이력
+## 11. 등급 색상 토큰
+
+> `ui-colors.ts`의 디자인 토큰과 일치해야 한다.
+
+| 등급 | 테두리 색상 | 글로우 |
+|------|----------|-------|
+| normal | border (#4a3a20) | 없음 |
+| rare | info (#5bc8e8) | 없음 |
+| unique | gradeUnique (#9060e0) | 없음 |
+| epic | gold (#f0d060) | `0_0_8px` glow |
+| legendary | tierBright (#ffe870) | `0_0_12px` glow |
+
+---
+
+## 12. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | 게임 에셋 제작 specs 기반 |
+| 2026-04-07 | §8, §11 | CurrencyIcon SVG 추가, 등급 색상 토큰 섹션 신설 |
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |

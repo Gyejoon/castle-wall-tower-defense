@@ -3,6 +3,7 @@ import {
 	MISSION_LABELS,
 	type MissionProgress,
 } from '@gld/shared';
+import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';
 import { useEffect, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useMetaStore } from '../../../stores/metaStore';
@@ -75,8 +76,7 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 
 	return (
 		<div
-			className={`flex flex-col gap-2 p-3 border border-border ${isWeekly ? 'min-h-[80px]' : ''}`}
-			style={{ background: 'rgba(26, 18, 8, 0.8)' }}
+			className={`flex flex-col gap-2 p-3 border border-border bg-bg-80 ${isWeekly ? 'min-h-[80px]' : ''}`}
 		>
 			<div className="flex justify-between items-start gap-2">
 				<span className="font-pixel text-xs text-text flex-1">
@@ -91,9 +91,7 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 					<span className="font-pixel text-[11px] text-gold">
 						{mission.reward.amount}
 					</span>
-					<span className="font-pixel text-[10px] text-text-secondary">
-						{mission.reward.type === 'diamond' ? '💎' : '🪙'}
-					</span>
+					{mission.reward.type === 'diamond' ? <DiamondIcon /> : <CoinIcon />}
 				</div>
 			</div>
 
@@ -115,7 +113,7 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 					<PixelButton
 						disabled={!isReady}
 						onClick={() => onClaim(mission.id, period)}
-						className="font-pixel text-[10px] px-2 py-1"
+						className="font-pixel text-[10px] px-2 py-1 min-h-[44px] min-w-[44px]"
 					>
 						수령
 					</PixelButton>
@@ -145,10 +143,7 @@ function MissionSection({
 	const allClaimed = missions.length > 0 && missions.every((m) => m.claimed);
 
 	return (
-		<div
-			className="flex flex-col gap-px border border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.7)' }}
-		>
+		<div className="flex flex-col gap-px border border-border bg-panel-70">
 			{/* 헤더 */}
 			<div
 				className="flex justify-between items-center px-3 py-2"
@@ -170,10 +165,7 @@ function MissionSection({
 
 			{/* 전부 완료 상태 */}
 			{allClaimed ? (
-				<div
-					className="flex flex-col items-center justify-center py-6 gap-2"
-					style={{ background: 'rgba(26, 18, 8, 0.8)' }}
-				>
+				<div className="flex flex-col items-center justify-center py-6 gap-2 bg-bg-80">
 					<span className="font-pixel text-lg text-gold">✓</span>
 					<span className="font-pixel text-xs text-success">
 						{isWeekly ? '이번 주 임무 완료!' : '오늘의 임무 완료!'}

@@ -39,8 +39,6 @@ interface MapTheme {
 	groundTint: number;
 	decorTint: number;
 	pathColor: number;
-	spawnColor: number;
-	exitColor: number;
 	pathLineColor: number;
 }
 
@@ -49,24 +47,18 @@ const MAP_THEMES: Record<string, MapTheme> = {
 		groundTint: 0xffffff, // no tint — natural green/brown
 		decorTint: 0xffffff,
 		pathColor: 0x9f8258,
-		spawnColor: 0x486133,
-		exitColor: 0xb0914f,
 		pathLineColor: 0xb8956a,
 	},
 	lava_fortress: {
 		groundTint: 0xd4a070, // warm orange/brown cast
 		decorTint: 0xc89060,
 		pathColor: 0xb05030,
-		spawnColor: 0x8b3020,
-		exitColor: 0xd06030,
 		pathLineColor: 0xc06040,
 	},
 	storm_citadel: {
 		groundTint: 0x8898c0, // cool blue/purple cast
 		decorTint: 0x7888b0,
 		pathColor: 0x5060a0,
-		spawnColor: 0x405080,
-		exitColor: 0x7080c0,
 		pathLineColor: 0x6070b0,
 	},
 };
@@ -76,11 +68,13 @@ function getMapTheme(mapId: string): MapTheme {
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
+import { CastleWallSystem } from '../systems/CastleWallSystem';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
+import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
@@ -93,6 +87,8 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
+	private castleWall!: CastleWallSystem;
+	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		this.damageNumbers.setEnabled(value);
@@ -131,6 +127,12 @@ export class GameScene extends Phaser.Scene {
 	private bossPrefetched = false;
 	private speedMultiplier: 1 | 2 = 1;
 	private scaledGameTime = 0;
+	private onWaveCompleted!: (data: {
+		wave: number;
+		totalWaves: number;
+		slotIndex: number;
+		delaySec: number;
+	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
 	private decorationTiles: Array<{
@@ -214,6 +216,17 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
 
+		this.castleWall = new CastleWallSystem(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.castleWall.create();
+		this.castleWall.update(this.playerHp);
+
+		this.spawnHut = new SpawnHutSystem(this, this.playerGrid, this.currentMap);
+		this.spawnHut.create();
+
 		this.setupInput();
 
 		this.onSelectTower = (data) => {
@@ -230,6 +243,7 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveStartedLifecycle = (data) => {
 			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
 			soundGenerator.playWaveStart();
+			this.spawnHut.setActive(true);
 		};
 
 		this.onBossWarning = () => {
@@ -238,6 +252,10 @@ export class GameScene extends Phaser.Scene {
 				void this.prefetchBossAssets();
 			}
 			this.showBossWarningOverlay();
+		};
+
+		this.onWaveCompleted = () => {
+			this.spawnHut.setActive(false);
 		};
 
 		this.onSetSpeed = ({ multiplier }) => {
@@ -275,6 +293,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-resume', this.onResume);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
+		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
 
 		EventBus.emit('game-ready');
@@ -341,8 +360,6 @@ export class GameScene extends Phaser.Scene {
 		const graphics = this.add.graphics();
 		const theme = getMapTheme(this.currentMap.id);
 		const pathColor = dark ? 0x5c6585 : theme.pathColor;
-		const spawnColor = dark ? 0x40556f : theme.spawnColor;
-		const exitColor = dark ? 0x7e8aa8 : theme.exitColor;
 
 		const allCells = getAllPathCells(this.currentMap);
 		for (const point of allCells) {
@@ -353,23 +370,6 @@ export class GameScene extends Phaser.Scene {
 				pathColor,
 				dark ? 0.4 : 0.52,
 			);
-		}
-
-		// Render spawn points for all lanes
-		const paths = getMapPaths(this.currentMap);
-		for (const lane of paths) {
-			if (lane.length === 0) continue;
-			const sp = lane[0];
-			grid.fillTileRect(graphics, sp.x, sp.y, spawnColor, dark ? 0.58 : 0.68);
-			const spWorld = grid.gridToWorld(sp.x, sp.y);
-			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
-			graphics.fillCircle(spWorld.x, spWorld.y - 6, 7);
-
-			const ep = lane[lane.length - 1];
-			grid.fillTileRect(graphics, ep.x, ep.y, exitColor, dark ? 0.58 : 0.68);
-			const epWorld = grid.gridToWorld(ep.x, ep.y);
-			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
-			graphics.fillCircle(epWorld.x, epWorld.y - 6, 7);
 		}
 	}
 
@@ -564,6 +564,7 @@ export class GameScene extends Phaser.Scene {
 		this.gameOver = true;
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
@@ -735,6 +736,13 @@ export class GameScene extends Phaser.Scene {
 			}
 
 			if (this.playerHp <= 0) {
+				EventBus.emit('base-hp-changed', {
+					hp: 0,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(0);
+				this.castleWall.onHit();
 				this.emitGameOver({
 					result: 'defeat',
 					reason: 'base_hp_depleted',
@@ -742,6 +750,16 @@ export class GameScene extends Phaser.Scene {
 				});
 				return;
 			}
+		}
+
+		if (playerExits.length > 0) {
+			EventBus.emit('base-hp-changed', {
+				hp: this.playerHp,
+				maxHp: INITIAL_PLAYER_HP,
+				laneIndex: 0,
+			});
+			this.castleWall.update(this.playerHp);
+			this.castleWall.onHit();
 		}
 
 		if (
@@ -768,6 +786,7 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-resume', this.onResume);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
+		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		this.game.registry.events.off(
 			'changedata-showDamageNumbers',
@@ -777,6 +796,9 @@ export class GameScene extends Phaser.Scene {
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
+
+		this.castleWall?.destroy();
+		this.spawnHut?.destroy();
 
 		this.selectionGraphics.clear();
 		this.hoverGraphics?.destroy();

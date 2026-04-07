@@ -18,3 +18,6 @@ export const DEFAULT_GRID_CONFIG: GridConfig = {
 };
 
 export const INITIAL_PLAYER_HP = 20;
+
+export const HP_WALL_STAGE_2 = 13; // hp > 13 → hp3
+export const HP_WALL_STAGE_1 = 6; // 7-13 → hp2, ≤6 → hp1

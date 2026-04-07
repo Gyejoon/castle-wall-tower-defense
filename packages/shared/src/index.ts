@@ -34,13 +34,14 @@ export {
 	rollGacha,
 	rollGacha10,
 } from './constants/gacha';
-export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
 export {
 	BOARD_TOP_PADDING,
 	DEFAULT_GRID_CONFIG,
 	GAME_CANVAS_H,
 	GRID_HEIGHT,
 	GRID_WIDTH,
+	HP_WALL_STAGE_1,
+	HP_WALL_STAGE_2,
 	INITIAL_PLAYER_HP,
 	ORTHO_CANVAS_W,
 	ORTHO_TILE,
@@ -91,6 +92,7 @@ export {
 	LEGENDARY_TOWERS,
 	RARE_TOWERS,
 } from './constants/towers';
+export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
 export { UNITS } from './constants/units';
 export type {
 	WaveDef,

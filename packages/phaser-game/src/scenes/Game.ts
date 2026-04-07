@@ -112,6 +112,9 @@ export class GameScene extends Phaser.Scene {
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
+	private onSellTower!: (data: { col: number; row: number }) => void;
+	private onPause!: () => void;
+	private onResume!: () => void;
 	private onWaveStartedLifecycle!: (data: {
 		wave: number;
 		totalWaves: number;
@@ -243,8 +246,33 @@ export class GameScene extends Phaser.Scene {
 			this.anims.globalTimeScale = multiplier;
 		};
 
+		this.onSellTower = ({ col, row }) => {
+			const result = this.playerTowers.sellTower(col, row);
+			if (result.success) {
+				this.energySystem.add(result.refund);
+				EventBus.emit('energy-changed', {
+					energy: this.energySystem.getEnergy(),
+				});
+				EventBus.emit('tower-sold', { col, row, refund: result.refund });
+				EventBus.emit('player-tower-count', {
+					count: this.playerTowers.getTowers().length,
+				});
+				EventBus.emit('tower-deselected');
+			}
+		};
+
+		this.onPause = () => {
+			this.scene.pause();
+		};
+		this.onResume = () => {
+			this.scene.resume();
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
+		EventBus.on('request-sell-tower', this.onSellTower);
+		EventBus.on('request-pause', this.onPause);
+		EventBus.on('request-resume', this.onResume);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('request-set-speed', this.onSetSpeed);
@@ -484,11 +512,26 @@ export class GameScene extends Phaser.Scene {
 				pointer.worldY,
 			);
 
-			if (
-				this.selectedTowerId &&
-				this.playerGrid.isInBounds(gridPos.x, gridPos.y)
-			) {
+			if (this.gameOver) return;
+			if (!this.playerGrid.isInBounds(gridPos.x, gridPos.y)) return;
+
+			if (this.selectedTowerId) {
 				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
+				return;
+			}
+
+			const tower = this.playerTowers.getTowerAt(gridPos.x, gridPos.y);
+			if (tower) {
+				const refund = TowerSystem.calcRefund(tower.def.cost);
+				EventBus.emit('tower-selected', {
+					towerDefId: tower.def.id,
+					towerName: tower.def.name,
+					col: gridPos.x,
+					row: gridPos.y,
+					refund,
+				});
+			} else {
+				EventBus.emit('tower-deselected');
 			}
 		});
 	}
@@ -617,7 +660,7 @@ export class GameScene extends Phaser.Scene {
 		time: number,
 		delta: number,
 		onKill: () => void,
-	): string[] {
+	): { id: string; isBoss: boolean }[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
 
@@ -673,13 +716,24 @@ export class GameScene extends Phaser.Scene {
 
 		this.damageNumbers.update(_time, delta);
 
-		for (const _uid of playerExits) {
+		for (const exit of playerExits) {
 			this.playerHp = Math.max(0, this.playerHp - 1);
 			EventBus.emit('player-damaged', {
 				playerId: 'local',
 				damage: 1,
 				remainingHp: this.playerHp,
 			});
+
+			// Boss leak = instant defeat
+			if (exit.isBoss) {
+				this.emitGameOver({
+					result: 'defeat',
+					reason: 'base_hp_depleted',
+					finalSlot: this.currentSlotDef.slotIndex,
+				});
+				return;
+			}
+
 			if (this.playerHp <= 0) {
 				this.emitGameOver({
 					result: 'defeat',
@@ -709,6 +763,9 @@ export class GameScene extends Phaser.Scene {
 
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
+		EventBus.off('request-sell-tower', this.onSellTower);
+		EventBus.off('request-pause', this.onPause);
+		EventBus.off('request-resume', this.onResume);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('request-set-speed', this.onSetSpeed);

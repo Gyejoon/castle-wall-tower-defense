@@ -24,6 +24,8 @@ interface SpawnQueueEntry {
 	source: UnitSpawnSource;
 	isBoss: boolean;
 	hpMultiplier: number;
+	waveHpMult: number;
+	waveSpeedMult: number;
 	waveSlot: number;
 }
 
@@ -57,6 +59,8 @@ interface QueueUnitsOptions {
 	source?: UnitSpawnSource;
 	isBoss?: boolean;
 	hpMultiplier?: number;
+	waveHpMult?: number;
+	waveSpeedMult?: number;
 	waveSlot?: number;
 }
 
@@ -133,6 +137,8 @@ export class UnitSystem {
 			source: options.source ?? 'base',
 			isBoss: options.isBoss ?? false,
 			hpMultiplier: options.hpMultiplier ?? 1,
+			waveHpMult: options.waveHpMult ?? 1,
+			waveSpeedMult: options.waveSpeedMult ?? 1,
 			waveSlot: options.waveSlot ?? 0,
 		});
 	}
@@ -154,7 +160,7 @@ export class UnitSystem {
 		EventBus.emit('unit-spawned', { unitType: entry.def.type, count: 1 });
 
 		const scaled = scaleUnitStats(entry.def.stats, this.stageLevel);
-		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1);
+		const finalHp = scaled.hp * (entry.hpMultiplier ?? 1) * entry.waveHpMult;
 
 		const unitData: ActiveUnit = {
 			instanceId,
@@ -204,7 +210,7 @@ export class UnitSystem {
 			bossPhase: 1,
 			invulnerableMs: 0,
 			maxHp: finalHp,
-			baseSpeed: scaled.speed,
+			baseSpeed: scaled.speed * entry.waveSpeedMult,
 			baseArmor: scaled.armor,
 			ccImmunityChance: scaled.ccImmunityChance,
 			waveSlot: entry.waveSlot,
@@ -423,9 +429,12 @@ export class UnitSystem {
 		);
 	}
 
-	private reachedExitBuffer: string[] = [];
+	private reachedExitBuffer: { id: string; isBoss: boolean }[] = [];
 
-	update(_time: number, delta: number): { reachedExit: string[] } {
+	update(
+		_time: number,
+		delta: number,
+	): { reachedExit: { id: string; isBoss: boolean }[] } {
 		const reachedExit = this.reachedExitBuffer;
 		reachedExit.length = 0;
 
@@ -452,7 +461,7 @@ export class UnitSystem {
 				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
 			const pathIdx = unit.data.pathIndex;
 			if (pathIdx >= unitLane.length - 1) {
-				reachedExit.push(id);
+				reachedExit.push({ id, isBoss: unit.isBoss });
 				unit.sprite.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(id);

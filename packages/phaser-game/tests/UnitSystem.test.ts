@@ -230,7 +230,7 @@ describe('UnitSystem', () => {
 			// scout_drone speed = 3.0, tile = 32px, so speed = 96px/s
 			// distance = 32px, time needed ≈ 333ms
 			// Use multiple updates to ensure movement completes
-			let exited: string[] = [];
+			let exited: { id: string; isBoss: boolean }[] = [];
 			for (let i = 0; i < 10 && system.hasActiveUnits(); i++) {
 				const result = system.update(0, 200);
 				exited = exited.concat(result.reachedExit);

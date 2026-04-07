@@ -39,6 +39,7 @@ interface TopHudProps {
 	runStatus: string;
 	onToggleSpeed: () => void;
 	bossHpVisible: boolean;
+	onExitRequest?: () => void;
 }
 
 export function TopHud({
@@ -52,6 +53,7 @@ export function TopHud({
 	runStatus,
 	onToggleSpeed,
 	bossHpVisible,
+	onExitRequest,
 }: TopHudProps) {
 	const hpFlash = useFlashKey(lives);
 
@@ -114,18 +116,31 @@ export function TopHud({
 							? `다음 ${waitCountdown}s`
 							: formatTimerLabel(combatHud.timerLabel)}
 				</div>
-				{runStatus === 'running' && speed2xUnlocked && (
-					<button
-						className="ml-auto font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
-						style={{
-							background:
-								gameSpeed === 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)',
-						}}
-						onClick={onToggleSpeed}
-					>
-						{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
-					</button>
-				)}
+				<div className="ml-auto flex items-center gap-1">
+					{runStatus === 'running' && speed2xUnlocked && (
+						<button
+							className="font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
+							style={{
+								background:
+									gameSpeed === 2
+										? 'rgba(200,112,32,0.3)'
+										: 'rgba(26,18,8,0.7)',
+							}}
+							onClick={onToggleSpeed}
+						>
+							{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+						</button>
+					)}
+					{runStatus === 'running' && onExitRequest && (
+						<button
+							className="flex h-[30px] w-[30px] items-center justify-center border border-border font-pixel text-[11px] text-text-secondary"
+							style={{ background: 'rgba(26,18,8,0.7)' }}
+							onClick={onExitRequest}
+						>
+							✕
+						</button>
+					)}
+				</div>
 			</div>
 			{/* 두 번째 행: 보스 체력바 (나타날 때 첫 행에 영향 없음) */}
 			{bossHpVisible && (

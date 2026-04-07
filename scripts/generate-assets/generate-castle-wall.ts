@@ -1,4 +1,4 @@
-import { makeCanvas, saveCanvas, PALETTE, drawRect, setPixel, fillCircle, hexToRgba, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, drawRect, setPixel, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 import type { SKRSContext2D } from '@napi-rs/canvas';
 
@@ -7,7 +7,7 @@ const W = 64;
 const H = 80;
 
 const CS = PALETTE.castleStone;
-const ACCENT = '#c8a04a';
+const ACCENT = PALETTE.laser; // #c8a04a — brand gold accent
 const DEBRIS = '#4a5254';
 
 // Merlon definitions: [x, width] for 5 merlons across 64px

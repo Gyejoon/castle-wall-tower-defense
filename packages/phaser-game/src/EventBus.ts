@@ -78,6 +78,8 @@ export interface GameEventMap {
 	'request-tutorial-advance': undefined;
 	'request-set-speed': { multiplier: 1 | 2 };
 
+	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
+
 	// Stage select
 	'stage-select-ready': undefined;
 	'request-enter-lobby': undefined;

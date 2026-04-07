@@ -83,6 +83,18 @@ export const PALETTE = {
   elementLightning: '#f39c12',  // 번개 속성
   elementLightningGlow: '#f7b731', // 번개 속성 글로우
   elementNeutral:   '#c8a04a',  // 무 속성 (기존 laser 색상)
+  // Castle wall stone
+  castleStone: {
+    dark: '#626567', mid: '#717d7e', light: '#8a9698',
+    joint: '#3c4f51', shadow: '#283d40', merlon: '#76868a',
+    moss: '#3d5a3e', gate: '#0d1117',
+  },
+  // Spawn hut wood
+  spawnHut: {
+    woodDark: '#3a2a1a', woodMid: '#2a1f15', woodLight: '#4a3828',
+    thatch: '#8a7a50', bone: '#c8c0b0', door: '#0a0a0a',
+    shadow: '#1a1210', accent: '#c04020', flagPole: '#5a4a3a',
+  },
 } as const;
 
 export const ELEMENT_COLORS = {

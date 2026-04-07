@@ -97,7 +97,12 @@ function createImage() {
 		setAlpha: vi.fn().mockReturnThis(),
 		setOrigin: vi.fn().mockReturnThis(),
 		setTint: vi.fn().mockReturnThis(),
+		setTexture: vi.fn().mockReturnThis(),
+		setVisible: vi.fn().mockReturnThis(),
 		setCrop: vi.fn().mockReturnThis(),
+		clearTint: vi.fn().mockReturnThis(),
+		play: vi.fn().mockReturnThis(),
+		anims: { pause: vi.fn(), resume: vi.fn(), isPlaying: false },
 		destroy: vi.fn(),
 	};
 }
@@ -149,7 +154,13 @@ describe('GameScene field runtime', () => {
 		const scene = new GameScene();
 
 		Object.assign(scene, {
-			game: { registry: { get: vi.fn(() => undefined), set: vi.fn(), events: { on: vi.fn() } } },
+			game: {
+				registry: {
+					get: vi.fn(() => undefined),
+					set: vi.fn(),
+					events: { on: vi.fn() },
+				},
+			},
 			scale: { width: 424, height: 960 },
 			add: {
 				image: addImage,
@@ -191,7 +202,13 @@ describe('GameScene field runtime', () => {
 				on: vi.fn(),
 			},
 			time: { timeScale: 1 },
-			anims: { globalTimeScale: 1 },
+			anims: {
+				globalTimeScale: 1,
+				exists: vi.fn(() => false),
+				create: vi.fn(),
+				generateFrameNumbers: vi.fn(() => []),
+			},
+			tweens: { add: vi.fn(), addCounter: vi.fn() },
 		});
 
 		scene.create();

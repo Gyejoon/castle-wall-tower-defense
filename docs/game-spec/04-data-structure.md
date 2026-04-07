@@ -167,7 +167,7 @@ type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 
 ---
 
-## 8. 변경 이력
+## 9. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|

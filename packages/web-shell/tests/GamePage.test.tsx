@@ -173,7 +173,9 @@ describe('GamePage', () => {
 
 	it('gstack UI/UX: game-page wrapper uses full height layout', () => {
 		const view = render(<GamePage />);
-		const gamePage = view.container.querySelector('.game-page') as HTMLDivElement;
+		const gamePage = view.container.querySelector(
+			'.game-page',
+		) as HTMLDivElement;
 
 		expect(gamePage).toBeTruthy();
 		expect(gamePage.className).toContain('h-full');

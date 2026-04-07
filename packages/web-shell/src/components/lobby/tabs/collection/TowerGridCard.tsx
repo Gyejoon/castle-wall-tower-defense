@@ -47,9 +47,7 @@ export function TowerGridCard({
 				height={40}
 				className="[image-rendering:pixelated]"
 				style={{
-					filter: locked
-						? 'brightness(0.4) grayscale(0.6)'
-						: undefined,
+					filter: locked ? 'brightness(0.4) grayscale(0.6)' : undefined,
 				}}
 			/>
 			<span

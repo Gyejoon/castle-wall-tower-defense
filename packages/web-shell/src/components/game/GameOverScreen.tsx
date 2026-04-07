@@ -47,15 +47,10 @@ export function GameOverScreen({
 					<span
 						className="font-pixel text-2xl"
 						style={{
-							color:
-								runStatus === 'victory'
-									? colors.success
-									: colors.danger,
+							color: runStatus === 'victory' ? colors.success : colors.danger,
 						}}
 					>
-						{runStatus === 'victory'
-							? '⚔ 방어 성공 ⚔'
-							: '✕ 방어 실패 ✕'}
+						{runStatus === 'victory' ? '⚔ 방어 성공 ⚔' : '✕ 방어 실패 ✕'}
 					</span>
 					<span className="font-pixel text-[11px] text-text-secondary">
 						{runStatus === 'defeat'

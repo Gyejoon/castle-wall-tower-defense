@@ -480,13 +480,10 @@ function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: numbe
     setPixel(ctx, Math.round(cx + scale), Math.round(cy - bodyH - 7 * scale - bDist + headBob), PALETTE.gold);
   }
 
-  if (rage) {
-    applyColorTint(ctx, size, size, PALETTE.fireRed, 0.25);
-  }
 }
 
-function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number): void {
-  const imageData = ctx.getImageData(0, 0, w, h);
+function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {
+  const imageData = ctx.getImageData(offsetX, offsetY, w, h);
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);
@@ -498,7 +495,7 @@ function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number,
       imageData.data[i + 2] = Math.min(255, imageData.data[i + 2] + Math.floor(b * alpha));
     }
   }
-  ctx.putImageData(imageData, 0, 0);
+  ctx.putImageData(imageData, offsetX, offsetY);
 }
 
 const DRAW_FNS: Record<string, (ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number) => void> = {
@@ -653,6 +650,8 @@ export async function generate(): Promise<ManifestEntry[]> {
       ctx.translate(ox, 0);
       drawBossFrame(ctx, BOSS_SIZE, f, true);
       ctx.restore();
+      // Apply rage tint per-frame at absolute coordinates (getImageData ignores translate)
+      applyColorTint(ctx, BOSS_SIZE, BOSS_SIZE, PALETTE.fireRed, 0.25, ox, 0);
     }
     saveCanvas(canvas, `${OUTPUT_DIR}/titan-boss-rage.png`);
     entries.push({

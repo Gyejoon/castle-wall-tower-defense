@@ -493,7 +493,7 @@ export class TowerSystem {
 				this.attackGraphics.strokePath();
 			}
 
-			if (line.ttl > 50) {
+			if (line.style !== 'arc' && line.ttl > 50) {
 				this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
 				this.attackGraphics.fillCircle(line.x2, line.y2, 4);
 			}

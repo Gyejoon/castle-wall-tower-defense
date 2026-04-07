@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-04T17:52:57.769Z",
+  "generated": "2026-04-07T04:59:57.850Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -166,7 +166,7 @@
       "path": "assets/towers/laser-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -181,7 +181,7 @@
       "path": "assets/towers/plasma-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -196,7 +196,7 @@
       "path": "assets/towers/emp-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -211,7 +211,7 @@
       "path": "assets/towers/shield-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -226,7 +226,7 @@
       "path": "assets/towers/twin_laser-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -241,7 +241,7 @@
       "path": "assets/towers/disruptor-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -256,7 +256,7 @@
       "path": "assets/towers/nova_cannon-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -271,7 +271,7 @@
       "path": "assets/towers/fortress-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -286,7 +286,7 @@
       "path": "assets/towers/stasis_field-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -301,7 +301,7 @@
       "path": "assets/towers/flame_tower-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -316,7 +316,7 @@
       "path": "assets/towers/wind_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -331,7 +331,7 @@
       "path": "assets/towers/earth_golem-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -346,7 +346,7 @@
       "path": "assets/towers/holy_shrine-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -361,7 +361,7 @@
       "path": "assets/towers/dragon_nest-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -376,7 +376,7 @@
       "path": "assets/towers/arcane_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -391,7 +391,7 @@
       "path": "assets/towers/world_tree-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -406,7 +406,7 @@
       "path": "assets/towers/celestial-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -421,7 +421,7 @@
       "path": "assets/towers/divine_throne-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "vfx"
     },
     {
@@ -430,7 +430,7 @@
       "path": "assets/units/scout_drone.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
@@ -439,7 +439,7 @@
       "path": "assets/units/battle_robot.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
@@ -448,7 +448,7 @@
       "path": "assets/units/heavy_walker.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
@@ -457,7 +457,7 @@
       "path": "assets/units/stealth_drone.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
@@ -466,7 +466,7 @@
       "path": "assets/units/titan.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
@@ -475,19 +475,25 @@
       "path": "assets/units/unit-death.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 4,
+      "frameCount": 8,
       "section": "preload"
     },
     {
       "key": "unit-titan-boss",
-      "type": "image",
+      "type": "spritesheet",
       "path": "assets/units/titan-boss.png",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frameCount": 8,
       "section": "boss"
     },
     {
       "key": "unit-titan-boss-rage",
-      "type": "image",
+      "type": "spritesheet",
       "path": "assets/units/titan-boss-rage.png",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frameCount": 8,
       "section": "boss"
     },
     {

@@ -318,12 +318,36 @@ Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽
 
 ---
 
-## Step 3: Phase 3 (Eng)
+## Step 3: Phase 3 (Eng) + Eng 스펙 검증
 
-autoplan 그대로 실행. 변경 없음.
+### 3-1. Phase 3 실행
+
+autoplan 그대로 실행.
 
 Phase 3.5 (DX)는 이 프로젝트가 게임이므로 기본 스킵한다.
 (DX 키워드가 2개 이상 감지되면 autoplan이 자동으로 실행함)
+
+### 3-2. Eng 스펙 검증
+
+Phase 3 완료 후, Step 0-4에서 Phase 3에 할당된 스펙 문서를 `docs/game-spec/`에서 읽고 검증한다.
+
+#### Eng 검증 차원
+
+| 차원 | 대조 문서 | 검증 내용 |
+|------|---------|---------|
+| 패키지 의존 방향 | 08-arch §1 (패키지 구조) | Plan이 단방향 의존성(`@gld/shared` → `@gld/phaser-game` → `web-shell`)을 위반하는 import를 제안하는가? |
+| 시스템 초기화 순서 | 08-arch §2 (시스템 의존성 및 생명주기) | Plan이 새 시스템을 추가할 때 기존 초기화 순서(Grid→Pathfinding→Tower→Unit→Wave→Deck→DamageNumber→Energy→Tutorial)에 맞게 위치를 지정했는가? |
+| update() 루프 순서 | 08-arch §2 | Plan이 update 루프에 새 로직을 추가할 때 기존 6단계 순서(Wave→Energy→processCombatField→DamageNumber→exit→victory/defeat)를 인지하고 올바른 위치에 배치했는가? |
+| EventBus 패턴 | 08-arch §3 (TypedEventBus) | Plan이 새 이벤트를 추가할 때 네이밍 규칙(React→Phaser: `request-*`, Phaser→React: 서술형)을 따르는가? GameEventMap에 타입을 추가해야 한다는 것을 인지하는가? |
+| 상태 관리 계층 | 08-arch §4 (상태 관리) | Plan이 상태를 올바른 계층에 배치하는가? (gameStore: 런 단위, metaStore: 영속+localStorage, game.registry: 초기값 전달용, 시스템 내부: 시스템 로컬) |
+| 렌더링 depth | 08-arch §5 (렌더링 파이프라인) | Plan이 새 시각 요소를 추가할 때 기존 depth 테이블(0 Ground ~ 150 Tutorial)과 충돌하지 않는가? |
+| 데이터 스키마 | 04-data §1 (Save Data), §5 (Enum) | Plan이 새 데이터 필드를 추가할 때 기존 스키마 구조를 따르는가? Tower ID, Stage ID, Grade 등 Enum 값이 유효한가? |
+| 설정 동기화 | 04-data §7 (React ↔ Phaser 설정 동기화) | Plan이 새 설정을 추가할 때 동기화 경로(Zustand → game.registry.set → Phaser changedata 이벤트)를 따르는가? |
+| 배포/운영 호환 | 05-ops §1 (운영 스택), §5 (배포) | Plan이 새 인프라 의존성을 추가하는가? 기존 운영 스택(Vercel, Sentry, PostHog, Supabase, Upstash)과 호환되는가? |
+
+판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.
+
+**❌ CONFLICT가 1건 이상이면 Final Gate로 진행할 수 없다.**
 
 ---
 

@@ -3,31 +3,33 @@ import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
 
-const MAP_THEMES: Record<string, { gradient: string; icon: string; borderColor: string }> = {
+const MAP_THEMES: Record<
+	string,
+	{ gradient: string; borderColor: string; thumb: string }
+> = {
 	forest_gate: {
 		gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
-		icon: '♣',
 		borderColor: '#4a8a2a',
+		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
 	},
 	lava_fortress: {
 		gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
-		icon: '♦',
 		borderColor: '#c04020',
+		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
 	},
 	storm_citadel: {
 		gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
-		icon: '♠',
 		borderColor: '#5a6aaa',
+		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
 	},
 };
 
 const NODE_POSITIONS: Record<string, { top: string; left: string }> = {
-	forest_gate: { top: '68%', left: '50%' },
-	lava_fortress: { top: '42%', left: '25%' },
-	storm_citadel: { top: '16%', left: '72%' },
+	forest_gate: { top: '66%', left: '50%' },
+	lava_fortress: { top: '40%', left: '28%' },
+	storm_citadel: { top: '14%', left: '68%' },
 };
 
-// SVG path data for dashed connections between nodes
 const PATH_CONNECTIONS = [
 	{ from: 'forest_gate', to: 'lava_fortress' },
 	{ from: 'lava_fortress', to: 'storm_citadel' },
@@ -53,7 +55,9 @@ export function WorldMapPage() {
 					>
 						← 돌아가기
 					</button>
-					<span className="font-pixel text-[11px] text-gold">스테이지 선택</span>
+					<span className="font-pixel text-[11px] text-gold">
+						스테이지 선택
+					</span>
 					<span className="font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
 						Lv.{playerLevel}
 					</span>
@@ -63,30 +67,50 @@ export function WorldMapPage() {
 				<div
 					className="relative flex-1 min-h-0 overflow-hidden"
 					style={{
-						background: 'radial-gradient(ellipse at 50% 80%, rgba(34,80,34,0.15), transparent 60%), radial-gradient(ellipse at 25% 45%, rgba(100,30,10,0.1), transparent 50%), radial-gradient(ellipse at 72% 20%, rgba(40,50,90,0.15), transparent 50%), #1a1208',
+						background:
+							'radial-gradient(ellipse at 50% 70%, rgba(34,80,34,0.12), transparent 60%), radial-gradient(ellipse at 28% 42%, rgba(100,30,10,0.08), transparent 50%), radial-gradient(ellipse at 68% 18%, rgba(40,50,90,0.12), transparent 50%), #1a1208',
 					}}
 				>
 					{/* Stars */}
 					<div className="stars-overlay" />
 
 					{/* Path connections (SVG) */}
-					<svg className="absolute inset-0 w-full h-full z-0" preserveAspectRatio="none">
+					<svg
+						className="absolute inset-0 w-full h-full z-0"
+						preserveAspectRatio="none"
+						role="img"
+						aria-label="스테이지 연결 경로"
+					>
 						{PATH_CONNECTIONS.map(({ from, to }) => {
 							const a = NODE_POSITIONS[from];
 							const b = NODE_POSITIONS[to];
 							if (!a || !b) return null;
 							return (
-								<line
-									key={`${from}-${to}`}
-									x1={a.left}
-									y1={a.top}
-									x2={b.left}
-									y2={b.top}
-									stroke="#4a3a20"
-									strokeWidth="2"
-									strokeDasharray="6 8"
-									opacity="0.5"
-								/>
+								<g key={`${from}-${to}`}>
+									{/* Shadow */}
+									<line
+										x1={a.left}
+										y1={a.top}
+										x2={b.left}
+										y2={b.top}
+										stroke="#0a0804"
+										strokeWidth="3"
+										strokeDasharray="6 10"
+										opacity="0.4"
+										transform="translate(1,1)"
+									/>
+									{/* Main line */}
+									<line
+										x1={a.left}
+										y1={a.top}
+										x2={b.left}
+										y2={b.top}
+										stroke="#4a3a20"
+										strokeWidth="2"
+										strokeDasharray="6 10"
+										opacity="0.6"
+									/>
+								</g>
 							);
 						})}
 					</svg>
@@ -105,10 +129,10 @@ export function WorldMapPage() {
 								type="button"
 								disabled={locked}
 								className={cn(
-									'absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-transform duration-150',
+									'absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-all duration-200',
 									locked
 										? 'opacity-40 grayscale cursor-not-allowed'
-										: 'cursor-pointer hover:scale-110 active:scale-95',
+										: 'cursor-pointer hover:scale-105 hover:-translate-y-[calc(50%+4px)] active:scale-95',
 								)}
 								style={{ top: pos.top, left: pos.left }}
 								onClick={() => {
@@ -118,87 +142,74 @@ export function WorldMapPage() {
 							>
 								{/* Card frame */}
 								<div
-									className="relative w-[96px] bg-panel border-2 border-border shadow-[3px_3px_0px_#0a0804] p-2 flex flex-col items-center gap-1"
+									className="relative w-[130px] bg-panel border-2 shadow-[3px_3px_0px_#0a0804] overflow-hidden"
 									style={{
-										borderColor: locked ? undefined : theme?.borderColor,
+										borderColor: locked
+											? 'var(--color-border)'
+											: theme?.borderColor,
 									}}
 								>
-									{/* Inner border */}
-									<div
-										className="absolute inset-[3px] border pointer-events-none"
-										style={{
-											borderColor: locked
-												? 'rgba(74,58,32,0.2)'
-												: `${theme?.borderColor}40`,
-										}}
-									/>
+									{/* Thumbnail image */}
+									<div className="relative h-[72px] overflow-hidden">
+										<img
+											src={theme?.thumb}
+											alt={map.name}
+											className={cn(
+												'w-full h-full object-cover [image-rendering:pixelated]',
+												locked && 'brightness-50',
+											)}
+										/>
+										{/* Gradient overlay */}
+										<div className="absolute inset-0 bg-gradient-to-t from-panel/90 to-transparent" />
 
-									{/* Icon circle */}
-									<div
-										className="w-[40px] h-[40px] rounded-full flex items-center justify-center border-2 relative"
-										style={{
-											background: locked
-												? 'linear-gradient(135deg, #3a3a3a, #2a2a2a)'
-												: theme?.gradient,
-											borderColor: locked
-												? '#4a4a4a'
-												: theme?.borderColor,
-										}}
-									>
-										{/* Highlight */}
-										<div className="absolute top-[3px] left-[5px] w-[10px] h-[6px] bg-white/10 rounded-full" />
+										{/* Lock overlay */}
+										{locked && (
+											<div className="absolute inset-0 flex items-center justify-center bg-black/30">
+												<span className="font-pixel text-[16px] text-text-secondary">
+													🔒
+												</span>
+											</div>
+										)}
+
+										{/* Clear badge */}
+										{cleared && !locked && (
+											<div className="absolute top-1 right-1 bg-gold px-1.5 py-0.5 border border-accent">
+												<span className="font-pixel text-[7px] text-bg">✓</span>
+											</div>
+										)}
+									</div>
+
+									{/* Info */}
+									<div className="px-2 py-1.5 flex flex-col items-center gap-0.5">
 										<span
-											className="font-pixel text-[16px]"
-											style={{
-												color: locked ? '#606060' : '#f0e8d8',
-											}}
+											className={cn(
+												'font-pixel text-[9px] text-center leading-tight',
+												locked ? 'text-text-secondary' : 'text-text',
+											)}
 										>
-											{locked ? '✕' : theme?.icon}
+											{map.name}
 										</span>
 
-										{/* Pulse ring for available uncleared */}
-										{!locked && !cleared && (
-											<div
-												className="absolute inset-[-6px] rounded-full border animate-[pulse_2s_ease-in-out_infinite] pointer-events-none"
+										<div
+											className={cn(
+												'px-1.5 py-0.5 border text-center mt-0.5',
+												locked
+													? 'bg-[#301010] border-[#802020]'
+													: 'bg-panel border-border',
+											)}
+										>
+											<span
+												className="font-pixel text-[7px]"
 												style={{
-													borderColor: `${theme?.borderColor}50`,
+													color: locked ? '#c03020' : '#c8a04a',
 												}}
-											/>
-										)}
-									</div>
-
-									{/* Map name */}
-									<span className="font-pixel text-[8px] text-text text-center leading-tight">
-										{map.name}
-									</span>
-
-									{/* Level badge */}
-									<div
-										className={cn(
-											'px-1.5 py-0.5 border text-center',
-											locked
-												? 'bg-[#301010] border-[#802020]'
-												: 'bg-panel border-border',
-										)}
-									>
-										<span
-											className="font-pixel text-[7px]"
-											style={{
-												color: locked ? '#c03020' : '#c8a04a',
-											}}
-										>
-											{locked
-												? `Lv.${map.unlockLevel} 해금`
-												: `Lv.${map.unlockLevel ?? 1}`}
-										</span>
-									</div>
-
-									{/* Clear badge */}
-									{cleared && !locked && (
-										<div className="absolute -top-1 -right-1 bg-gold border border-accent px-1 py-0.5">
-											<span className="font-pixel text-[7px] text-bg">✓</span>
+											>
+												{locked
+													? `Lv.${map.unlockLevel} 해금`
+													: `Lv.${map.unlockLevel ?? 1}`}
+											</span>
 										</div>
-									)}
+									</div>
 								</div>
 							</button>
 						);

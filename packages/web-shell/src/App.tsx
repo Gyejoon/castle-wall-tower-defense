@@ -85,10 +85,7 @@ export function App() {
 	}
 
 	return (
-		<div
-			className="w-full h-full"
-			style={{ filter, height: '100%' }}
-		>
+		<div className="w-full h-full" style={{ filter, height: '100%' }}>
 			{content}
 		</div>
 	);

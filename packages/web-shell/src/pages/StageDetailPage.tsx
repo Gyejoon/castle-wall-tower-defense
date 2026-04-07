@@ -8,9 +8,9 @@ import {
 	MAP_REGISTRY,
 } from '@gld/shared';
 import { lazy, Suspense, useState } from 'react';
+import { PixelButton } from '../components/ui/PixelButton';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
-import { PixelButton } from '../components/ui/PixelButton';
 
 const DeckEditSheet = lazy(() =>
 	import('../components/lobby/DeckEditSheet').then((m) => ({
@@ -18,10 +18,19 @@ const DeckEditSheet = lazy(() =>
 	})),
 );
 
-const MAP_THEMES: Record<string, { gradient: string; icon: string }> = {
-	forest_gate: { gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)', icon: '♣' },
-	lava_fortress: { gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)', icon: '♦' },
-	storm_citadel: { gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)', icon: '♠' },
+const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
+	forest_gate: {
+		gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
+		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
+	},
+	lava_fortress: {
+		gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
+		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
+	},
+	storm_citadel: {
+		gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
+		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
+	},
 };
 
 export function StageDetailPage() {
@@ -46,10 +55,22 @@ export function StageDetailPage() {
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [
-		{ label: '최대 경험치', value: `${maxXp} XP`, sub: `${totalWaves}웨이브 클리어 시` },
+		{
+			label: '최대 경험치',
+			value: `${maxXp} XP`,
+			sub: `${totalWaves}웨이브 클리어 시`,
+		},
 		{ label: '최대 골드', value: `~${maxGold} G`, sub: '전 몬스터 처치 시' },
-		{ label: '웨이브', value: `${totalWaves}`, sub: hasBoss ? '보스 포함' : '보스 없음' },
-		{ label: '경로', value: `${lanes} 레인`, sub: lanes === 1 ? '단일 경로' : '분기 경로' },
+		{
+			label: '웨이브',
+			value: `${totalWaves}`,
+			sub: hasBoss ? '보스 포함' : '보스 없음',
+		},
+		{
+			label: '경로',
+			value: `${lanes} 레인`,
+			sub: lanes === 1 ? '단일 경로' : '분기 경로',
+		},
 	];
 
 	return (
@@ -64,28 +85,32 @@ export function StageDetailPage() {
 					>
 						← 월드맵
 					</button>
-					<span className="font-pixel text-[11px] text-gold">스테이지 정보</span>
+					<span className="font-pixel text-[11px] text-gold">
+						스테이지 정보
+					</span>
 					<span className="w-[60px]" />
 				</div>
 
 				{/* Scrollable content */}
 				<div className="flex-1 min-h-0 overflow-auto">
 					{/* Hero */}
-					<div
-						className="relative h-[120px] flex items-center justify-center"
-						style={{ background: theme.gradient }}
-					>
+					<div className="relative h-[140px] overflow-hidden">
+						<img
+							src={theme.thumb}
+							alt={map.name}
+							className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated] scale-150"
+						/>
 						<div
 							className="absolute inset-0"
 							style={{
-								background: 'linear-gradient(to bottom, transparent 40%, #1a1208 100%)',
+								background:
+									'linear-gradient(to bottom, rgba(26,18,8,0.3) 0%, rgba(26,18,8,0.6) 60%, #1a1208 100%)',
 							}}
 						/>
-						<span className="text-[48px] z-10 drop-shadow-lg">{theme.icon}</span>
-						<span className="absolute bottom-2.5 left-4 font-pixel text-[15px] text-text z-10">
+						<span className="absolute bottom-3 left-4 font-pixel text-[15px] text-text z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
 							{map.name}
 						</span>
-						<span className="absolute bottom-3 right-4 font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.8)] px-2 py-1 border border-border z-10">
+						<span className="absolute bottom-3.5 right-4 font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.85)] px-2 py-1 border border-border z-10">
 							권장 Lv.{lvl}
 						</span>
 					</div>

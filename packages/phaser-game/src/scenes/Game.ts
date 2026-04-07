@@ -76,6 +76,7 @@ function getMapTheme(mapId: string): MapTheme {
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
+import { CastleWallSystem } from '../systems/CastleWallSystem';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
@@ -93,6 +94,7 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
+	private castleWall!: CastleWallSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		this.damageNumbers.setEnabled(value);
@@ -211,6 +213,14 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
 
+		this.castleWall = new CastleWallSystem(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.castleWall.create();
+		this.castleWall.update(this.playerHp);
+
 		this.setupInput();
 
 		this.onSelectTower = (data) => {
@@ -314,7 +324,6 @@ export class GameScene extends Phaser.Scene {
 		const theme = getMapTheme(this.currentMap.id);
 		const pathColor = dark ? 0x5c6585 : theme.pathColor;
 		const spawnColor = dark ? 0x40556f : theme.spawnColor;
-		const exitColor = dark ? 0x7e8aa8 : theme.exitColor;
 
 		const allCells = getAllPathCells(this.currentMap);
 		for (const point of allCells) {
@@ -336,12 +345,6 @@ export class GameScene extends Phaser.Scene {
 			const spWorld = grid.gridToWorld(sp.x, sp.y);
 			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
 			graphics.fillCircle(spWorld.x, spWorld.y - 6, 7);
-
-			const ep = lane[lane.length - 1];
-			grid.fillTileRect(graphics, ep.x, ep.y, exitColor, dark ? 0.58 : 0.68);
-			const epWorld = grid.gridToWorld(ep.x, ep.y);
-			graphics.fillStyle(dark ? 0xc4d6ff : 0xf6e3aa, dark ? 0.95 : 0.88);
-			graphics.fillCircle(epWorld.x, epWorld.y - 6, 7);
 		}
 	}
 
@@ -680,6 +683,13 @@ export class GameScene extends Phaser.Scene {
 				damage: 1,
 				remainingHp: this.playerHp,
 			});
+			EventBus.emit('base-hp-changed', {
+				hp: this.playerHp,
+				maxHp: INITIAL_PLAYER_HP,
+				laneIndex: 0,
+			});
+			this.castleWall.update(this.playerHp);
+			this.castleWall.onHit();
 			if (this.playerHp <= 0) {
 				this.emitGameOver({
 					result: 'defeat',
@@ -720,6 +730,8 @@ export class GameScene extends Phaser.Scene {
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
+
+		this.castleWall?.destroy();
 
 		this.selectionGraphics.clear();
 		this.hoverGraphics?.destroy();

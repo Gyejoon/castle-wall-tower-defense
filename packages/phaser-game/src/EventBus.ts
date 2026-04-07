@@ -78,6 +78,8 @@ export interface GameEventMap {
 	'request-tutorial-advance': undefined;
 	'request-set-speed': { multiplier: 1 | 2 };
 
+	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
+
 	// Internal
 	'current-scene-ready': Phaser.Scene;
 }

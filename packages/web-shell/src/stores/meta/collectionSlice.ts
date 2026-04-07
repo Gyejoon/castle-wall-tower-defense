@@ -39,6 +39,7 @@ export const createCollectionSlice: SliceCreator<
 		const tower = s.collection[idx];
 		const config = PROMOTION_CONFIG[tower.grade];
 		if (!config.nextGrade) return 'max_grade';
+		if (tower.level < config.requiredLevel) return 'level_too_low';
 		if (s.profile.gold < config.goldCost) return 'no_gold';
 
 		const newGold = s.profile.gold - config.goldCost;

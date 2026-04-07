@@ -23,6 +23,8 @@ diff에 Phaser 파일이 없으면 10/10.
 - `off()` 전에 `destroy()` 실행
 - `setTimeout`/`setInterval` 미정리
 - Web Audio 노드 미해제
+- 상태 리셋 함수에서 Phaser 동기 이벤트 미emit
+- 대체 실행 경로(에러/엣지 케이스)에서 이벤트 emit 누락
 
 ### Non-critical 위반 (-1)
 
@@ -30,6 +32,7 @@ diff에 Phaser 파일이 없으면 10/10.
 - 핫 루프의 `filter()` / `Array.find()` 남용
 - 시스템 간 직접 mutation
 - `Phaser.Scene` 대신 구체 타입에 강결합
+- 타이머 산술 불일치 (throttle된 update에서 frame delta 누적)
 
 ## 2. React Best Practices (Phase 3) — /10
 
@@ -76,7 +79,7 @@ diff에 React 파일이 없으면 10/10.
 ### Critical 위반 (-2)
 
 - 과사용 폰트 (Inter, Roboto, Arial, Open Sans, 시스템 기본 폰트)
-- 하드코딩 색상값, CSS 변수/토큰 미사용
+- 하드코딩 색상값, CSS 변수/토큰 미사용 (generate-assets/인라인 SVG 포함)
 - AI 양산형 종합 테스트 실패
 
 ### Non-critical 위반 (-1)
@@ -117,6 +120,12 @@ diff에 React 파일이 없으면 10/10.
 | 0-2 | 테스트 거의 없음 |
 
 커버 비율로 최대 8점, 실행 통과 시 +2, 실패 시 최대 5점 캡.
+
+### 테스트 검증 부정확 (-1/건)
+
+- 동어반복: expected 값을 production 함수로 계산
+- 유령 테스트: 테스트명의 시나리오를 setup이 트리거하지 않음
+- 경로 누락: N개 분기 중 happy path만 테스트
 
 ## 6. Independent Review (Phase 7) — /10
 

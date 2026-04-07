@@ -22,7 +22,7 @@ export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {
 	id: number;
-	message: string;
+	message: React.ReactNode;
 	tone: ToastTone;
 }
 
@@ -96,7 +96,7 @@ interface GameStoreState {
 	setLobbyTab: (tab: LobbyTab) => void;
 	setPlayerTowerCount: (count: number) => void;
 	patchCombatHud: (patch: Partial<CombatHudState>) => void;
-	pushToast: (message: string, tone?: ToastTone) => void;
+	pushToast: (message: React.ReactNode, tone?: ToastTone) => void;
 	clearToast: () => void;
 	resetRun: () => void;
 	enterLobby: () => void;

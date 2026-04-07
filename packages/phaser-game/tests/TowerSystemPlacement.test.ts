@@ -129,4 +129,26 @@ describe('TowerSystem placement contract', () => {
 			gridManager.getTile(buildablePoint.x, buildablePoint.y)?.occupied,
 		).toBe(true);
 	});
+
+	it('sellTower returns 50% refund and frees tile', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+
+		towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'laser');
+		const result = towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
+
+		expect(result.success).toBe(true);
+		// laser cost = 10, 50% = 5
+		expect(result.refund).toBe(5);
+		expect(
+			gridManager.getTile(buildablePoint.x, buildablePoint.y)?.occupied,
+		).toBe(false);
+	});
+
+	it('sellTower fails on empty tile', () => {
+		const { towerSystem } = createTowerSystem();
+		const result = towerSystem.sellTower(3, 3);
+
+		expect(result).toEqual({ success: false, refund: 0 });
+	});
 });

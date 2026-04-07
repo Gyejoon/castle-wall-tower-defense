@@ -36,6 +36,15 @@ export function PhaserGame() {
 		);
 		gameRef.current = game;
 
+		// Sync selectedDeck to Phaser registry so new runs use the latest deck
+		let prevDeck = useGameStore.getState().selectedDeck;
+		const unsubDeck = useGameStore.subscribe((state) => {
+			if (state.selectedDeck !== prevDeck) {
+				prevDeck = state.selectedDeck;
+				gameRef.current?.registry.set('deckIds', prevDeck);
+			}
+		});
+
 		// Sync showDamageNumbers setting to Phaser registry in real-time
 		let prevShowDmg = useGameStore.getState().showDamageNumbers;
 		const unsubDmgNumbers = useGameStore.subscribe((state) => {
@@ -51,6 +60,7 @@ export function PhaserGame() {
 			// cleanup, so we keep the game alive. On real unmount (key change
 			// or route change) the container is disconnected and we destroy.
 			if (!container.isConnected) {
+				unsubDeck();
 				unsubDmgNumbers();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;

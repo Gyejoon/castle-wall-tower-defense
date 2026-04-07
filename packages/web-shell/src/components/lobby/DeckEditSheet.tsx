@@ -4,6 +4,7 @@ import { useGameStore } from '../../stores/gameStore';
 import { useMetaStore } from '../../stores/metaStore';
 import { colors, TIER_LABELS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
+import { CloseButton } from '../ui/CloseButton';
 import { PixelButton } from '../ui/PixelButton';
 
 interface DeckEditSheetProps {
@@ -69,14 +70,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-border bg-panel shrink-0">
 					<span className="font-pixel text-base text-gold">덱 편집</span>
-					<button
-						type="button"
-						aria-label="닫기"
-						onClick={handleClose}
-						className="bg-transparent border border-border text-text-secondary font-pixel text-sm cursor-pointer px-2 py-1 min-h-[44px] min-w-[44px]"
-					>
-						✕
-					</button>
+					<CloseButton onClick={handleClose} />
 				</div>
 
 				{/* Tower list */}

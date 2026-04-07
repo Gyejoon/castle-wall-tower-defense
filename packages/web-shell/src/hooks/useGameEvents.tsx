@@ -24,6 +24,13 @@ export function useGameEvents() {
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 
 	const [waitCountdown, setWaitCountdown] = useState(0);
+	const [selectedTower, setSelectedTower] = useState<{
+		towerDefId: string;
+		towerName: string;
+		col: number;
+		row: number;
+		refund: number;
+	} | null>(null);
 	const waitIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
@@ -162,6 +169,34 @@ export function useGameEvents() {
 		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
 			if (data.phase === 2) pushToast('보스 분노!', 'warning');
 		};
+		const onTowerSelected = (data: {
+			towerDefId: string;
+			towerName: string;
+			col: number;
+			row: number;
+			refund: number;
+		}) => {
+			setSelectedTower(data);
+		};
+		const onTowerDeselected = () => {
+			setSelectedTower(null);
+		};
+		const onTowerSold = (data: { refund: number }) => {
+			pushToast(
+				<span className="inline-flex items-center gap-[2px]">
+					<img
+						src="assets/ui/icon-energy.webp"
+						alt=""
+						width={10}
+						height={10}
+						className="[image-rendering:pixelated]"
+					/>
+					+{data.refund}
+				</span>,
+				'success',
+			);
+			setSelectedTower(null);
+		};
 
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
@@ -176,6 +211,9 @@ export function useGameEvents() {
 		EventBus.on('boss-hp-update', onBossHpUpdate);
 		EventBus.on('boss-defeated', onBossDefeated);
 		EventBus.on('boss-phase-change', onBossPhaseChange);
+		EventBus.on('tower-selected', onTowerSelected);
+		EventBus.on('tower-deselected', onTowerDeselected);
+		EventBus.on('tower-sold', onTowerSold);
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
@@ -194,6 +232,9 @@ export function useGameEvents() {
 			EventBus.off('boss-hp-update', onBossHpUpdate);
 			EventBus.off('boss-defeated', onBossDefeated);
 			EventBus.off('boss-phase-change', onBossPhaseChange);
+			EventBus.off('tower-selected', onTowerSelected);
+			EventBus.off('tower-deselected', onTowerDeselected);
+			EventBus.off('tower-sold', onTowerSold);
 		};
 	}, [
 		patchCombatHud,
@@ -211,5 +252,5 @@ export function useGameEvents() {
 		setGameOverStats,
 	]);
 
-	return { waitCountdown };
+	return { waitCountdown, selectedTower };
 }

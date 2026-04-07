@@ -419,17 +419,31 @@ CONFLICT가 1건이라도 남아 있으면 Final Gate에 도달할 수 없다 (�
 | game-ui-design | `.claude/skills/game-ui-design/SKILL.md` | Step 2 (게임-웹 경계 평가) |
 | frontend-design | `.claude/skills/frontend-design/SKILL.md` | Step 2 (안티패턴 참조) |
 | frontend-design/reference/* | `.claude/skills/frontend-design/reference/` | Step 2 (차원별 깊이 평가 시) |
+| 01-GDD | `docs/game-spec/01-GDD.md` | Phase 1 (CEO), Phase 2 (Design) — 키워드 매칭 시 |
+| 02-balance-sheet | `docs/game-spec/02-balance-sheet.md` | Phase 2 (Design) — 키워드 매칭 시 |
+| 03-business-model | `docs/game-spec/03-business-model.md` | Phase 1 (CEO) — 키워드 매칭 시 |
+| 04-data-structure | `docs/game-spec/04-data-structure.md` | Phase 3 (Eng) — 키워드 매칭 시 |
+| 05-operations | `docs/game-spec/05-operations.md` | Phase 3 (Eng) — 키워드 매칭 시 |
+| 06-milestone | `docs/game-spec/06-milestone.md` | Phase 1 (CEO) — 키워드 매칭 시 |
+| 07-asset-definition | `docs/game-spec/07-asset-definition.md` | Phase 2 (Design) — 키워드 매칭 시 |
+| 08-architecture | `docs/game-spec/08-architecture.md` | Phase 3 (Eng) — 키워드 매칭 시 |
 
 ---
 
 ## 핵심 규칙
 
-1. **autoplan이 기반.** 이 스킬은 autoplan에 미학 레이어를 얹는 래퍼다. autoplan의 6 Decision Principles, 순차 실행, Decision Audit Trail, Dual Voices를 모두 유지한다.
+1. **autoplan이 기반.** 이 스킬은 autoplan에 스펙 검증 + 미학 레이어를 얹는 래퍼다. autoplan의 6 Decision Principles, 순차 실행, Decision Audit Trail, Dual Voices를 모두 유지한다.
 
-2. **미학 리뷰는 Phase 2 완료 후 1회.** Plan-design-review의 Pass 1-7이 끝난 뒤 미학 리뷰를 추가한다. Phase 1, 3에는 개입하지 않는다.
+2. **미학 리뷰는 Phase 2 완료 후 1회.** Plan-design-review의 Pass 1-7이 끝난 뒤 미학 리뷰를 추가한다. 미학은 Phase 2에서만 평가한다.
 
 3. **미학 점수는 블로킹하지 않는다.** 7점 미만은 taste decision으로 Final Gate에 올린다. 자동 거부하지 않는다 — 사용자가 최종 판단한다.
 
 4. **reference 파일은 필요할 때만.** 특정 차원을 깊이 평가해야 할 때만 frontend-design/reference/ 하위 파일을 읽는다. 모든 차원에 대해 매번 전부 읽지 않는다.
 
-5. **.impeccable.md가 진실의 원천.** 이 프로젝트의 디자인 방향(색상 토큰, 폰트, 간격 리듬, 원칙)은 .impeccable.md에 정의되어 있다. 미학 리뷰의 "올바른 방향"은 .impeccable.md가 결정한다.
+5. **.impeccable.md가 미학의 원천.** 이 프로젝트의 디자인 방향(색상 토큰, 폰트, 간격 리듬, 원칙)은 .impeccable.md에 정의되어 있다. 미학 리뷰의 "올바른 방향"은 .impeccable.md가 결정한다.
+
+6. **스펙 검증은 모든 Phase에서 실행한다.** Step 0-4에서 키워드 매칭으로 선택된 `docs/game-spec/` 문서만 각 Phase 시작 시점에 읽는다. 전체 8개를 매번 로드하지 않는다.
+
+7. **스펙 CONFLICT는 하드 블로커다.** CONFLICT(직접 모순)가 해소되지 않으면 다음 Phase로 진행할 수 없다. DRIFT(방향 이탈)는 경고로 기록하되 진행을 막지 않는다. 미학(어드바이저리)과 스펙(블로커)은 완전히 별개의 게이트다.
+
+8. **스펙 문서 업데이트도 유효한 해결책이다.** CONFLICT 발생 시 "Plan이 틀렸다"만이 아니라 "스펙이 낡았다"도 가능하다. 어느 쪽을 수정할지는 사용자가 결정한다. 수정 후 해당 Phase의 스펙 검증만 재실행한다.

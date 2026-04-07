@@ -1,126 +1,124 @@
 ---
 name: ralreview
-description: Use when reviewing non-trivial code changes in this repository before landing, or when the user asks for "ralreview", "ral review", "quality review", "전체 리뷰", "품질 검수", "landing review", or "pre-merge review".
+description: Use when reviewing non-trivial code changes in this repository before landing. Triggers on "ralreview", "ral review", "quality review", "전체 리뷰", "품질 검수", "landing review", "pre-merge review", "코드 검수", "리뷰 돌려", "머지 전 검토", "코드 리뷰해줘". Also use proactively before creating PRs when the diff touches game systems, React components, or shared packages.
 ---
 
 # RAL Review
 
-이 스킬은 이 저장소 전용 수렴형 코드 리뷰 프로토콜이다. 목표는 "한 번 훑어보기"가 아니라, 변경 diff를 여러 차례 좁혀 가며 런타임 안정성, 스펙 정합성, 테스트, 외부 시각 검증까지 통과시키는 것이다.
-
-핵심은 도구가 아니라 절차다. Claude Code에서는 slash command를 써도 되고, Codex에서는 같은 의도를 네이티브 셸, 서브에이전트, 리뷰 스킬로 수행하면 된다.
-
-## 플랫폼 적응
-
-플랫폼마다 도구 이름은 달라도 아래 의미를 유지한다.
-
-| 의도 | Claude Code | Codex |
-|---|---|---|
-| 반복 수렴 루프 | `/ralph-loop` | 현재 세션에서 최대 5회 명시적 반복 |
-| 단순화 패스 | `/simplify` | 변경 파일을 직접 읽고 안전한 정리 수행 |
-| 독립 리뷰 | `/codex review` | 별도 리뷰 서브에이전트 또는 리뷰 스킬 |
-| 적대적 리뷰 | `/codex:adversarial-review` | 두 번째 리뷰 서브에이전트 또는 명시적 반대 검토 |
-
-중요: 특정 명령이 없다고 스킬을 건너뛰지 말 것. 같은 검증 목적을 다른 도구로 달성하면 된다.
+이 저장소 전용 수렴형 코드 리뷰 프로토콜. 변경 diff를 여러 차례 좁혀 가며 런타임 안정성, React 품질, 스펙 정합성, 테스트, 외부 시각 검증까지 통과시킨다.
 
 ## 실행 원칙
 
 1. 현재 브랜치의 변경 코드만 본다.
 2. 한 번에 끝내려 하지 말고, 최대 5회까지 수렴시킨다.
-3. 자동 수정은 안전한 범위만 한다.
-4. 비즈니스 로직, 밸런스, 기능 범위를 바꾸는 수정은 보고만 한다.
-5. 루프가 끝나면 점수와 미해결 이슈를 남긴다.
+3. 자동 수정은 안전한 범위(AUTO)만 한다. 비즈니스 로직, 밸런스, 기능 범위를 바꾸는 수정은 보고(REPORT)만 한다.
+4. 루프가 끝나면 점수와 미해결 이슈를 남긴다.
 
 ## 빠른 시작
 
-### Claude Code
-
 ```text
-/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 42/50 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
+/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 50/60 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
 ```
 
-### Codex
-
-현재 세션에서 아래 Phase 0-7을 수행한다. 한 번 끝난 뒤 총점이 42/50 미만이면 같은 절차를 다시 돌린다. 최대 5회까지 반복한다.
+ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50/60 미만이면 같은 절차를 다시 돈다. 최대 5회.
 
 ## Phase 0: Init
 
 1. base 브랜치를 정한다.
-   - 우선순위: 현재 PR base -> `origin/main` -> `origin/master`
+   - 우선순위: 현재 PR base → `origin/main` → `origin/master`
 2. diff 범위를 정한다.
-   - 권장: `git diff --name-only <base>...HEAD`
-3. `.ts`/`.tsx` 변경이 없으면 즉시 PASS 처리한다.
-4. 이번 반복의 대상 파일 목록과 메모를 남긴다.
+   ```bash
+   git diff --name-only <base>...HEAD
+   ```
+3. 변경 파일을 분류한다.
+   - **Phaser 파일**: `packages/phaser-game/src/**/*.ts` (`.tsx` 제외)
+   - **React 파일**: `packages/web-shell/src/**/*.tsx`
+   - **Shared 파일**: `packages/shared/src/**/*.ts`
+4. `.ts`/`.tsx` 변경이 없으면 즉시 PASS 처리한다.
+5. 이번 반복의 대상 파일 목록과 메모를 남긴다.
 
 ## Phase 1: Simplify
 
-변경 파일에서 안전한 정리 작업을 먼저 한다.
+변경 파일에서 안전한 정리 작업을 먼저 한다. 여기서는 동작을 바꾸지 않는 수정만 한다.
 
 - 중복 분기, 죽은 코드, 불필요한 임시 변수 제거
 - 기존 유틸리티/상수 재사용
-- 이름 명확화
-- 과한 중첩 완화
+- 이름 명확화, 과한 중첩 완화
 - 테스트에서만 필요한 보조 코드가 런타임 코드에 섞여 있는지 점검
 
-여기서는 동작을 바꾸지 않는 수정만 한다.
+### Tailwind 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
 
-### Tailwind 마이그레이션 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
-
-Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본다.
-
-- **의미 차이 유틸리티**: `h-dvh` vs `h-full`, `bg-none` vs `bg-transparent`, `rounded-sm` vs 정확한 값 — 의도와 다른 유틸리티를 쓰고 있으면 교정한다
-- **픽셀 정확도**: Tailwind 기본 스텝값(`.5` = 2px, `1` = 4px)이 원래 임의값(`3px`, `5px`)과 다르면 `gap-[3px]`처럼 임의값으로 교정한다
-- **하드코딩된 색상**: `#4a3a20` 등 리터럴 색상이 `var(--color-*)` 토큰으로 교체 가능하면 교체한다
-- **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름과 겹치면 고유 이름으로 바꾼다
-- **이징 함수 정확도**: `ease-out`이 원래 `ease` 또는 커스텀 `cubic-bezier`였으면 `ease-[ease]`처럼 명시한다
+- **의미 차이 유틸리티**: `h-dvh` vs `h-full`, `bg-none` vs `bg-transparent` — 의도와 다른 유틸리티 교정
+- **픽셀 정확도**: Tailwind 기본 스텝값이 원래 임의값과 다르면 `gap-[3px]`처럼 임의값으로 교정
+- **하드코딩 색상**: `#4a3a20` 등 → `var(--color-*)` 토큰 교체
+- **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름 회피
+- **이징 함수 정확도**: CSS `ease` ≠ `ease-out` — 명시적 값으로 교정
 
 ## Phase 2: Phaser 런타임 안정성 검사
 
-프로젝트의 [`phaser-best-practices`](../phaser-best-practices/SKILL.md) 기준으로 변경 코드를 본다. 해당 항목이 변경 코드에 실제로 적용될 때만 점수에 반영한다.
+[`phaser-best-practices`](../phaser-best-practices/SKILL.md) 기준으로 변경 코드를 본다.
+
+### 조건부 활성화
+
+- diff에 Phaser 파일이 없으면 10/10과 `"Phaser 변경 없음"` 노트를 남긴다.
+- Phaser 파일이 있으면 아래 체크리스트를 적용한다.
 
 ### 체크리스트
 
-| # | 검사 항목 | 위반 예시 |
-|---|---|---|
-| 1 | Scene `create()`에서 `shutdown` 정리 등록 | `this.events.on('shutdown', ...)` 누락 |
-| 2 | 시스템 생성자가 `Phaser.Scene`에만 의존 | 특정 `GameScene` 타입에 강결합 |
-| 3 | 시스템에 `destroy()`가 있고 실제 정리 수행 | destroy 껍데기만 있거나 누락 |
-| 4 | EventBus 리스너 해제 가능한 named reference 사용 | 익명 함수로 등록 |
-| 5 | 정리 순서가 `off()` 후 `destroy()` | 순서 역전 |
-| 6 | Graphics는 `clear()` 후 재사용 | 매 프레임 destroy/recreate |
-| 7 | 핫 루프에서 선형 탐색 최소화 | `Array.find()` 남용 |
-| 8 | 시스템 간 통신이 직접 mutation 대신 반환값/이벤트 기반 | 다른 시스템 내부를 직접 수정 |
-| 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 |
-| 10 | React 쪽 unmount cleanup 완전성 | Phaser destroy 후 listener 잔존 |
-| 11 | `useEffect` 의존성 배열에 모든 외부 참조 포함 | `selectedMapId` 캡처 후 deps 누락 → 맵 변경 무시 |
-| 12 | `setTimeout`/`setInterval` 반환값을 저장하고 `destroy()`에서 clearTimeout/clearInterval | 매 게임마다 타이머 누적 |
-| 13 | Web Audio API 노드(`OscillatorNode`, `GainNode`)가 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 → 메모리 누수 |
+| # | 검사 항목 | 위반 예시 | 감점 |
+|---|---|---|---|
+| 1 | Scene `create()`에서 `shutdown` 정리 등록 | `this.events.on('shutdown', ...)` 누락 | -2 |
+| 2 | 시스템 생성자가 `Phaser.Scene`에만 의존 | 특정 `GameScene` 타입에 강결합 | -1 |
+| 3 | 시스템에 `destroy()`가 있고 실제 정리 수행 | destroy 껍데기만 있거나 누락 | -2 |
+| 4 | EventBus 리스너 해제 가능한 named reference | 익명 함수로 등록 | -2 |
+| 5 | 정리 순서가 `off()` 후 `destroy()` | 순서 역전 | -2 |
+| 6 | Graphics `clear()` 후 재사용 | 매 프레임 destroy/recreate | -1 |
+| 7 | 핫 루프에서 선형 탐색 최소화 | `Array.find()` 남용 | -1 |
+| 8 | 시스템 간 통신이 반환값/이벤트 기반 | 다른 시스템 내부를 직접 mutation | -1 |
+| 9 | 핫 루프 배열 정리가 in-place | `filter()` 반복 | -1 |
+| 10 | `setTimeout`/`setInterval` 정리 | 매 게임마다 타이머 누적 | -2 |
+| 11 | Web Audio 노드 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 | -2 |
 
-### 점수
+기본 10점, 위반별 감점, 최소 0점.
 
-- 기본 10점
-- 핵심 위반은 -2
-- 경미한 위반은 -1
-- 최소 0점
+## Phase 3: React 성능 & 패턴 검사
 
-## Phase 3: 스펙 정합성 검사
+[`vercel-react-best-practices`](../vercel-react-best-practices/SKILL.md) 기준으로 변경 코드를 본다.
 
-1. 최신 스펙 파일을 찾는다.
-   - `docs/superpowers/specs/*.md`
+### 조건부 활성화
+
+- diff에 React 파일(`web-shell/**/*.tsx`)이 없으면 10/10과 `"React 변경 없음"` 노트를 남긴다.
+- React 파일이 있으면 아래 체크리스트를 적용한다.
+
+### 체크리스트
+
+| # | 검사 항목 | 위반 예시 | 감점 |
+|---|---|---|---|
+| 1 | EventBus 리스너 useEffect cleanup | `EventBus.on()` 후 return에서 `off()` 누락 | -2 |
+| 2 | Zustand selector 세분화 | `useGameStore(s => s)` 전체 구독 | -2 |
+| 3 | 콜백 deps 불필요 리렌더 | 인라인 arrow가 deps에 영향 | -2 |
+| 4 | React-Phaser 경계 ref 안정성 | 매 렌더 재생성 콜백을 EventBus에 등록 | -2 |
+| 5 | 비싼 연산 memoization | useMemo 누락 파생 게임 상태 | -1 |
+| 6 | 정적 JSX 호이스팅 | 상수 JSX 렌더 내부 재생성 | -1 |
+| 7 | 조건부 렌더 ternary 사용 | `&&` 연산자로 falsy 0 렌더링 | -1 |
+| 8 | barrel import 회피 | `import { X } from '@gld/shared'` | -1 |
+| 9 | 무거운 컴포넌트 lazy loading | React.lazy 미사용 | -1 |
+| 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
+
+기본 10점, 항목 1-4 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+
+## Phase 4: 스펙 정합성 검사
+
+1. 최신 스펙 파일을 찾는다: `docs/superpowers/specs/*.md`
 2. 스펙이 없으면 10/10과 `"스펙 문서 없음"` 노트를 남긴다.
-3. 스펙이 있으면 아래를 본다.
-   - 요구사항 누락
-   - 의도와 다른 동작
-   - 스펙에 없는 scope creep
+3. 스펙이 있으면 검사한다:
+   - 요구사항 누락: -2/건
+   - 의도와 다른 동작: -2/건
+   - 스펙에 없는 scope creep: -1/건
 
-### 점수
+기본 10점, 최소 0점.
 
-- 기본 10점
-- 요구사항 누락: -2/건
-- 동작 차이: -2/건
-- scope creep: -1/건
-- 최소 0점
-
-## Phase 4: 테스트 커버리지 검사
+## Phase 5: 테스트 커버리지 검사
 
 1. 변경된 소스 파일 중 테스트 필수 대상을 식별한다.
 2. 대응 테스트 파일 존재 여부를 본다.
@@ -142,31 +140,32 @@ Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본
 
 ### 테스트 검증 정확도
 
-테스트가 존재해도 실제 시나리오를 검증하지 않는 경우 감점한다.
+테스트가 존재해도 실제 시나리오를 검증하지 않으면 감점한다.
 
 - 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
 - emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
-- 테스트가 예상 frameCount/tilesets 배열 등 에셋 메타데이터를 검증하지 않는 경우
+- 에셋 메타데이터(frameCount, tilesets 배열 등)를 검증하지 않는 경우
 
 ### 점수
 
 - 필수 대상 커버 비율로 최대 8점
 - 테스트 실행 통과 시 +2
 - 테스트 실패 시 최종 점수는 최대 5점으로 캡
-- 테스트 검증 부정확 (명칭과 동작 불일치): -1/건
+- 테스트 검증 부정확: -1/건
 
-## Phase 5: 독립 리뷰
+## Phase 6: 독립 리뷰
 
-현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다.
+현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다. 리뷰어는 diff만 보고 판단해야 하며, 이전 Phase의 결과를 참조하지 않는다.
 
-### Claude Code
+### 리뷰 실행 방법
 
-- `/codex review` 같은 외부 리뷰 경로 사용 가능
+다음 중 하나를 사용한다 (위에서부터 우선):
 
-### Codex
+1. **`/codex review`** — Codex CLI가 있으면 독립 diff 리뷰
+2. **Agent tool** — `subagent_type: "pr-review-toolkit:code-reviewer"`로 서브에이전트 실행
+3. **`/review`** — 프로젝트 내장 리뷰 스킬
 
-- 리뷰 서브에이전트를 띄워 현재 diff만 검토하게 하거나
-- 프로젝트/글로벌 리뷰 스킬을 사용해 독립 판정을 받는다
+특정 도구가 없다고 Phase를 건너뛰지 말 것. 가용한 도구로 독립 판정을 받는다.
 
 ### 점수
 
@@ -179,18 +178,18 @@ Tailwind v4 마이그레이션이 포함된 변경이면 아래를 추가로 본
 | fail, high severity | 5-6 |
 | fail, critical severity | 0-4 |
 
-## Phase 5.5: 적대적 리뷰
+## Phase 7: 적대적 리뷰
 
-이번엔 "무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다.
+"무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다. Phase 6과 다른 관점이어야 하며, 동일한 근거를 재진술하는 수준이면 안 된다.
+
+검증 대상:
 
 - 이벤트 emit/listen 쌍이 정말 맞물리는지
 - 캐시/파생 상태 동기화가 어긋나지 않는지
 - cleanup 순서가 반례에서 깨지지 않는지
 - 테스트가 happy path만 덮고 있지 않은지
 - 사용자의 실제 행동에서 state drift가 나는지
-- 루프 종료 조건이 경계값(예: `maxWaves < TOTAL_WAVES`)에서 도달 불가해 데드락이 나는지
-
-Codex에서는 두 번째 리뷰 서브에이전트를 띄워도 되고, 직접 반대 입장에서 검토해도 된다. 다만 동일한 근거를 재진술하는 수준이면 안 된다.
+- 루프 종료 조건이 경계값에서 도달 불가해 데드락이 나는지
 
 ### 점수
 
@@ -203,34 +202,30 @@ Codex에서는 두 번째 리뷰 서브에이전트를 띄워도 되고, 직접 
 | reviewer unavailable | 7 |
 | fail, critical severity | 0-4 |
 
-## Phase 6: 최종 Simplify
+## Phase 8: 최종 정리 & 판정
 
-Phase 2-5.5에서 생긴 수정 이후, 한 번 더 코드 모양을 정리한다.
+### 최종 Simplify
 
-- 중복 제거
-- naming 정리
-- 테스트 헬퍼 정리
-- 리뷰 대응 중 생긴 임시 분기 제거
+Phase 2-7에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, naming 정리, 리뷰 대응 중 생긴 임시 분기 제거.
 
-## Phase 7: 점수 집계와 판정
-
-출력 형식은 아래를 따른다.
+### 스코어카드
 
 ```text
 RAL REVIEW SCORECARD
-Runtime Stability:   X/10
-Spec Alignment:      X/10
-Test Coverage:       X/10
-Independent Review:  X/10
-Adversarial Review:  X/10
-Total:              XX/50
-Status:             PASS | FAIL
+Runtime Stability:     X/10
+React Best Practices:  X/10
+Spec Alignment:        X/10
+Test Coverage:         X/10
+Independent Review:    X/10
+Adversarial Review:    X/10
+Total:                XX/60
+Status:               PASS | FAIL
 ```
 
 ### 통과 기준
 
-- `PASS`: 총점 42/50 이상
-- `FAIL`: 총점 42 미만
+- `PASS`: 총점 50/60 이상
+- `FAIL`: 총점 50 미만
 
 ### FAIL일 때
 
@@ -241,13 +236,21 @@ Status:             PASS | FAIL
 
 ### 루프 중단 조건
 
-- 총점 42/50 이상
+- 총점 50/60 이상
 - 5회 반복 도달
 - 두 번 연속으로 유의미한 개선이 없고 남은 이슈가 REPORT뿐일 때
 
+### Lint
+
+PASS/FAIL과 무관하게 lint를 한 번 실행한다. 별도 보고 대상이며 점수에 포함하지 않는다.
+
+```bash
+bunx biome check .
+```
+
 ## AUTO / REPORT 경계
 
-| AUTO | REPORT |
+| AUTO (안전하게 수정) | REPORT (보고만) |
 |---|---|
 | 미사용 import 제거 | 새 기능 추가 |
 | 안전한 이름 정리 | 시스템 구조 재설계 |
@@ -255,19 +258,13 @@ Status:             PASS | FAIL
 | listener 해제 누락 수정 | 스펙 자체 변경 |
 | cleanup 순서 수정 | 프로토콜 재정의 |
 | 누락 테스트 추가 | 대규모 성능 리팩토링 |
-| 핫 루프의 명백한 비효율 완화 | 사용자 경험 정책 변경 |
-
-## Lint 연동
-
-ralreview가 끝나면 PASS/FAIL과 무관하게 lint를 한 번 실행한다.
-
-```bash
-bunx biome check .
-```
-
-lint는 별도 보고 대상이다. 점수에는 포함하지 않는다.
+| 핫 루프 비효율 완화 | 사용자 경험 정책 변경 |
+| memoization 추가 | 컴포넌트 구조 재설계 |
+| Zustand selector 세분화 | 새 store 도입 |
+| barrel → 직접 import 교체 | 패키지 구조 변경 |
 
 ## 참고 문서
 
 - [`scoring-rubric.md`](./references/scoring-rubric.md)
 - [`phaser-best-practices`](../phaser-best-practices/SKILL.md)
+- [`vercel-react-best-practices`](../vercel-react-best-practices/SKILL.md)

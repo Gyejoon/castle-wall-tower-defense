@@ -86,6 +86,55 @@ Plan 파일에서 아래 키워드를 검색한다:
 UI 스코프 결과를 출력한다:
 > "UI scope: ON (매치: [키워드 목록])" 또는 "UI scope: OFF — 미학 리뷰 스킵"
 
+### 0-4. 스펙 스코프 (Game Spec Alignment)
+
+Plan 파일 전문에서 키워드를 검색하여 관련 스펙 문서만 선택적으로 로드한다.
+전체 8개 문서를 매번 읽지 않는다.
+
+#### 키워드 → 문서 매핑
+
+| 문서 | 키워드 (2개 이상 매치 시 로드) |
+|------|------|
+| `01-GDD.md` | core loop, meta loop, tower, enemy, wave, boss, element, energy, deck, combat, placement, lobby, collection, tutorial, session, spawn, win condition, lose condition, 타워, 적, 웨이브, 보스, 에너지, 배치, 속성, 코어 루프, 메타 루프 |
+| `02-balance-sheet.md` | diamond, gold, gacha, pity, odds, rate, mission, daily, weekly, economy, cost, reward, bounty, armor, pierce, DPS, hp, damage, stat, level, tier, scale, 다이아, 골드, 확률, 미션, 보상, 밸런스, 수치 |
+| `03-business-model.md` | monetization, IAP, ads, shop, offer, sku, subscription, premium, cosmetic, conversion, KPI, retention, revenue, ARPPU, LiveOps, BM, 수익화, 상점, 광고, 과금 |
+| `04-data-structure.md` | save data, schema, localStorage, telemetry, event map, profile, collection data, progress, settings sync, registry, Zustand, store, migration, 저장, 스키마, 텔레메트리 |
+| `05-operations.md` | deploy, Vercel, Sentry, PostHog, monitoring, analytics, error tracking, LiveOps cadence, ops, 배포, 모니터링, 운영 |
+| `06-milestone.md` | phase, sprint, roadmap, milestone, launch, timeline, schedule, deadline, 마일스톤, 로드맵, 출시, 스프린트 |
+| `07-asset-definition.md` | asset, sprite, spritesheet, tileset, pixel art, VFX, pipeline, manifest, generate-assets, PNG, WebP, resolution, naming convention, 에셋, 스프라이트, 타일셋 |
+| `08-architecture.md` | package, monorepo, system init, update loop, EventBus, state management, depth, render, GridManager, TowerSystem, UnitSystem, WaveSystem, EnergySystem, DeckSystem, cleanup, Game.ts, 아키텍처, 시스템, 패키지 |
+
+#### 매칭 로직
+
+1. Plan 파일 전문을 소문자로 변환한다 (한글 키워드는 원문 그대로 매칭)
+2. 각 문서별 키워드 매치 수를 카운트한다
+3. **2개 이상 매치 → 해당 문서 선택**
+4. 매치가 0-1개인 문서는 로드하지 않는다
+
+#### Phase별 문서 할당
+
+선택된 문서를 Phase에 할당한다. 한 문서가 여러 Phase에 할당될 수 있다.
+
+| Phase | 기본 할당 문서 | 역할 |
+|-------|-------------|------|
+| Phase 1 (CEO) | 01-GDD, 03-business-model, 06-milestone | 전략·방향성·타임라인 정합 |
+| Phase 2 (Design) | 01-GDD §8, 02-balance-sheet, 07-asset-definition | UI·밸런스·에셋 정합 |
+| Phase 3 (Eng) | 04-data-structure, 05-operations, 08-architecture | 아키텍처·스키마·운영 정합 |
+
+**교차 할당**: 키워드 매칭으로 선택된 문서가 기본 할당 Phase와 다른 Phase에도 해당하면 양쪽 모두에 할당한다. 예: Plan에 "EventBus" + "energy" + "wave"가 있으면 08-architecture는 Phase 3(기본)뿐 아니라 Phase 1(CEO)에도 할당.
+
+#### 출력
+
+```
+Spec scope:
+  Phase 1 (CEO): 01-GDD (5 matches), 03-business-model (3 matches)
+  Phase 2 (Design): 01-GDD §8 (5 matches), 02-balance-sheet (4 matches)
+  Phase 3 (Eng): 08-architecture (7 matches), 04-data-structure (3 matches)
+  Skipped: 05-operations (0 matches), 06-milestone (1 match)
+```
+
+**문서는 아직 읽지 않는다.** 각 Phase 시작 시점에 해당 Phase에 할당된 문서만 읽는다.
+
 ---
 
 ## Step 1: autoplan 실행

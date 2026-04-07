@@ -21,7 +21,6 @@ export function StageSelectPage() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const gameRef = useRef<Phaser.Game | null>(null);
 
-	const runId = useGameStore((s) => s.runId);
 	const runStatus = useGameStore((s) => s.runStatus);
 	const gameReady = useGameStore((s) => s.gameReady);
 	const setGameReady = useGameStore((s) => s.setGameReady);
@@ -183,7 +182,6 @@ export function StageSelectPage() {
 						ref={containerRef}
 						id="game-container"
 						className="w-full h-full touch-none"
-						key={runId}
 					/>
 
 					{isInGame && runStatus !== 'victory' && runStatus !== 'defeat' && (

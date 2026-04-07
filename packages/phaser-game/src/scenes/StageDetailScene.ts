@@ -289,7 +289,7 @@ export class StageDetailScene extends Phaser.Scene {
 
 		// ===== Back button =====
 		const backBtn = this.add
-			.text(16, height - 16, '← 월드맵', {
+			.text(16, btnY - 20, '← 월드맵', {
 				fontFamily: '"Press Start 2P"',
 				fontSize: '8px',
 				color: '#c8a04a',

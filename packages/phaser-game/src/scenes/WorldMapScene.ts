@@ -403,6 +403,7 @@ export class WorldMapScene extends Phaser.Scene {
 
 		if (!locked) {
 			container.on('pointerover', () => {
+				this.tweens.killTweensOf(container);
 				this.tweens.add({
 					targets: container,
 					scaleX: 1.08,
@@ -421,6 +422,7 @@ export class WorldMapScene extends Phaser.Scene {
 			});
 
 			container.on('pointerout', () => {
+				this.tweens.killTweensOf(container);
 				this.tweens.add({
 					targets: container,
 					scaleX: 1,

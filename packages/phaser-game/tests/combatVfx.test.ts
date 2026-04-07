@@ -74,6 +74,7 @@ function createImage() {
 	return {
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
+		setVisible: vi.fn().mockReturnThis(),
 		destroy: vi.fn(),
 	};
 }

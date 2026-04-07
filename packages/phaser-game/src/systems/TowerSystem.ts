@@ -365,7 +365,7 @@ export class TowerSystem {
 					ttl: 80,
 					style,
 				});
-				this.spawnMuzzleVfx(def.id, towerWorld, data.position);
+				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				this.spawnImpactVfx(
 					this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
 					closestUnit.x,
@@ -508,6 +508,7 @@ export class TowerSystem {
 		towerDefId: string,
 		towerWorld: Position,
 		gridPos: Position,
+		towerSprite: Phaser.GameObjects.Image,
 	): void {
 		const textureKey = `tower-${towerDefId}-fire`;
 		const animationKey = getOptionalAnimationKey(textureKey);
@@ -518,6 +519,9 @@ export class TowerSystem {
 			return;
 		}
 
+		// Hide static tower during fire animation so animated frames are visible
+		towerSprite.setVisible(false);
+
 		const effect = this.scene.add.sprite(
 			towerWorld.x,
 			towerWorld.y - 20,
@@ -526,9 +530,10 @@ export class TowerSystem {
 		effect.setDisplaySize(64, 80);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
-		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
-			effect.destroy(),
-		);
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+			effect.destroy();
+			towerSprite.setVisible(true);
+		});
 	}
 
 	private spawnImpactVfx(textureKey: string, x: number, y: number): void {

@@ -17,19 +17,24 @@ function bobY(frame: number): number {
   return Math.round(Math.sin(walkPhase(frame) * 2) * 1.5);
 }
 
-// Leg swing: alternating legs
-function legSwing(frame: number): number {
+// Leg swing Y: alternating legs extend/retract
+function legSwingY(frame: number): number {
+  return Math.round(Math.sin(walkPhase(frame)) * 2);
+}
+
+// Leg swing X: feet slide forward/back (key for walk look)
+function legSwingX(frame: number): number {
   return Math.round(Math.sin(walkPhase(frame)) * 3);
 }
 
 // Arm swing: opposite to legs
 function armSwing(frame: number): number {
-  return Math.round(Math.sin(walkPhase(frame) + Math.PI) * 2);
+  return Math.round(Math.sin(walkPhase(frame) + Math.PI) * 3);
 }
 
 // Body lean: slight forward lean during stride
 function bodyLean(frame: number): number {
-  return Math.round(Math.sin(walkPhase(frame)) * 0.5);
+  return Math.round(Math.sin(walkPhase(frame)) * 1);
 }
 const REQUIRED_FILES = [
   'scout_drone.png',
@@ -85,38 +90,39 @@ function renderSheetWithGate(
 function drawGoblinScout(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
   const cx = ox + 20;
   const by = bobY(frame);
-  const ls = legSwing(frame);
+  const lx = legSwingX(frame);
+  const ly = legSwingY(frame);
   const as = armSwing(frame);
+  const lean = bodyLean(frame);
 
-  // Cloak and torso — hunched silhouette
-  drawRect(ctx, cx - 6, 17 + by, 12, 11, '#4c3f24');
-  drawRect(ctx, cx - 4, 19 + by, 8, 5, '#6a5a3a');
+  // Cloak and torso — hunched silhouette, leans with stride
+  drawRect(ctx, cx - 6 + lean, 17 + by, 12, 11, '#4c3f24');
+  drawRect(ctx, cx - 4 + lean, 19 + by, 8, 5, '#6a5a3a');
 
   // Head (green) with pointed ears
-  drawRect(ctx, cx - 4, 10 + by, 8, 8, PALETTE.scoutDrone);
-  drawRect(ctx, cx - 4, 10 + by, 8, 1, '#5a8a3a');
-  setPixel(ctx, cx - 5, 12 + by, PALETTE.scoutDrone);
-  setPixel(ctx, cx + 5, 12 + by, PALETTE.scoutDrone);
-  setPixel(ctx, cx - 6, 13 + by, PALETTE.scoutDrone);
-  setPixel(ctx, cx + 6, 13 + by, PALETTE.scoutDrone);
+  drawRect(ctx, cx - 4 + lean, 10 + by, 8, 8, PALETTE.scoutDrone);
+  drawRect(ctx, cx - 4 + lean, 10 + by, 8, 1, '#5a8a3a');
+  setPixel(ctx, cx - 5 + lean, 12 + by, PALETTE.scoutDrone);
+  setPixel(ctx, cx + 5 + lean, 12 + by, PALETTE.scoutDrone);
+  setPixel(ctx, cx - 6 + lean, 13 + by, PALETTE.scoutDrone);
+  setPixel(ctx, cx + 6 + lean, 13 + by, PALETTE.scoutDrone);
   // Eyes
-  setPixel(ctx, cx - 1, 13 + by, '#ff2020');
-  setPixel(ctx, cx + 1, 13 + by, '#ff2020');
+  setPixel(ctx, cx - 1 + lean, 13 + by, '#ff2020');
+  setPixel(ctx, cx + 1 + lean, 13 + by, '#ff2020');
 
-  // Left leg (swings forward/back)
-  drawRect(ctx, cx - 4, 28 + by, 4, 8 + ls, '#5a4a2a');
-  // Right leg (opposite swing)
-  drawRect(ctx, cx + 1, 28 + by, 4, 8 - ls, '#5a4a2a');
-  // Feet — small highlight at bottom
-  drawRect(ctx, cx - 4, 35 + by + ls, 4, 1, '#4a3a1a');
-  drawRect(ctx, cx + 1, 35 + by - ls, 4, 1, '#4a3a1a');
+  // Left leg — slides forward/back on X axis + Y length change
+  drawRect(ctx, cx - 4 + lx, 28 + by, 4, 9 + ly, '#5a4a2a');
+  drawRect(ctx, cx - 4 + lx, 36 + by + ly, 5, 2, '#4a3a1a'); // foot
+  // Right leg — opposite direction
+  drawRect(ctx, cx + 1 - lx, 28 + by, 4, 9 - ly, '#5a4a2a');
+  drawRect(ctx, cx + 1 - lx, 36 + by - ly, 5, 2, '#4a3a1a'); // foot
 
   // Dagger arm (swings with arm motion)
-  drawLine(ctx, cx + 6, 20 + by, cx + 10 + as, 17 + by + as, '#b0b0b0');
+  drawLine(ctx, cx + 6 + lean, 20 + by, cx + 10 + as, 17 + by + as, '#b0b0b0');
   setPixel(ctx, cx + 10 + as, 16 + by + as, PALETTE.white);
 
   // Left arm (opposite swing)
-  drawLine(ctx, cx - 6, 21 + by, cx - 8 - as, 24 + by - as, '#4c3f24');
+  drawLine(ctx, cx - 6 + lean, 21 + by, cx - 9 - as, 25 + by - as, '#4c3f24');
 }
 
 function drawGoblinScoutFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
@@ -134,11 +140,12 @@ function drawGoblinScoutFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: 
 function drawOrcWarrior(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
   const cx = ox + 20;
   const by = bobY(frame);
-  const ls = legSwing(frame);
+  const lx = legSwingX(frame);
+  const ly = legSwingY(frame);
   const as = armSwing(frame);
-
-  // Broad armor silhouette — slight sway
   const lean = bodyLean(frame);
+
+  // Broad armor silhouette — sways with stride
   drawRect(ctx, cx - 7 + lean, 18 + by, 14, 14, '#5a5a4a');
   drawRect(ctx, cx - 6 + lean, 19 + by, 12, 3, '#6a6a5a');
 
@@ -152,21 +159,21 @@ function drawOrcWarrior(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, f
   setPixel(ctx, cx + 1 + lean, 13 + by, '#e0e000');
 
   // Shield (left) — bobs with arm swing
-  drawRect(ctx, cx - 11, 17 + by - as, 5, 12, '#6a4a2a');
-  drawRect(ctx, cx - 11, 17 + by - as, 5, 1, '#8a6a4a');
+  drawRect(ctx, cx - 11 - as, 17 + by, 5, 12, '#6a4a2a');
+  drawRect(ctx, cx - 11 - as, 17 + by, 5, 1, '#8a6a4a');
 
   // Axe (right) — swings with arm
   const axeTop = 14 + by + as;
-  drawLine(ctx, cx + 8, axeTop, cx + 8, axeTop + 15, '#5a3a1a');
-  drawRect(ctx, cx + 7, axeTop - 1, 5, 5, '#b0b0b0');
-  setPixel(ctx, cx + 11, axeTop - 1, PALETTE.stoneLight);
+  drawLine(ctx, cx + 8 + as, axeTop, cx + 8 + as, axeTop + 15, '#5a3a1a');
+  drawRect(ctx, cx + 7 + as, axeTop - 1, 5, 5, '#b0b0b0');
+  setPixel(ctx, cx + 11 + as, axeTop - 1, PALETTE.stoneLight);
 
-  // Legs
-  drawRect(ctx, cx - 5, 32 + by, 5, 8 + ls, '#4a4a3a');
-  drawRect(ctx, cx + 1, 32 + by, 5, 8 - ls, '#4a4a3a');
-  // Boot highlight
-  drawRect(ctx, cx - 5, 39 + by + ls, 5, 1, '#3a3a2a');
-  drawRect(ctx, cx + 1, 39 + by - ls, 5, 1, '#3a3a2a');
+  // Left leg — x slides forward/back
+  drawRect(ctx, cx - 5 + lx, 32 + by, 5, 9 + ly, '#4a4a3a');
+  drawRect(ctx, cx - 5 + lx, 40 + by + ly, 6, 2, '#3a3a2a'); // boot
+  // Right leg — opposite
+  drawRect(ctx, cx + 1 - lx, 32 + by, 5, 9 - ly, '#4a4a3a');
+  drawRect(ctx, cx + 1 - lx, 40 + by - ly, 6, 2, '#3a3a2a'); // boot
 }
 
 function drawOrcWarriorFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
@@ -209,9 +216,13 @@ function drawStoneTroll(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, f
   drawRect(ctx, cx + 8, clubTop - 2, 8, 6, '#4a3a1e');
   setPixel(ctx, cx + 10, clubTop - 2, PALETTE.stoneDark);
 
-  // Thick legs — short stubby stride
-  drawRect(ctx, cx - 7, 36 + by, 6, 8 + ls, '#6a6a5a');
-  drawRect(ctx, cx + 2, 36 + by, 6, 8 - ls, '#6a6a5a');
+  // Thick legs — short stubby stride, x-slide for walk feel
+  const tlx = Math.round(Math.sin(walkPhase(frame)) * 2); // less than others — troll is slow
+  const tly = Math.round(Math.sin(walkPhase(frame)) * 1);
+  drawRect(ctx, cx - 7 + tlx, 36 + by, 6, 8 + tly, '#6a6a5a');
+  drawRect(ctx, cx - 7 + tlx, 43 + by + tly, 7, 2, '#5a5a4a'); // foot
+  drawRect(ctx, cx + 2 - tlx, 36 + by, 6, 8 - tly, '#6a6a5a');
+  drawRect(ctx, cx + 2 - tlx, 43 + by - tly, 7, 2, '#5a5a4a'); // foot
 }
 
 function drawStoneTrollFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {

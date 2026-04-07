@@ -244,7 +244,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .torch, .castle-flag, .stars-overlay,
   .matchmaking-swords::before, .matchmaking-swords::after,
-  .matchmaking-dots::after {
+  .matchmaking-dots::after,
+  .hud-flash {
     animation: none;
   }
   @keyframes fadeIn {

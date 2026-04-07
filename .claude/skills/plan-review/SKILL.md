@@ -77,8 +77,8 @@ Plan 파일에서 아래 키워드를 검색한다:
 | 웹 UI | component, screen, form, button, modal, layout, sidebar, tab, settings |
 | 공통 | UI, UX, 화면, 인터페이스, 디자인 |
 
-**2개 이상 매치 → UI 스코프 ON** (Phase 2 + 미학 리뷰 실행)
-**0-1개 매치 → UI 스코프 OFF** (Phase 2 전체 스킵)
+**2개 이상 매치 → UI 스코프 ON** (Phase 2 실행 + 미학 리뷰 추가)
+**0-1개 매치 → UI 스코프 OFF** (Phase 2는 autoplan이 판단, 미학 리뷰만 스킵)
 
 UI 스코프 결과를 출력한다:
 > "UI scope: ON (매치: [키워드 목록])" 또는 "UI scope: OFF — Phase 2 스킵"

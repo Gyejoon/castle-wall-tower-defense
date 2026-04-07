@@ -9,7 +9,8 @@ export class Boot extends Phaser.Scene {
 		this.load.json('asset-manifest', 'assets/asset-manifest.json');
 	}
 
-	create() {
+	async create() {
+		await document.fonts.ready;
 		this.scene.start('Preloader');
 	}
 }

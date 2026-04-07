@@ -44,7 +44,7 @@ export function TutorialOverlay() {
 			<button
 				type="button"
 				onClick={handleSkip}
-				className="absolute bottom-24 left-1/2 -translate-x-1/2 px-4 py-3 border border-gold max-w-[280px] pointer-events-auto text-left"
+				className="absolute bottom-28 left-1/2 -translate-x-1/2 px-4 py-3 border border-gold max-w-[280px] pointer-events-auto text-left"
 				style={{ background: 'rgba(26, 18, 8, 0.92)' }}
 			>
 				<p className="font-pixel text-xs text-gold text-center leading-relaxed">

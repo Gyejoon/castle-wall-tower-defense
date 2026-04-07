@@ -28,7 +28,7 @@ export function ToastNotification({ toast }: ToastNotificationProps) {
 
 	return (
 		<div
-			className="absolute top-3 left-1/2 z-[4] max-w-[min(80vw,280px)] -translate-x-1/2 px-3 py-2 text-center font-pixel text-xs shadow-[3px_3px_0px_rgba(0,0,0,0.28)]"
+			className="absolute top-12 left-1/2 z-[4] max-w-[min(80vw,280px)] -translate-x-1/2 px-3 py-2 text-center font-pixel text-xs shadow-[3px_3px_0px_rgba(0,0,0,0.28)]"
 			style={{
 				border: `2px solid ${style.border}`,
 				background: style.background,

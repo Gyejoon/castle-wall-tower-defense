@@ -4,8 +4,10 @@ import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
 
-const GamePage = lazy(async () =>
-	import('./pages/GamePage').then((module) => ({ default: module.GamePage })),
+const StageSelectPage = lazy(async () =>
+	import('./pages/StageSelectPage').then((module) => ({
+		default: module.StageSelectPage,
+	})),
 );
 
 function LoadingScreen() {
@@ -61,7 +63,7 @@ export function App() {
 			style={{ filter: COLORBLIND_FILTERS[colorblindMode], height: '100%' }}
 		>
 			<Suspense fallback={<LoadingScreen />}>
-				<GamePage />
+				<StageSelectPage />
 			</Suspense>
 		</div>
 	);

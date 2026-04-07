@@ -14,7 +14,7 @@ export { WaveSystem } from './systems/WaveSystem';
 
 export function startGame(
 	parentElement?: string | HTMLElement,
-	options?: { mapId?: string },
+	options?: { mapId?: string; mode?: 'game' | 'stageSelect' },
 ): Phaser.Game {
 	let width = gameConfig.width as number;
 	let height = gameConfig.height as number;
@@ -46,6 +46,9 @@ export function startGame(
 	const game = new Phaser.Game(config);
 	if (options?.mapId) {
 		game.registry.set('mapId', options.mapId);
+	}
+	if (options?.mode) {
+		game.registry.set('mode', options.mode);
 	}
 	return game;
 }

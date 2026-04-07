@@ -1,8 +1,8 @@
 import { ALL_TOWERS } from '@gld/shared';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { useMetaStore } from '../../stores/metaStore';
-import { colors } from '../../styles/tokens';
+import { colors, TIER_LABELS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
 import { PixelButton } from '../ui/PixelButton';
 
@@ -11,15 +11,8 @@ interface DeckEditSheetProps {
 	onClose: () => void;
 }
 
-const TIER_LABELS: Record<number, string> = {
-	1: '일반',
-	2: '레어',
-	3: '영웅',
-	4: '전설',
-	5: '신',
-};
-
-const TIER_COLORS: Record<number, string> = {
+/** 덱 편집 맥락용 서브톤 티어 색상 (가차 공개보다 절제된 톤) */
+const DECK_TIER_COLORS: Record<number, string> = {
 	1: colors.textSecondary,
 	2: '#5bc8e8',
 	3: '#c060f0',
@@ -31,7 +24,10 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 	const savedDeck = useGameStore((s) => s.selectedDeck);
 	const setSelectedDeck = useGameStore((s) => s.setSelectedDeck);
 	const collection = useMetaStore((s) => s.collection);
-	const ownedIds = new Set(collection.map((t) => t.defId));
+	const ownedIds = useMemo(
+		() => new Set(collection.map((t) => t.defId)),
+		[collection],
+	);
 	const ownedTowers = ALL_TOWERS.filter((t) => ownedIds.has(t.id));
 	const towersByTier = [1, 2, 3, 4, 5]
 		.map((tier) => ({
@@ -89,7 +85,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 						<div key={tier}>
 							<div
 								className="font-pixel text-xs mb-2 tracking-[1px]"
-								style={{ color: TIER_COLORS[tier] }}
+								style={{ color: DECK_TIER_COLORS[tier] }}
 							>
 								T{tier} {TIER_LABELS[tier]}
 							</div>

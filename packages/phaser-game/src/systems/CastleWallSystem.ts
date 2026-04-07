@@ -59,18 +59,19 @@ export class CastleWallSystem {
 			if (lane.length === 0) continue;
 			const ep = lane[lane.length - 1];
 			const world = this.grid.gridToWorld(ep.x, ep.y);
+			const wallY = world.y + TILE_SIZE / 2; // align wall bottom to tile bottom edge
 			const baseDepth = ep.x + ep.y;
 
 			// Wall sprite
-			const wall = this.scene.add.sprite(world.x, world.y, 'castle-wall-hp3');
-			wall.setDisplaySize(TILE_SIZE, 66);
+			const wall = this.scene.add.sprite(world.x, wallY, 'castle-wall-hp3');
+			wall.setDisplaySize(64, 80);
 			wall.setOrigin(0.5, 1.0);
 			wall.setDepth(baseDepth + 1);
 
 			// Smoke sprite
 			const smoke = this.scene.add.sprite(
 				world.x - 16,
-				world.y - 24,
+				wallY - 24,
 				'vfx-wall-smoke',
 			);
 			smoke.setDepth(baseDepth + 2);
@@ -81,7 +82,7 @@ export class CastleWallSystem {
 			// Fire sprites (two per wall)
 			const fire1 = this.scene.add.sprite(
 				world.x + 10,
-				world.y - 8,
+				wallY - 8,
 				'vfx-wall-fire',
 			);
 			fire1.setDepth(baseDepth + 2);
@@ -91,7 +92,7 @@ export class CastleWallSystem {
 
 			const fire2 = this.scene.add.sprite(
 				world.x + 24,
-				world.y + 4,
+				wallY + 4,
 				'vfx-wall-fire',
 			);
 			fire2.setDepth(baseDepth + 2);

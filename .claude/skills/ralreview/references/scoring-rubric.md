@@ -75,7 +75,7 @@ diff에 React 파일이 없으면 10/10.
 
 ### Critical 위반 (-2)
 
-- 과사용 폰트 (Inter, Roboto, Arial, Open Sans)
+- 과사용 폰트 (Inter, Roboto, Arial, Open Sans, 시스템 기본 폰트)
 - 하드코딩 색상값, CSS 변수/토큰 미사용
 - AI 양산형 종합 테스트 실패
 

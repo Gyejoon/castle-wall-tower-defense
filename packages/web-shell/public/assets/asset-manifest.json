@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-07T10:12:13.184Z",
+  "generated": "2026-04-07T16:55:02.588Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -578,6 +578,36 @@
       "section": "projectiles"
     },
     {
+      "key": "castle-wall-hp3",
+      "type": "image",
+      "path": "assets/castle-wall/base-hp3.png",
+      "section": "preload"
+    },
+    {
+      "key": "castle-wall-hp2",
+      "type": "image",
+      "path": "assets/castle-wall/base-hp2.png",
+      "section": "preload"
+    },
+    {
+      "key": "castle-wall-hp1",
+      "type": "image",
+      "path": "assets/castle-wall/base-hp1.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-hut-idle",
+      "type": "image",
+      "path": "assets/spawn-hut/base-idle.png",
+      "section": "preload"
+    },
+    {
+      "key": "spawn-hut-active",
+      "type": "image",
+      "path": "assets/spawn-hut/base-active.png",
+      "section": "preload"
+    },
+    {
       "key": "vfx-explosion-sm",
       "type": "spritesheet",
       "path": "assets/vfx/explosion-sm.png",
@@ -723,6 +753,33 @@
       "frameHeight": 64,
       "frameCount": 4,
       "section": "gacha"
+    },
+    {
+      "key": "vfx-wall-smoke",
+      "type": "spritesheet",
+      "path": "assets/vfx/wall-smoke.png",
+      "frameWidth": 24,
+      "frameHeight": 32,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "vfx-wall-fire",
+      "type": "spritesheet",
+      "path": "assets/vfx/wall-fire.png",
+      "frameWidth": 24,
+      "frameHeight": 32,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "vfx-spawn-smoke",
+      "type": "spritesheet",
+      "path": "assets/vfx/spawn-smoke.png",
+      "frameWidth": 24,
+      "frameHeight": 32,
+      "frameCount": 8,
+      "section": "preload"
     },
     {
       "key": "ui-tower-icons",

@@ -21,8 +21,8 @@ describe('stageInfo', () => {
 	});
 
 	describe('getMaxGoldForMap', () => {
-		it('forest_gate returns 1225 gold (all bounties ×1)', () => {
-			expect(getMaxGoldForMap('forest_gate')).toBe(1225);
+		it('forest_gate returns 1238 gold (all bounties ×1)', () => {
+			expect(getMaxGoldForMap('forest_gate')).toBe(1238);
 		});
 
 		it('lava_fortress returns 3230 gold (×2 multiplier)', () => {

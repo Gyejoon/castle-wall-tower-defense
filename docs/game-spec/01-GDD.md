@@ -182,8 +182,9 @@
 ### UI 구조
 
 - **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이
-  - HP/에너지 변화 시 scale flash 애니메이션 (250ms ease-out)
+  - HP 변화 시 scale flash 애니메이션 (250ms ease-out, 초기 마운트 시 스킵)
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
+  - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
 - **Lobby**: Home 탭 (즉시 시작 CTA), Collection 탭, Missions 탭, Settings 탭
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
@@ -212,7 +213,11 @@
 | tierBright | #ffe870 | tier 5 라벨 |
 | bossPhase1 | #c87020 | 보스 1페이즈 HP |
 
-React(DOM)는 hex string, Phaser(Canvas)는 `PHASER_COLORS` (0x number) 사용. 단일 진실 원천.
+**토큰 아키텍처**: `@gld/shared`의 `ui-colors.ts`가 단일 진실 원천.
+- `UI_COLORS` (hex string) — React DOM용
+- `PHASER_COLORS` (0x number) — Phaser Canvas용
+- `web-shell/styles/tokens.ts`의 `colors`는 `UI_COLORS`를 re-export
+- `global.css`의 `@theme` CSS 변수는 Tailwind v4용 복사본 (필수 중복)
 
 **타이포그래피 스케일** (Press Start 2P / Galmuri11)
 
@@ -246,13 +251,25 @@ React(DOM)는 hex string, Phaser(Canvas)는 `PHASER_COLORS` (0x number) 사용. 
 
 ## 9. Settings Matrix
 
-| setting_key | default | range/options | saved_to |
-|-------------|---------|---------------|---------|
-| bgm_volume | 0.7 | 0~1 | localStorage |
-| sfx_volume | 0.8 | 0~1 | localStorage |
-| screen_shake | on | on/off | localStorage |
-| colorblind_mode | off | off/protan/deutan/tritan | localStorage |
-| damage_numbers | on | on/off | localStorage |
+| setting_key | default | range/options | saved_to | 런타임 동기화 |
+|-------------|---------|---------------|---------|-------------|
+| bgm_volume | 0.7 | 0~1 | localStorage | Zustand → SoundGenerator |
+| sfx_volume | 0.8 | 0~1 | localStorage | Zustand → SoundGenerator |
+| screen_shake | on | on/off | localStorage | Zustand → GameScene |
+| colorblind_mode | off | off/protan/deutan/tritan | localStorage | Zustand → CSS filter |
+| damage_numbers | on | on/off | localStorage | Zustand → registry → Phaser changedata |
+
+### 설정 동기화 아키텍처
+
+```
+SettingsTab (React) → gameStore.toggle*()
+    → Zustand subscribe (PhaserGame.tsx)
+        → game.registry.set('showDamageNumbers', value)
+            → Phaser changedata-showDamageNumbers 이벤트
+                → DamageNumberSystem.setEnabled(value)
+```
+
+모든 설정은 로비에서 변경 가능하며, 게임 중에도 실시간 반영된다.
 
 ---
 
@@ -273,3 +290,4 @@ React(DOM)는 hex string, Phaser(Canvas)는 `PHASER_COLORS` (0x number) 사용. 
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | Obsidian GDD 기반 |
 | 2026-04-07 | §8 UI/UX | 디자인 시스템 섹션 신설 (색상 토큰 13종, 타이포 5단계, 터치 타겟, HUD 애니메이션, 데미지 넘버, CurrencyIcon SVG) |
+| 2026-04-07 | §8, §9 | 토큰 아키텍처(단일 원천 + re-export), 설정 런타임 동기화 경로, HUD flash 초기 마운트 스킵 |

@@ -138,7 +138,28 @@ type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 
 ---
 
-## 7. 버전 관리 전략
+## 7. React ↔ Phaser 설정 동기화
+
+게임 설정(`showDamageNumbers` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
+
+```
+[React] gameStore.toggleDamageNumbers()
+    ↓ Zustand subscribe (PhaserGame.tsx)
+[Bridge] game.registry.set('showDamageNumbers', value)
+    ↓ Phaser DataManager changedata 이벤트
+[Phaser] DamageNumberSystem.setEnabled(value)
+```
+
+| 구간 | 구현 파일 | 메커니즘 |
+|------|---------|---------|
+| 초기값 전달 | `PhaserGame.tsx` | `game.registry.set()` at mount |
+| 런타임 동기화 | `PhaserGame.tsx` | `useGameStore.subscribe()` → `registry.set()` |
+| Phaser 수신 | `Game.ts` | `game.registry.events.on('changedata-KEY')` |
+| 정리 | `PhaserGame.tsx` | `unsubscribe()` at unmount |
+
+---
+
+## 8. 버전 관리 전략
 
 - 스키마 변경 시 `localStorage`의 `schema_version` 필드를 업데이트한다.
 - 마이그레이션 로직은 `packages/web-shell/src/stores/` 내 별도 함수로 관리한다.
@@ -151,3 +172,4 @@ type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | GDD §13 기반 |
+| 2026-04-07 | §7 | React↔Phaser 설정 동기화 아키텍처 추가 |

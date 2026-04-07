@@ -77,10 +77,10 @@ export function StageDetailPage() {
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div className="flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
 				{/* Header */}
-				<div className="relative flex items-center justify-center px-3 py-2.5 bg-panel border-b border-border z-10">
+				<div className="relative flex items-center justify-center px-3 pt-3.5 pb-2.5 bg-panel border-b border-border z-10">
 					<button
 						type="button"
-						className="absolute left-3 font-pixel text-[9px] text-accent cursor-pointer hover:text-gold transition-colors"
+						className="absolute left-3 font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
 						onClick={enterStageSelect}
 					>
 						<span className="inline-flex items-center gap-1">
@@ -94,7 +94,7 @@ export function StageDetailPage() {
 							월드맵
 						</span>
 					</button>
-					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-[11px] text-gold">
+					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-base text-gold">
 						스테이지 정보
 					</span>
 				</div>

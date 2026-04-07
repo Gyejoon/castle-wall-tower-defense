@@ -81,6 +81,8 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 11 | Web Audio 노드 `disconnect()` 후 참조 해제 | 발사 이벤트마다 노드 누적 | -2 |
 | 12 | `game.registry.events` 리스너도 named ref + cleanup off() | 익명 함수로 `changedata-*` 등록 → 씬 재시작마다 누적 | -2 |
 | 13 | 산술 연산에서 0 나눗셈 가드 | `Math.floor(dist / N)`이 0일 때 `i / steps`가 NaN | -1 |
+| 14 | tween 중복 방지 | pointer in/out에서 `killTweensOf` 없이 `tweens.add` 반복 → jitter | -1 |
+| 15 | 인터랙티브 요소 간 겹침 | 버튼/텍스트가 동일 좌표에 배치되어 클릭 충돌 | -1 |
 
 기본 10점, 위반별 감점, 최소 0점.
 
@@ -108,8 +110,9 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 | 9 | 무거운 컴포넌트 lazy loading | React.lazy 미사용 | -1 |
 | 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
 | 11 | StrictMode phantom cleanup 안전성 | `useEffect` cleanup에서 구독 해제가 `isConnected` 가드 밖에 있으면 StrictMode 재마운트 시 구독 유실 | -2 |
+| 12 | `key` prop으로 인한 DOM 재생성과 useEffect 불일치 | `key={runId}`로 DOM이 바뀌는데 effect deps가 안정적이라 Phaser 재초기화 안 됨 | -2 |
 
-기본 10점, 항목 1-4,11 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-12 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: 스펙 정합성 검사
 
@@ -149,6 +152,7 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - 테스트명이 "더블탭 방지"인데 싱글클릭만 발생시키는 경우
 - emit 이벤트 검증 없이 함수 호출 여부만 확인하는 경우
 - 에셋 메타데이터(frameCount, tilesets 배열 등)를 검증하지 않는 경우
+- **동어반복 테스트**: expected 값을 production 코드와 같은 함수로 계산하면 regression을 잡지 못한다. 하드코딩된 스냅샷 값으로 assert한다
 
 ### 기존 테스트 깨짐 검사
 

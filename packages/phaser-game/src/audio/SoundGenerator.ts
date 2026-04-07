@@ -406,18 +406,18 @@ export class SoundGenerator {
 				volume: 0.14,
 			},
 			plasma: {
-				frequency: 180,
-				endFrequency: 90,
-				duration: 120,
-				type: 'sine',
-				volume: 0.15,
+				frequency: 120,
+				endFrequency: 60,
+				duration: 80,
+				type: 'triangle',
+				volume: 0.18,
 			},
 			nova_cannon: {
-				frequency: 140,
-				endFrequency: 60,
-				duration: 180,
-				type: 'sine',
-				volume: 0.18,
+				frequency: 90,
+				endFrequency: 40,
+				duration: 120,
+				type: 'triangle',
+				volume: 0.2,
 			},
 			emp: {
 				frequency: 600,
@@ -447,12 +447,34 @@ export class SoundGenerator {
 
 			// Noise sub-layers for specific tower types
 			if (towerType === 'plasma' || towerType === 'nova_cannon') {
+				// Launch thump — short brown noise burst
 				this.playNoise({
 					noiseType: 'brown',
-					duration: recipe.duration,
-					volume: 0.06,
+					duration: 40,
+					volume: 0.15,
 					filterType: 'lowpass',
-					filterFreq: 150,
+					filterFreq: 300,
+				});
+				// Whoosh — white noise sweep for projectile in flight
+				this.schedule(30, () => {
+					this.playNoise({
+						noiseType: 'white',
+						duration: 60,
+						volume: 0.04,
+						filterType: 'bandpass',
+						filterFreq: 600,
+						filterQ: 2,
+					});
+				});
+				// Impact thud — delayed brown noise
+				this.schedule(80, () => {
+					this.playNoise({
+						noiseType: 'brown',
+						duration: 50,
+						volume: 0.1,
+						filterType: 'lowpass',
+						filterFreq: 200,
+					});
 				});
 			} else if (towerType === 'laser' || towerType === 'twin_laser') {
 				this.playNoise({

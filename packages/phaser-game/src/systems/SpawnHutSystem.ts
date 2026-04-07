@@ -1,8 +1,4 @@
-import {
-	getMapPaths,
-	type MapLayout,
-	TILE_SIZE,
-} from '@gld/shared';
+import { getMapPaths, type MapLayout, TILE_SIZE } from '@gld/shared';
 import type Phaser from 'phaser';
 
 import type { GridManager } from './GridManager';

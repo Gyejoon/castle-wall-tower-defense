@@ -69,12 +69,12 @@ function getMapTheme(mapId: string): MapTheme {
 
 import { getPlacementGuardFailure } from '../placementRules';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
-import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
+import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
@@ -221,11 +221,7 @@ export class GameScene extends Phaser.Scene {
 		this.castleWall.create();
 		this.castleWall.update(this.playerHp);
 
-		this.spawnHut = new SpawnHutSystem(
-			this,
-			this.playerGrid,
-			this.currentMap,
-		);
+		this.spawnHut = new SpawnHutSystem(this, this.playerGrid, this.currentMap);
 		this.spawnHut.create();
 
 		this.setupInput();

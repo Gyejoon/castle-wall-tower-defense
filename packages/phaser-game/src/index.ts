@@ -6,6 +6,7 @@ export { gameConfig } from './config';
 export type { GameEventMap } from './EventBus';
 export { EventBus } from './EventBus';
 export { getPlacementGuardFailure } from './placementRules';
+export { UIScene } from './scenes/UIScene';
 // Re-export systems for testing
 export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';

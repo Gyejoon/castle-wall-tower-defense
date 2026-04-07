@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { GameScene } from './scenes/Game';
 import { Preloader } from './scenes/Preloader';
+import { UIScene } from './scenes/UIScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -10,12 +11,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 	height: GAME_CANVAS_H,
 	parent: 'game-container',
 	backgroundColor: '#1a1a2e',
-	render: {
-		preserveDrawingBuffer: true,
-	},
+	render: { preserveDrawingBuffer: true },
 	scale: {
 		mode: Phaser.Scale.FIT,
 		autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
 	},
-	scene: [Boot, Preloader, GameScene],
+	scene: [Boot, Preloader, GameScene, UIScene],
 };

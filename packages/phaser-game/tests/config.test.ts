@@ -38,4 +38,12 @@ describe('gameConfig', () => {
 		expect(gameConfig.height).toBe(GAME_CANVAS_H);
 		expect(gameConfig.plugins?.global).toBeUndefined();
 	});
+
+	it('includes UIScene in scene array', async () => {
+		const { gameConfig } = await import('../src/config');
+		const sceneNames = (gameConfig.scene as Array<{ name: string }>).map(
+			(s) => s.name,
+		);
+		expect(sceneNames).toContain('UIScene');
+	});
 });

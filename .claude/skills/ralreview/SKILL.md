@@ -55,6 +55,12 @@ ralph-loop이 없으면 아래 Phase 0-8을 수동으로 수행한다. 총점 50
 - **`@keyframes` 이름 충돌**: `pulse`, `spin`, `bounce` 등 Tailwind 내장 이름 회피
 - **이징 함수 정확도**: CSS `ease` ≠ `ease-out` — 명시적 값으로 교정
 
+### 에셋 경로 컨벤션 (변경 파일에 에셋 참조가 있을 때만)
+
+- **경로 형식 일관성**: 프로젝트 내 기존 에셋 경로 패턴(상대 `assets/` vs 절대 `/assets/`)을 확인하고 통일한다. 새 파일에서 다른 형식을 쓰면 base URL 변경 시 일부만 깨진다
+- **에셋 존재 여부**: `src="assets/ui/icon-*.webp"` 등 참조하는 파일이 실제로 `public/assets/` 하위에 존재하는지 확인한다. 생성 스크립트를 돌리지 않으면 빠질 수 있다
+- **webp 변환 누락**: PNG만 생성하고 webp 변환을 안 했거나, 코드에서 `.webp`를 참조하는데 `.png`만 있으면 404
+
 ## Phase 2: Phaser 런타임 안정성 검사
 
 [`phaser-best-practices`](../phaser-best-practices/SKILL.md) 기준으로 변경 코드를 본다.

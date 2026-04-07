@@ -34,16 +34,8 @@ export function App() {
 	useEffect(() => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.getState().refreshMissions();
-		// 하루 첫 오픈 시 출석 체크 자동 달성
-		// Zustand set()은 동기적으로 상태 반영 → refreshMissions() 직후 getState()는 최신 상태 보장
-		// current=0 가드: 오늘 이미 달성(current=1)이면 skip, 주간 attendance도 함께 누적됨(의도된 동작)
-		const meta = useMetaStore.getState();
-		const dailyAttendance = meta.progress.dailyMissions.find(
-			(m) => m.type === 'attendance',
-		);
-		if (dailyAttendance && dailyAttendance.current === 0) {
-			meta.progressMission('attendance', 1);
-		}
+		// 하루 첫 오픈 시 출석 체크 자동 달성 (주간 미션, KST 기준)
+		useMetaStore.getState().recordAttendance();
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
 		window.addEventListener('gld-save-error', onSaveError);

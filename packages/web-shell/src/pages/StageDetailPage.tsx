@@ -145,11 +145,11 @@ export function StageDetailPage() {
 
 					{/* Clear record */}
 					<div className="px-3 pb-3">
-						<p className="font-pixel text-[8px] text-text-secondary uppercase tracking-wider mb-2">
+						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
 							클리어 기록
 						</p>
 						<div className="flex items-center gap-2">
-							<div className="flex-1 h-[10px] bg-panel border border-border relative">
+							<div className="flex-1 h-[12px] bg-panel border border-border relative">
 								{best > 0 && (
 									<div
 										className="h-full"
@@ -160,7 +160,7 @@ export function StageDetailPage() {
 									/>
 								)}
 							</div>
-							<span className="font-pixel text-[8px] text-text w-[40px] text-right">
+							<span className="font-pixel text-[10px] text-text w-[40px] text-right">
 								{best}/{totalWaves}
 							</span>
 						</div>
@@ -169,12 +169,12 @@ export function StageDetailPage() {
 					{/* Deck preview */}
 					<div className="px-3 pb-3">
 						<div className="flex items-center justify-between mb-2">
-							<p className="font-pixel text-[8px] text-text-secondary uppercase tracking-wider">
+							<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider">
 								출전 덱
 							</p>
 							<button
 								type="button"
-								className="font-pixel text-[8px] text-accent bg-panel border border-border px-2 py-0.5 cursor-pointer hover:text-gold transition-colors"
+								className="font-pixel text-[10px] text-accent bg-panel border border-border px-2 py-0.5 cursor-pointer hover:text-gold transition-colors"
 								onClick={() => setShowDeckEdit(true)}
 							>
 								<span className="inline-flex items-center gap-1">
@@ -205,10 +205,10 @@ export function StageDetailPage() {
 											height={32}
 											className="[image-rendering:pixelated]"
 										/>
-										<span className="font-pixel text-[6px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
+										<span className="font-pixel text-[8px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
 											{tower.name}
 										</span>
-										<span className="font-pixel text-[7px] text-accent inline-flex items-center gap-[2px]">
+										<span className="font-pixel text-[9px] text-accent inline-flex items-center gap-[2px]">
 											<img
 												src="assets/ui/icon-energy.webp"
 												alt=""

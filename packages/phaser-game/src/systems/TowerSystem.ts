@@ -52,6 +52,7 @@ export class TowerSystem {
 		y2: number;
 		color: number;
 		ttl: number;
+		style: 'beam' | 'arc';
 	}> = [];
 
 	constructor(
@@ -354,6 +355,7 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
+				const style = this.hasSplash(special) ? 'arc' as const : 'beam' as const;
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,
@@ -361,6 +363,7 @@ export class TowerSystem {
 					y2: closestUnit.y,
 					color,
 					ttl: 80,
+					style,
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position);
 				this.spawnImpactVfx(
@@ -455,16 +458,41 @@ export class TowerSystem {
 			line.ttl -= delta;
 			if (line.ttl <= 0) continue;
 			const alpha = line.ttl / 80;
-			this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
-			this.attackGraphics.beginPath();
-			this.attackGraphics.moveTo(line.x1, line.y1);
-			this.attackGraphics.lineTo(line.x2, line.y2);
-			this.attackGraphics.strokePath();
-			this.attackGraphics.lineStyle(4, line.color, alpha * 0.2);
-			this.attackGraphics.beginPath();
-			this.attackGraphics.moveTo(line.x1, line.y1);
-			this.attackGraphics.lineTo(line.x2, line.y2);
-			this.attackGraphics.strokePath();
+
+			if (line.style === 'arc') {
+				// Parabolic arc projectile (catapult/splash towers)
+				const t = 1 - line.ttl / 80; // 0→1 as projectile flies
+				const dx = line.x2 - line.x1;
+				const dy = line.y2 - line.y1;
+				const px = line.x1 + dx * t;
+				const py = line.y1 + dy * t - Math.sin(t * Math.PI) * 40; // parabolic arc height
+				// Boulder
+				this.attackGraphics.fillStyle(0x5a5a5a, alpha);
+				this.attackGraphics.fillCircle(px, py, 4);
+				this.attackGraphics.fillStyle(0x8c8c8c, alpha * 0.7);
+				this.attackGraphics.fillCircle(px - 1, py - 1, 2);
+				// Trail dots
+				if (t > 0.1) {
+					const pt = t - 0.1;
+					const trailX = line.x1 + dx * pt;
+					const trailY = line.y1 + dy * pt - Math.sin(pt * Math.PI) * 40;
+					this.attackGraphics.fillStyle(line.color, alpha * 0.3);
+					this.attackGraphics.fillCircle(trailX, trailY, 2);
+				}
+			} else {
+				// Beam (laser/default)
+				this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
+				this.attackGraphics.beginPath();
+				this.attackGraphics.moveTo(line.x1, line.y1);
+				this.attackGraphics.lineTo(line.x2, line.y2);
+				this.attackGraphics.strokePath();
+				this.attackGraphics.lineStyle(4, line.color, alpha * 0.2);
+				this.attackGraphics.beginPath();
+				this.attackGraphics.moveTo(line.x1, line.y1);
+				this.attackGraphics.lineTo(line.x2, line.y2);
+				this.attackGraphics.strokePath();
+			}
+
 			if (line.ttl > 50) {
 				this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
 				this.attackGraphics.fillCircle(line.x2, line.y2, 4);

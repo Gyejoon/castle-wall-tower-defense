@@ -108,7 +108,12 @@ function createText() {
 		setDepth: vi.fn().mockReturnThis(),
 		setInteractive: vi.fn().mockReturnThis(),
 		setAlpha: vi.fn().mockReturnThis(),
+		setVisible: vi.fn().mockReturnThis(),
+		setScale: vi.fn().mockReturnThis(),
+		setColor: vi.fn().mockReturnThis(),
+		setPosition: vi.fn().mockReturnThis(),
 		setText: vi.fn().mockReturnThis(),
+		setY: vi.fn().mockReturnThis(),
 		on: vi.fn().mockReturnThis(),
 		destroy: vi.fn(),
 	};

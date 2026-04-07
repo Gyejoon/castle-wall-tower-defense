@@ -84,6 +84,7 @@ describe('GameScene', () => {
 		scene.onSelectTower = vi.fn();
 		scene.onClearTowerSelection = vi.fn();
 		scene.onWaveStartedLifecycle = vi.fn();
+		scene.damageNumbers = { destroy: vi.fn(), setEnabled: vi.fn() };
 		scene.playerTowers = { destroy: vi.fn() };
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
@@ -130,6 +131,7 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
+		scene.damageNumbers = { update: vi.fn(), show: vi.fn(), destroy: vi.fn(), setEnabled: vi.fn() };
 		scene.playerWaves = {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'ended'),
@@ -143,6 +145,7 @@ describe('GameScene', () => {
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),
 			getUnitElement: vi.fn(() => 'neutral'),
+			getUnitWorldPos: vi.fn(() => null),
 			applyDamage: vi.fn(),
 			applySlow: vi.fn(),
 			update: vi.fn(() => ({ reachedExit: [] })),
@@ -171,6 +174,7 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 7 };
+		scene.damageNumbers = { update: vi.fn(), show: vi.fn(), destroy: vi.fn(), setEnabled: vi.fn() };
 		scene.playerWaves = {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'running'),
@@ -184,6 +188,7 @@ describe('GameScene', () => {
 		scene.playerUnits = {
 			getUnitPositions: vi.fn(() => []),
 			getUnitElement: vi.fn(() => 'neutral'),
+			getUnitWorldPos: vi.fn(() => ({ x: 100, y: 200 })),
 			applyDamage: vi.fn(() => ({
 				killed: true,
 				unitDefId: 'scout_drone',
@@ -223,6 +228,7 @@ describe('GameScene', () => {
 		scene.onSelectTower = vi.fn();
 		scene.onClearTowerSelection = vi.fn();
 		scene.onWaveStartedLifecycle = vi.fn();
+		scene.damageNumbers = { destroy: vi.fn(), setEnabled: vi.fn() };
 		scene.playerTowers = { destroy: vi.fn() };
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };

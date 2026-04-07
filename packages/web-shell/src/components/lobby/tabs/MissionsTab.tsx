@@ -3,6 +3,7 @@ import {
 	MISSION_LABELS,
 	type MissionProgress,
 } from '@gld/shared';
+import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';
 import { useEffect, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useMetaStore } from '../../../stores/metaStore';
@@ -91,9 +92,7 @@ function MissionCard({ mission, onClaim, period, isWeekly }: MissionCardProps) {
 					<span className="font-pixel text-[11px] text-gold">
 						{mission.reward.amount}
 					</span>
-					<span className="font-pixel text-[10px] text-text-secondary">
-						{mission.reward.type === 'diamond' ? '💎' : '🪙'}
-					</span>
+					{mission.reward.type === 'diamond' ? <DiamondIcon /> : <CoinIcon />}
 				</div>
 			</div>
 

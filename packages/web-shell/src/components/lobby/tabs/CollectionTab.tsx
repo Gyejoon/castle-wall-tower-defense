@@ -197,7 +197,7 @@ function TowerGridCard({
 			</span>
 			{owned && (
 				<span
-					className="font-pixel text-[9px]"
+					className="font-pixel text-[10px]"
 					style={{ color: GRADE_BORDER[owned.grade] }}
 				>
 					Lv.{owned.level}

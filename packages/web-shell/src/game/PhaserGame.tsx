@@ -30,6 +30,10 @@ export function PhaserGame() {
 			'tutorialCompleted',
 			metaState.progress.tutorialCompleted ?? false,
 		);
+		game.registry.set(
+			'showDamageNumbers',
+			useGameStore.getState().showDamageNumbers,
+		);
 		gameRef.current = game;
 
 		return () => {

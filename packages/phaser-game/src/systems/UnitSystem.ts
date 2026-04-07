@@ -549,6 +549,11 @@ export class UnitSystem {
 		return this.unitPositionsBuffer;
 	}
 
+	getUnitWorldPos(unitId: string): { x: number; y: number } | null {
+		const unit = this.units.get(unitId);
+		return unit ? { x: unit.worldX, y: unit.worldY } : null;
+	}
+
 	getUnitElement(unitId: string): string {
 		const unit = this.units.get(unitId);
 		return unit?.def.element ?? 'neutral';

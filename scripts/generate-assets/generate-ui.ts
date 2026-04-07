@@ -241,6 +241,15 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: `ui-icon-${state}`, type: 'image', path: `assets/ui/icon-${state}.png` });
   }
 
+  // Close icon (32x32)
+  {
+    const { canvas, ctx } = makeCanvas(32, 32);
+    drawLine(ctx, 10, 10, 22, 22, PALETTE.gray);
+    drawLine(ctx, 22, 10, 10, 22, PALETTE.gray);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-close.png`);
+    entries.push({ key: 'ui-icon-close', type: 'image', path: 'assets/ui/icon-close.png' });
+  }
+
   // Gold icon (32x32)
   {
     const { canvas, ctx } = makeCanvas(32, 32);

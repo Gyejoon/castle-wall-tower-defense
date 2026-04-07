@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-07T16:55:02.588Z",
+  "generated": "2026-04-07T18:01:48.389Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -881,6 +881,12 @@
       "key": "ui-icon-unlocked",
       "type": "image",
       "path": "assets/ui/icon-unlocked.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-close",
+      "type": "image",
+      "path": "assets/ui/icon-close.png",
       "section": "ui"
     },
     {

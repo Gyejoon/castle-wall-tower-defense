@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { createDefaultSave, MAX_TOWER_LEVEL, SAVE_VERSION } from '@gld/shared';
+import {
+	createDefaultSave,
+	generateWeeklyMissions,
+	MAX_TOWER_LEVEL,
+	SAVE_VERSION,
+	toKSTDateStr,
+} from '@gld/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -173,5 +179,64 @@ describe('metaStore', () => {
 		useMetaStore.getState().updateSettings({ bgmVolume: 0 });
 		expect(useMetaStore.getState().settings.bgmVolume).toBe(0);
 		expect(useMetaStore.getState().settings.screenShake).toBe(true);
+	});
+
+	it('recordAttendance increments attendance mission and sets lastAttendanceDate', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			progress: { ...s.progress, weeklyMissions: generateWeeklyMissions() },
+		}));
+		const today = toKSTDateStr(new Date());
+		useMetaStore.getState().recordAttendance();
+		const s = useMetaStore.getState();
+		const att = s.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+		expect(s.progress.lastAttendanceDate).toBe(today);
+	});
+
+	it('recordAttendance is idempotent on same day', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			progress: { ...s.progress, weeklyMissions: generateWeeklyMissions() },
+		}));
+		useMetaStore.getState().recordAttendance();
+		useMetaStore.getState().recordAttendance();
+		const att = useMetaStore
+			.getState()
+			.progress.weeklyMissions.find((m) => m.type === 'attendance');
+		expect(att?.current).toBe(1);
+	});
+
+	it('refreshMissions clears lastAttendanceDate on weekly reset', () => {
+		useMetaStore.getState().loadSave();
+		const today = toKSTDateStr(new Date());
+		useMetaStore.setState((s) => ({
+			progress: {
+				...s.progress,
+				lastAttendanceDate: today,
+				weeklyMissions: generateWeeklyMissions(),
+				lastWeeklyMissionResetAt: new Date(
+					Date.now() - 8 * 24 * 60 * 60 * 1000,
+				).toISOString(),
+			},
+		}));
+		useMetaStore.getState().refreshMissions();
+		expect(useMetaStore.getState().progress.lastAttendanceDate).toBeNull();
+	});
+
+	it('refreshMissions preserves lastAttendanceDate on structural-only stale (mid-week mission type mismatch)', () => {
+		useMetaStore.getState().loadSave();
+		const today = toKSTDateStr(new Date());
+		// 구조적 stale: weeklyMissions 빈 배열 (타입 누락), 하지만 주간 리셋 기간 아님
+		useMetaStore.setState((s) => ({
+			progress: {
+				...s.progress,
+				lastAttendanceDate: today,
+				weeklyMissions: [],
+				lastWeeklyMissionResetAt: new Date().toISOString(), // just reset
+			},
+		}));
+		useMetaStore.getState().refreshMissions();
+		expect(useMetaStore.getState().progress.lastAttendanceDate).toBe(today);
 	});
 });

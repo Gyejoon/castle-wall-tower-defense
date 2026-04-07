@@ -1,4 +1,3 @@
-<!-- /autoplan restore point: /Users/lio/.gstack/projects/Gyejoon-grid-line-defense-pvp/lio-delicious-broker-autoplan-restore-20260406-192607.md -->
 # MVP 1차 개선 사항 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

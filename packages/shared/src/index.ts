@@ -20,7 +20,13 @@ export {
 	ELEMENT_TINT_COLORS,
 	getElementMultiplier,
 } from './constants/elements';
-export { ENERGY_CAP, ENERGY_PER_BOSS_KILL, ENERGY_PER_KILL, ENERGY_PER_SEC, INITIAL_ENERGY } from './constants/energy';
+export {
+	ENERGY_CAP,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
+	ENERGY_PER_SEC,
+	INITIAL_ENERGY,
+} from './constants/energy';
 export type { GachaResult } from './constants/gacha';
 export {
 	GACHA_COSTS,

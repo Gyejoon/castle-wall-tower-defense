@@ -17,8 +17,8 @@ import {
 	type SaveData,
 	shouldResetDaily,
 	shouldResetWeekly,
-	toKSTDateStr,
 	type TowerGrade,
+	toKSTDateStr,
 	WEEKLY_MISSION_TYPES,
 	xpToNextLevel,
 } from '@gld/shared';
@@ -421,6 +421,9 @@ export const useMetaStore = create<MetaState>()(
 							lastWeeklyMissionResetAt: weeklyStale
 								? now.toISOString()
 								: progress.lastWeeklyMissionResetAt,
+							lastAttendanceDate: needsWeeklyReset
+								? null
+								: progress.lastAttendanceDate,
 						},
 					};
 				});

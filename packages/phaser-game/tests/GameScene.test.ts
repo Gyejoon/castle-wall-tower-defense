@@ -108,6 +108,10 @@ describe('GameScene', () => {
 			'wave-started',
 			scene.onWaveStartedLifecycle,
 		);
+		expect(EventBus.off).toHaveBeenCalledWith(
+			'request-set-speed',
+			scene.onSetSpeed,
+		);
 
 		const offCalls = EventBus.off.mock.invocationCallOrder;
 		const destroyCalls = [

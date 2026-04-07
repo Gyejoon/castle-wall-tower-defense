@@ -143,6 +143,9 @@ export class GameScene extends Phaser.Scene {
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
 		this.scaledGameTime = 0;
+		this.speedMultiplier = 1;
+		this.time.timeScale = 1;
+		this.anims.globalTimeScale = 1;
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
@@ -682,8 +685,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
-		soundGenerator.reset();
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		soundGenerator.reset();
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;

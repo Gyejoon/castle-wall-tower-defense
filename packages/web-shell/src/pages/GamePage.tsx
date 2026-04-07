@@ -95,10 +95,8 @@ export function GamePage() {
 				bossWarningTimerRef.current = null;
 			}
 			const xpEarned = Math.round(
-				battleXp(
-					data.stats.wavesCleared,
-					data.result === 'victory',
-				) * data.stats.rewardMultiplier
+				battleXp(data.stats.wavesCleared, data.result === 'victory') *
+					data.stats.rewardMultiplier,
 			);
 			setGameOverStats({ ...data.stats, xpEarned });
 			const meta = useMetaStore.getState();
@@ -286,7 +284,10 @@ export function GamePage() {
 					style={{ background: 'rgba(42, 32, 16, 0.92)' }}
 				>
 					{/* 첫 번째 행: 항상 고정 */}
-					<div data-testid="top-hud-row" className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap px-3 py-2.5">
+					<div
+						data-testid="top-hud-row"
+						className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap px-3 py-2.5"
+					>
 						<div
 							className="shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
 							style={{ background: 'rgba(192,48,32,0.16)' }}
@@ -334,7 +335,12 @@ export function GamePage() {
 						{runStatus === 'running' && speed2xUnlocked && (
 							<button
 								className="ml-auto font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
-								style={{ background: gameSpeed === 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)' }}
+								style={{
+									background:
+										gameSpeed === 2
+											? 'rgba(200,112,32,0.3)'
+											: 'rgba(26,18,8,0.7)',
+								}}
 								onClick={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
 							>
 								{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
@@ -362,7 +368,6 @@ export function GamePage() {
 					{runStatus !== 'victory' && runStatus !== 'defeat' && (
 						<TutorialOverlay />
 					)}
-
 
 					{bossWarningVisible && (
 						<div
@@ -414,12 +419,25 @@ export function GamePage() {
 								<div
 									className="py-3 -mx-5 -mt-5 flex flex-col items-center gap-1"
 									style={{
-										background: runStatus === 'victory' ? 'rgba(40,80,40,0.8)' : 'rgba(80,20,20,0.8)',
+										background:
+											runStatus === 'victory'
+												? 'rgba(40,80,40,0.8)'
+												: 'rgba(80,20,20,0.8)',
 										borderBottom: `1px solid ${runStatus === 'victory' ? colors.success : colors.danger}`,
 									}}
 								>
-									<span className="font-pixel text-2xl" style={{ color: runStatus === 'victory' ? colors.success : colors.danger }}>
-										{runStatus === 'victory' ? '⚔ 방어 성공 ⚔' : '✕ 방어 실패 ✕'}
+									<span
+										className="font-pixel text-2xl"
+										style={{
+											color:
+												runStatus === 'victory'
+													? colors.success
+													: colors.danger,
+										}}
+									>
+										{runStatus === 'victory'
+											? '⚔ 방어 성공 ⚔'
+											: '✕ 방어 실패 ✕'}
 									</span>
 									<span className="font-pixel text-[11px] text-text-secondary">
 										{runStatus === 'defeat'
@@ -432,16 +450,44 @@ export function GamePage() {
 
 								{/* 스탯 그리드 */}
 								<div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 text-left">
-									<div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-										<span className="font-pixel text-[10px] text-text-secondary">클리어 웨이브</span>
-										<span className="font-pixel text-sm text-text">{gameOverStats?.wavesCleared ?? 0} / 10</span>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											클리어 웨이브
+										</span>
+										<span className="font-pixel text-sm text-text">
+											{gameOverStats?.wavesCleared ?? 0} / 10
+										</span>
 									</div>
-									<div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-										<span className="font-pixel text-[10px] text-text-secondary">배치한 타워</span>
-										<span className="font-pixel text-sm text-text">{gameOverStats?.towersPlaced ?? 0}</span>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											배치한 타워
+										</span>
+										<span className="font-pixel text-sm text-text">
+											{gameOverStats?.towersPlaced ?? 0}
+										</span>
 									</div>
-									<div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-										<span className="font-pixel text-[10px] text-text-secondary">생존 시간</span>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											생존 시간
+										</span>
 										<span className="font-pixel text-sm text-text">
 											{(() => {
 												const s = gameOverStats?.timeSurvivedSec ?? 0;
@@ -454,23 +500,51 @@ export function GamePage() {
 											})()}
 										</span>
 									</div>
-									<div className="flex flex-col gap-0.5 px-3 py-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-										<span className="font-pixel text-[10px] text-text-secondary">획득 골드</span>
-										<span className="font-pixel text-sm text-gold">{gameOverStats?.goldEarned ?? 0}G</span>
+									<div
+										className="flex flex-col gap-0.5 px-3 py-2"
+										style={{
+											background: 'rgba(0,0,0,0.3)',
+											border: '1px solid rgba(255,255,255,0.08)',
+										}}
+									>
+										<span className="font-pixel text-[10px] text-text-secondary">
+											획득 골드
+										</span>
+										<span className="font-pixel text-sm text-gold">
+											{gameOverStats?.goldEarned ?? 0}G
+										</span>
 									</div>
 								</div>
 
 								{/* XP */}
-								<div className="flex items-center justify-center gap-2 py-1.5" style={{ background: 'rgba(20,30,80,0.5)', border: '1px solid rgba(100,150,255,0.2)' }}>
-									<span className="font-pixel text-[11px] text-text-secondary">획득 XP</span>
-									<span className="font-pixel text-base text-info">+{gameOverStats?.xpEarned ?? 0}</span>
+								<div
+									className="flex items-center justify-center gap-2 py-1.5"
+									style={{
+										background: 'rgba(20,30,80,0.5)',
+										border: '1px solid rgba(100,150,255,0.2)',
+									}}
+								>
+									<span className="font-pixel text-[11px] text-text-secondary">
+										획득 XP
+									</span>
+									<span className="font-pixel text-base text-info">
+										+{gameOverStats?.xpEarned ?? 0}
+									</span>
 								</div>
 
 								{/* 버튼 */}
-								<PixelButton variant="gold" style={{ width: '100%' }} onClick={resetRun}>
+								<PixelButton
+									variant="gold"
+									style={{ width: '100%' }}
+									onClick={resetRun}
+								>
 									다시 시작
 								</PixelButton>
-								<PixelButton variant="secondary" style={{ width: '100%' }} onClick={enterLobby}>
+								<PixelButton
+									variant="secondary"
+									style={{ width: '100%' }}
+									onClick={enterLobby}
+								>
 									로비로 돌아가기
 								</PixelButton>
 							</div>

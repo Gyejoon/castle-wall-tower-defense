@@ -2,7 +2,12 @@
 // Migration tests for metaStore v1→v3
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
-import { createDefaultSave, generateWeeklyMissions, SAVE_STORAGE_KEY, SAVE_VERSION } from '@gld/shared';
+import {
+	createDefaultSave,
+	generateWeeklyMissions,
+	SAVE_STORAGE_KEY,
+	SAVE_VERSION,
+} from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -11,10 +16,18 @@ function makeLocalStorageMock(initial: Record<string, string> = {}): Storage {
 	const store: Record<string, string> = { ...initial };
 	return {
 		getItem: (key: string) => store[key] ?? null,
-		setItem: (key: string, val: string) => { store[key] = val; },
-		removeItem: (key: string) => { delete store[key]; },
-		clear: () => { for (const k in store) delete store[k]; },
-		get length() { return Object.keys(store).length; },
+		setItem: (key: string, val: string) => {
+			store[key] = val;
+		},
+		removeItem: (key: string) => {
+			delete store[key];
+		},
+		clear: () => {
+			for (const k in store) delete store[k];
+		},
+		get length() {
+			return Object.keys(store).length;
+		},
 		key: (i: number) => Object.keys(store)[i] ?? null,
 	} as Storage;
 }
@@ -27,13 +40,34 @@ describe('metaStore v1→v3 migration', () => {
 	it('v1 정상 데이터 → v3으로 마이그레이션', () => {
 		const v1Save = {
 			version: 1,
-			profile: { nickname: 'Tester', level: 3, xp: 200, gold: 1000, totalGoldEarned: 2000, wins: 5, losses: 2, winStreak: 2, bestWinStreak: 3 },
+			profile: {
+				nickname: 'Tester',
+				level: 3,
+				xp: 200,
+				gold: 1000,
+				totalGoldEarned: 2000,
+				wins: 5,
+				losses: 2,
+				winStreak: 2,
+				bestWinStreak: 3,
+			},
 			collection: [],
-			progress: { highestWave: { forest_gate: 5 }, stagesCleared: [], totalBattles: 7 },
-			settings: { soundEnabled: true, screenShake: true, showDamageNumbers: false },
+			progress: {
+				highestWave: { forest_gate: 5 },
+				stagesCleared: [],
+				totalBattles: 7,
+			},
+			settings: {
+				soundEnabled: true,
+				screenShake: true,
+				showDamageNumbers: false,
+			},
 			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
 		};
-		vi.stubGlobal('localStorage', makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Save) }));
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Save) }),
+		);
 
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
@@ -59,13 +93,30 @@ describe('metaStore v1→v3 migration', () => {
 	it('soundEnabled=false → bgmVolume 0, sfxVolume 0', () => {
 		const v1Save = {
 			version: 1,
-			profile: { nickname: 'Silent', level: 1, xp: 0, gold: 500, totalGoldEarned: 0, wins: 0, losses: 0, winStreak: 0, bestWinStreak: 0 },
+			profile: {
+				nickname: 'Silent',
+				level: 1,
+				xp: 0,
+				gold: 500,
+				totalGoldEarned: 0,
+				wins: 0,
+				losses: 0,
+				winStreak: 0,
+				bestWinStreak: 0,
+			},
 			collection: [],
 			progress: { highestWave: {}, stagesCleared: [], totalBattles: 0 },
-			settings: { soundEnabled: false, screenShake: true, showDamageNumbers: true },
+			settings: {
+				soundEnabled: false,
+				screenShake: true,
+				showDamageNumbers: true,
+			},
 			selectedDeck: [],
 		};
-		vi.stubGlobal('localStorage', makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Save) }));
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Save) }),
+		);
 
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
@@ -79,13 +130,30 @@ describe('metaStore v1→v3 migration', () => {
 	it('progress 필드 누락된 v1 → 기본값으로 채움', () => {
 		const v1Partial = {
 			version: 1,
-			profile: { nickname: 'Partial', level: 1, xp: 0, gold: 500, totalGoldEarned: 0, wins: 0, losses: 0, winStreak: 0, bestWinStreak: 0 },
+			profile: {
+				nickname: 'Partial',
+				level: 1,
+				xp: 0,
+				gold: 500,
+				totalGoldEarned: 0,
+				wins: 0,
+				losses: 0,
+				winStreak: 0,
+				bestWinStreak: 0,
+			},
 			collection: [],
 			progress: { highestWave: {}, stagesCleared: [] },
-			settings: { soundEnabled: true, screenShake: false, showDamageNumbers: true },
+			settings: {
+				soundEnabled: true,
+				screenShake: false,
+				showDamageNumbers: true,
+			},
 			selectedDeck: [],
 		};
-		vi.stubGlobal('localStorage', makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Partial) }));
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v1Partial) }),
+		);
 
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
@@ -101,7 +169,10 @@ describe('metaStore v1→v3 migration', () => {
 	});
 
 	it('corrupt JSON → 기본 세이브로 폴백', () => {
-		vi.stubGlobal('localStorage', makeLocalStorageMock({ [SAVE_STORAGE_KEY]: 'not-valid-json{{{' }));
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: 'not-valid-json{{{' }),
+		);
 
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
@@ -117,19 +188,46 @@ describe('metaStore v1→v3 migration', () => {
 	it('v2 데이터 → v3으로 마이그레이션 (lastAttendanceDate 추가)', () => {
 		const v2Save = {
 			version: 2,
-			profile: { nickname: 'V2User', level: 5, xp: 300, gold: 2000, diamond: 50, totalGoldEarned: 5000, wins: 10, losses: 3, winStreak: 4, bestWinStreak: 6 },
+			profile: {
+				nickname: 'V2User',
+				level: 5,
+				xp: 300,
+				gold: 2000,
+				diamond: 50,
+				totalGoldEarned: 5000,
+				wins: 10,
+				losses: 3,
+				winStreak: 4,
+				bestWinStreak: 6,
+			},
 			collection: [],
 			progress: {
-				highestWave: {}, stagesCleared: [], totalBattles: 13,
-				tutorialCompleted: true, gachaPityCount: 12,
-				dailyFreeBoxClaimedAt: null, dailyAdBoxCount: 1, dailyResetAt: null,
-				dailyMissions: [], weeklyMissions: [],
-				lastDailyMissionResetAt: null, lastWeeklyMissionResetAt: null,
+				highestWave: {},
+				stagesCleared: [],
+				totalBattles: 13,
+				tutorialCompleted: true,
+				gachaPityCount: 12,
+				dailyFreeBoxClaimedAt: null,
+				dailyAdBoxCount: 1,
+				dailyResetAt: null,
+				dailyMissions: [],
+				weeklyMissions: [],
+				lastDailyMissionResetAt: null,
+				lastWeeklyMissionResetAt: null,
 			},
-			settings: { bgmVolume: 0.5, sfxVolume: 0.6, screenShake: true, showDamageNumbers: true, colorblindMode: 'off' },
+			settings: {
+				bgmVolume: 0.5,
+				sfxVolume: 0.6,
+				screenShake: true,
+				showDamageNumbers: true,
+				colorblindMode: 'off',
+			},
 			selectedDeck: ['laser'],
 		};
-		vi.stubGlobal('localStorage', makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v2Save) }));
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v2Save) }),
+		);
 
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
@@ -167,7 +265,9 @@ describe('recordAttendance', () => {
 		vi.stubGlobal('localStorage', makeLocalStorageMock());
 		useMetaStore.getState().recordAttendance();
 		useMetaStore.getState().recordAttendance();
-		const att = useMetaStore.getState().progress.weeklyMissions.find((m) => m.type === 'attendance');
+		const att = useMetaStore
+			.getState()
+			.progress.weeklyMissions.find((m) => m.type === 'attendance');
 		expect(att?.current).toBe(1);
 		vi.unstubAllGlobals();
 	});
@@ -183,7 +283,9 @@ describe('recordAttendance', () => {
 			},
 		}));
 		useMetaStore.getState().recordAttendance();
-		const att = useMetaStore.getState().progress.weeklyMissions.find((m) => m.type === 'attendance');
+		const att = useMetaStore
+			.getState()
+			.progress.weeklyMissions.find((m) => m.type === 'attendance');
 		expect(att?.current).toBe(0);
 		vi.unstubAllGlobals();
 	});

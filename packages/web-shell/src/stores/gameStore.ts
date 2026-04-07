@@ -1,3 +1,4 @@
+import { EventBus } from '@gld/phaser-game';
 import {
 	type CombatHudState,
 	DEFAULT_DECK,
@@ -11,7 +12,6 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
-import { EventBus } from '@gld/phaser-game';
 import { useMetaStore } from './metaStore';
 
 const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
@@ -188,7 +188,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			},
 		})),
 	clearToast: () => set({ toast: null }),
-	resetRun: () =>
+	resetRun: () => {
 		set((state) => {
 			// Guard: if selected map is locked, fall back to default
 			// Use Infinity when store is unhydrated so we never accidentally lock maps
@@ -206,14 +206,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 				selectedMapId: safeMapId,
 				...createRunState(),
 			};
-		}),
-	enterLobby: () =>
+		});
+		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
+	enterLobby: () => {
 		set((state) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
 			lobbyTab: 'home',
 			...createRunState(),
-		})),
+		}));
+		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
 	setBgmVolume: (v) => {
 		useMetaStore.getState().updateSettings({ bgmVolume: v });
 		set({ bgmVolume: v });

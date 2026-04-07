@@ -245,7 +245,8 @@ body {
   .torch, .castle-flag, .stars-overlay,
   .matchmaking-swords::before, .matchmaking-swords::after,
   .matchmaking-dots::after,
-  .hud-flash {
+  .hud-flash,
+  [class*="gachaPulse"] {
     animation: none;
   }
   @keyframes fadeIn {

@@ -135,7 +135,12 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
-		scene.damageNumbers = { update: vi.fn(), show: vi.fn(), destroy: vi.fn(), setEnabled: vi.fn() };
+		scene.damageNumbers = {
+			update: vi.fn(),
+			show: vi.fn(),
+			destroy: vi.fn(),
+			setEnabled: vi.fn(),
+		};
 		scene.playerWaves = {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'ended'),
@@ -180,7 +185,12 @@ describe('GameScene', () => {
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 5 };
 		scene.playerHp = 1; // one more hit defeats
-		scene.damageNumbers = { update: vi.fn(), show: vi.fn(), destroy: vi.fn(), setEnabled: vi.fn() };
+		scene.damageNumbers = {
+			update: vi.fn(),
+			show: vi.fn(),
+			destroy: vi.fn(),
+			setEnabled: vi.fn(),
+		};
 		scene.playerWaves = {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'running'),
@@ -224,7 +234,12 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 7 };
-		scene.damageNumbers = { update: vi.fn(), show: vi.fn(), destroy: vi.fn(), setEnabled: vi.fn() };
+		scene.damageNumbers = {
+			update: vi.fn(),
+			show: vi.fn(),
+			destroy: vi.fn(),
+			setEnabled: vi.fn(),
+		};
 		scene.playerWaves = {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'running'),

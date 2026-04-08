@@ -169,7 +169,7 @@ export class WaveSystem {
 				: undefined;
 		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
 			EventBus.emit('boss-warning', {
-				slotIndex: wave.slotIndex - 1,
+				slotIndex: prevWave?.slotIndex ?? wave.slotIndex - 1,
 				bossSlotIndex: wave.slotIndex,
 				startAtSec: Math.round(this.elapsedMs / 1000),
 			});

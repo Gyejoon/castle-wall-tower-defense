@@ -9,6 +9,8 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export type { AchievementDef } from './constants/achievements';
+export { ACHIEVEMENT_MAP, ACHIEVEMENTS } from './constants/achievements';
 export type { BossPhaseConfig } from './constants/boss';
 export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';
@@ -83,6 +85,15 @@ export {
 export { getMaxGoldForMap, getMaxXpForMap } from './constants/stageInfo';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
+export type { StarRating } from './constants/starDifficulty';
+export {
+	checkStarClear,
+	getStarDifficultyMult,
+	PERFECT_CLEAR_BONUS,
+	STAR_CLEAR_CONDITIONS,
+	STAR_DIFFICULTY,
+	STAR_REWARD_MULTIPLIERS,
+} from './constants/starDifficulty';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,
@@ -131,3 +142,4 @@ export type {
 } from './types/tower';
 export { TIER_NAMES } from './types/tower';
 export type { ActiveUnit, UnitDef, UnitStats, UnitType } from './types/unit';
+export { calcCombatPower, calcTowerPower } from './utils/combatPower';

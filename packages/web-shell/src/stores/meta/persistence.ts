@@ -1,4 +1,9 @@
-import { SAVE_STORAGE_KEY, SAVE_VERSION, type SaveData } from '@gld/shared';
+import {
+	createDefaultSave,
+	SAVE_STORAGE_KEY,
+	SAVE_VERSION,
+	type SaveData,
+} from '@gld/shared';
 
 // ── Save writing ──────────────────────────────────────────────
 
@@ -57,10 +62,12 @@ type SaveMigration = (
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 	3: (data) => {
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		const profile = (data.profile ?? {}) as Record<string, unknown>;
 		const selectedDeck = (data.selectedDeck ?? []) as string[];
-		const collection = (data.collection ?? []) as Array<
-			Record<string, unknown>
-		>;
+		const collection = (
+			Array.isArray(data.collection) ? data.collection : []
+		) as Record<string, unknown>[];
 
 		const renameId = (id: string) =>
 			id === 'laser' ? 'archer' : id === 'twin_laser' ? 'twin_archer' : id;
@@ -68,11 +75,23 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 		return {
 			...data,
 			version: 4,
+			profile: {
+				...profile,
+				combatPower: 0,
+			},
 			selectedDeck: selectedDeck.map(renameId),
 			collection: collection.map((t) => ({
 				...t,
 				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
+				awakening: (t['awakening'] as number) ?? 0,
+				duplicateCount: (t['duplicateCount'] as number) ?? 0,
 			})),
+			progress: {
+				...progress,
+				stageStars: {},
+				achievements: { claimed: [], progress: {} },
+				awakeningStones: 0,
+			},
 		};
 	},
 	2: (data) => {
@@ -137,6 +156,42 @@ function migrateSave(
 	return version === SAVE_VERSION ? (current as unknown as SaveData) : null;
 }
 
+// ── Sanitization ─────────────────────────────────────────────
+
+const _defaults = createDefaultSave();
+
+/** Ensure all v4 required fields exist — guards against incomplete saves. */
+export function sanitizeV4Save(save: SaveData): SaveData {
+	const dp = _defaults.progress;
+	const dpr = _defaults.profile;
+	const dt = _defaults.collection[0];
+	const profile = save.profile ?? dpr;
+	const progress = save.progress ?? dp;
+
+	return {
+		...save,
+		profile: {
+			...profile,
+			combatPower: profile.combatPower ?? dpr.combatPower,
+		},
+		collection: Array.isArray(save.collection)
+			? save.collection
+					.filter((t): t is NonNullable<typeof t> => t != null)
+					.map((t) => ({
+						...t,
+						awakening: t.awakening ?? dt.awakening,
+						duplicateCount: t.duplicateCount ?? dt.duplicateCount,
+					}))
+			: _defaults.collection,
+		progress: {
+			...progress,
+			stageStars: progress.stageStars ?? dp.stageStars,
+			achievements: progress.achievements ?? dp.achievements,
+			awakeningStones: progress.awakeningStones ?? dp.awakeningStones,
+		},
+	};
+}
+
 export function parseSave(context?: {
 	tutorialCompleted?: boolean;
 }): SaveData | null {
@@ -145,9 +200,11 @@ export function parseSave(context?: {
 		if (!raw) return null;
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
-		if (parsed.version === SAVE_VERSION) return parsed as SaveData;
+		if (parsed.version === SAVE_VERSION)
+			return sanitizeV4Save(parsed as SaveData);
 		// Attempt migration from older version
-		return migrateSave(parsed, context);
+		const migrated = migrateSave(parsed, context);
+		return migrated ? sanitizeV4Save(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

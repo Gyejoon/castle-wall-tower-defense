@@ -21,6 +21,9 @@ export class WaveSystem {
 	private maxWaves: number;
 	private waves: WaveDef[];
 	private difficultyHpMult: number;
+	private armorMult: number;
+	private speedMult: number;
+	private ccResist: number;
 
 	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
@@ -32,7 +35,12 @@ export class WaveSystem {
 		unitSystem: UnitSystem,
 		waves: WaveDef[],
 		maxWaves?: number,
-		options?: { difficultyHpMult?: number },
+		options?: {
+			difficultyHpMult?: number;
+			armorMult?: number;
+			speedMult?: number;
+			ccResist?: number;
+		},
 	) {
 		this.unitSystem = unitSystem;
 		this.waves = waves;
@@ -41,6 +49,9 @@ export class WaveSystem {
 			Math.min(maxWaves ?? waves.length, waves.length),
 		);
 		this.difficultyHpMult = options?.difficultyHpMult ?? 1;
+		this.armorMult = options?.armorMult ?? 1;
+		this.speedMult = options?.speedMult ?? 1;
+		this.ccResist = options?.ccResist ?? 0;
 	}
 
 	setMaxWaves(count: number): void {
@@ -162,6 +173,19 @@ export class WaveSystem {
 		this.hasSpawnedCurrentWave = false;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
+		// Emit boss warning if no pre_boss wave already emitted it
+		const prevWave =
+			this.currentWaveIndex > 0
+				? this.waves[this.currentWaveIndex - 1]
+				: undefined;
+		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
+			EventBus.emit('boss-warning', {
+				slotIndex: prevWave?.slotIndex ?? wave.slotIndex - 1,
+				bossSlotIndex: wave.slotIndex,
+				startAtSec: Math.round(this.elapsedMs / 1000),
+			});
+		}
+
 		// Spawn units
 		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
 		const waveHpMult = waveScale?.hp ?? 1;
@@ -177,8 +201,10 @@ export class WaveSystem {
 				isBoss,
 				hpMultiplier,
 				waveHpMult,
-				waveSpeedMult,
+				waveSpeedMult: waveSpeedMult * this.speedMult,
 				waveSlot: wave.slotIndex,
+				armorMult: this.armorMult,
+				ccResist: this.ccResist,
 			});
 		}
 		this.hasSpawnedCurrentWave = true;

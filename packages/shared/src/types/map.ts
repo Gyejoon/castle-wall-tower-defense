@@ -15,6 +15,8 @@ export interface MapLayout {
 	tilemapKey: string;
 	tilesetKey: string;
 	unlockLevel?: number; // undefined = always unlocked (e.g. forest_gate)
+	/** Recommended combat power for this map. Shown on StageDetailPage. */
+	recommendedPower: number;
 	/** Gold and XP reward multiplier. forest_gate=1, lava_fortress=2, storm_citadel=3 */
 	rewardMultiplier: number;
 	/** HP multiplier applied to all spawned units. Default 1. */

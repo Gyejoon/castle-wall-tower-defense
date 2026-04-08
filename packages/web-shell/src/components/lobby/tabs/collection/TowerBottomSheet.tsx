@@ -117,9 +117,13 @@ export function TowerBottomSheet({
 					<span className="font-pixel text-sm text-text">{def.name}</span>
 					<div className="flex gap-0.5">
 						{TIER_DOT_KEYS.slice(0, def.tier).map((dotKey) => (
-							<span
+							<img
 								key={`${def.id}-detail-${dotKey}`}
-								className="block h-[5px] w-[5px] bg-gold"
+								src="assets/ui/icon-star-active.png"
+								alt=""
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated]"
 							/>
 						))}
 					</div>
@@ -288,7 +292,7 @@ export function TowerBottomSheet({
 
 			{!owned && (
 				<span className="text-center font-pixel text-[11px] text-text-secondary">
-					전투에서 타워를 획득하세요!
+					소환의 제단에서 타워를 획득하세요!
 				</span>
 			)}
 		</div>

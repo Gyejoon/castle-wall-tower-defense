@@ -1,8 +1,8 @@
 import { xpToNextLevel } from '@gld/shared';
-import { DiamondIcon } from '../ui/CurrencyIcon';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
+import { DiamondIcon } from '../ui/CurrencyIcon';
 
 function useAnimatedGold() {
 	const gold = useMetaStore((s) => s.profile.gold);
@@ -31,8 +31,18 @@ function useAnimatedGold() {
 	return display;
 }
 
+function getFrameColor(cp: number): string {
+	if (cp >= 50000) return 'var(--color-tier-bright, #ffe870)';
+	if (cp >= 10000) return 'var(--color-grade-unique, #9060e0)';
+	if (cp >= 5000) return 'var(--color-gold)';
+	if (cp >= 1000) return 'var(--color-accent)';
+	if (cp >= 500) return 'var(--color-success)';
+	return 'var(--color-border)';
+}
+
 export function ProfileBar() {
 	const profile = useMetaStore((s) => s.profile);
+	const combatPower = profile.combatPower;
 	const displayGold = useAnimatedGold();
 	const xpNeeded = xpToNextLevel(profile.level);
 	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;
@@ -40,7 +50,7 @@ export function ProfileBar() {
 	return (
 		<div
 			className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.85)' }}
+			style={{ background: 'var(--color-panel-85)' }}
 		>
 			{/* Avatar + Nickname + XP bar */}
 			<img
@@ -56,6 +66,22 @@ export function ProfileBar() {
 				</span>
 				<span className="font-pixel text-[11px] text-text-secondary">
 					Lv.{profile.level}
+				</span>
+				<span className="inline-flex items-center gap-1 font-pixel text-[11px]">
+					<img
+						src="assets/ui/icon-sword.webp"
+						alt=""
+						width={12}
+						height={12}
+						className="[image-rendering:pixelated]"
+					/>
+					<span className="text-text-secondary text-[10px]">전투력</span>
+					<span
+						className="text-text font-bold"
+						style={{ textShadow: `0 0 6px ${getFrameColor(combatPower)}` }}
+					>
+						{combatPower.toLocaleString()}
+					</span>
 				</span>
 				{/* XP progress bar */}
 				<div

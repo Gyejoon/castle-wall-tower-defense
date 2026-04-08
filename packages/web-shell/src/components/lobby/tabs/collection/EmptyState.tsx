@@ -4,7 +4,7 @@ export function EmptyState() {
 			<span className="text-center font-pixel text-[13px] leading-[1.8] text-text-secondary">
 				아직 타워가 없습니다.
 				<br />
-				전투에서 타워를 획득하세요!
+				소환의 제단에서 타워를 획득하세요!
 			</span>
 		</div>
 	);

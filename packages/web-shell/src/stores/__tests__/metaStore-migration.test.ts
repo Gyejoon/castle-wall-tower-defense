@@ -9,7 +9,7 @@ import {
 	SAVE_VERSION,
 } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseSave } from '../meta/persistence';
+import { parseSave, sanitizeV4Save } from '../meta/persistence';
 import { useMetaStore } from '../metaStore';
 
 // localStorage mock helper
@@ -166,6 +166,9 @@ describe('metaStore v1→v4 migration', () => {
 		expect(s.progress.lastAttendanceDate).toBeNull();
 		expect(s.progress.dailyMissions).toEqual([]);
 		expect(s.settings.screenShake).toBe(false);
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});
@@ -241,6 +244,9 @@ describe('metaStore v1→v4 migration', () => {
 		expect(s.progress.tutorialCompleted).toBe(true);
 		expect(s.settings.bgmVolume).toBe(0.5);
 		expect(s.progress.lastAttendanceDate).toBeNull();
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});
@@ -248,14 +254,45 @@ describe('metaStore v1→v4 migration', () => {
 	it('migrates v3 save: laser→archer, twin_laser→twin_archer', () => {
 		const v3Save = {
 			version: 3,
-			profile: { nickname: 'test', level: 1, xp: 0, gold: 100, diamond: 0, totalGoldEarned: 0, wins: 0, losses: 0, winStreak: 0, bestWinStreak: 0 },
+			profile: {
+				nickname: 'test',
+				level: 1,
+				xp: 0,
+				gold: 100,
+				diamond: 0,
+				totalGoldEarned: 0,
+				wins: 0,
+				losses: 0,
+				winStreak: 0,
+				bestWinStreak: 0,
+			},
 			collection: [
 				{ defId: 'laser', level: 5, grade: 'rare', acquiredAt: 1000 },
 				{ defId: 'twin_laser', level: 10, grade: 'epic', acquiredAt: 2000 },
 				{ defId: 'plasma', level: 3, grade: 'normal', acquiredAt: 500 },
 			],
-			progress: { highestWave: {}, stagesCleared: [], totalBattles: 0, tutorialCompleted: true, gachaPityCount: 0, dailyFreeBoxClaimedAt: null, dailyAdBoxCount: 0, dailyResetAt: null, dailyMissions: [], weeklyMissions: [], lastDailyMissionResetAt: null, lastWeeklyMissionResetAt: null, lastAttendanceDate: null },
-			settings: { bgmVolume: 0.7, sfxVolume: 0.8, screenShake: true, showDamageNumbers: true, colorblindMode: 'off' },
+			progress: {
+				highestWave: {},
+				stagesCleared: [],
+				totalBattles: 0,
+				tutorialCompleted: true,
+				gachaPityCount: 0,
+				dailyFreeBoxClaimedAt: null,
+				dailyAdBoxCount: 0,
+				dailyResetAt: null,
+				dailyMissions: [],
+				weeklyMissions: [],
+				lastDailyMissionResetAt: null,
+				lastWeeklyMissionResetAt: null,
+				lastAttendanceDate: null,
+			},
+			settings: {
+				bgmVolume: 0.7,
+				sfxVolume: 0.8,
+				screenShake: true,
+				showDamageNumbers: true,
+				colorblindMode: 'off',
+			},
 			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
 		};
 
@@ -272,6 +309,77 @@ describe('metaStore v1→v4 migration', () => {
 		expect(result!.collection[1].defId).toBe('twin_archer');
 		expect(result!.collection[2].defId).toBe('plasma'); // unchanged
 
+		vi.unstubAllGlobals();
+	});
+});
+
+describe('sanitizeV4Save — v4 필드 누락 방어', () => {
+	it('achievements 누락 시 기본값 채움', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete (save.progress as any).achievements;
+		const result = sanitizeV4Save(save);
+		expect(result.progress.achievements).toEqual({
+			claimed: [],
+			progress: {},
+		});
+	});
+
+	it('stageStars 누락 시 기본값 채움', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete (save.progress as any).stageStars;
+		const result = sanitizeV4Save(save);
+		expect(result.progress.stageStars).toEqual({});
+	});
+
+	it('collection 아이템에 awakening/duplicateCount 누락 시 기본값 채움', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const tower = save.collection[0] as any;
+		delete tower.awakening;
+		delete tower.duplicateCount;
+		const result = sanitizeV4Save(save);
+		expect(result.collection[0].awakening).toBe(0);
+		expect(result.collection[0].duplicateCount).toBe(0);
+	});
+
+	it('combatPower 누락 시 기본값 채움', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete (save.profile as any).combatPower;
+		const result = sanitizeV4Save(save);
+		expect(result.profile.combatPower).toBe(0);
+	});
+
+	it('collection이 배열이 아니면 기본 컬렉션으로 대체', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(save as any).collection = 'corrupted';
+		const result = sanitizeV4Save(save);
+		expect(Array.isArray(result.collection)).toBe(true);
+		expect(result.collection.length).toBeGreaterThan(0);
+	});
+
+	it('parseSave가 v4 데이터에 sanitization 적용', () => {
+		const save = createDefaultSave();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete (save.progress as any).achievements;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete (save.progress as any).stageStars;
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({
+				[SAVE_STORAGE_KEY]: JSON.stringify(save),
+			}),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.progress.achievements).toEqual({
+			claimed: [],
+			progress: {},
+		});
+		expect(result!.progress.stageStars).toEqual({});
 		vi.unstubAllGlobals();
 	});
 });

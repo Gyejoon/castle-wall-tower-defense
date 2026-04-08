@@ -204,26 +204,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
-  // Stage select thumbnails (128x96 each, 3 stages)
-  const STAGES = [
-    { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageBright },
-    { id: 'lava_fortress', name: 'Lava Fortress', color: PALETTE.fireRed },
-    { id: 'storm_citadel', name: 'Storm Citadel', color: '#4060c0' },
-  ];
-  for (const stage of STAGES) {
-    const { canvas, ctx } = makeCanvas(128, 96);
-    drawRect(ctx, 0, 0, 128, 96, stage.color);
-    drawRect(ctx, 4, 4, 120, 88, hexToRgba(PALETTE.shadow, 0.5));
-    ctx.fillStyle = PALETTE.white;
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(stage.name, 64, 54);
-    saveCanvas(canvas, `${OUTPUT_DIR}/stage-thumb-${stage.id}.png`);
-    entries.push({
-      key: `ui-stage-thumb-${stage.id}`, type: 'image',
-      path: `assets/ui/stage-thumb-${stage.id}.png`,
-    });
-  }
+  // Stage thumbnails are now generated via ComfyUI in generate-worldmap.ts
 
   // Lock icon (32x32) — medieval iron padlock, pixel art
   {
@@ -466,6 +447,23 @@ export async function generate(): Promise<ManifestEntry[]> {
     drawLine(ctx, 14, 22, 24, 10, PALETTE.white);
     saveCanvas(canvas, `${OUTPUT_DIR}/icon-complete.png`);
     entries.push({ key: 'ui-icon-complete', type: 'image', path: 'assets/ui/icon-complete.png' });
+  }
+
+  // Star icon — active (gold filled, 16x16)
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    drawStar(ctx, 8, 8, 7, 3, 5, PALETTE.gold);
+    fillCircle(ctx, 8, 8, 3, PALETTE.gold);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-star-active.png`);
+    entries.push({ key: 'ui-icon-star-active', type: 'image', path: 'assets/ui/icon-star-active.png' });
+  }
+
+  // Star icon — inactive (dim border, 16x16)
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    drawStar(ctx, 8, 8, 7, 3, 5, '#5a5040');
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-star-inactive.png`);
+    entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
   }
 
   // Ad button (120x40)

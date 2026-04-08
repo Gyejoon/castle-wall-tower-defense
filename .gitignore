@@ -29,3 +29,8 @@ Thumbs.db
 .env.*.local
 .gstack/
 .superpowers/
+
+# Quality gate runtime files
+.claude/.skip-gate
+.claude/quality-tracker.json
+.ralreview-state.json

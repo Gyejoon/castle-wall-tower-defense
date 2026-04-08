@@ -27,7 +27,7 @@ describe('LobbyPage', () => {
 		expect(view.getByText('Commander')).toBeTruthy();
 
 		const tabs = view.getAllByRole('tab');
-		expect(tabs).toHaveLength(4);
+		expect(tabs).toHaveLength(3);
 		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
 
 		expect(view.getByText('성벽 막기')).toBeTruthy();
@@ -39,22 +39,17 @@ describe('LobbyPage', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
 		const collectionTab = tabs[1];
-		const missionsTab = tabs[2];
-		const settingsTab = tabs[3];
+		const settingsTab = tabs[2];
 
 		expect(collectionTab).toBeTruthy();
-		expect(missionsTab).toBeTruthy();
 		expect(settingsTab).toBeTruthy();
-		if (!(collectionTab && missionsTab && settingsTab)) {
+		if (!(collectionTab && settingsTab)) {
 			throw new Error('expected lobby tabs to render');
 		}
 
 		fireEvent.click(collectionTab);
 		expect(useGameStore.getState().lobbyTab).toBe('collection');
 		expect(collectionTab.getAttribute('aria-selected')).toBe('true');
-
-		fireEvent.click(missionsTab);
-		expect(useGameStore.getState().lobbyTab).toBe('missions');
 
 		fireEvent.click(settingsTab);
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
@@ -86,7 +81,7 @@ describe('LobbyPage', () => {
 	it('shows settings tab with toggles', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const settingsTab = tabs[3];
+		const settingsTab = tabs[2];
 
 		expect(settingsTab).toBeTruthy();
 		if (!settingsTab) {

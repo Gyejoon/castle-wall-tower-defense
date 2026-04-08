@@ -1,4 +1,4 @@
-import { type SaveData, toKSTDateStr, xpToNextLevel } from '@gld/shared';
+import { type SaveData, type StarRating, toKSTDateStr, xpToNextLevel } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -21,6 +21,8 @@ export const createProfileSlice: SliceCreator<
 		| 'recordBattle'
 		| 'updateHighestWave'
 		| 'recordStageClear'
+		| 'recordStarClear'
+		| 'addAwakeningStones'
 		| 'recordAttendance'
 	>
 > = (set, get) => ({
@@ -39,6 +41,13 @@ export const createProfileSlice: SliceCreator<
 		set((s) => ({
 			profile: applyLevelUps({ ...s.profile, xp: s.profile.xp + amount }),
 		}));
+		// Level achievements
+		const level = get().profile.level;
+		get().updateAchievementProgress('lv_5', level);
+		get().updateAchievementProgress('lv_10', level);
+		get().updateAchievementProgress('lv_20', level);
+		get().updateAchievementProgress('lv_50', level);
+		get().updateAchievementProgress('lv_99', level);
 		debouncedSave(get());
 	},
 
@@ -86,6 +95,43 @@ export const createProfileSlice: SliceCreator<
 				},
 			};
 		});
+		const clearCount = get().progress.stagesCleared.length;
+		get().updateAchievementProgress('clear_1', clearCount);
+		get().updateAchievementProgress('clear_10', clearCount);
+		get().updateAchievementProgress('clear_50', clearCount);
+		debouncedSave(get());
+	},
+
+	recordStarClear: (mapId, star) => {
+		set((s) => {
+			const current = s.progress.stageStars[mapId] ?? 0;
+			if (star <= current) return s;
+			return {
+				progress: {
+					...s.progress,
+					stageStars: { ...s.progress.stageStars, [mapId]: star },
+				},
+			};
+		});
+		// Star achievements
+		if (star >= 2) {
+			const star2Count = Object.values(get().progress.stageStars).filter((s) => s >= 2).length;
+			get().updateAchievementProgress('star2_all', star2Count);
+		}
+		if (star >= 3) {
+			const star3Count = Object.values(get().progress.stageStars).filter((s) => s >= 3).length;
+			get().updateAchievementProgress('star3_all', star3Count);
+		}
+		debouncedSave(get());
+	},
+
+	addAwakeningStones: (amount) => {
+		set((s) => ({
+			progress: {
+				...s.progress,
+				awakeningStones: s.progress.awakeningStones + amount,
+			},
+		}));
 		debouncedSave(get());
 	},
 

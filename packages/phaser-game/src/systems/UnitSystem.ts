@@ -188,13 +188,21 @@ export class UnitSystem {
 			pathIndex: 0,
 		};
 
+		const textureKey = entry.isBoss
+			? `unit-${entry.def.id}-boss`
+			: `unit-${entry.def.id}`;
 		const sprite = this.scene.add.sprite(
 			startWorld.x,
 			startWorld.y,
-			`unit-${entry.def.id}`,
+			textureKey,
 		);
-		sprite.setDisplaySize(40, 48);
-		sprite.play(`${entry.def.id}-walk`);
+		sprite.setDisplaySize(entry.isBoss ? 80 : 40, entry.isBoss ? 96 : 48);
+		const walkAnimKey = entry.isBoss ? `anim-${textureKey}` : `${entry.def.id}-walk`;
+		if (this.scene.anims.exists(walkAnimKey)) {
+			sprite.play(walkAnimKey);
+		} else {
+			sprite.play(`${entry.def.id}-walk`);
+		}
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (entry.def.element !== 'neutral') {
 			sprite.setTint(ELEMENT_TINT_COLORS[entry.def.element]);
@@ -347,6 +355,15 @@ export class UnitSystem {
 		) {
 			unit.bossPhase = 2;
 			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
+			// Switch to rage texture if available
+			const rageKey = `unit-${unit.def.id}-boss-rage`;
+			if (this.scene.textures.exists(rageKey)) {
+				unit.sprite.setTexture(rageKey);
+				const rageAnimKey = `anim-${rageKey}`;
+				if (this.scene.anims.exists(rageAnimKey)) {
+					unit.sprite.play(rageAnimKey);
+				}
+			}
 			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
 			EventBus.emit('boss-phase-change', {
 				phase: 2,

@@ -415,70 +415,86 @@ function fillEllipse(ctx: import('@napi-rs/canvas').SKRSContext2D, cx: number, c
 }
 
 function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number, frame: number, rage: boolean): void {
-  const cx = size / 2;
-  const cy = size / 2;
-  const scale = size / 48;
+  const cx = size / 2; // 48
+  const cy = 44;       // body center (slightly above center, room for tail above and head below)
   const phase = (frame / 8) * Math.PI * 2;
 
-  // Breathing: body slightly expands/contracts
-  const breathScale = 1 + Math.sin(phase * 2) * 0.03;
-  const bodyW = Math.floor(16 * scale * breathScale);
-  const bodyH = Math.floor(12 * scale * breathScale);
+  // === Animation parameters ===
+  const wingFlap = Math.sin(phase);
+  const wingY = wingFlap > 0 ? wingFlap * 6 : wingFlap * 4; // asymmetric: fast down, slow up
+  const wingSpread = 1 + wingFlap * 0.08;
+  const tailSwing1 = Math.sin(phase + Math.PI * 0.6) * 6;
+  const tailSwing2 = Math.sin(phase + Math.PI) * 4;
+  const headBob = Math.round(Math.sin(phase * 2) * 1);
+  const bodyBob = Math.round(Math.sin(phase * 2) * 1.0);  // BUG-2 FIX: was 0.5
+  const breathScale = 1 + Math.sin(phase * 2) * 0.02;
+  const legAnim = Math.round(Math.sin(phase) * 3);
 
-  // Wing flap
-  const wingFlap = Math.round(Math.sin(phase) * 4 * scale);
+  // === 1. Fire aura (ground glow) ===
+  addGlow(ctx, cx, cy, 40, rage ? DRAGON.fireRed : DRAGON.fireOrange, rage ? 0.12 : 0.08);
 
-  // Fire aura pulse
-  const auraPulse = 0.15 + Math.sin(phase * 2) * 0.1;
-  const auraColor = rage ? PALETTE.fireRed : PALETTE.fireOrange;
+  // === 2. Shadow ===
+  drawIsoShadow(ctx, cx, cy + 2, 32, 16, 0.25);
 
-  // Wings (left/right)
-  const wingSpan = Math.floor(20 * scale);
-  for (let i = 0; i < wingSpan; i++) {
-    const wingH = Math.floor((wingSpan - i) * 0.6);
-    const wingColor = rage ? '#a02020' : '#8b2020';
-    for (let dy = -wingH + wingFlap; dy <= wingFlap; dy++) {
-      setPixel(ctx, cx - bodyW - i, cy + dy, wingColor);
-      setPixel(ctx, cx + bodyW + i, cy + dy, wingColor);
-    }
+  // === 3. Tail (top — extending upward, away from movement) ===
+  const tailBaseY = cy - 16;
+  for (let t = 0; t <= 1; t += 0.04) {
+    const tx = cx + tailSwing1 * t * 0.7 + tailSwing2 * t * t * 0.3;
+    const ty = tailBaseY - t * 24;  // BUG-1 FIX: was t * 30
+    const thickness = Math.round(3 - t * 2);
+    const c = t < 0.5 ? DRAGON.body : DRAGON.bodyDark;
+    drawRect(ctx, tx - thickness, ty, thickness * 2 + 1, 1, c);
+  }
+  // Tail spade (diamond at tip)
+  const tsX = Math.round(cx + tailSwing2 * 0.8);
+  const tsY = Math.round(tailBaseY - 24);  // BUG-1 FIX: was tailBaseY - 30
+  drawLine(ctx, tsX, tsY, tsX - 4, tsY - 4, DRAGON.bodyDark);
+  drawLine(ctx, tsX, tsY, tsX + 4, tsY - 4, DRAGON.bodyDark);
+  drawLine(ctx, tsX - 4, tsY - 4, tsX, tsY - 2, DRAGON.bodyDark);
+  drawLine(ctx, tsX + 4, tsY - 4, tsX, tsY - 2, DRAGON.bodyDark);
+  // Tail spines (3)
+  for (let i = 0; i < 3; i++) {
+    const t = (i + 1) / 4;
+    const spX = Math.round(cx + tailSwing1 * t * 0.5);
+    const spY = Math.round(tailBaseY - t * 22);
+    drawLine(ctx, spX - 2, spY, spX, spY - 3, DRAGON.spine);
+    drawLine(ctx, spX + 2, spY, spX, spY - 3, DRAGON.spine);
+  }
+  // Tail fire (rage only)
+  if (rage) {
+    addGlow(ctx, tsX, tsY - 2, 4, DRAGON.fireRed, 0.25 + Math.sin(phase * 3) * 0.1);
   }
 
-  // Body (large oval)
-  for (let dy = -bodyH; dy <= bodyH; dy++) {
-    for (let dx = -bodyW; dx <= bodyW; dx++) {
-      if ((dx * dx) / (bodyW * bodyW) + (dy * dy) / (bodyH * bodyH) <= 1) {
-        setPixel(ctx, cx + dx, cy + dy, PALETTE.titan);
-      }
-    }
-  }
+  // === 4. Body (vertical ellipse — head-to-tail orientation) ===
+  const bw = Math.round(16 * breathScale);
+  const bh = Math.round(20 * breathScale);
+  const bcy = cy + bodyBob;
 
-  // Scale shimmer — rotating
+  // Body outer shadow
+  fillEllipse(ctx, cx, bcy, bw + 1, bh + 1, DRAGON.bodyDeep);
+  // Main body
+  fillEllipse(ctx, cx, bcy, bw, bh, DRAGON.body);
+  // Spine ridge (center line)
+  drawLine(ctx, cx, bcy - bh + 2, cx, bcy + bh - 2, DRAGON.bodyDeep);
+  // Belly glow (lava showing through)
+  const bellyAlpha = rage ? 0.3 : 0.12;
+  addGlow(ctx, cx, bcy, Math.round(bw * 0.6), rage ? DRAGON.lavaGlow : DRAGON.bellyGlow, bellyAlpha + Math.sin(phase * 2) * 0.05);
+  // Belly scale lines
+  for (let i = 0; i < 3; i++) {
+    const sy = bcy + 2 + i * 3;
+    const hw = Math.round(bw * (0.5 - i * 0.1));
+    drawLine(ctx, cx - hw, sy, cx + hw, sy, hexToRgba(DRAGON.belly, 0.5));
+  }
+  // Scale texture dots
   for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + phase * 0.2;
-    const r = 8 * scale;
-    setPixel(ctx, Math.round(cx + r * Math.cos(a) * 0.6), Math.round(cy + r * Math.sin(a) * 0.4), '#e06040');
+    const a = (i / 8) * Math.PI * 2 + phase * 0.08;
+    const sx = cx + Math.round(Math.cos(a) * bw * 0.5);
+    const sy = bcy + Math.round(Math.sin(a) * bh * 0.45);
+    setPixel(ctx, sx, sy, hexToRgba(DRAGON.bodyMid, 0.4));
   }
 
-  // Head (top circle) — slight bob
-  const headBob = Math.round(Math.sin(phase * 2) * scale);
-  fillCircle(ctx, cx, cy - bodyH - Math.floor(4 * scale) + headBob, Math.floor(6 * scale), PALETTE.titan);
-
-  // Eyes — glow pulsing
-  const eyeY = cy - bodyH - Math.floor(4 * scale) + headBob;
-  const eyeColor = rage ? '#ff2020' : PALETTE.gold;
-  setPixel(ctx, cx - Math.floor(2 * scale), eyeY, eyeColor);
-  setPixel(ctx, cx + Math.floor(2 * scale), eyeY, eyeColor);
-
-  // Flame aura — pulsing
-  addGlow(ctx, cx, cy + bodyH, Math.floor(10 * scale), auraColor, auraPulse);
-
-  // Fire breath particles (every other frame)
-  if (frame % 3 !== 0) {
-    const bDist = (frame % 3) * 3 * scale;
-    setPixel(ctx, Math.round(cx), Math.round(cy - bodyH - 6 * scale - bDist + headBob), auraColor);
-    setPixel(ctx, Math.round(cx + scale), Math.round(cy - bodyH - 7 * scale - bDist + headBob), PALETTE.gold);
-  }
-
+  // (Wings, Legs, Head, Fire — added in subsequent tasks)
+  // Placeholder comment — will be replaced in Task 3-5
 }
 
 function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {

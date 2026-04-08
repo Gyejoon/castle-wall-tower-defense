@@ -94,7 +94,7 @@ describe('TowerSystem placement contract', () => {
 		const { scene, towerSystem } = createTowerSystem();
 		const pathPoint = FOREST_GATE_MAP.path[1];
 
-		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'laser')).toEqual({
+		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'archer')).toEqual({
 			success: false,
 			reason: 'occupied',
 		});
@@ -106,7 +106,7 @@ describe('TowerSystem placement contract', () => {
 		const blockedPoint = { x: 0, y: 0 };
 
 		expect(
-			towerSystem.placeTower(blockedPoint.x, blockedPoint.y, 'laser'),
+			towerSystem.placeTower(blockedPoint.x, blockedPoint.y, 'archer'),
 		).toEqual({
 			success: false,
 			reason: 'occupied',
@@ -121,7 +121,7 @@ describe('TowerSystem placement contract', () => {
 		const result = towerSystem.placeTower(
 			buildablePoint.x,
 			buildablePoint.y,
-			'laser',
+			'archer',
 		);
 
 		expect(result.success).toBe(true);
@@ -134,11 +134,11 @@ describe('TowerSystem placement contract', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
 		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
 
-		towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'laser');
+		towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer');
 		const result = towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
 
 		expect(result.success).toBe(true);
-		// laser cost = 10, 50% = 5
+		// archer cost = 10, 50% = 5
 		expect(result.refund).toBe(5);
 		expect(
 			gridManager.getTile(buildablePoint.x, buildablePoint.y)?.occupied,

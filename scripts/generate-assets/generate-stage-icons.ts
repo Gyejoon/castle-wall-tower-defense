@@ -129,7 +129,7 @@ function drawArrowLeftIcon() {
     setPixel(ctx, x + 1, y + 1, PALETTE.shadow);
   }
   for (const [x, y] of arrow) {
-    setPixel(ctx, x, y, PALETTE.laser); // accent gold-brown
+    setPixel(ctx, x, y, PALETTE.archer); // accent gold-brown
   }
   // Highlight
   setPixel(ctx, 4, 7, PALETTE.gold);

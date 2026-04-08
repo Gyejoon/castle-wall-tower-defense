@@ -391,18 +391,18 @@ export class SoundGenerator {
 
 	playTowerAttack(towerType: string): void {
 		const recipes: Record<string, SoundRecipe> = {
-			laser: {
-				frequency: 1200,
-				endFrequency: 800,
-				duration: 60,
-				type: 'sawtooth',
+			archer: {
+				frequency: 400,
+				endFrequency: 200,
+				duration: 80,
+				type: 'triangle',
 				volume: 0.12,
 			},
-			twin_laser: {
-				frequency: 1400,
-				endFrequency: 900,
-				duration: 50,
-				type: 'sawtooth',
+			twin_archer: {
+				frequency: 500,
+				endFrequency: 250,
+				duration: 70,
+				type: 'triangle',
 				volume: 0.14,
 			},
 			plasma: {
@@ -476,16 +476,40 @@ export class SoundGenerator {
 						filterFreq: 200,
 					});
 				});
-			} else if (towerType === 'laser' || towerType === 'twin_laser') {
+			} else if (towerType === 'archer' || towerType === 'twin_archer') {
+				// Bowstring snap + arrow whoosh
 				this.playNoise({
 					noiseType: 'white',
-					duration: 10,
-					volume: 0.05,
-					filterType: 'highpass',
-					filterFreq: 8000,
+					duration: 15,
+					volume: 0.04,
+					filterType: 'bandpass',
+					filterFreq: 2000,
+					filterQ: 3,
 				});
 			}
 		}
+	}
+
+	playArrowImpact(): void {
+		const now = Date.now();
+		const last = this.throttleMap.get('arrowImpact');
+		if (last !== undefined && now - last < 30) return;
+		this.throttleMap.set('arrowImpact', now);
+		this.play({
+			frequency: 200,
+			endFrequency: 80,
+			duration: 40,
+			type: 'triangle',
+			volume: 0.06,
+		});
+		this.playNoise({
+			noiseType: 'white',
+			duration: 20,
+			volume: 0.03,
+			filterType: 'bandpass',
+			filterFreq: 3000,
+			filterQ: 2,
+		});
 	}
 
 	playUnitDeath(): void {

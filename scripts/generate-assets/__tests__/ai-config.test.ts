@@ -31,10 +31,10 @@ describe('toManifestEntry', () => {
 
   test('creates spritesheet manifest entry with frame dimensions', () => {
     const entry = toManifestEntry({
-      key: 'tower-laser-fire',
+      key: 'tower-archer-fire',
       prompt: 'test',
       negativePrompt: 'test',
-      outputPath: 'packages/web-shell/public/assets/towers/laser-fire.png',
+      outputPath: 'packages/web-shell/public/assets/towers/archer-fire.png',
       frameCount: 4,
       frameWidth: 32,
       frameHeight: 32,

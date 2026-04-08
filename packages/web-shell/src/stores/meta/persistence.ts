@@ -56,6 +56,25 @@ type SaveMigration = (
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	3: (data) => {
+		const selectedDeck = (data.selectedDeck ?? []) as string[];
+		const collection = (data.collection ?? []) as Array<
+			Record<string, unknown>
+		>;
+
+		const renameId = (id: string) =>
+			id === 'laser' ? 'archer' : id === 'twin_laser' ? 'twin_archer' : id;
+
+		return {
+			...data,
+			version: 4,
+			selectedDeck: selectedDeck.map(renameId),
+			collection: collection.map((t) => ({
+				...t,
+				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
+			})),
+		};
+	},
 	2: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		return {

@@ -11,13 +11,13 @@ export async function generate(): Promise<ManifestEntry[]> {
   {
     const { canvas, ctx } = makeCanvas(288, 32);
 
-    // 궁수 탑 (laser) — 돌 탑 실루엣
+    // 궁수 탑 (archer) — 돌 탑 실루엣
     let ox = 0, cx = 16, cy = 16;
     drawRect(ctx, ox + 10, cy - 4, 12, 12, PALETTE.stone);
     drawRect(ctx, ox + 10, cy - 4, 12, 2, PALETTE.stoneLight);
     drawRect(ctx, ox + 9, cy - 8, 4, 5, PALETTE.stone);
     drawRect(ctx, ox + 19, cy - 8, 4, 5, PALETTE.stone);
-    setPixel(ctx, ox + 14, cy - 6, PALETTE.laser);
+    setPixel(ctx, ox + 14, cy - 6, PALETTE.archer);
 
     // 투석기 (plasma) — 나무 프레임
     ox = 32;
@@ -43,7 +43,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     addGlow(ctx, ox + 16, cy - 2, 5, PALETTE.magicGold, 0.3);
 
     // Fusion tier 2 — 별 모양 기반, 각 타워 색상
-    const fusionColors = [PALETTE.laser, PALETTE.emp, PALETTE.plasma, PALETTE.shield, PALETTE.stasis];
+    const fusionColors = [PALETTE.archer, PALETTE.emp, PALETTE.plasma, PALETTE.shield, PALETTE.stasis];
     for (let i = 0; i < 5; i++) {
       ox = (4 + i) * 32;
       drawStar(ctx, ox + 16, cy, 9, 4, 5, fusionColors[i]);

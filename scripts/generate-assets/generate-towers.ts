@@ -351,7 +351,7 @@ function drawStarTower(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
 
   // Variant-specific center details
   switch (tower.id) {
-    case 'twin_laser':
+    case 'twin_archer':
       // Double arrow slits (forward-facing on right side)
       drawRect(ctx, cx + 8, cy - 3, 7, 2, tower.color);
       drawRect(ctx, cx + 8, cy + 2, 7, 2, tower.color);
@@ -544,22 +544,36 @@ function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, fra
 
   switch (tower.shape) {
     case 'archer': {
-      // 0: idle tension → 1: pull → 2: release flash → 3-5: arrow flies → 6-7: settle
-      if (frame === 0) { /* idle */ }
-      else if (frame === 1) {
-        addGlow(ctx, cx, 40, 4, tower.color, 0.2); // tension glow
+      // 0: idle → 1: bow draw → 2: release flash → 3-5: arrow flies → 6: impact glow → 7: settle
+      const bowX = cx - 4;
+      const bowY = 38;
+
+      if (frame >= 1 && frame <= 2) {
+        // Bow body (curved line)
+        drawLine(ctx, bowX, bowY - 8, bowX, bowY + 8, PALETTE.wood);
+        drawLine(ctx, bowX - 1, bowY - 6, bowX - 1, bowY + 6, PALETTE.woodDark);
+        // Bowstring
+        const pullBack = frame === 1 ? 4 : 0;
+        drawLine(ctx, bowX, bowY - 8, bowX + pullBack + 2, bowY, hexToRgba(PALETTE.white, 0.6));
+        drawLine(ctx, bowX, bowY + 8, bowX + pullBack + 2, bowY, hexToRgba(PALETTE.white, 0.6));
+        // Arrow nocked (frame 1 only)
+        if (frame === 1) {
+          drawLine(ctx, bowX + 2, bowY, bowX + 12, bowY, PALETTE.wood);
+          setPixel(ctx, bowX + 12, bowY - 1, PALETTE.stoneLight);
+          setPixel(ctx, bowX + 12, bowY + 1, PALETTE.stoneLight);
+        }
       }
-      else if (frame === 2) {
-        addGlow(ctx, cx + 4, 42, 6, tower.color, 0.5); // release flash
+      if (frame === 2) {
+        addGlow(ctx, bowX + 6, bowY, 6, tower.color, 0.5);
       }
-      else if (frame >= 3 && frame <= 5) {
+      if (frame >= 3 && frame <= 5) {
         const dist = (frame - 2) * 7;
-        drawLine(ctx, cx + dist, 44, cx + dist + 6, 44, tower.color);
-        setPixel(ctx, cx + dist + 6, 43, tower.color);
-        setPixel(ctx, cx + dist + 6, 45, tower.color);
-        if (frame === 3) addGlow(ctx, cx + dist, 44, 3, tower.color, 0.3);
+        drawLine(ctx, cx + dist, bowY, cx + dist + 6, bowY, tower.color);
+        setPixel(ctx, cx + dist + 6, bowY - 1, PALETTE.stoneLight);
+        setPixel(ctx, cx + dist + 6, bowY + 1, PALETTE.stoneLight);
+        if (frame === 3) addGlow(ctx, cx + dist, bowY, 3, tower.color, 0.3);
       }
-      else if (frame === 6) addGlow(ctx, cx + 28, 44, 5, tower.color, 0.2);
+      if (frame === 6) addGlow(ctx, cx + 28, bowY, 5, tower.color, 0.2);
       // frame 7: settle back to idle
       break;
     }

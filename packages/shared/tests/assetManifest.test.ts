@@ -22,8 +22,8 @@ describe('asset manifest helpers', () => {
 		).toBe('ui');
 		expect(
 			inferAssetManifestSection({
-				key: 'tower-laser-fire',
-				path: 'assets/towers/laser-fire.png',
+				key: 'tower-archer-fire',
+				path: 'assets/towers/archer-fire.png',
 			}),
 		).toBe('vfx');
 		expect(

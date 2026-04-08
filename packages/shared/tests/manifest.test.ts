@@ -55,14 +55,14 @@ describe('inferAssetManifestSection — new sections', () => {
 		).toBe('vfx');
 		expect(
 			inferAssetManifestSection({
-				key: 'tower-laser',
-				path: 'assets/towers/laser.png',
+				key: 'tower-archer',
+				path: 'assets/towers/archer.png',
 			}),
 		).toBe('preload');
 		expect(
 			inferAssetManifestSection({
-				key: 'tower-laser-fire',
-				path: 'assets/towers/laser-fire.png',
+				key: 'tower-archer-fire',
+				path: 'assets/towers/archer-fire.png',
 			}),
 		).toBe('vfx');
 		expect(
@@ -73,8 +73,8 @@ describe('inferAssetManifestSection — new sections', () => {
 		).toBe('icons');
 		expect(
 			inferAssetManifestSection({
-				key: 'proj-laser',
-				path: 'assets/projectiles/laser.png',
+				key: 'proj-archer',
+				path: 'assets/projectiles/archer.png',
 			}),
 		).toBe('projectiles');
 		expect(

@@ -191,11 +191,15 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'victory',
+				selectedStar: 1,
+				starCleared: true,
+				hpRemaining: 20,
 				stats: {
 					wavesCleared: 10,
 					towersPlaced: 5,
 					timeSurvivedSec: 180,
 					goldEarned: 200,
+					rewardMultiplier: 1,
 				},
 			});
 		});
@@ -211,11 +215,15 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'victory',
+				selectedStar: 1,
+				starCleared: true,
+				hpRemaining: 20,
 				stats: {
 					wavesCleared: 10,
 					towersPlaced: 5,
 					timeSurvivedSec: 180,
 					goldEarned: 200,
+					rewardMultiplier: 1,
 				},
 			});
 		});
@@ -230,11 +238,15 @@ describe('GamePage', () => {
 		act(() => {
 			emitSpy('game-over', {
 				result: 'defeat',
+				selectedStar: 1,
+				starCleared: false,
+				hpRemaining: 0,
 				stats: {
 					wavesCleared: 5,
 					towersPlaced: 3,
 					timeSurvivedSec: 90,
 					goldEarned: 80,
+					rewardMultiplier: 1,
 				},
 			});
 		});

@@ -499,7 +499,7 @@ export class UnitSystem {
 	private reachedExitBuffer: { id: string; isBoss: boolean }[] = [];
 
 	update(
-		_time: number,
+		time: number,
 		delta: number,
 	): { reachedExit: { id: string; isBoss: boolean }[] } {
 		const reachedExit = this.reachedExitBuffer;
@@ -556,6 +556,7 @@ export class UnitSystem {
 			if (pathIdx >= unitLane.length - 1) {
 				reachedExit.push({ id, isBoss: unit.isBoss });
 				unit.sprite.destroy();
+				unit.shadow?.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(id);
 				this.removeFromLaneUnits(unit);
@@ -633,7 +634,7 @@ export class UnitSystem {
 
 			// Boss flies above ground with bobbing; shadow stays on ground
 			if (unit.isBoss) {
-				const flyBob = Math.sin(Date.now() * 0.003) * 3;
+				const flyBob = Math.sin(time * 0.003) * 3;
 				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
 				if (unit.shadow) {
 					unit.shadow.setPosition(unit.worldX, unit.worldY);
@@ -650,9 +651,11 @@ export class UnitSystem {
 				unit.worldX,
 				unit.worldY,
 			);
-			unit.sprite.setDepth(
-				this.gridManager.getDepth(currentGrid.x, currentGrid.y),
-			);
+			const unitDepth = this.gridManager.getDepth(currentGrid.x, currentGrid.y);
+			unit.sprite.setDepth(unitDepth);
+			if (unit.shadow) {
+				unit.shadow.setDepth(unitDepth - 1);
+			}
 			this.renderHpBar(
 				unit.hpBar,
 				unit.worldX,

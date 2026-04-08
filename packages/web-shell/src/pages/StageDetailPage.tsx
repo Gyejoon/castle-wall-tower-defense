@@ -3,11 +3,11 @@ import {
 	getMapPaths,
 	getMaxGoldForMap,
 	getMaxXpForMap,
+	getTotalRewardMultiplier,
 	getTotalWavesForMap,
 	getWavesForMap,
 	MAP_REGISTRY,
 	STAR_DIFFICULTY,
-	STAR_REWARD_MULTIPLIERS,
 	type StarRating,
 } from '@gld/shared';
 import { lazy, Suspense, useEffect, useState } from 'react';
@@ -89,9 +89,10 @@ export function StageDetailPage() {
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;
 
-	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', icon: '?' };
+	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', thumb: '' };
 	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
 	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
+	const rewardMult = getTotalRewardMultiplier(selectedMapId, selectedStar);
 	const totalWaves = getTotalWavesForMap(selectedMapId);
 	const waves = getWavesForMap(selectedMapId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
@@ -195,16 +196,10 @@ export function StageDetailPage() {
 						</span>
 						<div className="flex gap-3">
 							<span className="font-pixel text-[10px] text-gold">
-								x
-								{map.rewardMultiplier *
-									STAR_REWARD_MULTIPLIERS[selectedStar].gold}{' '}
-								골드
+								x{rewardMult.gold} 골드
 							</span>
 							<span className="font-pixel text-[10px] text-info">
-								x
-								{map.rewardMultiplier *
-									STAR_REWARD_MULTIPLIERS[selectedStar].xp}{' '}
-								XP
+								x{rewardMult.xp} XP
 							</span>
 						</div>
 					</div>

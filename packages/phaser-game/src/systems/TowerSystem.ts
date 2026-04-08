@@ -690,12 +690,6 @@ export class TowerSystem {
 		}
 		this.towers.clear();
 		this.attackGraphics?.destroy();
-		// Release all in-flight arrows before destroying pool
-		for (const line of this.attackLines) {
-			if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
-				this.arrowPool[line.arrowIndex].setVisible(false);
-			}
-		}
 		this.attackLines.length = 0;
 		for (const arrow of this.arrowPool) arrow.destroy();
 		this.arrowPool.length = 0;

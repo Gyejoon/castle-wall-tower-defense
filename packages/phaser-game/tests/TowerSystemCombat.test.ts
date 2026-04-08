@@ -47,6 +47,12 @@ function createImage() {
 	return {
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
+		setVisible: vi.fn().mockReturnThis(),
+		setPosition: vi.fn().mockReturnThis(),
+		setRotation: vi.fn().mockReturnThis(),
+		setAlpha: vi.fn().mockReturnThis(),
+		setDisplaySize: vi.fn().mockReturnThis(),
+		visible: false,
 		destroy: vi.fn(),
 	};
 }

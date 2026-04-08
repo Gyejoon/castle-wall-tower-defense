@@ -1,6 +1,7 @@
 import {
 	type AssetManifest,
 	buildDeckCards,
+	checkStarClear,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
 	ENERGY_PER_BOSS_KILL,
@@ -9,10 +10,12 @@ import {
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
+	getStarDifficultyMult,
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
 	PHASER_COLORS,
+	type StarRating,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -95,6 +98,7 @@ export class GameScene extends Phaser.Scene {
 	};
 
 	private playerHp = INITIAL_PLAYER_HP;
+	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
@@ -188,8 +192,14 @@ export class GameScene extends Phaser.Scene {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
 		}
 		this.currentSlotDef = mapWaves[0];
+		const selectedStar = (this.game.registry.get('selectedStar') ?? 1) as StarRating;
+		this.selectedStar = selectedStar;
+		const starMult = getStarDifficultyMult(selectedStar);
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
-			difficultyHpMult: this.currentMap.difficultyHpMult,
+			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
+			armorMult: starMult.armor,
+			speedMult: starMult.speed,
+			ccResist: starMult.ccResist,
 		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
@@ -568,8 +578,16 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
+
+		const starCleared = payload.result === 'victory'
+			? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
+			: false;
+
 		EventBus.emit('game-over', {
 			...payload,
+			selectedStar: this.selectedStar,
+			starCleared,
+			hpRemaining: this.playerHp,
 			stats: {
 				wavesCleared:
 					payload.result === 'victory'

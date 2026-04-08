@@ -1,6 +1,7 @@
 import type {
 	DeckCardDef,
 	PlacementFailureReason,
+	StarRating,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -25,6 +26,9 @@ export interface GameEventMap {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
+		selectedStar: StarRating;
+		starCleared: boolean;
+		hpRemaining: number;
 		stats: {
 			wavesCleared: number;
 			towersPlaced: number;

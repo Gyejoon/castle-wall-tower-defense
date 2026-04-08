@@ -74,9 +74,11 @@ export function AchievementPage() {
 							<div className="flex items-start justify-between gap-2">
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-1.5">
-										<span className="font-pixel text-[10px]" style={{ color: achieved ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>
-											{achieved ? 'V' : progress > 0 ? '-' : 'x'}
-										</span>
+										{achieved ? (
+											<img src="assets/ui/icon-complete.webp" alt="" width={12} height={12} className="[image-rendering:pixelated]" />
+										) : (
+											<img src="assets/ui/icon-locked.webp" alt="" width={12} height={12} className="[image-rendering:pixelated]" style={{ opacity: progress > 0 ? 0.5 : 0.3 }} />
+										)}
 										<span className="font-pixel text-[10px] text-text">
 											{ach.name}
 										</span>

@@ -67,7 +67,7 @@ export function AchievementPage() {
 										: 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
 									: 'var(--color-panel)',
 								borderColor: achieved && !claimed ? 'var(--color-accent)' : 'var(--color-border)',
-								opacity: !achieved && progress === 0 ? 0.4 : 1,
+								opacity: achieved ? 1 : 0.7,
 							}}
 						>
 							<div className="flex items-start justify-between gap-2">
@@ -77,18 +77,18 @@ export function AchievementPage() {
 											{achieved ? '✅' : progress > 0 ? '⬜' : '🔒'}
 										</span>
 										<span className="font-pixel text-[10px] text-text">
-											{progress > 0 || achieved ? ach.name : '???'}
+											{ach.name}
 										</span>
 									</div>
 									<p className="font-pixel text-[8px] text-text-secondary mt-0.5">
-										{progress > 0 || achieved ? ach.description : '조건 미공개'}
+										{ach.description}
 									</p>
 								</div>
 
 								{/* Reward + claim */}
 								<div className="flex flex-col items-end gap-1 shrink-0">
 									<span className="font-pixel text-[9px] text-gold">
-										{progress > 0 || achieved ? `💎 ${ach.reward.diamond}` : '???'}
+										💎 {ach.reward.diamond}
 									</span>
 									{achieved && !claimed && (
 										<button

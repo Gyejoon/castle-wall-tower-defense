@@ -52,6 +52,32 @@ export const useMetaStore = create<MetaState>()(
 					selectedDeck: save.selectedDeck,
 				});
 				writeSave(save);
+
+				// Sync achievement progress with current state
+				const s = get();
+				const cp = s.profile.combatPower;
+				s.updateAchievementProgress('cp_100', cp);
+				s.updateAchievementProgress('cp_500', cp);
+				s.updateAchievementProgress('cp_1000', cp);
+				s.updateAchievementProgress('cp_5000', cp);
+				s.updateAchievementProgress('cp_10000', cp);
+				s.updateAchievementProgress('cp_50000', cp);
+				s.updateAchievementProgress('lv_5', s.profile.level);
+				s.updateAchievementProgress('lv_10', s.profile.level);
+				s.updateAchievementProgress('lv_20', s.profile.level);
+				s.updateAchievementProgress('lv_50', s.profile.level);
+				s.updateAchievementProgress('lv_99', s.profile.level);
+				const clearCount = s.progress.stagesCleared.length;
+				s.updateAchievementProgress('clear_1', clearCount);
+				s.updateAchievementProgress('clear_10', clearCount);
+				s.updateAchievementProgress('clear_50', clearCount);
+				const maxLv = s.collection.length > 0 ? Math.max(...s.collection.map((t) => t.level)) : 0;
+				s.updateAchievementProgress('tower_lv10', maxLv);
+				s.updateAchievementProgress('tower_lv30', maxLv);
+				s.updateAchievementProgress('tower_lv50', maxLv);
+				if (s.collection.some((t) => t.grade === 'rare')) s.updateAchievementProgress('tower_rare', 1);
+				if (s.collection.some((t) => t.grade === 'unique')) s.updateAchievementProgress('tower_unique', 1);
+				if (s.collection.some((t) => t.grade === 'epic')) s.updateAchievementProgress('tower_epic', 1);
 			},
 
 			...createProfileSlice(set, get),

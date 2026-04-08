@@ -63,6 +63,7 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - **webp 변환 누락**: PNG만 생성하고 webp 변환을 안 했거나, 코드에서 `.webp`를 참조하는데 `.png`만 있으면 404
 - **형제 컴포넌트 스타일 패리티**: 유사 컴포넌트(CoinIcon/DiamondIcon, LockIcon/UnlockIcon 등)가 존재하면 display, verticalAlign 등 구조적 CSS 속성이 동일한지 확인한다
 - **에셋 스펙 정합성**: generate-assets 스크립트가 생성하는 에셋 크기(width × height)가 `docs/game-spec/`의 스펙 정의와 일치하는지 확인한다
+- **generate-assets 파이프라인 등록**: 새 `generate-*.ts` 스크립트를 추가했으면 `generate-all.ts`에 import + Promise.all + allEntries 전개가 빠짐없이 등록되었는지 확인한다. 누락하면 전체 에셋 재생성 시 해당 에셋이 소실된다
 
 ### 문서 구조 정합성 (변경 파일에 .md가 있을 때만)
 
@@ -129,8 +130,10 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | 10 | 루프/콜백 마이크로 최적화 | EventBus 핸들러 내 Array.find 남용 | -1 |
 | 11 | StrictMode phantom cleanup 안전성 | `useEffect` cleanup에서 구독 해제가 `isConnected` 가드 밖에 있으면 StrictMode 재마운트 시 구독 유실 | -2 |
 | 12 | `key` prop으로 인한 DOM 재생성과 useEffect 불일치 | `key={runId}`로 DOM이 바뀌는데 effect deps가 안정적이라 Phaser 재초기화 안 됨 | -2 |
+| 13 | async 이벤트 핸들러에서 리스너 제거가 `await` 전에 실행 | `removeEventListener`가 `await` 뒤에 있으면 단일 제스처에서 pointerdown+touchstart+click이 동시 발화하여 핸들러가 중복 실행됨 | -2 |
+| 14 | SVG `viewBox` + 절대 px 배치 컨테이너의 width/height 모두 고정 | viewBox가 있는 SVG와 절대 `px` 위치 자식이 같은 컨테이너에 있을 때, width를 생략하면 좁은 뷰포트에서 SVG 좌표는 스케일되지만 CSS px는 고정되어 위치가 어긋남 | -2 |
 
-기본 10점, 항목 1-4,11-12 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-14 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: Design Quality 검사
 
@@ -207,6 +210,7 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - **렌더 텍스트 변경**: 이모지/텍스트를 img 태그로 교체하면 `getByText('⚡60')` 같은 매처가 깨진다. 변경 파일과 관련된 기존 테스트를 grep하여 매처를 동기화한다.
 - **상태 흐름 변경**: `runStatus` 등 enum 값이나 상태 전환 순서가 바뀌면 기존 테스트의 기대값이 틀어진다.
 - **컴포넌트 구조 변경**: 버튼 텍스트, DOM 구조, role 속성이 바뀌면 `getByText`, `getByRole` 매처가 깨진다.
+- **mock 동기화 누락**: 런타임 코드에서 mock 대상 모듈의 새 export를 추가로 import하면(`soundGenerator` 등), 해당 모듈을 mock하는 **모든** 테스트 파일의 mock 정의에도 새 export를 추가해야 한다. `gameStore.test.ts`에는 추가했지만 `GamePage.test.tsx`에는 빠뜨리는 식의 누락이 흔하다. 변경 파일이 import하는 mock 대상을 grep하여 모든 mock 사이트를 대조한다.
 - **검증 방법**: 변경한 컴포넌트의 테스트 파일을 실행하여 통과 여부를 확인한 뒤에 점수를 매긴다.
 
 ### 점수
@@ -332,6 +336,10 @@ bunx biome check .
 | 순수 #000/#fff → 색조 입힌 값 교체 | 레이아웃 구조 재설계 |
 | 문서 섹션 번호/헤더 중복 수정 | 디자인 톤/컨셉 변경 |
 | 상태 리셋 함수에 동기 이벤트 emit 추가 | |
+| async 핸들러 내 `removeEventListener`를 `await` 전으로 이동 | |
+| SVG viewBox 컨테이너에 누락된 width/height 추가 | |
+| 새 generate-assets 스크립트를 generate-all.ts에 등록 | |
+| mock 대상 모듈에 새 export 추가 시 모든 mock 사이트 동기화 | |
 
 ## 참고 문서
 

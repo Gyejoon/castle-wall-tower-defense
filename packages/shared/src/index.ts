@@ -82,9 +82,13 @@ export {
 	toKSTDateStr,
 	WEEKLY_MISSION_TYPES,
 } from './constants/missions';
-export { getMaxGoldForMap, getMaxXpForMap } from './constants/stageInfo';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
+export {
+	getMaxGoldForMap,
+	getMaxXpForMap,
+	getTotalRewardMultiplier,
+} from './constants/stageInfo';
 export type { StarRating } from './constants/starDifficulty';
 export {
 	checkStarClear,

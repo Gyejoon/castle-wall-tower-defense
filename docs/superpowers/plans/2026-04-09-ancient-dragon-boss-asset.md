@@ -529,3 +529,40 @@ git commit -m "fix: adjust dragon boss proportions after in-game testing"
 ```
 
 (이 단계에서 변경 없으면 커밋 스킵)
+
+---
+
+## PLAN REVIEW REPORT
+
+### 스펙 정합성 (Game Spec Alignment) — 하드 게이트
+
+| Phase | 검증 문서 수 | PASS | DRIFT | CONFLICT |
+|-------|-----------|------|-------|----------|
+| CEO   | 1 (01-GDD) | 3 | 0 | 0 |
+| Design| 1 (07-asset-def) | 6 | 1 | 0 |
+| Eng   | 0 | — | — | — |
+
+**스펙 정합성: ✅ ALL PASS** (DRIFT 1건은 경고, 블로킹 아님)
+
+### ⚠️ DRIFT-1: 팔레트 원천 이탈
+- **문서**: 07-asset-definition §1
+- **스펙**: "색상 팔레트: shared.ts의 PALETTE 상수"
+- **Plan**: DRAGON 로컬 상수를 generate-units.ts에 추가 (22색)
+- **권고**: 보스 전용이므로 합리적. 스펙 §6에 명시 추가 권고.
+
+### 버그 2건 (구현 시 수정 필요)
+
+**BUG-1: 꼬리 프레임 밖 벗어남**
+- Task 2의 `tailBaseY - t * 30`이 y=-2까지 도달. 스페이드는 y=-6.
+- **수정**: `t * 30` → `t * 24` 또는 `cy`를 48로 조정.
+
+**BUG-2: bodyBob 실질 효과 없음**
+- `Math.round(Math.sin(phase * 2) * 0.5)` → 대부분 0.
+- **수정**: amplitude를 1.0으로 증가하거나 Math.round 제거.
+
+### 미학 리뷰 결과
+- **미학 종합**: 9.0/10
+- **AI Slop 위험도**: 9/10 (구체적 명세, 모호성 없음)
+
+### VERDICT: ✅ APPROVED WITH 2 BUGS TO FIX
+Plan의 방향과 구조는 건전. 구현 시 BUG-1, BUG-2를 수정하면 됨.

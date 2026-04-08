@@ -620,7 +620,61 @@ function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: numbe
   setPixel(ctx, cx - 1, headY + 8, DRAGON.bodyDeep);
   setPixel(ctx, cx + 1, headY + 8, DRAGON.bodyDeep);
 
-  // (Fire breath, Rage overlay — added in Task 5)
+  // === 11. Fire breath (downward — toward movement direction) ===
+  // Nostril smoke (always)
+  setPixel(ctx, cx - 1, headY + 10, hexToRgba(DRAGON.smoke, 0.3));
+  setPixel(ctx, cx + 1, headY + 11, hexToRgba(DRAGON.smoke, 0.25));
+
+  // Periodic fire breath (4-frame cycle)
+  const breathCycle = frame % 4;
+  if (breathCycle >= 1) {
+    const fireLen = rage ? breathCycle * 5 : breathCycle * 3;
+    const fireBaseY = headY + 10;
+    // Fire stream — 3 layers
+    for (let fy = 0; fy < fireLen; fy++) {
+      const t = fy / fireLen;
+      const halfW = Math.round(2 * (1 - t * 0.5)); // narrows toward tip
+      const colors = [DRAGON.fireCore, rage ? DRAGON.fireRed : DRAGON.fireOrange, DRAGON.fireDark];
+      const c = colors[Math.min(Math.floor(t * 3), 2)];
+      const alpha = 0.8 - t * 0.4;
+      for (let fx = -halfW; fx <= halfW; fx++) {
+        // Slight wave
+        const wave = Math.round(Math.sin(fy * 0.8 + phase * 3) * 1);
+        setPixel(ctx, cx + fx + wave, fireBaseY + fy, hexToRgba(c, alpha));
+      }
+    }
+    // Fire core (bright center)
+    setPixel(ctx, cx, fireBaseY, DRAGON.fireCore);
+    setPixel(ctx, cx, fireBaseY + 1, DRAGON.fireCore);
+
+    // Smoke puffs at tip
+    if (breathCycle >= 2) {
+      setPixel(ctx, cx - 1, fireBaseY + fireLen + 1, hexToRgba(DRAGON.smoke, 0.2));
+      setPixel(ctx, cx + 1, fireBaseY + fireLen + 2, hexToRgba(DRAGON.smoke, 0.15));
+    }
+  }
+
+  // === 12. Rage overlay ===
+  if (rage) {
+    // Lava crack lines on body (5 lines)
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + phase * 0.12;
+      const r1 = bw * 0.3;
+      const r2 = bw * 0.8;
+      const x1 = Math.round(cx + Math.cos(a) * r1);
+      const y1 = Math.round(bcy + Math.sin(a) * bh * 0.3);
+      const x2 = Math.round(cx + Math.cos(a + 0.3) * r2);
+      const y2 = Math.round(bcy + Math.sin(a + 0.3) * bh * 0.7);
+      drawLine(ctx, x1, y1, x2, y2, hexToRgba('#e04020', 0.2));
+    }
+
+    // Body edge glow
+    for (let a = 0; a < Math.PI * 2; a += 0.15) {
+      const edgeX = Math.round(cx + Math.cos(a) * (bw + 2));
+      const edgeY = Math.round(bcy + Math.sin(a) * (bh + 2));
+      setPixel(ctx, edgeX, edgeY, hexToRgba(DRAGON.fireRed, 0.15));
+    }
+  }
 }
 
 function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {

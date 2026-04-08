@@ -547,7 +547,80 @@ function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: numbe
     }
   }
 
-  // (Legs, Head, Fire — added in subsequent tasks)
+  // === 7. Back legs (toward tail = upper area) ===
+  for (const side of [-1, 1] as const) {
+    const lx = cx + side * 14;
+    const ly = bcy - 8;
+    const le = -legAnim; // opposite phase to front legs
+    drawRect(ctx, lx + (side > 0 ? 0 : -5), ly + le, 5, 10, DRAGON.bodyDark);
+    // Claws (3)
+    for (let c = 0; c < 3; c++) {
+      setPixel(ctx, lx + side * (3 + c), ly + le + 9 + c, DRAGON.claw);
+    }
+  }
+
+  // === 8. Front legs (toward head = lower area) ===
+  for (const side of [-1, 1] as const) {
+    const lx = cx + side * 12;
+    const ly = bcy + 6;
+    const le = legAnim; // main phase
+    drawRect(ctx, lx + (side > 0 ? 0 : -5), ly + le, 5, 10, DRAGON.bodyMid);
+    for (let c = 0; c < 3; c++) {
+      setPixel(ctx, lx + side * (3 + c), ly + le + 9 + c, DRAGON.claw);
+    }
+  }
+
+  // === 9. Neck connection ===
+  fillEllipse(ctx, cx, bcy + bh - 2, 8, 5, DRAGON.body);
+
+  // === 10. Head (bottom — facing downward, movement direction) ===
+  const headY = bcy + bh + 6 + headBob;
+
+  // Head shape (hexagonal, snout pointing down)
+  // Top of head (wider)
+  fillEllipse(ctx, cx, headY, 9, 6, DRAGON.body);
+  // Snout (narrower, extends down)
+  for (let dy = 0; dy < 6; dy++) {
+    const hw = Math.round(5 - dy * 0.7);
+    drawRect(ctx, cx - hw, headY + 4 + dy, hw * 2 + 1, 1, dy < 3 ? DRAGON.body : DRAGON.bodyDark);
+  }
+  // Head center ridge
+  drawLine(ctx, cx, headY - 4, cx, headY + 9, DRAGON.bodyDeep);
+  // Head dark top half
+  for (let dy = -5; dy < 0; dy++) {
+    const hw = Math.round(4 + dy * 0.3);
+    if (hw > 0) drawRect(ctx, cx - hw, headY + dy, hw * 2 + 1, 1, DRAGON.bodyDark);
+  }
+
+  // Horns (sweeping upward/outward — trailing behind the head)
+  for (const side of [-1, 1] as const) {
+    // Horn base to tip
+    drawLine(ctx, cx + side * 6, headY - 2, cx + side * 14, headY - 8, DRAGON.horn);
+    drawLine(ctx, cx + side * 6, headY - 1, cx + side * 14, headY - 7, DRAGON.horn);
+    // Horn tip highlight
+    setPixel(ctx, cx + side * 14, headY - 8, DRAGON.hornTip);
+    setPixel(ctx, cx + side * 13, headY - 8, DRAGON.hornTip);
+  }
+
+  // Eyes (on sides of head, glowing)
+  for (const side of [-1, 1] as const) {
+    const ex = cx + side * 4;
+    const ey = headY + 1;
+    const eColor = rage ? DRAGON.eyeRage : DRAGON.eyeNorm;
+    // Eye glow
+    addGlow(ctx, ex, ey, rage ? 5 : 3, eColor, rage ? 0.3 : 0.2);
+    // Eye dot
+    setPixel(ctx, ex, ey, eColor);
+    setPixel(ctx, ex + 1, ey, eColor);
+    // Eye highlight
+    setPixel(ctx, ex + 1, ey - 1, '#ffffff');
+  }
+
+  // Nostrils
+  setPixel(ctx, cx - 1, headY + 8, DRAGON.bodyDeep);
+  setPixel(ctx, cx + 1, headY + 8, DRAGON.bodyDeep);
+
+  // (Fire breath, Rage overlay — added in Task 5)
 }
 
 function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {

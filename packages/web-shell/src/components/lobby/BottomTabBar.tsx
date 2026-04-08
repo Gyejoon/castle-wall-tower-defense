@@ -21,18 +21,6 @@ const tabs: Array<{
 		inactiveIcon: uiMobileArt.collectionTabIconInactive,
 	},
 	{
-		id: 'missions',
-		label: '임무',
-		activeIcon: uiMobileArt.missionTabIconActive,
-		inactiveIcon: uiMobileArt.missionTabIconInactive,
-	},
-	{
-		id: 'achievements' as LobbyTab,
-		label: '업적',
-		activeIcon: uiMobileArt.missionTabIconActive,
-		inactiveIcon: uiMobileArt.missionTabIconInactive,
-	},
-	{
 		id: 'settings',
 		label: '영주실',
 		activeIcon: uiMobileArt.settingsTabIconActive,

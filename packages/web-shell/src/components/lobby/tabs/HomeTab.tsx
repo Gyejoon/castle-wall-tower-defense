@@ -1,6 +1,7 @@
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { PixelButton } from '../../ui/PixelButton';
+import { FloatingNavButtons } from '../FloatingNavButtons';
 import { TabBackground } from '../TabBackground';
 
 export function HomeTab() {
@@ -23,6 +24,9 @@ export function HomeTab() {
 			<div className="torch torch-right" />
 			<div className="castle-flag" />
 			<div className="stars-overlay" />
+
+			{/* Floating mission/achievement buttons */}
+			<FloatingNavButtons />
 
 			{/* Content overlay */}
 			<div

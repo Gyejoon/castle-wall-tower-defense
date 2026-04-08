@@ -1,8 +1,8 @@
 import { xpToNextLevel } from '@gld/shared';
-import { DiamondIcon } from '../ui/CurrencyIcon';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
+import { DiamondIcon } from '../ui/CurrencyIcon';
 
 function useAnimatedGold() {
 	const gold = useMetaStore((s) => s.profile.gold);
@@ -50,7 +50,7 @@ export function ProfileBar() {
 	return (
 		<div
 			className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.85)' }}
+			style={{ background: 'var(--color-panel-85)' }}
 		>
 			{/* Avatar + Nickname + XP bar */}
 			<img
@@ -67,8 +67,21 @@ export function ProfileBar() {
 				<span className="font-pixel text-[11px] text-text-secondary">
 					Lv.{profile.level}
 				</span>
-				<span className="font-pixel text-[9px]" style={{ color: getFrameColor(combatPower) }}>
-					⚔ {combatPower.toLocaleString()}
+				<span className="inline-flex items-center gap-1 font-pixel text-[11px]">
+					<img
+						src="assets/ui/icon-sword.webp"
+						alt=""
+						width={12}
+						height={12}
+						className="[image-rendering:pixelated]"
+					/>
+					<span className="text-text-secondary text-[10px]">전투력</span>
+					<span
+						className="text-text font-bold"
+						style={{ textShadow: `0 0 6px ${getFrameColor(combatPower)}` }}
+					>
+						{combatPower.toLocaleString()}
+					</span>
 				</span>
 				{/* XP progress bar */}
 				<div

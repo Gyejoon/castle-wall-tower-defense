@@ -468,6 +468,23 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-icon-complete', type: 'image', path: 'assets/ui/icon-complete.png' });
   }
 
+  // Star icon — active (gold filled, 16x16)
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    drawStar(ctx, 8, 8, 7, 3, 5, PALETTE.gold);
+    fillCircle(ctx, 8, 8, 3, PALETTE.gold);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-star-active.png`);
+    entries.push({ key: 'ui-icon-star-active', type: 'image', path: 'assets/ui/icon-star-active.png' });
+  }
+
+  // Star icon — inactive (dim border, 16x16)
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    drawStar(ctx, 8, 8, 7, 3, 5, '#5a5040');
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-star-inactive.png`);
+    entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
+  }
+
   // Ad button (120x40)
   {
     const { canvas, ctx } = makeCanvas(120, 40);

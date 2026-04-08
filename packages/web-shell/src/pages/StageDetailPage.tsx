@@ -141,9 +141,22 @@ export function StageDetailPage() {
 						<span className="absolute bottom-3 left-4 font-pixel text-[15px] text-text z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
 							{map.name}
 						</span>
-						<span className="absolute bottom-3.5 right-4 font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.85)] px-2 py-1 border border-border z-10">
-							권장 Lv.{lvl}
-						</span>
+						<div className="absolute bottom-2 right-4 flex flex-col items-end gap-1 z-10">
+							<span className="font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.85)] px-2 py-0.5 border border-border">
+								진입 가능 레벨: Lv.{lvl}
+							</span>
+							<span className="font-pixel text-[10px] text-text bg-[rgba(26,18,8,0.85)] px-2 py-0.5 border border-border inline-flex items-center gap-1">
+								<img
+									src="assets/ui/icon-sword.webp"
+									alt=""
+									width={10}
+									height={10}
+									className="[image-rendering:pixelated]"
+								/>
+								<span className="text-text-secondary">권장 전투력</span>
+								{Math.round(map.recommendedPower * STAR_DIFFICULTY[selectedStar].hp).toLocaleString()}
+							</span>
+						</div>
 					</div>
 
 					{/* Info cards 2x2 */}
@@ -190,16 +203,14 @@ export function StageDetailPage() {
 						{/* Stars display */}
 						<div className="flex gap-1 items-center mt-1.5">
 							{([1, 2, 3] as const).map((s) => (
-								<span
+								<img
 									key={s}
-									className="font-pixel"
-									style={{
-										fontSize: 12,
-										color: s <= (stageStars[selectedMapId] ?? 0) ? 'var(--color-gold)' : 'var(--color-border)',
-									}}
-								>
-									★
-								</span>
+									src={s <= (stageStars[selectedMapId] ?? 0) ? 'assets/ui/icon-star-active.png' : 'assets/ui/icon-star-inactive.png'}
+									alt=""
+									width={12}
+									height={12}
+									className="[image-rendering:pixelated]"
+								/>
 							))}
 						</div>
 					</div>
@@ -243,17 +254,23 @@ export function StageDetailPage() {
 											transform: active ? 'scale(1.05)' : 'scale(1)',
 										}}
 									>
-										<div
-											className="font-pixel"
-											style={{ fontSize: 10, color: colors.text }}
-										>
-											{'★'.repeat(star)} {diff.label}
+										<div className="flex items-center justify-center gap-[2px]">
+											{Array.from({ length: star }, (_, i) => (
+												<img
+													key={i}
+													src="assets/ui/icon-star-active.png"
+													alt=""
+													width={10}
+													height={10}
+													className="[image-rendering:pixelated]"
+												/>
+											))}
 										</div>
 										<div
 											className="font-pixel mt-1"
-											style={{ fontSize: 8, color: 'var(--color-text-secondary)' }}
+											style={{ fontSize: 10, color: colors.text }}
 										>
-											{diff.hp}×
+											{diff.label}
 										</div>
 									</button>
 								);

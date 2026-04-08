@@ -57,6 +57,7 @@ export class TowerSystem {
 		arrowIndex?: number;
 	}> = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
+	private arrowPoolInitialized = false;
 	private static readonly ARROW_POOL_SIZE = 16;
 
 	constructor(
@@ -73,12 +74,13 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
-		this.initArrowPool();
 	}
 
-	private initArrowPool(): void {
+	private ensureArrowPool(): void {
+		if (this.arrowPoolInitialized) return;
 		const textureKey = 'projectile-arrow';
 		if (!this.scene.textures.exists(textureKey)) return;
+		this.arrowPoolInitialized = true;
 		for (let i = 0; i < TowerSystem.ARROW_POOL_SIZE; i++) {
 			const arrow = this.scene.add.image(0, 0, textureKey);
 			arrow.setVisible(false);
@@ -379,6 +381,7 @@ export class TowerSystem {
 						: 'beam' as const;
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {
+					this.ensureArrowPool();
 					const idx = this.arrowPool.findIndex((a) => !a.visible);
 					if (idx >= 0) arrowIndex = idx;
 				}

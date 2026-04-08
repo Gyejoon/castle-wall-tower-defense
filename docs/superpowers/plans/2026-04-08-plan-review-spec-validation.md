@@ -1,3 +1,42 @@
+# plan-review 스킬: game-spec 기반 스펙 검증 추가
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** plan-review 스킬이 모든 리뷰 Phase에서 `docs/game-spec/` 문서를 근거로 plan의 스펙 정합성을 검증하고, 충돌 시 하드 블로커로 처리하도록 개선한다.
+
+**Architecture:** 기존 래퍼 패턴 유지. autoplan 코어 미수정. Step 0에 키워드→문서 매핑 로직 추가, Step 1/2/3 각각 Phase 완료 후 스펙 검증 섹션 주입, Step 4 Final Gate에 스펙 정합성 하드게이트 추가.
+
+**Tech Stack:** Markdown skill file (`.claude/skills/plan-review/SKILL.md`) 단일 파일 수정. `/skill-creator` 스킬 사용.
+
+---
+
+## File Structure
+
+- **Modify:** `.claude/skills/plan-review/SKILL.md` — 유일한 수정 대상
+
+현재 파일 구조 (252줄):
+```
+L1-16:   frontmatter (name, description, user-invocable)
+L17-28:  소개 + 실행 흐름 다이어그램
+L45-84:  Step 0 (0-1 Plan 찾기, 0-2 디자인 컨텍스트, 0-3 UI 스코프)
+L86-99:  Step 1 (CEO — autoplan 그대로)
+L100-198: Step 2 (Design + 미학 리뷰 6차원)
+L199-208: Step 3 (Eng — autoplan 그대로)
+L209-225: Step 4 (Final Gate + 미학 점수)
+L226-238: 참조 파일 테이블
+L239-252: 핵심 규칙 5개
+```
+
+---
+
+### Task 1: frontmatter description 업데이트
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md:1-16`
+
+- [ ] **Step 1: description에 스펙 검증 역할 추가**
+
+```markdown
 ---
 name: plan-review
 description: |
@@ -15,7 +54,15 @@ description: |
 user-invocable: true
 argument-hint: "[plan file path]"
 ---
+```
 
+old_string (교체 대상): 기존 frontmatter L1-16 전체.
+
+- [ ] **Step 2: 소개 문단 업데이트**
+
+기존 L18-25의 소개를 다음으로 교체:
+
+```markdown
 # /plan-review — 통합 Plan 리뷰 파이프라인
 
 autoplan(CEO → Design → Eng 순차 리뷰)을 실행하되, 두 가지 프로젝트 고유 레이어를 추가한다:
@@ -26,9 +73,13 @@ autoplan(CEO → Design → Eng 순차 리뷰)을 실행하되, 두 가지 프�
 autoplan만으로는 "전략적으로 타당한가"는 점검하지만 "게임 스펙 문서와 일치하는가"는
 점검하지 않는다. Plan 단계에서 스펙 정합성과 미학 방향을 확정해야 구현자가
 잘못된 수치나 AI slop에 빠지지 않고 일관된 결과물을 만들 수 있다.
+```
 
----
+- [ ] **Step 3: 실행 흐름 다이어그램 업데이트**
 
+기존 L29-41의 다이어그램을 다음으로 교체:
+
+```markdown
 ## 실행 흐름
 
 ```
@@ -42,50 +93,27 @@ Step 3: Phase 3 (Eng) + Eng 스펙 검증
     ↓ (CONFLICT → STOP, 사용자 해소 후 재검증)
 Step 4: Final Gate (스펙 정합성=하드 게이트 + 미학=어드바이저리)
 ```
+```
+
+- [ ] **Step 4: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): frontmatter·소개·흐름도에 스펙 검증 역할 반영"
+```
 
 ---
 
-## Step 0: 컨텍스트 수집
+### Task 2: Step 0에 스펙 스코프 서브스텝 추가
 
-### 0-1. Plan 파일 찾기
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md:45-84` (Step 0 섹션 끝에 추가)
 
-사용자가 경로를 지정했으면 읽는다. 아니면 자동 탐색:
+- [ ] **Step 1: 0-4. 스펙 스코프 섹션 작성**
 
-```bash
-# 최근 plan 파일
-ls -t docs/superpowers/plans/*.md 2>/dev/null | head -3
-# plan 모드에서 열린 파일
-git diff --name-only HEAD~5 2>/dev/null | grep -iE 'plan|spec' | head -3
-```
+기존 Step 0의 `0-3. UI 스코프 감지` 섹션 뒤 (`UI scope: OFF — 미학 리뷰 스킵"` 줄 뒤)에 다음을 추가:
 
-못 찾으면 사용자에게 경로를 묻는다.
-
-### 0-2. 디자인 컨텍스트 로드
-
-```bash
-[ -f .impeccable.md ] && echo "IMPECCABLE: found" || echo "IMPECCABLE: not found"
-[ -f .claude/skills/game-ui-design/SKILL.md ] && echo "GAME_UI: found" || echo "GAME_UI: not found"
-```
-
-`.impeccable.md`가 있으면 읽어서 미학 리뷰의 기준으로 사용한다.
-없으면 사용자에게 `/teach-impeccable`을 제안한다 (강제하지 않음).
-
-### 0-3. UI 스코프 감지
-
-Plan 파일에서 아래 키워드를 검색한다:
-
-| 카테고리 | 키워드 |
-|----------|--------|
-| 게임 UI | HUD, dock, panel, overlay, canvas, phaser, sprite, tile, tower, wave, tutorial-overlay |
-| 웹 UI | component, screen, form, button, modal, layout, sidebar, tab, settings |
-| 공통 | UI, UX, 화면, 인터페이스, 디자인 |
-
-**2개 이상 매치 → UI 스코프 ON** (Phase 2 실행 + 미학 리뷰 추가)
-**0-1개 매치 → UI 스코프 OFF** (Phase 2는 autoplan이 판단, 미학 리뷰만 스킵)
-
-UI 스코프 결과를 출력한다:
-> "UI scope: ON (매치: [키워드 목록])" 또는 "UI scope: OFF — 미학 리뷰 스킵"
-
+```markdown
 ### 0-4. 스펙 스코프 (Game Spec Alignment)
 
 Plan 파일 전문에서 키워드를 검색하여 관련 스펙 문서만 선택적으로 로드한다.
@@ -95,8 +123,8 @@ Plan 파일 전문에서 키워드를 검색하여 관련 스펙 문서만 선�
 
 | 문서 | 키워드 (2개 이상 매치 시 로드) |
 |------|------|
-| `01-GDD.md` | core loop, meta loop, tower, enemy, wave, boss, element, energy, deck, combat, placement, lobby, collection, tutorial, session, spawn, win condition, lose condition, sell, collision, flying, boss leak, exit modal, audio, wave scaling, difficulty, 타워, 적, 웨이브, 보스, 에너지, 배치, 속성, 코어 루프, 메타 루프, 판매, 물리 충돌, 비행, 나가기 |
-| `02-balance-sheet.md` | diamond, gold, gacha, pity, odds, rate, mission, daily, weekly, economy, cost, reward, bounty, armor, pierce, DPS, hp, damage, stat, level, tier, scale, upgrade, MAX_TOWER_LEVEL, 다이아, 골드, 확률, 미션, 보상, 밸런스, 수치, 승급 |
+| `01-GDD.md` | core loop, meta loop, tower, enemy, wave, boss, element, energy, deck, combat, placement, lobby, collection, tutorial, session, spawn, win condition, lose condition, 타워, 적, 웨이브, 보스, 에너지, 배치, 속성, 코어 루프, 메타 루프 |
+| `02-balance-sheet.md` | diamond, gold, gacha, pity, odds, rate, mission, daily, weekly, economy, cost, reward, bounty, armor, pierce, DPS, hp, damage, stat, level, tier, scale, 다이아, 골드, 확률, 미션, 보상, 밸런스, 수치 |
 | `03-business-model.md` | monetization, IAP, ads, shop, offer, sku, subscription, premium, cosmetic, conversion, KPI, retention, revenue, ARPPU, LiveOps, BM, 수익화, 상점, 광고, 과금 |
 | `04-data-structure.md` | save data, schema, localStorage, telemetry, event map, profile, collection data, progress, settings sync, registry, Zustand, store, migration, 저장, 스키마, 텔레메트리 |
 | `05-operations.md` | deploy, Vercel, Sentry, PostHog, monitoring, analytics, error tracking, LiveOps cadence, ops, 배포, 모니터링, 운영 |
@@ -134,9 +162,27 @@ Spec scope:
 ```
 
 **문서는 아직 읽지 않는다.** 각 Phase 시작 시점에 해당 Phase에 할당된 문서만 읽는다.
+```
+
+- [ ] **Step 2: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): Step 0에 스펙 스코프 키워드→문서 매핑 추가"
+```
 
 ---
 
+### Task 3: Step 1에 CEO 스펙 검증 주입
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md` (Step 1 섹션)
+
+- [ ] **Step 1: 기존 Step 1 교체**
+
+기존 Step 1 (L86-99, `## Step 1: autoplan 실행` ~ `**Phase 1 (CEO)**: autoplan 그대로 실행. 변경 없음.`) 을 다음으로 교체:
+
+```markdown
 ## Step 1: autoplan Phase 1 (CEO) + CEO 스펙 검증
 
 ### 1-1. Phase 1 실행
@@ -148,7 +194,7 @@ Read ~/.claude/skills/gstack/autoplan/SKILL.md
 ```
 
 autoplan의 모든 섹션(Preamble, 6 Decision Principles, Decision Audit Trail,
-Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 1 이후 검증, Phase 2 미학 리뷰 + 디자인 스펙 검증, Phase 3 이후 검증이다.
+Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 1 이후 검증, Phase 2 미학 리뷰, Phase 3 이후 검증이다.
 
 **Phase 1 (CEO)**: autoplan 그대로 실행.
 
@@ -197,9 +243,27 @@ CONFLICT가 있으면 상세 리포트를 추가한다 (리포트 형식은 Step
 어느 쪽이든 수정 후 해당 Phase의 스펙 검증만 재실행한다 (전체 재실행 불필요).
 
 ⚠️ DRIFT는 경고로 기록하되 진행을 막지 않는다.
+```
+
+- [ ] **Step 2: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): Step 1에 CEO 스펙 검증 5차원 주입"
+```
 
 ---
 
+### Task 4: Step 2에 디자인 스펙 검증 추가
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md` (Step 2 섹션)
+
+- [ ] **Step 1: Step 2 헤더 및 순서 업데이트**
+
+기존 Step 2 시작부 (L100-109) 를 다음으로 교체:
+
+```markdown
 ## Step 2: Phase 2 (Design) + 미학 리뷰 + 디자인 스펙 검증
 
 autoplan의 Phase 2(plan-design-review)를 실행한 뒤, 미학 리뷰와 스펙 검증을 **별도 섹션으로 추가**한다.
@@ -208,94 +272,13 @@ autoplan의 Phase 2(plan-design-review)를 실행한 뒤, 미학 리뷰와 스�
 1. plan-design-review의 Pass 1-7 실행 (autoplan이 지시하는 대로)
 2. Pass 7 완료 후, 미학 리뷰 실행 (아래 6개 차원)
 3. 미학 리뷰 완료 후, 디자인 스펙 검증 실행 (아래)
-
-### 미학 리뷰: 6개 차원
-
-Plan의 UI 관련 섹션을 `.impeccable.md`와 `game-ui-design` 기준으로 평가한다.
-각 차원 0-10 점수. 평가 시 `.claude/skills/frontend-design/SKILL.md`의 안티패턴 목록을 참조한다.
-
-#### 1. AI Slop 위험도 (0=위험 10=안전)
-
-Plan이 구현 시 AI 양산형 결과물을 유도하는 패턴을 포함하는지 검사한다.
-
-**레드 플래그** (frontend-design 기준):
-- "적절한 UI", "깔끔한 디자인" 등 모호한 지시 → 구현자가 기본값에 의존
-- 모든 것을 카드 그리드로 구성
-- 글래스모피즘, 그라데이션 텍스트, 뻔한 드롭 섀도
-- "모달로 표시" (더 나은 대안 검토 없이)
-
-**그린 플래그**:
-- 구체적 색상 토큰 명시 (예: accent #c8a04a)
-- 특정 폰트/크기 지정
-- 차별화된 레이아웃 설명 (비대칭, 의도적 그리드 파괴 등)
-
-#### 2. 타이포그래피
-
-- 폰트가 구체적으로 지정되었는가? (.impeccable.md 기준: Press Start 2P)
-- 제목/본문/캡션 간 시각적 위계가 Plan에 명시되었는가?
-- 게임 UI와 웹 UI에서 폰트 일관성 계획이 있는가?
-- 깊이 평가 필요 시 → `.claude/skills/frontend-design/reference/typography.md` 참조
-
-#### 3. 색상 전략
-
-- 팔레트가 구체적 hex 값으로 정의되었는가?
-- .impeccable.md의 Color Tokens과 일치하는가?
-- DOM(React)과 Canvas(Phaser) 간 색상 토큰 공유 계획이 있는가?
-- 상태별 색상 사용 (success/danger/info)이 일관되는가?
-- 깊이 평가 필요 시 → `.claude/skills/frontend-design/reference/color-and-contrast.md` 참조
-
-#### 4. 레이아웃 의도성
-
-- 게임 UI: HUD 투명도, 페이즈별 UI 전환(빌드↔전투)이 명시되었는가?
-- 8px/32px 간격 리듬(.impeccable.md 기준)을 따르는가?
-- 반응형 전략이 "축소"가 아닌 "적응"인가?
-- 모바일 퍼스트(390x844) 제약을 인지하고 있는가?
-- 깊이 평가 필요 시 → `.claude/skills/frontend-design/reference/spatial-design.md` 참조
-
-#### 5. 모션/인터랙션
-
-- 상태 전환(페이즈 변경, 타워 배치 피드백, 결과 화면)의 모션이 정의되었는가?
-- transform/opacity 기반인가? (layout 속성 애니메이션은 60fps를 깨뜨림)
-- 즉각적 피드백(.impeccable.md 원칙 #2)이 반영되었는가?
-- 깊이 평가 필요 시 → `.claude/skills/frontend-design/reference/motion-design.md` 참조
-
-#### 6. 게임-웹 경계 (game-ui-design 기준)
-
-- DOM(React)과 Canvas(Phaser)의 역할 분리가 명확한가?
-  - React: 메뉴, 설정, 로비, 텍스트 패널, 오버레이, 상태바
-  - Phaser: 게임 시각 피드백, 체력바, VFX, 타일맵
-- EventBus 통신 패턴을 따르는가? (request-* → Phaser, 서술적 이름 → React)
-- 터치 타겟 44x44px 최소 기준을 인지하는가?
-- 엄지 도달 영역(하단 2/3)에 핵심 인터랙션이 배치되는가?
-
-### 미학 리뷰 출력
-
-Plan 파일에 다음 섹션을 추가한다:
-
-```markdown
-## 미학 리뷰 (frontend-design + game-ui-design)
-
-| 차원 | 점수 | 소견 | 개선안 |
-|------|------|------|--------|
-| AI Slop 위험도 | X/10 | [구체적 근거] | [구체적 개선 — 파일명, 토큰명 수준] |
-| 타이포그래피 | X/10 | ... | ... |
-| 색상 전략 | X/10 | ... | ... |
-| 레이아웃 의도성 | X/10 | ... | ... |
-| 모션/인터랙션 | X/10 | ... | ... |
-| 게임-웹 경계 | X/10 | ... | ... |
-
-**미학 종합: X.X/10**
-
-### 개선 필요 항목
-[7점 미만 항목만. 각 항목에 대해:]
-- **[차원명]** (X/10): [문제] → [구체적 개선안]
 ```
 
-**점수 해석:**
-- 8-10: 구현 시 미학적으로 차별화될 준비가 됨
-- 5-7: 방향은 있지만 구체성 부족 → 개선안을 taste decision으로
-- 0-4: AI slop 위험 → Plan 수정 강력 권고
+- [ ] **Step 2: 미학 리뷰 출력 섹션 뒤에 디자인 스펙 검증 추가**
 
+기존 미학 리뷰 출력 마크다운 (`**점수 해석:**` 블록 끝) 바로 뒤에 다음을 추가:
+
+```markdown
 ### 디자인 스펙 검증
 
 Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽고, Plan의 UI/디자인 제안을 대조한다.
@@ -305,19 +288,37 @@ Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽
 | 차원 | 대조 문서 | 검증 내용 |
 |------|---------|---------|
 | 디자인 토큰 | 01-GDD §8 (UI/UX — 디자인 시스템) | Plan이 지정하는 색상, 폰트, 간격이 GDD의 13개 색상 토큰·5단계 타이포·44px 터치 기준과 일치하는가? 존재하지 않는 토큰을 사용하는가? |
-| 밸런스 수치 | 02-balance-sheet §1-8 | Plan이 참조하는 수치(에너지 비용, 가챠 확률, 미션 보상, 타워 스탯, 적 스탯, armor/pierce, WAVE_SCALING, difficultyHpMult, MAX_TOWER_LEVEL)가 밸런스 시트와 일치하는가? |
+| 밸런스 수치 | 02-balance-sheet §1-8 | Plan이 참조하는 수치(에너지 비용, 가챠 확률, 미션 보상, 타워 스탯, 적 스탯, armor/pierce)가 밸런스 시트와 일치하는가? |
 | 에셋 규격 | 07-asset-def §1 (공통 제작 사양), §3 (타워), §10 (네이밍) | Plan이 제안하는 에셋이 공통 규격(64×80 타워, 40×48 유닛, 8-frame 스프라이트시트, center pivot, PNG+WebP)을 따르는가? |
 | 속성/등급 색상 | 07-asset-def §4 (색상 정책), §11 (등급 토큰) | Plan이 사용하는 속성 색상(fire #e74c3c, water #3498db, lightning #f39c12, neutral #c8a04a)과 등급 색상이 에셋 정의와 일치하는가? |
-| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 4탭, WorldMap, StageDetail, Deck, Result, Tutorial, Tower Sell Panel, Exit Modal)와 충돌하지 않는가? |
+| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 4탭, WorldMap, StageDetail, Deck, Result, Tutorial)와 충돌하지 않는가? |
 | 콘텐츠 범위 | 01-GDD §5 (Content Plan) | Plan이 참조하는 타워·적·스테이지·웨이브 수가 콘텐츠 플랜(18타워×5티어, 5적, 3스테이지, 10웨이브)과 일치하는가? |
 
 판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.
 
 **❌ CONFLICT가 1건 이상이면 Phase 3으로 진행할 수 없다.**
 미학 점수(기존)는 여전히 블로킹하지 않는다 — 스펙 검증만 블로킹한다.
+```
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): Step 2에 디자인 스펙 검증 6차원 추가"
+```
 
 ---
 
+### Task 5: Step 3에 Eng 스펙 검증 주입
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md` (Step 3 섹션)
+
+- [ ] **Step 1: 기존 Step 3 교체**
+
+기존 Step 3 (L199-208) 을 다음으로 교체:
+
+```markdown
 ## Step 3: Phase 3 (Eng) + Eng 스펙 검증
 
 ### 3-1. Phase 3 실행
@@ -348,9 +349,27 @@ Phase 3 완료 후, Step 0-4에서 Phase 3에 할당된 스펙 문서를 `docs/g
 판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.
 
 **❌ CONFLICT가 1건 이상이면 Final Gate로 진행할 수 없다.**
+```
+
+- [ ] **Step 2: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): Step 3에 Eng 스펙 검증 9차원 주입"
+```
 
 ---
 
+### Task 6: Step 4 Final Gate 확장 + 충돌 리포트 형식
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md` (Step 4 섹션)
+
+- [ ] **Step 1: 기존 Step 4 교체**
+
+기존 Step 4 (L209-225) 를 다음으로 교체:
+
+```markdown
 ## Step 4: Final Gate 확장
 
 autoplan의 Phase 4 (Final Approval Gate) 출력에 다음을 추가한다:
@@ -405,9 +424,27 @@ CONFLICT가 1건이라도 남아 있으면 Final Gate에 도달할 수 없다 (�
 - **이탈 방향**: "[어떻게 벗어나는지]"
 - **권고**: [조정 제안]
 ```
+```
+
+- [ ] **Step 2: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): Step 4 Final Gate에 스펙 정합성 하드게이트 + 충돌 리포트 형식 추가"
+```
 
 ---
 
+### Task 7: 참조 파일 테이블 + 핵심 규칙 업데이트
+
+**Files:**
+- Modify: `.claude/skills/plan-review/SKILL.md` (참조 파일 테이블 + 핵심 규칙 섹션)
+
+- [ ] **Step 1: 참조 파일 테이블 교체**
+
+기존 참조 파일 테이블 (L226-238) 을 다음으로 교체:
+
+```markdown
 ## 참조 파일
 
 이 스킬이 실행 중 읽는 파일들:
@@ -427,9 +464,13 @@ CONFLICT가 1건이라도 남아 있으면 Final Gate에 도달할 수 없다 (�
 | 06-milestone | `docs/game-spec/06-milestone.md` | Phase 1 (CEO) — 키워드 매칭 시 |
 | 07-asset-definition | `docs/game-spec/07-asset-definition.md` | Phase 2 (Design) — 키워드 매칭 시 |
 | 08-architecture | `docs/game-spec/08-architecture.md` | Phase 3 (Eng) — 키워드 매칭 시 |
+```
 
----
+- [ ] **Step 2: 핵심 규칙 교체**
 
+기존 핵심 규칙 5개 (L239-252) 를 다음으로 교체:
+
+```markdown
 ## 핵심 규칙
 
 1. **autoplan이 기반.** 이 스킬은 autoplan에 스펙 검증 + 미학 레이어를 얹는 래퍼다. autoplan의 6 Decision Principles, 순차 실행, Decision Audit Trail, Dual Voices를 모두 유지한다.
@@ -447,3 +488,56 @@ CONFLICT가 1건이라도 남아 있으면 Final Gate에 도달할 수 없다 (�
 7. **스펙 CONFLICT는 하드 블로커다.** CONFLICT(직접 모순)가 해소되지 않으면 다음 Phase로 진행할 수 없다. DRIFT(방향 이탈)는 경고로 기록하되 진행을 막지 않는다. 미학(어드바이저리)과 스펙(블로커)은 완전히 별개의 게이트다.
 
 8. **스펙 문서 업데이트도 유효한 해결책이다.** CONFLICT 발생 시 "Plan이 틀렸다"만이 아니라 "스펙이 낡았다"도 가능하다. 어느 쪽을 수정할지는 사용자가 결정한다. 수정 후 해당 Phase의 스펙 검증만 재실행한다.
+```
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "feat(plan-review): 참조 파일에 game-spec 추가, 핵심 규칙 5→8개 확장"
+```
+
+---
+
+### Task 8: 스킬 검증 — 실제 plan으로 dry-run
+
+**Files:**
+- Read only: 최근 plan 파일, `.claude/skills/plan-review/SKILL.md`
+
+- [ ] **Step 1: 수정된 SKILL.md 전체 읽기**
+
+```bash
+cat .claude/skills/plan-review/SKILL.md
+```
+
+전체 내용이 일관되고, 마크다운 구문 오류가 없는지 확인.
+
+- [ ] **Step 2: 기존 plan 파일로 키워드 매칭 시뮬레이션**
+
+```bash
+ls -t docs/superpowers/plans/*.md | head -1
+```
+
+최근 plan 파일을 읽고, Step 0-4의 키워드 매칭 로직을 수동 적용:
+- 각 문서별 매치 키워드 수 확인
+- Phase별 문서 할당 결과 확인
+- 예상 출력 형식 확인
+
+Expected: 최소 2-3개 문서가 선택되고, Phase별 할당이 올바르게 출력됨.
+
+- [ ] **Step 3: CONFLICT 시나리오 검증**
+
+Plan에 "에너지 시작값 20" 같은 스펙 충돌 내용이 있다면 CONFLICT로 잡히는지 논리적 검증.
+없다면 가상 시나리오로 검증:
+- 02-balance-sheet에 "시작 에너지 10" 정의
+- Plan에 "시작 에너지 20으로 변경" 기술
+- → CONFLICT 판정 + 리포트 형식 확인
+
+- [ ] **Step 4: 최종 커밋 (필요 시)**
+
+검증 중 발견된 오타/구문 오류 수정 후 커밋.
+
+```bash
+git add .claude/skills/plan-review/SKILL.md
+git commit -m "fix(plan-review): 스펙 검증 dry-run 후 수정"
+```

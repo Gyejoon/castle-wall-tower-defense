@@ -52,6 +52,7 @@ interface UnitInstance {
 	ccImmunityChance: number;
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
+	shadow: Phaser.GameObjects.Ellipse | null;
 }
 
 interface QueueUnitsOptions {
@@ -232,6 +233,14 @@ export class UnitSystem {
 			this.gridManager.getDepth(startGrid.x, startGrid.y) - 1,
 		);
 
+		// Flying boss: add ground shadow and offset sprite upward
+		let shadow: Phaser.GameObjects.Ellipse | null = null;
+		if (entry.isBoss) {
+			shadow = this.scene.add.ellipse(startWorld.x, startWorld.y, 40, 16, 0x000000, 0.3);
+			shadow.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y) - 1);
+			sprite.setPosition(startWorld.x, startWorld.y - 20);
+		}
+
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
@@ -257,6 +266,7 @@ export class UnitSystem {
 			baseArmor: scaled.armor,
 			ccImmunityChance: scaled.ccImmunityChance,
 			waveSlot: entry.waveSlot,
+			shadow,
 			pathProgress: 0,
 		};
 		this.units.set(instanceId, instance);
@@ -396,6 +406,7 @@ export class UnitSystem {
 				});
 			}
 			unit.sprite.destroy();
+			unit.shadow?.destroy();
 			unit.hpBar.destroy();
 			const deathFx = this.scene.add.sprite(
 				unit.worldX,
@@ -635,7 +646,16 @@ export class UnitSystem {
 				}
 			}
 
-			unit.sprite.setPosition(unit.worldX, unit.worldY);
+			// Boss flies above ground with bobbing; shadow stays on ground
+			if (unit.isBoss) {
+				const flyBob = Math.sin(Date.now() * 0.003) * 3;
+				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
+				if (unit.shadow) {
+					unit.shadow.setPosition(unit.worldX, unit.worldY);
+				}
+			} else {
+				unit.sprite.setPosition(unit.worldX, unit.worldY);
+			}
 			// Rotate boss sprite to face movement direction (sprite default: head pointing down = PI/2)
 			if (unit.isBoss && dist > 0.01) {
 				const moveAngle = Math.atan2(dy, dx);
@@ -773,6 +793,7 @@ export class UnitSystem {
 	destroy(): void {
 		for (const unit of this.units.values()) {
 			unit.sprite.destroy();
+			unit.shadow?.destroy();
 			unit.hpBar.destroy();
 		}
 		this.units.clear();

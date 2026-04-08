@@ -27,6 +27,12 @@ const tabs: Array<{
 		inactiveIcon: uiMobileArt.missionTabIconInactive,
 	},
 	{
+		id: 'achievements' as LobbyTab,
+		label: '업적',
+		activeIcon: uiMobileArt.missionTabIconActive,
+		inactiveIcon: uiMobileArt.missionTabIconInactive,
+	},
+	{
 		id: 'settings',
 		label: '영주실',
 		activeIcon: uiMobileArt.settingsTabIconActive,

@@ -32,12 +32,12 @@ function useAnimatedGold() {
 }
 
 function getFrameColor(cp: number): string {
-	if (cp >= 50000) return '#ffe870';
-	if (cp >= 10000) return '#9060e0';
-	if (cp >= 5000) return '#f0d060';
-	if (cp >= 1000) return '#c8a04a';
-	if (cp >= 500) return '#7ab648';
-	return '#4a3a20';
+	if (cp >= 50000) return 'var(--color-tier-bright, #ffe870)';
+	if (cp >= 10000) return 'var(--color-grade-unique, #9060e0)';
+	if (cp >= 5000) return 'var(--color-gold)';
+	if (cp >= 1000) return 'var(--color-accent)';
+	if (cp >= 500) return 'var(--color-success)';
+	return 'var(--color-border)';
 }
 
 export function ProfileBar() {

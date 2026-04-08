@@ -40,8 +40,8 @@ export function AchievementPage() {
 						onClick={() => setCategory(cat.id)}
 						className="flex-1 py-2.5 font-pixel text-[10px] text-center cursor-pointer transition-colors"
 						style={{
-							color: category === cat.id ? '#c8a04a' : '#a09070',
-							borderBottom: category === cat.id ? '2px solid #c8a04a' : '2px solid transparent',
+							color: category === cat.id ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+							borderBottom: category === cat.id ? '2px solid var(--color-accent)' : '2px solid transparent',
 						}}
 					>
 						{cat.label}
@@ -63,17 +63,17 @@ export function AchievementPage() {
 							style={{
 								background: achieved
 									? claimed
-										? 'rgba(122,182,72,0.08)'
-										: 'rgba(200,160,74,0.1)'
-									: '#2a2010',
-								borderColor: achieved && !claimed ? '#c8a04a' : '#4a3a20',
+										? 'color-mix(in srgb, var(--color-success) 8%, transparent)'
+										: 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
+									: 'var(--color-panel)',
+								borderColor: achieved && !claimed ? 'var(--color-accent)' : 'var(--color-border)',
 								opacity: !achieved && progress === 0 ? 0.4 : 1,
 							}}
 						>
 							<div className="flex items-start justify-between gap-2">
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-1.5">
-										<span className="font-pixel text-[10px]" style={{ color: achieved ? '#7ab648' : '#a09070' }}>
+										<span className="font-pixel text-[10px]" style={{ color: achieved ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>
 											{achieved ? '✅' : progress > 0 ? '⬜' : '🔒'}
 										</span>
 										<span className="font-pixel text-[10px] text-text">
@@ -96,8 +96,8 @@ export function AchievementPage() {
 											onClick={() => claimAchievement(ach.id)}
 											className="font-pixel text-[9px] px-2 py-1 cursor-pointer"
 											style={{
-												background: '#c8a04a',
-												color: '#1a1208',
+												background: 'var(--color-accent)',
+												color: 'var(--color-bg)',
 												minHeight: 28,
 											}}
 										>
@@ -120,7 +120,7 @@ export function AchievementPage() {
 											className="h-full"
 											style={{
 												width: `${Math.min(100, (progress / ach.target) * 100)}%`,
-												background: '#c8a04a',
+												background: 'var(--color-accent)',
 											}}
 										/>
 									</div>

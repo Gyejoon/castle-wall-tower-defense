@@ -31,9 +31,9 @@ function isStarUnlocked(
 }
 
 const STAR_COLORS = {
-	1: { bg: 'rgba(122,182,72,0.1)', border: '#7ab648', text: '#7ab648' },
-	2: { bg: 'rgba(200,160,74,0.1)', border: '#c8a04a', text: '#c8a04a' },
-	3: { bg: 'rgba(192,48,32,0.1)', border: '#c03020', text: '#c03020' },
+	1: { bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)', border: 'var(--color-success)', text: 'var(--color-success)' },
+	2: { bg: 'color-mix(in srgb, var(--color-accent) 10%, transparent)', border: 'var(--color-accent)', text: 'var(--color-accent)' },
+	3: { bg: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', border: 'var(--color-danger)', text: 'var(--color-danger)' },
 } as const;
 
 const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
@@ -195,7 +195,7 @@ export function StageDetailPage() {
 									className="font-pixel"
 									style={{
 										fontSize: 12,
-										color: s <= (stageStars[selectedMapId] ?? 0) ? '#f0d060' : '#4a3a20',
+										color: s <= (stageStars[selectedMapId] ?? 0) ? 'var(--color-gold)' : 'var(--color-border)',
 									}}
 								>
 									★
@@ -238,7 +238,7 @@ export function StageDetailPage() {
 										style={{
 											minHeight: 48,
 											background: active ? colors.bg : 'transparent',
-											border: `2px solid ${active ? colors.border : unlocked ? '#4a3a20' : '#2a2010'}`,
+											border: `2px solid ${active ? colors.border : unlocked ? 'var(--color-border)' : 'var(--color-panel)'}`,
 											opacity: unlocked ? 1 : 0.3,
 											transform: active ? 'scale(1.05)' : 'scale(1)',
 										}}
@@ -251,7 +251,7 @@ export function StageDetailPage() {
 										</div>
 										<div
 											className="font-pixel mt-1"
-											style={{ fontSize: 8, color: '#a09070' }}
+											style={{ fontSize: 8, color: 'var(--color-text-secondary)' }}
 										>
 											{diff.hp}×
 										</div>

@@ -9,6 +9,8 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
+export type { AchievementDef } from './constants/achievements';
+export { ACHIEVEMENT_MAP, ACHIEVEMENTS } from './constants/achievements';
 export type { BossPhaseConfig } from './constants/boss';
 export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';

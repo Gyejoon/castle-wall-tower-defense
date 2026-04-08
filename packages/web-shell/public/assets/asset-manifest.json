@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-08T18:12:50.338Z",
+  "generated": "2026-04-08T18:42:46.148Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -854,24 +854,6 @@
       "section": "ui"
     },
     {
-      "key": "ui-stage-thumb-forest_gate",
-      "type": "image",
-      "path": "assets/ui/stage-thumb-forest_gate.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-stage-thumb-lava_fortress",
-      "type": "image",
-      "path": "assets/ui/stage-thumb-lava_fortress.png",
-      "section": "ui"
-    },
-    {
-      "key": "ui-stage-thumb-storm_citadel",
-      "type": "image",
-      "path": "assets/ui/stage-thumb-storm_citadel.png",
-      "section": "ui"
-    },
-    {
       "key": "ui-icon-locked",
       "type": "image",
       "path": "assets/ui/icon-locked.png",
@@ -953,6 +935,18 @@
       "key": "ui-icon-complete",
       "type": "image",
       "path": "assets/ui/icon-complete.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-star-active",
+      "type": "image",
+      "path": "assets/ui/icon-star-active.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-icon-star-inactive",
+      "type": "image",
+      "path": "assets/ui/icon-star-inactive.png",
       "section": "ui"
     },
     {
@@ -1256,6 +1250,42 @@
       "key": "ui-check-badge",
       "type": "image",
       "path": "assets/ui/check-badge.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-worldmap-bg",
+      "type": "image",
+      "path": "assets/ui/worldmap-bg.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-lava_fortress",
+      "type": "image",
+      "path": "assets/ui/landmark-lava_fortress.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-storm_citadel",
+      "type": "image",
+      "path": "assets/ui/landmark-storm_citadel.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-stage-thumb-forest_gate",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-forest_gate.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-stage-thumb-lava_fortress",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-lava_fortress.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-stage-thumb-storm_citadel",
+      "type": "image",
+      "path": "assets/ui/stage-thumb-storm_citadel.png",
       "section": "ui"
     }
   ]

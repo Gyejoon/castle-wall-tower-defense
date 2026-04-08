@@ -204,26 +204,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
-  // Stage select thumbnails (128x96 each, 3 stages)
-  const STAGES = [
-    { id: 'forest_gate', name: 'Forest Gate', color: PALETTE.foliageBright },
-    { id: 'lava_fortress', name: 'Lava Fortress', color: PALETTE.fireRed },
-    { id: 'storm_citadel', name: 'Storm Citadel', color: '#4060c0' },
-  ];
-  for (const stage of STAGES) {
-    const { canvas, ctx } = makeCanvas(128, 96);
-    drawRect(ctx, 0, 0, 128, 96, stage.color);
-    drawRect(ctx, 4, 4, 120, 88, hexToRgba(PALETTE.shadow, 0.5));
-    ctx.fillStyle = PALETTE.white;
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(stage.name, 64, 54);
-    saveCanvas(canvas, `${OUTPUT_DIR}/stage-thumb-${stage.id}.png`);
-    entries.push({
-      key: `ui-stage-thumb-${stage.id}`, type: 'image',
-      path: `assets/ui/stage-thumb-${stage.id}.png`,
-    });
-  }
+  // Stage thumbnails are now generated via ComfyUI in generate-worldmap.ts
 
   // Lock icon (32x32) — medieval iron padlock, pixel art
   {

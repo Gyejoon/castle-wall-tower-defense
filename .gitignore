@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# AI temp
+scripts/generate-assets/.ai-temp/
+
 # Build
 dist/
 build/

@@ -31,6 +31,7 @@ export function StageSelectPage() {
 	const clearToast = useGameStore((s) => s.clearToast);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
+	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
@@ -135,7 +136,10 @@ export function StageSelectPage() {
 		const onStageSelectReady = () => setGameReady(true);
 		const onGameReady = () => setGameReady(true);
 
+		const onEnterStageSelect = () => enterStageSelect();
+
 		EventBus.on('request-enter-lobby', onEnterLobby);
+		EventBus.on('request-enter-stage-select', onEnterStageSelect);
 		EventBus.on('request-start-game-from-stage', onStartGame);
 		EventBus.on('request-deck-edit', onDeckEdit);
 		EventBus.on('stage-select-ready', onStageSelectReady);
@@ -143,6 +147,7 @@ export function StageSelectPage() {
 
 		return () => {
 			EventBus.off('request-enter-lobby', onEnterLobby);
+			EventBus.off('request-enter-stage-select', onEnterStageSelect);
 			EventBus.off('request-start-game-from-stage', onStartGame);
 			EventBus.off('request-deck-edit', onDeckEdit);
 			EventBus.off('stage-select-ready', onStageSelectReady);

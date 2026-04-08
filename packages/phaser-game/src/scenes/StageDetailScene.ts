@@ -25,7 +25,7 @@ export class StageDetailScene extends Phaser.Scene {
 		const { mapId } = data;
 		const map = MAP_REGISTRY[mapId];
 		if (!map) {
-			this.scene.start('WorldMap');
+			EventBus.emit('request-enter-stage-select');
 			return;
 		}
 
@@ -301,7 +301,7 @@ export class StageDetailScene extends Phaser.Scene {
 				this.isTransitioning = true;
 				this.cameras.main.fadeOut(400);
 				this.cameras.main.once('camerafadeoutcomplete', () => {
-					this.scene.start('WorldMap');
+					EventBus.emit('request-enter-stage-select');
 				});
 			});
 		backBtn.on('pointerover', () => backBtn.setColor('#f0d060'));

@@ -4,18 +4,18 @@ import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
 
-const MAP_THEMES: Record<string, { borderColor: string; thumb: string }> = {
+const MAP_THEMES: Record<string, { borderColor: string; landmark: string }> = {
 	forest_gate: {
 		borderColor: '#4a8a2a',
-		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
+		landmark: 'assets/ui/landmark-forest_gate.webp',
 	},
 	lava_fortress: {
 		borderColor: '#c04020',
-		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
+		landmark: 'assets/ui/landmark-lava_fortress.webp',
 	},
 	storm_citadel: {
 		borderColor: '#5a6aaa',
-		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
+		landmark: 'assets/ui/landmark-storm_citadel.webp',
 	},
 };
 
@@ -23,9 +23,9 @@ const MAP_CONTENT_WIDTH = 430;
 const MAP_CONTENT_HEIGHT = 640;
 
 const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
-	forest_gate: { top: 460, left: 215 },
-	lava_fortress: { top: 270, left: 112 },
-	storm_citadel: { top: 80, left: 300 },
+	forest_gate: { top: 480, left: 250 },
+	lava_fortress: { top: 120, left: 200 },
+	storm_citadel: { top: 300, left: 310 },
 };
 
 const PATH_CONNECTIONS = [
@@ -93,22 +93,24 @@ export function WorldMapPage() {
 
 				{/* Map area — scrollable on small screens */}
 				<div className="relative flex-1 min-h-0">
-					<div ref={scrollRef} className="h-full overflow-auto">
+					<div ref={scrollRef} className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center justify-center">
 						<div
-							className="relative"
+							className="relative mx-auto"
 							style={{
 								width: `${MAP_CONTENT_WIDTH}px`,
 								height: `${MAP_CONTENT_HEIGHT}px`,
-								background: `
-								radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
-								radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
-								radial-gradient(ellipse at 70% 16%, rgba(40,50,90,0.18), transparent 40%),
-								#1a1208
-							`,
 							}}
 						>
-							{/* Stars */}
-							<div className="stars-overlay" />
+							{/* World map background */}
+							<img
+								src="assets/ui/worldmap-bg.webp"
+								alt=""
+								className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated]"
+							/>
+							<div
+								className="absolute inset-0 pointer-events-none"
+								style={{ boxShadow: 'inset 0 0 60px 20px rgba(10,8,4,0.7)' }}
+							/>
 
 							{/* Path connections (SVG) */}
 							<svg
@@ -130,10 +132,10 @@ export function WorldMapPage() {
 												y1={a.top}
 												x2={b.left}
 												y2={b.top}
-												stroke="#c8a04a"
-												strokeWidth="6"
+												stroke="#f0d060"
+												strokeWidth="8"
 												strokeDasharray="4 12"
-												opacity="0.08"
+												opacity="0.1"
 											/>
 											{/* Shadow */}
 											<line
@@ -189,46 +191,30 @@ export function WorldMapPage() {
 											enterStageDetail(map.id);
 										}}
 									>
-										{/* Card */}
-										<div
-											className={cn(
-												'relative w-[140px] bg-panel overflow-hidden',
-												locked
-													? 'border-2 border-border shadow-[2px_2px_0px_#0a0804]'
-													: 'border-2 shadow-[3px_3px_0px_#0a0804]',
-											)}
-											style={{
-												borderColor: locked ? undefined : theme?.borderColor,
-											}}
-										>
-											{/* Inner border accent */}
-											{!locked && (
-												<div
-													className="absolute inset-[2px] border pointer-events-none z-20"
-													style={{
-														borderColor: `${theme?.borderColor}30`,
-													}}
-												/>
-											)}
-
-											{/* Thumbnail */}
-											<div className="relative h-[80px] overflow-hidden">
+										{/* Landmark */}
+										<div className="relative">
+											{/* Landmark icon */}
+											<div
+												className="relative w-[96px] h-[96px] transition-[filter] duration-200"
+												style={!locked ? { filter: `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})` } : undefined}
+												onMouseEnter={(e) => { if (!locked) e.currentTarget.style.filter = `drop-shadow(0 0 8px ${theme?.borderColor})`; }}
+												onMouseLeave={(e) => { if (!locked) e.currentTarget.style.filter = `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`; }}
+											>
 												<img
-													src={theme?.thumb}
+													src={theme?.landmark}
 													alt={map.name}
 													className={cn(
-														'w-full h-full object-cover [image-rendering:pixelated]',
+														'w-full h-full [image-rendering:pixelated]',
 														locked && 'brightness-[0.35]',
 													)}
 												/>
-												<div className="absolute inset-0 bg-gradient-to-t from-panel via-transparent to-transparent" />
 
 												{/* Lock icon */}
 												{locked && (
 													<div className="absolute inset-0 flex items-center justify-center">
 														{lockImgError ? (
 															<span className="font-pixel text-[20px] text-text-secondary/70 select-none">
-																✕
+																&#10005;
 															</span>
 														) : (
 															<img
@@ -248,41 +234,34 @@ export function WorldMapPage() {
 													<img
 														src="assets/ui/check-badge.png"
 														alt="클리어"
-														className="absolute top-1 right-1 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
+														className="absolute top-0 right-0 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
 													/>
 												)}
 											</div>
 
-											{/* Info */}
-											<div className="px-2 py-2 flex flex-col items-center gap-1">
+											{/* Label */}
+											<div
+												className="mt-1 flex flex-col items-center gap-0.5 px-2 py-1 bg-panel/85 backdrop-blur-sm border"
+												style={{ borderColor: locked ? '#4a3a20' : theme?.borderColor }}
+											>
 												<span
 													className={cn(
-														'font-pixel text-[9px] text-center leading-tight',
+														'font-pixel text-[8px] text-center leading-tight',
 														locked ? 'text-text-secondary' : 'text-text',
 													)}
 												>
 													{map.name}
 												</span>
-
-												<div
+												<span
 													className={cn(
-														'px-2 py-0.5 border text-center',
-														locked
-															? 'bg-danger/10 border-danger/30'
-															: 'bg-panel border-border',
+														'font-pixel text-[6px]',
+														locked ? 'text-danger' : 'text-accent',
 													)}
 												>
-													<span
-														className={cn(
-															'font-pixel text-[7px]',
-															locked ? 'text-danger' : 'text-accent',
-														)}
-													>
-														{locked
-															? `Lv.${map.unlockLevel} 해금`
-															: `Lv.${map.unlockLevel ?? 1}`}
-													</span>
-												</div>
+													{locked
+														? `Lv.${map.unlockLevel} 해금`
+														: `Lv.${map.unlockLevel ?? 1}`}
+												</span>
 											</div>
 										</div>
 									</button>

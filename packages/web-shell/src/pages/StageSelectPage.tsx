@@ -133,9 +133,9 @@ export function StageSelectPage() {
 
 	// Sound unlock on visibility change
 	useEffect(() => {
-		const handleVisibility = () => {
+		const handleVisibility = async () => {
 			if (document.visibilityState === 'visible') {
-				soundGenerator.unlock();
+				await soundGenerator.unlock();
 			}
 		};
 		document.addEventListener('visibilitychange', handleVisibility);

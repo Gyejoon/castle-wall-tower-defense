@@ -34,10 +34,17 @@ export function GamePage() {
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
 
+	// Apply saved SFX volume to audio engine on mount
+	useEffect(() => {
+		const sfxVol = useGameStore.getState().sfxVolume;
+		soundGenerator.setMasterVolume(sfxVol);
+	}, []);
+
 	// iOS AudioContext unlock on first user gesture
 	useEffect(() => {
-		const unlockAudio = () => {
-			soundGenerator.unlock();
+		const unlockAudio = async () => {
+			await soundGenerator.unlock();
+			soundGenerator.setMasterVolume(useGameStore.getState().sfxVolume);
 			document.removeEventListener('pointerdown', unlockAudio);
 			document.removeEventListener('touchstart', unlockAudio);
 			document.removeEventListener('click', unlockAudio);
@@ -53,9 +60,9 @@ export function GamePage() {
 	}, []);
 
 	useEffect(() => {
-		const handleVisibility = () => {
+		const handleVisibility = async () => {
 			if (document.visibilityState === 'visible') {
-				soundGenerator.unlock();
+				await soundGenerator.unlock();
 			}
 		};
 		document.addEventListener('visibilitychange', handleVisibility);

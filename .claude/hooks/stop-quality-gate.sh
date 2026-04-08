@@ -32,7 +32,7 @@ fi
 # Check for .ts/.tsx changes (staged + unstaged)
 CODE_FILES=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
-ALL_CODE_FILES="${CODE_FILES}${STAGED_FILES}"
+ALL_CODE_FILES="${CODE_FILES}${CODE_FILES:+$'\n'}${STAGED_FILES}"
 
 if [[ -z "$ALL_CODE_FILES" ]]; then
   # No code changes, allow exit
@@ -84,7 +84,7 @@ EOF
   exit 2
 fi
 
-SCORE=$(jq -r '.score // 0' .ralreview-state.json 2>/dev/null || echo "0")
+SCORE=$(jq -r '.score // 0 | floor' .ralreview-state.json 2>/dev/null || echo "0")
 STATUS=$(jq -r '.status // "unknown"' .ralreview-state.json 2>/dev/null || echo "unknown")
 
 if [[ "$STATUS" != "pass" ]] || [[ "$SCORE" -lt 58 ]]; then

@@ -17,7 +17,7 @@ fi
 # Check for .ts/.tsx changes
 CODE_FILES=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
-ALL_CODE_FILES="${CODE_FILES}${STAGED_FILES}"
+ALL_CODE_FILES="${CODE_FILES}${CODE_FILES:+$'\n'}${STAGED_FILES}"
 
 if [[ -z "$ALL_CODE_FILES" ]]; then
   exit 0

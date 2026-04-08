@@ -15,7 +15,7 @@ if [[ -z "$USER_PROMPT" ]]; then
 fi
 
 # Check for skip keywords (case-insensitive)
-if echo "$USER_PROMPT" | grep -iqE 'SKIP_GATE|실험 모드|실험모드'; then
+if printf '%s' "$USER_PROMPT" | grep -iqE 'SKIP_GATE|실험 모드|실험모드'; then
   date +%s > .claude/.skip-gate
   echo "SKIP_GATE activated for this turn."
 else

@@ -96,7 +96,7 @@ except FileNotFoundError:
 with open(RULES_FILE, "a") as f:
     for cat in new_rules:
         # Skip if rule header already exists
-        if f"\n## {cat}" in existing_rules:
+        if f"\n## {cat}" in existing_rules or existing_rules.startswith(f"## {cat}"):
             continue
 
         entry = tracker[cat]

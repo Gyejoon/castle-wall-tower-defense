@@ -377,109 +377,304 @@ function drawAncientDragonFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox
   drawRect(ctx, cx + 1, bodyCy + 8, 4, 7, hexToRgba(PALETTE.titan, 0.8));
 }
 
-function drawBossDragon(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number): void {
-  const cx = size / 2;
-  const cy = size / 2;
-  const scale = size / 48; // 48 is existing FRAME_H
+// === Dragon Boss Palette (dark & evil medieval dragon) ===
+const DRAGON = {
+  bodyDeep:    '#1a0404',
+  bodyDark:    '#2a0808',
+  body:        '#3a0e0e',
+  bodyMid:     '#4a1212',
+  bodyLight:   '#5a1818',
+  belly:       '#602020',
+  bellyGlow:   '#803020',
+  wingBone:    '#200404',
+  wingMem:     '#180303',
+  wingMemRage: '#2a0606',
+  spine:       '#1a0e04',
+  horn:        '#2a1a0a',
+  hornTip:     '#3a2a1a',
+  claw:        '#0a0402',
+  eyeNorm:     '#e0b040',
+  eyeRage:     '#ff1010',
+  fireCore:    '#ffe060',
+  fireOrange:  '#e07020',
+  fireRed:     '#c03020',
+  fireDark:    '#801808',
+  smoke:       '#403020',
+  lavaGlow:    '#c04010',
+} as const;
 
-  // Body (large oval)
-  const bodyW = Math.floor(16 * scale);
-  const bodyH = Math.floor(12 * scale);
-  for (let dy = -bodyH; dy <= bodyH; dy++) {
-    for (let dx = -bodyW; dx <= bodyW; dx++) {
-      if ((dx * dx) / (bodyW * bodyW) + (dy * dy) / (bodyH * bodyH) <= 1) {
-        setPixel(ctx, cx + dx, cy + dy, PALETTE.titan);
+/** Pixel-art ellipse fill (no anti-aliasing) — uses setPixel for crisp edges */
+function fillEllipse(ctx: import('@napi-rs/canvas').SKRSContext2D, cx: number, cy: number, rx: number, ry: number, color: string): void {
+  for (let dy = -ry; dy <= ry; dy++) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1) {
+        setPixel(ctx, cx + dx, cy + dy, color);
       }
     }
   }
-
-  // Wings (left/right triangles)
-  const wingSpan = Math.floor(20 * scale);
-  for (let i = 0; i < wingSpan; i++) {
-    const wingH = Math.floor((wingSpan - i) * 0.6);
-    for (let dy = -wingH; dy <= 0; dy++) {
-      setPixel(ctx, cx - bodyW - i, cy + dy, '#8b2020');
-      setPixel(ctx, cx + bodyW + i, cy + dy, '#8b2020');
-    }
-  }
-
-  // Head (top circle)
-  fillCircle(ctx, cx, cy - bodyH - Math.floor(4 * scale), Math.floor(6 * scale), PALETTE.titan);
-
-  // Eyes (yellow)
-  const eyeY = cy - bodyH - Math.floor(4 * scale);
-  setPixel(ctx, cx - Math.floor(2 * scale), eyeY, PALETTE.gold);
-  setPixel(ctx, cx + Math.floor(2 * scale), eyeY, PALETTE.gold);
-
-  // Flame aura (bottom glow)
-  addGlow(ctx, cx, cy + bodyH, Math.floor(10 * scale), PALETTE.fireOrange, 0.2);
 }
 
 function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number, frame: number, rage: boolean): void {
-  const cx = size / 2;
-  const cy = size / 2;
-  const scale = size / 48;
+  const cx = size / 2; // 48
+  const cy = 44;       // body center (slightly above center, room for tail above and head below)
   const phase = (frame / 8) * Math.PI * 2;
 
-  // Breathing: body slightly expands/contracts
-  const breathScale = 1 + Math.sin(phase * 2) * 0.03;
-  const bodyW = Math.floor(16 * scale * breathScale);
-  const bodyH = Math.floor(12 * scale * breathScale);
+  // === Animation parameters ===
+  const wingFlap = Math.sin(phase);
+  const wingY = wingFlap > 0 ? wingFlap * 6 : wingFlap * 4; // asymmetric: fast down, slow up
+  const wingSpread = 1 + wingFlap * 0.08;
+  const tailSwing1 = Math.sin(phase + Math.PI * 0.6) * 6;
+  const tailSwing2 = Math.sin(phase + Math.PI) * 4;
+  const headBob = Math.round(Math.sin(phase * 2) * 1);
+  const bodyBob = Math.round(Math.sin(phase * 2) * 1.0);  // BUG-2 FIX: was 0.5
+  const breathScale = 1 + Math.sin(phase * 2) * 0.02;
+  const legAnim = Math.round(Math.sin(phase) * 3);
 
-  // Wing flap
-  const wingFlap = Math.round(Math.sin(phase) * 4 * scale);
+  // === 1. Fire aura (ground glow) ===
+  addGlow(ctx, cx, cy, 40, rage ? DRAGON.fireRed : DRAGON.fireOrange, rage ? 0.12 : 0.08);
 
-  // Fire aura pulse
-  const auraPulse = 0.15 + Math.sin(phase * 2) * 0.1;
-  const auraColor = rage ? PALETTE.fireRed : PALETTE.fireOrange;
+  // === 2. Shadow ===
+  drawIsoShadow(ctx, cx, cy + 2, 32, 16, 0.25);
 
-  // Wings (left/right)
-  const wingSpan = Math.floor(20 * scale);
-  for (let i = 0; i < wingSpan; i++) {
-    const wingH = Math.floor((wingSpan - i) * 0.6);
-    const wingColor = rage ? '#a02020' : '#8b2020';
-    for (let dy = -wingH + wingFlap; dy <= wingFlap; dy++) {
-      setPixel(ctx, cx - bodyW - i, cy + dy, wingColor);
-      setPixel(ctx, cx + bodyW + i, cy + dy, wingColor);
-    }
+  // === 3. Tail (top — extending upward, away from movement) ===
+  const tailBaseY = cy - 16;
+  for (let t = 0; t <= 1; t += 0.04) {
+    const tx = cx + tailSwing1 * t * 0.7 + tailSwing2 * t * t * 0.3;
+    const ty = tailBaseY - t * 24;  // BUG-1 FIX: was t * 30
+    const thickness = Math.round(3 - t * 2);
+    const c = t < 0.5 ? DRAGON.body : DRAGON.bodyDark;
+    drawRect(ctx, tx - thickness, ty, thickness * 2 + 1, 1, c);
+  }
+  // Tail spade (diamond at tip)
+  const tsX = Math.round(cx + tailSwing2 * 0.8);
+  const tsY = Math.round(tailBaseY - 24);  // BUG-1 FIX: was tailBaseY - 30
+  drawLine(ctx, tsX, tsY, tsX - 4, tsY - 4, DRAGON.bodyDark);
+  drawLine(ctx, tsX, tsY, tsX + 4, tsY - 4, DRAGON.bodyDark);
+  drawLine(ctx, tsX - 4, tsY - 4, tsX, tsY - 2, DRAGON.bodyDark);
+  drawLine(ctx, tsX + 4, tsY - 4, tsX, tsY - 2, DRAGON.bodyDark);
+  // Tail spines (3)
+  for (let i = 0; i < 3; i++) {
+    const t = (i + 1) / 4;
+    const spX = Math.round(cx + tailSwing1 * t * 0.5);
+    const spY = Math.round(tailBaseY - t * 22);
+    drawLine(ctx, spX - 2, spY, spX, spY - 3, DRAGON.spine);
+    drawLine(ctx, spX + 2, spY, spX, spY - 3, DRAGON.spine);
+  }
+  // Tail fire (rage only)
+  if (rage) {
+    addGlow(ctx, tsX, tsY - 2, 4, DRAGON.fireRed, 0.25 + Math.sin(phase * 3) * 0.1);
   }
 
-  // Body (large oval)
-  for (let dy = -bodyH; dy <= bodyH; dy++) {
-    for (let dx = -bodyW; dx <= bodyW; dx++) {
-      if ((dx * dx) / (bodyW * bodyW) + (dy * dy) / (bodyH * bodyH) <= 1) {
-        setPixel(ctx, cx + dx, cy + dy, PALETTE.titan);
+  // === 4. Body (vertical ellipse — head-to-tail orientation) ===
+  const bw = Math.round(16 * breathScale);
+  const bh = Math.round(20 * breathScale);
+  const bcy = cy + bodyBob;
+
+  // Body outer shadow
+  fillEllipse(ctx, cx, bcy, bw + 1, bh + 1, DRAGON.bodyDeep);
+  // Main body
+  fillEllipse(ctx, cx, bcy, bw, bh, DRAGON.body);
+  // Spine ridge (center line)
+  drawLine(ctx, cx, bcy - bh + 2, cx, bcy + bh - 2, DRAGON.bodyDeep);
+  // Belly glow (lava showing through)
+  const bellyAlpha = rage ? 0.3 : 0.12;
+  addGlow(ctx, cx, bcy, Math.round(bw * 0.6), rage ? DRAGON.lavaGlow : DRAGON.bellyGlow, bellyAlpha + Math.sin(phase * 2) * 0.05);
+  // Belly scale lines
+  for (let i = 0; i < 3; i++) {
+    const sy = bcy + 2 + i * 3;
+    const hw = Math.round(bw * (0.5 - i * 0.1));
+    drawLine(ctx, cx - hw, sy, cx + hw, sy, hexToRgba(DRAGON.belly, 0.5));
+  }
+  // Scale texture dots
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + phase * 0.08;
+    const sx = cx + Math.round(Math.cos(a) * bw * 0.5);
+    const sy = bcy + Math.round(Math.sin(a) * bh * 0.45);
+    setPixel(ctx, sx, sy, hexToRgba(DRAGON.bodyMid, 0.4));
+  }
+
+  // === 5. Spine ridges (on body) ===
+  for (let i = 0; i < 6; i++) {
+    const t = (i - 2.5) / 3;
+    const sy = Math.round(bcy + t * bh * 0.7);
+    drawLine(ctx, cx - 2, sy, cx, sy - 1, DRAGON.spine);
+    drawLine(ctx, cx + 2, sy, cx, sy - 1, DRAGON.spine);
+  }
+
+  // === 6. Wings (massive, spread left-right) ===
+  for (const side of [-1, 1] as const) {
+    const wbx = cx + side * 8;  // wing base on body edge
+    const wby = cy;
+
+    // 3 wing bones
+    const boneLens = [34, 30, 24].map(l => Math.round(l * wingSpread));
+    // Bone endpoints: front bone angles down (toward head), back bone angles up (toward tail)
+    const boneEndpoints = [
+      { x: wbx + side * boneLens[0], y: wby + 12 + Math.round(wingY) },      // front
+      { x: wbx + side * boneLens[1], y: wby - 2 + Math.round(wingY * 0.7) },  // middle
+      { x: wbx + side * boneLens[2], y: wby - 14 + Math.round(wingY * 0.4) }, // back
+    ];
+
+    // Wing membrane — fill area between bones using scanline
+    const memColor = rage ? DRAGON.wingMemRage : DRAGON.wingMem;
+    for (let row = Math.min(boneEndpoints[2].y, wby - 8); row <= Math.max(boneEndpoints[0].y, wby + 8); row++) {
+      const t = (row - boneEndpoints[2].y) / (boneEndpoints[0].y - boneEndpoints[2].y + 0.01);
+      const outerX = Math.round(wbx + side * (boneLens[2] + t * (boneLens[0] - boneLens[2])));
+      const innerX = wbx + side * 2;
+      const startX = Math.min(innerX, outerX);
+      const endX = Math.max(innerX, outerX);
+      for (let px = startX; px <= endX; px++) {
+        setPixel(ctx, px, row, hexToRgba(memColor, 0.55));
       }
     }
+
+    // Rage: wing inner glow
+    if (rage) {
+      addGlow(ctx, wbx + side * 18, wby, 14, DRAGON.fireRed, 0.08);
+    }
+
+    // Wing bones
+    for (const ep of boneEndpoints) {
+      drawLine(ctx, wbx, wby, ep.x, ep.y, DRAGON.wingBone);
+      drawLine(ctx, wbx, wby + 1, ep.x, ep.y + 1, DRAGON.wingBone);
+    }
+
+    // Wing bone tip claws (first 2 bones)
+    for (let b = 0; b < 2; b++) {
+      const ep = boneEndpoints[b];
+      setPixel(ctx, ep.x + side, ep.y, DRAGON.claw);
+      setPixel(ctx, ep.x + side, ep.y + 1, DRAGON.claw);
+    }
   }
 
-  // Scale shimmer — rotating
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + phase * 0.2;
-    const r = 8 * scale;
-    setPixel(ctx, Math.round(cx + r * Math.cos(a) * 0.6), Math.round(cy + r * Math.sin(a) * 0.4), '#e06040');
+  // === 7. Back legs (toward tail = upper area) ===
+  for (const side of [-1, 1] as const) {
+    const lx = cx + side * 14;
+    const ly = bcy - 8;
+    const le = -legAnim; // opposite phase to front legs
+    drawRect(ctx, lx + (side > 0 ? 0 : -5), ly + le, 5, 10, DRAGON.bodyDark);
+    // Claws (3)
+    for (let c = 0; c < 3; c++) {
+      setPixel(ctx, lx + side * (3 + c), ly + le + 9 + c, DRAGON.claw);
+    }
   }
 
-  // Head (top circle) — slight bob
-  const headBob = Math.round(Math.sin(phase * 2) * scale);
-  fillCircle(ctx, cx, cy - bodyH - Math.floor(4 * scale) + headBob, Math.floor(6 * scale), PALETTE.titan);
-
-  // Eyes — glow pulsing
-  const eyeY = cy - bodyH - Math.floor(4 * scale) + headBob;
-  const eyeColor = rage ? '#ff2020' : PALETTE.gold;
-  setPixel(ctx, cx - Math.floor(2 * scale), eyeY, eyeColor);
-  setPixel(ctx, cx + Math.floor(2 * scale), eyeY, eyeColor);
-
-  // Flame aura — pulsing
-  addGlow(ctx, cx, cy + bodyH, Math.floor(10 * scale), auraColor, auraPulse);
-
-  // Fire breath particles (every other frame)
-  if (frame % 3 !== 0) {
-    const bDist = (frame % 3) * 3 * scale;
-    setPixel(ctx, Math.round(cx), Math.round(cy - bodyH - 6 * scale - bDist + headBob), auraColor);
-    setPixel(ctx, Math.round(cx + scale), Math.round(cy - bodyH - 7 * scale - bDist + headBob), PALETTE.gold);
+  // === 8. Front legs (toward head = lower area) ===
+  for (const side of [-1, 1] as const) {
+    const lx = cx + side * 12;
+    const ly = bcy + 6;
+    const le = legAnim; // main phase
+    drawRect(ctx, lx + (side > 0 ? 0 : -5), ly + le, 5, 10, DRAGON.bodyMid);
+    for (let c = 0; c < 3; c++) {
+      setPixel(ctx, lx + side * (3 + c), ly + le + 9 + c, DRAGON.claw);
+    }
   }
 
+  // === 9. Neck connection ===
+  fillEllipse(ctx, cx, bcy + bh - 2, 8, 5, DRAGON.body);
+
+  // === 10. Head (bottom — facing downward, movement direction) ===
+  const headY = bcy + bh + 6 + headBob;
+
+  // Head shape (hexagonal, snout pointing down)
+  // Top of head (wider)
+  fillEllipse(ctx, cx, headY, 9, 6, DRAGON.body);
+  // Snout (narrower, extends down)
+  for (let dy = 0; dy < 6; dy++) {
+    const hw = Math.round(5 - dy * 0.7);
+    drawRect(ctx, cx - hw, headY + 4 + dy, hw * 2 + 1, 1, dy < 3 ? DRAGON.body : DRAGON.bodyDark);
+  }
+  // Head center ridge
+  drawLine(ctx, cx, headY - 4, cx, headY + 9, DRAGON.bodyDeep);
+  // Head dark top half
+  for (let dy = -5; dy < 0; dy++) {
+    const hw = Math.round(4 + dy * 0.3);
+    if (hw > 0) drawRect(ctx, cx - hw, headY + dy, hw * 2 + 1, 1, DRAGON.bodyDark);
+  }
+
+  // Horns (sweeping upward/outward — trailing behind the head)
+  for (const side of [-1, 1] as const) {
+    // Horn base to tip
+    drawLine(ctx, cx + side * 6, headY - 2, cx + side * 14, headY - 8, DRAGON.horn);
+    drawLine(ctx, cx + side * 6, headY - 1, cx + side * 14, headY - 7, DRAGON.horn);
+    // Horn tip highlight
+    setPixel(ctx, cx + side * 14, headY - 8, DRAGON.hornTip);
+    setPixel(ctx, cx + side * 13, headY - 8, DRAGON.hornTip);
+  }
+
+  // Eyes (on sides of head, glowing)
+  for (const side of [-1, 1] as const) {
+    const ex = cx + side * 4;
+    const ey = headY + 1;
+    const eColor = rage ? DRAGON.eyeRage : DRAGON.eyeNorm;
+    // Eye glow
+    addGlow(ctx, ex, ey, rage ? 5 : 3, eColor, rage ? 0.3 : 0.2);
+    // Eye dot
+    setPixel(ctx, ex, ey, eColor);
+    setPixel(ctx, ex + 1, ey, eColor);
+    // Eye highlight
+    setPixel(ctx, ex + 1, ey - 1, '#ffffff');
+  }
+
+  // Nostrils
+  setPixel(ctx, cx - 1, headY + 8, DRAGON.bodyDeep);
+  setPixel(ctx, cx + 1, headY + 8, DRAGON.bodyDeep);
+
+  // === 11. Fire breath (downward — toward movement direction) ===
+  // Nostril smoke (always)
+  setPixel(ctx, cx - 1, headY + 10, hexToRgba(DRAGON.smoke, 0.3));
+  setPixel(ctx, cx + 1, headY + 11, hexToRgba(DRAGON.smoke, 0.25));
+
+  // Periodic fire breath (4-frame cycle)
+  const breathCycle = frame % 4;
+  if (breathCycle >= 1) {
+    const fireLen = rage ? breathCycle * 5 : breathCycle * 3;
+    const fireBaseY = headY + 10;
+    // Fire stream — 3 layers
+    for (let fy = 0; fy < fireLen; fy++) {
+      const t = fy / fireLen;
+      const halfW = Math.round(2 * (1 - t * 0.5)); // narrows toward tip
+      const colors = [DRAGON.fireCore, rage ? DRAGON.fireRed : DRAGON.fireOrange, DRAGON.fireDark];
+      const c = colors[Math.min(Math.floor(t * 3), 2)];
+      const alpha = 0.8 - t * 0.4;
+      for (let fx = -halfW; fx <= halfW; fx++) {
+        // Slight wave
+        const wave = Math.round(Math.sin(fy * 0.8 + phase * 3) * 1);
+        setPixel(ctx, cx + fx + wave, fireBaseY + fy, hexToRgba(c, alpha));
+      }
+    }
+    // Fire core (bright center)
+    setPixel(ctx, cx, fireBaseY, DRAGON.fireCore);
+    setPixel(ctx, cx, fireBaseY + 1, DRAGON.fireCore);
+
+    // Smoke puffs at tip
+    if (breathCycle >= 2) {
+      setPixel(ctx, cx - 1, fireBaseY + fireLen + 1, hexToRgba(DRAGON.smoke, 0.2));
+      setPixel(ctx, cx + 1, fireBaseY + fireLen + 2, hexToRgba(DRAGON.smoke, 0.15));
+    }
+  }
+
+  // === 12. Rage overlay ===
+  if (rage) {
+    // Lava crack lines on body (5 lines)
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + phase * 0.12;
+      const r1 = bw * 0.3;
+      const r2 = bw * 0.8;
+      const x1 = Math.round(cx + Math.cos(a) * r1);
+      const y1 = Math.round(bcy + Math.sin(a) * bh * 0.3);
+      const x2 = Math.round(cx + Math.cos(a + 0.3) * r2);
+      const y2 = Math.round(bcy + Math.sin(a + 0.3) * bh * 0.7);
+      drawLine(ctx, x1, y1, x2, y2, hexToRgba('#e04020', 0.2));
+    }
+
+    // Body edge glow
+    for (let a = 0; a < Math.PI * 2; a += 0.15) {
+      const edgeX = Math.round(cx + Math.cos(a) * (bw + 2));
+      const edgeY = Math.round(bcy + Math.sin(a) * (bh + 2));
+      setPixel(ctx, edgeX, edgeY, hexToRgba(DRAGON.fireRed, 0.15));
+    }
+  }
 }
 
 function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {
@@ -637,7 +832,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,
-      section: 'boss' as const,
+      section: 'preload' as const,
     });
   }
 
@@ -661,7 +856,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,
-      section: 'boss' as const,
+      section: 'preload' as const,
     });
   }
 

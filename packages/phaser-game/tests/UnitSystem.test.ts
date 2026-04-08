@@ -28,9 +28,12 @@ function createSprite() {
 		setPosition: vi.fn().mockReturnThis(),
 		setTint: vi.fn().mockReturnThis(),
 		clearTint: vi.fn().mockReturnThis(),
+		setTexture: vi.fn().mockReturnThis(),
+		setRotation: vi.fn().mockReturnThis(),
 		play: vi.fn().mockReturnThis(),
 		once: vi.fn(),
 		destroy: vi.fn(),
+		active: true,
 	};
 }
 
@@ -48,6 +51,7 @@ function createScene() {
 		add: {
 			sprite: vi.fn(() => createSprite()),
 			graphics: vi.fn(() => createGraphics()),
+			ellipse: vi.fn(() => ({ setDepth: vi.fn(), setPosition: vi.fn(), destroy: vi.fn() })),
 		},
 		textures: { exists: vi.fn(() => false) },
 		anims: { exists: vi.fn(() => false) },

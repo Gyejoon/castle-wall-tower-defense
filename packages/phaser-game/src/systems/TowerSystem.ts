@@ -55,6 +55,8 @@ export class TowerSystem {
 		maxTtl: number;
 		style: 'beam' | 'arc' | 'arrow';
 		arrowIndex?: number;
+		targetUnitId?: string;
+		impactPending?: boolean;
 	}> = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
@@ -396,13 +398,17 @@ export class TowerSystem {
 					maxTtl,
 					style,
 					arrowIndex,
+					targetUnitId: style === 'arrow' ? closestUnit.instanceId : undefined,
+					impactPending: style === 'arrow',
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
-				this.spawnImpactVfx(
-					this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
-					closestUnit.x,
-					closestUnit.y,
-				);
+				if (style !== 'arrow') {
+					this.spawnImpactVfx(
+						this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
+						closestUnit.x,
+						closestUnit.y,
+					);
+				}
 
 				const lastSound = this.lastSoundTime.get(def.type) ?? 0;
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
@@ -488,9 +494,25 @@ export class TowerSystem {
 		for (let i = 0; i < this.attackLines.length; i++) {
 			const line = this.attackLines[i];
 			line.ttl -= delta;
+
+			// Track target for arrows: update x2/y2 to unit's current position
+			if (line.style === 'arrow' && line.targetUnitId) {
+				const target = unitPositions.find(
+					(u) => u.instanceId === line.targetUnitId,
+				);
+				if (target && target.hp > 0) {
+					line.x2 = target.x;
+					line.y2 = target.y;
+				}
+			}
+
 			if (line.ttl <= 0) {
 				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
 					this.arrowPool[line.arrowIndex].setVisible(false);
+				}
+				// Spawn impact VFX when arrow arrives
+				if (line.impactPending) {
+					this.spawnImpactVfx('projectile-hit-flash', line.x2, line.y2);
 				}
 				continue;
 			}

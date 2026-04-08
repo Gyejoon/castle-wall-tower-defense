@@ -385,7 +385,10 @@ export class TowerSystem {
 				if (style === 'arrow') {
 					this.ensureArrowPool();
 					const idx = this.arrowPool.findIndex((a) => !a.visible);
-					if (idx >= 0) arrowIndex = idx;
+					if (idx >= 0) {
+						arrowIndex = idx;
+						this.arrowPool[idx].setVisible(true);
+					}
 				}
 				const maxTtl = style === 'arrow' ? 120 : 80;
 				this.attackLines.push({

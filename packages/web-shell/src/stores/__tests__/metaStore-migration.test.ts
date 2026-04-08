@@ -38,7 +38,7 @@ describe('metaStore v1→v4 migration', () => {
 		useMetaStore.setState(createDefaultSave());
 	});
 
-	it('v1 정상 데이터 → v3으로 마이그레이션', () => {
+	it('v1 정상 데이터 → v4으로 마이그레이션 (laser→archer 포함)', () => {
 		const v1Save = {
 			version: 1,
 			profile: {
@@ -63,7 +63,7 @@ describe('metaStore v1→v4 migration', () => {
 				screenShake: true,
 				showDamageNumbers: false,
 			},
-			selectedDeck: ['archer', 'plasma', 'emp', 'shield'],
+			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
 		};
 		vi.stubGlobal(
 			'localStorage',
@@ -75,6 +75,7 @@ describe('metaStore v1→v4 migration', () => {
 
 		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.version).toBe(4);
+		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
 		expect(s.profile.diamond).toBe(0);

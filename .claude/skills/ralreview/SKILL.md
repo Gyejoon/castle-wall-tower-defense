@@ -35,7 +35,8 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
    - **React 파일**: `packages/web-shell/src/**/*.tsx`
    - **Shared 파일**: `packages/shared/src/**/*.ts`
 4. `.ts`/`.tsx` 변경이 없으면 즉시 PASS 처리한다.
-5. 이번 반복의 대상 파일 목록과 메모를 남긴다.
+5. diff에 `docs/game-spec/**`, `.claude/skills/*/SKILL.md`, `AGENTS.md`, `README.md`가 포함되면 `/doc-validate` 실행을 권고한다. ralreview는 코드 품질만 검증하고, 문서 교차참조 정합성은 doc-validate가 담당한다.
+6. 이번 반복의 대상 파일 목록과 메모를 남긴다.
 
 ## Phase 1: Simplify
 

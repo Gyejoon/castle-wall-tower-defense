@@ -491,6 +491,12 @@ export class TowerSystem {
 			}
 		}
 
+		// Build unit lookup map for O(1) arrow tracking
+		const unitMap =
+			this.attackLines.length > 0
+				? new Map(unitPositions.map((u) => [u.instanceId, u]))
+				: null;
+
 		this.attackGraphics.clear();
 		let write = 0;
 		for (let i = 0; i < this.attackLines.length; i++) {
@@ -498,10 +504,8 @@ export class TowerSystem {
 			line.ttl -= delta;
 
 			// Track target for arrows: update x2/y2 to unit's current position
-			if (line.style === 'arrow' && line.targetUnitId) {
-				const target = unitPositions.find(
-					(u) => u.instanceId === line.targetUnitId,
-				);
+			if (line.style === 'arrow' && line.targetUnitId && unitMap) {
+				const target = unitMap.get(line.targetUnitId);
 				if (target && target.hp > 0) {
 					line.x2 = target.x;
 					line.y2 = target.y;

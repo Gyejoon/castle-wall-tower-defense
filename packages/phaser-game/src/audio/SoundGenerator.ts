@@ -493,7 +493,7 @@ export class SoundGenerator {
 	playArrowImpact(): void {
 		const now = Date.now();
 		const last = this.throttleMap.get('arrowImpact');
-		if (last !== undefined && now - last < 80) return;
+		if (last !== undefined && now - last < 30) return;
 		this.throttleMap.set('arrowImpact', now);
 		this.play({
 			frequency: 200,

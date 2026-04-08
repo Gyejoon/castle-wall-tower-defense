@@ -43,15 +43,15 @@ export function GamePage() {
 	// iOS AudioContext unlock on first user gesture
 	useEffect(() => {
 		const unlockAudio = async () => {
+			document.removeEventListener('pointerdown', unlockAudio);
+			document.removeEventListener('touchstart', unlockAudio);
+			document.removeEventListener('click', unlockAudio);
 			try {
 				await soundGenerator.unlock();
 				soundGenerator.setMasterVolume(useGameStore.getState().sfxVolume);
 			} catch {
 				/* AudioContext.resume() can reject in restricted contexts */
 			}
-			document.removeEventListener('pointerdown', unlockAudio);
-			document.removeEventListener('touchstart', unlockAudio);
-			document.removeEventListener('click', unlockAudio);
 		};
 		document.addEventListener('pointerdown', unlockAudio);
 		document.addEventListener('touchstart', unlockAudio);

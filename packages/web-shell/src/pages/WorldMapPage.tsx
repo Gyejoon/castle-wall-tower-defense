@@ -97,6 +97,7 @@ export function WorldMapPage() {
 						<div
 							className="relative"
 							style={{
+								width: `${MAP_CONTENT_WIDTH}px`,
 								height: `${MAP_CONTENT_HEIGHT}px`,
 								background: `
 								radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),

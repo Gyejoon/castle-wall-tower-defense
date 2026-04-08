@@ -52,8 +52,12 @@ export class TowerSystem {
 		y2: number;
 		color: number;
 		ttl: number;
-		style: 'beam' | 'arc';
+		maxTtl: number;
+		style: 'beam' | 'arc' | 'arrow';
+		arrowIndex?: number;
 	}> = [];
+	private arrowPool: Phaser.GameObjects.Image[] = [];
+	private static readonly ARROW_POOL_SIZE = 16;
 
 	constructor(
 		scene: Phaser.Scene,
@@ -69,6 +73,19 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
+		this.initArrowPool();
+	}
+
+	private initArrowPool(): void {
+		const textureKey = 'projectile-arrow';
+		if (!this.scene.textures.exists(textureKey)) return;
+		for (let i = 0; i < TowerSystem.ARROW_POOL_SIZE; i++) {
+			const arrow = this.scene.add.image(0, 0, textureKey);
+			arrow.setVisible(false);
+			arrow.setDepth(25);
+			arrow.setDisplaySize(24, 6);
+			this.arrowPool.push(arrow);
+		}
 	}
 
 	placeTower(
@@ -355,15 +372,27 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
-				const style = this.hasSplash(special) ? 'arc' as const : 'beam' as const;
+				const style = this.hasSplash(special)
+					? 'arc' as const
+					: (def.type === 'archer' || def.type === 'twin_archer')
+						? 'arrow' as const
+						: 'beam' as const;
+				let arrowIndex: number | undefined;
+				if (style === 'arrow') {
+					const idx = this.arrowPool.findIndex((a) => !a.visible);
+					if (idx >= 0) arrowIndex = idx;
+				}
+				const maxTtl = style === 'arrow' ? 120 : 80;
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,
 					x2: closestUnit.x,
 					y2: closestUnit.y,
 					color,
-					ttl: 80,
+					ttl: maxTtl,
+					maxTtl,
 					style,
+					arrowIndex,
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				this.spawnImpactVfx(
@@ -456,12 +485,53 @@ export class TowerSystem {
 		for (let i = 0; i < this.attackLines.length; i++) {
 			const line = this.attackLines[i];
 			line.ttl -= delta;
-			if (line.ttl <= 0) continue;
-			const alpha = line.ttl / 80;
+			if (line.ttl <= 0) {
+				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
+					this.arrowPool[line.arrowIndex].setVisible(false);
+				}
+				continue;
+			}
+			const alpha = line.ttl / line.maxTtl;
 
-			if (line.style === 'arc') {
+			if (line.style === 'arrow') {
+				const t = 1 - line.ttl / line.maxTtl; // 0→1 as arrow flies
+				const dx = line.x2 - line.x1;
+				const dy = line.y2 - line.y1;
+				const px = line.x1 + dx * t;
+				const py = line.y1 + dy * t - Math.sin(t * Math.PI) * 15; // low arc (15px)
+
+				// Rotation angle (tangent direction)
+				const nextT = Math.min(t + 0.05, 1);
+				const nx = line.x1 + dx * nextT;
+				const ny = line.y1 + dy * nextT - Math.sin(nextT * Math.PI) * 15;
+				const angle = Math.atan2(ny - py, nx - px);
+
+				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
+					const arrow = this.arrowPool[line.arrowIndex];
+					arrow.setPosition(px, py);
+					arrow.setRotation(angle);
+					arrow.setAlpha(alpha);
+					arrow.setVisible(true);
+				} else {
+					// Fallback: draw arrow with graphics if pool exhausted
+					this.attackGraphics.fillStyle(line.color, alpha);
+					this.attackGraphics.fillCircle(px, py, 3);
+				}
+
+				// Trail line behind arrow
+				if (t > 0.08) {
+					const trailT = t - 0.08;
+					const trailX = line.x1 + dx * trailT;
+					const trailY = line.y1 + dy * trailT - Math.sin(trailT * Math.PI) * 15;
+					this.attackGraphics.lineStyle(1, line.color, alpha * 0.3);
+					this.attackGraphics.beginPath();
+					this.attackGraphics.moveTo(trailX, trailY);
+					this.attackGraphics.lineTo(px, py);
+					this.attackGraphics.strokePath();
+				}
+			} else if (line.style === 'arc') {
 				// Parabolic arc projectile (catapult/splash towers)
-				const t = 1 - line.ttl / 80; // 0→1 as projectile flies
+				const t = 1 - line.ttl / line.maxTtl; // 0→1 as projectile flies
 				const dx = line.x2 - line.x1;
 				const dy = line.y2 - line.y1;
 				const px = line.x1 + dx * t;
@@ -480,7 +550,7 @@ export class TowerSystem {
 					this.attackGraphics.fillCircle(trailX, trailY, 2);
 				}
 			} else {
-				// Beam (archer/default)
+				// Beam (default)
 				this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
 				this.attackGraphics.beginPath();
 				this.attackGraphics.moveTo(line.x1, line.y1);
@@ -493,7 +563,7 @@ export class TowerSystem {
 				this.attackGraphics.strokePath();
 			}
 
-			if (line.style !== 'arc' && line.ttl > 50) {
+			if (line.style === 'beam' && line.ttl > 50) {
 				this.attackGraphics.fillStyle(0xffffff, alpha * 0.6);
 				this.attackGraphics.fillCircle(line.x2, line.y2, 4);
 			}
@@ -620,6 +690,14 @@ export class TowerSystem {
 		}
 		this.towers.clear();
 		this.attackGraphics?.destroy();
-		this.attackLines = [];
+		// Release all in-flight arrows before destroying pool
+		for (const line of this.attackLines) {
+			if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
+				this.arrowPool[line.arrowIndex].setVisible(false);
+			}
+		}
+		this.attackLines.length = 0;
+		for (const arrow of this.arrowPool) arrow.destroy();
+		this.arrowPool.length = 0;
 	}
 }

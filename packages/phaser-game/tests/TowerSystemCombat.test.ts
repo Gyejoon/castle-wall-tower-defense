@@ -305,4 +305,18 @@ describe('TowerSystem combat', () => {
 		// update() takes 3 params (time, delta, unitPositions), not 4
 		expect(towerSystem.update.length).toBeLessThanOrEqual(3);
 	});
+
+	it('archer tower produces arrow-style attack lines', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'archer');
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+
+		towerSystem.update(2000, 16, [
+			{ instanceId: 'u1', x: unitWorld.x, y: unitWorld.y, hp: 100, element: 'neutral' as const },
+		]);
+
+		const lines = (towerSystem as any).attackLines;
+		expect(lines.length).toBe(1);
+		expect(lines[0].style).toBe('arrow');
+	});
 });

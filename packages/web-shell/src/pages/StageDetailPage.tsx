@@ -69,7 +69,6 @@ export function StageDetailPage() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
-	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const selectedStar = useGameStore((s) => s.selectedStar);
 	const setSelectedStar = useGameStore((s) => s.setSelectedStar);
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
@@ -88,24 +87,30 @@ export function StageDetailPage() {
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;
 
-	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', icon: '?' };
-	const maxXp = getMaxXpForMap(selectedMapId);
-	const maxGold = getMaxGoldForMap(selectedMapId);
+	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', thumb: '' };
+	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
+	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
 	const totalWaves = getTotalWavesForMap(selectedMapId);
 	const waves = getWavesForMap(selectedMapId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
 	const lanes = getMapPaths(map).length;
-	const best = highestWave[selectedMapId] ?? 0;
-	const isCleared = stagesCleared.includes(selectedMapId);
+	const starKey =
+		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
+	const best = highestWave[starKey] ?? 0;
+	const isCleared = best >= totalWaves;
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [
 		{
 			label: '최대 경험치',
 			value: `${maxXp} XP`,
-			sub: `${totalWaves}웨이브 클리어 시`,
+			sub: `★${selectedStar} 기준`,
 		},
-		{ label: '최대 골드', value: `~${maxGold} G`, sub: '전 몬스터 처치 시' },
+		{
+			label: '최대 골드',
+			value: `~${maxGold} G`,
+			sub: `★${selectedStar} 기준`,
+		},
 		{
 			label: '웨이브',
 			value: `${totalWaves}`,
@@ -193,7 +198,7 @@ export function StageDetailPage() {
 								<p className="font-pixel text-[7px] text-text-secondary uppercase tracking-wider">
 									{card.label}
 								</p>
-								<p className="font-pixel text-[11px] text-gold mt-1">
+								<p className="font-pixel text-[11px] text-gold mt-1 transition-all duration-200">
 									{card.value}
 								</p>
 								<p className="font-pixel text-[6px] text-text-secondary mt-0.5">
@@ -249,7 +254,7 @@ export function StageDetailPage() {
 							<div className="flex items-center gap-2 px-3 py-2 bg-panel border border-gold/30">
 								<span className="font-pixel text-[11px] text-gold">▶▶</span>
 								<span className="font-pixel text-[9px] text-accent">
-									클리어 완료 — 2배속 플레이 가능
+									★{selectedStar} 클리어 완료 — 2배속 플레이 가능
 								</span>
 							</div>
 						</div>
@@ -287,9 +292,9 @@ export function StageDetailPage() {
 										}}
 									>
 										<div className="flex items-center justify-center gap-[2px]">
-											{Array.from({ length: star }, (_, i) => (
+											{([1, 2, 3] as const).slice(0, star).map((s) => (
 												<img
-													key={i}
+													key={s}
 													src="assets/ui/icon-star-active.png"
 													alt=""
 													width={10}

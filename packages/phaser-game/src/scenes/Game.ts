@@ -96,6 +96,12 @@ export class GameScene extends Phaser.Scene {
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		this.damageNumbers.setEnabled(value);
 	};
+	private onDeckIdsChange = (_parent: unknown, value: string[]) => {
+		if (value) {
+			this.playerDeck = new DeckSystem(buildDeckCards(value));
+			EventBus.emit('deck-loaded', { cards: this.playerDeck.getCards() });
+		}
+	};
 
 	private playerHp = INITIAL_PLAYER_HP;
 	private selectedStar: StarRating = 1;
@@ -193,7 +199,8 @@ export class GameScene extends Phaser.Scene {
 		}
 		this.currentSlotDef = mapWaves[0];
 		const rawStar = this.game.registry.get('selectedStar');
-		const selectedStar: StarRating = rawStar === 2 || rawStar === 3 ? rawStar : 1;
+		const selectedStar: StarRating =
+			rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
@@ -214,6 +221,7 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
+		this.game.registry.events.on('changedata-deckIds', this.onDeckIdsChange);
 
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -580,9 +588,10 @@ export class GameScene extends Phaser.Scene {
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
-		const starCleared = payload.result === 'victory'
-			? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
-			: false;
+		const starCleared =
+			payload.result === 'victory'
+				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
+				: false;
 
 		EventBus.emit('game-over', {
 			...payload,
@@ -818,6 +827,7 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
+		this.game.registry.events.off('changedata-deckIds', this.onDeckIdsChange);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();

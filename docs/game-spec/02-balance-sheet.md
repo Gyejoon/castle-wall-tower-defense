@@ -239,12 +239,19 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 > 코드 위치: `packages/shared/src/utils/combatPower.ts`
 
 ```
-전투력 = Σ (보유 타워별: 기본ATK × 등급배수 × 레벨배수 × 각성배수)
+전투력 = Σ (출전덱 4타워에 대해: basePower × 등급배수 × 레벨배수 × 각성배수)
+
+basePower:
+  - 공격 타워: damage × attackSpeed (DPS 기반)
+  - 서포트 타워: 유틸리티 가중치 (stun 15, stun_aoe_extended 40, stun_aoe_global 80, slow_30_aoe 20, 기타 10)
 
 등급배수: normal 1.0 / rare 1.1 / unique 1.25 / epic 1.45
 레벨배수: 1 + (level - 1) × 0.03
 각성배수: 0각성 1.0 / 1각성 1.2 / 2각성 1.5 / 3각성 2.0
 ```
+
+> 전투력은 전체 보유 컬렉션이 아닌 **출전덱(selectedDeck) 4타워**만 합산한다.
+> 덱 변경 시 즉시 재계산되며, 전투력 업적 진행도도 함께 갱신된다.
 
 ### 전투력 마일스톤
 | 전투력 | 프로필 프레임 색상 |

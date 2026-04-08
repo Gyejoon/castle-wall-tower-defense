@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getMaxGoldForMap, getMaxXpForMap } from '../src/constants/stageInfo';
+import {
+	getMaxGoldForMap,
+	getMaxXpForMap,
+	getTotalRewardMultiplier,
+} from '../src/constants/stageInfo';
 
 describe('stageInfo', () => {
 	describe('getMaxXpForMap', () => {
@@ -18,6 +22,14 @@ describe('stageInfo', () => {
 		it('returns 0 for unknown map', () => {
 			expect(getMaxXpForMap('nonexistent')).toBe(0);
 		});
+
+		it('forest_gate ★2 returns 300 XP (150 × 2 xp mult)', () => {
+			expect(getMaxXpForMap('forest_gate', 2)).toBe(300);
+		});
+
+		it('forest_gate ★3 returns 450 XP (150 × 3 xp mult)', () => {
+			expect(getMaxXpForMap('forest_gate', 3)).toBe(450);
+		});
 	});
 
 	describe('getMaxGoldForMap', () => {
@@ -35,6 +47,37 @@ describe('stageInfo', () => {
 
 		it('returns 0 for unknown map', () => {
 			expect(getMaxGoldForMap('nonexistent')).toBe(0);
+		});
+
+		it('forest_gate ★2 returns 2120 gold (848 × 2.5 gold mult)', () => {
+			expect(getMaxGoldForMap('forest_gate', 2)).toBe(2120);
+		});
+
+		it('forest_gate ★3 returns 4240 gold (848 × 5 gold mult)', () => {
+			expect(getMaxGoldForMap('forest_gate', 3)).toBe(4240);
+		});
+	});
+
+	describe('getTotalRewardMultiplier', () => {
+		it('forest_gate ★1 = {gold:1, xp:1}', () => {
+			expect(getTotalRewardMultiplier('forest_gate', 1)).toEqual({
+				gold: 1,
+				xp: 1,
+			});
+		});
+
+		it('lava_fortress ★2 = {gold:5, xp:4}', () => {
+			expect(getTotalRewardMultiplier('lava_fortress', 2)).toEqual({
+				gold: 5,
+				xp: 4,
+			});
+		});
+
+		it('storm_citadel ★3 = {gold:15, xp:9}', () => {
+			expect(getTotalRewardMultiplier('storm_citadel', 3)).toEqual({
+				gold: 15,
+				xp: 9,
+			});
 		});
 	});
 });

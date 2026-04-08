@@ -318,10 +318,18 @@ describe('TowerSystem combat', () => {
 		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
 
 		towerSystem.update(2000, 16, [
-			{ instanceId: 'u1', x: unitWorld.x, y: unitWorld.y, hp: 100, element: 'neutral' as const },
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral' as const,
+			},
 		]);
 
-		const lines = (towerSystem as any).attackLines;
+		const lines = (
+			towerSystem as unknown as { attackLines: { style: string }[] }
+		).attackLines;
 		expect(lines.length).toBe(1);
 		expect(lines[0].style).toBe('arrow');
 	});

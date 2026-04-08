@@ -3,7 +3,10 @@ import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
 export const createAchievementSlice: SliceCreator<
-	Pick<MetaActions, 'updateAchievementProgress' | 'claimAchievement' | 'checkAchievements'>
+	Pick<
+		MetaActions,
+		'updateAchievementProgress' | 'claimAchievement' | 'checkAchievements'
+	>
 > = (set, get) => ({
 	updateAchievementProgress: (id, value) => {
 		set((s) => ({
@@ -23,14 +26,18 @@ export const createAchievementSlice: SliceCreator<
 
 	claimAchievement: (id) => {
 		const state = get();
-		if (state.progress.achievements.claimed.includes(id)) return 'already_claimed';
+		if (state.progress.achievements.claimed.includes(id))
+			return 'already_claimed';
 		const def = ACHIEVEMENT_MAP[id];
 		if (!def) return 'not_ready';
 		const progress = state.progress.achievements.progress[id] ?? 0;
 		if (progress < def.target) return 'not_ready';
 
 		set((s) => ({
-			profile: { ...s.profile, diamond: s.profile.diamond + def.reward.diamond },
+			profile: {
+				...s.profile,
+				diamond: s.profile.diamond + def.reward.diamond,
+			},
 			progress: {
 				...s.progress,
 				achievements: {

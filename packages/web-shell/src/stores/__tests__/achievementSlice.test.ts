@@ -13,7 +13,7 @@ describe('achievementSlice', () => {
 		it('sets progress for a new achievement id', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 50);
 			expect(
-				useMetaStore.getState().progress.achievements.progress['cp_100'],
+				useMetaStore.getState().progress.achievements.progress.cp_100,
 			).toBe(50);
 		});
 
@@ -21,7 +21,7 @@ describe('achievementSlice', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 80);
 			useMetaStore.getState().updateAchievementProgress('cp_100', 30);
 			expect(
-				useMetaStore.getState().progress.achievements.progress['cp_100'],
+				useMetaStore.getState().progress.achievements.progress.cp_100,
 			).toBe(80);
 		});
 
@@ -29,7 +29,7 @@ describe('achievementSlice', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 50);
 			useMetaStore.getState().updateAchievementProgress('cp_100', 100);
 			expect(
-				useMetaStore.getState().progress.achievements.progress['cp_100'],
+				useMetaStore.getState().progress.achievements.progress.cp_100,
 			).toBe(100);
 		});
 	});
@@ -57,7 +57,7 @@ describe('achievementSlice', () => {
 		});
 
 		it('diamond amount matches ACHIEVEMENT_MAP definition', () => {
-			const expected = ACHIEVEMENT_MAP['cp_100'].reward.diamond;
+			const expected = ACHIEVEMENT_MAP.cp_100.reward.diamond;
 			const beforeDiamond = useMetaStore.getState().profile.diamond;
 			useMetaStore.getState().updateAchievementProgress('cp_100', 100);
 			useMetaStore.getState().claimAchievement('cp_100');

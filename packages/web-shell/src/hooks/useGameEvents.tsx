@@ -85,12 +85,11 @@ export function useGameEvents() {
 			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
-			meta.updateHighestWave(
-				useGameStore.getState().selectedMapId,
-				data.stats.wavesCleared,
-			);
+			const mapId = useGameStore.getState().selectedMapId;
+			const starKey =
+				data.selectedStar > 1 ? `${mapId}:${data.selectedStar}` : mapId;
+			meta.updateHighestWave(starKey, data.stats.wavesCleared);
 			if (data.result === 'victory') {
-				const mapId = useGameStore.getState().selectedMapId;
 				meta.recordStageClear(mapId);
 
 				// ★ Record star clear
@@ -202,8 +201,8 @@ export function useGameEvents() {
 			pushToast('BOSS CLEAR!', 'success');
 			// Boss kill achievements
 			const meta = useMetaStore.getState();
-			const prevBoss10 = meta.progress.achievements.progress['boss_10'] ?? 0;
-			const prevBoss100 = meta.progress.achievements.progress['boss_100'] ?? 0;
+			const prevBoss10 = meta.progress.achievements.progress.boss_10 ?? 0;
+			const prevBoss100 = meta.progress.achievements.progress.boss_100 ?? 0;
 			meta.updateAchievementProgress('boss_10', prevBoss10 + 1);
 			meta.updateAchievementProgress('boss_100', prevBoss100 + 1);
 		};

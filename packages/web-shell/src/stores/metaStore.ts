@@ -42,7 +42,10 @@ export const useMetaStore = create<MetaState>()(
 						localStorage.removeItem('tutorial_completed');
 					} catch {}
 
-					save.profile.combatPower = calcCombatPower(save.collection);
+					save.profile.combatPower = calcCombatPower(
+						save.collection,
+						save.selectedDeck,
+					);
 
 					set({
 						version: save.version,

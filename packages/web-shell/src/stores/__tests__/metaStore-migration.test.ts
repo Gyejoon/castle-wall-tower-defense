@@ -303,11 +303,11 @@ describe('metaStore v1→v4 migration', () => {
 		const result = parseSave();
 
 		expect(result).not.toBeNull();
-		expect(result!.version).toBe(4);
-		expect(result!.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
-		expect(result!.collection[0].defId).toBe('archer');
-		expect(result!.collection[1].defId).toBe('twin_archer');
-		expect(result!.collection[2].defId).toBe('plasma'); // unchanged
+		expect(result?.version).toBe(4);
+		expect(result?.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
+		expect(result?.collection[0].defId).toBe('archer');
+		expect(result?.collection[1].defId).toBe('twin_archer');
+		expect(result?.collection[2].defId).toBe('plasma'); // unchanged
 
 		vi.unstubAllGlobals();
 	});
@@ -316,8 +316,7 @@ describe('metaStore v1→v4 migration', () => {
 describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 	it('achievements 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		delete (save.progress as any).achievements;
+		delete (save.progress as unknown as Record<string, unknown>).achievements;
 		const result = sanitizeV4Save(save);
 		expect(result.progress.achievements).toEqual({
 			claimed: [],
@@ -327,16 +326,14 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 
 	it('stageStars 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		delete (save.progress as any).stageStars;
+		delete (save.progress as unknown as Record<string, unknown>).stageStars;
 		const result = sanitizeV4Save(save);
 		expect(result.progress.stageStars).toEqual({});
 	});
 
 	it('collection 아이템에 awakening/duplicateCount 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tower = save.collection[0] as any;
+		const tower = save.collection[0] as unknown as Record<string, unknown>;
 		delete tower.awakening;
 		delete tower.duplicateCount;
 		const result = sanitizeV4Save(save);
@@ -346,16 +343,14 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 
 	it('combatPower 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		delete (save.profile as any).combatPower;
+		delete (save.profile as unknown as Record<string, unknown>).combatPower;
 		const result = sanitizeV4Save(save);
 		expect(result.profile.combatPower).toBe(0);
 	});
 
 	it('collection이 배열이 아니면 기본 컬렉션으로 대체', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(save as any).collection = 'corrupted';
+		(save as unknown as Record<string, unknown>).collection = 'corrupted';
 		const result = sanitizeV4Save(save);
 		expect(Array.isArray(result.collection)).toBe(true);
 		expect(result.collection.length).toBeGreaterThan(0);
@@ -363,10 +358,8 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 
 	it('parseSave가 v4 데이터에 sanitization 적용', () => {
 		const save = createDefaultSave();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		delete (save.progress as any).achievements;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		delete (save.progress as any).stageStars;
+		delete (save.progress as unknown as Record<string, unknown>).achievements;
+		delete (save.progress as unknown as Record<string, unknown>).stageStars;
 		vi.stubGlobal(
 			'localStorage',
 			makeLocalStorageMock({
@@ -375,11 +368,11 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result!.progress.achievements).toEqual({
+		expect(result?.progress.achievements).toEqual({
 			claimed: [],
 			progress: {},
 		});
-		expect(result!.progress.stageStars).toEqual({});
+		expect(result?.progress.stageStars).toEqual({});
 		vi.unstubAllGlobals();
 	});
 });

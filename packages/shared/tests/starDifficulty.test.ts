@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	checkStarClear,
 	getStarDifficultyMult,
-	STAR_CLEAR_CONDITIONS,
+	PERFECT_CLEAR_BONUS,
 	STAR_DIFFICULTY,
 	STAR_REWARD_MULTIPLIERS,
-	PERFECT_CLEAR_BONUS,
 } from '../src/constants/starDifficulty';
 
 describe('STAR_DIFFICULTY', () => {

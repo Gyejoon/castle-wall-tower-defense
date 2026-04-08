@@ -58,7 +58,13 @@ export interface GameEventMap {
 		startAtSec: number;
 	};
 	'boss-phase-change': { phase: 1 | 2; unitId: string };
-	'boss-hp-update': { unitId: string; defId: string; hp: number; maxHp: number; phase: 1 | 2 };
+	'boss-hp-update': {
+		unitId: string;
+		defId: string;
+		hp: number;
+		maxHp: number;
+		phase: 1 | 2;
+	};
 	'boss-defeated': { unitId: string; waveSlot: number };
 	'player-tower-count': { count: number };
 	'wave-preview': {

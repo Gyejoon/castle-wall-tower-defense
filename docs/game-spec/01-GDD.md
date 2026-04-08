@@ -277,8 +277,8 @@
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
   - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
-- **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). Home 탭에 단일 "성벽 막기" 골드 버튼
-- **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금/클리어 상태 표시, 권장 레벨 뱃지, 클리어 배지(골드 방패 픽셀 아트). 고정 px 좌표(430×640) 레이아웃으로 노드 간격과 화살표 길이 일정 유지. 마운트 시 권장 스테이지(첫 미클리어 해금 스테이지)로 자동 스크롤.
+- **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
+- **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금 상태 표시, 권장 레벨 뱃지, 별 진행도 표시(★1/★2/★3 활성 별 아이콘), 보상 배율 배지(x2/x3). 고정 px 좌표(430×640) 레이아웃으로 노드 간격과 화살표 길이 일정 유지. 마운트 시 권장 스테이지(첫 미클리어 해금 스테이지)로 자동 스크롤.
 - **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 2배속 가이드(클리어 완료 시 "▶▶ 클리어 완료 — 2배속 플레이 가능" 표시) + 출전 덱 4슬롯 미리보기 + 게임 시작
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
 - **Tower Sell Panel**: 배치된 타워 탭 시 하단 중앙에 표시 (타워 이름 + "판매 E+N" danger 버튼)

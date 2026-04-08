@@ -153,7 +153,7 @@ export function StageSelectPage() {
 			EventBus.off('stage-select-ready', onStageSelectReady);
 			EventBus.off('game-ready', onGameReady);
 		};
-	}, [enterLobby, setSelectedMapId, setGameReady]);
+	}, [enterLobby, setSelectedMapId, setGameReady, enterStageSelect]);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {

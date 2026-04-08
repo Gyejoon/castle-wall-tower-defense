@@ -269,9 +269,7 @@ export function TowerBottomSheet({
 						style={{ width: '100%', fontSize: '12px' }}
 						onClick={handlePromote}
 						disabled={
-							promoting ||
-							profile.gold < promoConfig.goldCost ||
-							!meetsLevelReq
+							promoting || profile.gold < promoConfig.goldCost || !meetsLevelReq
 						}
 					>
 						{promoting ? '승급 중...' : `승급 시도 (${promoConfig.goldCost}G)`}

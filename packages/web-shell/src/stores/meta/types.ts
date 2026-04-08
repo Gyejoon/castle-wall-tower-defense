@@ -1,4 +1,9 @@
-import type { GachaResult, MissionType, SaveData, StarRating } from '@gld/shared';
+import type {
+	GachaResult,
+	MissionType,
+	SaveData,
+	StarRating,
+} from '@gld/shared';
 
 export interface MetaActions {
 	loadSave: () => void;

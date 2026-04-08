@@ -60,8 +60,8 @@ describe('findPath (standalone)', () => {
 	it('경로가 있으면 Position 배열을 반환한다', () => {
 		const path = findPath(openGrid(), { x: 0, y: 0 }, { x: 4, y: 4 });
 		expect(path).not.toBeNull();
-		expect(path![0]).toEqual({ x: 0, y: 0 });
-		expect(path![path!.length - 1]).toEqual({ x: 4, y: 4 });
+		expect(path?.[0]).toEqual({ x: 0, y: 0 });
+		expect(path?.[path?.length - 1]).toEqual({ x: 4, y: 4 });
 	});
 
 	it('경로가 막히면 null을 반환한다', () => {

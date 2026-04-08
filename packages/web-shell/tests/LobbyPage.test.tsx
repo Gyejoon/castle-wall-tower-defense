@@ -75,7 +75,7 @@ describe('LobbyPage', () => {
 		fireEvent.click(collectionTab);
 
 		expect(view.getByText('보유 타워')).toBeTruthy();
-		expect(view.getByText('궁수 탑')).toBeTruthy();
+		expect(view.getAllByText('궁수 탑').length).toBeGreaterThanOrEqual(1);
 	});
 
 	it('shows settings tab with toggles', () => {

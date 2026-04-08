@@ -35,6 +35,7 @@ export function PhaserGame() {
 			useGameStore.getState().showDamageNumbers,
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
+		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
 		gameRef.current = game;
 
 		// Sync selectedDeck to Phaser registry so new runs use the latest deck
@@ -64,6 +65,15 @@ export function PhaserGame() {
 			}
 		});
 
+		// Sync selectedStar to Phaser registry in real-time
+		let prevStar = useGameStore.getState().selectedStar;
+		const unsubStar = useGameStore.subscribe((state) => {
+			if (state.selectedStar !== prevStar) {
+				prevStar = state.selectedStar;
+				gameRef.current?.registry.set('selectedStar', prevStar);
+			}
+		});
+
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -73,6 +83,7 @@ export function PhaserGame() {
 				unsubDeck();
 				unsubDmgNumbers();
 				unsubShake();
+				unsubStar();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

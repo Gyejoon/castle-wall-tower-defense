@@ -1,4 +1,4 @@
-import { TIER_NAMES, type GachaResult } from '@gld/shared';
+import { type GachaResult, TIER_NAMES } from '@gld/shared';
 import { colors, TIER_COLORS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
 import { PixelButton } from '../ui/PixelButton';
@@ -52,7 +52,7 @@ export function GachaRevealPhase({
 				<div className="grid grid-cols-5 gap-2 w-full">
 					{results.map((r, i) => (
 						<button
-							key={`${r.towerId}-${i}`}
+							key={i}
 							type="button"
 							onClick={() => onFlipCard(i)}
 							className={cn(

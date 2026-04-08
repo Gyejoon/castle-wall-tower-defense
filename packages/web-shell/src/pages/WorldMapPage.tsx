@@ -40,6 +40,7 @@ export function WorldMapPage() {
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const stageStars = useMetaStore((s) => s.progress.stageStars);
 
 	const maps = Object.values(MAP_REGISTRY);
 
@@ -93,7 +94,10 @@ export function WorldMapPage() {
 
 				{/* Map area — scrollable on small screens */}
 				<div className="relative flex-1 min-h-0">
-					<div ref={scrollRef} className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center justify-center">
+					<div
+						ref={scrollRef}
+						className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center justify-center"
+					>
 						<div
 							className="relative mx-auto"
 							style={{
@@ -106,6 +110,7 @@ export function WorldMapPage() {
 								src="assets/ui/worldmap-bg.webp"
 								alt=""
 								className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated]"
+								style={{ objectPosition: '40% center' }}
 							/>
 							<div
 								className="absolute inset-0 pointer-events-none"
@@ -171,7 +176,6 @@ export function WorldMapPage() {
 								const pos = NODE_POSITIONS[map.id];
 								if (!pos) return null;
 								const locked = !isMapUnlocked(map, playerLevel);
-								const cleared = stagesCleared.includes(map.id);
 								const theme = MAP_THEMES[map.id];
 
 								return (
@@ -196,9 +200,21 @@ export function WorldMapPage() {
 											{/* Landmark icon */}
 											<div
 												className="relative w-[96px] h-[96px] transition-[filter] duration-200"
-												style={!locked ? { filter: `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})` } : undefined}
-												onMouseEnter={(e) => { if (!locked) e.currentTarget.style.filter = `drop-shadow(0 0 8px ${theme?.borderColor})`; }}
-												onMouseLeave={(e) => { if (!locked) e.currentTarget.style.filter = `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`; }}
+												style={
+													!locked
+														? {
+																filter: `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`,
+															}
+														: undefined
+												}
+												onMouseEnter={(e) => {
+													if (!locked)
+														e.currentTarget.style.filter = `drop-shadow(0 0 8px ${theme?.borderColor})`;
+												}}
+												onMouseLeave={(e) => {
+													if (!locked)
+														e.currentTarget.style.filter = `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`;
+												}}
 											>
 												<img
 													src={theme?.landmark}
@@ -229,20 +245,35 @@ export function WorldMapPage() {
 													</div>
 												)}
 
-												{/* Clear badge */}
-												{cleared && !locked && (
-													<img
-														src="assets/ui/check-badge.png"
-														alt="클리어"
-														className="absolute top-0 right-0 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
-													/>
+												{/* Star progress */}
+												{!locked && (
+													<div className="absolute top-1 right-1 flex gap-[1px]">
+														{([1, 2, 3] as const).map((s) => (
+															<img
+																key={s}
+																src={
+																	s <=
+																	(stageStars[map.id] ??
+																		(stagesCleared.includes(map.id) ? 1 : 0))
+																		? 'assets/ui/icon-star-active.png'
+																		: 'assets/ui/icon-star-inactive.png'
+																}
+																alt=""
+																width={10}
+																height={10}
+																className="[image-rendering:pixelated] drop-shadow-[1px_1px_0px_#0a0804]"
+															/>
+														))}
+													</div>
 												)}
 											</div>
 
 											{/* Label */}
 											<div
 												className="mt-1 flex flex-col items-center gap-0.5 px-2 py-1 bg-panel/85 backdrop-blur-sm border"
-												style={{ borderColor: locked ? '#4a3a20' : theme?.borderColor }}
+												style={{
+													borderColor: locked ? '#4a3a20' : theme?.borderColor,
+												}}
 											>
 												<span
 													className={cn(
@@ -252,6 +283,7 @@ export function WorldMapPage() {
 												>
 													{map.name}
 												</span>
+
 												<span
 													className={cn(
 														'font-pixel text-[6px]',

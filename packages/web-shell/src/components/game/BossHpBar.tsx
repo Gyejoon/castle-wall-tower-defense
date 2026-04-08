@@ -9,8 +9,7 @@ interface BossHpBarProps {
 }
 
 export function BossHpBar({ entry }: BossHpBarProps) {
-	const pct =
-		entry.maxHp > 0 ? Math.max(0, entry.hp / entry.maxHp) * 100 : 0;
+	const pct = entry.maxHp > 0 ? Math.max(0, entry.hp / entry.maxHp) * 100 : 0;
 	const barColor = entry.phase === 2 ? '#c03020' : '#c87020';
 	const phaseLabel = entry.phase === 2 ? 'Phase 2' : 'Phase 1';
 

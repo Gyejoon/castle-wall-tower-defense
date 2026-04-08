@@ -44,6 +44,15 @@ export function App() {
 	useEffect(() => {
 		try {
 			useMetaStore.getState().loadSave();
+			// Sync persisted state to gameStore (created before loadSave runs)
+			const meta = useMetaStore.getState();
+			useGameStore.setState({
+				selectedDeck: meta.selectedDeck,
+				bgmVolume: meta.settings.bgmVolume,
+				sfxVolume: meta.settings.sfxVolume,
+				colorblindMode: meta.settings.colorblindMode,
+				screenShake: meta.settings.screenShake,
+			});
 			useMetaStore.getState().refreshMissions();
 			useMetaStore.getState().recordAttendance();
 		} catch (err) {

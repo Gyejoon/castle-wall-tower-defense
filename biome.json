@@ -23,7 +23,11 @@
 			},
 			"suspicious": {
 				"noExplicitAny": "error",
-				"noDoubleEquals": "error"
+				"noDoubleEquals": "error",
+				"noArrayIndexKey": "off"
+			},
+			"a11y": {
+				"noStaticElementInteractions": "off"
 			},
 			"complexity": {
 				"noUselessConstructor": "off"

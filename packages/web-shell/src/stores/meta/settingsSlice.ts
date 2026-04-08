@@ -1,3 +1,4 @@
+import { calcCombatPower } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -8,7 +9,19 @@ export const createSettingsSlice: SliceCreator<
 	>
 > = (set, get) => ({
 	setSelectedDeck: (deck) => {
-		set({ selectedDeck: deck });
+		const s = get();
+		const cp = calcCombatPower(s.collection, deck);
+		set({
+			selectedDeck: deck,
+			profile: { ...s.profile, combatPower: cp },
+		});
+		// Sync combat power achievements
+		get().updateAchievementProgress('cp_100', cp);
+		get().updateAchievementProgress('cp_500', cp);
+		get().updateAchievementProgress('cp_1000', cp);
+		get().updateAchievementProgress('cp_5000', cp);
+		get().updateAchievementProgress('cp_10000', cp);
+		get().updateAchievementProgress('cp_50000', cp);
 		debouncedSave(get());
 	},
 

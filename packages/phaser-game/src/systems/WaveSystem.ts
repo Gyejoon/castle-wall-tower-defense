@@ -173,6 +173,19 @@ export class WaveSystem {
 		this.hasSpawnedCurrentWave = false;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
+		// Emit boss warning if no pre_boss wave already emitted it
+		const prevWave =
+			this.currentWaveIndex > 0
+				? this.waves[this.currentWaveIndex - 1]
+				: undefined;
+		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
+			EventBus.emit('boss-warning', {
+				slotIndex: prevWave?.slotIndex ?? wave.slotIndex - 1,
+				bossSlotIndex: wave.slotIndex,
+				startAtSec: Math.round(this.elapsedMs / 1000),
+			});
+		}
+
 		// Spawn units
 		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
 		const waveHpMult = waveScale?.hp ?? 1;

@@ -1,4 +1,9 @@
-import { SAVE_STORAGE_KEY, SAVE_VERSION, type SaveData } from '@gld/shared';
+import {
+	createDefaultSave,
+	SAVE_STORAGE_KEY,
+	SAVE_VERSION,
+	type SaveData,
+} from '@gld/shared';
 
 // ── Save writing ──────────────────────────────────────────────
 
@@ -151,6 +156,42 @@ function migrateSave(
 	return version === SAVE_VERSION ? (current as unknown as SaveData) : null;
 }
 
+// ── Sanitization ─────────────────────────────────────────────
+
+const _defaults = createDefaultSave();
+
+/** Ensure all v4 required fields exist — guards against incomplete saves. */
+export function sanitizeV4Save(save: SaveData): SaveData {
+	const dp = _defaults.progress;
+	const dpr = _defaults.profile;
+	const dt = _defaults.collection[0];
+	const profile = save.profile ?? dpr;
+	const progress = save.progress ?? dp;
+
+	return {
+		...save,
+		profile: {
+			...profile,
+			combatPower: profile.combatPower ?? dpr.combatPower,
+		},
+		collection: Array.isArray(save.collection)
+			? save.collection
+					.filter((t): t is NonNullable<typeof t> => t != null)
+					.map((t) => ({
+						...t,
+						awakening: t.awakening ?? dt.awakening,
+						duplicateCount: t.duplicateCount ?? dt.duplicateCount,
+					}))
+			: _defaults.collection,
+		progress: {
+			...progress,
+			stageStars: progress.stageStars ?? dp.stageStars,
+			achievements: progress.achievements ?? dp.achievements,
+			awakeningStones: progress.awakeningStones ?? dp.awakeningStones,
+		},
+	};
+}
+
 export function parseSave(context?: {
 	tutorialCompleted?: boolean;
 }): SaveData | null {
@@ -159,9 +200,11 @@ export function parseSave(context?: {
 		if (!raw) return null;
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
-		if (parsed.version === SAVE_VERSION) return parsed as SaveData;
+		if (parsed.version === SAVE_VERSION)
+			return sanitizeV4Save(parsed as SaveData);
 		// Attempt migration from older version
-		return migrateSave(parsed, context);
+		const migrated = migrateSave(parsed, context);
+		return migrated ? sanitizeV4Save(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

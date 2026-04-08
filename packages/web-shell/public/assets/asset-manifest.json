@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-08T10:30:01.605Z",
+  "generated": "2026-04-08T18:12:50.338Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -485,7 +485,7 @@
       "frameWidth": 96,
       "frameHeight": 96,
       "frameCount": 8,
-      "section": "boss"
+      "section": "preload"
     },
     {
       "key": "unit-titan-boss-rage",
@@ -494,7 +494,7 @@
       "frameWidth": 96,
       "frameHeight": 96,
       "frameCount": 8,
-      "section": "boss"
+      "section": "preload"
     },
     {
       "key": "projectile-arrow",
@@ -1251,6 +1251,12 @@
       "type": "image",
       "path": "assets/ui/badge-new.png",
       "section": "gacha"
+    },
+    {
+      "key": "ui-check-badge",
+      "type": "image",
+      "path": "assets/ui/check-badge.png",
+      "section": "ui"
     }
   ]
 }

@@ -54,6 +54,7 @@ interface UnitInstance {
 	ccImmunityChance: number;
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
+	shadow: Phaser.GameObjects.Ellipse | null;
 }
 
 interface QueueUnitsOptions {
@@ -194,13 +195,23 @@ export class UnitSystem {
 			pathIndex: 0,
 		};
 
+		const bossTextureKey = `unit-${entry.def.id}-boss`;
+		const normalTextureKey = `unit-${entry.def.id}`;
+		const bossTextureReady =
+			entry.isBoss && this.scene.textures.exists(bossTextureKey);
+		const textureKey = bossTextureReady ? bossTextureKey : normalTextureKey;
 		const sprite = this.scene.add.sprite(
 			startWorld.x,
 			startWorld.y,
-			`unit-${entry.def.id}`,
+			textureKey,
 		);
-		sprite.setDisplaySize(40, 48);
-		sprite.play(`${entry.def.id}-walk`);
+		sprite.setDisplaySize(entry.isBoss ? 60 : 40, entry.isBoss ? 72 : 48);
+		const bossAnimKey = `anim-${bossTextureKey}`;
+		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
+			sprite.play(bossAnimKey);
+		} else {
+			sprite.play(`${entry.def.id}-walk`);
+		}
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (entry.def.element !== 'neutral') {
 			sprite.setTint(ELEMENT_TINT_COLORS[entry.def.element]);
@@ -212,6 +223,21 @@ export class UnitSystem {
 			32,
 			this.gridManager.getDepth(startGrid.x, startGrid.y) - 1,
 		);
+
+		// Flying boss: add ground shadow and offset sprite upward
+		let shadow: Phaser.GameObjects.Ellipse | null = null;
+		if (entry.isBoss) {
+			shadow = this.scene.add.ellipse(
+				startWorld.x,
+				startWorld.y,
+				40,
+				16,
+				0x000000,
+				0.3,
+			);
+			shadow.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y) - 1);
+			sprite.setPosition(startWorld.x, startWorld.y - 20);
+		}
 
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
@@ -238,6 +264,7 @@ export class UnitSystem {
 			baseArmor: scaled.armor * entry.armorMult,
 			ccImmunityChance: Math.min(1, scaled.ccImmunityChance + entry.ccResist),
 			waveSlot: entry.waveSlot,
+			shadow,
 			pathProgress: 0,
 		};
 		this.units.set(instanceId, instance);
@@ -353,6 +380,15 @@ export class UnitSystem {
 		) {
 			unit.bossPhase = 2;
 			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
+			// Switch to rage texture if available
+			const rageKey = `unit-${unit.def.id}-boss-rage`;
+			if (this.scene.textures.exists(rageKey)) {
+				unit.sprite.setTexture(rageKey);
+				const rageAnimKey = `anim-${rageKey}`;
+				if (this.scene.anims.exists(rageAnimKey)) {
+					unit.sprite.play(rageAnimKey);
+				}
+			}
 			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
 			EventBus.emit('boss-phase-change', {
 				phase: 2,
@@ -368,6 +404,7 @@ export class UnitSystem {
 				});
 			}
 			unit.sprite.destroy();
+			unit.shadow?.destroy();
 			unit.hpBar.destroy();
 			const deathFx = this.scene.add.sprite(
 				unit.worldX,
@@ -475,7 +512,7 @@ export class UnitSystem {
 	private reachedExitBuffer: { id: string; isBoss: boolean }[] = [];
 
 	update(
-		_time: number,
+		time: number,
 		delta: number,
 	): { reachedExit: { id: string; isBoss: boolean }[] } {
 		const reachedExit = this.reachedExitBuffer;
@@ -532,6 +569,7 @@ export class UnitSystem {
 			if (pathIdx >= unitLane.length - 1) {
 				reachedExit.push({ id, isBoss: unit.isBoss });
 				unit.sprite.destroy();
+				unit.shadow?.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(id);
 				this.removeFromLaneUnits(unit);
@@ -607,14 +645,30 @@ export class UnitSystem {
 				}
 			}
 
-			unit.sprite.setPosition(unit.worldX, unit.worldY);
+			// Boss flies above ground with bobbing; shadow stays on ground
+			if (unit.isBoss) {
+				const flyBob = Math.sin(time * 0.003) * 3;
+				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
+				if (unit.shadow) {
+					unit.shadow.setPosition(unit.worldX, unit.worldY);
+				}
+			} else {
+				unit.sprite.setPosition(unit.worldX, unit.worldY);
+			}
+			// Rotate boss sprite to face movement direction (sprite default: head pointing down = PI/2)
+			if (unit.isBoss && dist > 0.01) {
+				const moveAngle = Math.atan2(dy, dx);
+				unit.sprite.setRotation(moveAngle - Math.PI / 2);
+			}
 			const currentGrid = this.gridManager.worldToGrid(
 				unit.worldX,
 				unit.worldY,
 			);
-			unit.sprite.setDepth(
-				this.gridManager.getDepth(currentGrid.x, currentGrid.y),
-			);
+			const unitDepth = this.gridManager.getDepth(currentGrid.x, currentGrid.y);
+			unit.sprite.setDepth(unitDepth);
+			if (unit.shadow) {
+				unit.shadow.setDepth(unitDepth - 1);
+			}
 			this.renderHpBar(
 				unit.hpBar,
 				unit.worldX,
@@ -693,7 +747,8 @@ export class UnitSystem {
 					const clamped = Math.max(0, target);
 					// Lerp toward target for smooth deceleration instead of instant snap
 					const lerped =
-						rear.pathProgress + (clamped - rear.pathProgress) * this.COLLISION_LERP;
+						rear.pathProgress +
+						(clamped - rear.pathProgress) * this.COLLISION_LERP;
 					this.setUnitPathProgress(rear, Math.max(0, lerped));
 				}
 			}
@@ -740,6 +795,7 @@ export class UnitSystem {
 	destroy(): void {
 		for (const unit of this.units.values()) {
 			unit.sprite.destroy();
+			unit.shadow?.destroy();
 			unit.hpBar.destroy();
 		}
 		this.units.clear();

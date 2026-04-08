@@ -24,7 +24,10 @@ export class Preloader extends Phaser.Scene {
 		for (const id of getCoreUnitIds()) {
 			const assetKey = `unit-${id}`;
 			const entry = manifest.assets.find((a) => a.key === assetKey);
-			if (!entry) console.warn(`[Preloader] No manifest entry for "${assetKey}", falling back to 8 frames`);
+			if (!entry)
+				console.warn(
+					`[Preloader] No manifest entry for "${assetKey}", falling back to 8 frames`,
+				);
 			const endFrame = (entry?.frameCount ?? 8) - 1;
 
 			this.anims.create({
@@ -38,9 +41,28 @@ export class Preloader extends Phaser.Scene {
 			});
 		}
 
+		// Boss walk animations (looping)
+		for (const bossKey of ['unit-titan-boss', 'unit-titan-boss-rage']) {
+			const entry = manifest.assets.find((a) => a.key === bossKey);
+			if (!entry) continue;
+			const endFrame = (entry.frameCount ?? 8) - 1;
+			this.anims.create({
+				key: `anim-${bossKey}`,
+				frames: this.anims.generateFrameNumbers(bossKey, {
+					start: 0,
+					end: endFrame,
+				}),
+				frameRate: 10,
+				repeat: -1,
+			});
+		}
+
 		{
 			const entry = manifest.assets.find((a) => a.key === 'unit-death');
-			if (!entry) console.warn('[Preloader] No manifest entry for "unit-death", falling back to 8 frames');
+			if (!entry)
+				console.warn(
+					'[Preloader] No manifest entry for "unit-death", falling back to 8 frames',
+				);
 			const endFrame = (entry?.frameCount ?? 8) - 1;
 
 			this.anims.create({

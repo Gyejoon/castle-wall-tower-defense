@@ -377,42 +377,41 @@ function drawAncientDragonFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox
   drawRect(ctx, cx + 1, bodyCy + 8, 4, 7, hexToRgba(PALETTE.titan, 0.8));
 }
 
-function drawBossDragon(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number): void {
-  const cx = size / 2;
-  const cy = size / 2;
-  const scale = size / 48; // 48 is existing FRAME_H
+// === Dragon Boss Palette (dark & evil medieval dragon) ===
+const DRAGON = {
+  bodyDeep:    '#1a0404',
+  bodyDark:    '#2a0808',
+  body:        '#3a0e0e',
+  bodyMid:     '#4a1212',
+  bodyLight:   '#5a1818',
+  belly:       '#602020',
+  bellyGlow:   '#803020',
+  wingBone:    '#200404',
+  wingMem:     '#180303',
+  wingMemRage: '#2a0606',
+  spine:       '#1a0e04',
+  horn:        '#2a1a0a',
+  hornTip:     '#3a2a1a',
+  claw:        '#0a0402',
+  eyeNorm:     '#e0b040',
+  eyeRage:     '#ff1010',
+  fireCore:    '#ffe060',
+  fireOrange:  '#e07020',
+  fireRed:     '#c03020',
+  fireDark:    '#801808',
+  smoke:       '#403020',
+  lavaGlow:    '#c04010',
+} as const;
 
-  // Body (large oval)
-  const bodyW = Math.floor(16 * scale);
-  const bodyH = Math.floor(12 * scale);
-  for (let dy = -bodyH; dy <= bodyH; dy++) {
-    for (let dx = -bodyW; dx <= bodyW; dx++) {
-      if ((dx * dx) / (bodyW * bodyW) + (dy * dy) / (bodyH * bodyH) <= 1) {
-        setPixel(ctx, cx + dx, cy + dy, PALETTE.titan);
+/** Pixel-art ellipse fill (no anti-aliasing) — uses setPixel for crisp edges */
+function fillEllipse(ctx: import('@napi-rs/canvas').SKRSContext2D, cx: number, cy: number, rx: number, ry: number, color: string): void {
+  for (let dy = -ry; dy <= ry; dy++) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1) {
+        setPixel(ctx, cx + dx, cy + dy, color);
       }
     }
   }
-
-  // Wings (left/right triangles)
-  const wingSpan = Math.floor(20 * scale);
-  for (let i = 0; i < wingSpan; i++) {
-    const wingH = Math.floor((wingSpan - i) * 0.6);
-    for (let dy = -wingH; dy <= 0; dy++) {
-      setPixel(ctx, cx - bodyW - i, cy + dy, '#8b2020');
-      setPixel(ctx, cx + bodyW + i, cy + dy, '#8b2020');
-    }
-  }
-
-  // Head (top circle)
-  fillCircle(ctx, cx, cy - bodyH - Math.floor(4 * scale), Math.floor(6 * scale), PALETTE.titan);
-
-  // Eyes (yellow)
-  const eyeY = cy - bodyH - Math.floor(4 * scale);
-  setPixel(ctx, cx - Math.floor(2 * scale), eyeY, PALETTE.gold);
-  setPixel(ctx, cx + Math.floor(2 * scale), eyeY, PALETTE.gold);
-
-  // Flame aura (bottom glow)
-  addGlow(ctx, cx, cy + bodyH, Math.floor(10 * scale), PALETTE.fireOrange, 0.2);
 }
 
 function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: number, frame: number, rage: boolean): void {

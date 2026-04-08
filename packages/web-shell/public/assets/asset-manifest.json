@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-08T10:30:01.605Z",
+  "generated": "2026-04-08T17:48:25.777Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -1251,6 +1251,36 @@
       "type": "image",
       "path": "assets/ui/badge-new.png",
       "section": "gacha"
+    },
+    {
+      "key": "ui-check-badge",
+      "type": "image",
+      "path": "assets/ui/check-badge.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-worldmap-bg",
+      "type": "image",
+      "path": "assets/ui/worldmap-bg.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-forest_gate",
+      "type": "image",
+      "path": "assets/ui/landmark-forest_gate.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-lava_fortress",
+      "type": "image",
+      "path": "assets/ui/landmark-lava_fortress.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-storm_citadel",
+      "type": "image",
+      "path": "assets/ui/landmark-storm_citadel.png",
+      "section": "ui"
     }
   ]
 }

@@ -16,6 +16,7 @@ import { dirname } from 'path';
 import {
   AI_TEMP_DIR,
   COMFYUI_CONFIG,
+  STAGE_THUMB_PROMPTS,
   WORLDMAP_PROMPTS,
   toManifestEntry,
   type AssetPromptConfig,
@@ -92,8 +93,10 @@ async function generateAsset(config: AssetPromptConfig): Promise<ManifestEntry> 
   console.log(`  generating: ${config.key}`);
 
   const isBackground = config.key === 'ui-worldmap-bg';
-  const genWidth = isBackground ? 512 : 512;
-  const genHeight = isBackground ? 768 : 512;
+  const isStageThumb = config.key.startsWith('ui-stage-thumb-');
+  // Generate at higher resolution, resize to target later
+  const genWidth = isStageThumb ? 768 : 512;
+  const genHeight = isBackground ? 768 : isStageThumb ? 512 : 512;
 
   const tempPath = `${AI_TEMP_DIR}/${config.key}-raw.png`;
   mkdirSync(dirname(tempPath), { recursive: true });
@@ -113,15 +116,15 @@ async function generateAsset(config: AssetPromptConfig): Promise<ManifestEntry> 
   mkdirSync(dirname(config.outputPath), { recursive: true });
 
   if (isBackground) {
-    // Background: use as-is (already 512x768)
     const { writeFileSync, readFileSync } = await import('fs');
     writeFileSync(config.outputPath, readFileSync(tempPath));
   } else {
-    // Landmarks: resize from 512x512 to 96x96 with nearest-neighbor
+    // Resize to target dimensions
     const src = await loadImage(tempPath);
-    const { canvas, ctx } = makeCanvas(96, 96);
-    ctx.drawImage(src, 0, 0, 96, 96);
+    const { canvas, ctx } = makeCanvas(config.frameWidth, config.frameHeight);
+    ctx.drawImage(src, 0, 0, config.frameWidth, config.frameHeight);
     saveCanvas(canvas, config.outputPath);
+    console.log(`  wrote ${config.outputPath} (${config.frameWidth}x${config.frameHeight})`);
   }
 
   return toManifestEntry(config);
@@ -182,8 +185,9 @@ export async function generate(): Promise<ManifestEntry[]> {
   }
   console.log('  ComfyUI connected');
 
+  const allPrompts = [...WORLDMAP_PROMPTS, ...STAGE_THUMB_PROMPTS];
   const results = await Promise.allSettled(
-    WORLDMAP_PROMPTS.map((config) => generateAsset(config)),
+    allPrompts.map((config) => generateAsset(config)),
   );
 
   const entries: ManifestEntry[] = [];
@@ -193,7 +197,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       entries.push(result.value);
     } else {
       console.error(
-        `  ERROR generating ${WORLDMAP_PROMPTS[i].key}:`,
+        `  ERROR generating ${allPrompts[i].key}:`,
         result.reason,
       );
     }

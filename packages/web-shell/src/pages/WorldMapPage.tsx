@@ -23,9 +23,9 @@ const MAP_CONTENT_WIDTH = 430;
 const MAP_CONTENT_HEIGHT = 640;
 
 const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
-	forest_gate: { top: 460, left: 215 },
-	lava_fortress: { top: 270, left: 112 },
-	storm_citadel: { top: 80, left: 300 },
+	forest_gate: { top: 480, left: 250 },
+	lava_fortress: { top: 120, left: 200 },
+	storm_citadel: { top: 300, left: 310 },
 };
 
 const PATH_CONNECTIONS = [
@@ -93,9 +93,9 @@ export function WorldMapPage() {
 
 				{/* Map area — scrollable on small screens */}
 				<div className="relative flex-1 min-h-0">
-					<div ref={scrollRef} className="h-full overflow-auto">
+					<div ref={scrollRef} className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center justify-center">
 						<div
-							className="relative"
+							className="relative mx-auto"
 							style={{
 								width: `${MAP_CONTENT_WIDTH}px`,
 								height: `${MAP_CONTENT_HEIGHT}px`,

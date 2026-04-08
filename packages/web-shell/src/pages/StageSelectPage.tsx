@@ -33,7 +33,7 @@ export function StageSelectPage() {
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
-const gameOverStats = useGameStore((s) => s.gameOverStats);
+	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
 	const selectedMapId = useGameStore((s) => s.selectedMapId);

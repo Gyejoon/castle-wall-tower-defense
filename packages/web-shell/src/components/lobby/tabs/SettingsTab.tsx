@@ -288,7 +288,7 @@ function DevToolsSection() {
 			>
 				<span className="font-pixel text-xs text-gold">MAX 전투력 세팅</span>
 				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
-					Lv.10 / 타워 18종 / 전 맵 ★1 클리어 / 99999G
+					Lv.10 / 타워 18종 / 전 맵 ★3 클리어 / 99999G
 				</span>
 			</button>
 			<button

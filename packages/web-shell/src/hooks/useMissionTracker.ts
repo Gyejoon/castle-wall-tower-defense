@@ -41,5 +41,5 @@ export function useMissionTracker() {
 			EventBus.off('boss-defeated', onBossDefeated);
 			EventBus.off('game-over', onGameOver);
 		};
-	}, [progressMission]);
+	}, [progressMission, _runId]);
 }

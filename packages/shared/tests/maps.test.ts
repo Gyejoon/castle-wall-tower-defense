@@ -156,7 +156,8 @@ describe('getAllPathCells', () => {
 	it('multi-lane includes cells from all lanes', () => {
 		const stormCells = getAllPathCells(STORM_CITADEL_MAP);
 		const cellSet = new Set(stormCells.map((p) => `${p.x},${p.y}`));
-		for (const lane of STORM_CITADEL_MAP.paths ?? []) {
+		expect(STORM_CITADEL_MAP.paths).toBeDefined();
+		for (const lane of STORM_CITADEL_MAP.paths!) {
 			for (const p of lane) {
 				expect(cellSet.has(`${p.x},${p.y}`)).toBe(true);
 			}

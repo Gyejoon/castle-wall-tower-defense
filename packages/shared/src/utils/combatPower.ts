@@ -7,7 +7,6 @@ const AWAKENING_MULTIPLIER = [1.0, 1.2, 1.5, 2.0] as const;
 /** Utility weight for special abilities on zero-damage towers */
 const UTILITY_BASE: Record<string, number> = {
 	stun: 15,
-	stun_aoe: 25,
 	stun_aoe_extended: 40,
 	stun_aoe_global: 80,
 	slow_30_aoe: 20,

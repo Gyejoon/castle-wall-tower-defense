@@ -254,7 +254,7 @@ export function StageDetailPage() {
 							<div className="flex items-center gap-2 px-3 py-2 bg-panel border border-gold/30">
 								<span className="font-pixel text-[11px] text-gold">▶▶</span>
 								<span className="font-pixel text-[9px] text-accent">
-									클리어 완료 — 2배속 플레이 가능
+									★{selectedStar} 클리어 완료 — 2배속 플레이 가능
 								</span>
 							</div>
 						</div>

@@ -230,9 +230,19 @@ function DevToolsSection() {
 		}));
 		save.progress = {
 			...save.progress,
-			highestWave: { forest_gate: 10, lava_fortress: 10, storm_citadel: 10 },
+			highestWave: {
+				forest_gate: 10,
+				'forest_gate:2': 10,
+				'forest_gate:3': 10,
+				lava_fortress: 10,
+				'lava_fortress:2': 10,
+				'lava_fortress:3': 10,
+				storm_citadel: 10,
+				'storm_citadel:2': 10,
+				'storm_citadel:3': 10,
+			},
 			stagesCleared: ['forest_gate', 'lava_fortress', 'storm_citadel'],
-			stageStars: { forest_gate: 1, lava_fortress: 1, storm_citadel: 1 },
+			stageStars: { forest_gate: 3, lava_fortress: 3, storm_citadel: 3 },
 			totalBattles: 30,
 			tutorialCompleted: true,
 		};

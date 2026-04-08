@@ -110,6 +110,7 @@ export function WorldMapPage() {
 								src="assets/ui/worldmap-bg.webp"
 								alt=""
 								className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated]"
+								style={{ objectPosition: '40% center' }}
 							/>
 							<div
 								className="absolute inset-0 pointer-events-none"
@@ -251,7 +252,9 @@ export function WorldMapPage() {
 															<img
 																key={s}
 																src={
-																	s <= (stageStars[map.id] ?? 0)
+																	s <=
+																	(stageStars[map.id] ??
+																		(stagesCleared.includes(map.id) ? 1 : 0))
 																		? 'assets/ui/icon-star-active.png'
 																		: 'assets/ui/icon-star-inactive.png'
 																}
@@ -280,11 +283,6 @@ export function WorldMapPage() {
 												>
 													{map.name}
 												</span>
-												{map.rewardMultiplier > 1 && (
-													<span className="font-pixel text-[7px] text-gold">
-														x{map.rewardMultiplier} 보상
-													</span>
-												)}
 
 												<span
 													className={cn(

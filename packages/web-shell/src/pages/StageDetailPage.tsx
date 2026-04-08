@@ -102,7 +102,7 @@ export function StageDetailPage() {
 				</div>
 
 				{/* Scrollable content */}
-				<div className="flex-1 min-h-0 overflow-auto flex flex-col">
+				<div className="flex-1 min-h-0 overflow-auto flex flex-col [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
 					{/* Hero */}
 					<div className="relative h-[140px] overflow-hidden flex-shrink-0">
 						<img

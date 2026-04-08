@@ -198,7 +198,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(entry.isBoss ? 80 : 40, entry.isBoss ? 96 : 48);
+		sprite.setDisplaySize(entry.isBoss ? 60 : 40, entry.isBoss ? 72 : 48);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -636,6 +636,11 @@ export class UnitSystem {
 			}
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
+			// Rotate sprite to face movement direction (sprite default: head pointing down = PI/2)
+			if (dist > 0.01) {
+				const moveAngle = Math.atan2(dy, dx);
+				unit.sprite.setRotation(moveAngle - Math.PI / 2);
+			}
 			const currentGrid = this.gridManager.worldToGrid(
 				unit.worldX,
 				unit.worldY,

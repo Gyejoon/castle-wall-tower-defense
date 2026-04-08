@@ -170,6 +170,9 @@ describe('GameScene', () => {
 			result: 'victory',
 			reason: 'all_waves_cleared',
 			finalSlot: 20,
+			selectedStar: 1,
+			starCleared: true,
+			hpRemaining: 20,
 			stats: {
 				wavesCleared: 20,
 				towersPlaced: 0,
@@ -222,6 +225,9 @@ describe('GameScene', () => {
 			result: 'defeat',
 			reason: 'base_hp_depleted',
 			finalSlot: 5,
+			selectedStar: 1,
+			starCleared: false,
+			hpRemaining: 0,
 			stats: {
 				wavesCleared: 4, // finalSlot-1
 				towersPlaced: 0,

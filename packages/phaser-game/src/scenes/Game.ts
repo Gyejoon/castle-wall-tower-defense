@@ -192,7 +192,8 @@ export class GameScene extends Phaser.Scene {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
 		}
 		this.currentSlotDef = mapWaves[0];
-		const selectedStar = (this.game.registry.get('selectedStar') ?? 1) as StarRating;
+		const rawStar = this.game.registry.get('selectedStar');
+		const selectedStar: StarRating = rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
@@ -587,7 +588,7 @@ export class GameScene extends Phaser.Scene {
 			...payload,
 			selectedStar: this.selectedStar,
 			starCleared,
-			hpRemaining: this.playerHp,
+			hpRemaining: Math.max(0, this.playerHp),
 			stats: {
 				wavesCleared:
 					payload.result === 'victory'

@@ -129,6 +129,66 @@ export const TOWER_PROMPTS: AssetPromptConfig[] = TOWERS.flatMap((tower) => [
   },
 ]);
 
+// === World Map Prompts ===
+const WORLDMAP_NEGATIVE =
+  'blurry, modern, sci-fi, neon, realistic, photorealistic, 3D render, ' +
+  'high resolution, smooth gradients, anti-aliased, text, watermark, signature';
+
+const WORLDMAP_STYLE =
+  'pixel art, medieval fantasy, retro game aesthetic, warm muted colors, detailed pixel shading';
+
+export const WORLDMAP_PROMPTS: AssetPromptConfig[] = [
+  {
+    key: 'ui-worldmap-bg',
+    prompt: `${WORLDMAP_STYLE}, top-down world map, parchment style background, ` +
+      'dense forest region at bottom, volcanic lava fields at middle-left, ' +
+      'stormy mountain peaks at top-right, ocean borders, winding paths between regions, ' +
+      'dark fantasy atmosphere, fog of war edges',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/worldmap-bg.png`,
+    frameCount: 1,
+    frameWidth: 512,
+    frameHeight: 768,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-forest_gate',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'wooden gate with stone pillars surrounded by dense dark forest, ' +
+      'green canopy, moss-covered, mysterious forest entrance',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-forest_gate.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-lava_fortress',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'dark stone fortress on volcanic rock, lava flowing around base, ' +
+      'glowing orange cracks, obsidian walls, smoke rising',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-lava_fortress.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-storm_citadel',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'tall stone citadel with spire, dark storm clouds swirling above, ' +
+      'lightning crackling, blue-purple magical aura, floating debris',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-storm_citadel.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+];
+
 // === Unit Prompts (PixelLab) ===
 export interface UnitPromptConfig {
   key: string;

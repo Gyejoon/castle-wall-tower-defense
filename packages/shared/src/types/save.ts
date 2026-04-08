@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';

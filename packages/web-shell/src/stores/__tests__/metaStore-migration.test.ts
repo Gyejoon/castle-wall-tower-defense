@@ -73,7 +73,7 @@ describe('metaStore v1→v3 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.version).toBe(3);
+		expect(s.version).toBe(4);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
 		expect(s.profile.diamond).toBe(0);
@@ -158,12 +158,15 @@ describe('metaStore v1→v3 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(3);
+		expect(s.version).toBe(4);
 		// v1에 없던 새 필드가 기본값으로 채워짐
 		expect(s.progress.gachaPityCount).toBe(0);
 		expect(s.progress.lastAttendanceDate).toBeNull();
 		expect(s.progress.dailyMissions).toEqual([]);
 		expect(s.settings.screenShake).toBe(false);
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});
@@ -232,13 +235,16 @@ describe('metaStore v1→v3 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(3);
+		expect(s.version).toBe(4);
 		expect(s.profile.diamond).toBe(50);
 		expect(s.profile.nickname).toBe('V2User');
 		expect(s.progress.gachaPityCount).toBe(12);
 		expect(s.progress.tutorialCompleted).toBe(true);
 		expect(s.settings.bgmVolume).toBe(0.5);
 		expect(s.progress.lastAttendanceDate).toBeNull();
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});

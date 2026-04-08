@@ -69,8 +69,8 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			},
 			collection: collection.map((t) => ({
 				...t,
-				awakening: (t as any).awakening ?? 0,
-				duplicateCount: (t as any).duplicateCount ?? 0,
+				awakening: (t['awakening'] as number) ?? 0,
+				duplicateCount: (t['duplicateCount'] as number) ?? 0,
 			})),
 			progress: {
 				...progress,

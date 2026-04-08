@@ -22,8 +22,8 @@ export const useMetaStore = create<MetaState>()(
 			...defaultSave,
 
 			loadSave: () => {
+				// Phase 1: Load & persist save data
 				try {
-					// Read legacy tutorial_completed key before migration
 					let legacyTutorialCompleted = false;
 					try {
 						legacyTutorialCompleted =
@@ -38,12 +38,10 @@ export const useMetaStore = create<MetaState>()(
 						save = migrateLegacyDeck(save);
 					}
 
-					// Clean up legacy key
 					try {
 						localStorage.removeItem('tutorial_completed');
 					} catch {}
 
-					// Recalculate combatPower from collection (may be stale after migration)
 					save.profile.combatPower = calcCombatPower(save.collection);
 
 					set({
@@ -55,8 +53,22 @@ export const useMetaStore = create<MetaState>()(
 						selectedDeck: save.selectedDeck,
 					});
 					writeSave(save);
+				} catch (err) {
+					console.error('[GLD] loadSave failed, resetting to default:', err);
+					const fallback = createDefaultSave();
+					set({
+						version: fallback.version,
+						profile: fallback.profile,
+						collection: fallback.collection,
+						progress: fallback.progress,
+						settings: fallback.settings,
+						selectedDeck: fallback.selectedDeck,
+					});
+					writeSave(fallback);
+				}
 
-					// Sync achievement progress with current state
+				// Phase 2: Sync achievements (non-fatal — save is already persisted)
+				try {
 					const s = get();
 					const cp = s.profile.combatPower;
 					s.updateAchievementProgress('cp_100', cp);
@@ -88,7 +100,6 @@ export const useMetaStore = create<MetaState>()(
 					if (s.collection.some((t) => t.grade === 'epic'))
 						s.updateAchievementProgress('tower_epic', 1);
 
-					// Sync star-clear achievements from stageStars
 					const stageStars = s.progress.stageStars;
 					const star2Count = Object.values(stageStars).filter(
 						(r) => r >= 2,
@@ -99,17 +110,7 @@ export const useMetaStore = create<MetaState>()(
 					s.updateAchievementProgress('star2_all', star2Count);
 					s.updateAchievementProgress('star3_all', star3Count);
 				} catch (err) {
-					console.error('[GLD] loadSave failed, resetting to default:', err);
-					const fallback = createDefaultSave();
-					set({
-						version: fallback.version,
-						profile: fallback.profile,
-						collection: fallback.collection,
-						progress: fallback.progress,
-						settings: fallback.settings,
-						selectedDeck: fallback.selectedDeck,
-					});
-					writeSave(fallback);
+					console.error('[GLD] Achievement sync failed (non-fatal):', err);
 				}
 			},
 

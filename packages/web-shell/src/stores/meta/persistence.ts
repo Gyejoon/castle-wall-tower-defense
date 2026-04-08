@@ -175,11 +175,13 @@ export function sanitizeV4Save(save: SaveData): SaveData {
 			combatPower: profile.combatPower ?? dpr.combatPower,
 		},
 		collection: Array.isArray(save.collection)
-			? save.collection.map((t) => ({
-					...t,
-					awakening: t.awakening ?? dt.awakening,
-					duplicateCount: t.duplicateCount ?? dt.duplicateCount,
-				}))
+			? save.collection
+					.filter((t): t is NonNullable<typeof t> => t != null)
+					.map((t) => ({
+						...t,
+						awakening: t.awakening ?? dt.awakening,
+						duplicateCount: t.duplicateCount ?? dt.duplicateCount,
+					}))
 			: _defaults.collection,
 		progress: {
 			...progress,

@@ -480,7 +480,7 @@ export class TowerSystem {
 					this.attackGraphics.fillCircle(trailX, trailY, 2);
 				}
 			} else {
-				// Beam (laser/default)
+				// Beam (archer/default)
 				this.attackGraphics.lineStyle(2, line.color, alpha * 0.8);
 				this.attackGraphics.beginPath();
 				this.attackGraphics.moveTo(line.x1, line.y1);

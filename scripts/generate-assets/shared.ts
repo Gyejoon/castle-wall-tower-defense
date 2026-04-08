@@ -27,7 +27,7 @@ export const PALETTE = {
   fireOrange:    '#e07020',  // 불꽃 오렌지
   fireRed:       '#c03020',  // 불꽃 빨강
   // Tower colors
-  laser:         '#c8a04a',  // 궁수 탑 (황금 갈색)
+  archer:         '#c8a04a',  // 궁수 탑 (황금 갈색)
   plasma:        '#8b4513',  // 투석기 (진한 갈색)
   emp:           '#5bc8e8',  // 서리 마탑 (아이스 블루)
   shield:        '#f0e080',  // 성기사 제단 (황금빛)
@@ -82,7 +82,7 @@ export const PALETTE = {
   elementWaterGlow: '#5dade2',  // 수 속성 글로우
   elementLightning: '#f39c12',  // 번개 속성
   elementLightningGlow: '#f7b731', // 번개 속성 글로우
-  elementNeutral:   '#c8a04a',  // 무 속성 (기존 laser 색상)
+  elementNeutral:   '#c8a04a',  // 무 속성 (기존 archer 색상)
   // Castle wall stone
   castleStone: {
     dark: '#626567', mid: '#717d7e', light: '#8a9698',

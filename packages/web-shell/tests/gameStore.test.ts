@@ -43,9 +43,9 @@ describe('gameStore', () => {
 	it('tracks selected tower and placement feedback', () => {
 		expect(useGameStore.getState().selectedTowerId).toBeNull();
 		expect(useGameStore.getState().placementFeedback).toBeNull();
-		useGameStore.getState().setSelectedTower('laser');
+		useGameStore.getState().setSelectedTower('archer');
 		useGameStore.getState().setPlacementFeedback('combat_phase');
-		expect(useGameStore.getState().selectedTowerId).toBe('laser');
+		expect(useGameStore.getState().selectedTowerId).toBe('archer');
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
@@ -96,7 +96,7 @@ describe('gameStore', () => {
 	it('initializes deck cards from DEFAULT_DECK and tracks selection', () => {
 		const { deckCards, selectedCardIndex } = useGameStore.getState();
 		expect(deckCards).toHaveLength(4);
-		expect(deckCards[0].towerDefId).toBe('laser');
+		expect(deckCards[0].towerDefId).toBe('archer');
 		expect(selectedCardIndex).toBeNull();
 
 		useGameStore.getState().setSelectedCardIndex(2);
@@ -195,7 +195,7 @@ describe('gameStore', () => {
 		useGameStore.getState().setGameReady(true);
 		useGameStore.getState().setEnergy(10);
 		useGameStore.getState().setLives(3);
-		useGameStore.getState().setSelectedTower('laser');
+		useGameStore.getState().setSelectedTower('archer');
 		useGameStore.getState().setWave(4);
 		useGameStore.getState().setWavePhase('boss');
 		useGameStore.getState().setCountdown(2);

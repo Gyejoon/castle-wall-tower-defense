@@ -16,8 +16,8 @@ describe('towerToRole', () => {
 		expect(towerToRole(shield)).toBe('stun');
 	});
 	it('maps damage tower to attacker role', () => {
-		const laser = ALL_TOWERS.find((t) => t.id === 'laser')!;
-		expect(towerToRole(laser)).toBe('attacker');
+		const archer = ALL_TOWERS.find((t) => t.id === 'archer')!;
+		expect(towerToRole(archer)).toBe('attacker');
 	});
 	it('categorizes all 18 towers without error', () => {
 		for (const tower of ALL_TOWERS) {
@@ -30,10 +30,10 @@ describe('towerToRole', () => {
 
 describe('buildDeckCards', () => {
 	it('builds 4 DeckCardDef from valid tower IDs', () => {
-		const cards = buildDeckCards(['laser', 'plasma', 'emp', 'shield']);
+		const cards = buildDeckCards(['archer', 'plasma', 'emp', 'shield']);
 		expect(cards).toHaveLength(4);
 		expect(cards[0]).toEqual({
-			towerDefId: 'laser',
+			towerDefId: 'archer',
 			energyCost: 10,
 			role: 'attacker',
 		});
@@ -56,7 +56,7 @@ describe('buildDeckCards', () => {
 	});
 	it('throws on unknown tower ID', () => {
 		expect(() =>
-			buildDeckCards(['nonexistent', 'laser', 'plasma', 'emp']),
+			buildDeckCards(['nonexistent', 'archer', 'plasma', 'emp']),
 		).toThrow();
 	});
 });

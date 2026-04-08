@@ -7,7 +7,7 @@ export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const entries: ManifestEntry[] = [];
 
-  // laser-beam.png (32x8) — 화살
+  // arrow.png (32x8) — 화살
   {
     const { canvas, ctx } = makeCanvas(32, 8);
     // Arrow shaft (wood brown)
@@ -25,8 +25,8 @@ export async function generate(): Promise<ManifestEntry[]> {
     setPixel(ctx, 6, 5, '#c03020');
     setPixel(ctx, 3, 1, hexToRgba('#c03020', 0.6));
     setPixel(ctx, 3, 6, hexToRgba('#c03020', 0.6));
-    saveCanvas(canvas, `${OUTPUT_DIR}/laser-beam.png`);
-    entries.push({ key: 'projectile-laser-beam', type: 'image', path: 'assets/projectiles/laser-beam.png' });
+    saveCanvas(canvas, `${OUTPUT_DIR}/arrow.png`);
+    entries.push({ key: 'projectile-arrow', type: 'image', path: 'assets/projectiles/arrow.png' });
   }
 
   // plasma-bolt.png (16x16) — 둥근 돌 투사체

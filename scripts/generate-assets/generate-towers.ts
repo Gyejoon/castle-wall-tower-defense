@@ -351,7 +351,7 @@ function drawStarTower(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef) {
 
   // Variant-specific center details
   switch (tower.id) {
-    case 'twin_laser':
+    case 'twin_archer':
       // Double arrow slits (forward-facing on right side)
       drawRect(ctx, cx + 8, cy - 3, 7, 2, tower.color);
       drawRect(ctx, cx + 8, cy + 2, 7, 2, tower.color);

@@ -260,7 +260,7 @@ describe('TowerSystem combat', () => {
 
 	it('focused attacker (no special) sets armorPierce=true', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'laser');
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'archer');
 
 		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
 		const events = towerSystem.update(1000, 16, [

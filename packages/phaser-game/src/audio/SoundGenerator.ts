@@ -391,14 +391,14 @@ export class SoundGenerator {
 
 	playTowerAttack(towerType: string): void {
 		const recipes: Record<string, SoundRecipe> = {
-			laser: {
+			archer: {
 				frequency: 1200,
 				endFrequency: 800,
 				duration: 60,
 				type: 'sawtooth',
 				volume: 0.12,
 			},
-			twin_laser: {
+			twin_archer: {
 				frequency: 1400,
 				endFrequency: 900,
 				duration: 50,
@@ -476,7 +476,7 @@ export class SoundGenerator {
 						filterFreq: 200,
 					});
 				});
-			} else if (towerType === 'laser' || towerType === 'twin_laser') {
+			} else if (towerType === 'archer' || towerType === 'twin_archer') {
 				this.playNoise({
 					noiseType: 'white',
 					duration: 10,

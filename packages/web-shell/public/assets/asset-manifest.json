@@ -155,15 +155,15 @@
       "section": "preload"
     },
     {
-      "key": "tower-laser",
+      "key": "tower-archer",
       "type": "image",
-      "path": "assets/towers/laser.png",
+      "path": "assets/towers/archer.png",
       "section": "preload"
     },
     {
-      "key": "tower-laser-fire",
+      "key": "tower-archer-fire",
       "type": "spritesheet",
-      "path": "assets/towers/laser-fire.png",
+      "path": "assets/towers/archer-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
@@ -215,15 +215,15 @@
       "section": "vfx"
     },
     {
-      "key": "tower-twin_laser",
+      "key": "tower-twin_archer",
       "type": "image",
-      "path": "assets/towers/twin_laser.png",
+      "path": "assets/towers/twin_archer.png",
       "section": "preload"
     },
     {
-      "key": "tower-twin_laser-fire",
+      "key": "tower-twin_archer-fire",
       "type": "spritesheet",
-      "path": "assets/towers/twin_laser-fire.png",
+      "path": "assets/towers/twin_archer-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
@@ -497,9 +497,9 @@
       "section": "boss"
     },
     {
-      "key": "projectile-laser-beam",
+      "key": "projectile-arrow",
       "type": "image",
-      "path": "assets/projectiles/laser-beam.png",
+      "path": "assets/projectiles/arrow.png",
       "section": "projectiles"
     },
     {

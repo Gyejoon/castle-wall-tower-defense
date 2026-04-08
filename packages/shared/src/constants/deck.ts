@@ -26,7 +26,7 @@ export interface DeckCardDef {
 }
 
 export const DEFAULT_DECK: readonly DeckCardDef[] = [
-	{ towerDefId: 'laser', energyCost: 10, role: 'attacker' },
+	{ towerDefId: 'archer', energyCost: 10, role: 'attacker' },
 	{ towerDefId: 'plasma', energyCost: 10, role: 'splash' },
 	{ towerDefId: 'emp', energyCost: 20, role: 'slow' },
 	{ towerDefId: 'shield', energyCost: 20, role: 'stun' },

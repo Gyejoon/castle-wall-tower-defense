@@ -14,7 +14,7 @@ import {
 import { create } from 'zustand';
 import { useMetaStore } from './metaStore';
 
-const DEFAULT_DECK_IDS = ['laser', 'plasma', 'emp', 'shield'];
+const DEFAULT_DECK_IDS = ['archer', 'plasma', 'emp', 'shield'];
 
 export type RunStatus = 'lobby' | 'stageSelect' | 'stageDetail' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'missions' | 'settings';

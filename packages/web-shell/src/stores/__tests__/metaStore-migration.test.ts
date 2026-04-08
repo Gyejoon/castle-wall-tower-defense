@@ -62,7 +62,7 @@ describe('metaStore v1→v3 migration', () => {
 				screenShake: true,
 				showDamageNumbers: false,
 			},
-			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
+			selectedDeck: ['archer', 'plasma', 'emp', 'shield'],
 		};
 		vi.stubGlobal(
 			'localStorage',
@@ -222,7 +222,7 @@ describe('metaStore v1→v3 migration', () => {
 				showDamageNumbers: true,
 				colorblindMode: 'off',
 			},
-			selectedDeck: ['laser'],
+			selectedDeck: ['archer'],
 		};
 		vi.stubGlobal(
 			'localStorage',

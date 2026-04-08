@@ -108,7 +108,7 @@ describe('optional combat vfx', () => {
 			textures: {
 				exists: vi.fn((key: string) =>
 					[
-						'tower-laser-fire',
+						'tower-archer-fire',
 						'projectile-hit-flash',
 						'vfx-explosion-sm',
 					].includes(key),
@@ -131,7 +131,7 @@ describe('optional combat vfx', () => {
 
 		expect(create).toHaveBeenCalledWith(
 			expect.objectContaining({
-				key: getOptionalAnimationKey('tower-laser-fire'),
+				key: getOptionalAnimationKey('tower-archer-fire'),
 				frameRate: 14,
 				repeat: 0,
 			}),
@@ -165,13 +165,13 @@ describe('optional combat vfx', () => {
 			},
 			textures: {
 				exists: vi.fn((key: string) =>
-					['tower-laser-fire', 'projectile-hit-flash'].includes(key),
+					['tower-archer-fire', 'projectile-hit-flash'].includes(key),
 				),
 			},
 			anims: {
 				exists: vi.fn((key: string) =>
 					[
-						getOptionalAnimationKey('tower-laser-fire'),
+						getOptionalAnimationKey('tower-archer-fire'),
 						getOptionalAnimationKey('projectile-hit-flash'),
 					].includes(key),
 				),
@@ -206,14 +206,14 @@ describe('optional combat vfx', () => {
 			gridManager as never,
 			pathfinding as never,
 		);
-		const result = towerSystem.placeTower(0, 0, 'laser');
+		const result = towerSystem.placeTower(0, 0, 'archer');
 		expect(result.success).toBe(true);
 
 		towerSystem.update(1000, 16, [
 			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
 		]);
 
-		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-laser-fire');
+		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-archer-fire');
 		expect(addSprite).toHaveBeenCalledWith(132, 120, 'projectile-hit-flash');
 	});
 

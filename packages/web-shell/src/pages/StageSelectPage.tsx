@@ -77,10 +77,7 @@ export function StageSelectPage() {
 			'showDamageNumbers',
 			useGameStore.getState().showDamageNumbers,
 		);
-		game.registry.set(
-			'screenShake',
-			useGameStore.getState().screenShake,
-		);
+		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		gameRef.current = game;
 
 		let prevShowDmg = useGameStore.getState().showDamageNumbers;

@@ -96,6 +96,10 @@ vi.mock('@gld/phaser-game', () => {
 			off: offSpy,
 			removeAllListeners: removeAllListenersSpy,
 		},
+		soundGenerator: {
+			setMasterVolume: vi.fn(),
+			unlock: vi.fn().mockResolvedValue(undefined),
+		},
 	};
 });
 

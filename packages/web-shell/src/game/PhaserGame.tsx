@@ -34,10 +34,7 @@ export function PhaserGame() {
 			'showDamageNumbers',
 			useGameStore.getState().showDamageNumbers,
 		);
-		game.registry.set(
-			'screenShake',
-			useGameStore.getState().screenShake,
-		);
+		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		gameRef.current = game;
 
 		// Sync selectedDeck to Phaser registry so new runs use the latest deck

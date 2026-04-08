@@ -510,9 +510,10 @@ export class TowerSystem {
 				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
 					this.arrowPool[line.arrowIndex].setVisible(false);
 				}
-				// Spawn impact VFX when arrow arrives
+				// Spawn impact VFX + sound when arrow arrives
 				if (line.impactPending) {
 					this.spawnImpactVfx('projectile-hit-flash', line.x2, line.y2);
+					soundGenerator.playArrowImpact();
 				}
 				continue;
 			}

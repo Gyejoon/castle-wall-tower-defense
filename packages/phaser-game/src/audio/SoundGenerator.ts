@@ -490,6 +490,28 @@ export class SoundGenerator {
 		}
 	}
 
+	playArrowImpact(): void {
+		this.playThrottled(
+			'arrowImpact',
+			{
+				frequency: 200,
+				endFrequency: 80,
+				duration: 40,
+				type: 'triangle',
+				volume: 0.06,
+			},
+			80,
+		);
+		this.playNoise({
+			noiseType: 'white',
+			duration: 20,
+			volume: 0.03,
+			filterType: 'bandpass',
+			filterFreq: 3000,
+			filterQ: 2,
+		});
+	}
+
 	playUnitDeath(): void {
 		this.playThrottled(
 			'unitDeath',

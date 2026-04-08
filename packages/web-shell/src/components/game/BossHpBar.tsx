@@ -1,5 +1,8 @@
+import { UNITS } from '@gld/shared';
 import type { BossHpEntry } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
+
+const UNIT_NAME_MAP = new Map(UNITS.map((u) => [u.id, u.name]));
 
 interface BossHpBarProps {
 	entry: BossHpEntry;
@@ -26,7 +29,7 @@ export function BossHpBar({ entry }: BossHpBarProps) {
 						entry.phase === 2 ? 'text-danger' : 'text-gold',
 					)}
 				>
-					{entry.defId}
+					{UNIT_NAME_MAP.get(entry.defId) ?? entry.defId}
 				</span>
 				<span className="font-pixel text-[11px] text-text drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
 					{phaseLabel} — {entry.hp}/{entry.maxHp}

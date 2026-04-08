@@ -3,7 +3,6 @@ import {
 	getMapPaths,
 	getMaxGoldForMap,
 	getMaxXpForMap,
-	getTotalRewardMultiplier,
 	getTotalWavesForMap,
 	getWavesForMap,
 	MAP_REGISTRY,
@@ -70,7 +69,6 @@ export function StageDetailPage() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
-	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const selectedStar = useGameStore((s) => s.selectedStar);
 	const setSelectedStar = useGameStore((s) => s.setSelectedStar);
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
@@ -92,13 +90,14 @@ export function StageDetailPage() {
 	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', thumb: '' };
 	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
 	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
-	const rewardMult = getTotalRewardMultiplier(selectedMapId, selectedStar);
 	const totalWaves = getTotalWavesForMap(selectedMapId);
 	const waves = getWavesForMap(selectedMapId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
 	const lanes = getMapPaths(map).length;
-	const best = highestWave[selectedMapId] ?? 0;
-	const isCleared = stagesCleared.includes(selectedMapId);
+	const starKey =
+		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
+	const best = highestWave[starKey] ?? 0;
+	const isCleared = best >= totalWaves;
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [
@@ -185,21 +184,6 @@ export function StageDetailPage() {
 								{Math.round(
 									map.recommendedPower * STAR_DIFFICULTY[selectedStar].hp,
 								).toLocaleString()}
-							</span>
-						</div>
-					</div>
-
-					{/* 보상 배율 */}
-					<div className="mx-3 mt-2 flex items-center justify-between px-3 py-1.5 bg-panel border border-gold/30 transition-all duration-200">
-						<span className="font-pixel text-[8px] text-text-secondary">
-							보상 배율
-						</span>
-						<div className="flex gap-3">
-							<span className="font-pixel text-[10px] text-gold">
-								x{rewardMult.gold} 골드
-							</span>
-							<span className="font-pixel text-[10px] text-info">
-								x{rewardMult.xp} XP
 							</span>
 						</div>
 					</div>
@@ -308,9 +292,9 @@ export function StageDetailPage() {
 										}}
 									>
 										<div className="flex items-center justify-center gap-[2px]">
-											{Array.from({ length: star }, (_, i) => (
+											{([1, 2, 3] as const).slice(0, star).map((s) => (
 												<img
-													key={i}
+													key={s}
 													src="assets/ui/icon-star-active.png"
 													alt=""
 													width={10}

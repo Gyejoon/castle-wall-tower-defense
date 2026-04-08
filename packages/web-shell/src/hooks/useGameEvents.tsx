@@ -85,12 +85,11 @@ export function useGameEvents() {
 			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
-			meta.updateHighestWave(
-				useGameStore.getState().selectedMapId,
-				data.stats.wavesCleared,
-			);
+			const mapId = useGameStore.getState().selectedMapId;
+			const starKey =
+				data.selectedStar > 1 ? `${mapId}:${data.selectedStar}` : mapId;
+			meta.updateHighestWave(starKey, data.stats.wavesCleared);
 			if (data.result === 'victory') {
-				const mapId = useGameStore.getState().selectedMapId;
 				meta.recordStageClear(mapId);
 
 				// ★ Record star clear

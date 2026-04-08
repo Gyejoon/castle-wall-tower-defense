@@ -1,5 +1,13 @@
+import {
+	ALL_TOWERS,
+	createDefaultSave,
+	type OwnedTower,
+	SAVE_VERSION,
+} from '@gld/shared';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
+import { writeSave } from '../../../stores/meta/persistence';
+import { useMetaStore } from '../../../stores/metaStore';
 import { colors } from '../../../styles/tokens';
 import { TabBackground } from '../TabBackground';
 
@@ -71,6 +79,8 @@ export function SettingsTab() {
 					<InfoRow label="버전" value="0.1.0-alpha" />
 					<InfoRow label="빌드" value="2026.03.31" />
 				</SettingsSection>
+
+				{import.meta.env.DEV && <DevToolsSection />}
 			</div>
 		</div>
 	);
@@ -191,5 +201,96 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 				{value}
 			</span>
 		</div>
+	);
+}
+
+function DevToolsSection() {
+	const applyMaxSave = () => {
+		const now = Date.now();
+		const save = createDefaultSave();
+		save.profile = {
+			...save.profile,
+			level: 10,
+			gold: 99999,
+			diamond: 999,
+			totalGoldEarned: 99999,
+			wins: 30,
+			losses: 0,
+			winStreak: 30,
+			bestWinStreak: 30,
+			combatPower: 9999,
+		};
+		save.collection = ALL_TOWERS.map<OwnedTower>((t) => ({
+			defId: t.id,
+			level: 50,
+			grade: 'normal',
+			acquiredAt: now,
+			awakening: 0,
+			duplicateCount: 0,
+		}));
+		save.progress = {
+			...save.progress,
+			highestWave: { forest_gate: 10, lava_fortress: 10, storm_citadel: 10 },
+			stagesCleared: ['forest_gate', 'lava_fortress', 'storm_citadel'],
+			stageStars: { forest_gate: 1, lava_fortress: 1, storm_citadel: 1 },
+			totalBattles: 30,
+			tutorialCompleted: true,
+		};
+		save.selectedDeck = [
+			'celestial',
+			'divine_throne',
+			'world_tree',
+			'dragon_nest',
+		];
+
+		useMetaStore.setState({
+			version: SAVE_VERSION,
+			profile: save.profile,
+			collection: save.collection,
+			progress: save.progress,
+			settings: save.settings,
+			selectedDeck: save.selectedDeck,
+		});
+		writeSave(save);
+		window.location.reload();
+	};
+
+	const resetSave = () => {
+		const save = createDefaultSave();
+		useMetaStore.setState({
+			version: SAVE_VERSION,
+			profile: save.profile,
+			collection: save.collection,
+			progress: save.progress,
+			settings: save.settings,
+			selectedDeck: save.selectedDeck,
+		});
+		writeSave(save);
+		window.location.reload();
+	};
+
+	return (
+		<SettingsSection title="DEV TOOLS">
+			<button
+				type="button"
+				onClick={applyMaxSave}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-gold">MAX 전투력 세팅</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					Lv.10 / 타워 18종 / 전 맵 ★1 클리어 / 99999G
+				</span>
+			</button>
+			<button
+				type="button"
+				onClick={resetSave}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-danger">세이브 초기화</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					신규 유저 상태로 리셋
+				</span>
+			</button>
+		</SettingsSection>
 	);
 }

@@ -122,7 +122,7 @@ export const FOREST_GATE_MAP: MapLayout = {
 	tilesetKey: 'tileset',
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,
-	recommendedPower: 100,
+	recommendedPower: 55,
 };
 
 // --- Lava Fortress: 2-lane map ---
@@ -231,7 +231,7 @@ export const LAVA_FORTRESS_MAP: MapLayout = {
 	tilesetKey: 'tileset',
 	rewardMultiplier: 2,
 	difficultyHpMult: 1.3,
-	recommendedPower: 500,
+	recommendedPower: 170,
 };
 
 // --- Storm Citadel: 3-lane map ---
@@ -358,7 +358,7 @@ export const STORM_CITADEL_MAP: MapLayout = {
 	tilesetKey: 'tileset',
 	rewardMultiplier: 3,
 	difficultyHpMult: 1.6,
-	recommendedPower: 1500,
+	recommendedPower: 400,
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {

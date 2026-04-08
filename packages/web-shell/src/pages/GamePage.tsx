@@ -1,11 +1,12 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
+import { getTotalWavesForMap } from '@gld/shared';
 import { useCallback, useEffect, useState } from 'react';
+import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
-import { BossHpBar } from '../components/game/BossHpBar';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
@@ -29,8 +30,12 @@ export function GamePage() {
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
-	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
-	const speed2xUnlocked = stagesCleared.includes(selectedMapId);
+	const selectedStar = useGameStore((s) => s.selectedStar);
+	const highestWave = useMetaStore((s) => s.progress.highestWave);
+	const starKey =
+		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
+	const speed2xUnlocked =
+		(highestWave[starKey] ?? 0) >= getTotalWavesForMap(selectedMapId);
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
@@ -170,9 +175,7 @@ export function GamePage() {
 								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
 								style={{ background: 'rgba(42, 32, 16, 0.95)' }}
 							>
-								<span className="text-text">
-									{selectedTower.towerName}
-								</span>
+								<span className="text-text">{selectedTower.towerName}</span>
 								<button
 									className="border border-danger px-2 py-1 text-danger"
 									style={{ background: 'rgba(192,48,32,0.2)' }}

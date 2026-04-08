@@ -1,4 +1,4 @@
-import { type SaveData, toKSTDateStr, xpToNextLevel } from '@gld/shared';
+import { type SaveData, type StarRating, toKSTDateStr, xpToNextLevel } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -21,6 +21,8 @@ export const createProfileSlice: SliceCreator<
 		| 'recordBattle'
 		| 'updateHighestWave'
 		| 'recordStageClear'
+		| 'recordStarClear'
+		| 'addAwakeningStones'
 		| 'recordAttendance'
 	>
 > = (set, get) => ({
@@ -86,6 +88,30 @@ export const createProfileSlice: SliceCreator<
 				},
 			};
 		});
+		debouncedSave(get());
+	},
+
+	recordStarClear: (mapId, star) => {
+		set((s) => {
+			const current = s.progress.stageStars[mapId] ?? 0;
+			if (star <= current) return s;
+			return {
+				progress: {
+					...s.progress,
+					stageStars: { ...s.progress.stageStars, [mapId]: star },
+				},
+			};
+		});
+		debouncedSave(get());
+	},
+
+	addAwakeningStones: (amount) => {
+		set((s) => ({
+			progress: {
+				...s.progress,
+				awakeningStones: s.progress.awakeningStones + amount,
+			},
+		}));
 		debouncedSave(get());
 	},
 

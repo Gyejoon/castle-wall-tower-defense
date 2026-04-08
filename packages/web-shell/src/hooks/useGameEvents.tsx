@@ -2,7 +2,11 @@ import { EventBus } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
+	INITIAL_PLAYER_HP,
+	PERFECT_CLEAR_BONUS,
 	type PlacementFailureReason,
+	STAR_REWARD_MULTIPLIERS,
+	type StarRating,
 } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
@@ -43,6 +47,9 @@ export function useGameEvents() {
 			setEnergy(data.energy);
 		const onGameOver = (data: {
 			result: 'victory' | 'defeat';
+			selectedStar: StarRating;
+			starCleared: boolean;
+			hpRemaining: number;
 			stats: {
 				wavesCleared: number;
 				towersPlaced: number;
@@ -58,13 +65,21 @@ export function useGameEvents() {
 				clearTimeout(bossWarningTimerRef.current);
 				bossWarningTimerRef.current = null;
 			}
+			const starReward = STAR_REWARD_MULTIPLIERS[data.selectedStar];
+			const goldEarned = Math.round(data.stats.goldEarned * starReward.gold);
 			const xpEarned = Math.round(
 				battleXp(data.stats.wavesCleared, data.result === 'victory') *
-					data.stats.rewardMultiplier,
+					data.stats.rewardMultiplier * starReward.xp,
 			);
-			setGameOverStats({ ...data.stats, xpEarned });
+			setGameOverStats({
+				...data.stats,
+				goldEarned,
+				xpEarned,
+				selectedStar: data.selectedStar,
+				starCleared: data.starCleared,
+			});
 			const meta = useMetaStore.getState();
-			meta.addGold(data.stats.goldEarned);
+			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
 			meta.updateHighestWave(
@@ -74,6 +89,21 @@ export function useGameEvents() {
 			if (data.result === 'victory') {
 				const mapId = useGameStore.getState().selectedMapId;
 				meta.recordStageClear(mapId);
+
+				// ★ Record star clear
+				if (data.starCleared) {
+					meta.recordStarClear(mapId, data.selectedStar);
+				}
+
+				// Awakening stone rewards
+				if (starReward.awakeningStone > 0) {
+					meta.addAwakeningStones(starReward.awakeningStone);
+				}
+
+				// Perfect clear bonus (★3 with HP 100%)
+				if (data.selectedStar === 3 && data.hpRemaining === INITIAL_PLAYER_HP) {
+					meta.addAwakeningStones(PERFECT_CLEAR_BONUS.awakeningStone);
+				}
 			}
 		};
 		const onWaveStarted = (data: {

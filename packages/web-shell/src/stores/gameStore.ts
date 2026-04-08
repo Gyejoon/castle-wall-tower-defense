@@ -47,6 +47,8 @@ export interface GameOverStats {
 	timeSurvivedSec: number;
 	goldEarned: number;
 	xpEarned: number;
+	selectedStar?: StarRating;
+	starCleared?: boolean;
 }
 
 interface GameStoreState {

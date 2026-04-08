@@ -1,5 +1,5 @@
 import { isMapUnlocked, MAP_REGISTRY } from '@gld/shared';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
@@ -35,12 +35,32 @@ const PATH_CONNECTIONS = [
 
 export function WorldMapPage() {
 	const [lockImgError, setLockImgError] = useState(false);
+	const scrollRef = useRef<HTMLDivElement>(null);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 
 	const maps = Object.values(MAP_REGISTRY);
+
+	// 권장 스테이지: 첫 번째 미클리어 해금 스테이지, 없으면 마지막 해금 스테이지
+	const recommendedMapId = (() => {
+		const unclearedUnlocked = maps.find(
+			(m) => isMapUnlocked(m, playerLevel) && !stagesCleared.includes(m.id),
+		);
+		if (unclearedUnlocked) return unclearedUnlocked.id;
+		const unlocked = maps.filter((m) => isMapUnlocked(m, playerLevel));
+		return unlocked[unlocked.length - 1]?.id;
+	})();
+
+	// 마운트 시 권장 스테이지 위치로 스크롤
+	useEffect(() => {
+		const container = scrollRef.current;
+		const pos = recommendedMapId ? NODE_POSITIONS[recommendedMapId] : null;
+		if (!container || !pos) return;
+		const scrollTarget = pos.top - container.clientHeight / 2;
+		container.scrollTo({ top: Math.max(0, scrollTarget) });
+	}, [recommendedMapId]);
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
@@ -73,7 +93,7 @@ export function WorldMapPage() {
 
 				{/* Map area — scrollable on small screens */}
 				<div className="relative flex-1 min-h-0">
-					<div className="h-full overflow-auto">
+					<div ref={scrollRef} className="h-full overflow-auto">
 						<div
 							className="relative"
 							style={{

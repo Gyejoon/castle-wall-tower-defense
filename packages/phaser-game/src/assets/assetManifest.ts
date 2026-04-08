@@ -119,7 +119,8 @@ export function registerOptionalCombatAnimations(
 		const animationKey = getOptionalAnimationKey(asset.key);
 		if (scene.anims.exists(animationKey)) continue;
 
-		const isBossAnim = asset.key.startsWith('unit-') && asset.key.includes('-boss');
+		const isBossAnim =
+			asset.key.startsWith('unit-') && asset.key.includes('-boss');
 		scene.anims.create({
 			key: animationKey,
 			frames: scene.anims.generateFrameNumbers(asset.key, {

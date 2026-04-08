@@ -221,7 +221,14 @@ export class UnitSystem {
 		// Flying boss: add ground shadow and offset sprite upward
 		let shadow: Phaser.GameObjects.Ellipse | null = null;
 		if (entry.isBoss) {
-			shadow = this.scene.add.ellipse(startWorld.x, startWorld.y, 40, 16, 0x000000, 0.3);
+			shadow = this.scene.add.ellipse(
+				startWorld.x,
+				startWorld.y,
+				40,
+				16,
+				0x000000,
+				0.3,
+			);
 			shadow.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y) - 1);
 			sprite.setPosition(startWorld.x, startWorld.y - 20);
 		}
@@ -734,7 +741,8 @@ export class UnitSystem {
 					const clamped = Math.max(0, target);
 					// Lerp toward target for smooth deceleration instead of instant snap
 					const lerped =
-						rear.pathProgress + (clamped - rear.pathProgress) * this.COLLISION_LERP;
+						rear.pathProgress +
+						(clamped - rear.pathProgress) * this.COLLISION_LERP;
 					this.setUnitPathProgress(rear, Math.max(0, lerped));
 				}
 			}

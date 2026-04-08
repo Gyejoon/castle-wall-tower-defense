@@ -163,7 +163,10 @@ export class WaveSystem {
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
 		// Emit boss warning if no pre_boss wave already emitted it
-		const prevWave = this.currentWaveIndex > 0 ? this.waves[this.currentWaveIndex - 1] : undefined;
+		const prevWave =
+			this.currentWaveIndex > 0
+				? this.waves[this.currentWaveIndex - 1]
+				: undefined;
 		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
 			EventBus.emit('boss-warning', {
 				slotIndex: wave.slotIndex - 1,

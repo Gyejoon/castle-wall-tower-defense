@@ -24,7 +24,10 @@ export class Preloader extends Phaser.Scene {
 		for (const id of getCoreUnitIds()) {
 			const assetKey = `unit-${id}`;
 			const entry = manifest.assets.find((a) => a.key === assetKey);
-			if (!entry) console.warn(`[Preloader] No manifest entry for "${assetKey}", falling back to 8 frames`);
+			if (!entry)
+				console.warn(
+					`[Preloader] No manifest entry for "${assetKey}", falling back to 8 frames`,
+				);
 			const endFrame = (entry?.frameCount ?? 8) - 1;
 
 			this.anims.create({
@@ -56,7 +59,10 @@ export class Preloader extends Phaser.Scene {
 
 		{
 			const entry = manifest.assets.find((a) => a.key === 'unit-death');
-			if (!entry) console.warn('[Preloader] No manifest entry for "unit-death", falling back to 8 frames');
+			if (!entry)
+				console.warn(
+					'[Preloader] No manifest entry for "unit-death", falling back to 8 frames',
+				);
 			const endFrame = (entry?.frameCount ?? 8) - 1;
 
 			this.anims.create({

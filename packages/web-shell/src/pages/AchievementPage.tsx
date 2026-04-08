@@ -1,4 +1,4 @@
-import { ACHIEVEMENTS, type AchievementDef } from '@gld/shared';
+import { ACHIEVEMENTS } from '@gld/shared';
 import { useState } from 'react';
 import { useMetaStore } from '../stores/metaStore';
 

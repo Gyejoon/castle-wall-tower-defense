@@ -25,12 +25,11 @@ export const createCollectionSlice: SliceCreator<
 
 		const newCollection = [...s.collection];
 		newCollection[idx] = { ...tower, level: tower.level + 1 };
+		const cp = calcCombatPower(newCollection);
 		set({
-			profile: { ...s.profile, gold: s.profile.gold - cost },
+			profile: { ...s.profile, gold: s.profile.gold - cost, combatPower: cp },
 			collection: newCollection,
 		});
-		const cp = calcCombatPower(get().collection);
-		set((s) => ({ profile: { ...s.profile, combatPower: cp } }));
 		// Tower level achievements
 		const maxTowerLevel = Math.max(...get().collection.map((t) => t.level));
 		get().updateAchievementProgress('tower_lv10', maxTowerLevel);
@@ -68,12 +67,11 @@ export const createCollectionSlice: SliceCreator<
 				level: config.resetLevel ? 1 : tower.level,
 			};
 		}
+		const cp = calcCombatPower(newCollection);
 		set({
-			profile: { ...s.profile, gold: newGold },
+			profile: { ...s.profile, gold: newGold, combatPower: cp },
 			collection: newCollection,
 		});
-		const cp = calcCombatPower(get().collection);
-		set((s) => ({ profile: { ...s.profile, combatPower: cp } }));
 		// Grade achievements (only on success)
 		if (success) {
 			const newGrade = config.nextGrade as TowerGrade;

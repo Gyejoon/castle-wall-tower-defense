@@ -42,7 +42,7 @@ function getFrameColor(cp: number): string {
 
 export function ProfileBar() {
 	const profile = useMetaStore((s) => s.profile);
-	const combatPower = useMetaStore((s) => s.profile.combatPower);
+	const combatPower = profile.combatPower;
 	const displayGold = useAnimatedGold();
 	const xpNeeded = xpToNextLevel(profile.level);
 	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;

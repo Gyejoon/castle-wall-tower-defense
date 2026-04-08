@@ -43,8 +43,12 @@ export function GamePage() {
 	// iOS AudioContext unlock on first user gesture
 	useEffect(() => {
 		const unlockAudio = async () => {
-			await soundGenerator.unlock();
-			soundGenerator.setMasterVolume(useGameStore.getState().sfxVolume);
+			try {
+				await soundGenerator.unlock();
+				soundGenerator.setMasterVolume(useGameStore.getState().sfxVolume);
+			} catch {
+				/* AudioContext.resume() can reject in restricted contexts */
+			}
 			document.removeEventListener('pointerdown', unlockAudio);
 			document.removeEventListener('touchstart', unlockAudio);
 			document.removeEventListener('click', unlockAudio);
@@ -62,7 +66,11 @@ export function GamePage() {
 	useEffect(() => {
 		const handleVisibility = async () => {
 			if (document.visibilityState === 'visible') {
-				await soundGenerator.unlock();
+				try {
+					await soundGenerator.unlock();
+				} catch {
+					/* AudioContext.resume() can reject in restricted contexts */
+				}
 			}
 		};
 		document.addEventListener('visibilitychange', handleVisibility);

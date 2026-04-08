@@ -34,9 +34,13 @@ export function TowerGridCard({
 		>
 			<div className="flex gap-[3px]">
 				{TIER_DOT_KEYS.slice(0, def.tier).map((dotKey) => (
-					<span
+					<img
 						key={`${def.id}-tier-${dotKey}`}
-						className="block h-[5px] w-[5px] bg-gold"
+						src="assets/ui/icon-star-active.png"
+						alt=""
+						width={8}
+						height={8}
+						className="[image-rendering:pixelated]"
 					/>
 				))}
 			</div>

@@ -1,4 +1,4 @@
-import type { GachaResult, MissionType, SaveData } from '@gld/shared';
+import type { GachaResult, MissionType, SaveData, StarRating } from '@gld/shared';
 
 export interface MetaActions {
 	loadSave: () => void;
@@ -34,7 +34,12 @@ export interface MetaActions {
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
 	recordStageClear: (mapId: string) => void;
+	recordStarClear: (mapId: string, star: StarRating) => void;
+	addAwakeningStones: (amount: number) => void;
 	recordAttendance: () => void;
+	updateAchievementProgress: (id: string, value: number) => void;
+	claimAchievement: (id: string) => 'success' | 'not_ready' | 'already_claimed';
+	checkAchievements: () => string[];
 }
 
 export type MetaState = SaveData & MetaActions;

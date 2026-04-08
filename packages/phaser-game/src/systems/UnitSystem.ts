@@ -27,6 +27,8 @@ interface SpawnQueueEntry {
 	waveHpMult: number;
 	waveSpeedMult: number;
 	waveSlot: number;
+	armorMult: number;
+	ccResist: number;
 }
 
 interface UnitInstance {
@@ -63,6 +65,8 @@ interface QueueUnitsOptions {
 	waveHpMult?: number;
 	waveSpeedMult?: number;
 	waveSlot?: number;
+	armorMult?: number;
+	ccResist?: number;
 }
 
 export class UnitSystem {
@@ -158,6 +162,8 @@ export class UnitSystem {
 			waveHpMult: options.waveHpMult ?? 1,
 			waveSpeedMult: options.waveSpeedMult ?? 1,
 			waveSlot: options.waveSlot ?? 0,
+			armorMult: options.armorMult ?? 1,
+			ccResist: options.ccResist ?? 0,
 		});
 	}
 
@@ -229,8 +235,8 @@ export class UnitSystem {
 			invulnerableMs: 0,
 			maxHp: finalHp,
 			baseSpeed: scaled.speed * entry.waveSpeedMult,
-			baseArmor: scaled.armor,
-			ccImmunityChance: scaled.ccImmunityChance,
+			baseArmor: scaled.armor * entry.armorMult,
+			ccImmunityChance: Math.min(1, scaled.ccImmunityChance + entry.ccResist),
 			waveSlot: entry.waveSlot,
 			pathProgress: 0,
 		};

@@ -28,6 +28,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.8,
 		statBonus: 0.1,
 		requiredLevel: 20,
+		resetLevel: true,
 	},
 	rare: {
 		nextGrade: 'unique' as TowerGrade,
@@ -35,6 +36,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.5,
 		statBonus: 0.15,
 		requiredLevel: 30,
+		resetLevel: true,
 	},
 	unique: {
 		nextGrade: 'epic' as TowerGrade,
@@ -42,6 +44,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.25,
 		statBonus: 0.2,
 		requiredLevel: 50,
+		resetLevel: true,
 	},
 	epic: {
 		nextGrade: null,
@@ -49,10 +52,11 @@ export const PROMOTION_CONFIG = {
 		successRate: 0,
 		statBonus: 0,
 		requiredLevel: 0,
+		resetLevel: false,
 	},
 } as const;
 
-const GRADE_BONUS: Record<TowerGrade, number> = {
+export const GRADE_BONUS: Record<TowerGrade, number> = {
 	normal: 0,
 	rare: 0.1,
 	unique: 0.25,
@@ -86,12 +90,15 @@ export function createDefaultSave(): SaveData {
 			losses: 0,
 			winStreak: 0,
 			bestWinStreak: 0,
+			combatPower: 0,
 		},
 		collection: DEFAULT_STARTER_IDS.map<OwnedTower>((defId) => ({
 			defId,
 			level: 1,
 			grade: 'normal',
 			acquiredAt: now,
+			awakening: 0,
+			duplicateCount: 0,
 		})),
 		progress: {
 			highestWave: {},
@@ -107,6 +114,9 @@ export function createDefaultSave(): SaveData {
 			lastDailyMissionResetAt: null,
 			lastWeeklyMissionResetAt: null,
 			lastAttendanceDate: null,
+			stageStars: {},
+			achievements: { claimed: [], progress: {} },
+			awakeningStones: 0,
 		},
 		settings: {
 			bgmVolume: 0.7,

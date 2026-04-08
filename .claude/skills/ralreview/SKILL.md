@@ -134,8 +134,9 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | 12 | `key` prop으로 인한 DOM 재생성과 useEffect 불일치 | `key={runId}`로 DOM이 바뀌는데 effect deps가 안정적이라 Phaser 재초기화 안 됨 | -2 |
 | 13 | async 이벤트 핸들러에서 리스너 제거가 `await` 전에 실행 | `removeEventListener`가 `await` 뒤에 있으면 단일 제스처에서 pointerdown+touchstart+click이 동시 발화하여 핸들러가 중복 실행됨 | -2 |
 | 14 | SVG `viewBox` + 절대 px 배치 컨테이너의 width/height 모두 고정 | viewBox가 있는 SVG와 절대 `px` 위치 자식이 같은 컨테이너에 있을 때, width를 생략하면 좁은 뷰포트에서 SVG 좌표는 스케일되지만 CSS px는 고정되어 위치가 어긋남 | -2 |
+| 15 | 렌더 본문에서 store setter/side effect 호출 금지 | 렌더 중 `setX()`, `setState()`, `dispatch()` 호출 → React pure-render 위반. 조건부 상태 리셋은 `useEffect`로 이동 | -2 |
 
-기본 10점, 항목 1-4,11-14 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-15 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: Design Quality 검사
 

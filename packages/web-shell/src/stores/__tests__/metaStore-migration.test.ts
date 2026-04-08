@@ -166,6 +166,9 @@ describe('metaStore v1→v4 migration', () => {
 		expect(s.progress.lastAttendanceDate).toBeNull();
 		expect(s.progress.dailyMissions).toEqual([]);
 		expect(s.settings.screenShake).toBe(false);
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});
@@ -241,6 +244,9 @@ describe('metaStore v1→v4 migration', () => {
 		expect(s.progress.tutorialCompleted).toBe(true);
 		expect(s.settings.bgmVolume).toBe(0.5);
 		expect(s.progress.lastAttendanceDate).toBeNull();
+		expect(s.profile.combatPower).toBe(0);
+		expect(s.progress.stageStars).toEqual({});
+		expect(s.progress.awakeningStones).toBe(0);
 
 		vi.unstubAllGlobals();
 	});
@@ -248,14 +254,45 @@ describe('metaStore v1→v4 migration', () => {
 	it('migrates v3 save: laser→archer, twin_laser→twin_archer', () => {
 		const v3Save = {
 			version: 3,
-			profile: { nickname: 'test', level: 1, xp: 0, gold: 100, diamond: 0, totalGoldEarned: 0, wins: 0, losses: 0, winStreak: 0, bestWinStreak: 0 },
+			profile: {
+				nickname: 'test',
+				level: 1,
+				xp: 0,
+				gold: 100,
+				diamond: 0,
+				totalGoldEarned: 0,
+				wins: 0,
+				losses: 0,
+				winStreak: 0,
+				bestWinStreak: 0,
+			},
 			collection: [
 				{ defId: 'laser', level: 5, grade: 'rare', acquiredAt: 1000 },
 				{ defId: 'twin_laser', level: 10, grade: 'epic', acquiredAt: 2000 },
 				{ defId: 'plasma', level: 3, grade: 'normal', acquiredAt: 500 },
 			],
-			progress: { highestWave: {}, stagesCleared: [], totalBattles: 0, tutorialCompleted: true, gachaPityCount: 0, dailyFreeBoxClaimedAt: null, dailyAdBoxCount: 0, dailyResetAt: null, dailyMissions: [], weeklyMissions: [], lastDailyMissionResetAt: null, lastWeeklyMissionResetAt: null, lastAttendanceDate: null },
-			settings: { bgmVolume: 0.7, sfxVolume: 0.8, screenShake: true, showDamageNumbers: true, colorblindMode: 'off' },
+			progress: {
+				highestWave: {},
+				stagesCleared: [],
+				totalBattles: 0,
+				tutorialCompleted: true,
+				gachaPityCount: 0,
+				dailyFreeBoxClaimedAt: null,
+				dailyAdBoxCount: 0,
+				dailyResetAt: null,
+				dailyMissions: [],
+				weeklyMissions: [],
+				lastDailyMissionResetAt: null,
+				lastWeeklyMissionResetAt: null,
+				lastAttendanceDate: null,
+			},
+			settings: {
+				bgmVolume: 0.7,
+				sfxVolume: 0.8,
+				screenShake: true,
+				showDamageNumbers: true,
+				colorblindMode: 'off',
+			},
 			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
 		};
 

@@ -59,6 +59,22 @@
 }
 ```
 
+### SaveData v4 추가 필드
+
+**OwnedTower 확장:**
+- `awakening: 0|1|2|3` — 각성 단계 (기본 0)
+- `duplicateCount: number` — 중복 조각 수
+
+**ProgressData 확장:**
+- `stageStars: Record<string, 1|2|3>` — 맵별 최고 클리어 별
+- `achievements: { claimed: string[], progress: Record<string, number> }` — 업적 진행
+- `awakeningStones: number` — 각성석 보유량
+
+**ProfileData 확장:**
+- `combatPower: number` — 전투력 (계산 캐시)
+
+**마이그레이션:** v3→v4, 새 필드는 기본값(0, {}, [])으로 초기화
+
 ---
 
 ## 2. 저장 시점
@@ -117,6 +133,18 @@ type ColorblindMode = 'off' | 'protan' | 'deutan' | 'tritan';
 
 ```typescript
 type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
+```
+
+### StarRating
+
+```typescript
+type StarRating = 1 | 2 | 3;
+```
+
+### AchievementCategory
+
+```typescript
+type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
 ```
 
 ---

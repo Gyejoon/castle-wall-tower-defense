@@ -308,7 +308,7 @@ Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽
 | 밸런스 수치 | 02-balance-sheet §1-8 | Plan이 참조하는 수치(에너지 비용, 가챠 확률, 미션 보상, 타워 스탯, 적 스탯, armor/pierce, WAVE_SCALING, difficultyHpMult, MAX_TOWER_LEVEL)가 밸런스 시트와 일치하는가? |
 | 에셋 규격 | 07-asset-def §1 (공통 제작 사양), §3 (타워), §10 (네이밍) | Plan이 제안하는 에셋이 공통 규격(64×80 타워, 40×48 유닛, 8-frame 스프라이트시트, center pivot, PNG+WebP)을 따르는가? |
 | 속성/등급 색상 | 07-asset-def §4 (색상 정책), §11 (등급 토큰) | Plan이 사용하는 속성 색상(fire #e74c3c, water #3498db, lightning #f39c12, neutral #c8a04a)과 등급 색상이 에셋 정의와 일치하는가? |
-| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 4탭, WorldMap, StageDetail, Deck, Result, Tutorial, Tower Sell Panel, Exit Modal)와 충돌하지 않는가? |
+| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 3탭+플로팅 아이콘, WorldMap, StageDetail, Deck, Result, Tutorial, Tower Sell Panel, Exit Modal)와 충돌하지 않는가? |
 | 콘텐츠 범위 | 01-GDD §5 (Content Plan) | Plan이 참조하는 타워·적·스테이지·웨이브 수가 콘텐츠 플랜(18타워×5티어, 5적, 3스테이지, 10웨이브)과 일치하는가? |
 
 판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.

@@ -1,5 +1,6 @@
 import {
 	ALL_TOWERS,
+	calcCombatPower,
 	enhancementCost,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
@@ -24,10 +25,23 @@ export const createCollectionSlice: SliceCreator<
 
 		const newCollection = [...s.collection];
 		newCollection[idx] = { ...tower, level: tower.level + 1 };
+		const cp = calcCombatPower(newCollection);
 		set({
-			profile: { ...s.profile, gold: s.profile.gold - cost },
+			profile: { ...s.profile, gold: s.profile.gold - cost, combatPower: cp },
 			collection: newCollection,
 		});
+		// Tower level achievements
+		const maxTowerLevel = Math.max(...get().collection.map((t) => t.level));
+		get().updateAchievementProgress('tower_lv10', maxTowerLevel);
+		get().updateAchievementProgress('tower_lv30', maxTowerLevel);
+		get().updateAchievementProgress('tower_lv50', maxTowerLevel);
+		// Combat power achievements
+		get().updateAchievementProgress('cp_100', cp);
+		get().updateAchievementProgress('cp_500', cp);
+		get().updateAchievementProgress('cp_1000', cp);
+		get().updateAchievementProgress('cp_5000', cp);
+		get().updateAchievementProgress('cp_10000', cp);
+		get().updateAchievementProgress('cp_50000', cp);
 		debouncedSave(get());
 		return 'success';
 	},
@@ -50,12 +64,28 @@ export const createCollectionSlice: SliceCreator<
 			newCollection[idx] = {
 				...tower,
 				grade: config.nextGrade as TowerGrade,
+				level: config.resetLevel ? 1 : tower.level,
 			};
 		}
+		const cp = calcCombatPower(newCollection);
 		set({
-			profile: { ...s.profile, gold: newGold },
+			profile: { ...s.profile, gold: newGold, combatPower: cp },
 			collection: newCollection,
 		});
+		// Grade achievements (only on success)
+		if (success) {
+			const newGrade = config.nextGrade as TowerGrade;
+			if (newGrade === 'rare') get().updateAchievementProgress('tower_rare', 1);
+			if (newGrade === 'unique') get().updateAchievementProgress('tower_unique', 1);
+			if (newGrade === 'epic') get().updateAchievementProgress('tower_epic', 1);
+		}
+		// Combat power achievements
+		get().updateAchievementProgress('cp_100', cp);
+		get().updateAchievementProgress('cp_500', cp);
+		get().updateAchievementProgress('cp_1000', cp);
+		get().updateAchievementProgress('cp_5000', cp);
+		get().updateAchievementProgress('cp_10000', cp);
+		get().updateAchievementProgress('cp_50000', cp);
 		debouncedSave(get());
 		return success ? 'success' : 'fail';
 	},

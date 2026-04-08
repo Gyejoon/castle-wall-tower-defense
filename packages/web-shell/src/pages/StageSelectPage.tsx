@@ -77,6 +77,7 @@ export function StageSelectPage() {
 			useGameStore.getState().showDamageNumbers,
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
+		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
 		gameRef.current = game;
 
 		let prevShowDmg = useGameStore.getState().showDamageNumbers;
@@ -95,10 +96,19 @@ export function StageSelectPage() {
 			}
 		});
 
+		let prevStar = useGameStore.getState().selectedStar;
+		const unsubStar = useGameStore.subscribe((state) => {
+			if (state.selectedStar !== prevStar) {
+				prevStar = state.selectedStar;
+				gameRef.current?.registry.set('selectedStar', prevStar);
+			}
+		});
+
 		return () => {
 			if (!container.isConnected) {
 				unsubDmgNumbers();
 				unsubShake();
+				unsubStar();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

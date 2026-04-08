@@ -636,8 +636,8 @@ export class UnitSystem {
 			}
 
 			unit.sprite.setPosition(unit.worldX, unit.worldY);
-			// Rotate sprite to face movement direction (sprite default: head pointing down = PI/2)
-			if (dist > 0.01) {
+			// Rotate boss sprite to face movement direction (sprite default: head pointing down = PI/2)
+			if (unit.isBoss && dist > 0.01) {
 				const moveAngle = Math.atan2(dy, dx);
 				unit.sprite.setRotation(moveAngle - Math.PI / 2);
 			}

@@ -27,7 +27,7 @@ export const PALETTE = {
   fireOrange:    '#e07020',  // 불꽃 오렌지
   fireRed:       '#c03020',  // 불꽃 빨강
   // Tower colors
-  archer:         '#c8a04a',  // 궁수 탑 (황금 갈색)
+  archer:        '#c8a04a',  // 궁수 탑 (황금 갈색)
   plasma:        '#8b4513',  // 투석기 (진한 갈색)
   emp:           '#5bc8e8',  // 서리 마탑 (아이스 블루)
   shield:        '#f0e080',  // 성기사 제단 (황금빛)

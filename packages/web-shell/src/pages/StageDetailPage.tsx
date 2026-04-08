@@ -239,7 +239,7 @@ export function StageDetailPage() {
 											? 'assets/ui/icon-star-active.png'
 											: 'assets/ui/icon-star-inactive.png'
 									}
-									alt=""
+									alt={s <= (stageStars[selectedMapId] ?? 0) ? `★${s} 획득` : `★${s} 미획득`}
 									width={12}
 									height={12}
 									className="[image-rendering:pixelated]"
@@ -296,7 +296,7 @@ export function StageDetailPage() {
 												<img
 													key={s}
 													src="assets/ui/icon-star-active.png"
-													alt=""
+													alt="★"
 													width={10}
 													height={10}
 													className="[image-rendering:pixelated]"

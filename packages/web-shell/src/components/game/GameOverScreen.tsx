@@ -83,7 +83,7 @@ export function GameOverScreen({
 											? 'assets/ui/icon-star-active.png'
 											: 'assets/ui/icon-star-inactive.png'
 									}
-									alt=""
+									alt={gameOverStats.starCleared ? '★' : '☆'}
 									width={14}
 									height={14}
 									className="[image-rendering:pixelated]"

@@ -264,6 +264,15 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - 상태 리셋 함수(resetRun, enterLobby 등)가 리셋하는 모든 속성에 대해 Phaser 측 동기 이벤트를 emit하는지
 - 정상 경로(happy path)와 대체 경로(에러, 엣지 케이스)가 동일한 이벤트 세트를 emit하는지
 
+### 방어 코드 자체의 견고성
+
+diff에 try-catch, sanitization, fallback, migration, validation 코드가 포함되면 아래를 반드시 검증한다. "방어 코드가 깨지면 방어 대상보다 더 나쁜 결과를 낳는다"가 원칙이다.
+
+- **catch 범위 ≤ rollback 범위**: try 블록 안에서 이미 persist(set+writeSave, DB write, API call)한 뒤 후속 작업(sync, 알림, 캐시 갱신)이 throw하면, catch에서 persist를 되돌려도 되는가? persist와 후속 작업은 별도 try-catch로 분리해야 catch가 유효 데이터를 덮어쓰지 않는다
+- **외부 데이터 순회 시 요소 null 가드**: localStorage, API 응답, JSON.parse 결과에서 배열을 순회(`map`, `forEach`, `reduce`)하거나 spread(`...item`)할 때, 개별 요소가 null/undefined/비정상 타입일 수 있다. 컨테이너(`Array.isArray`)만 검사하고 요소를 검사하지 않으면 방어 코드 안에서 throw한다
+- **sanitization 함수의 입력 가정 검증**: sanitize/validate 함수가 `obj.field`에 접근하면 `obj` 자체가 null인 경우를 가정했는지 확인. `??`로 필드를 채우기 전에 부모 객체가 존재해야 한다
+- **fallback이 원본보다 나쁜 결과를 내는지**: default save로 폴백하면 유저 데이터 전체 소실. catch가 발동하는 시점에 이미 유효 데이터가 persist된 상태라면, fallback이 오히려 손해다
+
 ### 점수
 
 | 결과 | 점수 |

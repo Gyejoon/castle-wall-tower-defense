@@ -42,9 +42,13 @@ export function App() {
 	const colorblindMode = useGameStore((s) => s.colorblindMode);
 
 	useEffect(() => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.getState().refreshMissions();
-		useMetaStore.getState().recordAttendance();
+		try {
+			useMetaStore.getState().loadSave();
+			useMetaStore.getState().refreshMissions();
+			useMetaStore.getState().recordAttendance();
+		} catch (err) {
+			console.error('[GLD] Boot sequence failed:', err);
+		}
 		const onSaveError = () =>
 			pushToast('저장 공간 부족! 데이터가 저장되지 않을 수 있습니다', 'error');
 		window.addEventListener('gld-save-error', onSaveError);

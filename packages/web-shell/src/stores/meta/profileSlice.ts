@@ -41,6 +41,13 @@ export const createProfileSlice: SliceCreator<
 		set((s) => ({
 			profile: applyLevelUps({ ...s.profile, xp: s.profile.xp + amount }),
 		}));
+		// Level achievements
+		const level = get().profile.level;
+		get().updateAchievementProgress('lv_5', level);
+		get().updateAchievementProgress('lv_10', level);
+		get().updateAchievementProgress('lv_20', level);
+		get().updateAchievementProgress('lv_50', level);
+		get().updateAchievementProgress('lv_99', level);
 		debouncedSave(get());
 	},
 
@@ -88,6 +95,10 @@ export const createProfileSlice: SliceCreator<
 				},
 			};
 		});
+		const clearCount = get().progress.stagesCleared.length;
+		get().updateAchievementProgress('clear_1', clearCount);
+		get().updateAchievementProgress('clear_10', clearCount);
+		get().updateAchievementProgress('clear_50', clearCount);
 		debouncedSave(get());
 	},
 
@@ -102,6 +113,15 @@ export const createProfileSlice: SliceCreator<
 				},
 			};
 		});
+		// Star achievements
+		if (star >= 2) {
+			const star2Count = Object.values(get().progress.stageStars).filter((s) => s >= 2).length;
+			get().updateAchievementProgress('star2_all', star2Count);
+		}
+		if (star >= 3) {
+			const star3Count = Object.values(get().progress.stageStars).filter((s) => s >= 3).length;
+			get().updateAchievementProgress('star3_all', star3Count);
+		}
 		debouncedSave(get());
 	},
 

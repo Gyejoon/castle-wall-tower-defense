@@ -11,6 +11,7 @@ import {
 	writeSave,
 } from './meta/persistence';
 import { createProfileSlice } from './meta/profileSlice';
+import { createAchievementSlice } from './meta/achievementSlice';
 import { createSettingsSlice } from './meta/settingsSlice';
 import type { MetaState } from './meta/types';
 
@@ -55,6 +56,7 @@ export const useMetaStore = create<MetaState>()(
 			...createGachaSlice(set, get),
 			...createMissionSlice(set, get),
 			...createSettingsSlice(set, get),
+			...createAchievementSlice(set, get),
 		};
 	}),
 );

@@ -37,6 +37,9 @@ export interface MetaActions {
 	recordStarClear: (mapId: string, star: StarRating) => void;
 	addAwakeningStones: (amount: number) => void;
 	recordAttendance: () => void;
+	updateAchievementProgress: (id: string, value: number) => void;
+	claimAchievement: (id: string) => 'success' | 'not_ready' | 'already_claimed';
+	checkAchievements: () => string[];
 }
 
 export type MetaState = SaveData & MetaActions;

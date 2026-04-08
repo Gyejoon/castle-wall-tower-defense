@@ -136,34 +136,32 @@ function generatePlaceholders(): ManifestEntry[] {
 
   const entries: ManifestEntry[] = [];
 
-  for (const config of WORLDMAP_PROMPTS) {
+  const PLACEHOLDER_COLORS: Record<string, string> = {
+    'ui-landmark-forest_gate': '#4a8a2a',
+    'ui-landmark-lava_fortress': '#c04020',
+    'ui-landmark-storm_citadel': '#5a6aaa',
+    'ui-stage-thumb-forest_gate': '#2d5a1e',
+    'ui-stage-thumb-lava_fortress': '#8a2a0a',
+    'ui-stage-thumb-storm_citadel': '#2a3a6a',
+  };
+
+  for (const config of [...WORLDMAP_PROMPTS, ...STAGE_THUMB_PROMPTS]) {
     const isBackground = config.key === 'ui-worldmap-bg';
-    const w = isBackground ? 512 : 96;
-    const h = isBackground ? 768 : 96;
+    const w = isBackground ? 512 : config.frameWidth;
+    const h = isBackground ? 768 : config.frameHeight;
 
     const { canvas, ctx } = makeCanvas(w, h);
 
     if (isBackground) {
-      // Dark parchment background
       drawRect(ctx, 0, 0, w, h, '#2a2218');
-      // Forest zone (bottom)
       drawRect(ctx, 0, Math.floor(h * 0.6), w, Math.floor(h * 0.4), '#1a3a10');
-      // Lava zone (middle-left)
       drawRect(ctx, 0, Math.floor(h * 0.3), Math.floor(w * 0.5), Math.floor(h * 0.3), '#3a1808');
-      // Storm zone (top-right)
       drawRect(ctx, Math.floor(w * 0.5), 0, Math.floor(w * 0.5), Math.floor(h * 0.3), '#1a2040');
     } else {
-      // Landmark placeholder: colored square with border
-      const colors: Record<string, string> = {
-        'ui-landmark-forest_gate': '#4a8a2a',
-        'ui-landmark-lava_fortress': '#c04020',
-        'ui-landmark-storm_citadel': '#5a6aaa',
-      };
-      const color = colors[config.key] ?? PALETTE.gold;
+      const color = PLACEHOLDER_COLORS[config.key] ?? PALETTE.gold;
       drawRect(ctx, 0, 0, w, h, '#2a1f14');
       drawRect(ctx, 4, 4, w - 8, h - 8, color);
-      drawRect(ctx, 8, 8, w - 16, w - 16, '#2a1f14');
-      // Center dot
+      drawRect(ctx, 8, 8, w - 16, h - 16, '#2a1f14');
       drawRect(ctx, Math.floor(w / 2) - 4, Math.floor(h / 2) - 4, 8, 8, color);
     }
 

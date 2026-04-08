@@ -493,8 +493,61 @@ function drawBossFrame(ctx: import('@napi-rs/canvas').SKRSContext2D, size: numbe
     setPixel(ctx, sx, sy, hexToRgba(DRAGON.bodyMid, 0.4));
   }
 
-  // (Wings, Legs, Head, Fire — added in subsequent tasks)
-  // Placeholder comment — will be replaced in Task 3-5
+  // === 5. Spine ridges (on body) ===
+  for (let i = 0; i < 6; i++) {
+    const t = (i - 2.5) / 3;
+    const sy = Math.round(bcy + t * bh * 0.7);
+    drawLine(ctx, cx - 2, sy, cx, sy - 1, DRAGON.spine);
+    drawLine(ctx, cx + 2, sy, cx, sy - 1, DRAGON.spine);
+  }
+
+  // === 6. Wings (massive, spread left-right) ===
+  for (const side of [-1, 1] as const) {
+    const wbx = cx + side * 8;  // wing base on body edge
+    const wby = cy;
+
+    // 3 wing bones
+    const boneLens = [34, 30, 24].map(l => Math.round(l * wingSpread));
+    // Bone endpoints: front bone angles down (toward head), back bone angles up (toward tail)
+    const boneEndpoints = [
+      { x: wbx + side * boneLens[0], y: wby + 12 + Math.round(wingY) },      // front
+      { x: wbx + side * boneLens[1], y: wby - 2 + Math.round(wingY * 0.7) },  // middle
+      { x: wbx + side * boneLens[2], y: wby - 14 + Math.round(wingY * 0.4) }, // back
+    ];
+
+    // Wing membrane — fill area between bones using scanline
+    const memColor = rage ? DRAGON.wingMemRage : DRAGON.wingMem;
+    for (let row = Math.min(boneEndpoints[2].y, wby - 8); row <= Math.max(boneEndpoints[0].y, wby + 8); row++) {
+      const t = (row - boneEndpoints[2].y) / (boneEndpoints[0].y - boneEndpoints[2].y + 0.01);
+      const outerX = Math.round(wbx + side * (boneLens[2] + t * (boneLens[0] - boneLens[2])));
+      const innerX = wbx + side * 2;
+      const startX = Math.min(innerX, outerX);
+      const endX = Math.max(innerX, outerX);
+      for (let px = startX; px <= endX; px++) {
+        setPixel(ctx, px, row, hexToRgba(memColor, 0.55));
+      }
+    }
+
+    // Rage: wing inner glow
+    if (rage) {
+      addGlow(ctx, wbx + side * 18, wby, 14, DRAGON.fireRed, 0.08);
+    }
+
+    // Wing bones
+    for (const ep of boneEndpoints) {
+      drawLine(ctx, wbx, wby, ep.x, ep.y, DRAGON.wingBone);
+      drawLine(ctx, wbx, wby + 1, ep.x, ep.y + 1, DRAGON.wingBone);
+    }
+
+    // Wing bone tip claws (first 2 bones)
+    for (let b = 0; b < 2; b++) {
+      const ep = boneEndpoints[b];
+      setPixel(ctx, ep.x + side, ep.y, DRAGON.claw);
+      setPixel(ctx, ep.x + side, ep.y + 1, DRAGON.claw);
+    }
+  }
+
+  // (Legs, Head, Fire — added in subsequent tasks)
 }
 
 function applyColorTint(ctx: import('@napi-rs/canvas').SKRSContext2D, w: number, h: number, color: string, alpha: number, offsetX: number = 0, offsetY: number = 0): void {

@@ -11,7 +11,7 @@ export const WALK_FRAME_COUNT = 4;
 // === ComfyUI Configuration ===
 export const COMFYUI_CONFIG = {
   url: process.env.COMFYUI_URL || 'http://localhost:8188',
-  model: 'rd_pro__isometric.safetensors',
+  model: 'dreamshaper_8.safetensors',
   steps: 20,
   cfgScale: 7,
   width: 512,

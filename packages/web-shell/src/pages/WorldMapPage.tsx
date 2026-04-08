@@ -40,6 +40,7 @@ export function WorldMapPage() {
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const stageStars = useMetaStore((s) => s.progress.stageStars);
 
 	const maps = Object.values(MAP_REGISTRY);
 
@@ -169,7 +170,6 @@ export function WorldMapPage() {
 								const pos = NODE_POSITIONS[map.id];
 								if (!pos) return null;
 								const locked = !isMapUnlocked(map, playerLevel);
-								const cleared = stagesCleared.includes(map.id);
 								const theme = MAP_THEMES[map.id];
 
 								return (
@@ -243,13 +243,24 @@ export function WorldMapPage() {
 													</div>
 												)}
 
-												{/* Clear badge */}
-												{cleared && !locked && (
-													<img
-														src="assets/ui/check-badge.png"
-														alt="클리어"
-														className="absolute top-1 right-1 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
-													/>
+												{/* Star progress */}
+												{!locked && (
+													<div className="absolute top-1 right-1 flex gap-[1px]">
+														{([1, 2, 3] as const).map((s) => (
+															<img
+																key={s}
+																src={
+																	s <= (stageStars[map.id] ?? 0)
+																		? 'assets/ui/icon-star-active.png'
+																		: 'assets/ui/icon-star-inactive.png'
+																}
+																alt=""
+																width={10}
+																height={10}
+																className="[image-rendering:pixelated] drop-shadow-[1px_1px_0px_#0a0804]"
+															/>
+														))}
+													</div>
 												)}
 											</div>
 
@@ -263,6 +274,11 @@ export function WorldMapPage() {
 												>
 													{map.name}
 												</span>
+												{map.rewardMultiplier > 1 && (
+													<span className="font-pixel text-[7px] text-gold">
+														x{map.rewardMultiplier} 보상
+													</span>
+												)}
 
 												<div
 													className={cn(

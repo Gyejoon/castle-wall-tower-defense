@@ -6,6 +6,8 @@ import {
 	getTotalWavesForMap,
 	getWavesForMap,
 	MAP_REGISTRY,
+	STAR_DIFFICULTY,
+	type StarRating,
 } from '@gld/shared';
 import { lazy, Suspense, useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
@@ -17,6 +19,22 @@ const DeckEditSheet = lazy(() =>
 		default: m.DeckEditSheet,
 	})),
 );
+
+function isStarUnlocked(
+	star: StarRating,
+	mapId: string,
+	stageStarsMap: Record<string, number>,
+): boolean {
+	if (star === 1) return true;
+	if (star === 2) return (stageStarsMap[mapId] ?? 0) >= 1;
+	return (stageStarsMap[mapId] ?? 0) >= 2;
+}
+
+const STAR_COLORS = {
+	1: { bg: 'rgba(122,182,72,0.1)', border: '#7ab648', text: '#7ab648' },
+	2: { bg: 'rgba(200,160,74,0.1)', border: '#c8a04a', text: '#c8a04a' },
+	3: { bg: 'rgba(192,48,32,0.1)', border: '#c03020', text: '#c03020' },
+} as const;
 
 const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
 	forest_gate: {
@@ -40,6 +58,9 @@ export function StageDetailPage() {
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
+	const selectedStar = useGameStore((s) => s.selectedStar);
+	const setSelectedStar = useGameStore((s) => s.setSelectedStar);
+	const stageStars = useMetaStore((s) => s.progress.stageStars);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
 
 	const map = MAP_REGISTRY[selectedMapId];
@@ -166,6 +187,21 @@ export function StageDetailPage() {
 								{best}/{totalWaves}
 							</span>
 						</div>
+						{/* Stars display */}
+						<div className="flex gap-1 items-center mt-1.5">
+							{([1, 2, 3] as const).map((s) => (
+								<span
+									key={s}
+									className="font-pixel"
+									style={{
+										fontSize: 12,
+										color: s <= (stageStars[selectedMapId] ?? 0) ? '#f0d060' : '#4a3a20',
+									}}
+								>
+									★
+								</span>
+							))}
+						</div>
 					</div>
 
 					{/* 2x speed guide */}
@@ -179,6 +215,51 @@ export function StageDetailPage() {
 							</div>
 						</div>
 					)}
+
+					{/* Star difficulty selector */}
+					<div className="px-3 pb-3">
+						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
+							난이도 선택
+						</p>
+						<div className="flex gap-2">
+							{([1, 2, 3] as StarRating[]).map((star) => {
+								const unlocked = isStarUnlocked(star, selectedMapId, stageStars);
+								const active = selectedStar === star;
+								const colors = STAR_COLORS[star];
+								const diff = STAR_DIFFICULTY[star];
+
+								return (
+									<button
+										key={star}
+										type="button"
+										onClick={() => unlocked && setSelectedStar(star)}
+										disabled={!unlocked}
+										className="flex-1 p-2 text-center transition-transform duration-150 cursor-pointer disabled:cursor-not-allowed"
+										style={{
+											minHeight: 48,
+											background: active ? colors.bg : 'transparent',
+											border: `2px solid ${active ? colors.border : unlocked ? '#4a3a20' : '#2a2010'}`,
+											opacity: unlocked ? 1 : 0.3,
+											transform: active ? 'scale(1.05)' : 'scale(1)',
+										}}
+									>
+										<div
+											className="font-pixel"
+											style={{ fontSize: 10, color: colors.text }}
+										>
+											{'★'.repeat(star)} {diff.label}
+										</div>
+										<div
+											className="font-pixel mt-1"
+											style={{ fontSize: 8, color: '#a09070' }}
+										>
+											{diff.hp}×
+										</div>
+									</button>
+								);
+							})}
+						</div>
+					</div>
 
 					{/* Deck preview */}
 					<div className="px-3 pb-3">

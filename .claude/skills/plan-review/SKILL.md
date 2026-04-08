@@ -148,7 +148,7 @@ Read ~/.claude/skills/gstack/autoplan/SKILL.md
 ```
 
 autoplan의 모든 섹션(Preamble, 6 Decision Principles, Decision Audit Trail,
-Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 1 이후 검증, Phase 2 미학 리뷰, Phase 3 이후 검증이다.
+Dual Voices 등)을 그대로 따른다. 이 스킬이 수정하는 부분은 Phase 1 이후 검증, Phase 2 미학 리뷰 + 디자인 스펙 검증, Phase 3 이후 검증이다.
 
 **Phase 1 (CEO)**: autoplan 그대로 실행.
 
@@ -161,7 +161,7 @@ Phase 1 완료 후, Step 0-4에서 Phase 1에 할당된 스펙 문서를 `docs/g
 | 차원 | 대조 문서 | 검증 내용 |
 |------|---------|---------|
 | 코어 루프 정합 | 01-GDD §3 (Core Loop / Meta Loop) | Plan이 코어 루프(배치→웨이브→보상)나 메타 루프(성장→도전)를 변경/확장하는가? 변경 시 GDD의 정의와 충돌하지 않는가? |
-| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 8대 코어 시스템(Grid, Pathfinding, Tower, Unit, Wave, Energy, Merge, Tower Sell)과 충돌하지 않는가? |
+| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 8대 코어 시스템(Combat, Movement, Placement, Tower Sell, Element, Gacha/Box, Upgrade, Boss/Encounter)과 충돌하지 않는가? |
 | 수익화 원칙 | 03-BM §1 (BM 구조) | Plan이 BM 금지선(진입장벽, pay-to-win, 강제 광고, 밸런스 영향 코스메틱)을 위반하는가? |
 | 타임라인 정합 | 06-milestone (출시 전) | Plan의 작업이 현재 Phase 위치와 맞는가? 미래 Phase 기능을 선행하고 있지 않은가? |
 | 게임 정체성 | 01-GDD §10 (Edge Point) | Plan이 게임의 Edge Point(세로형 single-field, 즉시 시작, 10웨이브 밀도, 4타워 에너지 관리)를 희석하는가? |

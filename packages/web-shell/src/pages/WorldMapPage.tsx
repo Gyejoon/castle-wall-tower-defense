@@ -224,11 +224,11 @@ export function WorldMapPage() {
 
 												{/* Clear badge */}
 												{cleared && !locked && (
-													<div className="absolute top-1 right-1 bg-gold px-1.5 py-0.5 border border-accent shadow-[1px_1px_0px_#0a0804]">
-														<span className="font-pixel text-[7px] text-bg">
-															✓
-														</span>
-													</div>
+													<img
+														src="/assets/ui/check-badge.png"
+														alt="클리어"
+														className="absolute top-1 right-1 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
+													/>
 												)}
 											</div>
 

@@ -7,7 +7,7 @@ const W = 64;
 const H = 80;
 
 const CS = PALETTE.castleStone;
-const ACCENT = PALETTE.laser; // #c8a04a — brand gold accent
+const ACCENT = PALETTE.archer; // #c8a04a — brand gold accent
 const DEBRIS = '#4a5254';
 
 // Merlon definitions: [x, width] for 5 merlons across 64px

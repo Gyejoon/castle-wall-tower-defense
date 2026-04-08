@@ -96,10 +96,10 @@ describe('metaStore', () => {
 
 	it('enhanceTower deducts gold and increments level', () => {
 		useMetaStore.getState().loadSave();
-		const result = useMetaStore.getState().enhanceTower('laser');
+		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('success');
 		const s = useMetaStore.getState();
-		const tower = s.collection.find((t) => t.defId === 'laser');
+		const tower = s.collection.find((t) => t.defId === 'archer');
 		expect(tower?.level).toBe(2);
 		expect(s.profile.gold).toBeLessThan(500);
 	});
@@ -107,7 +107,7 @@ describe('metaStore', () => {
 	it('enhanceTower returns no_gold when gold insufficient', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({ profile: { ...s.profile, gold: 0 } }));
-		const result = useMetaStore.getState().enhanceTower('laser');
+		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('no_gold');
 	});
 
@@ -115,10 +115,10 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: MAX_TOWER_LEVEL } : t,
+				t.defId === 'archer' ? { ...t, level: MAX_TOWER_LEVEL } : t,
 			),
 		}));
-		const result = useMetaStore.getState().enhanceTower('laser');
+		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('max_level');
 	});
 
@@ -126,14 +126,14 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: 20 } : t,
+				t.defId === 'archer' ? { ...t, level: 20 } : t,
 			),
 		}));
-		const result = useMetaStore.getState().promoteTower('laser', () => 0);
+		const result = useMetaStore.getState().promoteTower('archer', () => 0);
 		expect(result).toBe('success');
 		const tower = useMetaStore
 			.getState()
-			.collection.find((t) => t.defId === 'laser');
+			.collection.find((t) => t.defId === 'archer');
 		expect(tower?.grade).toBe('rare');
 	});
 
@@ -141,15 +141,15 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: 20 } : t,
+				t.defId === 'archer' ? { ...t, level: 20 } : t,
 			),
 		}));
 		const beforeGold = useMetaStore.getState().profile.gold;
-		useMetaStore.getState().promoteTower('laser', () => 0.99);
+		useMetaStore.getState().promoteTower('archer', () => 0.99);
 		expect(useMetaStore.getState().profile.gold).toBe(beforeGold - 500);
 		const tower = useMetaStore
 			.getState()
-			.collection.find((t) => t.defId === 'laser');
+			.collection.find((t) => t.defId === 'archer');
 		expect(tower?.grade).toBe('normal');
 	});
 
@@ -157,10 +157,10 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, grade: 'epic' as const } : t,
+				t.defId === 'archer' ? { ...t, grade: 'epic' as const } : t,
 			),
 		}));
-		const result = useMetaStore.getState().promoteTower('laser');
+		const result = useMetaStore.getState().promoteTower('archer');
 		expect(result).toBe('max_grade');
 	});
 
@@ -169,10 +169,10 @@ describe('metaStore', () => {
 		useMetaStore.setState((s) => ({
 			profile: { ...s.profile, gold: 0 },
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: 20 } : t,
+				t.defId === 'archer' ? { ...t, level: 20 } : t,
 			),
 		}));
-		const result = useMetaStore.getState().promoteTower('laser');
+		const result = useMetaStore.getState().promoteTower('archer');
 		expect(result).toBe('no_gold');
 	});
 
@@ -181,7 +181,7 @@ describe('metaStore', () => {
 		useMetaStore.setState((s) => ({
 			profile: { ...s.profile, gold: 10000 },
 		}));
-		const result = useMetaStore.getState().promoteTower('laser');
+		const result = useMetaStore.getState().promoteTower('archer');
 		expect(result).toBe('level_too_low');
 	});
 
@@ -190,17 +190,17 @@ describe('metaStore', () => {
 		useMetaStore.setState((s) => ({
 			profile: { ...s.profile, gold: 10000 },
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: 19 } : t,
+				t.defId === 'archer' ? { ...t, level: 19 } : t,
 			),
 		}));
-		expect(useMetaStore.getState().promoteTower('laser')).toBe('level_too_low');
+		expect(useMetaStore.getState().promoteTower('archer')).toBe('level_too_low');
 
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'laser' ? { ...t, level: 20, grade: 'normal' as const } : t,
+				t.defId === 'archer' ? { ...t, level: 20, grade: 'normal' as const } : t,
 			),
 		}));
-		expect(useMetaStore.getState().promoteTower('laser', () => 0)).toBe(
+		expect(useMetaStore.getState().promoteTower('archer', () => 0)).toBe(
 			'success',
 		);
 	});
@@ -209,11 +209,11 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore
 			.getState()
-			.setSelectedDeck(['emp', 'shield', 'laser', 'plasma']);
+			.setSelectedDeck(['emp', 'shield', 'archer', 'plasma']);
 		expect(useMetaStore.getState().selectedDeck).toEqual([
 			'emp',
 			'shield',
-			'laser',
+			'archer',
 			'plasma',
 		]);
 	});

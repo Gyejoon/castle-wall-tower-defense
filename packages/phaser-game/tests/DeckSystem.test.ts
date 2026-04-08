@@ -10,7 +10,7 @@ describe('DeckSystem', () => {
 
 	it('getCard returns card by index', () => {
 		const ds = new DeckSystem();
-		expect(ds.getCard(0)?.towerDefId).toBe('laser');
+		expect(ds.getCard(0)?.towerDefId).toBe('archer');
 		expect(ds.getCard(3)?.towerDefId).toBe('shield');
 	});
 
@@ -42,7 +42,7 @@ describe('DeckSystem', () => {
 
 	it('getTowerDef returns TowerDef from ALL_TOWERS', () => {
 		const ds = new DeckSystem();
-		const def = ds.getTowerDef('laser');
+		const def = ds.getTowerDef('archer');
 		expect(def).not.toBeNull();
 		expect(def?.name).toBe('궁수 탑');
 	});

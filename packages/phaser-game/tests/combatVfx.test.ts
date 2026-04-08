@@ -19,6 +19,7 @@ vi.mock('phaser', () => ({
 vi.mock('../src/audio/SoundGenerator', () => ({
 	soundGenerator: {
 		playTowerAttack: vi.fn(),
+		playArrowImpact: vi.fn(),
 	},
 }));
 
@@ -108,7 +109,7 @@ describe('optional combat vfx', () => {
 			textures: {
 				exists: vi.fn((key: string) =>
 					[
-						'tower-laser-fire',
+						'tower-archer-fire',
 						'projectile-hit-flash',
 						'vfx-explosion-sm',
 					].includes(key),
@@ -131,7 +132,7 @@ describe('optional combat vfx', () => {
 
 		expect(create).toHaveBeenCalledWith(
 			expect.objectContaining({
-				key: getOptionalAnimationKey('tower-laser-fire'),
+				key: getOptionalAnimationKey('tower-archer-fire'),
 				frameRate: 14,
 				repeat: 0,
 			}),
@@ -165,13 +166,13 @@ describe('optional combat vfx', () => {
 			},
 			textures: {
 				exists: vi.fn((key: string) =>
-					['tower-laser-fire', 'projectile-hit-flash'].includes(key),
+					['tower-archer-fire', 'projectile-hit-flash'].includes(key),
 				),
 			},
 			anims: {
 				exists: vi.fn((key: string) =>
 					[
-						getOptionalAnimationKey('tower-laser-fire'),
+						getOptionalAnimationKey('tower-archer-fire'),
 						getOptionalAnimationKey('projectile-hit-flash'),
 					].includes(key),
 				),
@@ -206,14 +207,22 @@ describe('optional combat vfx', () => {
 			gridManager as never,
 			pathfinding as never,
 		);
-		const result = towerSystem.placeTower(0, 0, 'laser');
+		const result = towerSystem.placeTower(0, 0, 'archer');
 		expect(result.success).toBe(true);
 
+		// First update: fires the attack, spawns muzzle VFX, queues arrow in flight
 		towerSystem.update(1000, 16, [
 			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
 		]);
 
-		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-laser-fire');
+		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-archer-fire');
+
+		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
+		// Drive the TTL to zero with a second update.
+		towerSystem.update(1200, 120, [
+			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
+		]);
+
 		expect(addSprite).toHaveBeenCalledWith(132, 120, 'projectile-hit-flash');
 	});
 

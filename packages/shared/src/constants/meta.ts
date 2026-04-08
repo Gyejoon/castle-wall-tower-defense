@@ -73,7 +73,7 @@ export function getEffectiveStats(
 	);
 }
 
-const DEFAULT_STARTER_IDS = ['laser', 'plasma', 'emp', 'shield'];
+const DEFAULT_STARTER_IDS = ['archer', 'plasma', 'emp', 'shield'];
 
 export function createDefaultSave(): SaveData {
 	const now = Date.now();

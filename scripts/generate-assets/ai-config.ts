@@ -95,11 +95,11 @@ export const TILE_PROMPTS: AssetPromptConfig[] = [
 
 // === Tower Prompts ===
 const TOWERS = [
-  { id: 'laser', description: 'wooden archer tower with bow, golden brown wood' },
+  { id: 'archer', description: 'wooden archer tower with bow, golden brown wood' },
   { id: 'plasma', description: 'stone catapult siege weapon, dark brown wood and gray stone' },
   { id: 'emp', description: 'ice blue crystal tower, frost magic, icy glow' },
   { id: 'shield', description: 'golden holy altar, glowing shield, warm yellow light' },
-  { id: 'twin_laser', description: 'twin crossbow turret, reinforced wood and iron' },
+  { id: 'twin_archer', description: 'twin crossbow turret, reinforced wood and iron' },
   { id: 'disruptor', description: 'dark purple crystal tower, shadow magic, ominous glow' },
   { id: 'nova_cannon', description: 'large trebuchet, heavy stone base, siege weapon' },
   { id: 'fortress', description: 'miniature castle keep, stone walls, battlements, flag on top' },

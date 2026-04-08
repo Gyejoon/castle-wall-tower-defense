@@ -3,9 +3,9 @@ import type { TowerDef } from '../types/tower';
 // T1 Common (4 towers)
 export const BASE_TOWERS: TowerDef[] = [
 	{
-		id: 'laser',
+		id: 'archer',
 		name: '궁수 탑',
-		type: 'laser',
+		type: 'archer',
 		tier: 1,
 		stats: { damage: 10, range: 3, attackSpeed: 1.5 },
 		cost: 10,
@@ -60,9 +60,9 @@ export const BASE_TOWERS: TowerDef[] = [
 // T2 Rare (4 towers)
 export const RARE_TOWERS: TowerDef[] = [
 	{
-		id: 'twin_laser',
+		id: 'twin_archer',
 		name: '쌍궁 탑',
-		type: 'twin_laser',
+		type: 'twin_archer',
 		tier: 2,
 		stats: { damage: 25, range: 4, attackSpeed: 2.0 },
 		cost: 10,

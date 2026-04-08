@@ -1,9 +1,9 @@
 export type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 
-export type TowerType = 'laser' | 'plasma' | 'emp' | 'shield';
+export type TowerType = 'archer' | 'plasma' | 'emp' | 'shield';
 
 export type FusionTowerType =
-	| 'twin_laser'
+	| 'twin_archer'
 	| 'disruptor'
 	| 'nova_cannon'
 	| 'fortress'

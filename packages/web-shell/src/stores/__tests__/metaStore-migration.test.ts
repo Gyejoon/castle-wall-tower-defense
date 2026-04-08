@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v3
+// Migration tests for metaStore v1→v4
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
 import {
@@ -9,6 +9,7 @@ import {
 	SAVE_VERSION,
 } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { parseSave } from '../meta/persistence';
 import { useMetaStore } from '../metaStore';
 
 // localStorage mock helper
@@ -32,12 +33,12 @@ function makeLocalStorageMock(initial: Record<string, string> = {}): Storage {
 	} as Storage;
 }
 
-describe('metaStore v1→v3 migration', () => {
+describe('metaStore v1→v4 migration', () => {
 	beforeEach(() => {
 		useMetaStore.setState(createDefaultSave());
 	});
 
-	it('v1 정상 데이터 → v3으로 마이그레이션', () => {
+	it('v1 정상 데이터 → v4으로 마이그레이션 (laser→archer 포함)', () => {
 		const v1Save = {
 			version: 1,
 			profile: {
@@ -74,6 +75,7 @@ describe('metaStore v1→v3 migration', () => {
 
 		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.version).toBe(4);
+		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
 		expect(s.profile.diamond).toBe(0);
@@ -225,7 +227,7 @@ describe('metaStore v1→v3 migration', () => {
 				showDamageNumbers: true,
 				colorblindMode: 'off',
 			},
-			selectedDeck: ['laser'],
+			selectedDeck: ['archer'],
 		};
 		vi.stubGlobal(
 			'localStorage',
@@ -245,6 +247,67 @@ describe('metaStore v1→v3 migration', () => {
 		expect(s.profile.combatPower).toBe(0);
 		expect(s.progress.stageStars).toEqual({});
 		expect(s.progress.awakeningStones).toBe(0);
+
+		vi.unstubAllGlobals();
+	});
+
+	it('migrates v3 save: laser→archer, twin_laser→twin_archer', () => {
+		const v3Save = {
+			version: 3,
+			profile: {
+				nickname: 'test',
+				level: 1,
+				xp: 0,
+				gold: 100,
+				diamond: 0,
+				totalGoldEarned: 0,
+				wins: 0,
+				losses: 0,
+				winStreak: 0,
+				bestWinStreak: 0,
+			},
+			collection: [
+				{ defId: 'laser', level: 5, grade: 'rare', acquiredAt: 1000 },
+				{ defId: 'twin_laser', level: 10, grade: 'epic', acquiredAt: 2000 },
+				{ defId: 'plasma', level: 3, grade: 'normal', acquiredAt: 500 },
+			],
+			progress: {
+				highestWave: {},
+				stagesCleared: [],
+				totalBattles: 0,
+				tutorialCompleted: true,
+				gachaPityCount: 0,
+				dailyFreeBoxClaimedAt: null,
+				dailyAdBoxCount: 0,
+				dailyResetAt: null,
+				dailyMissions: [],
+				weeklyMissions: [],
+				lastDailyMissionResetAt: null,
+				lastWeeklyMissionResetAt: null,
+				lastAttendanceDate: null,
+			},
+			settings: {
+				bgmVolume: 0.7,
+				sfxVolume: 0.8,
+				screenShake: true,
+				showDamageNumbers: true,
+				colorblindMode: 'off',
+			},
+			selectedDeck: ['laser', 'plasma', 'emp', 'shield'],
+		};
+
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v3Save) }),
+		);
+		const result = parseSave();
+
+		expect(result).not.toBeNull();
+		expect(result!.version).toBe(4);
+		expect(result!.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
+		expect(result!.collection[0].defId).toBe('archer');
+		expect(result!.collection[1].defId).toBe('twin_archer');
+		expect(result!.collection[2].defId).toBe('plasma'); // unchanged
 
 		vi.unstubAllGlobals();
 	});

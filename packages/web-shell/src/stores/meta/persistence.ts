@@ -59,7 +59,14 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 	3: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const profile = (data.profile ?? {}) as Record<string, unknown>;
-		const collection = (Array.isArray(data.collection) ? data.collection : []) as Record<string, unknown>[];
+		const selectedDeck = (data.selectedDeck ?? []) as string[];
+		const collection = (
+			Array.isArray(data.collection) ? data.collection : []
+		) as Record<string, unknown>[];
+
+		const renameId = (id: string) =>
+			id === 'laser' ? 'archer' : id === 'twin_laser' ? 'twin_archer' : id;
+
 		return {
 			...data,
 			version: 4,
@@ -67,8 +74,10 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				...profile,
 				combatPower: 0,
 			},
+			selectedDeck: selectedDeck.map(renameId),
 			collection: collection.map((t) => ({
 				...t,
+				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
 				awakening: (t['awakening'] as number) ?? 0,
 				duplicateCount: (t['duplicateCount'] as number) ?? 0,
 			})),

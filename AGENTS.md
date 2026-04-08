@@ -54,6 +54,11 @@ Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이
 - Codex용 수렴 리뷰 스킬: `.agents/skills/ralreview/SKILL.md`
 - 런타임 안정성 체크 기준: `.claude/skills/phaser-best-practices/SKILL.md`
 
+## 자동 학습 룰
+
+반복 실수에서 자동 생성된 프로젝트 룰이 있다. 작업 전 확인 필수:
+→ `.claude/learned-rules.md`
+
 ## 워크스페이스 맵
 
 | 패키지 | 역할 |

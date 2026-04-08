@@ -181,8 +181,8 @@ describe('field asset preload alignment', () => {
 			},
 		);
 		expect(image).toHaveBeenCalledWith(
-			'tower-laser',
-			manifestByKey.get('tower-laser')?.path,
+			'tower-archer',
+			manifestByKey.get('tower-archer')?.path,
 		);
 		expect(spritesheet).toHaveBeenCalledWith(
 			'unit-scout_drone',

@@ -5,6 +5,7 @@ import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
+import { BossHpBar } from '../components/game/BossHpBar';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
@@ -23,7 +24,7 @@ export function GamePage() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
-	const bossHp = useGameStore((s) => s.bossHp);
+	const bossHpMap = useGameStore((s) => s.bossHpMap);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
@@ -123,7 +124,6 @@ export function GamePage() {
 					speed2xUnlocked={speed2xUnlocked}
 					runStatus={runStatus}
 					onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
-					bossHpVisible={bossHp.visible}
 					onExitRequest={handleExitRequest}
 				/>
 
@@ -136,6 +136,14 @@ export function GamePage() {
 					}}
 				>
 					<PhaserGame key={runId} />
+
+					{Object.keys(bossHpMap).length > 0 && (
+						<div className="absolute top-0 left-0 right-0 z-[2] flex flex-col gap-1 px-3 pt-2">
+							{Object.values(bossHpMap).map((entry) => (
+								<BossHpBar key={entry.unitId} entry={entry} />
+							))}
+						</div>
+					)}
 
 					{runStatus !== 'victory' && runStatus !== 'defeat' && (
 						<TutorialOverlay />

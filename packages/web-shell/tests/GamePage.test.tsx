@@ -141,7 +141,7 @@ describe('GamePage', () => {
 			emitSpy('tower-placed', {
 				col: 3,
 				row: 4,
-				towerId: 'laser',
+				towerId: 'archer',
 				success: false,
 				reason: 'combat_phase',
 			});

@@ -1,4 +1,5 @@
 import type { AchievementDef } from '@gld/shared';
+import { DiamondIcon } from './CurrencyIcon';
 
 export function AchievementToast({ achievement }: { achievement: AchievementDef }) {
 	return (
@@ -10,8 +11,8 @@ export function AchievementToast({ achievement }: { achievement: AchievementDef 
 				animation: 'slideDown 0.3s ease-out',
 			}}
 		>
-			<span className="text-[10px] text-text">🏆 {achievement.name}</span>
-			<span className="text-[10px] text-gold">💎 {achievement.reward.diamond}</span>
+			<span className="text-[10px] text-text">{achievement.name}</span>
+			<span className="text-[10px] text-gold inline-flex items-center gap-0.5"><DiamondIcon size={10} /> {achievement.reward.diamond}</span>
 		</div>
 	);
 }

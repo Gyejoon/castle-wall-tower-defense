@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS } from '@gld/shared';
 import { useState } from 'react';
+import { DiamondIcon } from '../components/ui/CurrencyIcon';
 import { useMetaStore } from '../stores/metaStore';
 
 const CATEGORIES = [
@@ -74,7 +75,7 @@ export function AchievementPage() {
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-1.5">
 										<span className="font-pixel text-[10px]" style={{ color: achieved ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>
-											{achieved ? '✅' : progress > 0 ? '⬜' : '🔒'}
+											{achieved ? 'V' : progress > 0 ? '-' : 'x'}
 										</span>
 										<span className="font-pixel text-[10px] text-text">
 											{ach.name}
@@ -88,7 +89,7 @@ export function AchievementPage() {
 								{/* Reward + claim */}
 								<div className="flex flex-col items-end gap-1 shrink-0">
 									<span className="font-pixel text-[9px] text-gold">
-										💎 {ach.reward.diamond}
+										<span className="inline-flex items-center gap-0.5"><DiamondIcon size={10} /> {ach.reward.diamond}</span>
 									</span>
 									{achieved && !claimed && (
 										<button

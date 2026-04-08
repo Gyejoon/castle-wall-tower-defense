@@ -58,7 +58,9 @@ type SaveMigration = (
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 	3: (data) => {
 		const selectedDeck = (data.selectedDeck ?? []) as string[];
-		const collection = (data.collection ?? []) as Array<Record<string, unknown>>;
+		const collection = (data.collection ?? []) as Array<
+			Record<string, unknown>
+		>;
 
 		const renameId = (id: string) =>
 			id === 'laser' ? 'archer' : id === 'twin_laser' ? 'twin_archer' : id;

@@ -491,17 +491,17 @@ export class SoundGenerator {
 	}
 
 	playArrowImpact(): void {
-		this.playThrottled(
-			'arrowImpact',
-			{
-				frequency: 200,
-				endFrequency: 80,
-				duration: 40,
-				type: 'triangle',
-				volume: 0.06,
-			},
-			80,
-		);
+		const now = Date.now();
+		const last = this.throttleMap.get('arrowImpact');
+		if (last !== undefined && now - last < 80) return;
+		this.throttleMap.set('arrowImpact', now);
+		this.play({
+			frequency: 200,
+			endFrequency: 80,
+			duration: 40,
+			type: 'triangle',
+			volume: 0.06,
+		});
 		this.playNoise({
 			noiseType: 'white',
 			duration: 20,

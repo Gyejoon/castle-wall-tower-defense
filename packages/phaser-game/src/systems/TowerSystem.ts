@@ -377,10 +377,10 @@ export class TowerSystem {
 
 				const color = TowerSystem.parseHexColor(def.color);
 				const style = this.hasSplash(special)
-					? 'arc' as const
-					: (def.type === 'archer' || def.type === 'twin_archer')
-						? 'arrow' as const
-						: 'beam' as const;
+					? ('arc' as const)
+					: def.type === 'archer' || def.type === 'twin_archer'
+						? ('arrow' as const)
+						: ('beam' as const);
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {
 					this.ensureArrowPool();
@@ -404,7 +404,9 @@ export class TowerSystem {
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				if (style !== 'arrow') {
 					this.spawnImpactVfx(
-						this.hasSplash(special) ? 'vfx-explosion-sm' : 'projectile-hit-flash',
+						this.hasSplash(special)
+							? 'vfx-explosion-sm'
+							: 'projectile-hit-flash',
 						closestUnit.x,
 						closestUnit.y,
 					);
@@ -548,7 +550,8 @@ export class TowerSystem {
 				if (t > 0.08) {
 					const trailT = t - 0.08;
 					const trailX = line.x1 + dx * trailT;
-					const trailY = line.y1 + dy * trailT - Math.sin(trailT * Math.PI) * 15;
+					const trailY =
+						line.y1 + dy * trailT - Math.sin(trailT * Math.PI) * 15;
 					this.attackGraphics.lineStyle(1, line.color, alpha * 0.3);
 					this.attackGraphics.beginPath();
 					this.attackGraphics.moveTo(trailX, trailY);

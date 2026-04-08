@@ -10,7 +10,7 @@ import {
 	type UnitDef,
 } from '@gld/shared';
 import Phaser from 'phaser';
-import { getOptionalAnimationKey } from '../assets/assetManifest';
+import { getCachedAssetManifest, getOptionalAnimationKey, registerOptionalCombatAnimations } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 
@@ -188,20 +188,37 @@ export class UnitSystem {
 			pathIndex: 0,
 		};
 
-		const textureKey = entry.isBoss
-			? `unit-${entry.def.id}-boss`
-			: `unit-${entry.def.id}`;
+		const bossTextureKey = `unit-${entry.def.id}-boss`;
+		const normalTextureKey = `unit-${entry.def.id}`;
+		const bossTextureReady =
+			entry.isBoss && this.scene.textures.exists(bossTextureKey);
+		const textureKey = bossTextureReady ? bossTextureKey : normalTextureKey;
 		const sprite = this.scene.add.sprite(
 			startWorld.x,
 			startWorld.y,
 			textureKey,
 		);
 		sprite.setDisplaySize(entry.isBoss ? 80 : 40, entry.isBoss ? 96 : 48);
-		const walkAnimKey = entry.isBoss ? `anim-${textureKey}` : `${entry.def.id}-walk`;
-		if (this.scene.anims.exists(walkAnimKey)) {
-			sprite.play(walkAnimKey);
+		const bossAnimKey = `anim-${bossTextureKey}`;
+		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
+			sprite.play(bossAnimKey);
 		} else {
 			sprite.play(`${entry.def.id}-walk`);
+		}
+		// If boss texture isn't loaded yet, swap when it becomes available
+		if (entry.isBoss && !bossTextureReady) {
+			const onTextureAdded = (_key: string) => {
+				if (_key === bossTextureKey && sprite.active) {
+					sprite.setTexture(bossTextureKey);
+					registerOptionalCombatAnimations(this.scene, getCachedAssetManifest(this.scene));
+					const aKey = `anim-${bossTextureKey}`;
+					if (this.scene.anims.exists(aKey)) {
+						sprite.play(aKey);
+					}
+					this.scene.textures.off('addtexture', onTextureAdded);
+				}
+			};
+			this.scene.textures.on('addtexture', onTextureAdded);
 		}
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (entry.def.element !== 'neutral') {

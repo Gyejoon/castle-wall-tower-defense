@@ -266,8 +266,8 @@
   - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
 - **Lobby**: Home 탭 (단일 "성벽 막기" 골드 버튼), Collection 탭, Missions 탭, Settings 탭
-- **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금/클리어 상태 표시, 권장 레벨 뱃지
-- **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 출전 덱 4슬롯 미리보기 + 게임 시작
+- **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금/클리어 상태 표시, 권장 레벨 뱃지, 클리어 배지(골드 방패 픽셀 아트). 고정 px 좌표(430×640) 레이아웃으로 노드 간격과 화살표 길이 일정 유지. 마운트 시 권장 스테이지(첫 미클리어 해금 스테이지)로 자동 스크롤.
+- **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 2배속 가이드(클리어 완료 시 "▶▶ 클리어 완료 — 2배속 플레이 가능" 표시) + 출전 덱 4슬롯 미리보기 + 게임 시작
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
 - **Tower Sell Panel**: 배치된 타워 탭 시 하단 중앙에 표시 (타워 이름 + "판매 E+N" danger 버튼)
 - **Exit Modal**: "나가기" 텍스트 버튼 탭 → 확인 모달 (게임 일시정지, "나가기"/"계속하기")
@@ -277,8 +277,10 @@
 ### iOS 사운드
 
 iOS Safari/Chrome은 사용자 제스처 없이 AudioContext를 시작할 수 없음.
-첫 `pointerdown`/`touchstart`/`click`에서 `soundGenerator.unlock()` 호출 (1회성).
-`visibilitychange`로 탭 전환 후 복귀 시에도 재개.
+첫 `pointerdown`/`touchstart`/`click`에서 `await soundGenerator.unlock()` 호출 (async, try-catch 래핑).
+unlock 후 저장된 SFX 볼륨을 오디오 엔진에 재적용. `visibilitychange`로 탭 전환 후 복귀 시에도 `await` 재개.
+리스너는 `await` 전에 선제거하여 단일 제스처의 중복 이벤트(pointerdown+touchstart+click) 동시 호출 방지.
+GamePage, StageSelectPage 모두 마운트 시 저장된 SFX 볼륨을 오디오 엔진에 초기 적용.
 
 ### 디자인 시스템
 
@@ -343,22 +345,31 @@ iOS Safari/Chrome은 사용자 제스처 없이 AudioContext를 시작할 수 �
 | setting_key | default | range/options | saved_to | 런타임 동기화 |
 |-------------|---------|---------------|---------|-------------|
 | bgm_volume | 0.7 | 0~1 | localStorage | Zustand → SoundGenerator |
-| sfx_volume | 0.8 | 0~1 | localStorage | Zustand → SoundGenerator |
-| screen_shake | on | on/off | localStorage | Zustand → GameScene |
+| sfx_volume | 0.8 | 0~1 | localStorage | Zustand → SoundGenerator (`setMasterVolume` 직접 호출) |
+| screen_shake | on | on/off | localStorage | Zustand → registry → Phaser (`screenShake !== false` 체크) |
 | colorblind_mode | off | off/protan/deutan/tritan | localStorage | Zustand → CSS filter |
 | damage_numbers | on | on/off | localStorage | Zustand → registry → Phaser changedata |
 
 ### 설정 동기화 아키텍처
 
 ```
-SettingsTab (React) → gameStore.toggle*()
-    → Zustand subscribe (PhaserGame.tsx)
-        → game.registry.set('showDamageNumbers', value)
-            → Phaser changedata-showDamageNumbers 이벤트
-                → DamageNumberSystem.setEnabled(value)
+SettingsTab (React) → gameStore.toggle*() / set*()
+    → Zustand subscribe (PhaserGame.tsx / StageSelectPage.tsx)
+        → game.registry.set('showDamageNumbers' | 'screenShake', value)
+            → Phaser 씬에서 registry.get() 조회 후 기능 적용/스킵
+
+sfxVolume 특수 경로:
+    gameStore.setSfxVolume(v) → soundGenerator.setMasterVolume(v) 직접 호출
+    GamePage/StageSelectPage 마운트 시에도 저장된 볼륨 초기 적용
+
+screenShake 동기화:
+    gameStore.toggleScreenShake() → metaStore.updateSettings({ screenShake }) 영속화
+    gameStore 초기값: metaStore.settings.screenShake ?? true
+    PhaserGame.tsx: registry.set('screenShake', value) + subscribe
+    Game.ts showBossWarningOverlay(): registry.get('screenShake') !== false → shake 조건 실행
 ```
 
-모든 설정은 로비에서 변경 가능하며, 게임 중에도 실시간 반영된다.
+모든 설정은 로비에서 변경 가능하며, 게임 중에도 실시간 반영된다. 전역 스크롤바는 CSS에서 숨김 처리 (`scrollbar-width: none`).
 
 ---
 
@@ -381,3 +392,4 @@ SettingsTab (React) → gameStore.toggle*()
 | 2026-04-07 | §8 UI/UX | 디자인 시스템 섹션 신설 (색상 토큰 13종, 타이포 5단계, 터치 타겟, HUD 애니메이션, 데미지 넘버, CurrencyIcon SVG) |
 | 2026-04-07 | §8, §9 | 토큰 아키텍처(단일 원천 + re-export), 설정 런타임 동기화 경로, HUD flash 초기 마운트 스킵 |
 | 2026-04-07 | §4, §6, §7, §8 | 웨이브 재설계(초반 완만→후반 가파름), WAVE_SCALING 10단계, difficultyHpMult 맵별 차등(1/1.3/1.6), 타워 판매(50%), 게임 나가기(확인 모달+일시정지), 보스 leak 즉시 패배, iOS AudioContext unlock, 덱 편집 버그 수정 |
+| 2026-04-08 | §8, §9 | 월드맵 px 고정 레이아웃(430×640)+권장 스테이지 자동 스크롤, 클리어 배지 픽셀 아트 에셋, 2배속 가이드 UI, SFX→soundGenerator 연결, screenShake metaStore 영속화+registry 동기화, iOS async unlock(try-catch+리스너 선제거), 전역 스크롤바 숨김 |

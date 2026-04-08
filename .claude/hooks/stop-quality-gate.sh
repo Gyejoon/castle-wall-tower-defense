@@ -58,7 +58,11 @@ EOF
 # Phase 2: Test verification
 # ──────────────────────────────────────
 
-TEST_OUTPUT=$(timeout 180 bun run test 2>&1) || {
+TIMEOUT_CMD="timeout"
+command -v timeout &>/dev/null || TIMEOUT_CMD="gtimeout"
+command -v "$TIMEOUT_CMD" &>/dev/null || TIMEOUT_CMD=""
+
+TEST_OUTPUT=$(${TIMEOUT_CMD:+$TIMEOUT_CMD 180} bun run test 2>&1) || {
   cat >&2 <<EOF
 QUALITY GATE BLOCKED: Test
 ─────────────────────

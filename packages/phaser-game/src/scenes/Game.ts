@@ -96,6 +96,12 @@ export class GameScene extends Phaser.Scene {
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		this.damageNumbers.setEnabled(value);
 	};
+	private onDeckIdsChange = (_parent: unknown, value: string[]) => {
+		if (value) {
+			this.playerDeck = new DeckSystem(buildDeckCards(value));
+			EventBus.emit('deck-loaded', { cards: this.playerDeck.getCards() });
+		}
+	};
 
 	private playerHp = INITIAL_PLAYER_HP;
 	private selectedStar: StarRating = 1;
@@ -215,6 +221,7 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
+		this.game.registry.events.on('changedata-deckIds', this.onDeckIdsChange);
 
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -820,6 +827,7 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
+		this.game.registry.events.off('changedata-deckIds', this.onDeckIdsChange);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();

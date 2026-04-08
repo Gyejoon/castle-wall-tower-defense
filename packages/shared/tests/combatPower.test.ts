@@ -68,4 +68,26 @@ describe('calcCombatPower', () => {
 		];
 		expect(calcCombatPower(collection)).toBe(55);
 	});
+
+	it('with deckIds filters to deck towers only', () => {
+		const collection: OwnedTower[] = [
+			makeTower({ defId: 'archer' }), // 15
+			makeTower({ defId: 'plasma' }), // 20
+			makeTower({ defId: 'emp' }), // 5
+			makeTower({ defId: 'shield' }), // 15
+		];
+		expect(calcCombatPower(collection, ['archer', 'plasma'])).toBe(35);
+	});
+
+	it('deckIds with missing tower returns partial sum', () => {
+		const collection: OwnedTower[] = [
+			makeTower({ defId: 'archer' }), // 15
+		];
+		expect(calcCombatPower(collection, ['archer', 'nonexistent'])).toBe(15);
+	});
+
+	it('empty deckIds returns 0', () => {
+		const collection: OwnedTower[] = [makeTower({ defId: 'archer' })];
+		expect(calcCombatPower(collection, [])).toBe(0);
+	});
 });

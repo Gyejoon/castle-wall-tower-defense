@@ -1,10 +1,14 @@
 import { ALL_TOWERS, type TowerDef } from '@gld/shared';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
+import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 
 const GachaScreen = lazy(() =>
 	import('../../GachaScreen').then((m) => ({ default: m.GachaScreen })),
+);
+const DeckEditSheet = lazy(() =>
+	import('../DeckEditSheet').then((m) => ({ default: m.DeckEditSheet })),
 );
 
 import { PixelButton } from '../../ui/PixelButton';
@@ -16,6 +20,8 @@ import { TowerGridCard } from './collection/TowerGridCard';
 export function CollectionTab() {
 	const [selectedDef, setSelectedDef] = useState<TowerDef | null>(null);
 	const [showGacha, setShowGacha] = useState(false);
+	const [showDeckEdit, setShowDeckEdit] = useState(false);
+	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const collection = useMetaStore((s) => s.collection);
 	const ownedIds = useMemo(
 		() => new Set(collection.map((t) => t.defId)),
@@ -39,6 +45,62 @@ export function CollectionTab() {
 			/>
 
 			<div className="relative z-[1] flex flex-1 flex-col gap-3 overflow-auto p-3">
+				{/* 출전 덱 */}
+				<div>
+					<div className="flex items-center justify-between mb-2">
+						<span className="font-pixel text-sm text-text">출전 덱</span>
+						<button
+							type="button"
+							className="font-pixel text-[10px] text-accent bg-panel border border-border px-2 py-0.5 cursor-pointer hover:text-gold transition-colors"
+							onClick={() => setShowDeckEdit(true)}
+						>
+							<span className="inline-flex items-center gap-1">
+								<img
+									src="assets/ui/icon-edit.webp"
+									alt=""
+									width={10}
+									height={10}
+									className="[image-rendering:pixelated]"
+								/>
+								편집
+							</span>
+						</button>
+					</div>
+					<div className="flex gap-1.5">
+						{selectedDeck.map((id) => {
+							const tower = ALL_TOWERS.find((t) => t.id === id);
+							if (!tower) return null;
+							return (
+								<div
+									key={id}
+									className="flex-1 bg-panel border border-border p-1.5 flex flex-col items-center gap-1"
+								>
+									<img
+										src={`assets/towers/${tower.type}.webp`}
+										alt={tower.name}
+										width={32}
+										height={32}
+										className="[image-rendering:pixelated]"
+									/>
+									<span className="font-pixel text-[8px] text-text-secondary text-center overflow-hidden max-w-full whitespace-nowrap text-ellipsis">
+										{tower.name}
+									</span>
+									<span className="font-pixel text-[9px] text-accent inline-flex items-center gap-[2px]">
+										<img
+											src="assets/ui/icon-energy.webp"
+											alt=""
+											width={10}
+											height={10}
+											className="[image-rendering:pixelated]"
+										/>
+										{tower.cost}
+									</span>
+								</div>
+							);
+						})}
+					</div>
+				</div>
+
 				<div className="flex items-center justify-between">
 					<span className="font-pixel text-sm text-text">보유 타워</span>
 					<div className="flex items-center gap-2">
@@ -93,6 +155,15 @@ export function CollectionTab() {
 					def={selectedDef}
 					onClose={() => setSelectedDef(null)}
 				/>
+			)}
+
+			{showDeckEdit && (
+				<Suspense fallback={null}>
+					<DeckEditSheet
+						open={showDeckEdit}
+						onClose={() => setShowDeckEdit(false)}
+					/>
+				</Suspense>
 			)}
 
 			{showGacha && (

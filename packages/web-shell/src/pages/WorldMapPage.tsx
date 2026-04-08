@@ -199,7 +199,6 @@ export function WorldMapPage() {
 										<div className="relative">
 											{/* Landmark icon */}
 											<div
-												role="presentation"
 												className="relative w-[96px] h-[96px] transition-[filter] duration-200"
 												style={
 													!locked

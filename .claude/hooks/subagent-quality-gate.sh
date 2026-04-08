@@ -6,10 +6,7 @@ set -euo pipefail
 
 HOOK_INPUT=$(cat)
 
-# ──────────────────────────────────────
 # Phase 0: Skip conditions
-# ──────────────────────────────────────
-
 if [[ -f .claude/.skip-gate ]]; then
   exit 0
 fi
@@ -23,10 +20,7 @@ if [[ -z "$ALL_CODE_FILES" ]]; then
   exit 0
 fi
 
-# ──────────────────────────────────────
 # Phase 1: Lint verification
-# ──────────────────────────────────────
-
 LINT_OUTPUT=$(bunx biome check . 2>&1) || {
   cat >&2 <<EOF
 SUBAGENT GATE BLOCKED: Lint
@@ -38,20 +32,29 @@ EOF
   exit 2
 }
 
-# ──────────────────────────────────────
 # Phase 2: Changed-package tests
-# ──────────────────────────────────────
-
-# Detect changed packages
 CHANGED_PKGS=$(echo "$ALL_CODE_FILES" | grep -oE 'packages/[^/]+' | sort -u || true)
 
 if [[ -z "$CHANGED_PKGS" ]]; then
-  # Changes outside packages/ — skip targeted tests
   exit 0
 fi
 
 TEST_FAILED=0
 TEST_ERRORS=""
+
+# Helper function for timeout (compatible with macOS)
+run_with_timeout() {
+  local timeout_seconds=$1
+  shift
+  
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$timeout_seconds" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$timeout_seconds" "$@"
+  else
+    "$@"
+  fi
+}
 
 while IFS= read -r pkg; do
   case "$pkg" in
@@ -69,7 +72,7 @@ while IFS= read -r pkg; do
       ;;
   esac
 
-  PKG_OUTPUT=$(timeout 120 bun run --filter "$PKG_FILTER" test 2>&1) || {
+  PKG_OUTPUT=$(run_with_timeout 120 bun run --filter "$PKG_FILTER" test 2>&1) || {
     TEST_FAILED=1
     TEST_ERRORS="${TEST_ERRORS}
 --- ${pkg} ---

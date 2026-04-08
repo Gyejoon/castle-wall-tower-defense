@@ -35,10 +35,10 @@ export class SoundGenerator {
 	private throttleMap: Map<string, number> = new Map();
 	private pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
-	unlock(): void {
+	async unlock(): Promise<void> {
 		const ctx = this.getContext();
 		if (ctx.state === 'suspended') {
-			void ctx.resume();
+			await ctx.resume();
 		}
 	}
 

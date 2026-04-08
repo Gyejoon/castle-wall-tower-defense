@@ -17,10 +17,10 @@ description: Use when reviewing non-trivial code changes in this repository befo
 ## 빠른 시작
 
 ```text
-/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 58/70 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
+/ralph-loop "Run the ralreview pipeline on current branch changes. Follow the ralreview skill exactly. Fix only AUTO issues. When the total score reaches 66/80 or higher, output RALREVIEW PASS." --completion-promise "RALREVIEW PASS" --max-iterations 5
 ```
 
-ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58/70 미만이면 같은 절차를 다시 돈다. 최대 5회.
+ralph-loop이 없으면 아래 Phase 0-10을 수동으로 수행한다. 총점 66/80 미만이면 같은 절차를 다시 돈다. 최대 5회.
 
 ## Phase 0: Init
 
@@ -224,17 +224,54 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 - 테스트 실패 시 최종 점수는 최대 5점으로 캡
 - 테스트 검증 부정확: -1/건
 
-## Phase 7: 독립 리뷰
+## Phase 7: Codex Side-Effect Review
 
-현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다. 리뷰어는 diff만 보고 판단해야 하며, 이전 Phase의 결과를 참조하지 않는다.
+`/codex review` 스킬을 side-effect와 런타임 안정성에 특화된 프롬프트로 실행한다. 내부 체크리스트(Phase 2-6)가 놓치기 쉬운 기본적인 안정성 이슈를 외부 모델이 독립 검증한다.
+
+### 실행 방법
+
+Skill tool로 `/codex review`를 호출한다:
+
+```
+Skill("codex", "review focus on side-effects, resource leaks, cleanup ordering, stale closures, event emit/listen mismatches, state mutation during render, async race conditions, NaN propagation, and timer accumulation. Flag any runtime stability risk.")
+```
+
+Codex CLI가 설치되지 않았으면 7/10 (reviewer unavailable)으로 처리하고 건너뛴다.
+
+### 검증 초점
+
+- 리소스 누수 (리스너, 타이머, Web Audio 노드 미해제)
+- cleanup 누락/순서 오류
+- 렌더 중 state setter 호출 (React pure-render 위반)
+- stale closure in async handlers
+- 이벤트 emit/listen 불일치
+- 0 나눗셈, NaN 전파
+- 비동기 race condition
+- 타이머 산술 불일치
+
+### 점수
+
+| 결과 | 점수 |
+|---|---|
+| pass, 이슈 없음 | 10 |
+| pass, informational only | 9 |
+| pass, minor suggestion | 8 |
+| reviewer unavailable | 7 |
+| fail, high severity | 5-6 |
+| fail, critical severity | 0-4 |
+
+Codex가 발견한 이슈 중 AUTO 범위에 해당하는 것은 즉시 수정한다.
+
+## Phase 8: 독립 리뷰
+
+현재 세션의 구현자 시각과 분리된 리뷰를 반드시 한 번 받는다. 리뷰어는 diff만 보고 판단해야 하며, 이전 Phase의 결과를 참조하지 않는다. Phase 7에서 이미 Codex를 side-effect 특화로 실행했으므로, 여기서는 **구조, 설계, API 표면** 관점의 독립 리뷰를 수행한다.
 
 ### 리뷰 실행 방법
 
 다음 중 하나를 사용한다 (위에서부터 우선):
 
-1. **`/codex review`** — Codex CLI가 있으면 독립 diff 리뷰
-2. **Agent tool** — `subagent_type: "pr-review-toolkit:code-reviewer"`로 서브에이전트 실행
-3. **`/review`** — 프로젝트 내장 리뷰 스킬
+1. **Agent tool** — `subagent_type: "superpowers:code-reviewer"`로 서브에이전트 실행
+2. **`/review`** — 프로젝트 내장 리뷰 스킬
 
 특정 도구가 없다고 Phase를 건너뛰지 말 것. 가용한 도구로 독립 판정을 받는다.
 
@@ -249,9 +286,9 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | fail, high severity | 5-6 |
 | fail, critical severity | 0-4 |
 
-## Phase 8: 적대적 리뷰
+## Phase 9: 적대적 리뷰
 
-"무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다. Phase 7과 다른 관점이어야 하며, 동일한 근거를 재진술하는 수준이면 안 된다.
+"무엇이 틀렸는가"가 아니라 "이 설계 가정이 어디서 깨지는가"를 본다. Phase 8과 다른 관점이어야 하며, 동일한 근거를 재진술하는 수준이면 안 된다.
 
 검증 대상:
 
@@ -275,31 +312,32 @@ ralph-loop이 없으면 아래 Phase 0-9를 수동으로 수행한다. 총점 58
 | reviewer unavailable | 7 |
 | fail, critical severity | 0-4 |
 
-## Phase 9: 최종 정리 & 판정
+## Phase 10: 최종 정리 & 판정
 
 ### 최종 Simplify
 
-Phase 2-8에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, naming 정리, 리뷰 대응 중 생긴 임시 분기 제거.
+Phase 2-9에서 생긴 수정 이후 한 번 더 정리한다: 중복 제거, naming 정리, 리뷰 대응 중 생긴 임시 분기 제거.
 
 ### 스코어카드
 
 ```text
 RAL REVIEW SCORECARD
 Runtime Stability:     X/10
+Codex Side-Effect:     X/10
 React Best Practices:  X/10
 Design Quality:        X/10
 Spec Alignment:        X/10
 Test Coverage:         X/10
 Independent Review:    X/10
 Adversarial Review:    X/10
-Total:                XX/70
+Total:                XX/80
 Status:               PASS | FAIL
 ```
 
 ### 통과 기준
 
-- `PASS`: 총점 58/70 이상
-- `FAIL`: 총점 58 미만
+- `PASS`: 총점 66/80 이상
+- `FAIL`: 총점 66 미만
 
 ### FAIL일 때
 
@@ -310,7 +348,7 @@ Status:               PASS | FAIL
 
 ### 루프 중단 조건
 
-- 총점 58/70 이상
+- 총점 66/80 이상
 - 5회 반복 도달
 - 두 번 연속으로 유의미한 개선이 없고 남은 이슈가 REPORT뿐일 때
 

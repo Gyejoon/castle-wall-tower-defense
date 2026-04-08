@@ -1,7 +1,6 @@
 import { ENERGY_CAP } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
-import { BossHpBar } from './BossHpBar';
 
 /** Increments a counter each time `value` changes, used as a React key to replay CSS animations.
  *  Returns 0 on initial mount (no animation), 1+ on subsequent changes. */
@@ -38,7 +37,6 @@ interface TopHudProps {
 	speed2xUnlocked: boolean;
 	runStatus: string;
 	onToggleSpeed: () => void;
-	bossHpVisible: boolean;
 	onExitRequest?: () => void;
 }
 
@@ -52,7 +50,6 @@ export function TopHud({
 	speed2xUnlocked,
 	runStatus,
 	onToggleSpeed,
-	bossHpVisible,
 	onExitRequest,
 }: TopHudProps) {
 	const hpFlash = useFlashKey(lives);
@@ -151,12 +148,6 @@ export function TopHud({
 					)}
 				</div>
 			</div>
-			{/* 두 번째 행: 보스 체력바 (나타날 때 첫 행에 영향 없음) */}
-			{bossHpVisible && (
-				<div className="px-3 pb-2">
-					<BossHpBar />
-				</div>
-			)}
 		</div>
 	);
 }

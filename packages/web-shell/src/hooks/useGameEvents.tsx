@@ -19,7 +19,9 @@ export function useGameEvents() {
 	const patchCombatHud = useGameStore((s) => s.patchCombatHud);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const resetRun = useGameStore((s) => s.resetRun);
-	const setBossHp = useGameStore((s) => s.setBossHp);
+	const upsertBossHp = useGameStore((s) => s.upsertBossHp);
+	const removeBossHp = useGameStore((s) => s.removeBossHp);
+	const clearAllBossHp = useGameStore((s) => s.clearAllBossHp);
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 
@@ -52,7 +54,7 @@ export function useGameEvents() {
 			};
 		}) => {
 			setRunStatus(data.result);
-			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+			clearAllBossHp();
 			setBossWarningVisible(false);
 			if (bossWarningTimerRef.current) {
 				clearTimeout(bossWarningTimerRef.current);
@@ -156,14 +158,16 @@ export function useGameEvents() {
 			}, 1500);
 		};
 		const onBossHpUpdate = (data: {
+			unitId: string;
+			defId: string;
 			hp: number;
 			maxHp: number;
 			phase: 1 | 2;
 		}) => {
-			setBossHp({ ...data, visible: true });
+			upsertBossHp(data);
 		};
-		const onBossDefeated = () => {
-			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
+		const onBossDefeated = (data: { unitId: string }) => {
+			removeBossHp(data.unitId);
 			pushToast('BOSS CLEAR!', 'success');
 		};
 		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
@@ -247,7 +251,9 @@ export function useGameEvents() {
 		setPlayerTowerCount,
 		setSelectedCardIndex,
 		setRunStatus,
-		setBossHp,
+		upsertBossHp,
+		removeBossHp,
+		clearAllBossHp,
 		setBossWarningVisible,
 		setGameOverStats,
 	]);

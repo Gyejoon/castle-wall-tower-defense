@@ -32,11 +32,12 @@ type WavePreviewGroup = {
 	count: number;
 };
 
-export interface BossHpState {
+export interface BossHpEntry {
+	unitId: string;
+	defId: string;
 	hp: number;
 	maxHp: number;
 	phase: 1 | 2;
-	visible: boolean;
 }
 
 /** Phaser emits wavesCleared~goldEarned; xpEarned is computed in the React layer via battleXp(). */
@@ -73,7 +74,7 @@ interface GameStoreState {
 	combatHud: CombatHudState;
 	toast: UiToast | null;
 	selectedDeck: string[];
-	bossHp: BossHpState;
+	bossHpMap: Record<string, BossHpEntry>;
 	bossWarningVisible: boolean;
 	gameOverStats: GameOverStats | null;
 	tutorialStep: number | null;
@@ -106,7 +107,9 @@ interface GameStoreState {
 	toggleScreenShake: () => void;
 	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
-	setBossHp: (bossHp: BossHpState) => void;
+	upsertBossHp: (entry: BossHpEntry) => void;
+	removeBossHp: (unitId: string) => void;
+	clearAllBossHp: () => void;
 	setBossWarningVisible: (v: boolean) => void;
 	setGameOverStats: (stats: GameOverStats | null) => void;
 	setTutorialStep: (step: number | null) => void;
@@ -138,7 +141,7 @@ const createRunState = () => ({
 	playerTowerCount: 0,
 	combatHud: createCombatHud(),
 	toast: null,
-	bossHp: { hp: 0, maxHp: 0, phase: 1 as 1 | 2, visible: false },
+	bossHpMap: {} as Record<string, BossHpEntry>,
 	bossWarningVisible: false,
 	gameOverStats: null,
 	tutorialStep: null,
@@ -245,7 +248,16 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		useMetaStore.getState().setSelectedDeck(deck);
 		set({ selectedDeck: deck });
 	},
-	setBossHp: (bossHp) => set({ bossHp }),
+	upsertBossHp: (entry) =>
+		set((state) => ({
+			bossHpMap: { ...state.bossHpMap, [entry.unitId]: entry },
+		})),
+	removeBossHp: (unitId) =>
+		set((state) => {
+			const { [unitId]: _, ...rest } = state.bossHpMap;
+			return { bossHpMap: rest };
+		}),
+	clearAllBossHp: () => set({ bossHpMap: {} }),
 	setBossWarningVisible: (v) => set({ bossWarningVisible: v }),
 	setGameOverStats: (stats) => set({ gameOverStats: stats }),
 	setTutorialStep: (step) => set({ tutorialStep: step }),

@@ -20,6 +20,7 @@ import { generate as generateRarityFrames } from './generate-rarity-frames';
 import { generate as generateTiles } from './generate-tiles';
 import { generate as generateTutorialUi } from './generate-tutorial-ui';
 import { generate as generateGachaUi } from './generate-gacha-ui';
+import { generate as generateCheckBadge } from './generate-check-badge';
 
 export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 	const staticEntries = [
@@ -73,6 +74,7 @@ export async function generateAllAssets() {
 		tiles,
 		tutorialUi,
 		gachaUi,
+		checkBadge,
 	] = await Promise.all([
 		Promise.resolve(collectStaticFieldAssetEntries()).then((result) => {
 			console.log('[vendor-field-assets] done');
@@ -134,6 +136,10 @@ export async function generateAllAssets() {
 			console.log('[gacha-ui] done');
 			return result;
 		}),
+		generateCheckBadge().then((result) => {
+			console.log('[check-badge] done');
+			return result;
+		}),
 	]);
 
 	const allEntries = withManifestSections([
@@ -152,6 +158,7 @@ export async function generateAllAssets() {
 		...tiles,
 		...tutorialUi,
 		...gachaUi,
+		...checkBadge,
 	]);
 
 	const seen = new Set<string>();

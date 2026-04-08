@@ -9,6 +9,9 @@ vi.mock('@gld/phaser-game', () => ({
 		off: vi.fn(),
 		removeAllListeners: vi.fn(),
 	},
+	soundGenerator: {
+		setMasterVolume: vi.fn(),
+	},
 }));
 
 describe('gameStore', () => {
@@ -165,6 +168,12 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().sfxVolume).toBe(0.5);
 	});
 
+	it('setSfxVolume calls soundGenerator.setMasterVolume', async () => {
+		const { soundGenerator } = await import('@gld/phaser-game');
+		useGameStore.getState().setSfxVolume(0.3);
+		expect(soundGenerator.setMasterVolume).toHaveBeenCalledWith(0.3);
+	});
+
 	it('toggles accessibility feedback flags', () => {
 		expect(useGameStore.getState().screenShake).toBe(true);
 		expect(useGameStore.getState().showDamageNumbers).toBe(true);
@@ -174,6 +183,14 @@ describe('gameStore', () => {
 
 		expect(useGameStore.getState().screenShake).toBe(false);
 		expect(useGameStore.getState().showDamageNumbers).toBe(false);
+	});
+
+	it('toggleScreenShake persists to metaStore', async () => {
+		const { useMetaStore } = await import('../src/stores/metaStore');
+		const spy = vi.spyOn(useMetaStore.getState(), 'updateSettings');
+		useGameStore.getState().toggleScreenShake();
+		expect(spy).toHaveBeenCalledWith({ screenShake: false });
+		spy.mockRestore();
 	});
 
 	it('setGameSpeed updates gameSpeed state', () => {

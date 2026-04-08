@@ -77,6 +77,7 @@ export function StageSelectPage() {
 			'showDamageNumbers',
 			useGameStore.getState().showDamageNumbers,
 		);
+		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		gameRef.current = game;
 
 		let prevShowDmg = useGameStore.getState().showDamageNumbers;
@@ -87,9 +88,18 @@ export function StageSelectPage() {
 			}
 		});
 
+		let prevShake = useGameStore.getState().screenShake;
+		const unsubShake = useGameStore.subscribe((state) => {
+			if (state.screenShake !== prevShake) {
+				prevShake = state.screenShake;
+				gameRef.current?.registry.set('screenShake', prevShake);
+			}
+		});
+
 		return () => {
 			if (!container.isConnected) {
 				unsubDmgNumbers();
+				unsubShake();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);
@@ -131,11 +141,21 @@ export function StageSelectPage() {
 		};
 	}, [enterLobby, setSelectedMapId, setGameReady]);
 
+	// Apply saved SFX volume to audio engine on mount
+	useEffect(() => {
+		const sfxVol = useGameStore.getState().sfxVolume;
+		soundGenerator.setMasterVolume(sfxVol);
+	}, []);
+
 	// Sound unlock on visibility change
 	useEffect(() => {
-		const handleVisibility = () => {
+		const handleVisibility = async () => {
 			if (document.visibilityState === 'visible') {
-				soundGenerator.unlock();
+				try {
+					await soundGenerator.unlock();
+				} catch {
+					/* AudioContext.resume() can reject in restricted contexts */
+				}
 			}
 		};
 		document.addEventListener('visibilitychange', handleVisibility);

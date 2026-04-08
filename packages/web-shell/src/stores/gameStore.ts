@@ -1,4 +1,4 @@
-import { EventBus } from '@gld/phaser-game';
+import { EventBus, soundGenerator } from '@gld/phaser-game';
 import {
 	type CombatHudState,
 	DEFAULT_DECK,
@@ -154,7 +154,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
 	colorblindMode: useMetaStore.getState().settings?.colorblindMode ?? 'off',
-	screenShake: true,
+	screenShake: useMetaStore.getState().settings?.screenShake ?? true,
 	showDamageNumbers: true,
 	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
 	...createRunState(),
@@ -227,13 +227,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setSfxVolume: (v) => {
 		useMetaStore.getState().updateSettings({ sfxVolume: v });
 		set({ sfxVolume: v });
+		soundGenerator.setMasterVolume(v);
 	},
 	setColorblindMode: (mode) => {
 		useMetaStore.getState().updateSettings({ colorblindMode: mode });
 		set({ colorblindMode: mode });
 	},
 	toggleScreenShake: () =>
-		set((state) => ({ screenShake: !state.screenShake })),
+		set((state) => {
+			const next = !state.screenShake;
+			useMetaStore.getState().updateSettings({ screenShake: next });
+			return { screenShake: next };
+		}),
 	toggleDamageNumbers: () =>
 		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
 	setSelectedDeck: (deck) => {

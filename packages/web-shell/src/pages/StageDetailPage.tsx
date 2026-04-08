@@ -39,6 +39,7 @@ export function StageDetailPage() {
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
+	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
 
 	const map = MAP_REGISTRY[selectedMapId];
@@ -52,6 +53,7 @@ export function StageDetailPage() {
 	const hasBoss = waves.some((w) => w.kind === 'boss');
 	const lanes = getMapPaths(map).length;
 	const best = highestWave[selectedMapId] ?? 0;
+	const isCleared = stagesCleared.includes(selectedMapId);
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [
@@ -165,6 +167,18 @@ export function StageDetailPage() {
 							</span>
 						</div>
 					</div>
+
+					{/* 2x speed guide */}
+					{isCleared && (
+						<div className="px-3 pb-2">
+							<div className="flex items-center gap-2 px-3 py-2 bg-panel border border-gold/30">
+								<span className="font-pixel text-[11px] text-gold">▶▶</span>
+								<span className="font-pixel text-[9px] text-accent">
+									클리어 완료 — 2배속 플레이 가능
+								</span>
+							</div>
+						</div>
+					)}
 
 					{/* Deck preview */}
 					<div className="px-3 pb-3">

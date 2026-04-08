@@ -840,7 +840,10 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private showBossWarningOverlay(): void {
-		this.cameras.main.shake(300, 0.005);
+		const shakeEnabled = this.game.registry.get('screenShake') !== false;
+		if (shakeEnabled) {
+			this.cameras.main.shake(300, 0.005);
+		}
 		const overlay = this.add.rectangle(
 			this.scale.width / 2,
 			this.scale.height / 2,

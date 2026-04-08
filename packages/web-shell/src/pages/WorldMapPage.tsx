@@ -1,5 +1,5 @@
 import { isMapUnlocked, MAP_REGISTRY } from '@gld/shared';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
@@ -19,10 +19,13 @@ const MAP_THEMES: Record<string, { borderColor: string; thumb: string }> = {
 	},
 };
 
-const NODE_POSITIONS: Record<string, { top: string; left: string }> = {
-	forest_gate: { top: '68%', left: '50%' },
-	lava_fortress: { top: '40%', left: '26%' },
-	storm_citadel: { top: '12%', left: '70%' },
+const MAP_CONTENT_WIDTH = 430;
+const MAP_CONTENT_HEIGHT = 640;
+
+const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
+	forest_gate: { top: 460, left: 215 },
+	lava_fortress: { top: 270, left: 112 },
+	storm_citadel: { top: 80, left: 300 },
 };
 
 const PATH_CONNECTIONS = [
@@ -32,12 +35,32 @@ const PATH_CONNECTIONS = [
 
 export function WorldMapPage() {
 	const [lockImgError, setLockImgError] = useState(false);
+	const scrollRef = useRef<HTMLDivElement>(null);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 
 	const maps = Object.values(MAP_REGISTRY);
+
+	// 권장 스테이지: 첫 번째 미클리어 해금 스테이지, 없으면 마지막 해금 스테이지
+	const recommendedMapId = (() => {
+		const unclearedUnlocked = maps.find(
+			(m) => isMapUnlocked(m, playerLevel) && !stagesCleared.includes(m.id),
+		);
+		if (unclearedUnlocked) return unclearedUnlocked.id;
+		const unlocked = maps.filter((m) => isMapUnlocked(m, playerLevel));
+		return unlocked[unlocked.length - 1]?.id;
+	})();
+
+	// 마운트 시 권장 스테이지 위치로 스크롤
+	useEffect(() => {
+		const container = scrollRef.current;
+		const pos = recommendedMapId ? NODE_POSITIONS[recommendedMapId] : null;
+		if (!container || !pos) return;
+		const scrollTarget = pos.top - container.clientHeight / 2;
+		container.scrollTo({ top: Math.max(0, scrollTarget) });
+	}, [recommendedMapId]);
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
@@ -70,10 +93,12 @@ export function WorldMapPage() {
 
 				{/* Map area — scrollable on small screens */}
 				<div className="relative flex-1 min-h-0">
-					<div className="h-full overflow-auto">
+					<div ref={scrollRef} className="h-full overflow-auto">
 						<div
-							className="relative min-h-[520px] h-full"
+							className="relative"
 							style={{
+								width: `${MAP_CONTENT_WIDTH}px`,
+								height: `${MAP_CONTENT_HEIGHT}px`,
 								background: `
 								radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
 								radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
@@ -88,6 +113,7 @@ export function WorldMapPage() {
 							{/* Path connections (SVG) */}
 							<svg
 								className="absolute inset-0 w-full h-full z-0"
+								viewBox={`0 0 ${MAP_CONTENT_WIDTH} ${MAP_CONTENT_HEIGHT}`}
 								preserveAspectRatio="none"
 								role="img"
 								aria-label="스테이지 연결 경로"
@@ -157,7 +183,7 @@ export function WorldMapPage() {
 												? 'opacity-45 grayscale cursor-not-allowed'
 												: 'cursor-pointer hover:scale-[1.06] hover:-translate-y-[calc(50%+3px)] active:scale-95',
 										)}
-										style={{ top: pos.top, left: pos.left }}
+										style={{ top: `${pos.top}px`, left: `${pos.left}px` }}
 										onClick={() => {
 											if (locked) return;
 											enterStageDetail(map.id);
@@ -219,11 +245,11 @@ export function WorldMapPage() {
 
 												{/* Clear badge */}
 												{cleared && !locked && (
-													<div className="absolute top-1 right-1 bg-gold px-1.5 py-0.5 border border-accent shadow-[1px_1px_0px_#0a0804]">
-														<span className="font-pixel text-[7px] text-bg">
-															✓
-														</span>
-													</div>
+													<img
+														src="assets/ui/check-badge.png"
+														alt="클리어"
+														className="absolute top-1 right-1 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
+													/>
 												)}
 											</div>
 

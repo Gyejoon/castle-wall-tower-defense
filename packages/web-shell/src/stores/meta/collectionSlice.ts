@@ -76,7 +76,8 @@ export const createCollectionSlice: SliceCreator<
 		if (success) {
 			const newGrade = config.nextGrade as TowerGrade;
 			if (newGrade === 'rare') get().updateAchievementProgress('tower_rare', 1);
-			if (newGrade === 'unique') get().updateAchievementProgress('tower_unique', 1);
+			if (newGrade === 'unique')
+				get().updateAchievementProgress('tower_unique', 1);
 			if (newGrade === 'epic') get().updateAchievementProgress('tower_epic', 1);
 		}
 		// Combat power achievements

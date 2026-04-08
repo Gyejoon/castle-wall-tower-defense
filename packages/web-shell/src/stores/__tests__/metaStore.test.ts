@@ -193,11 +193,15 @@ describe('metaStore', () => {
 				t.defId === 'archer' ? { ...t, level: 19 } : t,
 			),
 		}));
-		expect(useMetaStore.getState().promoteTower('archer')).toBe('level_too_low');
+		expect(useMetaStore.getState().promoteTower('archer')).toBe(
+			'level_too_low',
+		);
 
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 20, grade: 'normal' as const } : t,
+				t.defId === 'archer'
+					? { ...t, level: 20, grade: 'normal' as const }
+					: t,
 			),
 		}));
 		expect(useMetaStore.getState().promoteTower('archer', () => 0)).toBe(

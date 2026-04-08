@@ -1,4 +1,4 @@
-import { TIER_NAMES, type GachaResult } from '@gld/shared';
+import { type GachaResult, TIER_NAMES } from '@gld/shared';
 import { colors, TIER_COLORS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
 import { PixelButton } from '../ui/PixelButton';

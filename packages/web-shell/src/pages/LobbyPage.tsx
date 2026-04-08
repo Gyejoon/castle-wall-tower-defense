@@ -4,8 +4,8 @@ import { CollectionTab } from '../components/lobby/tabs/CollectionTab';
 import { HomeTab } from '../components/lobby/tabs/HomeTab';
 import { MissionsTab } from '../components/lobby/tabs/MissionsTab';
 import { SettingsTab } from '../components/lobby/tabs/SettingsTab';
-import { AchievementPage } from './AchievementPage';
 import { useGameStore } from '../stores/gameStore';
+import { AchievementPage } from './AchievementPage';
 
 export function LobbyPage() {
 	const lobbyTab = useGameStore((s) => s.lobbyTab);

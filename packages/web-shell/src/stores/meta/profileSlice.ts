@@ -1,4 +1,9 @@
-import { type SaveData, type StarRating, toKSTDateStr, xpToNextLevel } from '@gld/shared';
+import {
+	type SaveData,
+	type StarRating,
+	toKSTDateStr,
+	xpToNextLevel,
+} from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -115,11 +120,15 @@ export const createProfileSlice: SliceCreator<
 		});
 		// Star achievements
 		if (star >= 2) {
-			const star2Count = Object.values(get().progress.stageStars).filter((s) => s >= 2).length;
+			const star2Count = Object.values(get().progress.stageStars).filter(
+				(s) => s >= 2,
+			).length;
 			get().updateAchievementProgress('star2_all', star2Count);
 		}
 		if (star >= 3) {
-			const star3Count = Object.values(get().progress.stageStars).filter((s) => s >= 3).length;
+			const star3Count = Object.values(get().progress.stageStars).filter(
+				(s) => s >= 3,
+			).length;
 			get().updateAchievementProgress('star3_all', star3Count);
 		}
 		debouncedSave(get());

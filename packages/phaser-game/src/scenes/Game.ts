@@ -193,7 +193,8 @@ export class GameScene extends Phaser.Scene {
 		}
 		this.currentSlotDef = mapWaves[0];
 		const rawStar = this.game.registry.get('selectedStar');
-		const selectedStar: StarRating = rawStar === 2 || rawStar === 3 ? rawStar : 1;
+		const selectedStar: StarRating =
+			rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
@@ -580,9 +581,10 @@ export class GameScene extends Phaser.Scene {
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
-		const starCleared = payload.result === 'victory'
-			? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
-			: false;
+		const starCleared =
+			payload.result === 'victory'
+				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
+				: false;
 
 		EventBus.emit('game-over', {
 			...payload,

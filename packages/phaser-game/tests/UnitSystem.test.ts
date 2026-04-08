@@ -51,7 +51,11 @@ function createScene() {
 		add: {
 			sprite: vi.fn(() => createSprite()),
 			graphics: vi.fn(() => createGraphics()),
-			ellipse: vi.fn(() => ({ setDepth: vi.fn(), setPosition: vi.fn(), destroy: vi.fn() })),
+			ellipse: vi.fn(() => ({
+				setDepth: vi.fn(),
+				setPosition: vi.fn(),
+				destroy: vi.fn(),
+			})),
 		},
 		textures: { exists: vi.fn(() => false) },
 		anims: { exists: vi.fn(() => false) },

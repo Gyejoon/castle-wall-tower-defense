@@ -28,6 +28,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.8,
 		statBonus: 0.1,
 		requiredLevel: 20,
+		resetLevel: true,
 	},
 	rare: {
 		nextGrade: 'unique' as TowerGrade,
@@ -35,6 +36,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.5,
 		statBonus: 0.15,
 		requiredLevel: 30,
+		resetLevel: true,
 	},
 	unique: {
 		nextGrade: 'epic' as TowerGrade,
@@ -42,6 +44,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0.25,
 		statBonus: 0.2,
 		requiredLevel: 50,
+		resetLevel: true,
 	},
 	epic: {
 		nextGrade: null,
@@ -49,6 +52,7 @@ export const PROMOTION_CONFIG = {
 		successRate: 0,
 		statBonus: 0,
 		requiredLevel: 0,
+		resetLevel: false,
 	},
 } as const;
 

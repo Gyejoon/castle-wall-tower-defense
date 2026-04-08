@@ -50,6 +50,7 @@ export const createCollectionSlice: SliceCreator<
 			newCollection[idx] = {
 				...tower,
 				grade: config.nextGrade as TowerGrade,
+				level: config.resetLevel ? 1 : tower.level,
 			};
 		}
 		set({

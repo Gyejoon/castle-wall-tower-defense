@@ -33,8 +33,7 @@ export function StageSelectPage() {
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const setSelectedMapId = useGameStore((s) => s.setSelectedMapId);
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
-	const bossHp = useGameStore((s) => s.bossHp);
-	const gameOverStats = useGameStore((s) => s.gameOverStats);
+const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
@@ -186,7 +185,6 @@ export function StageSelectPage() {
 						speed2xUnlocked={speed2xUnlocked}
 						runStatus={runStatus}
 						onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
-						bossHpVisible={bossHp.visible}
 					/>
 				)}
 

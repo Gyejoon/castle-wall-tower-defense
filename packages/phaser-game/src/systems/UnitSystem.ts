@@ -397,6 +397,8 @@ export class UnitSystem {
 
 		if (unit.isBoss && unit.data.hp > 0) {
 			EventBus.emit('boss-hp-update', {
+				unitId: unit.data.instanceId,
+				defId: unit.def.id,
 				hp: Math.max(0, unit.data.hp),
 				maxHp: unit.maxHp,
 				phase: unit.bossPhase,

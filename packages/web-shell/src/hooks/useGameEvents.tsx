@@ -95,8 +95,8 @@ export function useGameEvents() {
 					meta.recordStarClear(mapId, data.selectedStar);
 				}
 
-				// Awakening stone rewards
-				if (starReward.awakeningStone > 0) {
+				// Awakening stone rewards (only when star condition is met)
+				if (starReward.awakeningStone > 0 && data.starCleared) {
 					meta.addAwakeningStones(starReward.awakeningStone);
 				}
 
@@ -195,6 +195,11 @@ export function useGameEvents() {
 		const onBossDefeated = () => {
 			setBossHp({ hp: 0, maxHp: 0, phase: 1, visible: false });
 			pushToast('BOSS CLEAR!', 'success');
+			// Boss kill achievements
+			const meta = useMetaStore.getState();
+			const prev = meta.progress.achievements.progress['boss_10'] ?? 0;
+			meta.updateAchievementProgress('boss_10', prev + 1);
+			meta.updateAchievementProgress('boss_100', prev + 1);
 		};
 		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
 			if (data.phase === 2) pushToast('보스 분노!', 'warning');

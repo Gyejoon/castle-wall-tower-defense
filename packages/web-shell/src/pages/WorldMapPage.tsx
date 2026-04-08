@@ -19,10 +19,12 @@ const MAP_THEMES: Record<string, { borderColor: string; thumb: string }> = {
 	},
 };
 
-const NODE_POSITIONS: Record<string, { top: string; left: string }> = {
-	forest_gate: { top: '68%', left: '50%' },
-	lava_fortress: { top: '40%', left: '26%' },
-	storm_citadel: { top: '12%', left: '70%' },
+const MAP_CONTENT_HEIGHT = 640;
+
+const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
+	forest_gate: { top: 460, left: 215 },
+	lava_fortress: { top: 270, left: 112 },
+	storm_citadel: { top: 80, left: 300 },
 };
 
 const PATH_CONNECTIONS = [
@@ -72,8 +74,9 @@ export function WorldMapPage() {
 				<div className="relative flex-1 min-h-0">
 					<div className="h-full overflow-auto">
 						<div
-							className="relative min-h-[520px] h-full"
+							className="relative"
 							style={{
+								height: `${MAP_CONTENT_HEIGHT}px`,
 								background: `
 								radial-gradient(ellipse at 50% 72%, rgba(34,80,34,0.18), transparent 45%),
 								radial-gradient(ellipse at 26% 42%, rgba(100,30,10,0.14), transparent 40%),
@@ -88,6 +91,7 @@ export function WorldMapPage() {
 							{/* Path connections (SVG) */}
 							<svg
 								className="absolute inset-0 w-full h-full z-0"
+								viewBox={`0 0 430 ${MAP_CONTENT_HEIGHT}`}
 								preserveAspectRatio="none"
 								role="img"
 								aria-label="스테이지 연결 경로"
@@ -157,7 +161,7 @@ export function WorldMapPage() {
 												? 'opacity-45 grayscale cursor-not-allowed'
 												: 'cursor-pointer hover:scale-[1.06] hover:-translate-y-[calc(50%+3px)] active:scale-95',
 										)}
-										style={{ top: pos.top, left: pos.left }}
+										style={{ top: `${pos.top}px`, left: `${pos.left}px` }}
 										onClick={() => {
 											if (locked) return;
 											enterStageDetail(map.id);

@@ -91,6 +91,7 @@ export interface GameEventMap {
 	// Stage select
 	'stage-select-ready': undefined;
 	'request-enter-lobby': undefined;
+	'request-enter-stage-select': undefined;
 	'request-start-game-from-stage': { mapId: string };
 	'request-deck-edit': undefined;
 

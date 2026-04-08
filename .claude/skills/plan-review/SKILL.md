@@ -95,8 +95,8 @@ Plan 파일 전문에서 키워드를 검색하여 관련 스펙 문서만 선�
 
 | 문서 | 키워드 (2개 이상 매치 시 로드) |
 |------|------|
-| `01-GDD.md` | core loop, meta loop, tower, enemy, wave, boss, element, energy, deck, combat, placement, lobby, collection, tutorial, session, spawn, win condition, lose condition, 타워, 적, 웨이브, 보스, 에너지, 배치, 속성, 코어 루프, 메타 루프 |
-| `02-balance-sheet.md` | diamond, gold, gacha, pity, odds, rate, mission, daily, weekly, economy, cost, reward, bounty, armor, pierce, DPS, hp, damage, stat, level, tier, scale, 다이아, 골드, 확률, 미션, 보상, 밸런스, 수치 |
+| `01-GDD.md` | core loop, meta loop, tower, enemy, wave, boss, element, energy, deck, combat, placement, lobby, collection, tutorial, session, spawn, win condition, lose condition, sell, collision, flying, boss leak, exit modal, audio, wave scaling, difficulty, 타워, 적, 웨이브, 보스, 에너지, 배치, 속성, 코어 루프, 메타 루프, 판매, 물리 충돌, 비행, 나가기 |
+| `02-balance-sheet.md` | diamond, gold, gacha, pity, odds, rate, mission, daily, weekly, economy, cost, reward, bounty, armor, pierce, DPS, hp, damage, stat, level, tier, scale, upgrade, MAX_TOWER_LEVEL, 다이아, 골드, 확률, 미션, 보상, 밸런스, 수치, 승급 |
 | `03-business-model.md` | monetization, IAP, ads, shop, offer, sku, subscription, premium, cosmetic, conversion, KPI, retention, revenue, ARPPU, LiveOps, BM, 수익화, 상점, 광고, 과금 |
 | `04-data-structure.md` | save data, schema, localStorage, telemetry, event map, profile, collection data, progress, settings sync, registry, Zustand, store, migration, 저장, 스키마, 텔레메트리 |
 | `05-operations.md` | deploy, Vercel, Sentry, PostHog, monitoring, analytics, error tracking, LiveOps cadence, ops, 배포, 모니터링, 운영 |
@@ -161,7 +161,7 @@ Phase 1 완료 후, Step 0-4에서 Phase 1에 할당된 스펙 문서를 `docs/g
 | 차원 | 대조 문서 | 검증 내용 |
 |------|---------|---------|
 | 코어 루프 정합 | 01-GDD §3 (Core Loop / Meta Loop) | Plan이 코어 루프(배치→웨이브→보상)나 메타 루프(성장→도전)를 변경/확장하는가? 변경 시 GDD의 정의와 충돌하지 않는가? |
-| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 7대 코어 시스템과 충돌하지 않는가? |
+| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 8대 코어 시스템(Grid, Pathfinding, Tower, Unit, Wave, Energy, Merge, Tower Sell)과 충돌하지 않는가? |
 | 수익화 원칙 | 03-BM §1 (BM 구조) | Plan이 BM 금지선(진입장벽, pay-to-win, 강제 광고, 밸런스 영향 코스메틱)을 위반하는가? |
 | 타임라인 정합 | 06-milestone (출시 전) | Plan의 작업이 현재 Phase 위치와 맞는가? 미래 Phase 기능을 선행하고 있지 않은가? |
 | 게임 정체성 | 01-GDD §10 (Edge Point) | Plan이 게임의 Edge Point(세로형 single-field, 즉시 시작, 10웨이브 밀도, 4타워 에너지 관리)를 희석하는가? |
@@ -305,10 +305,10 @@ Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽
 | 차원 | 대조 문서 | 검증 내용 |
 |------|---------|---------|
 | 디자인 토큰 | 01-GDD §8 (UI/UX — 디자인 시스템) | Plan이 지정하는 색상, 폰트, 간격이 GDD의 13개 색상 토큰·5단계 타이포·44px 터치 기준과 일치하는가? 존재하지 않는 토큰을 사용하는가? |
-| 밸런스 수치 | 02-balance-sheet §1-8 | Plan이 참조하는 수치(에너지 비용, 가챠 확률, 미션 보상, 타워 스탯, 적 스탯, armor/pierce)가 밸런스 시트와 일치하는가? |
+| 밸런스 수치 | 02-balance-sheet §1-8 | Plan이 참조하는 수치(에너지 비용, 가챠 확률, 미션 보상, 타워 스탯, 적 스탯, armor/pierce, WAVE_SCALING, difficultyHpMult, MAX_TOWER_LEVEL)가 밸런스 시트와 일치하는가? |
 | 에셋 규격 | 07-asset-def §1 (공통 제작 사양), §3 (타워), §10 (네이밍) | Plan이 제안하는 에셋이 공통 규격(64×80 타워, 40×48 유닛, 8-frame 스프라이트시트, center pivot, PNG+WebP)을 따르는가? |
 | 속성/등급 색상 | 07-asset-def §4 (색상 정책), §11 (등급 토큰) | Plan이 사용하는 속성 색상(fire #e74c3c, water #3498db, lightning #f39c12, neutral #c8a04a)과 등급 색상이 에셋 정의와 일치하는가? |
-| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 4탭, WorldMap, StageDetail, Deck, Result, Tutorial)와 충돌하지 않는가? |
+| UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 4탭, WorldMap, StageDetail, Deck, Result, Tutorial, Tower Sell Panel, Exit Modal)와 충돌하지 않는가? |
 | 콘텐츠 범위 | 01-GDD §5 (Content Plan) | Plan이 참조하는 타워·적·스테이지·웨이브 수가 콘텐츠 플랜(18타워×5티어, 5적, 3스테이지, 10웨이브)과 일치하는가? |
 
 판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.

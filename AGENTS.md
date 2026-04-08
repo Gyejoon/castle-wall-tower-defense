@@ -44,9 +44,9 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성, 유닛 5종, A* 경로탐색, 에너지 기반 덱 경제(시작 10, 킬 +2, 보스킬 +5), 이벤트 기반 10웨이브 진행, 보스 HP바, 결과 오버레이(스탯 그리드), 3맵 선택(난이도/보상 배율 차등), 2배속 토글(첫 클리어 후 해금), 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
+**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성·판매(50% 에너지 환급), 유닛 5종(Titan 비행), A* 경로탐색, 에너지 기반 덱 경제(시작 10, 킬 +2, 보스킬 +5), 이벤트 기반 10웨이브 진행, 맵별 아키타입 테마 웨이브(Scout/Speed/Tank/Stealth/Boss), 웨이브 스케일링(HP 1.0x~3.5x), 맵별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌(지상 유닛 분리, 스턴/슬로우 체이닝, 비행 면제), 보스 리크(경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 2배속 토글(첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
 
-**아직 구현되지 않은 것:** 속성 시스템 전투 적용, 난이도별 밸런스 조정, 메타 성장/컬렉션. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
+**아직 구현되지 않은 것:** 속성 시스템 전투 적용, 메타 성장(저장/타워 강화·승급 LV.50 캡/컬렉션 영속화), 가챠·미션·튜토리얼. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
 ## Local Skills
 
@@ -112,7 +112,9 @@ lobby → building → running → victory | defeat → lobby
 | `packages/web-shell/src/game/PhaserGame.tsx` | React 측 Phaser 마운트 |
 | `packages/web-shell/src/App.tsx` | 상태 기반 라우팅 (lobby ↔ game) |
 | `packages/web-shell/src/pages/LobbyPage.tsx` | 3탭 로비 (home, collection, settings) |
-| `packages/web-shell/src/pages/GamePage.tsx` | 게임 UI, HUD, 이모트 |
+| `packages/web-shell/src/pages/WorldMapPage.tsx` | 월드맵 — 3맵 진행도·잠금 해제 |
+| `packages/web-shell/src/pages/StageDetailPage.tsx` | 스테이지 상세 — 난이도·보상·덱 편집 |
+| `packages/web-shell/src/pages/GamePage.tsx` | 게임 UI, HUD, 타워 판매 패널, 나가기 모달 |
 | `packages/web-shell/src/styles/tokens.ts` | 중세 색상 팔레트 토큰 |
 
 게임 시스템 파일 (`packages/phaser-game/src/systems/`):
@@ -171,6 +173,7 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 | `05-operations.md` | 운영 스택, 모니터링, LiveOps 체계 |
 | `06-milestone.md` | Phase 로드맵, 출시 전/후 단기/중기/장기 계획 |
 | `07-asset-definition.md` | 에셋 사양, 인벤토리, 파이프라인 |
+| `08-architecture.md` | 패키지 구조, 시스템 의존성, EventBus, 상태 관리, 렌더링 depth |
 
 ### 문서 운용 원칙
 

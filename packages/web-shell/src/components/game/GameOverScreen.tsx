@@ -77,7 +77,7 @@ export function GameOverScreen({
 						<div className="flex gap-[2px]">
 							{Array.from({ length: gameOverStats.selectedStar }, (_, i) => (
 								<img
-									key={i}
+									key={`star-${i}`}
 									src={
 										gameOverStats.starCleared
 											? 'assets/ui/icon-star-active.png'

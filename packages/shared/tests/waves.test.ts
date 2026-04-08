@@ -63,7 +63,7 @@ describe('getWavesForMap', () => {
 	});
 
 	it('모든 등록된 맵이 10개 웨이브를 가진다', () => {
-		for (const [mapId, waves] of Object.entries(WAVE_REGISTRY)) {
+		for (const [_mapId, waves] of Object.entries(WAVE_REGISTRY)) {
 			expect(waves).toHaveLength(10);
 			for (let i = 0; i < waves.length; i++) {
 				expect(waves[i].slotIndex).toBe(i + 1);

@@ -6,7 +6,7 @@ import { useMetaStore } from '../stores/metaStore';
 export function useMissionTracker() {
 	const progressMission = useMetaStore((s) => s.progressMission);
 	// runId가 바뀔 때마다 effect 재실행 → maxWaveThisRun 리셋 보장 (game-over 없는 씬 종료 포함)
-	const runId = useGameStore((s) => s.runId);
+	const _runId = useGameStore((s) => s.runId);
 	const maxWaveThisRun = useRef(0);
 
 	useEffect(() => {
@@ -41,5 +41,5 @@ export function useMissionTracker() {
 			EventBus.off('boss-defeated', onBossDefeated);
 			EventBus.off('game-over', onGameOver);
 		};
-	}, [progressMission, runId]);
+	}, [progressMission]);
 }

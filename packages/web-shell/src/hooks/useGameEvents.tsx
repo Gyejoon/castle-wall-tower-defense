@@ -201,8 +201,8 @@ export function useGameEvents() {
 			pushToast('BOSS CLEAR!', 'success');
 			// Boss kill achievements
 			const meta = useMetaStore.getState();
-			const prevBoss10 = meta.progress.achievements.progress['boss_10'] ?? 0;
-			const prevBoss100 = meta.progress.achievements.progress['boss_100'] ?? 0;
+			const prevBoss10 = meta.progress.achievements.progress.boss_10 ?? 0;
+			const prevBoss100 = meta.progress.achievements.progress.boss_100 ?? 0;
 			meta.updateAchievementProgress('boss_10', prevBoss10 + 1);
 			meta.updateAchievementProgress('boss_100', prevBoss100 + 1);
 		};

@@ -262,11 +262,11 @@ describe('UnitSystem', () => {
 
 			// Lane A unit should move in y=0 row
 			expect(unitOnA).toBeDefined();
-			expect(unitOnA!.y).toBe(0);
+			expect(unitOnA?.y).toBe(0);
 
 			// Lane B unit should move in y=2 row (y * 32 = 64)
 			expect(unitOnB).toBeDefined();
-			expect(unitOnB!.y).toBe(LANE_B[0].y * 32);
+			expect(unitOnB?.y).toBe(LANE_B[0].y * 32);
 		});
 	});
 
@@ -312,8 +312,8 @@ describe('UnitSystem', () => {
 			// scout_drone hp=30, armor=0
 			const result = system.applyDamage(unitId, 30);
 			expect(result).not.toBeNull();
-			expect(result!.killed).toBe(true);
-			expect(result!.bounty).toBe(5); // scout_drone bounty
+			expect(result?.killed).toBe(true);
+			expect(result?.bounty).toBe(5); // scout_drone bounty
 			expect(system.hasActiveUnits()).toBe(false);
 		});
 
@@ -326,7 +326,7 @@ describe('UnitSystem', () => {
 			const unitId = system.getUnitPositions()[0].instanceId;
 			// damage=8, armor=5 → actual=3
 			const result = system.applyDamage(unitId, 8);
-			expect(result!.killed).toBe(false);
+			expect(result?.killed).toBe(false);
 
 			// hp should be 80 - 3 = 77
 			const pos = system.getUnitPositions();
@@ -354,7 +354,7 @@ describe('UnitSystem', () => {
 			const unitId = system.getUnitPositions()[0].instanceId;
 			const result = system.applyDamage(unitId, 1);
 			expect(result).not.toBeNull();
-			expect(result!.isBoss).toBe(false);
+			expect(result?.isBoss).toBe(false);
 		});
 
 		it('returns isBoss=true for boss unit', () => {
@@ -365,7 +365,7 @@ describe('UnitSystem', () => {
 			const unitId = system.getUnitPositions()[0].instanceId;
 			const result = system.applyDamage(unitId, 1, true);
 			expect(result).not.toBeNull();
-			expect(result!.isBoss).toBe(true);
+			expect(result?.isBoss).toBe(true);
 		});
 	});
 
@@ -423,7 +423,7 @@ describe('Boss phase system', () => {
 		// Deal 251 armorPierce damage: 500 - 251 = 249 (below 250 threshold)
 		const result = system.applyDamage(unitId, 251, true);
 		expect(result).not.toBeNull();
-		expect(result!.killed).toBe(false);
+		expect(result?.killed).toBe(false);
 
 		// HP should be clamped to at least 1 due to phase transition
 		const positions = system.getUnitPositions();
@@ -451,7 +451,7 @@ describe('Boss phase system', () => {
 		// Apply more damage during invulnerability window
 		const blockedResult = system.applyDamage(unitId, 100, true);
 		expect(blockedResult).not.toBeNull();
-		expect(blockedResult!.killed).toBe(false);
+		expect(blockedResult?.killed).toBe(false);
 
 		// HP should be unchanged
 		expect(system.getUnitPositions()[0].hp).toBe(hpAfterTransition);
@@ -481,8 +481,8 @@ describe('Boss phase system', () => {
 		// Now deal lethal damage in phase 2
 		const result = system.applyDamage(unitId, 300, true);
 		expect(result).not.toBeNull();
-		expect(result!.killed).toBe(true);
-		expect(result!.bounty).toBe(60); // titan bounty
+		expect(result?.killed).toBe(true);
+		expect(result?.bounty).toBe(60); // titan bounty
 		expect(system.getUnitPositions()).toHaveLength(0);
 	});
 
@@ -495,7 +495,7 @@ describe('Boss phase system', () => {
 		// One-shot: 600 armor-piercing → HP=-100, no phase transition
 		const result = system.applyDamage(unitId, 600, true);
 		expect(result).not.toBeNull();
-		expect(result!.killed).toBe(true);
+		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
 	});
 });

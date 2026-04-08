@@ -1,9 +1,4 @@
-import {
-	type SaveData,
-	type StarRating,
-	toKSTDateStr,
-	xpToNextLevel,
-} from '@gld/shared';
+import { type SaveData, toKSTDateStr, xpToNextLevel } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 

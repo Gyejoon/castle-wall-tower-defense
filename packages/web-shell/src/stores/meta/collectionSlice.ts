@@ -25,7 +25,7 @@ export const createCollectionSlice: SliceCreator<
 
 		const newCollection = [...s.collection];
 		newCollection[idx] = { ...tower, level: tower.level + 1 };
-		const cp = calcCombatPower(newCollection);
+		const cp = calcCombatPower(newCollection, s.selectedDeck);
 		set({
 			profile: { ...s.profile, gold: s.profile.gold - cost, combatPower: cp },
 			collection: newCollection,
@@ -67,7 +67,7 @@ export const createCollectionSlice: SliceCreator<
 				level: config.resetLevel ? 1 : tower.level,
 			};
 		}
-		const cp = calcCombatPower(newCollection);
+		const cp = calcCombatPower(newCollection, s.selectedDeck);
 		set({
 			profile: { ...s.profile, gold: newGold, combatPower: cp },
 			collection: newCollection,

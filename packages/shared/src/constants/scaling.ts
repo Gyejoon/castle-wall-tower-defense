@@ -26,7 +26,9 @@ export function scaleUnitStats(
 	level: number,
 ): ScaledUnitStats {
 	const band = getLevelBand(level);
-	const m = BAND_MULTIPLIERS[band]!;
+	const m = BAND_MULTIPLIERS[
+		band
+	] as (typeof BAND_MULTIPLIERS)[keyof typeof BAND_MULTIPLIERS];
 	return {
 		hp: Math.round(base.hp * m.hp),
 		speed: base.speed * m.speed,

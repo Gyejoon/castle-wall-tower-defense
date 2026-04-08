@@ -3,7 +3,6 @@ import {
 	checkStarClear,
 	getStarDifficultyMult,
 	PERFECT_CLEAR_BONUS,
-	STAR_CLEAR_CONDITIONS,
 	STAR_DIFFICULTY,
 	STAR_REWARD_MULTIPLIERS,
 } from '../src/constants/starDifficulty';

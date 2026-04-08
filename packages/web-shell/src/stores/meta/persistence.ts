@@ -83,8 +83,8 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			collection: collection.map((t) => ({
 				...t,
 				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
-				awakening: (t['awakening'] as number) ?? 0,
-				duplicateCount: (t['duplicateCount'] as number) ?? 0,
+				awakening: (t.awakening as number) ?? 0,
+				duplicateCount: (t.duplicateCount as number) ?? 0,
 			})),
 			progress: {
 				...progress,

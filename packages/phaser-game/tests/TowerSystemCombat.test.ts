@@ -327,7 +327,9 @@ describe('TowerSystem combat', () => {
 			},
 		]);
 
-		const lines = (towerSystem as any).attackLines;
+		const lines = (
+			towerSystem as unknown as { attackLines: { style: string }[] }
+		).attackLines;
 		expect(lines.length).toBe(1);
 		expect(lines[0].style).toBe('arrow');
 	});

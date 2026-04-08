@@ -34,6 +34,12 @@ export function calcTowerPower(tower: OwnedTower): number {
 	return Math.round(basePower * levelMult * gradeMult * awakenMult);
 }
 
-export function calcCombatPower(collection: OwnedTower[]): number {
-	return collection.reduce((sum, t) => sum + calcTowerPower(t), 0);
+export function calcCombatPower(
+	collection: OwnedTower[],
+	deckIds?: string[],
+): number {
+	const towers = deckIds
+		? collection.filter((t) => deckIds.includes(t.defId))
+		: collection;
+	return towers.reduce((sum, t) => sum + calcTowerPower(t), 0);
 }

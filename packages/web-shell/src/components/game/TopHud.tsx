@@ -125,6 +125,7 @@ export function TopHud({
 				<div className="ml-auto flex items-center gap-1">
 					{runStatus === 'running' && speed2xUnlocked && (
 						<button
+							type="button"
 							className="font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
 							style={{
 								background:
@@ -139,6 +140,7 @@ export function TopHud({
 					)}
 					{runStatus === 'running' && onExitRequest && (
 						<button
+							type="button"
 							className="border border-border px-2 py-0.5 font-pixel text-[11px] text-text-secondary"
 							style={{ background: 'rgba(26,18,8,0.7)' }}
 							onClick={onExitRequest}

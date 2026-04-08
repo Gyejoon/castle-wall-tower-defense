@@ -52,7 +52,7 @@ export function GachaRevealPhase({
 				<div className="grid grid-cols-5 gap-2 w-full">
 					{results.map((r, i) => (
 						<button
-							key={`${r.towerId}-${i}`}
+							key={`${r.towerId}-${r.isNew ? 'new' : 'dup'}-${i}`}
 							type="button"
 							onClick={() => onFlipCard(i)}
 							className={cn(

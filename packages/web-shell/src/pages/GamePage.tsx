@@ -177,6 +177,7 @@ export function GamePage() {
 							>
 								<span className="text-text">{selectedTower.towerName}</span>
 								<button
+									type="button"
 									className="border border-danger px-2 py-1 text-danger"
 									style={{ background: 'rgba(192,48,32,0.2)' }}
 									onClick={handleSellTower}
@@ -217,6 +218,7 @@ export function GamePage() {
 								</p>
 								<div className="flex gap-3">
 									<button
+										type="button"
 										className="border border-danger px-4 py-2 font-pixel text-[11px] text-danger"
 										style={{ background: 'rgba(192,48,32,0.2)' }}
 										onClick={handleExitConfirm}
@@ -224,6 +226,7 @@ export function GamePage() {
 										나가기
 									</button>
 									<button
+										type="button"
 										className="border border-accent px-4 py-2 font-pixel text-[11px] text-accent"
 										style={{ background: 'rgba(200,160,74,0.2)' }}
 										onClick={handleExitCancel}

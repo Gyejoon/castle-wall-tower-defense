@@ -157,7 +157,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 								: null;
 							return (
 								<div
-									key={i}
+									key={`slot-${i}`}
 									className={cn(
 										'min-h-[52px] border-2 flex flex-col items-center justify-center gap-1 py-1.5 px-1',
 										tower

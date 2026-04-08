@@ -19,6 +19,7 @@ const MAP_THEMES: Record<string, { borderColor: string; thumb: string }> = {
 	},
 };
 
+const MAP_CONTENT_WIDTH = 430;
 const MAP_CONTENT_HEIGHT = 640;
 
 const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
@@ -91,7 +92,7 @@ export function WorldMapPage() {
 							{/* Path connections (SVG) */}
 							<svg
 								className="absolute inset-0 w-full h-full z-0"
-								viewBox={`0 0 430 ${MAP_CONTENT_HEIGHT}`}
+								viewBox={`0 0 ${MAP_CONTENT_WIDTH} ${MAP_CONTENT_HEIGHT}`}
 								preserveAspectRatio="none"
 								role="img"
 								aria-label="스테이지 연결 경로"

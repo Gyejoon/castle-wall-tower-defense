@@ -7,6 +7,7 @@ import {
 	getWavesForMap,
 	MAP_REGISTRY,
 	STAR_DIFFICULTY,
+	STAR_REWARD_MULTIPLIERS,
 	type StarRating,
 } from '@gld/shared';
 import { lazy, Suspense, useEffect, useState } from 'react';
@@ -89,8 +90,8 @@ export function StageDetailPage() {
 	if (!map) return null;
 
 	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', icon: '?' };
-	const maxXp = getMaxXpForMap(selectedMapId);
-	const maxGold = getMaxGoldForMap(selectedMapId);
+	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
+	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
 	const totalWaves = getTotalWavesForMap(selectedMapId);
 	const waves = getWavesForMap(selectedMapId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
@@ -103,9 +104,13 @@ export function StageDetailPage() {
 		{
 			label: '최대 경험치',
 			value: `${maxXp} XP`,
-			sub: `${totalWaves}웨이브 클리어 시`,
+			sub: `★${selectedStar} 기준`,
 		},
-		{ label: '최대 골드', value: `~${maxGold} G`, sub: '전 몬스터 처치 시' },
+		{
+			label: '최대 골드',
+			value: `~${maxGold} G`,
+			sub: `★${selectedStar} 기준`,
+		},
 		{
 			label: '웨이브',
 			value: `${totalWaves}`,
@@ -183,6 +188,27 @@ export function StageDetailPage() {
 						</div>
 					</div>
 
+					{/* 보상 배율 */}
+					<div className="mx-3 mt-2 flex items-center justify-between px-3 py-1.5 bg-panel border border-gold/30 transition-all duration-200">
+						<span className="font-pixel text-[8px] text-text-secondary">
+							보상 배율
+						</span>
+						<div className="flex gap-3">
+							<span className="font-pixel text-[10px] text-gold">
+								x
+								{map.rewardMultiplier *
+									STAR_REWARD_MULTIPLIERS[selectedStar].gold}{' '}
+								골드
+							</span>
+							<span className="font-pixel text-[10px] text-info">
+								x
+								{map.rewardMultiplier *
+									STAR_REWARD_MULTIPLIERS[selectedStar].xp}{' '}
+								XP
+							</span>
+						</div>
+					</div>
+
 					{/* Info cards 2x2 */}
 					<div className="grid grid-cols-2 gap-2 p-3">
 						{infoCards.map((card) => (
@@ -193,7 +219,7 @@ export function StageDetailPage() {
 								<p className="font-pixel text-[7px] text-text-secondary uppercase tracking-wider">
 									{card.label}
 								</p>
-								<p className="font-pixel text-[11px] text-gold mt-1">
+								<p className="font-pixel text-[11px] text-gold mt-1 transition-all duration-200">
 									{card.value}
 								</p>
 								<p className="font-pixel text-[6px] text-text-secondary mt-0.5">

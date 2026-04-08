@@ -38,6 +38,7 @@ GridManager
 DeckSystem    (deckCards)
 DamageNumberSystem  (scene)
 EnergySystem  (standalone)
+GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 [M2+]
 TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 
@@ -46,13 +47,14 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 1. WaveSystem.update(scaledDelta, activeUnitCount)
 2. EnergySystem.update(scaledDelta / 1000)
-3. processCombatField()
+3. GimmickSystem.update(scaledDelta)  ← [M2+ 추가]
+4. processCombatField()
    ├─ TowerSystem.update() → damageEvents
    ├─ UnitSystem.applyDamage / applySlow / applyStun
    └─ UnitSystem.update() → reachedExit[]
-4. DamageNumberSystem.update(_time, delta)  ← 실제 delta(스케일 없음)
-5. Exit 처리 → player HP 감소 → defeat 체크
-6. WavePhase === 'ended' + 유닛 없음 → victory 체크
+5. DamageNumberSystem.update(_time, delta)  ← 실제 delta(스케일 없음)
+6. Exit 처리 → player HP 감소 → defeat 체크
+7. WavePhase === 'ended' + 유닛 없음 → victory 체크
 ```
 
 `speedMultiplier`(1× or 2×)는 `scaledDelta`에만 적용된다. DamageNumberSystem은 시각 효과이므로 실제 delta를 사용한다.
@@ -106,6 +108,7 @@ EnergySystem.reset()
 | `game-over` | 승/패 확정 | useGameEvents → runStatus, 메타 갱신 |
 | `tutorial-step` | 튜토리얼 진행 | 튜토리얼 UI |
 | `tutorial-completed` | 튜토리얼 완료 | metaStore.progress |
+| `gimmick-state-changed` | GimmickSystem 상태 변경 | useGameEvents → HUD 표시 |
 
 ### React → Game 이벤트 (`request-*` 접두사)
 
@@ -119,6 +122,8 @@ EnergySystem.reset()
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
 | `request-set-speed` | SpeedButton | Game.ts onSetSpeed |
 | `request-tutorial-advance` | 튜토리얼 UI | TutorialSystem |
+| `request-gimmick-info` | UI에서 기믹 상태 요청 | GimmickSystem |
+| `star-selected` | StageDetail에서 별 선택 | game.registry sync |
 
 ---
 
@@ -158,6 +163,7 @@ EnergySystem.reset()
 | Depth | 레이어 | 대상 |
 |-------|--------|------|
 | 0 | Ground | TinySwords 배경 타일 |
+| 2-4 | Gimmick VFX | 용암 glow(2), 역병 안개(3), 마력 폭발(4) |
 | 3 + x + y + depthOffset | Decorations | 나무, 바위 등 장식 스프라이트 (`gridManager.getDepth()` 기반) |
 | 5 | Path | 경로 라인 오버레이 |
 | ~12 | Towers | 타워 스프라이트 |

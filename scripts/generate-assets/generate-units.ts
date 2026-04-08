@@ -832,7 +832,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,
-      section: 'boss' as const,
+      section: 'preload' as const,
     });
   }
 
@@ -856,7 +856,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,
-      section: 'boss' as const,
+      section: 'preload' as const,
     });
   }
 

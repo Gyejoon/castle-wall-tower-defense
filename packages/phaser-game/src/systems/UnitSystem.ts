@@ -10,7 +10,7 @@ import {
 	type UnitDef,
 } from '@gld/shared';
 import Phaser from 'phaser';
-import { getCachedAssetManifest, getOptionalAnimationKey, registerOptionalCombatAnimations } from '../assets/assetManifest';
+import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 
@@ -205,21 +205,6 @@ export class UnitSystem {
 			sprite.play(bossAnimKey);
 		} else {
 			sprite.play(`${entry.def.id}-walk`);
-		}
-		// If boss texture isn't loaded yet, swap when it becomes available
-		if (entry.isBoss && !bossTextureReady) {
-			const onTextureAdded = (_key: string) => {
-				if (_key === bossTextureKey && sprite.active) {
-					sprite.setTexture(bossTextureKey);
-					registerOptionalCombatAnimations(this.scene, getCachedAssetManifest(this.scene));
-					const aKey = `anim-${bossTextureKey}`;
-					if (this.scene.anims.exists(aKey)) {
-						sprite.play(aKey);
-					}
-					this.scene.textures.off('addtexture', onTextureAdded);
-				}
-			};
-			this.scene.textures.on('addtexture', onTextureAdded);
 		}
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (entry.def.element !== 'neutral') {

@@ -1,5 +1,6 @@
 import {
 	ALL_TOWERS,
+	calcCombatPower,
 	enhancementCost,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
@@ -28,6 +29,8 @@ export const createCollectionSlice: SliceCreator<
 			profile: { ...s.profile, gold: s.profile.gold - cost },
 			collection: newCollection,
 		});
+		const cp = calcCombatPower(get().collection);
+		set((s) => ({ profile: { ...s.profile, combatPower: cp } }));
 		debouncedSave(get());
 		return 'success';
 	},
@@ -57,6 +60,8 @@ export const createCollectionSlice: SliceCreator<
 			profile: { ...s.profile, gold: newGold },
 			collection: newCollection,
 		});
+		const cp = calcCombatPower(get().collection);
+		set((s) => ({ profile: { ...s.profile, combatPower: cp } }));
 		debouncedSave(get());
 		return success ? 'success' : 'fail';
 	},

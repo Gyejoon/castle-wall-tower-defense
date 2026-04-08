@@ -31,8 +31,18 @@ function useAnimatedGold() {
 	return display;
 }
 
+function getFrameColor(cp: number): string {
+	if (cp >= 50000) return '#ffe870';
+	if (cp >= 10000) return '#9060e0';
+	if (cp >= 5000) return '#f0d060';
+	if (cp >= 1000) return '#c8a04a';
+	if (cp >= 500) return '#7ab648';
+	return '#4a3a20';
+}
+
 export function ProfileBar() {
 	const profile = useMetaStore((s) => s.profile);
+	const combatPower = useMetaStore((s) => s.profile.combatPower);
 	const displayGold = useAnimatedGold();
 	const xpNeeded = xpToNextLevel(profile.level);
 	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;
@@ -56,6 +66,9 @@ export function ProfileBar() {
 				</span>
 				<span className="font-pixel text-[11px] text-text-secondary">
 					Lv.{profile.level}
+				</span>
+				<span className="font-pixel text-[9px]" style={{ color: getFrameColor(combatPower) }}>
+					⚔ {combatPower.toLocaleString()}
 				</span>
 				{/* XP progress bar */}
 				<div

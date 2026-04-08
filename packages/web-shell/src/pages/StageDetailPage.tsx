@@ -9,7 +9,7 @@ import {
 	STAR_DIFFICULTY,
 	type StarRating,
 } from '@gld/shared';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
@@ -79,9 +79,11 @@ export function StageDetailPage() {
 	const highestStar = (stageStars[selectedMapId] ?? 0) as 0 | 1 | 2 | 3;
 	const maxUnlocked: StarRating =
 		highestStar >= 2 ? 3 : highestStar >= 1 ? 2 : 1;
-	if (selectedStar > maxUnlocked) {
-		setSelectedStar(maxUnlocked);
-	}
+	useEffect(() => {
+		if (selectedStar > maxUnlocked) {
+			setSelectedStar(maxUnlocked);
+		}
+	}, [selectedStar, maxUnlocked, setSelectedStar]);
 
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;

@@ -1,0 +1,214 @@
+/**
+ * World Map Asset Generation via ComfyUI
+ *
+ * Generates:
+ * - worldmap-bg.png (512x768) — full world map background
+ * - landmark-{stage_id}.png (96x96) — stage landmark icons
+ *
+ * Falls back to @napi-rs/canvas placeholders when ComfyUI is unavailable.
+ *
+ * Usage: bun run scripts/generate-assets/generate-worldmap.ts
+ */
+
+import { loadImage } from '@napi-rs/canvas';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+import {
+  AI_TEMP_DIR,
+  COMFYUI_CONFIG,
+  STAGE_THUMB_PROMPTS,
+  WORLDMAP_PROMPTS,
+  toManifestEntry,
+  type AssetPromptConfig,
+} from './ai-config';
+import {
+  checkAvailable,
+  downloadImage,
+  queuePrompt,
+  waitForCompletion,
+  type ComfyUIWorkflow,
+} from './comfyui-client';
+import {
+  PALETTE,
+  drawRect,
+  makeCanvas,
+  saveCanvas,
+  type ManifestEntry,
+} from './shared';
+
+const OUTPUT_DIR = 'packages/web-shell/public/assets/ui';
+
+function buildWorkflow(
+  config: AssetPromptConfig,
+  width: number,
+  height: number,
+): ComfyUIWorkflow {
+  return {
+    '3': {
+      class_type: 'KSampler',
+      inputs: {
+        seed: Math.floor(Math.random() * 2 ** 32),
+        steps: COMFYUI_CONFIG.steps,
+        cfg: COMFYUI_CONFIG.cfgScale,
+        sampler_name: COMFYUI_CONFIG.sampler,
+        scheduler: 'normal',
+        denoise: 1.0,
+        model: ['4', 0],
+        positive: ['6', 0],
+        negative: ['7', 0],
+        latent_image: ['5', 0],
+      },
+    },
+    '4': {
+      class_type: 'CheckpointLoaderSimple',
+      inputs: { ckpt_name: COMFYUI_CONFIG.model },
+    },
+    '5': {
+      class_type: 'EmptyLatentImage',
+      inputs: { width, height, batch_size: 1 },
+    },
+    '6': {
+      class_type: 'CLIPTextEncode',
+      inputs: { text: config.prompt, clip: ['4', 1] },
+    },
+    '7': {
+      class_type: 'CLIPTextEncode',
+      inputs: { text: config.negativePrompt, clip: ['4', 1] },
+    },
+    '8': {
+      class_type: 'VAEDecode',
+      inputs: { samples: ['3', 0], vae: ['4', 2] },
+    },
+    '9': {
+      class_type: 'SaveImage',
+      inputs: {
+        filename_prefix: `ai-worldmap-${config.key}`,
+        images: ['8', 0],
+      },
+    },
+  };
+}
+
+async function generateAsset(config: AssetPromptConfig): Promise<ManifestEntry> {
+  console.log(`  generating: ${config.key}`);
+
+  const isBackground = config.key === 'ui-worldmap-bg';
+  const isStageThumb = config.key.startsWith('ui-stage-thumb-');
+  // Generate at higher resolution, resize to target later
+  const genWidth = isStageThumb ? 768 : 512;
+  const genHeight = isBackground ? 768 : isStageThumb ? 512 : 512;
+
+  const tempPath = `${AI_TEMP_DIR}/${config.key}-raw.png`;
+  mkdirSync(dirname(tempPath), { recursive: true });
+
+  const promptId = await queuePrompt(buildWorkflow(config, genWidth, genHeight));
+  console.log(`    queued prompt: ${promptId}`);
+
+  const result = await waitForCompletion(promptId);
+  const outputs = Object.values(result.outputs);
+  if (outputs.length === 0 || outputs[0].images.length === 0) {
+    throw new Error(`No output images for ${config.key}`);
+  }
+
+  const image = outputs[0].images[0];
+  await downloadImage(image.filename, image.subfolder, tempPath);
+
+  mkdirSync(dirname(config.outputPath), { recursive: true });
+
+  if (isBackground) {
+    const { writeFileSync, readFileSync } = await import('fs');
+    writeFileSync(config.outputPath, readFileSync(tempPath));
+  } else {
+    // Resize to target dimensions
+    const src = await loadImage(tempPath);
+    const { canvas, ctx } = makeCanvas(config.frameWidth, config.frameHeight);
+    ctx.drawImage(src, 0, 0, config.frameWidth, config.frameHeight);
+    saveCanvas(canvas, config.outputPath);
+    console.log(`  wrote ${config.outputPath} (${config.frameWidth}x${config.frameHeight})`);
+  }
+
+  return toManifestEntry(config);
+}
+
+function generatePlaceholders(): ManifestEntry[] {
+  console.log('  ComfyUI unavailable — generating placeholders');
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+
+  const entries: ManifestEntry[] = [];
+
+  const PLACEHOLDER_COLORS: Record<string, string> = {
+    'ui-landmark-forest_gate': '#4a8a2a',
+    'ui-landmark-lava_fortress': '#c04020',
+    'ui-landmark-storm_citadel': '#5a6aaa',
+    'ui-stage-thumb-forest_gate': '#2d5a1e',
+    'ui-stage-thumb-lava_fortress': '#8a2a0a',
+    'ui-stage-thumb-storm_citadel': '#2a3a6a',
+  };
+
+  for (const config of [...WORLDMAP_PROMPTS, ...STAGE_THUMB_PROMPTS]) {
+    const isBackground = config.key === 'ui-worldmap-bg';
+    const w = isBackground ? 512 : config.frameWidth;
+    const h = isBackground ? 768 : config.frameHeight;
+
+    const { canvas, ctx } = makeCanvas(w, h);
+
+    if (isBackground) {
+      drawRect(ctx, 0, 0, w, h, '#2a2218');
+      drawRect(ctx, 0, Math.floor(h * 0.6), w, Math.floor(h * 0.4), '#1a3a10');
+      drawRect(ctx, 0, Math.floor(h * 0.3), Math.floor(w * 0.5), Math.floor(h * 0.3), '#3a1808');
+      drawRect(ctx, Math.floor(w * 0.5), 0, Math.floor(w * 0.5), Math.floor(h * 0.3), '#1a2040');
+    } else {
+      const color = PLACEHOLDER_COLORS[config.key] ?? PALETTE.gold;
+      drawRect(ctx, 0, 0, w, h, '#2a1f14');
+      drawRect(ctx, 4, 4, w - 8, h - 8, color);
+      drawRect(ctx, 8, 8, w - 16, h - 16, '#2a1f14');
+      drawRect(ctx, Math.floor(w / 2) - 4, Math.floor(h / 2) - 4, 8, 8, color);
+    }
+
+    saveCanvas(canvas, config.outputPath);
+    entries.push(toManifestEntry(config));
+  }
+
+  return entries;
+}
+
+export async function generate(): Promise<ManifestEntry[]> {
+  console.log('Generating world map assets...');
+
+  if (!(await checkAvailable())) {
+    console.warn(
+      `  WARNING: ComfyUI not available at ${COMFYUI_CONFIG.url}. Using placeholders.`,
+    );
+    return generatePlaceholders();
+  }
+  console.log('  ComfyUI connected');
+
+  const allPrompts = [...WORLDMAP_PROMPTS, ...STAGE_THUMB_PROMPTS];
+  const results = await Promise.allSettled(
+    allPrompts.map((config) => generateAsset(config)),
+  );
+
+  const entries: ManifestEntry[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === 'fulfilled') {
+      entries.push(result.value);
+    } else {
+      console.error(
+        `  ERROR generating ${allPrompts[i].key}:`,
+        result.reason,
+      );
+    }
+  }
+
+  return entries;
+}
+
+if (import.meta.main) {
+  generate()
+    .then((entries) => console.log(`\nGenerated ${entries.length} world map assets`))
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}

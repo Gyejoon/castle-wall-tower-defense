@@ -11,7 +11,7 @@ export const WALK_FRAME_COUNT = 4;
 // === ComfyUI Configuration ===
 export const COMFYUI_CONFIG = {
   url: process.env.COMFYUI_URL || 'http://localhost:8188',
-  model: 'rd_pro__isometric.safetensors',
+  model: 'dreamshaper_8.safetensors',
   steps: 20,
   cfgScale: 7,
   width: 512,
@@ -128,6 +128,106 @@ export const TOWER_PROMPTS: AssetPromptConfig[] = TOWERS.flatMap((tower) => [
     type: 'spritesheet' as const,
   },
 ]);
+
+// === World Map Prompts ===
+const WORLDMAP_NEGATIVE =
+  'blurry, modern, sci-fi, neon, realistic, photorealistic, 3D render, ' +
+  'high resolution, smooth gradients, anti-aliased, text, watermark, signature';
+
+const WORLDMAP_STYLE =
+  'pixel art, medieval fantasy, retro game aesthetic, warm muted colors, detailed pixel shading';
+
+export const WORLDMAP_PROMPTS: AssetPromptConfig[] = [
+  {
+    key: 'ui-worldmap-bg',
+    prompt: `${WORLDMAP_STYLE}, top-down world map, parchment style background, ` +
+      'dense forest region at bottom, volcanic lava fields at middle-left, ' +
+      'stormy mountain peaks at top-right, ocean borders, winding paths between regions, ' +
+      'dark fantasy atmosphere, fog of war edges',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/worldmap-bg.png`,
+    frameCount: 1,
+    frameWidth: 512,
+    frameHeight: 768,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-forest_gate',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'wooden gate with stone pillars surrounded by dense dark forest, ' +
+      'green canopy, moss-covered, mysterious forest entrance',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-forest_gate.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-lava_fortress',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'dark stone fortress engulfed in bright flowing lava, molten rivers pouring down sides, ' +
+      'intense orange-red glow, magma pools at base, volcanic eruption, fire and embers',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-lava_fortress.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+  {
+    key: 'ui-landmark-storm_citadel',
+    prompt: `${WORLDMAP_STYLE}, single building icon, centered, transparent background, ` +
+      'tall stone citadel with spire, dark storm clouds swirling above, ' +
+      'lightning crackling, blue-purple magical aura, floating debris',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/landmark-storm_citadel.png`,
+    frameCount: 1,
+    frameWidth: 96,
+    frameHeight: 96,
+    type: 'image',
+  },
+];
+
+// === Stage Thumbnail Prompts ===
+export const STAGE_THUMB_PROMPTS: AssetPromptConfig[] = [
+  {
+    key: 'ui-stage-thumb-forest_gate',
+    prompt: `${WORLDMAP_STYLE}, wide landscape scene, dense dark enchanted forest, ` +
+      'ancient wooden gate with stone pillars at center, moss-covered path leading through, ' +
+      'dappled green light filtering through canopy, mysterious fog, fireflies',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/stage-thumb-forest_gate.png`,
+    frameCount: 1,
+    frameWidth: 430,
+    frameHeight: 280,
+    type: 'image',
+  },
+  {
+    key: 'ui-stage-thumb-lava_fortress',
+    prompt: `${WORLDMAP_STYLE}, wide landscape scene, volcanic fortress on obsidian rock, ` +
+      'rivers of lava flowing around dark stone walls, orange-red glow, erupting volcano in background, ' +
+      'smoke and embers rising, cracked earth, hellish atmosphere',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/stage-thumb-lava_fortress.png`,
+    frameCount: 1,
+    frameWidth: 430,
+    frameHeight: 280,
+    type: 'image',
+  },
+  {
+    key: 'ui-stage-thumb-storm_citadel',
+    prompt: `${WORLDMAP_STYLE}, wide landscape scene, tall gothic citadel on mountain peak, ` +
+      'dark swirling storm clouds, lightning bolts striking towers, blue-purple magical energy, ' +
+      'howling wind, floating debris, dramatic dark sky',
+    negativePrompt: WORLDMAP_NEGATIVE,
+    outputPath: `${AI_OUTPUT_DIR}/ui/stage-thumb-storm_citadel.png`,
+    frameCount: 1,
+    frameWidth: 430,
+    frameHeight: 280,
+    type: 'image',
+  },
+];
 
 // === Unit Prompts (PixelLab) ===
 export interface UnitPromptConfig {

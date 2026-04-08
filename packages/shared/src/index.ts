@@ -85,12 +85,12 @@ export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
 export type { StarRating } from './constants/starDifficulty';
 export {
-  checkStarClear,
-  getStarDifficultyMult,
-  PERFECT_CLEAR_BONUS,
-  STAR_CLEAR_CONDITIONS,
-  STAR_DIFFICULTY,
-  STAR_REWARD_MULTIPLIERS,
+	checkStarClear,
+	getStarDifficultyMult,
+	PERFECT_CLEAR_BONUS,
+	STAR_CLEAR_CONDITIONS,
+	STAR_DIFFICULTY,
+	STAR_REWARD_MULTIPLIERS,
 } from './constants/starDifficulty';
 export {
 	ALL_TOWERS,

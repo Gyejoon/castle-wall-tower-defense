@@ -21,7 +21,7 @@ export const STAR_REWARD_MULTIPLIERS = {
 } as const;
 
 /** ★3에서 HP 100% 유지 시 추가 보너스 */
-export const PERFECT_CLEAR_BONUS = { awakeningStone: 2 };
+export const PERFECT_CLEAR_BONUS = { awakeningStone: 2 } as const;
 
 export function getStarDifficultyMult(star: StarRating) {
   return STAR_DIFFICULTY[star];

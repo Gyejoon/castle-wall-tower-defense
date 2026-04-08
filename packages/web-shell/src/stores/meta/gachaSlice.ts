@@ -83,6 +83,8 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 					level: 1,
 					grade: 'normal',
 					acquiredAt: Date.now(),
+					awakening: 0,
+					duplicateCount: 0,
 				});
 			}
 		}

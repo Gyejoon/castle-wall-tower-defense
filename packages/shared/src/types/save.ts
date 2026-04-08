@@ -1,4 +1,6 @@
-export const SAVE_VERSION = 3;
+import type { StarRating } from '../constants/starDifficulty';
+
+export const SAVE_VERSION = 4;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -14,6 +16,8 @@ export interface OwnedTower {
 	level: number; // 1~30
 	grade: TowerGrade;
 	acquiredAt: number;
+	awakening: 0 | 1 | 2 | 3;
+	duplicateCount: number;
 }
 
 export interface ProfileData {
@@ -27,6 +31,7 @@ export interface ProfileData {
 	losses: number;
 	winStreak: number;
 	bestWinStreak: number;
+	combatPower: number;
 }
 
 export type MissionType =
@@ -60,6 +65,12 @@ export interface ProgressData {
 	lastDailyMissionResetAt: string | null;
 	lastWeeklyMissionResetAt: string | null;
 	lastAttendanceDate: string | null;
+	stageStars: Record<string, StarRating>;
+	achievements: {
+		claimed: string[];
+		progress: Record<string, number>;
+	};
+	awakeningStones: number;
 }
 
 export interface SettingsData {

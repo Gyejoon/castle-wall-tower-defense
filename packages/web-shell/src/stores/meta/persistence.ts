@@ -56,6 +56,30 @@ type SaveMigration = (
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	3: (data) => {
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		const profile = (data.profile ?? {}) as Record<string, unknown>;
+		const collection = (Array.isArray(data.collection) ? data.collection : []) as Record<string, unknown>[];
+		return {
+			...data,
+			version: 4,
+			profile: {
+				...profile,
+				combatPower: 0,
+			},
+			collection: collection.map((t) => ({
+				...t,
+				awakening: (t as any).awakening ?? 0,
+				duplicateCount: (t as any).duplicateCount ?? 0,
+			})),
+			progress: {
+				...progress,
+				stageStars: {},
+				achievements: { claimed: [], progress: {} },
+				awakeningStones: 0,
+			},
+		};
+	},
 	2: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		return {

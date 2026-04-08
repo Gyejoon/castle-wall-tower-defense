@@ -86,12 +86,15 @@ export function createDefaultSave(): SaveData {
 			losses: 0,
 			winStreak: 0,
 			bestWinStreak: 0,
+			combatPower: 0,
 		},
 		collection: DEFAULT_STARTER_IDS.map<OwnedTower>((defId) => ({
 			defId,
 			level: 1,
 			grade: 'normal',
 			acquiredAt: now,
+			awakening: 0,
+			duplicateCount: 0,
 		})),
 		progress: {
 			highestWave: {},
@@ -107,6 +110,9 @@ export function createDefaultSave(): SaveData {
 			lastDailyMissionResetAt: null,
 			lastWeeklyMissionResetAt: null,
 			lastAttendanceDate: null,
+			stageStars: {},
+			achievements: { claimed: [], progress: {} },
+			awakeningStones: 0,
 		},
 		settings: {
 			bgmVolume: 0.7,

@@ -163,7 +163,7 @@ EnergySystem.reset()
 | Depth | 레이어 | 대상 |
 |-------|--------|------|
 | 0 | Ground | TinySwords 배경 타일 |
-| 2-4 | Gimmick VFX | 용암 glow(2), 역병 안개(3), 마력 폭발(4) |
+| 0.1-0.9 | Gimmick VFX | 용암 glow(0.1), 역병 안개(0.5), 마력 폭발(0.9) |
 | 3 + x + y + depthOffset | Decorations | 나무, 바위 등 장식 스프라이트 (`gridManager.getDepth()` 기반) |
 | 5 | Path | 경로 라인 오버레이 |
 | ~12 | Towers | 타워 스프라이트 |

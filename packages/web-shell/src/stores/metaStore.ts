@@ -1,6 +1,7 @@
 import { calcCombatPower, createDefaultSave } from '@gld/shared';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { createAchievementSlice } from './meta/achievementSlice';
 import { createCollectionSlice } from './meta/collectionSlice';
 import { createGachaSlice } from './meta/gachaSlice';
 import { createMissionSlice } from './meta/missionSlice';
@@ -11,7 +12,6 @@ import {
 	writeSave,
 } from './meta/persistence';
 import { createProfileSlice } from './meta/profileSlice';
-import { createAchievementSlice } from './meta/achievementSlice';
 import { createSettingsSlice } from './meta/settingsSlice';
 import type { MetaState } from './meta/types';
 
@@ -71,13 +71,30 @@ export const useMetaStore = create<MetaState>()(
 				s.updateAchievementProgress('clear_1', clearCount);
 				s.updateAchievementProgress('clear_10', clearCount);
 				s.updateAchievementProgress('clear_50', clearCount);
-				const maxLv = s.collection.length > 0 ? Math.max(...s.collection.map((t) => t.level)) : 0;
+				const maxLv =
+					s.collection.length > 0
+						? Math.max(...s.collection.map((t) => t.level))
+						: 0;
 				s.updateAchievementProgress('tower_lv10', maxLv);
 				s.updateAchievementProgress('tower_lv30', maxLv);
 				s.updateAchievementProgress('tower_lv50', maxLv);
-				if (s.collection.some((t) => t.grade === 'rare')) s.updateAchievementProgress('tower_rare', 1);
-				if (s.collection.some((t) => t.grade === 'unique')) s.updateAchievementProgress('tower_unique', 1);
-				if (s.collection.some((t) => t.grade === 'epic')) s.updateAchievementProgress('tower_epic', 1);
+				if (s.collection.some((t) => t.grade === 'rare'))
+					s.updateAchievementProgress('tower_rare', 1);
+				if (s.collection.some((t) => t.grade === 'unique'))
+					s.updateAchievementProgress('tower_unique', 1);
+				if (s.collection.some((t) => t.grade === 'epic'))
+					s.updateAchievementProgress('tower_epic', 1);
+
+				// Sync star-clear achievements from stageStars
+				const stageStars = s.progress.stageStars;
+				const star2Count = Object.values(stageStars).filter(
+					(r) => r >= 2,
+				).length;
+				const star3Count = Object.values(stageStars).filter(
+					(r) => r >= 3,
+				).length;
+				s.updateAchievementProgress('star2_all', star2Count);
+				s.updateAchievementProgress('star3_all', star3Count);
 			},
 
 			...createProfileSlice(set, get),

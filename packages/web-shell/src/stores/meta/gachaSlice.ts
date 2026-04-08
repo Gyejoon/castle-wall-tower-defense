@@ -74,9 +74,13 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 		let goldGained = 0;
 		const newCollection = [...s.collection];
 		for (const r of results) {
-			const alreadyOwned = newCollection.some((t) => t.defId === r.towerId);
-			if (alreadyOwned) {
+			const existingIdx = newCollection.findIndex((t) => t.defId === r.towerId);
+			if (existingIdx >= 0) {
 				goldGained += 50;
+				newCollection[existingIdx] = {
+					...newCollection[existingIdx],
+					duplicateCount: newCollection[existingIdx].duplicateCount + 1,
+				};
 			} else {
 				newCollection.push({
 					defId: r.towerId,

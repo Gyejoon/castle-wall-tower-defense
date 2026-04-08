@@ -56,7 +56,7 @@ export const PROMOTION_CONFIG = {
 	},
 } as const;
 
-const GRADE_BONUS: Record<TowerGrade, number> = {
+export const GRADE_BONUS: Record<TowerGrade, number> = {
 	normal: 0,
 	rare: 0.1,
 	unique: 0.25,

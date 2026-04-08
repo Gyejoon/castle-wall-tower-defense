@@ -41,8 +41,14 @@ export function AchievementPage() {
 						onClick={() => setCategory(cat.id)}
 						className="flex-1 py-2.5 font-pixel text-[10px] text-center cursor-pointer transition-colors"
 						style={{
-							color: category === cat.id ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-							borderBottom: category === cat.id ? '2px solid var(--color-accent)' : '2px solid transparent',
+							color:
+								category === cat.id
+									? 'var(--color-accent)'
+									: 'var(--color-text-secondary)',
+							borderBottom:
+								category === cat.id
+									? '2px solid var(--color-accent)'
+									: '2px solid transparent',
 						}}
 					>
 						{cat.label}
@@ -67,7 +73,10 @@ export function AchievementPage() {
 										? 'color-mix(in srgb, var(--color-success) 8%, transparent)'
 										: 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
 									: 'var(--color-panel)',
-								borderColor: achieved && !claimed ? 'var(--color-accent)' : 'var(--color-border)',
+								borderColor:
+									achieved && !claimed
+										? 'var(--color-accent)'
+										: 'var(--color-border)',
 								opacity: achieved ? 1 : 0.7,
 							}}
 						>
@@ -75,9 +84,22 @@ export function AchievementPage() {
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-1.5">
 										{achieved ? (
-											<img src="assets/ui/icon-complete.webp" alt="" width={12} height={12} className="[image-rendering:pixelated]" />
+											<img
+												src="assets/ui/icon-complete.webp"
+												alt=""
+												width={12}
+												height={12}
+												className="[image-rendering:pixelated]"
+											/>
 										) : (
-											<img src="assets/ui/icon-locked.webp" alt="" width={12} height={12} className="[image-rendering:pixelated]" style={{ opacity: progress > 0 ? 0.5 : 0.3 }} />
+											<img
+												src="assets/ui/icon-locked.webp"
+												alt=""
+												width={12}
+												height={12}
+												className="[image-rendering:pixelated]"
+												style={{ opacity: progress > 0 ? 0.5 : 0.3 }}
+											/>
 										)}
 										<span className="font-pixel text-[10px] text-text">
 											{ach.name}
@@ -91,7 +113,9 @@ export function AchievementPage() {
 								{/* Reward + claim */}
 								<div className="flex flex-col items-end gap-1 shrink-0">
 									<span className="font-pixel text-[9px] text-gold">
-										<span className="inline-flex items-center gap-0.5"><DiamondIcon size={10} /> {ach.reward.diamond}</span>
+										<span className="inline-flex items-center gap-0.5">
+											<DiamondIcon size={10} /> {ach.reward.diamond}
+										</span>
 									</span>
 									{achieved && !claimed && (
 										<button
@@ -128,7 +152,7 @@ export function AchievementPage() {
 										/>
 									</div>
 									<span className="font-pixel text-[7px] text-text-secondary mt-0.5">
-										{progress}/{ach.target.toLocaleString()}
+										{progress.toLocaleString()}/{ach.target.toLocaleString()}
 									</span>
 								</div>
 							)}

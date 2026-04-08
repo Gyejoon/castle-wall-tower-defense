@@ -31,9 +31,21 @@ function isStarUnlocked(
 }
 
 const STAR_COLORS = {
-	1: { bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)', border: 'var(--color-success)', text: 'var(--color-success)' },
-	2: { bg: 'color-mix(in srgb, var(--color-accent) 10%, transparent)', border: 'var(--color-accent)', text: 'var(--color-accent)' },
-	3: { bg: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', border: 'var(--color-danger)', text: 'var(--color-danger)' },
+	1: {
+		bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',
+		border: 'var(--color-success)',
+		text: 'var(--color-success)',
+	},
+	2: {
+		bg: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+		border: 'var(--color-accent)',
+		text: 'var(--color-accent)',
+	},
+	3: {
+		bg: 'color-mix(in srgb, var(--color-danger) 10%, transparent)',
+		border: 'var(--color-danger)',
+		text: 'var(--color-danger)',
+	},
 } as const;
 
 const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
@@ -62,6 +74,14 @@ export function StageDetailPage() {
 	const setSelectedStar = useGameStore((s) => s.setSelectedStar);
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
+
+	// Guard: reset selectedStar if locked on current map
+	const highestStar = (stageStars[selectedMapId] ?? 0) as 0 | 1 | 2 | 3;
+	const maxUnlocked: StarRating =
+		highestStar >= 2 ? 3 : highestStar >= 1 ? 2 : 1;
+	if (selectedStar > maxUnlocked) {
+		setSelectedStar(maxUnlocked);
+	}
 
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;
@@ -154,7 +174,9 @@ export function StageDetailPage() {
 									className="[image-rendering:pixelated]"
 								/>
 								<span className="text-text-secondary">권장 전투력</span>
-								{Math.round(map.recommendedPower * STAR_DIFFICULTY[selectedStar].hp).toLocaleString()}
+								{Math.round(
+									map.recommendedPower * STAR_DIFFICULTY[selectedStar].hp,
+								).toLocaleString()}
 							</span>
 						</div>
 					</div>
@@ -205,7 +227,11 @@ export function StageDetailPage() {
 							{([1, 2, 3] as const).map((s) => (
 								<img
 									key={s}
-									src={s <= (stageStars[selectedMapId] ?? 0) ? 'assets/ui/icon-star-active.png' : 'assets/ui/icon-star-inactive.png'}
+									src={
+										s <= (stageStars[selectedMapId] ?? 0)
+											? 'assets/ui/icon-star-active.png'
+											: 'assets/ui/icon-star-inactive.png'
+									}
 									alt=""
 									width={12}
 									height={12}
@@ -234,7 +260,11 @@ export function StageDetailPage() {
 						</p>
 						<div className="flex gap-2">
 							{([1, 2, 3] as StarRating[]).map((star) => {
-								const unlocked = isStarUnlocked(star, selectedMapId, stageStars);
+								const unlocked = isStarUnlocked(
+									star,
+									selectedMapId,
+									stageStars,
+								);
 								const active = selectedStar === star;
 								const colors = STAR_COLORS[star];
 								const diff = STAR_DIFFICULTY[star];

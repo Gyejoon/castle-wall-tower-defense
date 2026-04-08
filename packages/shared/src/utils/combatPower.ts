@@ -1,13 +1,6 @@
-import type { OwnedTower } from '../types/save';
+import { enhancementStatMultiplier, GRADE_BONUS } from '../constants/meta';
 import { ALL_TOWERS } from '../constants/towers';
-import { enhancementStatMultiplier } from '../constants/meta';
-
-const GRADE_MULTIPLIER: Record<string, number> = {
-	normal: 1.0,
-	rare: 1.1,
-	unique: 1.25,
-	epic: 1.45,
-};
+import type { OwnedTower, TowerGrade } from '../types/save';
 
 const AWAKENING_MULTIPLIER = [1.0, 1.2, 1.5, 2.0] as const;
 
@@ -16,7 +9,7 @@ export function calcTowerPower(tower: OwnedTower): number {
 	if (!def) return 0;
 	const baseDmg = def.stats.damage;
 	const levelMult = enhancementStatMultiplier(tower.level);
-	const gradeMult = GRADE_MULTIPLIER[tower.grade] ?? 1;
+	const gradeMult = 1 + (GRADE_BONUS[tower.grade as TowerGrade] ?? 0);
 	const awakenMult = AWAKENING_MULTIPLIER[tower.awakening] ?? 1;
 	return Math.round(baseDmg * levelMult * gradeMult * awakenMult);
 }

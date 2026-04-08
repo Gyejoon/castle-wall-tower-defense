@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createDefaultSave } from '@gld/shared';
+import { ACHIEVEMENT_MAP, createDefaultSave } from '@gld/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -12,19 +12,25 @@ describe('achievementSlice', () => {
 	describe('updateAchievementProgress', () => {
 		it('sets progress for a new achievement id', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 50);
-			expect(useMetaStore.getState().progress.achievements.progress['cp_100']).toBe(50);
+			expect(
+				useMetaStore.getState().progress.achievements.progress['cp_100'],
+			).toBe(50);
 		});
 
 		it('does not decrease existing progress (Math.max)', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 80);
 			useMetaStore.getState().updateAchievementProgress('cp_100', 30);
-			expect(useMetaStore.getState().progress.achievements.progress['cp_100']).toBe(80);
+			expect(
+				useMetaStore.getState().progress.achievements.progress['cp_100'],
+			).toBe(80);
 		});
 
 		it('replaces lower value with higher value', () => {
 			useMetaStore.getState().updateAchievementProgress('cp_100', 50);
 			useMetaStore.getState().updateAchievementProgress('cp_100', 100);
-			expect(useMetaStore.getState().progress.achievements.progress['cp_100']).toBe(100);
+			expect(
+				useMetaStore.getState().progress.achievements.progress['cp_100'],
+			).toBe(100);
 		});
 	});
 
@@ -50,11 +56,14 @@ describe('achievementSlice', () => {
 			expect(result).toBe('already_claimed');
 		});
 
-		it('diamond amount matches ACHIEVEMENT_MAP definition (cp_100 = 50)', () => {
+		it('diamond amount matches ACHIEVEMENT_MAP definition', () => {
+			const expected = ACHIEVEMENT_MAP['cp_100'].reward.diamond;
 			const beforeDiamond = useMetaStore.getState().profile.diamond;
 			useMetaStore.getState().updateAchievementProgress('cp_100', 100);
 			useMetaStore.getState().claimAchievement('cp_100');
-			expect(useMetaStore.getState().profile.diamond).toBe(beforeDiamond + 50);
+			expect(useMetaStore.getState().profile.diamond).toBe(
+				beforeDiamond + expected,
+			);
 		});
 	});
 

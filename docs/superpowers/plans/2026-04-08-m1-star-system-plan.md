@@ -19,7 +19,7 @@
 |------|------|
 | `packages/shared/src/constants/starDifficulty.ts` | ★ 배수, 클리어 조건, 보상 배수 상수 |
 | `packages/shared/src/utils/combatPower.ts` | 전투력 계산 순수 함수 |
-| `packages/shared/src/constants/achievements.ts` | 업적 정의 (~60개 v1) |
+| `packages/shared/src/constants/achievements.ts` | 업적 정의 (24개 v1) |
 | `packages/web-shell/src/stores/meta/achievementSlice.ts` | 업적 진행/달성/보상 슬라이스 |
 | `packages/web-shell/src/pages/AchievementPage.tsx` | 업적 목록 UI |
 | `packages/web-shell/src/components/ui/AchievementToast.tsx` | 업적 달성 토스트 |
@@ -1026,7 +1026,7 @@ git commit -m "feat: achievement page UI with category tabs and claim flow"
 | 클리어 조건 | 생존 | HP 50%+ | HP 80%+ |
 | 골드 보상 | 1× | 2.5× | 5× |
 | XP 보상 | 1× | 2× | 3× |
-| 각성석 드롭 | 0 | 1-2 | 3-5 |
+| 각성석 드롭 | 0 | 1 | 3 |
 | 퍼펙트(HP 100%) 보너스 | — | — | 각성석 +2 |
 
 ### ★ 해금 조건

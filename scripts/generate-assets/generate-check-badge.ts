@@ -1,4 +1,4 @@
-import { makeCanvas, saveCanvas, PALETTE, setPixel, drawRect, fillCircle, type ManifestEntry } from './shared';
+import { makeCanvas, saveCanvas, PALETTE, setPixel, drawRect, type ManifestEntry } from './shared';
 import { mkdirSync } from 'fs';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/ui';
@@ -16,9 +16,9 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   // Shield shape (gold) — pointed bottom, flat top
   const shieldColor = PALETTE.gold;          // #f0d060
-  const shieldDark = '#c0a030';              // darker gold for border
-  const shieldHighlight = '#ffe89a';         // bright gold highlight
-  const checkColor = '#1a1a0a';              // near-black for checkmark
+  const shieldDark = PALETTE.tierGodDark;     // #c0a030
+  const shieldHighlight = PALETTE.tierGodBright; // #ffe89a
+  const checkColor = PALETTE.shadow;         // #2a1f0a
   const shadowColor = PALETTE.shadow;        // #2a1f0a
 
   // Draw shield body (rows 2-17, centered)

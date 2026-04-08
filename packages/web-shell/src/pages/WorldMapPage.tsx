@@ -245,7 +245,7 @@ export function WorldMapPage() {
 												{/* Clear badge */}
 												{cleared && !locked && (
 													<img
-														src="/assets/ui/check-badge.png"
+														src="assets/ui/check-badge.png"
 														alt="클리어"
 														className="absolute top-1 right-1 w-5 h-5 drop-shadow-[1px_1px_0px_#0a0804] [image-rendering:pixelated]"
 													/>

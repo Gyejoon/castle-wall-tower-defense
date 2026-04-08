@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v3
+// Migration tests for metaStore v1→v4
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
 import {

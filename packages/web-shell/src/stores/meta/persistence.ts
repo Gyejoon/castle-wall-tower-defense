@@ -69,7 +69,7 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			selectedDeck: selectedDeck.map(renameId),
 			collection: collection.map((t) => ({
 				...t,
-				defId: renameId(t.defId as string),
+				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
 			})),
 		};
 	},

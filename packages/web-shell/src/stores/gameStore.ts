@@ -9,6 +9,7 @@ import {
 	isMapUnlocked,
 	MAP_REGISTRY,
 	type PlacementFailureReason,
+	type StarRating,
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
@@ -79,6 +80,7 @@ interface GameStoreState {
 	tutorialStep: number | null;
 	tutorialMessage: string | null;
 	gameSpeed: 1 | 2;
+	selectedStar: StarRating;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -112,6 +114,7 @@ interface GameStoreState {
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
 	setGameSpeed: (speed: 1 | 2) => void;
+	setSelectedStar: (star: StarRating) => void;
 	enterStageSelect: () => void;
 	enterStageDetail: (mapId: string) => void;
 }
@@ -150,6 +153,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
 	selectedMapId: 'forest_gate',
+	selectedStar: 1 as StarRating,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -216,6 +220,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
 			lobbyTab: 'home',
+			selectedStar: 1 as StarRating,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -254,6 +259,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		set({ gameSpeed: speed });
 		EventBus.emit('request-set-speed', { multiplier: speed });
 	},
+	setSelectedStar: (star) => set({ selectedStar: star }),
 	enterStageSelect: () => set({ runStatus: 'stageSelect', lobbyTab: 'home' }),
 	enterStageDetail: (mapId: string) =>
 		set({ runStatus: 'stageDetail', selectedMapId: mapId }),

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildDeckCardsSafe, DEFAULT_DECK } from '../src';
 import { buildDeckCards, towerToRole } from '../src/constants/deck';
 import { ALL_TOWERS } from '../src/constants/towers';
 
@@ -62,5 +63,29 @@ describe('buildDeckCards', () => {
 		expect(() =>
 			buildDeckCards(['nonexistent', 'archer', 'plasma', 'emp']),
 		).toThrow();
+	});
+});
+
+describe('buildDeckCardsSafe', () => {
+	it('returns valid cards for all-known ids', () => {
+		const cards = buildDeckCardsSafe(['archer', 'plasma', 'emp', 'shield']);
+		expect(cards).toHaveLength(4);
+		expect(cards[0].towerDefId).toBe('archer');
+	});
+
+	it('filters out unknown tower ids without throwing', () => {
+		const cards = buildDeckCardsSafe(['archer', 'not_a_tower', 'plasma']);
+		expect(cards).toHaveLength(2);
+		expect(cards.map((c) => c.towerDefId)).toEqual(['archer', 'plasma']);
+	});
+
+	it('falls back to DEFAULT_DECK when input is empty', () => {
+		const cards = buildDeckCardsSafe([]);
+		expect(cards).toEqual(DEFAULT_DECK);
+	});
+
+	it('falls back to DEFAULT_DECK when all ids are unknown', () => {
+		const cards = buildDeckCardsSafe(['x', 'y']);
+		expect(cards).toEqual(DEFAULT_DECK);
 	});
 });

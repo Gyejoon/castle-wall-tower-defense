@@ -96,6 +96,27 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().toast).toBeNull();
 	});
 
+	it('setRunStatus clears stale toast on transition (#95)', () => {
+		useGameStore.getState().setRunStatus('building');
+		useGameStore.getState().pushToast('+10 에너지', 'success');
+		expect(useGameStore.getState().toast).not.toBeNull();
+
+		// Transition to a different runStatus → stale toast cleared
+		useGameStore.getState().setRunStatus('victory');
+		expect(useGameStore.getState().toast).toBeNull();
+		expect(useGameStore.getState().runStatus).toBe('victory');
+	});
+
+	it('setRunStatus keeps toast when status does not actually change', () => {
+		useGameStore.getState().setRunStatus('building');
+		useGameStore.getState().pushToast('+5 에너지', 'success');
+		const toastBefore = useGameStore.getState().toast;
+
+		// Same status → no-op, toast preserved
+		useGameStore.getState().setRunStatus('building');
+		expect(useGameStore.getState().toast).toBe(toastBefore);
+	});
+
 	it('initializes deck cards from DEFAULT_DECK and tracks selection', () => {
 		const { deckCards, selectedCardIndex } = useGameStore.getState();
 		expect(deckCards).toHaveLength(4);

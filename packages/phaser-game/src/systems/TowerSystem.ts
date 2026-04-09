@@ -364,12 +364,19 @@ export class TowerSystem {
 								def.element,
 								unit.element,
 							);
+							// slow는 tower 사거리 내 splash unit에만 적용 (#98)
+							let splashSlow: typeof slowEffect;
+							if (slowEffect) {
+								const tdx = data.position.x - sUnitGrid.x;
+								const tdy = data.position.y - sUnitGrid.y;
+								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
+							}
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: Math.round(
 									tower.effectiveDamage * splashElementMult * 0.5,
 								),
-								slow: slowEffect,
+								slow: splashSlow,
 							});
 						}
 					}

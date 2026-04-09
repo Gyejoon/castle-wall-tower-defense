@@ -230,6 +230,11 @@ body {
   50% { opacity: 0.5; transform: scale(1.05); }
 }
 
+/* Claimable badge pulse (missions/achievements 수령 가능 뱃지) */
+.claimable-badge {
+  animation: warningPulse 1.6s ease-in-out infinite;
+}
+
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
@@ -271,6 +276,7 @@ body {
   .matchmaking-swords::before, .matchmaking-swords::after,
   .matchmaking-dots::after,
   .hud-flash,
+  .claimable-badge,
   [class*="gachaPulse"] {
     animation: none;
   }

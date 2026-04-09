@@ -201,6 +201,29 @@ describe('TowerSystem combat', () => {
 		expect(stunEvt?.stun?.duration).toBe(1000); // CC_AURA_CONFIGS.stun_aoe = 1000ms
 	});
 
+	it('active stun tower (fortress) duration scales with level (LV.50 → 1.4x)', () => {
+		const { towerSystem, gridManager } = createTowerSystem([
+			makeOwned('fortress', 50),
+		]);
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'fortress');
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+
+		const events = towerSystem.update(1000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		// Active path: base stun_aoe durationMs=1000 * stunDurationMultiplier(50)=1.4 → 1400
+		const stunEvt = events.find((e) => e.stun);
+		expect(stunEvt).toBeDefined();
+		expect(stunEvt?.stun?.duration).toBe(1400);
+	});
+
 	it('passive stun aura (shield) returns stun event on cooldown', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
 		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'shield');

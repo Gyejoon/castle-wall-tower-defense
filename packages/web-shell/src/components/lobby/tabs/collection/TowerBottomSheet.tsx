@@ -182,32 +182,30 @@ export function TowerBottomSheet({
 				)}
 			</div>
 
-			{def.stats.special && (
-				<div className="flex flex-col gap-1">
-					<p className="font-pixel text-[11px] leading-[1.6] text-accent">
-						특수: {translateSpecial(def.stats.special)}
-					</p>
-					{(() => {
-						if (!def.stats.special) return null;
-						const configKey = def.stats.special.replace(/%/g, '');
-						const cfg = CC_AURA_CONFIGS[configKey];
-						if (!cfg) return null;
-						const effectLabel = def.stats.special.startsWith('stun')
-							? '스턴'
-							: '슬로우';
-						const aoeLabel = cfg.aoe ? '광역' : '단일';
-						return (
-							<p
-								className="font-pixel text-[10px] leading-[1.4]"
-								style={{ color: colors.textSecondary }}
-							>
-								{effectLabel} {(cfg.durationMs / 1000).toFixed(1)}s / 쿨{' '}
-								{(cfg.cooldownMs / 1000).toFixed(1)}s / {aoeLabel}
+			{def.stats.special &&
+				(() => {
+					const special = def.stats.special;
+					const configKey = special.replace(/%/g, '');
+					const cfg = CC_AURA_CONFIGS[configKey];
+					return (
+						<div className="flex flex-col gap-1">
+							<p className="font-pixel text-[11px] leading-[1.6] text-accent">
+								특수: {translateSpecial(special)}
 							</p>
-						);
-					})()}
-				</div>
-			)}
+							{cfg && (
+								<p
+									className="font-pixel text-[10px] leading-[1.4]"
+									style={{ color: colors.textSecondary }}
+								>
+									{special.startsWith('stun') ? '스턴' : '슬로우'}{' '}
+									{(cfg.durationMs / 1000).toFixed(1)}s / 쿨{' '}
+									{(cfg.cooldownMs / 1000).toFixed(1)}s /{' '}
+									{cfg.aoe ? '광역' : '단일'}
+								</p>
+							)}
+						</div>
+					);
+				})()}
 
 			{/* Enhancement section */}
 			{owned && (

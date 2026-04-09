@@ -260,6 +260,111 @@ body {
   }
 }
 
+/* === WorldMap animations ===
+   모든 애니메이션은 transform/opacity/filter만 사용 (60fps 보장).
+   layout 속성(width/height/top/left) 변경 금지. */
+
+/* SVG 경로 점선 흐름 — strokeDasharray="3 12"과 맞춰 cycle=15 */
+@keyframes wm-dash-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -30; }
+}
+.wm-dash-flow {
+  animation: wm-dash-flow 1.8s linear infinite;
+}
+
+/* 권장 월드 펄스 링 — 바깥으로 번짐 */
+@keyframes wm-idle-pulse {
+  0%   { transform: scale(0.9); opacity: 0.9; }
+  70%  { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.wm-pulse-ring {
+  animation: wm-idle-pulse 2.2s ease-out infinite;
+}
+.wm-pulse-ring-delay {
+  animation: wm-idle-pulse 2.2s ease-out infinite;
+  animation-delay: 1.1s;
+}
+
+/* 캐릭터 idle — transform 기반 bob (layout 속성 금지) */
+@keyframes wm-char-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.wm-character-bob {
+  animation: wm-char-bob 1.2s ease-in-out infinite;
+}
+
+/* 캐릭터 노드 간 이동 — transform 기반 (layout 속성 금지) */
+.wm-character-anchor {
+  transition: transform 1500ms ease-in-out;
+}
+
+/* 파티클 상승 (forest 잎, plague 안개) */
+@keyframes wm-particle-rise {
+  0%   { transform: translate(0, 0) scale(0.8); opacity: 0; }
+  20%  { opacity: 0.8; }
+  100% { transform: translate(var(--wm-drift, 0), -36px) scale(1); opacity: 0; }
+}
+.wm-particle {
+  animation: wm-particle-rise 2.8s ease-out infinite;
+}
+
+/* 연기 뭉게 (lava smoke blob) — scale + opacity pulse */
+@keyframes wm-smoke-float {
+  0%   { transform: translate(0, 0) scale(0.7); opacity: 0; }
+  30%  { opacity: 0.55; }
+  100% { transform: translate(var(--wm-drift, 0), -28px) scale(1.4); opacity: 0; }
+}
+.wm-smoke {
+  animation: wm-smoke-float 3.2s ease-out infinite;
+}
+
+/* 스톰 전기 깜빡임 — 불규칙 opacity step */
+@keyframes wm-electric {
+  0%, 18%, 24%, 100% { opacity: 0; }
+  20%, 22%            { opacity: 0.9; }
+  60%, 64%            { opacity: 0.6; }
+}
+.wm-electric {
+  animation: wm-electric 2.4s steps(1, end) infinite;
+}
+
+/* 실루엣 월드 반짝임 — 희망감 */
+@keyframes wm-silhouette {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.55; }
+}
+.wm-silhouette {
+  animation: wm-silhouette 4s ease-in-out infinite;
+}
+
+/* 슬라이드오버 패널 — 하단에서 올라옴 */
+@keyframes wm-panel-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.wm-panel-slide-up {
+  animation: wm-panel-slide-up 220ms ease-out;
+}
+@keyframes wm-panel-slide-down {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(100%); opacity: 0; }
+}
+.wm-panel-slide-down {
+  animation: wm-panel-slide-down 180ms ease-in forwards;
+}
+
+/* Backdrop fade */
+@keyframes wm-backdrop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.wm-backdrop-fade-in {
+  animation: wm-backdrop-fade-in 200ms ease-out;
+}
+
 /* Responsive: small screens (320px) */
 @media (max-width: 359px) {
   .profile-currency {
@@ -277,8 +382,27 @@ body {
   .matchmaking-dots::after,
   .hud-flash,
   .claimable-badge,
+  .wm-dash-flow,
+  .wm-pulse-ring,
+  .wm-pulse-ring-delay,
+  .wm-character-bob,
+  .wm-particle,
+  .wm-smoke,
+  .wm-electric,
+  .wm-silhouette,
   [class*="gachaPulse"] {
     animation: none;
+  }
+  .wm-character-anchor {
+    transition: none;
+  }
+  @keyframes wm-panel-slide-up {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes wm-panel-slide-down {
+    from { opacity: 0; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(0); }
   }
   @keyframes fadeIn {
     from { opacity: 1; }

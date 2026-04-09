@@ -1,40 +1,28 @@
-import { isMapUnlocked, MAP_REGISTRY } from '@gld/shared';
-import { useEffect, useRef, useState } from 'react';
+import { MAP_REGISTRY, UI_COLORS } from '@gld/shared';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import { cn } from '../utils/cn';
-
-const MAP_THEMES: Record<string, { borderColor: string; landmark: string }> = {
-	forest_gate: {
-		borderColor: '#4a8a2a',
-		landmark: 'assets/ui/landmark-forest_gate.webp',
-	},
-	lava_fortress: {
-		borderColor: '#c04020',
-		landmark: 'assets/ui/landmark-lava_fortress.webp',
-	},
-	storm_citadel: {
-		borderColor: '#5a6aaa',
-		landmark: 'assets/ui/landmark-storm_citadel.webp',
-	},
-};
-
-const MAP_CONTENT_WIDTH = 430;
-const MAP_CONTENT_HEIGHT = 640;
-
-const NODE_POSITIONS: Record<string, { top: number; left: number }> = {
-	forest_gate: { top: 480, left: 250 },
-	lava_fortress: { top: 120, left: 200 },
-	storm_citadel: { top: 300, left: 310 },
-};
-
-const PATH_CONNECTIONS = [
-	{ from: 'forest_gate', to: 'lava_fortress' },
-	{ from: 'lava_fortress', to: 'storm_citadel' },
-];
+import { AmbientFx } from './worldmap/AmbientFx';
+import { MapCharacter } from './worldmap/MapCharacter';
+import {
+	MAP_CONTENT_HEIGHT,
+	MAP_CONTENT_WIDTH,
+	WORLD_LAYOUT,
+	WORLD_PATH_CONNECTIONS,
+	type WorldSlot,
+} from './worldmap/WorldLayout';
+import { WorldStagePanel } from './worldmap/WorldStagePanel';
+import {
+	getRecommendedStageId,
+	getStageStars,
+	isWorldUnlocked,
+	type UnlockContext,
+} from './worldmap/worldLogic';
 
 export function WorldMapPage() {
 	const [lockImgError, setLockImgError] = useState(false);
+	const [activeWorldIdx, setActiveWorldIdx] = useState<number | null>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
@@ -42,32 +30,49 @@ export function WorldMapPage() {
 	const stagesCleared = useMetaStore((s) => s.progress.stagesCleared);
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 
-	const maps = Object.values(MAP_REGISTRY);
+	const ctx: UnlockContext = useMemo(
+		() => ({ playerLevel, stagesCleared, stageStars }),
+		[playerLevel, stagesCleared, stageStars],
+	);
 
-	// 권장 스테이지: 첫 번째 미클리어 해금 스테이지, 없으면 마지막 해금 스테이지
-	const recommendedMapId = (() => {
-		const unclearedUnlocked = maps.find(
-			(m) => isMapUnlocked(m, playerLevel) && !stagesCleared.includes(m.id),
+	const recommendedStageId = useMemo(
+		() => getRecommendedStageId(WORLD_LAYOUT, ctx),
+		[ctx],
+	);
+
+	const recommendedWorldIdx = useMemo(() => {
+		if (!recommendedStageId) return -1;
+		return WORLD_LAYOUT.findIndex((w) =>
+			w.stageIds.includes(recommendedStageId),
 		);
-		if (unclearedUnlocked) return unclearedUnlocked.id;
-		const unlocked = maps.filter((m) => isMapUnlocked(m, playerLevel));
-		return unlocked[unlocked.length - 1]?.id;
-	})();
+	}, [recommendedStageId]);
 
-	// 마운트 시 권장 스테이지 위치로 스크롤
+	const recommendedWorld =
+		recommendedWorldIdx >= 0 ? WORLD_LAYOUT[recommendedWorldIdx] : undefined;
+
+	// 마운트 시 권장 월드 위치로 스크롤
 	useEffect(() => {
 		const container = scrollRef.current;
-		const pos = recommendedMapId ? NODE_POSITIONS[recommendedMapId] : null;
-		if (!container || !pos) return;
-		const scrollTarget = pos.top - container.clientHeight / 2;
+		if (!container || !recommendedWorld) return;
+		const scrollTarget =
+			recommendedWorld.position.top - container.clientHeight / 2;
 		container.scrollTo({ top: Math.max(0, scrollTarget) });
-	}, [recommendedMapId]);
+	}, [recommendedWorld]);
+
+	const activeWorld =
+		activeWorldIdx !== null ? WORLD_LAYOUT[activeWorldIdx] : null;
+
+	const handleWorldClick = (idx: number, world: WorldSlot) => {
+		if (world.placeholder) return;
+		if (!isWorldUnlocked(world, ctx)) return;
+		setActiveWorldIdx(idx);
+	};
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
 				{/* Header */}
-				<div className="relative flex items-center justify-center px-3 py-4 bg-panel border-b-2 border-border z-10">
+				<div className="relative flex items-center justify-center px-3 py-4 bg-panel border-b-2 border-border z-20">
 					<button
 						type="button"
 						className="absolute left-3 font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
@@ -87,16 +92,24 @@ export function WorldMapPage() {
 					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-base text-gold">
 						스테이지 선택
 					</span>
-					<span className="absolute right-3 font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
-						Lv.{playerLevel}
-					</span>
+					{/* 우측 정렬: Lv 뱃지 + 전투력 slot(#109 drop-in) */}
+					<div className="absolute right-3 flex items-center gap-2">
+						<span className="font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
+							Lv.{playerLevel}
+						</span>
+						{/* 전투력 뱃지 공간 — #109 drop-in */}
+						<div
+							aria-hidden
+							className="h-5 w-12 border border-dashed border-border/30"
+						/>
+					</div>
 				</div>
 
-				{/* Map area — scrollable on small screens */}
+				{/* Map area */}
 				<div className="relative flex-1 min-h-0">
 					<div
 						ref={scrollRef}
-						className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center justify-center"
+						className="h-full overflow-x-hidden overflow-y-auto bg-[#1a1208] flex flex-col items-center"
 					>
 						<div
 							className="relative mx-auto"
@@ -105,128 +118,207 @@ export function WorldMapPage() {
 								height: `${MAP_CONTENT_HEIGHT}px`,
 							}}
 						>
-							{/* World map background */}
+							{/* Background */}
 							<img
 								src="assets/ui/worldmap-bg.webp"
 								alt=""
 								className="absolute inset-0 w-full h-full object-cover [image-rendering:pixelated]"
 								style={{ objectPosition: '40% center' }}
 							/>
+							{/* Vertical masking — 배경 512×768과 컨테이너 430×800 갭을 자연스럽게 가림 */}
 							<div
 								className="absolute inset-0 pointer-events-none"
-								style={{ boxShadow: 'inset 0 0 60px 20px rgba(10,8,4,0.7)' }}
+								style={{
+									boxShadow: 'inset 0 0 80px 24px rgba(10,8,4,0.8)',
+								}}
 							/>
 
-							{/* Path connections (SVG) */}
+							{/* 월드별 컬러 와시 — themeToken 토큰 기반 radial glow */}
+							{WORLD_LAYOUT.map((world, i) => {
+								const color = UI_COLORS[world.themeToken];
+								const dim = world.placeholder || !isWorldUnlocked(world, ctx);
+								return (
+									<div
+										key={`wash-${i}`}
+										aria-hidden
+										className="absolute pointer-events-none"
+										style={{
+											top: `${world.position.top - 120}px`,
+											left: `${world.position.left - 120}px`,
+											width: '240px',
+											height: '240px',
+											background: `radial-gradient(circle, ${color}${dim ? '14' : '33'} 0%, transparent 65%)`,
+											mixBlendMode: 'screen',
+										}}
+									/>
+								);
+							})}
+
+							{/* SVG 경로 (dash flow) */}
 							<svg
-								className="absolute inset-0 w-full h-full z-0"
+								className="absolute inset-0 w-full h-full z-[1]"
 								viewBox={`0 0 ${MAP_CONTENT_WIDTH} ${MAP_CONTENT_HEIGHT}`}
 								preserveAspectRatio="none"
 								role="img"
-								aria-label="스테이지 연결 경로"
+								aria-label="월드 연결 경로"
 							>
-								{PATH_CONNECTIONS.map(({ from, to }) => {
-									const a = NODE_POSITIONS[from];
-									const b = NODE_POSITIONS[to];
+								{WORLD_PATH_CONNECTIONS.map(({ fromIdx, toIdx }, i) => {
+									const a = WORLD_LAYOUT[fromIdx];
+									const b = WORLD_LAYOUT[toIdx];
 									if (!a || !b) return null;
+									const dimmed = b.placeholder || !isWorldUnlocked(b, ctx);
 									return (
-										<g key={`${from}-${to}`}>
+										<g key={`path-${i}`}>
 											{/* Glow */}
 											<line
-												x1={a.left}
-												y1={a.top}
-												x2={b.left}
-												y2={b.top}
-												stroke="#f0d060"
+												x1={a.position.left}
+												y1={a.position.top}
+												x2={b.position.left}
+												y2={b.position.top}
+												stroke={UI_COLORS.gold}
 												strokeWidth="8"
-												strokeDasharray="4 12"
-												opacity="0.1"
+												strokeDasharray="3 12"
+												opacity={dimmed ? 0.05 : 0.12}
 											/>
 											{/* Shadow */}
 											<line
-												x1={a.left}
-												y1={a.top}
-												x2={b.left}
-												y2={b.top}
+												x1={a.position.left}
+												y1={a.position.top}
+												x2={b.position.left}
+												y2={b.position.top}
 												stroke="#0a0804"
 												strokeWidth="4"
-												strokeDasharray="4 12"
+												strokeDasharray="3 12"
 												opacity="0.5"
 												transform="translate(1,1)"
 											/>
-											{/* Main path — dot style */}
+											{/* Main dashed line — 흘러가는 dash */}
 											<line
-												x1={a.left}
-												y1={a.top}
-												x2={b.left}
-												y2={b.top}
-												stroke="#c8a04a"
+												x1={a.position.left}
+												y1={a.position.top}
+												x2={b.position.left}
+												y2={b.position.top}
+												stroke={dimmed ? UI_COLORS.border : UI_COLORS.accent}
 												strokeWidth="3"
 												strokeDasharray="3 12"
 												strokeLinecap="round"
-												opacity="0.45"
+												opacity={dimmed ? 0.35 : 0.7}
+												className={dimmed ? undefined : 'wm-dash-flow'}
 											/>
 										</g>
 									);
 								})}
 							</svg>
 
-							{/* Map nodes */}
-							{maps.map((map) => {
-								const pos = NODE_POSITIONS[map.id];
-								if (!pos) return null;
-								const locked = !isMapUnlocked(map, playerLevel);
-								const theme = MAP_THEMES[map.id];
+							{/* World nodes */}
+							{WORLD_LAYOUT.map((world, idx) => {
+								const unlocked = isWorldUnlocked(world, ctx);
+								const isPlaceholder = !!world.placeholder;
+								const isRecommended = idx === recommendedWorldIdx;
+								const themeColor = UI_COLORS[world.themeToken];
+
+								// 최대 rewardMultiplier 조회
+								const firstStage = world.stageIds[0];
+								const firstMap = firstStage
+									? MAP_REGISTRY[firstStage]
+									: undefined;
+								const rewardMult = firstMap?.rewardMultiplier ?? 1;
+								const unlockLevel = firstMap?.unlockLevel;
+
+								// ★ 진행 (첫 스테이지 기준)
+								const stars = firstStage ? getStageStars(firstStage, ctx) : 0;
 
 								return (
-									<button
-										key={map.id}
-										type="button"
-										disabled={locked}
-										className={cn(
-											'absolute z-10 -translate-x-1/2 -translate-y-1/2 transition-all duration-200',
-											locked
-												? 'opacity-45 grayscale cursor-not-allowed'
-												: 'cursor-pointer hover:scale-[1.06] hover:-translate-y-[calc(50%+3px)] active:scale-95',
-										)}
-										style={{ top: `${pos.top}px`, left: `${pos.left}px` }}
-										onClick={() => {
-											if (locked) return;
-											enterStageDetail(map.id);
+									<div
+										key={world.worldId}
+										className="absolute z-[10] -translate-x-1/2 -translate-y-1/2"
+										style={{
+											top: `${world.position.top}px`,
+											left: `${world.position.left}px`,
 										}}
 									>
-										{/* Landmark */}
-										<div className="relative">
-											{/* Landmark icon */}
-											<div
-												className="relative w-[96px] h-[96px] transition-[filter] duration-200"
-												style={
-													!locked
-														? {
-																filter: `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`,
-															}
-														: undefined
-												}
-												onMouseEnter={(e) => {
-													if (!locked)
-														e.currentTarget.style.filter = `drop-shadow(0 0 8px ${theme?.borderColor})`;
-												}}
-												onMouseLeave={(e) => {
-													if (!locked)
-														e.currentTarget.style.filter = `drop-shadow(0 0 0px ${theme?.borderColor ?? 'transparent'})`;
-												}}
-											>
+										{/* 기단 (돌받침) — 랜드마크 아래 픽셀 타원 */}
+										<div
+											aria-hidden
+											className="absolute left-1/2 -translate-x-1/2"
+											style={{
+												top: '78px',
+												width: '64px',
+												height: '14px',
+												backgroundColor: 'rgba(10,8,4,0.45)',
+												borderRadius: '50%',
+												filter: 'blur(1px)',
+											}}
+										/>
+
+										{/* 권장 월드 펄스 링 */}
+										{isRecommended && unlocked && (
+											<>
+												<div
+													aria-hidden
+													className="wm-pulse-ring absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+													style={{
+														width: '108px',
+														height: '108px',
+														borderRadius: '50%',
+														border: `2px solid ${themeColor}`,
+														boxShadow: `0 0 12px ${themeColor}`,
+													}}
+												/>
+												<div
+													aria-hidden
+													className="wm-pulse-ring-delay absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+													style={{
+														width: '108px',
+														height: '108px',
+														borderRadius: '50%',
+														border: `2px solid ${themeColor}`,
+														boxShadow: `0 0 12px ${themeColor}`,
+													}}
+												/>
+											</>
+										)}
+
+										<button
+											type="button"
+											disabled={!unlocked}
+											onClick={() => handleWorldClick(idx, world)}
+											className={cn(
+												'relative block transition-all duration-200',
+												unlocked
+													? 'cursor-pointer hover:scale-[1.06] active:scale-95'
+													: 'cursor-not-allowed',
+											)}
+										>
+											<div className="relative w-[96px] h-[96px]">
+												{/* 랜드마크 이미지 */}
 												<img
-													src={theme?.landmark}
-													alt={map.name}
+													src={world.landmarkAsset}
+													alt={world.displayName}
 													className={cn(
 														'w-full h-full [image-rendering:pixelated]',
-														locked && 'brightness-[0.35]',
+														isPlaceholder &&
+															'wm-silhouette brightness-[0.3] grayscale blur-[2px]',
+														!isPlaceholder &&
+															!unlocked &&
+															'brightness-[0.35] grayscale',
 													)}
+													style={
+														!isPlaceholder && unlocked
+															? {
+																	filter: `drop-shadow(0 0 6px ${themeColor}80)`,
+																}
+															: undefined
+													}
 												/>
 
+												{/* Ambient FX — 활성 월드만 */}
+												{!isPlaceholder && unlocked && (
+													<AmbientFx kind={world.ambientFxKind} size={96} />
+												)}
+
 												{/* Lock icon */}
-												{locked && (
+												{!unlocked && !isPlaceholder && (
 													<div className="absolute inset-0 flex items-center justify-center">
 														{lockImgError ? (
 															<span className="font-pixel text-[20px] text-text-secondary/70 select-none">
@@ -238,23 +330,30 @@ export function WorldMapPage() {
 																alt="잠김"
 																width={24}
 																height={24}
-																className="[image-rendering:pixelated] opacity-70 select-none"
+																className="[image-rendering:pixelated] opacity-75 select-none"
 																onError={() => setLockImgError(true)}
 															/>
 														)}
 													</div>
 												)}
 
-												{/* Star progress */}
-												{!locked && (
-													<div className="absolute top-1 right-1 flex gap-[1px]">
+												{/* Placeholder ??? */}
+												{isPlaceholder && (
+													<div className="absolute inset-0 flex items-center justify-center">
+														<span className="font-pixel text-[22px] text-text-secondary/60 select-none drop-shadow-[1px_1px_0_#0a0804]">
+															?
+														</span>
+													</div>
+												)}
+
+												{/* ★ progress — 활성 월드만 */}
+												{!isPlaceholder && unlocked && (
+													<div className="absolute top-1 left-1 flex gap-[1px]">
 														{([1, 2, 3] as const).map((s) => (
 															<img
 																key={s}
 																src={
-																	s <=
-																	(stageStars[map.id] ??
-																		(stagesCleared.includes(map.id) ? 1 : 0))
+																	s <= stars
 																		? 'assets/ui/icon-star-active.png'
 																		: 'assets/ui/icon-star-inactive.png'
 																}
@@ -268,48 +367,98 @@ export function WorldMapPage() {
 												)}
 											</div>
 
-											{/* Label */}
+											{/* 라벨 리본 — 지명표 */}
 											<div
-												className="mt-1 flex flex-col items-center gap-0.5 px-2 py-1 bg-panel/85 backdrop-blur-sm border"
+												className="mt-1 flex flex-col items-center gap-0.5 px-2 py-1 bg-panel/90 backdrop-blur-sm border relative"
 												style={{
-													borderColor: locked ? '#4a3a20' : theme?.borderColor,
+													borderColor: isPlaceholder
+														? UI_COLORS.border
+														: unlocked
+															? themeColor
+															: UI_COLORS.border,
 												}}
 											>
+												{/* 보상 배율 배지 — 리본 우상단 */}
+												{rewardMult > 1 && unlocked && !isPlaceholder && (
+													<div
+														className="absolute -top-2 -right-1 px-1 leading-none"
+														style={{
+															backgroundColor: UI_COLORS.panel,
+															border: `1px solid ${UI_COLORS.gold}`,
+														}}
+													>
+														<span
+															className="font-pixel text-[8px]"
+															style={{ color: UI_COLORS.gold }}
+														>
+															×{rewardMult}
+														</span>
+													</div>
+												)}
+
 												<span
 													className={cn(
-														'font-pixel text-[8px] text-center leading-tight',
-														locked ? 'text-text-secondary' : 'text-text',
+														'font-pixel text-[10px] text-center leading-tight',
+														isPlaceholder
+															? 'text-text-secondary/50'
+															: unlocked
+																? 'text-gold'
+																: 'text-text-secondary',
 													)}
 												>
-													{map.name}
+													{isPlaceholder ? '???' : world.displayName}
 												</span>
 
 												<span
 													className={cn(
-														'font-pixel text-[6px]',
-														locked ? 'text-danger' : 'text-accent',
+														'font-pixel text-[7px]',
+														isPlaceholder
+															? 'text-text-secondary/40'
+															: unlocked
+																? 'text-text-secondary'
+																: 'text-danger',
 													)}
 												>
-													{locked
-														? `Lv.${map.unlockLevel} 해금`
-														: `Lv.${map.unlockLevel ?? 1}`}
+													{isPlaceholder
+														? 'Coming Soon'
+														: unlocked
+															? `W${idx + 1}`
+															: unlockLevel !== undefined
+																? `Lv.${unlockLevel} 해금`
+																: 'Locked'}
 												</span>
 											</div>
-										</div>
-									</button>
+										</button>
+									</div>
 								);
 							})}
 
-							{/* Bottom hint */}
-							<div className="absolute bottom-4 left-0 right-0 text-center">
-								<span className="font-pixel text-[7px] text-text-secondary/50">
-									스테이지를 선택하세요
-								</span>
-							</div>
+							{/* 캐릭터 아바타 — 권장 월드 위치 */}
+							{recommendedWorld && (
+								<MapCharacter
+									top={recommendedWorld.position.top}
+									left={recommendedWorld.position.left}
+								/>
+							)}
 						</div>
 					</div>
-					{/* Scroll hint fade — viewport-fixed */}
-					<div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-bg to-transparent z-10" />
+
+					{/* 스크롤 힌트 페이드 */}
+					<div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-bg to-transparent z-[5]" />
+
+					{/* Slide-over 스테이지 패널 */}
+					{activeWorld && activeWorldIdx !== null && (
+						<WorldStagePanel
+							world={activeWorld}
+							worldIndex={activeWorldIdx}
+							ctx={ctx}
+							onClose={() => setActiveWorldIdx(null)}
+							onSelectStage={(stageId) => {
+								setActiveWorldIdx(null);
+								enterStageDetail(stageId);
+							}}
+						/>
+					)}
 				</div>
 			</div>
 		</div>

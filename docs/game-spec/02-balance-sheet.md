@@ -234,7 +234,47 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 - ★2: 해당 맵 ★1 클리어
 - ★3: 해당 맵 ★2 클리어
 
-## 10. 전투력 공식
+## 10. Terrain Modifiers
+
+맵 타일의 지형 타입별 게임성 차등. `packages/shared/src/constants/terrain.ts` 가 이 표를 코드로 구현한다. 밸런스 수정 시 이 표 → terrain.ts 순서로 갱신한다.
+
+| 지형 | 이동 배수 (TERRAIN_SPEED) | A* 비용 (TERRAIN_COST) | 배치 가능 | 특수 효과 |
+|---|---|---|---|---|
+| plain (평원) | 1.00x | 1.0 | ✓ | — |
+| road (길) | 1.10x | 0.9 | ✗ | 경로 전용 |
+| forest (숲) | 0.85x | 1.15 | ✓ | — |
+| bog (늪) | 0.70x | 1.4 | ✗ | 위 유닛은 스턴/슬로우 지속시간 -50% |
+| hill (언덕) | 1.00x | 1.0 | ✓ | 위 타워 사거리 +1 (타일) |
+| cursed (저주) | 1.00x | 1.0 | ✓ | 위 타워 최종 공격력 ×0.9 (storm_citadel 전용) |
+| water (물) | 통과 불가 (비행만) | ∞ | ✗ | — |
+| lava (용암) | 통과 불가 (비행만) | ∞ | ✗ | 비행 유닛이 위를 지날 때 5 DMG/sec DOT (lava_fortress 전용) |
+| mountain (산) | 통과 불가 | ∞ | ✗ | 벽 |
+
+### 최종 데미지 계산식 (cursed 땅 포함)
+
+```
+finalDamage = baseDamage
+            × elementMultiplier    // 속성 상성 0.7x / 1.0x / 1.3x (§속성 상성표)
+            × terrainAttackMult    // cursed=0.9, 그 외=1.0
+            × (1 - armorReduction) // 기존 armor/pierce 공식
+            × tierBonus            // LV 구간별 보정 (§타워 성장)
+```
+
+모든 배수는 **곱셈 누적**. cursed 위에서 공격하는 수 속성 타워가 화 속성 적을 때리면 `base × 1.3 × 0.9 × ...`.
+
+### CC 저항 누적 규칙
+
+bog 의 CC 저항(-50%) 은 ★ 등급의 CC 저항(★2 20%, ★3 40%)과 **곱셈 누적**:
+
+```
+finalCCDuration = baseDuration × (1 - terrainCCResist) × (1 - starCCResist)
+```
+
+예: ★3 난이도에서 bog 에 있는 유닛에 2초 스턴 → `2.0 × (1 - 0.5) × (1 - 0.4) = 0.6` 초.
+
+---
+
+## 11. 전투력 공식
 
 > 코드 위치: `packages/shared/src/utils/combatPower.ts`
 
@@ -263,7 +303,7 @@ basePower:
 | 10K-49,999 | gradeUnique #9060e0 + glow |
 | 50K+ | tierBright #ffe870 + pulse |
 
-## 11. 승급 레벨 리셋
+## 12. 승급 레벨 리셋
 
 승급 성공 시 타워 레벨이 1로 리셋된다.
 
@@ -275,7 +315,7 @@ basePower:
 
 ---
 
-## 12. 변경 이력
+## 13. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 | 이유 |
 |------|------|---------|------|
@@ -291,10 +331,11 @@ basePower:
 | 2026-04-08 | 물리 충돌 시스템 | 지상 유닛 겹침 방지, CC 연쇄, 비행 면제(titan) | 전술 깊이 증가, CC 타워 가치 상승 |
 | 2026-04-08 | 웨이브 테마 배치 | 3맵 10웨이브를 아키타입 테마로 재구성 (속도/탱크/혼합/보스) | 덱 다양성 요구, 전략적 변주 |
 | 2026-04-08 | 타워 판매 UI 개선 | "E+5" → 에너지 아이콘+숫자 (DeckDock/TopHud 패턴 통일) | 시각적 일관성 |
+| 2026-04-09 | Terrain Modifiers | 맵 지형 타입별 이동/배치/효과 표, 최종 데미지·CC 계산식 추가 | 이슈 #74/#77/#78 |
 
 ---
 
-## 13. 미결 이슈
+## 14. 미결 이슈
 
 - [ ] `missions.ts` — use_element 추가, 범위 조정 코드 반영
 - [ ] use_element 주간 속성 랜덤 지정 기능 (매주 화/수/번개 중 1개)

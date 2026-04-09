@@ -127,6 +127,11 @@ export {
 	WAVE_DEFS,
 	WAVE_SCALING,
 } from './constants/waves';
+export {
+	getWorldById,
+	WORLD_ORDER,
+	WORLDS,
+} from './constants/worlds';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';
@@ -142,6 +147,13 @@ export type {
 	TowerGrade,
 } from './types/save';
 export { SAVE_STORAGE_KEY, SAVE_VERSION, TOWER_GRADES } from './types/save';
+export type {
+	StageDef,
+	StageLockStatus,
+	WorldDef,
+	WorldId,
+	WorldUnlockRule,
+} from './types/stage';
 export type {
 	FusionTowerType,
 	PlacedTower,

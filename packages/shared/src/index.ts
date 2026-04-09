@@ -75,6 +75,8 @@ export {
 	getEffectiveStats,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 	xpToNextLevel,
 } from './constants/meta';
 export {

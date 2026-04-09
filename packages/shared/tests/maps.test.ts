@@ -58,21 +58,23 @@ describe('FOREST_GATE_MAP', () => {
 		expect(FOREST_GATE_MAP.height).toBe(18);
 	});
 
-	it('blocked placement에 spawn/exit과 코너 차단 타일이 포함되어야 한다', () => {
+	it('blocked placement에 모든 경로(road) 셀이 포함되어야 한다', () => {
+		// After migration to .tmj.json, blockedPlacementPoints are derived from
+		// terrain (road/water/mountain/bog cells), not from an explicit list.
+		// All path cells are road terrain, so they must all be blocked.
+		const blockedSet = new Set(
+			FOREST_GATE_MAP.blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+		);
+		for (const p of FOREST_GATE_MAP.path) {
+			expect(blockedSet.has(`${p.x},${p.y}`)).toBe(true);
+		}
+		// spawn and exit are path cells, so they are blocked
 		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
 			x: 3,
 			y: 0,
 		});
 		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
 			x: 4,
-			y: 17,
-		});
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
-			x: 0,
-			y: 0,
-		});
-		expect(FOREST_GATE_MAP.blockedPlacementPoints).toContainEqual({
-			x: 7,
 			y: 17,
 		});
 	});

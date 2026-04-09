@@ -175,11 +175,16 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 	if (laneObjects.length === 0) {
 		throw new Error('[parseTiledMap] no path lanes defined');
 	}
-	const primary =
-		laneObjects.find((o) => prop<boolean>(o.properties, 'isPrimary', false)) ??
-		laneObjects[0];
+	const primaryIndex = laneObjects.findIndex((o) =>
+		prop<boolean>(o.properties, 'isPrimary', false),
+	);
+	const primary = primaryIndex >= 0 ? laneObjects[primaryIndex] : laneObjects[0];
 	const primaryPath = polylineToCells(primary, tileSize);
-	const allLanes = laneObjects.map((o) => polylineToCells(o, tileSize));
+	const allLanes = laneObjects.map((o, i) =>
+		i === (primaryIndex >= 0 ? primaryIndex : 0)
+			? primaryPath
+			: polylineToCells(o, tileSize),
+	);
 
 	const structures = parseStructures(structuresLayer, tileSize);
 

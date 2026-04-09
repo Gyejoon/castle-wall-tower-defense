@@ -18,7 +18,7 @@ import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
 
-interface TowerInstance {
+export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
 	effectiveDamage: number;

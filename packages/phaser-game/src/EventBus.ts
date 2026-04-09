@@ -109,7 +109,7 @@ export interface GameEventMap {
 	'current-scene-ready': Phaser.Scene;
 }
 
-class TypedEventBus {
+export class TypedEventBus {
 	private emitter = new Events.EventEmitter();
 
 	emit<K extends keyof GameEventMap>(

@@ -26,6 +26,7 @@ interface TowerInstance {
 	sprite: Phaser.GameObjects.Image;
 	lastAttackTime: number;
 	lastAuraTime: number;
+	disabledUntilMs?: number;
 }
 
 export type TowerPlacementResult =
@@ -254,6 +255,10 @@ export class TowerSystem {
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
 			if (def.stats.attackSpeed <= 0) continue;
+
+			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
+				continue; // tower is disabled by an enemy ranged attack
+			}
 
 			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
@@ -711,6 +716,12 @@ export class TowerSystem {
 
 	getTowers(): PlacedTower[] {
 		return Array.from(this.towers.values()).map((t) => t.data);
+	}
+
+	disableTower(towerId: string, untilMs: number): void {
+		const t = this.towers.get(towerId);
+		if (!t) return;
+		t.disabledUntilMs = Math.max(t.disabledUntilMs ?? 0, untilMs);
 	}
 
 	getTowerSprite(instanceId: string): Phaser.GameObjects.Image | null {

@@ -4,6 +4,7 @@ import {
 	ELEMENT_TINT_COLORS,
 	type ElementType,
 	PHASER_COLORS,
+	type PlacedTower,
 	type Position,
 	scaleUnitStats,
 	UNITS,
@@ -13,6 +14,7 @@ import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
+import type { TowerSystem } from './TowerSystem';
 
 export type UnitSpawnSource = 'base';
 
@@ -55,6 +57,7 @@ interface UnitInstance {
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
 	shadow: Phaser.GameObjects.Ellipse | null;
+	lastRangedAttackMs?: number;
 }
 
 interface QueueUnitsOptions {
@@ -74,6 +77,7 @@ export class UnitSystem {
 	private units: Map<string, UnitInstance> = new Map();
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
+	private towerSystem: TowerSystem | null = null;
 	private currentPath: Position[] = [];
 	private currentPathWorld: Position[] = [];
 	private lanes: Position[][] = [];
@@ -93,6 +97,11 @@ export class UnitSystem {
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
+	}
+
+	/** Inject TowerSystem for ranged_tower_attack behavior */
+	setTowerSystem(towerSystem: TowerSystem): void {
+		this.towerSystem = towerSystem;
 	}
 
 	/** Inject RNG for testability (CC immunity) */
@@ -194,6 +203,9 @@ export class UnitSystem {
 			hp: finalHp,
 			pathIndex: 0,
 		};
+		if (entry.def.specialBehavior === 'damage_shield') {
+			unitData.shieldHp = entry.def.specialParams?.shieldHp ?? 0;
+		}
 
 		const bossTextureKey = `unit-${entry.def.id}-boss`;
 		const normalTextureKey = `unit-${entry.def.id}`;
@@ -368,7 +380,31 @@ export class UnitSystem {
 		}
 
 		const armor = armorPierce ? 0 : unit.baseArmor;
-		const damage = Math.max(1, rawDamage - armor);
+		let damage = Math.max(1, rawDamage - armor);
+
+		// Shield absorption: damage_shield enemies absorb damage until shield breaks
+		if ((unit.data.shieldHp ?? 0) > 0) {
+			const shieldHp = unit.data.shieldHp ?? 0;
+			if (shieldHp >= damage) {
+				unit.data.shieldHp = shieldHp - damage;
+				damage = 0;
+			} else {
+				damage -= shieldHp;
+				unit.data.shieldHp = 0;
+			}
+		}
+		if (damage <= 0) {
+			return {
+				killed: false,
+				bounty: 0,
+				unitDefId: unit.def.id,
+				countsTowardClear: unit.countsTowardClear,
+				source: unit.source,
+				isBoss: unit.isBoss,
+				actualDamage: 0,
+			};
+		}
+
 		unit.data.hp -= damage;
 
 		// Boss phase transition check — only if still alive (hp > 0)
@@ -598,6 +634,38 @@ export class UnitSystem {
 					}
 				}
 				continue; // skip movement while stunned
+			}
+
+			// Enemies with ranged_tower_attack disable the nearest tower on cooldown
+			if (
+				unit.def.specialBehavior === 'ranged_tower_attack' &&
+				this.towerSystem
+			) {
+				const cooldown = unit.def.specialParams?.cooldownMs ?? 3000;
+				const range = unit.def.specialParams?.range ?? 2;
+				const dmg = unit.def.specialParams?.damage ?? 25;
+				const last = unit.lastRangedAttackMs ?? 0;
+				if (time - last >= cooldown) {
+					const unitX = unit.data.position.x;
+					const unitY = unit.data.position.y;
+					const towers = this.towerSystem.getTowers();
+					let bestTower: PlacedTower | undefined;
+					let bestDist = Infinity;
+					for (const t of towers) {
+						const dx = Math.abs(t.position.x - unitX);
+						const dy = Math.abs(t.position.y - unitY);
+						const cheb = Math.max(dx, dy); // Chebyshev distance on grid
+						if (cheb <= range && cheb < bestDist) {
+							bestDist = cheb;
+							bestTower = t;
+						}
+					}
+					if (bestTower) {
+						const stunMs = Math.min(dmg * 50, 2000);
+						this.towerSystem.disableTower(bestTower.instanceId, time + stunMs);
+						unit.lastRangedAttackMs = time;
+					}
+				}
 			}
 
 			const nextGrid = unitLane[pathIdx + 1];

@@ -204,6 +204,7 @@ export class GameScene extends Phaser.Scene {
 			getSpawnExitPairs(this.currentMap),
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
+		this.playerUnits.setTowerSystem(this.playerTowers);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		const mapWaves = getWavesForMap(mapId);
 		if (mapWaves.length === 0) {

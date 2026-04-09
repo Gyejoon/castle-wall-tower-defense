@@ -91,6 +91,7 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -135,6 +136,7 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
 		scene.damageNumbers = {
 			update: vi.fn(),
@@ -187,6 +189,7 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 5 };
 		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
@@ -309,6 +312,7 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

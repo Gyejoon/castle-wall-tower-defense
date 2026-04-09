@@ -178,5 +178,11 @@ export type {
 	TowerType,
 } from './types/tower';
 export { TIER_NAMES } from './types/tower';
-export type { ActiveUnit, UnitDef, UnitStats, UnitType } from './types/unit';
+export type {
+	ActiveUnit,
+	UnitDef,
+	UnitSpecialBehavior,
+	UnitStats,
+	UnitType,
+} from './types/unit';
 export { calcCombatPower, calcTowerPower } from './utils/combatPower';

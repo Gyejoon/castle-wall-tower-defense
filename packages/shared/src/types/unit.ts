@@ -1,5 +1,7 @@
 import type { ElementType } from './tower';
 
+export type UnitSpecialBehavior = 'ranged_tower_attack' | 'damage_shield';
+
 export type UnitType =
 	| 'scout_drone'
 	| 'battle_robot'
@@ -33,6 +35,8 @@ export interface UnitDef {
 	bounty: number; // gold earned for killing
 	isPremium: boolean;
 	flying?: boolean; // exempt from ground collision
+	specialBehavior?: UnitSpecialBehavior;
+	specialParams?: Record<string, number>;
 }
 
 export interface ActiveUnit {
@@ -41,4 +45,6 @@ export interface ActiveUnit {
 	position: { x: number; y: number };
 	hp: number;
 	pathIndex: number;
+	/** Remaining shield HP for damage_shield enemies. Undefined = no shield. */
+	shieldHp?: number;
 }

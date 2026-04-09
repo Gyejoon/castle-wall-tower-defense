@@ -43,17 +43,20 @@ describe('stageInfo', () => {
 			expect(getMaxGoldForMap('forest_gate')).toBe(198);
 		});
 
-		// lava_fortress → w2_s1: flame_imp/lava_golem bounty=0 (no UnitDef yet)
-		// battle_robot(12)×(6+8+6)+heavy_walker(25)×(3+3)=12×20+25×6=240+150=390, ×2=780
-		it('lava_fortress returns 780 gold (×2 multiplier, new W2 unit bounties pending)', () => {
-			expect(getMaxGoldForMap('lava_fortress')).toBe(780);
+		// lava_fortress → w2_s1: flame_imp(12), lava_golem(80), battle_robot(12), heavy_walker(25)
+		// W1:12×6+12×3=108, W2:12×6=72, W3:25×3+12×4=123, W4:80×1+12×5=140
+		// W5:12×8+80×2=256, W6:12×8+25×3=171, W7:80×2+12×6+12×4=280 → total=1150, ×2=2300
+		it('lava_fortress returns 2300 gold (×2 multiplier, W2 unit bounties)', () => {
+			expect(getMaxGoldForMap('lava_fortress')).toBe(2300);
 		});
 
-		// storm_citadel → w3_s1: arcane_mage/mana_shield bounty=0 (no UnitDef yet)
-		// battle_robot(12)×(10+6+8)+heavy_walker(25)×(4+5)+stealth_drone(18)×5+titan(60)×1
-		// =12×24+25×9+18×5+60=288+225+90+60=663, ×3=1989
-		it('storm_citadel returns 1989 gold (×3 multiplier, new W3 unit bounties pending)', () => {
-			expect(getMaxGoldForMap('storm_citadel')).toBe(1989);
+		// storm_citadel → w3_s1: arcane_mage(30), mana_shield(45), battle_robot(12),
+		// heavy_walker(25), stealth_drone(18), titan(60)
+		// W1:12×10+30×2=180, W2:45×3=135, W3:30×4+12×6=192, W4:25×4+45×2=190
+		// W5:30×5+18×5=240, W6:45×4+12×8=276, W7:25×5+30×3=215
+		// W8:45×5+30×4=345, W9:60×1+30×4=180 → total=1953, ×3=5859
+		it('storm_citadel returns 5859 gold (×3 multiplier, W3 unit bounties)', () => {
+			expect(getMaxGoldForMap('storm_citadel')).toBe(5859);
 		});
 
 		it('returns 0 for unknown map', () => {

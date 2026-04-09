@@ -264,6 +264,42 @@ describe('TowerSystem combat', () => {
 		expect(splashEvt?.slow).toBeDefined();
 	});
 
+	it('disruptor splash slow does NOT apply beyond tower range (#98)', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'disruptor');
+
+		// disruptor range=5 (rangeSq=25). Tower grid pos (gx,gy), unit centers are
+		// floats (gx+0.5,gy+N.5). u1 at y+4 → distSq 20.5 (in range).
+		// u2 at y+5 → distSq 30.5 (out of range) but 1.0 from u1 (within splash 2.25).
+		const unitWorld1 = gridManager.gridToWorld(pos.gridX, pos.gridY + 4);
+		const unitWorld2 = gridManager.gridToWorld(pos.gridX, pos.gridY + 5);
+		const events = towerSystem.update(1000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld1.x,
+				y: unitWorld1.y,
+				hp: 100,
+				element: 'neutral',
+			},
+			{
+				instanceId: 'u2',
+				x: unitWorld2.x,
+				y: unitWorld2.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		// u1 in range → slowed + damaged
+		const primary = events.find((e) => e.unitId === 'u1');
+		expect(primary?.slow).toBeDefined();
+
+		// u2 outside tower range → still takes splash damage but NO slow
+		const splashEvt = events.find((e) => e.unitId === 'u2' && e.damage > 0);
+		expect(splashEvt).toBeDefined();
+		expect(splashEvt?.slow).toBeUndefined();
+	});
+
 	it('focused attacker (no special) sets armorPierce=true', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
 		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'archer');

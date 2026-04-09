@@ -4,12 +4,14 @@ import {
 	checkStarClear,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
+	DEFAULT_STAGE_ID,
 	ENERGY_PER_BOSS_KILL,
 	ENERGY_PER_KILL,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
+	getStageById,
 	getStarDifficultyMult,
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
@@ -18,6 +20,7 @@ import {
 	type StarRating,
 	type WaveDef,
 	type WavePhase,
+	type WorldId,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import {
@@ -72,6 +75,10 @@ function getMapTheme(mapId: string): MapTheme {
 
 import { getPlacementGuardFailure } from '../placementRules';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
+import { createWorldGimmick } from '../systems/world-gimmicks/registry';
+import type { WorldGimmick } from '../systems/world-gimmicks/types';
+import '../systems/world-gimmicks/W2FurnaceGimmick';
+import '../systems/world-gimmicks/W3ArcaneGimmick';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
@@ -150,6 +157,7 @@ export class GameScene extends Phaser.Scene {
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
+	private worldGimmick: WorldGimmick | null = null;
 
 	constructor() {
 		super('Game');
@@ -222,6 +230,23 @@ export class GameScene extends Phaser.Scene {
 			speedMult: starMult.speed,
 			ccResist: starMult.ccResist,
 		});
+		const rawStageId = this.game.registry.get('selectedStageId') as
+			| string
+			| undefined;
+		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
+		const stageDef = getStageById(stageId);
+		this.worldGimmick = createWorldGimmick(stageDef.worldId as WorldId, {
+			worldId: stageDef.worldId as WorldId,
+			map: this.currentMap,
+			star: selectedStar,
+			eventBus: EventBus,
+			getSceneTimeMs: () => this.time.now,
+			getTowers: () => Array.from(this.playerTowers.getAllTowers()),
+		});
+		this.worldGimmick?.init();
+		this.worldGimmick?.onBattleStart();
+		this.playerTowers.setWorldGimmick(this.worldGimmick);
+
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards =
 			deckIds && deckIds.length > 0
@@ -280,6 +305,7 @@ export class GameScene extends Phaser.Scene {
 			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
+			this.worldGimmick?.onWaveStart(data.wave);
 		};
 
 		this.onBossWarning = () => {
@@ -753,6 +779,7 @@ export class GameScene extends Phaser.Scene {
 		const scaledDelta = delta * this.speedMultiplier;
 		this.scaledGameTime += scaledDelta;
 
+		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		this.energySystem.update(scaledDelta / 1000);
 
@@ -854,6 +881,9 @@ export class GameScene extends Phaser.Scene {
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
+
+		this.worldGimmick?.destroy();
+		this.worldGimmick = null;
 
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();

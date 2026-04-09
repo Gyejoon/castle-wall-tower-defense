@@ -17,6 +17,8 @@ import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
+import type { WorldGimmick } from './world-gimmicks/types';
+import { W3ArcaneGimmick } from './world-gimmicks/W3ArcaneGimmick';
 
 export interface TowerInstance {
 	data: PlacedTower;
@@ -45,6 +47,7 @@ export class TowerSystem {
 	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
 	private destroyed = false;
+	private worldGimmick: WorldGimmick | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -79,6 +82,14 @@ export class TowerSystem {
 		this.attackGraphics.setDepth(10);
 	}
 
+	setWorldGimmick(gimmick: WorldGimmick | null): void {
+		this.worldGimmick = gimmick;
+	}
+
+	getAllTowers(): TowerInstance[] {
+		return Array.from(this.towers.values());
+	}
+
 	private ensureArrowPool(): void {
 		if (this.arrowPoolInitialized) return;
 		const textureKey = 'projectile-arrow';
@@ -106,6 +117,13 @@ export class TowerSystem {
 		}
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
+			return { success: false, reason: 'occupied' };
+		}
+
+		if (
+			this.worldGimmick &&
+			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
+		) {
 			return { success: false, reason: 'occupied' };
 		}
 
@@ -260,6 +278,9 @@ export class TowerSystem {
 				continue; // tower is disabled by an enemy ranged attack
 			}
 
+			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
+				continue;
+
 			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
 
@@ -290,7 +311,15 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				const baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				if (
+					this.worldGimmick instanceof W3ArcaneGimmick &&
+					this.worldGimmick.isTowerOnArcaneCircle(tower)
+				) {
+					baseDamage = Math.round(
+						baseDamage * (1 + this.worldGimmick.getCircleDamageBonus()),
+					);
+				}
 				const special = def.stats.special;
 
 				const slowEffect =

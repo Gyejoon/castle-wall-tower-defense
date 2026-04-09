@@ -36,6 +36,10 @@ export function PhaserGame() {
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
+		game.registry.set(
+			'selectedStageId',
+			useGameStore.getState().selectedStageId,
+		);
 		gameRef.current = game;
 
 		// Sync showDamageNumbers setting to Phaser registry in real-time

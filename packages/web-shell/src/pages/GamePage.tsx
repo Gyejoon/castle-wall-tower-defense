@@ -158,10 +158,21 @@ export function GamePage() {
 
 					{!gameReady && (
 						<div
-							className="absolute inset-0 z-[2] flex items-center justify-center font-pixel text-[13px] text-text-secondary"
+							className="absolute inset-0 z-[2] flex flex-col items-center pt-[40%]"
 							style={{ background: 'rgba(26, 18, 8, 0.76)' }}
 						>
-							그리드 부팅 중...
+							<div
+								className="font-pixel text-[15px] text-accent"
+								style={{ letterSpacing: '0.16em' }}
+							>
+								&gt;_ 전투 개시
+							</div>
+							<div
+								className="font-pixel text-[10px] text-text-secondary mt-2 matchmaking-dots"
+								style={{ letterSpacing: '0.1em' }}
+							>
+								그리드 초기화 중
+							</div>
 						</div>
 					)}
 

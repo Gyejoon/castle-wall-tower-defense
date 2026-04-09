@@ -53,7 +53,11 @@ export function App() {
 			);
 			const safeDeck =
 				sanitizedDeck.length === 4 ? sanitizedDeck : [...DEFAULT_DECK_IDS];
-			if (safeDeck !== meta.selectedDeck) {
+			const currentDeck = meta.selectedDeck ?? [];
+			const deckChanged =
+				safeDeck.length !== currentDeck.length ||
+				safeDeck.some((id, i) => id !== currentDeck[i]);
+			if (deckChanged) {
 				useMetaStore.getState().setSelectedDeck(safeDeck);
 			}
 			useGameStore.setState({

@@ -202,6 +202,30 @@ body {
   50% { opacity: 0.6; }
 }
 
+/* Gacha card stagger animations — transform+opacity only for 60fps */
+@keyframes cardFlipIn {
+  0%   { opacity: 0; transform: scale(0.72) rotateY(180deg); }
+  60%  { opacity: 1; transform: scale(1.04) rotateY(10deg); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+@keyframes cardFlipInRare {
+  0%   { opacity: 0; transform: scale(0.65) rotateY(200deg); }
+  55%  { opacity: 1; transform: scale(1.08) rotateY(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+@keyframes cardFlipInEpic {
+  0%   { opacity: 0; transform: scale(0.55) rotateY(220deg); }
+  50%  { opacity: 1; transform: scale(1.15) rotateY(-12deg); }
+  75%  { transform: scale(0.96) rotateY(4deg); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+@keyframes cardFlipInLegend {
+  0%   { opacity: 0; transform: scale(0.5) rotateY(240deg); filter: brightness(1); }
+  40%  { opacity: 1; transform: scale(1.22) rotateY(-18deg); filter: brightness(2.2); }
+  60%  { transform: scale(0.94) rotateY(6deg); filter: brightness(1.4); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); filter: brightness(1); }
+}
+
 /* Gacha box opening pulse */
 @keyframes gachaPulse {
   0%, 100% { transform: scale(1); }

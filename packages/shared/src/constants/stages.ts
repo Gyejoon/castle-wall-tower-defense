@@ -2,14 +2,6 @@
 import type { StageDef, WorldId } from '../types/stage';
 import type { UnitType } from '../types/unit';
 
-// 보스 유닛 타입은 후속 태스크에서 units.ts에 등록됩니다.
-// 그때까지 캐스트로 타입 시스템을 우회합니다. 보스 등록 완료 후 이 타입과 모든 캐스트를 제거하세요.
-type BossUnitIdPlaceholder =
-	| 'orc_warlord'
-	| 'forge_master'
-	| 'corrupted_archmage';
-const boss = (id: BossUnitIdPlaceholder): UnitType => id as unknown as UnitType;
-
 const W1_STAGES: StageDef[] = [
 	{
 		id: 'w1_s1',
@@ -89,7 +81,7 @@ const W1_STAGES: StageDef[] = [
 		mapId: 'w1_forest_a',
 		waveSetId: 'w1_s8',
 		isBossStage: true,
-		bossUnitId: boss('orc_warlord'),
+		bossUnitId: 'orc_warlord',
 		recommendedPower: 300,
 	},
 ];
@@ -173,7 +165,7 @@ const W2_STAGES: StageDef[] = [
 		mapId: 'w2_forge_a',
 		waveSetId: 'w2_s8',
 		isBossStage: true,
-		bossUnitId: boss('forge_master'),
+		bossUnitId: 'forge_master',
 		recommendedPower: 900,
 	},
 ];
@@ -257,7 +249,7 @@ const W3_STAGES: StageDef[] = [
 		mapId: 'w3_tower_a',
 		waveSetId: 'w3_s8',
 		isBossStage: true,
-		bossUnitId: boss('corrupted_archmage'),
+		bossUnitId: 'corrupted_archmage',
 		recommendedPower: 2400,
 	},
 ];

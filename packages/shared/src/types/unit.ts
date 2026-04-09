@@ -37,6 +37,8 @@ export interface UnitDef {
 	flying?: boolean; // exempt from ground collision
 	specialBehavior?: UnitSpecialBehavior;
 	specialParams?: Record<string, number>;
+	/** Boss behavior handler id — looked up in the boss-ai registry at spawn time. */
+	bossBehaviorId?: string;
 }
 
 export interface ActiveUnit {
@@ -47,4 +49,6 @@ export interface ActiveUnit {
 	pathIndex: number;
 	/** Remaining shield HP for damage_shield enemies. Undefined = no shield. */
 	shieldHp?: number;
+	/** Arbitrary runtime metadata (e.g. { isClone: true } for corrupted_archmage). */
+	metadata?: Record<string, unknown>;
 }

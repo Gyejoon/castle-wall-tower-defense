@@ -135,8 +135,9 @@ ralph-loop이 없으면 아래 Phase 0-10을 수동으로 수행한다. 총점 6
 | 13 | async 이벤트 핸들러에서 리스너 제거가 `await` 전에 실행 | `removeEventListener`가 `await` 뒤에 있으면 단일 제스처에서 pointerdown+touchstart+click이 동시 발화하여 핸들러가 중복 실행됨 | -2 |
 | 14 | SVG `viewBox` + 절대 px 배치 컨테이너의 width/height 모두 고정 | viewBox가 있는 SVG와 절대 `px` 위치 자식이 같은 컨테이너에 있을 때, width를 생략하면 좁은 뷰포트에서 SVG 좌표는 스케일되지만 CSS px는 고정되어 위치가 어긋남 | -2 |
 | 15 | 렌더 본문에서 store setter/side effect 호출 금지 | 렌더 중 `setX()`, `setState()`, `dispatch()` 호출 → React pure-render 위반. 조건부 상태 리셋은 `useEffect`로 이동 | -2 |
+| 16 | `prefers-reduced-motion` 커버리지 | inline `style={{ animation: ... }}`로 애니메이션을 걸거나, 기존 `@media (prefers-reduced-motion: reduce)` 셀렉터 리스트에 없는 새 클래스로 애니메이션을 추가하면 접근성 설정을 조용히 우회한다. inline animation style은 항상 의심 대상 — 전용 CSS 클래스로 이동하고 reduced-motion 블록의 셀렉터 리스트에 포함시킨다. 검사법: diff에서 `style={{.*animation`, `animation:.*keyframes이름` 등장 시 `global.css`의 reduced-motion 블록을 grep하여 해당 셀렉터가 포함되어 있는지 대조 | -2 |
 
-기본 10점, 항목 1-4,11-15 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
+기본 10점, 항목 1-4,11-16 Critical(-2), 항목 5-10 Non-critical(-1), 최소 0점.
 
 ## Phase 4: Design Quality 검사
 
@@ -391,6 +392,7 @@ bunx biome check .
 | SVG viewBox 컨테이너에 누락된 width/height 추가 | |
 | 새 generate-assets 스크립트를 generate-all.ts에 등록 | |
 | mock 대상 모듈에 새 export 추가 시 모든 mock 사이트 동기화 | |
+| inline animation style을 전용 CSS 클래스로 이동 + reduced-motion 셀렉터 리스트에 추가 | |
 
 ## 참고 문서
 

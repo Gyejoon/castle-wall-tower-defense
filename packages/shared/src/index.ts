@@ -139,6 +139,11 @@ export {
 	WORLD_ORDER,
 	WORLDS,
 } from './constants/worlds';
+export {
+	getStageLockStatus,
+	isStageUnlocked,
+	isWorldUnlocked,
+} from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { MapLayout } from './types/map';

@@ -95,6 +95,13 @@ export {
 	getMaxXpForMap,
 	getTotalRewardMultiplier,
 } from './constants/stageInfo';
+export {
+	DEFAULT_STAGE_ID,
+	getStageById,
+	getStagesByWorld,
+	STAGE_ORDER,
+	STAGES,
+} from './constants/stages';
 export type { StarRating } from './constants/starDifficulty';
 export {
 	checkStarClear,

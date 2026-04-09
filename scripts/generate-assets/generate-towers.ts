@@ -22,6 +22,20 @@ import type { SKRSContext2D } from '@napi-rs/canvas';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
 
+export const PILOT_IDS = [
+  'archer',
+  'flame_tower',
+  'dragon_nest',
+  'wind_spire',
+  'arcane_spire',
+  'world_tree',
+  'celestial',
+  'divine_throne',
+] as const;
+export type PilotId = (typeof PILOT_IDS)[number];
+export const HQ_WIDTH = 128;
+export const HQ_HEIGHT = 160;
+
 type GeneratedTowerShape = 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
 
 interface TowerAssetDef {

@@ -32,6 +32,26 @@ export type TowerPlacementResult =
 	| { success: true; tower: PlacedTower }
 	| { success: false; reason: PlacementFailureReason };
 
+const TOWER_GRADE_VARIANT_IDS = new Set([
+	'archer',
+	'flame_tower',
+	'dragon_nest',
+	'wind_spire',
+	'arcane_spire',
+	'world_tree',
+	'celestial',
+	'divine_throne',
+]);
+
+export function resolveTowerTextureKey(
+	defId: string,
+	grade: 'normal' | 'rare' | 'unique' | 'epic',
+): string {
+	if (grade === 'normal') return `tower-${defId}`;
+	if (!TOWER_GRADE_VARIANT_IDS.has(defId)) return `tower-${defId}`;
+	return `tower-${defId}-${grade}`;
+}
+
 export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
 	private lastSoundTime: Map<string, number> = new Map();
@@ -142,12 +162,9 @@ export class TowerSystem {
 			level: towerLevel,
 		};
 
+		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
 		const base = this.scene.add.graphics();
-		const sprite = this.scene.add.image(
-			worldPos.x,
-			worldPos.y,
-			`tower-${towerDefId}`,
-		);
+		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
 		sprite.setY(worldPos.y - 20);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);

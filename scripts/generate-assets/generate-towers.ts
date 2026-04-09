@@ -19,6 +19,12 @@ import { mkdirSync, existsSync } from 'fs';
 import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
 import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 import type { SKRSContext2D } from '@napi-rs/canvas';
+import {
+  drawArcherHQ, drawFlameTowerHQ, drawDragonNestHQ,
+  drawWindSpireHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
+  drawCelestialHQ, drawDivineThroneHQ,
+} from './towers/pilot-draw';
+import { drawGradeDecoration, type GradeVariant } from './towers/grade-decoration';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
 
@@ -35,6 +41,21 @@ export const PILOT_IDS = [
 export type PilotId = (typeof PILOT_IDS)[number];
 export const HQ_WIDTH = 128;
 export const HQ_HEIGHT = 160;
+
+const PILOT_DRAW: Record<PilotId, (ctx: SKRSContext2D, ox: number, oy: number) => void> = {
+  archer: drawArcherHQ,
+  flame_tower: drawFlameTowerHQ,
+  dragon_nest: drawDragonNestHQ,
+  wind_spire: drawWindSpireHQ,
+  arcane_spire: drawArcaneSpireHQ,
+  world_tree: drawWorldTreeHQ,
+  celestial: drawCelestialHQ,
+  divine_throne: drawDivineThroneHQ,
+};
+
+function isPilot(id: string): id is PilotId {
+  return (PILOT_IDS as readonly string[]).includes(id);
+}
 
 type GeneratedTowerShape = 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
 
@@ -656,60 +677,114 @@ export async function generate(): Promise<ManifestEntry[]> {
   const entries: ManifestEntry[] = [];
 
   for (const tower of TOWERS) {
-    // Static sprite (64x80)
-    {
-      const { canvas, ctx } = makeCanvas(64, 80);
-      renderWithGate(
-        canvas,
-        ctx,
-        64,
-        80,
-        `${tower.id}.png`,
-        (drawCtx) => drawTowerShape(drawCtx, 0, tower),
-        (drawCtx) => {
-          switch (tower.shape) {
-            case 'archer': drawArcherTowerFallback(drawCtx, 0); break;
-            case 'catapult': drawCatapultFallback(drawCtx, 0); break;
-            case 'frost': drawFrostTowerFallback(drawCtx, 0); break;
-            case 'paladin': drawPaladinShrineFallback(drawCtx, 0); break;
-            case 'star': drawStarTowerFallback(drawCtx, 0, tower); break;
-          }
-        },
-      );
-      saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
-      entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
-    }
+    if (isPilot(tower.id)) {
+      const drawFn = PILOT_DRAW[tower.id];
+      const gradeCtx = {
+        cx: 64,
+        topY: 36,
+        width: 44,
+        height: 96,
+        accentColor: tower.color,
+      };
 
-    // Fire animation (8 frames of 64x80)
-    {
-      const fireW = 64 * FIRE_FRAME_COUNT;
-      const { canvas, ctx } = makeCanvas(fireW, 80);
-      renderWithGate(
-        canvas,
-        ctx,
-        fireW,
-        80,
-        `${tower.id}-fire.png`,
-        (drawCtx) => {
-          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-            drawFireFrame(drawCtx, f * 64, tower, f);
-          }
-        },
-        (drawCtx) => {
-          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-            drawTowerShape(drawCtx, f * 64, tower);
-          }
-        },
-      );
-      saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
-      entries.push({
-        key: `tower-${tower.id}-fire`,
-        type: 'spritesheet',
-        path: `assets/towers/${tower.id}-fire.png`,
-        frameWidth: 64,
-        frameHeight: 80,
-        frameCount: FIRE_FRAME_COUNT,
-      });
+      // Normal (base HQ sprite)
+      {
+        const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawFn(ctx, 0, 0);
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
+        entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
+      }
+
+      // Grade variants: rare / unique / epic
+      for (const grade of ['rare', 'unique', 'epic'] as GradeVariant[]) {
+        const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawFn(ctx, 0, 0);
+        drawGradeDecoration(ctx, grade, gradeCtx);
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-${grade}.png`);
+        entries.push({
+          key: `tower-${tower.id}-${grade}`,
+          type: 'image',
+          path: `assets/towers/${tower.id}-${grade}.png`,
+        });
+      }
+
+      // HQ fire spritesheet (128×160 per frame × 8 frames)
+      {
+        const fireW = HQ_WIDTH * FIRE_FRAME_COUNT;
+        const { canvas, ctx } = makeCanvas(fireW, HQ_HEIGHT);
+        for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
+          // Draw HQ base tower at each frame offset, then layer fire effects at 2× scale
+          drawFn(ctx, f * HQ_WIDTH, 0);
+          // Scale up the fire effect coordinates (2× from 64×80 baseline)
+          drawFireFrame(ctx, f * HQ_WIDTH, tower, f);
+        }
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
+        entries.push({
+          key: `tower-${tower.id}-fire`,
+          type: 'spritesheet',
+          path: `assets/towers/${tower.id}-fire.png`,
+          frameWidth: HQ_WIDTH,
+          frameHeight: HQ_HEIGHT,
+          frameCount: FIRE_FRAME_COUNT,
+        });
+      }
+    } else {
+      // Legacy path: 64×80 — unchanged for non-pilot towers
+      // Static sprite (64x80)
+      {
+        const { canvas, ctx } = makeCanvas(64, 80);
+        renderWithGate(
+          canvas,
+          ctx,
+          64,
+          80,
+          `${tower.id}.png`,
+          (drawCtx) => drawTowerShape(drawCtx, 0, tower),
+          (drawCtx) => {
+            switch (tower.shape) {
+              case 'archer': drawArcherTowerFallback(drawCtx, 0); break;
+              case 'catapult': drawCatapultFallback(drawCtx, 0); break;
+              case 'frost': drawFrostTowerFallback(drawCtx, 0); break;
+              case 'paladin': drawPaladinShrineFallback(drawCtx, 0); break;
+              case 'star': drawStarTowerFallback(drawCtx, 0, tower); break;
+            }
+          },
+        );
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
+        entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
+      }
+
+      // Fire animation (8 frames of 64x80)
+      {
+        const fireW = 64 * FIRE_FRAME_COUNT;
+        const { canvas, ctx } = makeCanvas(fireW, 80);
+        renderWithGate(
+          canvas,
+          ctx,
+          fireW,
+          80,
+          `${tower.id}-fire.png`,
+          (drawCtx) => {
+            for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
+              drawFireFrame(drawCtx, f * 64, tower, f);
+            }
+          },
+          (drawCtx) => {
+            for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
+              drawTowerShape(drawCtx, f * 64, tower);
+            }
+          },
+        );
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
+        entries.push({
+          key: `tower-${tower.id}-fire`,
+          type: 'spritesheet',
+          path: `assets/towers/${tower.id}-fire.png`,
+          frameWidth: 64,
+          frameHeight: 80,
+          frameCount: FIRE_FRAME_COUNT,
+        });
+      }
     }
   }
 

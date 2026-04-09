@@ -141,7 +141,7 @@ export function GachaSelectPhase({
 							isTenPullDisabled ? 'text-text-secondary' : 'text-text',
 						)}
 					>
-						10연차
+						10연속
 					</p>
 					{isTenPullDisabled ? (
 						<p className="font-pixel text-[10px] text-error/70">다이아 부족</p>

@@ -108,7 +108,7 @@ const FOREST_GATE_BUILDABLE_POINTS = buildBuildablePoints({
 });
 
 export const FOREST_GATE_MAP: MapLayout = {
-	id: 'forest_gate',
+	id: 'w1_forest_a',
 	name: '숲의 성문',
 	width: 8,
 	height: 18,
@@ -215,7 +215,7 @@ const LAVA_BUILDABLE = buildBuildablePoints({
 });
 
 export const LAVA_FORTRESS_MAP: MapLayout = {
-	id: 'lava_fortress',
+	id: 'w2_forge_a',
 	name: '용암 요새',
 	unlockLevel: 3,
 	width: 8,
@@ -342,7 +342,7 @@ const STORM_BUILDABLE = buildBuildablePoints({
 });
 
 export const STORM_CITADEL_MAP: MapLayout = {
-	id: 'storm_citadel',
+	id: 'w3_tower_a',
 	name: '폭풍 성채',
 	unlockLevel: 7,
 	width: 8,
@@ -361,13 +361,231 @@ export const STORM_CITADEL_MAP: MapLayout = {
 	recommendedPower: 400,
 };
 
+// --- W1 Forest B: S-curve variant ---
+const W1_FOREST_B_PATH: Position[] = [
+	{ x: 4, y: 0 },
+	{ x: 4, y: 1 },
+	{ x: 4, y: 2 },
+	{ x: 4, y: 3 },
+	{ x: 3, y: 3 },
+	{ x: 2, y: 3 },
+	{ x: 2, y: 4 },
+	{ x: 2, y: 5 },
+	{ x: 2, y: 6 },
+	{ x: 3, y: 6 },
+	{ x: 4, y: 6 },
+	{ x: 5, y: 6 },
+	{ x: 5, y: 7 },
+	{ x: 5, y: 8 },
+	{ x: 5, y: 9 },
+	{ x: 4, y: 9 },
+	{ x: 3, y: 9 },
+	{ x: 2, y: 9 },
+	{ x: 2, y: 10 },
+	{ x: 2, y: 11 },
+	{ x: 2, y: 12 },
+	{ x: 3, y: 12 },
+	{ x: 4, y: 12 },
+	{ x: 5, y: 12 },
+	{ x: 5, y: 13 },
+	{ x: 5, y: 14 },
+	{ x: 5, y: 15 },
+	{ x: 4, y: 15 },
+	{ x: 3, y: 15 },
+	{ x: 3, y: 16 },
+	{ x: 3, y: 17 },
+];
+
+const W1_FOREST_B_BLOCKED: Position[] = [
+	{ x: 4, y: 0 },
+	{ x: 3, y: 17 },
+];
+
+const W1_FOREST_B_BUILDABLE = buildBuildablePoints({
+	width: 8,
+	height: 18,
+	path: W1_FOREST_B_PATH,
+	blockedPlacementPoints: W1_FOREST_B_BLOCKED,
+});
+
+export const W1_FOREST_B_MAP: MapLayout = {
+	id: 'w1_forest_b',
+	name: '변경의 숲 — 외곽 길',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: W1_FOREST_B_PATH,
+	blockedPlacementPoints: W1_FOREST_B_BLOCKED,
+	buildablePoints: W1_FOREST_B_BUILDABLE,
+	spawnPoint: { x: 4, y: 0 },
+	exitPoint: { x: 3, y: 17 },
+	tilemapKey: 'tilemap-forest-gate',
+	tilesetKey: 'tileset',
+	rewardMultiplier: 1,
+	difficultyHpMult: 1,
+	recommendedPower: 120,
+};
+
+// --- W2 Forge B: lava corridor ---
+const W2_FORGE_B_PATH: Position[] = [
+	{ x: 3, y: 0 },
+	{ x: 3, y: 1 },
+	{ x: 3, y: 2 },
+	{ x: 3, y: 3 },
+	{ x: 4, y: 3 },
+	{ x: 5, y: 3 },
+	{ x: 5, y: 4 },
+	{ x: 5, y: 5 },
+	{ x: 5, y: 6 },
+	{ x: 4, y: 6 },
+	{ x: 3, y: 6 },
+	{ x: 2, y: 6 },
+	{ x: 2, y: 7 },
+	{ x: 2, y: 8 },
+	{ x: 2, y: 9 },
+	{ x: 3, y: 9 },
+	{ x: 4, y: 9 },
+	{ x: 5, y: 9 },
+	{ x: 5, y: 10 },
+	{ x: 5, y: 11 },
+	{ x: 5, y: 12 },
+	{ x: 4, y: 12 },
+	{ x: 3, y: 12 },
+	{ x: 2, y: 12 },
+	{ x: 2, y: 13 },
+	{ x: 2, y: 14 },
+	{ x: 2, y: 15 },
+	{ x: 3, y: 15 },
+	{ x: 4, y: 15 },
+	{ x: 4, y: 16 },
+	{ x: 4, y: 17 },
+];
+
+const W2_FORGE_B_BLOCKED: Position[] = [
+	{ x: 3, y: 0 },
+	{ x: 4, y: 17 },
+];
+
+const W2_FORGE_B_BUILDABLE = buildBuildablePoints({
+	width: 8,
+	height: 18,
+	path: W2_FORGE_B_PATH,
+	blockedPlacementPoints: W2_FORGE_B_BLOCKED,
+});
+
+export const W2_FORGE_B_MAP: MapLayout = {
+	id: 'w2_forge_b',
+	name: '불의 단조장 — 용암 통로',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: W2_FORGE_B_PATH,
+	blockedPlacementPoints: W2_FORGE_B_BLOCKED,
+	buildablePoints: W2_FORGE_B_BUILDABLE,
+	spawnPoint: { x: 3, y: 0 },
+	exitPoint: { x: 4, y: 17 },
+	tilemapKey: 'tilemap-lava_fortress',
+	tilesetKey: 'tileset',
+	rewardMultiplier: 2,
+	difficultyHpMult: 1.3,
+	recommendedPower: 350,
+};
+
+// --- W3 Tower B: dual-lane ---
+const W3_TOWER_B_LANE_A: Position[] = [
+	{ x: 2, y: 0 },
+	{ x: 2, y: 1 },
+	{ x: 2, y: 2 },
+	{ x: 2, y: 3 },
+	{ x: 2, y: 4 },
+	{ x: 2, y: 5 },
+	{ x: 2, y: 6 },
+	{ x: 2, y: 7 },
+	{ x: 2, y: 8 },
+	{ x: 2, y: 9 },
+	{ x: 2, y: 10 },
+	{ x: 2, y: 11 },
+	{ x: 2, y: 12 },
+	{ x: 2, y: 13 },
+	{ x: 2, y: 14 },
+	{ x: 2, y: 15 },
+	{ x: 3, y: 15 },
+	{ x: 3, y: 16 },
+	{ x: 3, y: 17 },
+];
+
+const W3_TOWER_B_LANE_B: Position[] = [
+	{ x: 5, y: 0 },
+	{ x: 5, y: 1 },
+	{ x: 5, y: 2 },
+	{ x: 5, y: 3 },
+	{ x: 5, y: 4 },
+	{ x: 5, y: 5 },
+	{ x: 5, y: 6 },
+	{ x: 5, y: 7 },
+	{ x: 5, y: 8 },
+	{ x: 5, y: 9 },
+	{ x: 5, y: 10 },
+	{ x: 5, y: 11 },
+	{ x: 5, y: 12 },
+	{ x: 5, y: 13 },
+	{ x: 5, y: 14 },
+	{ x: 5, y: 15 },
+	{ x: 4, y: 15 },
+	{ x: 4, y: 16 },
+	{ x: 4, y: 17 },
+];
+
+const W3_TOWER_B_BLOCKED: Position[] = [
+	{ x: 2, y: 0 },
+	{ x: 5, y: 0 },
+	{ x: 3, y: 17 },
+	{ x: 4, y: 17 },
+];
+
+const W3_TOWER_B_BUILDABLE = buildBuildablePoints({
+	width: 8,
+	height: 18,
+	path: [...W3_TOWER_B_LANE_A, ...W3_TOWER_B_LANE_B],
+	blockedPlacementPoints: W3_TOWER_B_BLOCKED,
+});
+
+export const W3_TOWER_B_MAP: MapLayout = {
+	id: 'w3_tower_b',
+	name: '마탑 성채 — 이중 회랑',
+	width: 8,
+	height: 18,
+	tileSize: 32,
+	path: W3_TOWER_B_LANE_A,
+	paths: [W3_TOWER_B_LANE_A, W3_TOWER_B_LANE_B],
+	blockedPlacementPoints: W3_TOWER_B_BLOCKED,
+	buildablePoints: W3_TOWER_B_BUILDABLE,
+	spawnPoint: { x: 2, y: 0 },
+	exitPoint: { x: 3, y: 17 },
+	tilemapKey: 'tilemap-storm_citadel',
+	tilesetKey: 'tileset',
+	rewardMultiplier: 3,
+	difficultyHpMult: 1.6,
+	recommendedPower: 800,
+};
+
 export const MAP_REGISTRY: Record<string, MapLayout> = {
+	// W1
+	w1_forest_a: FOREST_GATE_MAP,
+	w1_forest_b: W1_FOREST_B_MAP,
+	// W2
+	w2_forge_a: LAVA_FORTRESS_MAP,
+	w2_forge_b: W2_FORGE_B_MAP,
+	// W3
+	w3_tower_a: STORM_CITADEL_MAP,
+	w3_tower_b: W3_TOWER_B_MAP,
+	// Legacy aliases
 	forest_gate: FOREST_GATE_MAP,
 	lava_fortress: LAVA_FORTRESS_MAP,
 	storm_citadel: STORM_CITADEL_MAP,
 };
 
-export const DEFAULT_MAP_ID = 'forest_gate';
+export const DEFAULT_MAP_ID = 'w1_forest_a';
 
 export function getMapById(mapId: string): MapLayout {
 	const map = MAP_REGISTRY[mapId];

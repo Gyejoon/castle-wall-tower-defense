@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v4
+// Migration tests for metaStore v1→v5
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
 import {
@@ -9,7 +9,7 @@ import {
 	SAVE_VERSION,
 } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseSave, sanitizeV4Save } from '../meta/persistence';
+import { parseSave, sanitizeV5Save } from '../meta/persistence';
 import { useMetaStore } from '../metaStore';
 
 // localStorage mock helper
@@ -33,7 +33,7 @@ function makeLocalStorageMock(initial: Record<string, string> = {}): Storage {
 	} as Storage;
 }
 
-describe('metaStore v1→v4 migration', () => {
+describe('metaStore v1→v5 migration', () => {
 	beforeEach(() => {
 		useMetaStore.setState(createDefaultSave());
 	});
@@ -74,7 +74,7 @@ describe('metaStore v1→v4 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(5);
 		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
@@ -160,7 +160,7 @@ describe('metaStore v1→v4 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(5);
 		// v1에 없던 새 필드가 기본값으로 채워짐
 		expect(s.progress.gachaPityCount).toBe(0);
 		expect(s.progress.lastAttendanceDate).toBeNull();
@@ -237,7 +237,7 @@ describe('metaStore v1→v4 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(5);
 		expect(s.profile.diamond).toBe(50);
 		expect(s.profile.nickname).toBe('V2User');
 		expect(s.progress.gachaPityCount).toBe(12);
@@ -303,7 +303,7 @@ describe('metaStore v1→v4 migration', () => {
 		const result = parseSave();
 
 		expect(result).not.toBeNull();
-		expect(result?.version).toBe(4);
+		expect(result?.version).toBe(5);
 		expect(result?.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(result?.collection[0].defId).toBe('archer');
 		expect(result?.collection[1].defId).toBe('twin_archer');
@@ -313,11 +313,11 @@ describe('metaStore v1→v4 migration', () => {
 	});
 });
 
-describe('sanitizeV4Save — v4 필드 누락 방어', () => {
+describe('sanitizeV5Save — v5 필드 누락 방어', () => {
 	it('achievements 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).achievements;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeV5Save(save);
 		expect(result.progress.achievements).toEqual({
 			claimed: [],
 			progress: {},
@@ -327,7 +327,7 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 	it('stageStars 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).stageStars;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeV5Save(save);
 		expect(result.progress.stageStars).toEqual({});
 	});
 
@@ -336,7 +336,7 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 		const tower = save.collection[0] as unknown as Record<string, unknown>;
 		delete tower.awakening;
 		delete tower.duplicateCount;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeV5Save(save);
 		expect(result.collection[0].awakening).toBe(0);
 		expect(result.collection[0].duplicateCount).toBe(0);
 	});
@@ -344,14 +344,14 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 	it('combatPower 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.profile as unknown as Record<string, unknown>).combatPower;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeV5Save(save);
 		expect(result.profile.combatPower).toBe(0);
 	});
 
 	it('collection이 배열이 아니면 기본 컬렉션으로 대체', () => {
 		const save = createDefaultSave();
 		(save as unknown as Record<string, unknown>).collection = 'corrupted';
-		const result = sanitizeV4Save(save);
+		const result = sanitizeV5Save(save);
 		expect(Array.isArray(result.collection)).toBe(true);
 		expect(result.collection.length).toBeGreaterThan(0);
 	});
@@ -373,6 +373,129 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 			progress: {},
 		});
 		expect(result?.progress.stageStars).toEqual({});
+		vi.unstubAllGlobals();
+	});
+});
+
+// ── v4 → v5 migration (stageStars mapId → stageId) ──────────────────────────
+
+function makeV4Save(stageStars: Record<string, number> = {}) {
+	const base = createDefaultSave();
+	return {
+		...base,
+		version: 4,
+		progress: {
+			...base.progress,
+			stageStars,
+		},
+	};
+}
+
+describe('save v4→v5 migration: stageStars mapId→stageId', () => {
+	it('migrates v4 → v5: version bump', () => {
+		const save = makeV4Save({});
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result?.version).toBe(5);
+		vi.unstubAllGlobals();
+	});
+
+	it('duplicates forest_gate ★2 to w1_s1..w1_s8', () => {
+		const save = makeV4Save({ forest_gate: 2 });
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		const stars = result!.progress.stageStars;
+		for (let i = 1; i <= 8; i++) {
+			expect(stars[`w1_s${i}`]).toBe(2);
+		}
+		expect(stars['forest_gate']).toBeUndefined();
+		vi.unstubAllGlobals();
+	});
+
+	it('duplicates lava_fortress ★1 to w2_s1..w2_s8', () => {
+		const save = makeV4Save({ lava_fortress: 1 });
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		const stars = result!.progress.stageStars;
+		for (let i = 1; i <= 8; i++) {
+			expect(stars[`w2_s${i}`]).toBe(1);
+		}
+		expect(stars['lava_fortress']).toBeUndefined();
+		vi.unstubAllGlobals();
+	});
+
+	it('duplicates storm_citadel ★3 to w3_s1..w3_s8', () => {
+		const save = makeV4Save({ storm_citadel: 3 });
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		const stars = result!.progress.stageStars;
+		for (let i = 1; i <= 8; i++) {
+			expect(stars[`w3_s${i}`]).toBe(3);
+		}
+		expect(stars['storm_citadel']).toBeUndefined();
+		vi.unstubAllGlobals();
+	});
+
+	it('preserves stars already keyed by new stageIds', () => {
+		const save = makeV4Save({ w1_s3: 2 });
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.progress.stageStars['w1_s3']).toBe(2);
+		vi.unstubAllGlobals();
+	});
+
+	it('preserves profile/collection/settings unchanged', () => {
+		const save = makeV4Save({});
+		save.profile.combatPower = 9999;
+		save.settings.bgmVolume = 0.3;
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.profile.combatPower).toBe(9999);
+		expect(result!.settings.bgmVolume).toBe(0.3);
+		vi.unstubAllGlobals();
+	});
+
+	it('idempotent on v5 input: passing v5 save returns same data without re-migration', () => {
+		const v5Save = {
+			...createDefaultSave(),
+			version: 5,
+			progress: {
+				...createDefaultSave().progress,
+				stageStars: { w1_s1: 3, w2_s4: 1 },
+			},
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v5Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.version).toBe(5);
+		expect(result!.progress.stageStars).toEqual({ w1_s1: 3, w2_s4: 1 });
 		vi.unstubAllGlobals();
 	});
 });

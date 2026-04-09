@@ -58,9 +58,68 @@ type SaveMigration = (
 	context?: { tutorialCompleted?: boolean },
 ) => Record<string, unknown>;
 
+const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
+	forest_gate: [
+		'w1_s1',
+		'w1_s2',
+		'w1_s3',
+		'w1_s4',
+		'w1_s5',
+		'w1_s6',
+		'w1_s7',
+		'w1_s8',
+	],
+	lava_fortress: [
+		'w2_s1',
+		'w2_s2',
+		'w2_s3',
+		'w2_s4',
+		'w2_s5',
+		'w2_s6',
+		'w2_s7',
+		'w2_s8',
+	],
+	storm_citadel: [
+		'w3_s1',
+		'w3_s2',
+		'w3_s3',
+		'w3_s4',
+		'w3_s5',
+		'w3_s6',
+		'w3_s7',
+		'w3_s8',
+	],
+};
+
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	4: (data) => {
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		const oldStars = (progress.stageStars ?? {}) as Record<string, unknown>;
+		const newStars: Record<string, unknown> = {};
+
+		for (const [mapId, starRating] of Object.entries(oldStars)) {
+			const stages = MAP_TO_WORLD_STAGES[mapId];
+			if (stages) {
+				for (const stageId of stages) {
+					newStars[stageId] = starRating;
+				}
+			} else {
+				// unknown key: preserve as-is (new format or unrecognised)
+				newStars[mapId] = starRating;
+			}
+		}
+
+		return {
+			...data,
+			version: 5,
+			progress: {
+				...progress,
+				stageStars: newStars,
+			},
+		};
+	},
 	3: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const profile = (data.profile ?? {}) as Record<string, unknown>;
@@ -160,8 +219,8 @@ function migrateSave(
 
 const _defaults = createDefaultSave();
 
-/** Ensure all v4 required fields exist — guards against incomplete saves. */
-export function sanitizeV4Save(save: SaveData): SaveData {
+/** Ensure all v5 required fields exist — guards against incomplete saves. */
+export function sanitizeV5Save(save: SaveData): SaveData {
 	const dp = _defaults.progress;
 	const dpr = _defaults.profile;
 	const dt = _defaults.collection[0];
@@ -201,10 +260,10 @@ export function parseSave(context?: {
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (parsed.version === SAVE_VERSION)
-			return sanitizeV4Save(parsed as SaveData);
+			return sanitizeV5Save(parsed as SaveData);
 		// Attempt migration from older version
 		const migrated = migrateSave(parsed, context);
-		return migrated ? sanitizeV4Save(migrated) : null;
+		return migrated ? sanitizeV5Save(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

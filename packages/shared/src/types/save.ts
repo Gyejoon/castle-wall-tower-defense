@@ -1,6 +1,6 @@
 import type { StarRating } from '../constants/starDifficulty';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -65,6 +65,7 @@ export interface ProgressData {
 	lastDailyMissionResetAt: string | null;
 	lastWeeklyMissionResetAt: string | null;
 	lastAttendanceDate: string | null;
+	/** Key is stageId (e.g. "w1_s1"). Pre-v5 saves used mapId keys and are migrated. */
 	stageStars: Record<string, StarRating>;
 	achievements: {
 		claimed: string[];

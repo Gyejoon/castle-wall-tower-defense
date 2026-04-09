@@ -65,6 +65,7 @@ const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
 
 export function StageDetailPage() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
+	const selectedStageId = useGameStore((s) => s.selectedStageId);
 	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
@@ -75,7 +76,7 @@ export function StageDetailPage() {
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
 
 	// Guard: reset selectedStar if locked on current map
-	const highestStar = (stageStars[selectedMapId] ?? 0) as 0 | 1 | 2 | 3;
+	const highestStar = (stageStars[selectedStageId] ?? 0) as 0 | 1 | 2 | 3;
 	const maxUnlocked: StarRating =
 		highestStar >= 2 ? 3 : highestStar >= 1 ? 2 : 1;
 	useEffect(() => {
@@ -235,7 +236,7 @@ export function StageDetailPage() {
 								<img
 									key={s}
 									src={
-										s <= (stageStars[selectedMapId] ?? 0)
+										s <= (stageStars[selectedStageId] ?? 0)
 											? 'assets/ui/icon-star-active.png'
 											: 'assets/ui/icon-star-inactive.png'
 									}

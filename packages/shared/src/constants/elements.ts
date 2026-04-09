@@ -39,3 +39,10 @@ export const CC_AURA_CONFIGS: Record<string, CcAuraConfig> = {
 	stun_aoe_global: { cooldownMs: 7000, durationMs: 2000, aoe: true },
 	slow_30_aoe: { cooldownMs: 2000, durationMs: 1500, aoe: true },
 };
+
+/**
+ * 타워 사거리가 이 값 이상이면 "전체 맵" 범위로 간주한다.
+ * UI는 숫자 대신 '전체 맵' 뱃지를 렌더한다.
+ * 현재 해당 타워: divine_throne (range 999)
+ */
+export const GLOBAL_RANGE_THRESHOLD = 100;

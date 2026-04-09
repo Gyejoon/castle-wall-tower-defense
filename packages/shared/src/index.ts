@@ -26,6 +26,7 @@ export {
 	CC_AURA_CONFIGS,
 	ELEMENT_MATCHUP,
 	ELEMENT_TINT_COLORS,
+	GLOBAL_RANGE_THRESHOLD,
 	getElementMultiplier,
 } from './constants/elements';
 export {

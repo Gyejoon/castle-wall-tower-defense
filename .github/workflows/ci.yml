@@ -37,9 +37,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate assets
-        run: bun run scripts/generate-assets/generate-all.ts
-
       - name: Build
         run: bun build:web
 

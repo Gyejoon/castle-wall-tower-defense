@@ -277,7 +277,7 @@
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
   - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
-- **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
+- **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). 각 아이콘에 수령 가능 카운트 뱃지(`-top-1 -right-1`, `bg-danger`, `text-[8px] font-pixel`, `warningPulse 1.6s` 애니메이션, `aria-label`에 카운트 포함, `useClaimableCounts` 훅이 `metaStore`에서 `current >= target && !claimed` 집계). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
 - **WorldMapPage** (스테이지 선택): 맵 썸네일 카드 노드 + SVG 골드 점선 경로, 잠금/해금 상태 표시, 권장 레벨 뱃지, 별 진행도 표시(★1/★2/★3 활성 별 아이콘), 보상 배율 배지(x2/x3). 고정 px 좌표(430×640) 레이아웃으로 노드 간격과 화살표 길이 일정 유지. 마운트 시 권장 스테이지(첫 미클리어 해금 스테이지)로 자동 스크롤.
 - **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 2배속 가이드(클리어 완료 시 "▶▶ 클리어 완료 — 2배속 플레이 가능" 표시) + 출전 덱 4슬롯 미리보기 + 게임 시작
 - **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
@@ -285,6 +285,26 @@
 - **Exit Modal**: "나가기" 텍스트 버튼 탭 → 확인 모달 (게임 일시정지, "나가기"/"계속하기")
 - **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀
 - **Tutorial Overlay**: 첫 세션 5단계 (step 1~2만 강제)
+
+### LoadingScreen & 페이지 전환
+
+- **LoadingScreen** (Suspense fallback): 2단 타이포 계층
+  - 타이틀: `font-pixel text-[15px] text-accent tracking-[0.16em]`, `>_` 터미널 프리픽스
+  - 서브카피: `font-pixel text-[10px] text-text-secondary tracking-[0.1em]`, `matchmaking-dots` 3-dot 애니메이션
+  - 레이아웃: `w-full h-full flex flex-col items-center pt-[40dvh]` (엄지 도달 영역, 불투명 `bg-bg`로 lazy chunk 로드 중 플래시 방지)
+  - context별 카피:
+    | context | 타이틀 | 서브카피 |
+    |---------|--------|----------|
+    | map | `>_ 월드맵 로딩` | `작전 지역 스캔 중` |
+    | stage | `>_ 작전 브리핑` | `스테이지 정보 수신 중` |
+    | battle | `>_ 전장 구축` | `타워 배치 준비` |
+- **GamePage 부팅 오버레이**: LoadingScreen과 **동일한 시각 언어**
+  - 타이틀 `>_ 전투 개시` + 서브카피 `그리드 초기화 중`
+  - 반투명 배경(`rgba(26, 18, 8, 0.76)`)으로 그리드가 살짝 비침 → lazy chunk 로드 → Phaser 부팅 사이의 단절감 제거
+- **페이지 전환 애니메이션**: `fadeSlideIn 220ms ease-out` (opacity 0→1 + translateY -4→0)
+  - App.tsx 래퍼에 `key={phase}` 부여 (phase = `lobby|map|stage|battle`)
+  - 주의: `key={runStatus}` 금지 — `building/running/victory/defeat`가 모두 GamePage이므로 `runStatus`를 키로 쓰면 전투 중 GamePage가 unmount되어 Phaser scene이 재초기화된다
+  - `prefers-reduced-motion` 대응 (global.css 라인 291-294)
 
 ### iOS 사운드
 
@@ -416,3 +436,4 @@ screenShake 동기화:
 | 2026-04-07 | §8, §9 | 토큰 아키텍처(단일 원천 + re-export), 설정 런타임 동기화 경로, HUD flash 초기 마운트 스킵 |
 | 2026-04-07 | §4, §6, §7, §8 | 웨이브 재설계(초반 완만→후반 가파름), WAVE_SCALING 10단계, difficultyHpMult 맵별 차등(1/1.3/1.6), 타워 판매(50%), 게임 나가기(확인 모달+일시정지), 보스 leak 즉시 패배, iOS AudioContext unlock, 덱 편집 버그 수정 |
 | 2026-04-08 | §8, §9 | 월드맵 px 고정 레이아웃(430×640)+권장 스테이지 자동 스크롤, 클리어 배지 픽셀 아트 에셋, 2배속 가이드 UI, SFX→soundGenerator 연결, screenShake metaStore 영속화+registry 동기화, iOS async unlock(try-catch+리스너 선제거), 전역 스크롤바 숨김 |
+| 2026-04-09 | §8 UI/UX | FloatingNavButtons 수령 가능 뱃지(`useClaimableCounts` + warningPulse), LoadingScreen 2단 타이포(`>_` 터미널 프리픽스, context별 카피), GamePage 부팅 오버레이 통일, 페이지 전환 `fadeSlideIn 220ms`(`key={phase}`로 GamePage 안정성 보장), 폰트/이미지 preload(Galmuri11 woff2 link preload, Press Start 2P CSS @import→HTML link, UI 이미지 17개 boot 시점 사전 로드) |

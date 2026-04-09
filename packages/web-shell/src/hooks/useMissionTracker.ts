@@ -9,6 +9,7 @@ export function useMissionTracker() {
 	const _runId = useGameStore((s) => s.runId);
 	const maxWaveThisRun = useRef(0);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: _runId 변경 시 effect 재실행으로 maxWaveThisRun 리셋
 	useEffect(() => {
 		maxWaveThisRun.current = 0;
 

@@ -29,6 +29,9 @@ export function useGameEvents() {
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 
+	const setCountdown = useGameStore((s) => s.setCountdown);
+	const setWavePhase = useGameStore((s) => s.setWavePhase);
+
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const [selectedTower, setSelectedTower] = useState<{
 		towerDefId: string;
@@ -238,6 +241,16 @@ export function useGameEvents() {
 			setSelectedTower(null);
 		};
 
+		const onPrepStarted = (data: { durationMs: number }) => {
+			setCountdown(Math.ceil(data.durationMs / 1000));
+			setWavePhase('prep');
+		};
+		const onPrepTick = (data: { remainingMs: number }) => {
+			setCountdown(Math.ceil(data.remainingMs / 1000));
+		};
+
+		EventBus.on('wave-prep-started', onPrepStarted);
+		EventBus.on('wave-prep-tick', onPrepTick);
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
@@ -259,6 +272,8 @@ export function useGameEvents() {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
 			if (bossWarningTimerRef.current)
 				clearTimeout(bossWarningTimerRef.current);
+			EventBus.off('wave-prep-started', onPrepStarted);
+			EventBus.off('wave-prep-tick', onPrepTick);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
@@ -280,6 +295,7 @@ export function useGameEvents() {
 		patchCombatHud,
 		pushToast,
 		resetRun,
+		setCountdown,
 		setDeckCards,
 		setEnergy,
 		setLives,
@@ -287,6 +303,7 @@ export function useGameEvents() {
 		setPlayerTowerCount,
 		setSelectedCardIndex,
 		setRunStatus,
+		setWavePhase,
 		upsertBossHp,
 		removeBossHp,
 		clearAllBossHp,

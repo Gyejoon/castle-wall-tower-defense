@@ -1,5 +1,6 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	INITIAL_PREP_MS,
 	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
@@ -28,8 +29,10 @@ export class WaveSystem {
 	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
 	private waitTimerMs = 0;
+	private prepTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
+	private tutorialCompleted: boolean;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -40,6 +43,7 @@ export class WaveSystem {
 			armorMult?: number;
 			speedMult?: number;
 			ccResist?: number;
+			tutorialCompleted?: boolean;
 		},
 	) {
 		this.unitSystem = unitSystem;
@@ -52,6 +56,7 @@ export class WaveSystem {
 		this.armorMult = options?.armorMult ?? 1;
 		this.speedMult = options?.speedMult ?? 1;
 		this.ccResist = options?.ccResist ?? 0;
+		this.tutorialCompleted = options?.tutorialCompleted ?? true;
 	}
 
 	setMaxWaves(count: number): void {
@@ -60,10 +65,21 @@ export class WaveSystem {
 
 	start(): void {
 		this.currentWaveIndex = -1;
-		this.phase = 'combat';
 		this.waitTimerMs = 0;
 		this.hasSpawnedCurrentWave = false;
 		this.elapsedMs = 0;
+
+		if (!this.tutorialCompleted) {
+			// 튜토리얼 1회차 한정: prep 페이즈 진입
+			// 재도전/재진입 시에는 "즉시 시작" 유지 (01-GDD §10 Edge Point)
+			this.phase = 'prep';
+			this.prepTimerMs = INITIAL_PREP_MS;
+			EventBus.emit('wave-prep-started', { durationMs: INITIAL_PREP_MS });
+			return;
+		}
+
+		// 튜토리얼 완료: 기존 동작 유지
+		this.phase = 'combat';
 		this.advanceToNextWave();
 	}
 
@@ -77,6 +93,18 @@ export class WaveSystem {
 		const MAX_DELTA_MS = 5000;
 		const clampedDelta = Math.min(delta, MAX_DELTA_MS);
 		this.elapsedMs += clampedDelta;
+
+		if (this.phase === 'prep') {
+			this.prepTimerMs -= clampedDelta;
+			EventBus.emit('wave-prep-tick', {
+				remainingMs: Math.max(0, this.prepTimerMs),
+			});
+			if (this.prepTimerMs <= 0) {
+				this.phase = 'combat';
+				this.advanceToNextWave();
+			}
+			return;
+		}
 
 		if (this.phase === 'combat' || this.phase === 'boss') {
 			// Wait for all units to be cleared (killed or leaked)

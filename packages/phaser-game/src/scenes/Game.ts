@@ -215,11 +215,13 @@ export class GameScene extends Phaser.Scene {
 			rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
+		const tutorialDone = this.game.registry.get('tutorialCompleted') === true;
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
 			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
 			armorMult: starMult.armor,
 			speedMult: starMult.speed,
 			ccResist: starMult.ccResist,
+			tutorialCompleted: tutorialDone,
 		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards =

@@ -300,11 +300,11 @@ basePower:
 | 2026-04-09 | arcane_spire 너프 | damage 50→35, range 6→5 (DPS 75→52.5) | T4 최고 사거리+관통+DPS 3박자로 정답 타워 고정. wind_spire(T3)와 근접한 수치로 재조정 (#104) |
 | 2026-04-09 | divine_throne 쿨다운 너프 | stun_aoe_global cooldownMs 5000→7000 | 글로벌 2초 스턴을 5초마다 → 7초마다. 글로벌 컨셉 유지한 채 빈도만 너프 (#103) |
 | 2026-04-09 | 스턴 타워 레벨 성장 공식 신설 | shield/fortress/holy_shrine/divine_throne 모두 cooldown -29%, duration +40% @LV.50 | 기존 스턴 타워는 레벨업 효과 미정의 → 실질 성장률 0. `stunCooldownMultiplier`/`stunDurationMultiplier` 도입 (#99) |
-| 2026-04-09 | 속성 상성 §14 섹션 추가 + UI CC 뱃지 | 밸런스 시트에 ELEMENT_MATCHUP 문서화, TowerBottomSheet에 CC duration/cooldown/aoe + range 999 "전체 맵" 뱃지 | 스펙 단일 진실 원천 유지, UI 가시성 개선 (#105, #103) |
+| 2026-04-09 | 속성 상성 §13 섹션 추가 + UI CC 뱃지 | 밸런스 시트에 ELEMENT_MATCHUP 문서화, TowerBottomSheet에 CC duration/cooldown/aoe + range 999 "전체 맵" 뱃지 | 스펙 단일 진실 원천 유지, UI 가시성 개선 (#105, #103) |
 
 ---
 
-## 14. 속성 상성 (Element Matchup)
+## 13. 속성 상성 (Element Matchup)
 
 > 코드 위치: `packages/shared/src/constants/elements.ts` — `ELEMENT_MATCHUP`
 
@@ -339,7 +339,7 @@ basePower:
 
 ---
 
-## 13. 미결 이슈
+## 14. 미결 이슈
 
 - [ ] `missions.ts` — use_element 추가, 범위 조정 코드 반영
 - [ ] use_element 주간 속성 랜덤 지정 기능 (매주 화/수/번개 중 1개)

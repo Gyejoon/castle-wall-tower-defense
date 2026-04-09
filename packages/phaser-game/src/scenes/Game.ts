@@ -94,6 +94,7 @@ export class GameScene extends Phaser.Scene {
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
+		if (!this.isSceneAlive()) return;
 		this.damageNumbers.setEnabled(value);
 	};
 	private playerHp = INITIAL_PLAYER_HP;
@@ -152,6 +153,24 @@ export class GameScene extends Phaser.Scene {
 
 	constructor() {
 		super('Game');
+	}
+
+	/**
+	 * Returns true only if this scene instance is in a state where its
+	 * GameObjects and systems can be safely touched. EventBus is a module
+	 * singleton, so handlers can survive past scene shutdown if listener
+	 * cleanup is skipped (e.g. React StrictMode quirks, Phaser game.destroy
+	 * emitting only 'destroy' not 'shutdown'). Guard every EventBus handler
+	 * with this to avoid crashes like:
+	 *   - Cannot read properties of null (reading 'queueOp') in onPause
+	 *   - Cannot read properties of undefined (reading 'sys') in
+	 *     SpawnHutSystem.setActive, called via a stale onWaveStartedLifecycle.
+	 */
+	private isSceneAlive(): boolean {
+		if (this.isCleaningUp) return false;
+		const status = this.sys?.settings?.status;
+		// Phaser scene status: SHUTDOWN=8, DESTROYED=9. Skip if >= SHUTDOWN.
+		return typeof status === 'number' && status < 8;
 	}
 
 	create(data?: { mapId?: string }) {
@@ -243,23 +262,27 @@ export class GameScene extends Phaser.Scene {
 		this.setupInput();
 
 		this.onSelectTower = (data) => {
+			if (!this.isSceneAlive()) return;
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
 			this.renderPlaceableHighlights();
 		};
 		this.onClearTowerSelection = () => {
+			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
 			this.selectionGraphics.clear();
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
+			if (!this.isSceneAlive()) return;
 			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 		};
 
 		this.onBossWarning = () => {
+			if (!this.isSceneAlive()) return;
 			if (!this.bossPrefetched) {
 				this.bossPrefetched = true;
 				void this.prefetchBossAssets();
@@ -268,16 +291,19 @@ export class GameScene extends Phaser.Scene {
 		};
 
 		this.onWaveCompleted = () => {
+			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
 		};
 
 		this.onSetSpeed = ({ multiplier }) => {
+			if (!this.isSceneAlive()) return;
 			this.speedMultiplier = multiplier;
 			this.time.timeScale = multiplier;
 			this.anims.globalTimeScale = multiplier;
 		};
 
 		this.onSellTower = ({ col, row }) => {
+			if (!this.isSceneAlive()) return;
 			const result = this.playerTowers.sellTower(col, row);
 			if (result.success) {
 				this.energySystem.add(result.refund);
@@ -293,9 +319,11 @@ export class GameScene extends Phaser.Scene {
 		};
 
 		this.onPause = () => {
+			if (!this.isSceneAlive()) return;
 			this.scene.pause();
 		};
 		this.onResume = () => {
+			if (!this.isSceneAlive()) return;
 			this.scene.resume();
 		};
 

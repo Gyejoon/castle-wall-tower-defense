@@ -5,7 +5,17 @@ export type UnitType =
 	| 'battle_robot'
 	| 'heavy_walker'
 	| 'stealth_drone'
-	| 'titan';
+	| 'titan'
+	// W2 enemies
+	| 'flame_imp'
+	| 'lava_golem'
+	// W3 enemies
+	| 'arcane_mage'
+	| 'mana_shield'
+	// Bosses
+	| 'orc_warlord'
+	| 'forge_master'
+	| 'corrupted_archmage';
 
 export interface UnitStats {
 	hp: number;

@@ -129,7 +129,10 @@ export type {
 } from './constants/waves';
 export {
 	getTotalWavesForMap,
+	getTotalWavesForStage,
 	getWavesForMap,
+	getWavesForStage,
+	STAGE_WAVES,
 	TOTAL_WAVES,
 	WAVE_DEFS,
 	WAVE_SCALING,

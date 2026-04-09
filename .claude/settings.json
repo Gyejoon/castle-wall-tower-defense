@@ -58,5 +58,6 @@
         ]
       }
     ]
-  }
+  },
+  "showClearContextOnPlanAccept": true
 }

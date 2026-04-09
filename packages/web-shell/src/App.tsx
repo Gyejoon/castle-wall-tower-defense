@@ -1,3 +1,4 @@
+import { ALL_TOWERS, DEFAULT_DECK_IDS } from '@gld/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { useMissionTracker } from './hooks/useMissionTracker';
 import { LobbyPage } from './pages/LobbyPage';
@@ -46,8 +47,17 @@ export function App() {
 			useMetaStore.getState().loadSave();
 			// Sync persisted state to gameStore (created before loadSave runs)
 			const meta = useMetaStore.getState();
+			const validIds = new Set(ALL_TOWERS.map((t) => t.id));
+			const sanitizedDeck = (meta.selectedDeck ?? []).filter((id) =>
+				validIds.has(id),
+			);
+			const safeDeck =
+				sanitizedDeck.length === 4 ? sanitizedDeck : [...DEFAULT_DECK_IDS];
+			if (safeDeck !== meta.selectedDeck) {
+				useMetaStore.getState().setSelectedDeck(safeDeck);
+			}
 			useGameStore.setState({
-				selectedDeck: meta.selectedDeck,
+				selectedDeck: safeDeck,
 				bgmVolume: meta.settings.bgmVolume,
 				sfxVolume: meta.settings.sfxVolume,
 				colorblindMode: meta.settings.colorblindMode,

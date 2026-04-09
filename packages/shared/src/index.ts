@@ -104,6 +104,7 @@ export {
 	STAR_DIFFICULTY,
 	STAR_REWARD_MULTIPLIERS,
 } from './constants/starDifficulty';
+export * from './constants/terrain';
 export {
 	ALL_TOWERS,
 	BASE_TOWERS,

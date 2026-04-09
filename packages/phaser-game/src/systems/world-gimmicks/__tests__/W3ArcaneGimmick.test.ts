@@ -25,8 +25,11 @@ function makeCtx(
 			difficultyHpMult: 1,
 			recommendedPower: 0,
 			gimmickTiles: { arcaneCircleTiles: [{ x: 4, y: 4 }] },
+			// biome-ignore lint/suspicious/noExplicitAny: test stub
 		} as any,
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		star: star as any,
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		eventBus: { emit: () => {}, on: () => {}, off: () => {} } as any,
 		getSceneTimeMs: () => now.value,
 		getTowers: () => [],
@@ -68,6 +71,7 @@ describe('W3ArcaneGimmick', () => {
 	it('★3: only 1 arcane circle tile (even if map has more)', () => {
 		const ctx = makeCtx(3);
 		// override to provide 3 tiles
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		(ctx.map.gimmickTiles as any).arcaneCircleTiles = [
 			{ x: 1, y: 1 },
 			{ x: 2, y: 2 },
@@ -80,6 +84,7 @@ describe('W3ArcaneGimmick', () => {
 
 	it('★1: all arcane circles active (up to 999)', () => {
 		const ctx = makeCtx(1);
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		(ctx.map.gimmickTiles as any).arcaneCircleTiles = [
 			{ x: 1, y: 1 },
 			{ x: 2, y: 2 },
@@ -101,7 +106,9 @@ describe('W3ArcaneGimmick', () => {
 		const ctx = makeCtx(1);
 		const g = new W3ArcaneGimmick(ctx);
 		g.init();
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		const onCircle = { data: { position: { x: 4, y: 4 } } } as any;
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		const offCircle = { data: { position: { x: 7, y: 7 } } } as any;
 		expect(g.isTowerOnArcaneCircle(onCircle)).toBe(true);
 		expect(g.isTowerOnArcaneCircle(offCircle)).toBe(false);

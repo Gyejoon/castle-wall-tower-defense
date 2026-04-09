@@ -26,8 +26,11 @@ function makeCtx(
 			difficultyHpMult: 1,
 			recommendedPower: 0,
 			gimmickTiles: { furnaceTiles },
+			// biome-ignore lint/suspicious/noExplicitAny: test stub
 		} as any,
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		star: star as any,
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		eventBus: { emit: () => {}, on: () => {}, off: () => {} } as any,
 		getSceneTimeMs: () => now.value,
 		getTowers: () => [],
@@ -64,6 +67,7 @@ describe('W2FurnaceGimmick', () => {
 		g.init();
 		g.onBattleStart();
 
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		const tower = { data: { position: { x: 1, y: 1 } } } as any;
 		ctx._now.value = 0;
 		expect(g.isTowerActive(tower)).toBe(true); // OFF phase — tower is active
@@ -77,6 +81,7 @@ describe('W2FurnaceGimmick', () => {
 		g.init();
 		g.onBattleStart();
 
+		// biome-ignore lint/suspicious/noExplicitAny: test stub
 		const tower = { data: { position: { x: 7, y: 7 } } } as any;
 		ctx._now.value = 15_000;
 		expect(g.isTowerActive(tower)).toBe(true);

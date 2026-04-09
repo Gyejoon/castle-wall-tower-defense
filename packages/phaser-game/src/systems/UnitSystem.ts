@@ -93,6 +93,10 @@ export class UnitSystem {
 	private readonly SPAWN_BLOCK_TIMEOUT = 2000; // ms
 	private laneUnits: Map<number, UnitInstance[]> = new Map();
 	private spawnBlockTimer = 0;
+	/** Called after any unit (wave-queue or additional) is physically spawned. */
+	private unitSpawnedCallback:
+		| ((instanceId: string, defId: string, isBoss: boolean) => void)
+		| null = null;
 
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
@@ -107,6 +111,13 @@ export class UnitSystem {
 	/** Inject RNG for testability (CC immunity) */
 	setRng(rng: () => number): void {
 		this.rng = rng;
+	}
+
+	/** Register a callback to be notified whenever a unit is physically spawned. */
+	setUnitSpawnedCallback(
+		cb: (instanceId: string, defId: string, isBoss: boolean) => void,
+	): void {
+		this.unitSpawnedCallback = cb;
 	}
 
 	setStageLevel(level: number): void {
@@ -290,6 +301,8 @@ export class UnitSystem {
 			}
 			arr.push(instance);
 		}
+
+		this.unitSpawnedCallback?.(instanceId, entry.def.id, entry.isBoss);
 	}
 
 	private renderHpBar(
@@ -788,6 +801,118 @@ export class UnitSystem {
 	getUnitElement(unitId: string): string {
 		const unit = this.units.get(unitId);
 		return unit?.def.element ?? 'neutral';
+	}
+
+	/** Look up a live unit instance by its instanceId. Used by boss behavior pipeline. */
+	getUnit(instanceId: string): UnitInstance | undefined {
+		return this.units.get(instanceId);
+	}
+
+	/**
+	 * Spawn a unit immediately at a given grid position, bypassing the wave queue.
+	 * Used by boss behaviors (e.g. OrcWarlord summons minions).
+	 */
+	spawnAdditionalUnit(
+		unitDefId: string,
+		position: { x: number; y: number },
+		metadata?: Record<string, unknown>,
+	): void {
+		const def = UNITS.find((u) => u.id === unitDefId);
+		if (!def) return;
+		if (this.lanes.length === 0 && this.currentPath.length === 0) return;
+
+		// Pick the lane whose start is closest to the requested position
+		let laneIndex = 0;
+		if (this.lanes.length > 1) {
+			let bestDist = Infinity;
+			for (let i = 0; i < this.lanes.length; i++) {
+				const start = this.lanes[i][0];
+				if (!start) continue;
+				const dx = start.x - position.x;
+				const dy = start.y - position.y;
+				const d = dx * dx + dy * dy;
+				if (d < bestDist) {
+					bestDist = d;
+					laneIndex = i;
+				}
+			}
+		}
+
+		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
+		const lanePathWorld = this.lanesWorld[laneIndex] ?? this.currentPathWorld;
+		if (lanePath.length === 0) return;
+
+		const instanceId = `unit_${this.nextId++}`;
+		const startGrid = lanePath[0];
+		const startWorld = lanePathWorld[0];
+
+		EventBus.emit('unit-spawned', { unitType: def.type, count: 1 });
+
+		const scaled = scaleUnitStats(def.stats, this.stageLevel);
+		const finalHp = scaled.hp;
+
+		const unitData: ActiveUnit = {
+			instanceId,
+			defId: def.id,
+			position: { x: startGrid.x, y: startGrid.y },
+			hp: finalHp,
+			pathIndex: 0,
+			metadata,
+		};
+
+		const textureKey = `unit-${def.id}`;
+		const sprite = this.scene.add.sprite(
+			startWorld.x,
+			startWorld.y,
+			textureKey,
+		);
+		sprite.setDisplaySize(40, 48);
+		sprite.play(`${def.id}-walk`);
+		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
+		if (def.element !== 'neutral') {
+			sprite.setTint(ELEMENT_TINT_COLORS[def.element]);
+		}
+
+		const hpBar = this.scene.add.graphics();
+		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
+
+		const instance: UnitInstance = {
+			data: unitData,
+			def,
+			sprite,
+			hpBar,
+			worldX: startWorld.x,
+			worldY: startWorld.y,
+			slowFactor: 1.0,
+			slowRemaining: 0,
+			stunRemaining: 0,
+			bounty: Math.round(def.bounty * scaled.bountyMultiplier),
+			countsTowardClear: false, // summoned units don't count toward wave clear
+			source: 'base',
+			laneIndex,
+			isBoss: false,
+			bossPhase: 1,
+			invulnerableMs: 0,
+			maxHp: finalHp,
+			baseSpeed: scaled.speed,
+			baseArmor: scaled.armor,
+			ccImmunityChance: scaled.ccImmunityChance,
+			waveSlot: 0,
+			shadow: null,
+			pathProgress: 0,
+		};
+		this.units.set(instanceId, instance);
+
+		if (!def.flying) {
+			let arr = this.laneUnits.get(laneIndex);
+			if (!arr) {
+				arr = [];
+				this.laneUnits.set(laneIndex, arr);
+			}
+			arr.push(instance);
+		}
+
+		this.unitSpawnedCallback?.(instanceId, def.id, false);
 	}
 
 	private removeFromLaneUnits(unit: UnitInstance): void {

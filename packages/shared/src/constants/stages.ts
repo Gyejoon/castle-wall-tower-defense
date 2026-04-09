@@ -1,6 +1,5 @@
 // packages/shared/src/constants/stages.ts
 import type { StageDef, WorldId } from '../types/stage';
-import type { UnitType } from '../types/unit';
 
 const W1_STAGES: StageDef[] = [
 	{

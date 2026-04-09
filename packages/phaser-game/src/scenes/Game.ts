@@ -1,4 +1,5 @@
 import {
+	type ActiveUnit,
 	type AssetManifest,
 	buildDeckCardsSafe,
 	checkStarClear,
@@ -18,6 +19,7 @@ import {
 	type MapLayout,
 	PHASER_COLORS,
 	type StarRating,
+	UNITS,
 	type WaveDef,
 	type WavePhase,
 	type WorldId,
@@ -74,7 +76,12 @@ function getMapTheme(mapId: string): MapTheme {
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
+import { createBossBehavior } from '../systems/boss-ai/registry';
+import type { BossBehavior } from '../systems/boss-ai/types';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
+import '../systems/boss-ai/orcWarlord';
+import '../systems/boss-ai/forgeMaster';
+import '../systems/boss-ai/corruptedArchmage';
 import { createWorldGimmick } from '../systems/world-gimmicks/registry';
 import type { WorldGimmick } from '../systems/world-gimmicks/types';
 import '../systems/world-gimmicks/W2FurnaceGimmick';
@@ -158,6 +165,7 @@ export class GameScene extends Phaser.Scene {
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
 	private worldGimmick: WorldGimmick | null = null;
+	private bossBehaviors = new Map<string, BossBehavior>(); // key = unit instanceId
 
 	constructor() {
 		super('Game');
@@ -214,6 +222,17 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setTowerSystem(this.playerTowers);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
+		this.playerUnits.setUnitSpawnedCallback((instanceId, defId, isBoss) => {
+			if (!isBoss) return;
+			const def = UNITS.find((u) => u.id === defId);
+			if (!def?.bossBehaviorId) return;
+			const behavior = createBossBehavior(def.bossBehaviorId);
+			if (!behavior) return;
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit) return;
+			this.bossBehaviors.set(instanceId, behavior);
+			behavior.onSpawn(this.buildBossContext(unit.data));
+		});
 		const mapWaves = getWavesForMap(mapId);
 		if (mapWaves.length === 0) {
 			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
@@ -738,6 +757,10 @@ export class GameScene extends Phaser.Scene {
 		time: number,
 		delta: number,
 		onKill: () => void,
+		onDamageResult?: (
+			unitId: string,
+			result: ReturnType<UnitSystem['applyDamage']>,
+		) => void,
 	): { id: string; isBoss: boolean }[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
@@ -753,6 +776,7 @@ export class GameScene extends Phaser.Scene {
 				if (pos && result) {
 					this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
 				}
+				onDamageResult?.(evt.unitId, result);
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
 					const energyReward = result.isBoss
@@ -763,10 +787,16 @@ export class GameScene extends Phaser.Scene {
 				}
 			}
 			if (evt.slow) {
-				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+				const behavior = this.bossBehaviors.get(evt.unitId);
+				if (!behavior?.isCcImmune()) {
+					unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+				}
 			}
 			if (evt.stun) {
-				unitSystem.applyStun(evt.unitId, evt.stun.duration);
+				const behavior = this.bossBehaviors.get(evt.unitId);
+				if (!behavior?.isCcImmune()) {
+					unitSystem.applyStun(evt.unitId, evt.stun.duration);
+				}
 			}
 		}
 
@@ -783,6 +813,17 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		this.energySystem.update(scaledDelta / 1000);
 
+		// Tick boss behaviors before combat so they can react with fresh sceneTime
+		for (const [instanceId, behavior] of this.bossBehaviors) {
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit) {
+				behavior.destroy();
+				this.bossBehaviors.delete(instanceId);
+				continue;
+			}
+			behavior.onTick(this.buildBossContext(unit.data), scaledDelta);
+		}
+
 		const playerExits = this.processCombatField(
 			this.playerTowers,
 			this.playerUnits,
@@ -790,6 +831,21 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
+			},
+			(unitId, result) => {
+				if (!result) return;
+				const behavior = this.bossBehaviors.get(unitId);
+				if (!behavior) return;
+				const unit = this.playerUnits.getUnit(unitId);
+				if (result.killed) {
+					behavior.destroy();
+					this.bossBehaviors.delete(unitId);
+					return;
+				}
+				if (unit) {
+					const hpRatio = unit.data.hp / unit.maxHp;
+					behavior.onDamageTaken(this.buildBossContext(unit.data), hpRatio);
+				}
 			},
 		);
 
@@ -860,6 +916,28 @@ export class GameScene extends Phaser.Scene {
 		}
 	}
 
+	private buildBossContext(
+		boss: ActiveUnit,
+	): import('../systems/boss-ai/types').BossContext {
+		return {
+			boss,
+			sceneTimeMs: this.time.now,
+			spawnUnit: (unitId, pos, metadata) => {
+				this.playerUnits.spawnAdditionalUnit(unitId, pos, metadata);
+			},
+			disableTower: (towerId, untilMs) => {
+				if (towerId === '__random__') {
+					const towers = this.playerTowers.getAllTowers();
+					if (towers.length === 0) return;
+					const target = towers[Math.floor(Math.random() * towers.length)];
+					this.playerTowers.disableTower(target.data.instanceId, untilMs);
+				} else {
+					this.playerTowers.disableTower(towerId, untilMs);
+				}
+			},
+		};
+	}
+
 	private cleanup() {
 		if (this.isCleaningUp) return;
 		this.isCleaningUp = true;
@@ -893,6 +971,8 @@ export class GameScene extends Phaser.Scene {
 		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();
 		this.playerTowers.destroy();
+		for (const b of this.bossBehaviors.values()) b.destroy();
+		this.bossBehaviors.clear();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();
 		this.playerDeck.reset();

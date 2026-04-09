@@ -113,6 +113,7 @@ export class W3ArcaneGimmick implements WorldGimmick {
 			}
 		}
 
+		// biome-ignore lint/suspicious/noExplicitAny: custom event not in EventBus union type
 		this.ctx.eventBus.emit?.('arcane_burst' as any, {
 			center: { x: cx, y: cy },
 			areaSize: this.cfg.areaSize,

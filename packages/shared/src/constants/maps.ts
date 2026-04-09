@@ -232,6 +232,16 @@ export const LAVA_FORTRESS_MAP: MapLayout = {
 	rewardMultiplier: 2,
 	difficultyHpMult: 1.3,
 	recommendedPower: 170,
+	gimmickTiles: {
+		furnaceTiles: [
+			{ x: 2, y: 3 },
+			{ x: 5, y: 3 },
+			{ x: 2, y: 9 },
+			{ x: 5, y: 9 },
+			{ x: 2, y: 15 },
+			{ x: 5, y: 15 },
+		],
+	},
 };
 
 // --- Storm Citadel: 3-lane map ---
@@ -359,6 +369,12 @@ export const STORM_CITADEL_MAP: MapLayout = {
 	rewardMultiplier: 3,
 	difficultyHpMult: 1.6,
 	recommendedPower: 400,
+	gimmickTiles: {
+		arcaneCircleTiles: [
+			{ x: 2, y: 6 },
+			{ x: 5, y: 12 },
+		],
+	},
 };
 
 // --- W1 Forest B: S-curve variant ---
@@ -489,6 +505,13 @@ export const W2_FORGE_B_MAP: MapLayout = {
 	rewardMultiplier: 2,
 	difficultyHpMult: 1.3,
 	recommendedPower: 350,
+	gimmickTiles: {
+		furnaceTiles: [
+			{ x: 4, y: 4 },
+			{ x: 4, y: 8 },
+			{ x: 4, y: 14 },
+		],
+	},
 };
 
 // --- W3 Tower B: dual-lane ---
@@ -567,6 +590,12 @@ export const W3_TOWER_B_MAP: MapLayout = {
 	rewardMultiplier: 3,
 	difficultyHpMult: 1.6,
 	recommendedPower: 800,
+	gimmickTiles: {
+		arcaneCircleTiles: [
+			{ x: 3, y: 8 },
+			{ x: 4, y: 8 },
+		],
+	},
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {

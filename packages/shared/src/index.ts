@@ -149,7 +149,7 @@ export {
 } from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
-export type { MapLayout } from './types/map';
+export type { GimmickTileSet, MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
 	MissionProgress,

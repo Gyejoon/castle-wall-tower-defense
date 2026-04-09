@@ -42,9 +42,10 @@ Node.js >= 22과 [bun](https://bun.sh/)이 필요하다.
 
 ```bash
 bun install                                        # 의존성 설치
-bun run scripts/generate-assets/generate-all.ts    # 에셋 생성 (최초 1회)
 bun dev:web                                        # 개발 서버 (port 3000)
 ```
+
+에셋은 `packages/web-shell/public/assets/`에 커밋되어 있어 별도 생성 없이 바로 실행된다. 에셋 자체를 수정하려면 아래 `bun generate:assets`로 재생성하고 산출물을 함께 커밋한다.
 
 ## 사용 가능한 커맨드
 
@@ -58,7 +59,7 @@ bun dev:web                                        # 개발 서버 (port 3000)
 | `bun test:web` | web-shell 테스트 |
 | `bun lint` | 전체 lint |
 | `bun lint:check` | Biome check |
-| `bun generate:assets` | 픽셀 아트 에셋 전체 생성 |
+| `bun generate:assets` | 픽셀 아트 에셋 전체 재생성 (생성 스크립트 변경 시에만 필요, 산출물은 git에 함께 커밋) |
 
 ## 게임플레이 & 아키텍처 하이라이트
 

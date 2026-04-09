@@ -1,6 +1,6 @@
 import {
 	type AssetManifest,
-	buildDeckCards,
+	buildDeckCardsSafe,
 	checkStarClear,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
@@ -96,13 +96,6 @@ export class GameScene extends Phaser.Scene {
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		this.damageNumbers.setEnabled(value);
 	};
-	private onDeckIdsChange = (_parent: unknown, value: string[]) => {
-		if (value) {
-			this.playerDeck = new DeckSystem(buildDeckCards(value));
-			EventBus.emit('deck-loaded', { cards: this.playerDeck.getCards() });
-		}
-	};
-
 	private playerHp = INITIAL_PLAYER_HP;
 	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
@@ -210,7 +203,10 @@ export class GameScene extends Phaser.Scene {
 			ccResist: starMult.ccResist,
 		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
-		const deckCards = deckIds ? buildDeckCards(deckIds) : DEFAULT_DECK;
+		const deckCards =
+			deckIds && deckIds.length > 0
+				? buildDeckCardsSafe(deckIds)
+				: DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
 		this.damageNumbers = new DamageNumberSystem(this);
 		const showDmgNumbers = this.game.registry.get('showDamageNumbers') as
@@ -221,8 +217,6 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
-		this.game.registry.events.on('changedata-deckIds', this.onDeckIdsChange);
-
 		this.events.on('shutdown', this.cleanup, this);
 
 		this.cacheDecorationData();
@@ -827,7 +821,6 @@ export class GameScene extends Phaser.Scene {
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
-		this.game.registry.events.off('changedata-deckIds', this.onDeckIdsChange);
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();

@@ -216,7 +216,7 @@ export const LEGENDARY_TOWERS: TowerDef[] = [
 		name: '비전 첨탑',
 		type: 'arcane_spire',
 		tier: 4,
-		stats: { damage: 50, range: 6, attackSpeed: 1.5 },
+		stats: { damage: 35, range: 5, attackSpeed: 1.5 },
 		cost: 10,
 		element: 'lightning',
 		isPremium: false,

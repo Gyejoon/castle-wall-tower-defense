@@ -6,6 +6,8 @@ import {
 	enhancementStatMultiplier,
 	getEffectiveStats,
 	SAVE_VERSION,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 	xpToNextLevel,
 } from '../src/index';
 
@@ -78,5 +80,43 @@ describe('createDefaultSave', () => {
 	});
 	it('starts with 500 gold', () => {
 		expect(createDefaultSave().profile.gold).toBe(500);
+	});
+});
+
+describe('stun level growth', () => {
+	describe('stunCooldownMultiplier', () => {
+		it('LV.1 returns 1.0 (no growth)', () => {
+			expect(stunCooldownMultiplier(1)).toBeCloseTo(1.0, 5);
+		});
+		it('LV.10 returns 0.91 (-9%)', () => {
+			expect(stunCooldownMultiplier(10)).toBeCloseTo(0.91, 5);
+		});
+		it('LV.20 returns 0.81 (-19%)', () => {
+			expect(stunCooldownMultiplier(20)).toBeCloseTo(0.81, 5);
+		});
+		it('LV.30 returns 0.71 (-29%)', () => {
+			expect(stunCooldownMultiplier(30)).toBeCloseTo(0.71, 5);
+		});
+		it('LV.31~50 plateaus at 0.71', () => {
+			expect(stunCooldownMultiplier(31)).toBeCloseTo(0.71, 5);
+			expect(stunCooldownMultiplier(50)).toBeCloseTo(0.71, 5);
+		});
+	});
+
+	describe('stunDurationMultiplier', () => {
+		it('LV.1~10 is flat 1.0', () => {
+			expect(stunDurationMultiplier(1)).toBeCloseTo(1.0, 5);
+			expect(stunDurationMultiplier(10)).toBeCloseTo(1.0, 5);
+		});
+		it('LV.20 returns 1.2 (+20%)', () => {
+			expect(stunDurationMultiplier(20)).toBeCloseTo(1.2, 5);
+		});
+		it('LV.21~30 plateaus at 1.2', () => {
+			expect(stunDurationMultiplier(21)).toBeCloseTo(1.2, 5);
+			expect(stunDurationMultiplier(30)).toBeCloseTo(1.2, 5);
+		});
+		it('LV.50 returns 1.4 (+40%)', () => {
+			expect(stunDurationMultiplier(50)).toBeCloseTo(1.4, 5);
+		});
 	});
 });

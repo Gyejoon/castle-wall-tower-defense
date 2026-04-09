@@ -1,4 +1,4 @@
-import { FOREST_GATE_MAP } from '@gld/shared';
+import { FOREST_GATE_MAP, type OwnedTower } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -69,7 +69,7 @@ function createScene() {
 	};
 }
 
-function createTowerSystem() {
+function createTowerSystem(collection?: OwnedTower[]) {
 	const scene = createScene();
 	const gridManager = new GridManager(FOREST_GATE_MAP);
 	const pathfinding = {
@@ -80,8 +80,24 @@ function createTowerSystem() {
 		scene as never,
 		gridManager,
 		pathfinding as never,
+		collection,
 	);
 	return { scene, gridManager, towerSystem };
+}
+
+function makeOwned(
+	defId: string,
+	level: number,
+	grade: OwnedTower['grade'] = 'normal',
+): OwnedTower {
+	return {
+		defId,
+		level,
+		grade,
+		acquiredAt: 0,
+		awakening: 0,
+		duplicateCount: 0,
+	};
 }
 
 /** Place a tower on a buildable tile and return world position of that tile */
@@ -185,6 +201,29 @@ describe('TowerSystem combat', () => {
 		expect(stunEvt?.stun?.duration).toBe(1000); // CC_AURA_CONFIGS.stun_aoe = 1000ms
 	});
 
+	it('active stun tower (fortress) duration scales with level (LV.50 → 1.4x)', () => {
+		const { towerSystem, gridManager } = createTowerSystem([
+			makeOwned('fortress', 50),
+		]);
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'fortress');
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+
+		const events = towerSystem.update(1000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		// Active path: base stun_aoe durationMs=1000 * stunDurationMultiplier(50)=1.4 → 1400
+		const stunEvt = events.find((e) => e.stun);
+		expect(stunEvt).toBeDefined();
+		expect(stunEvt?.stun?.duration).toBe(1400);
+	});
+
 	it('passive stun aura (shield) returns stun event on cooldown', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
 		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'shield');
@@ -227,6 +266,56 @@ describe('TowerSystem combat', () => {
 				element: 'neutral',
 			},
 		]);
+		expect(events3.find((e) => e.stun)).toBeDefined();
+	});
+
+	it('shield stun duration scales with tower level (LV.50 → 1.4x)', () => {
+		const { towerSystem, gridManager } = createTowerSystem([
+			makeOwned('shield', 50),
+		]);
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'shield');
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+
+		const events = towerSystem.update(3000, 16, [
+			{
+				instanceId: 'u1',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 100,
+				element: 'neutral',
+			},
+		]);
+
+		const stunEvt = events.find((e) => e.stun);
+		expect(stunEvt).toBeDefined();
+		// base durationMs=1000, stunDurationMultiplier(50)=1.4 → 1400
+		expect(stunEvt?.stun?.duration).toBe(1400);
+	});
+
+	it('shield stun cooldown scales with tower level (LV.50 → 0.71x)', () => {
+		const { towerSystem, gridManager } = createTowerSystem([
+			makeOwned('shield', 50),
+		]);
+		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'shield');
+		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
+		const unit = {
+			instanceId: 'u1',
+			x: unitWorld.x,
+			y: unitWorld.y,
+			hp: 100,
+			element: 'neutral' as const,
+		};
+
+		// First aura fires at t=3000 (lastAuraTime=0, elapsed 3000 >= 2130)
+		const events1 = towerSystem.update(3000, 16, [unit]);
+		expect(events1.find((e) => e.stun)).toBeDefined();
+
+		// At t=5000, elapsed 2000 < 2130 → no stun yet (would've fired at 3000*0.71 after)
+		const events2 = towerSystem.update(5000, 16, [unit]);
+		expect(events2.find((e) => e.stun)).toBeUndefined();
+
+		// At t=5200, elapsed 2200 >= 2130 → fires. LV.1 would still be blocked (2200<3000)
+		const events3 = towerSystem.update(5200, 16, [unit]);
 		expect(events3.find((e) => e.stun)).toBeDefined();
 	});
 

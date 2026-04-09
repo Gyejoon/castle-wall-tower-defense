@@ -11,6 +11,8 @@ import {
 	CC_AURA_CONFIGS,
 	getEffectiveStats,
 	getElementMultiplier,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -321,7 +323,9 @@ export class TowerSystem {
 
 				if (this.isStunSpecial(special) && special) {
 					const configKey = special.replace(/%/g, '');
-					const stunDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const baseDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const level = tower.data.level ?? 1;
+					const stunDuration = baseDuration * stunDurationMultiplier(level);
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
@@ -441,7 +445,16 @@ export class TowerSystem {
 			const config = CC_AURA_CONFIGS[configKey];
 			if (!config) continue;
 
-			if (time - tower.lastAuraTime < config.cooldownMs) continue;
+			const level = tower.data.level ?? 1;
+			const stunScaled = this.isStunSpecial(special);
+			const effectiveCooldown = stunScaled
+				? config.cooldownMs * stunCooldownMultiplier(level)
+				: config.cooldownMs;
+			const effectiveDuration = stunScaled
+				? config.durationMs * stunDurationMultiplier(level)
+				: config.durationMs;
+
+			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
 			const rangeSq = def.stats.range ** 2;
@@ -457,7 +470,7 @@ export class TowerSystem {
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: 0,
-								stun: { duration: config.durationMs },
+								stun: { duration: effectiveDuration },
 							});
 						}
 					}
@@ -479,7 +492,7 @@ export class TowerSystem {
 						this.damageEventsBuffer.push({
 							unitId: closest.instanceId,
 							damage: 0,
-							stun: { duration: config.durationMs },
+							stun: { duration: effectiveDuration },
 						});
 					}
 				}

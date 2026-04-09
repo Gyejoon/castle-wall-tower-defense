@@ -69,3 +69,13 @@ describe('Tower definitions', () => {
 		for (const t of GOD_TOWERS) expect(t.tier).toBe(5);
 	});
 });
+
+describe('tower balance', () => {
+	it('arcane_spire is nerfed to damage 35 / range 5 (#104)', () => {
+		const arcane = ALL_TOWERS.find((t) => t.id === 'arcane_spire');
+		expect(arcane).toBeDefined();
+		expect(arcane?.stats.damage).toBe(35);
+		expect(arcane?.stats.range).toBe(5);
+		expect(arcane?.stats.attackSpeed).toBe(1.5);
+	});
+});

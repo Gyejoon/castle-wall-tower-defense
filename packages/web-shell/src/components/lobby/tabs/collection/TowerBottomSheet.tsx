@@ -1,5 +1,7 @@
 import {
+	CC_AURA_CONFIGS,
 	enhancementCost,
+	GLOBAL_RANGE_THRESHOLD,
 	getEffectiveStats,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
@@ -159,7 +161,11 @@ export function TowerBottomSheet({
 				/>
 				<StatDisplay
 					label="사거리"
-					value={String(def.stats.range)}
+					value={
+						def.stats.range >= GLOBAL_RANGE_THRESHOLD
+							? '전체 맵'
+							: String(def.stats.range)
+					}
 					color={colors.textSecondary}
 				/>
 				<StatDisplay
@@ -177,9 +183,30 @@ export function TowerBottomSheet({
 			</div>
 
 			{def.stats.special && (
-				<p className="font-pixel text-[11px] leading-[1.6] text-accent">
-					특수: {translateSpecial(def.stats.special)}
-				</p>
+				<div className="flex flex-col gap-1">
+					<p className="font-pixel text-[11px] leading-[1.6] text-accent">
+						특수: {translateSpecial(def.stats.special)}
+					</p>
+					{(() => {
+						if (!def.stats.special) return null;
+						const configKey = def.stats.special.replace(/%/g, '');
+						const cfg = CC_AURA_CONFIGS[configKey];
+						if (!cfg) return null;
+						const effectLabel = def.stats.special.startsWith('stun')
+							? '스턴'
+							: '슬로우';
+						const aoeLabel = cfg.aoe ? '광역' : '단일';
+						return (
+							<p
+								className="font-pixel text-[10px] leading-[1.4]"
+								style={{ color: colors.textSecondary }}
+							>
+								{effectLabel} {(cfg.durationMs / 1000).toFixed(1)}s / 쿨{' '}
+								{(cfg.cooldownMs / 1000).toFixed(1)}s / {aoeLabel}
+							</p>
+						);
+					})()}
+				</div>
 			)}
 
 			{/* Enhancement section */}

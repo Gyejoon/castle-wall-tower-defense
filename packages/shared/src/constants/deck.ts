@@ -25,9 +25,30 @@ export interface DeckCardDef {
 	readonly maxUses?: number;
 }
 
+export const DEFAULT_DECK_IDS = ['archer', 'plasma', 'emp', 'shield'] as const;
+
 export const DEFAULT_DECK: readonly DeckCardDef[] = [
 	{ towerDefId: 'archer', energyCost: 10, role: 'attacker' },
 	{ towerDefId: 'plasma', energyCost: 10, role: 'splash' },
 	{ towerDefId: 'emp', energyCost: 20, role: 'slow' },
 	{ towerDefId: 'shield', energyCost: 20, role: 'stun' },
 ] as const;
+
+export function buildDeckCardsSafe(
+	towerIds: readonly string[],
+): readonly DeckCardDef[] {
+	const valid: DeckCardDef[] = [];
+	for (const id of towerIds) {
+		const tower = ALL_TOWERS.find((t) => t.id === id);
+		if (!tower) {
+			console.warn(`[buildDeckCardsSafe] Unknown tower id dropped: ${id}`);
+			continue;
+		}
+		valid.push({
+			towerDefId: id,
+			energyCost: tower.cost,
+			role: towerToRole(tower),
+		});
+	}
+	return valid.length > 0 ? valid : DEFAULT_DECK;
+}

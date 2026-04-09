@@ -2,6 +2,7 @@ import { EventBus, soundGenerator } from '@gld/phaser-game';
 import {
 	type CombatHudState,
 	DEFAULT_DECK,
+	DEFAULT_DECK_IDS,
 	DEFAULT_MAP_ID,
 	type DeckCardDef,
 	INITIAL_ENERGY,
@@ -14,8 +15,6 @@ import {
 } from '@gld/shared';
 import { create } from 'zustand';
 import { useMetaStore } from './metaStore';
-
-const DEFAULT_DECK_IDS = ['archer', 'plasma', 'emp', 'shield'];
 
 export type RunStatus =
 	| 'lobby'

@@ -151,7 +151,9 @@
 
 > **스턴 타워 LV.50 최종 배수**: cooldown ×0.71 (-29%), duration ×1.4 (+40%)
 > 코드 위치: `packages/shared/src/constants/meta.ts` — `stunCooldownMultiplier`, `stunDurationMultiplier`
-> 적용 대상: shield (T1), fortress (T2), holy_shrine (T4), divine_throne (T5)
+> 적용 대상:
+> - **Passive 스턴 타워** (shield T1 / holy_shrine T4 / divine_throne T5, `attackSpeed=0`): cooldown + duration 양쪽 스케일 적용
+> - **Active 스턴 타워** (fortress T2, `attackSpeed=1.0`): duration 스케일만 적용. 발동 cadence는 `attackInterval = 1000/attackSpeed`로 결정되며 `CC_AURA_CONFIGS.cooldownMs`는 참조하지 않음. 별도 cooldown 스케일은 attackSpeed 재설계가 필요하여 후속 세션에서 처리
 
 > MAX_TOWER_LEVEL = 50. unique→epic 승급에 LV.50 필요.
 

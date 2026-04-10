@@ -426,13 +426,6 @@ export class SoundGenerator {
 				type: 'square',
 				volume: 0.08,
 			},
-			disruptor: {
-				frequency: 700,
-				endFrequency: 350,
-				duration: 100,
-				type: 'square',
-				volume: 0.1,
-			},
 			fortress: {
 				frequency: 500,
 				endFrequency: 600,

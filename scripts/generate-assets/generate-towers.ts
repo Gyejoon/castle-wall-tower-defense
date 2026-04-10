@@ -683,25 +683,11 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
   const cx = ox + 32;
 
   if (tower.id === 'archer') {
-    // Simple arrow flight — no bow drawing
-    const arrowY = 38;
-    if (frame >= 1 && frame <= 5) {
-      const dist = (frame - 1) * 6;
-      // Arrow shaft
-      drawLine(ctx, cx + dist, arrowY, cx + dist + 8, arrowY, PALETTE.wood);
-      // Arrowhead
-      setPixel(ctx, cx + dist + 8, arrowY - 1, PALETTE.stoneLight);
-      setPixel(ctx, cx + dist + 8, arrowY + 1, PALETTE.stoneLight);
-      setPixel(ctx, cx + dist + 9, arrowY, PALETTE.stoneLight);
-      // Fletching
-      setPixel(ctx, cx + dist, arrowY - 1, PALETTE.fireRed);
-      setPixel(ctx, cx + dist, arrowY + 1, PALETTE.fireRed);
-    }
-    if (frame === 6) {
-      // Impact spark
-      setPixel(ctx, cx + 30, arrowY, PALETTE.gold);
-      setPixel(ctx, cx + 30, arrowY - 1, hexToRgba(PALETTE.gold, 0.5));
-      setPixel(ctx, cx + 30, arrowY + 1, hexToRgba(PALETTE.gold, 0.5));
+    // Brief muzzle flash only — no projectile
+    if (frame === 2 || frame === 3) {
+      setPixel(ctx, cx + 6, 38, PALETTE.gold);
+      setPixel(ctx, cx + 7, 37, hexToRgba(PALETTE.gold, 0.5));
+      setPixel(ctx, cx + 7, 39, hexToRgba(PALETTE.gold, 0.5));
     }
     return;
   }

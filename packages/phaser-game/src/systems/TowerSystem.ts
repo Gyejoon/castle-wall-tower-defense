@@ -24,6 +24,7 @@ interface TowerInstance {
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
+	idleTween?: Phaser.Tweens.Tween;
 	lastAttackTime: number;
 	lastAuraTime: number;
 }
@@ -169,6 +170,18 @@ export class TowerSystem {
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
+		const idleTween = this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: 1, to: 1.03 },
+			scaleY: { from: 1, to: 1.03 },
+			y: { from: sprite.y, to: sprite.y - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+			delay: (this.nextId * 137) % 1800,
+		});
+
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
@@ -179,6 +192,7 @@ export class TowerSystem {
 			),
 			base,
 			sprite,
+			idleTween,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
 		});
@@ -650,7 +664,10 @@ export class TowerSystem {
 			towerWorld.y - 20,
 			textureKey,
 		);
-		effect.setDisplaySize(64, 80);
+		effect.setDisplaySize(
+			TOWER_GRADE_VARIANT_IDS.has(towerDefId) ? 128 : 64,
+			TOWER_GRADE_VARIANT_IDS.has(towerDefId) ? 160 : 80,
+		);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
 		const restoreVisibility = () => {
@@ -702,6 +719,8 @@ export class TowerSystem {
 		if (!entry) return { success: false, refund: 0 };
 		const { key: targetKey, instance: targetInstance } = entry;
 
+		targetInstance.idleTween?.stop();
+		targetInstance.idleTween?.remove();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
 		this.towers.delete(targetKey);
@@ -738,6 +757,8 @@ export class TowerSystem {
 		if (this.destroyed) return;
 		this.destroyed = true;
 		for (const tower of this.towers.values()) {
+			tower.idleTween?.stop();
+			tower.idleTween?.remove();
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}

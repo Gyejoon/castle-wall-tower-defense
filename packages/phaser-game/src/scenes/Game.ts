@@ -31,8 +31,8 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
+	TERRAIN_FRAME_MAP,
 	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_GROUND_FRAMES,
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
@@ -444,11 +444,8 @@ export class GameScene extends Phaser.Scene {
 		for (let y = startY; y < endY; y++) {
 			for (let x = startX; x < endX; x++) {
 				const world = grid.gridToWorld(x, y);
-				const frame =
-					TINY_SWORDS_GROUND_FRAMES[
-						((((x % 2) + 2) % 2) + (((y % 2) + 2) % 2)) %
-							TINY_SWORDS_GROUND_FRAMES.length
-					];
+				const terrain = grid.getTerrainAt(x, y) ?? 'plain';
+				const frame = TERRAIN_FRAME_MAP[terrain];
 				const sprite = this.add.sprite(
 					world.x,
 					world.y,

@@ -79,6 +79,25 @@ export const TINY_SWORDS_TILESET_ASSETS: TinySwordsAssetEntry[] = [
 export const TINY_SWORDS_PRIMARY_TILESET = TINY_SWORDS_TILESET_ASSETS[0];
 export const TINY_SWORDS_GROUND_FRAMES = [0, 1] as const;
 
+import type { TerrainKind } from '@gld/shared';
+
+/**
+ * Tiny Swords Tilemap_color1 frame indices for each terrain type.
+ * The tileset is 9 columns × 6 rows (64×64 each). Frame = row*9 + col.
+ * These are placeholder indices — adjust after visual inspection.
+ */
+export const TERRAIN_FRAME_MAP: Record<TerrainKind, number> = {
+	plain: 0, // light grass (existing frame 0)
+	road: 12, // dirt path
+	forest: 20, // dark grass
+	bog: 28, // swamp-like
+	water: 36, // water
+	lava: 40, // warm tile (repurposed for lava with tint)
+	mountain: 44, // stone
+	hill: 1, // slightly different grass (existing frame 1)
+	cursed: 52, // dark tile
+};
+
 export const TINY_SWORDS_DECORATION_ASSETS: TinySwordsDecorationAssetEntry[] = [
 	{
 		key: 'tiny-swords-rock-1',

@@ -440,6 +440,13 @@ export class SoundGenerator {
 				type: 'triangle',
 				volume: 0.1,
 			},
+			disruptor: {
+				frequency: 800,
+				endFrequency: 400,
+				duration: 60,
+				type: 'sine',
+				volume: 0.1,
+			},
 			earth_golem: {
 				frequency: 100,
 				endFrequency: 50,
@@ -453,7 +460,33 @@ export class SoundGenerator {
 			this.play(recipe);
 
 			// Noise sub-layers for specific tower types
-			if (towerType === 'plasma' || towerType === 'nova_cannon') {
+			if (towerType === 'disruptor') {
+				// Snowball throw — crisp high white noise
+				this.playNoise({
+					noiseType: 'white',
+					duration: 30,
+					volume: 0.06,
+					filterType: 'highpass',
+					filterFreq: 2000,
+				});
+				// Snow impact — soft muffled thud
+				this.schedule(80, () => {
+					this.playNoise({
+						noiseType: 'white',
+						duration: 50,
+						volume: 0.08,
+						filterType: 'lowpass',
+						filterFreq: 400,
+					});
+					this.play({
+						frequency: 300,
+						endFrequency: 150,
+						duration: 40,
+						type: 'sine',
+						volume: 0.06,
+					});
+				});
+			} else if (towerType === 'plasma' || towerType === 'nova_cannon') {
 				// Launch thump — short brown noise burst
 				this.playNoise({
 					noiseType: 'brown',

@@ -522,8 +522,16 @@ export class TowerSystem {
 						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
 						: towerWorld.y;
 
-				// Twin archer: fire 2 arrows simultaneously
+				// Twin archer: fire 2 arrows, each with half damage
 				const shotCount = def.type === 'twin_archer' ? 2 : 1;
+				const shotBatch =
+					shotCount > 1
+						? pendingBatch.map((evt) => ({
+								...evt,
+								damage: Math.round(evt.damage / 2),
+							}))
+						: pendingBatch;
+
 				for (let shot = 0; shot < shotCount; shot++) {
 					let shotArrowIndex: number | undefined;
 					if (style === 'arrow' && shot > 0) {
@@ -537,7 +545,6 @@ export class TowerSystem {
 					} else {
 						shotArrowIndex = arrowIndex;
 					}
-					// Offset twin arrows slightly
 					const offsetY = shotCount > 1 ? (shot === 0 ? -4 : 4) : 0;
 					this.attackLines.push({
 						x1: fireOriginX,
@@ -552,11 +559,14 @@ export class TowerSystem {
 						arrowIndex: shotArrowIndex,
 						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
 						impactPending: hasProjectile,
-						pendingDamage: hasProjectile ? pendingBatch : undefined,
+						pendingDamage: hasProjectile ? shotBatch : undefined,
 						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 					});
 				}
-				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
+				// Nova cannon: skip muzzle VFX (barrel IS the visual)
+				if (def.type !== 'nova_cannon') {
+					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
+				}
 
 				if (!hasProjectile) {
 					// Beam: instant impact VFX

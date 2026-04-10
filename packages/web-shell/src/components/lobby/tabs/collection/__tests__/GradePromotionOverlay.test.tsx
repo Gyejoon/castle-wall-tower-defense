@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GradePromotionOverlay } from '../GradePromotionOverlay';
 
@@ -7,12 +7,7 @@ describe('GradePromotionOverlay', () => {
 		vi.useFakeTimers();
 		const onDone = vi.fn();
 		render(
-			<GradePromotionOverlay
-				fromGrade="normal"
-				toGrade="rare"
-				towerId="archer"
-				onDone={onDone}
-			/>,
+			<GradePromotionOverlay toGrade="rare" towerId="archer" onDone={onDone} />,
 		);
 		act(() => {
 			vi.advanceTimersByTime(1400);
@@ -24,26 +19,24 @@ describe('GradePromotionOverlay', () => {
 	it('renders new grade sprite src', () => {
 		const { container } = render(
 			<GradePromotionOverlay
-				fromGrade="normal"
 				toGrade="rare"
 				towerId="archer"
 				onDone={() => {}}
 			/>,
 		);
-		const img = container.querySelector('img')!;
+		const img = container.querySelector('img') as HTMLImageElement;
 		expect(img.getAttribute('src')).toBe('/assets/towers/archer-rare.png');
 	});
 
 	it('uses base sprite for normal grade', () => {
 		const { container } = render(
 			<GradePromotionOverlay
-				fromGrade="normal"
 				toGrade="normal"
 				towerId="archer"
 				onDone={() => {}}
 			/>,
 		);
-		const img = container.querySelector('img')!;
+		const img = container.querySelector('img') as HTMLImageElement;
 		expect(img.getAttribute('src')).toBe('/assets/towers/archer.png');
 	});
 });

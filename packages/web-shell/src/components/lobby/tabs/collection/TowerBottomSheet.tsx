@@ -41,7 +41,6 @@ export function TowerBottomSheet({
 		'success' | 'fail' | null
 	>(null);
 	const [promotion, setPromotion] = useState<{
-		from: TowerGrade;
 		to: TowerGrade;
 	} | null>(null);
 	const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -71,7 +70,6 @@ export function TowerBottomSheet({
 			if (result === 'success') {
 				setPromotionResult('success');
 				setPromotion({
-					from: grade,
 					to: promoConfig.nextGrade as TowerGrade,
 				});
 				pushToast('승급 성공!', 'success');
@@ -304,7 +302,6 @@ export function TowerBottomSheet({
 			)}
 			{promotion && (
 				<GradePromotionOverlay
-					fromGrade={promotion.from}
 					toGrade={promotion.to}
 					towerId={def.id}
 					onDone={() => setPromotion(null)}

@@ -31,8 +31,8 @@
 
 ```
 GridManager (terrain + buildable + paths 주입)
-    └─► StructureSystem  (scene, gridManager, structures)
     └─► PathfindingSystem (terrain cost grid)
+    └─► StructureSystem  (scene, gridManager, structures)
     └─► TowerSystem  (GridManager, PathfindingSystem, collection, spawnExitPairs)
     └─► UnitSystem   (GridManager)
         └─► WaveSystem   (UnitSystem, mapWaves, difficultyHpMult)
@@ -74,11 +74,11 @@ Game.ts ──────────────────────► Ev
 ```
 EventBus 리스너 해제
 TutorialSystem.destroy()
+StructureSystem.destroy()
 DamageNumberSystem.destroy()
 TowerSystem.destroy()
 UnitSystem.destroy()
 WaveSystem.destroy()
-StructureSystem.destroy()
 DeckSystem.reset()
 EnergySystem.reset()
 옵셔널 에셋 언로드

@@ -66,6 +66,7 @@ export class TowerSystem {
 		ttl: number;
 		maxTtl: number;
 		style: 'beam' | 'arc' | 'arrow';
+		towerType?: string;
 		arrowIndex?: number;
 		targetUnitId?: string;
 		impactPending?: boolean;
@@ -511,21 +512,50 @@ export class TowerSystem {
 					? 'vfx-explosion-sm'
 					: 'projectile-hit-flash';
 
-				this.attackLines.push({
-					x1: towerWorld.x,
-					y1: towerWorld.y,
-					x2: closestUnit.x,
-					y2: closestUnit.y,
-					color,
-					ttl: maxTtl,
-					maxTtl,
-					style,
-					arrowIndex,
-					targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
-					impactPending: hasProjectile,
-					pendingDamage: hasProjectile ? pendingBatch : undefined,
-					impactVfxKey: hasProjectile ? impactVfxKey : undefined,
-				});
+				// Nova cannon: fire from barrel tip, not tower center
+				const fireOriginX =
+					def.type === 'nova_cannon' && tower.barrelSprite
+						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
+						: towerWorld.x;
+				const fireOriginY =
+					def.type === 'nova_cannon' && tower.barrelSprite
+						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
+						: towerWorld.y;
+
+				// Twin archer: fire 2 arrows simultaneously
+				const shotCount = def.type === 'twin_archer' ? 2 : 1;
+				for (let shot = 0; shot < shotCount; shot++) {
+					let shotArrowIndex: number | undefined;
+					if (style === 'arrow' && shot > 0) {
+						const idx = this.arrowPool.findIndex(
+							(a, ai) => !a.visible && ai !== arrowIndex,
+						);
+						if (idx >= 0) {
+							shotArrowIndex = idx;
+							this.arrowPool[idx].setVisible(true);
+						}
+					} else {
+						shotArrowIndex = arrowIndex;
+					}
+					// Offset twin arrows slightly
+					const offsetY = shotCount > 1 ? (shot === 0 ? -4 : 4) : 0;
+					this.attackLines.push({
+						x1: fireOriginX,
+						y1: fireOriginY + offsetY,
+						x2: closestUnit.x,
+						y2: closestUnit.y + offsetY,
+						color,
+						ttl: maxTtl,
+						maxTtl,
+						style,
+						towerType: def.type,
+						arrowIndex: shotArrowIndex,
+						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
+						impactPending: hasProjectile,
+						pendingDamage: hasProjectile ? pendingBatch : undefined,
+						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
+					});
+				}
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 
 				if (!hasProjectile) {
@@ -718,10 +748,12 @@ export class TowerSystem {
 				const dy = line.y2 - line.y1;
 				const px = line.x1 + dx * t;
 				const py = line.y1 + dy * t - Math.sin(t * Math.PI) * 40; // parabolic arc height
-				// Boulder
-				this.attackGraphics.fillStyle(0x5a5a5a, alpha);
+				// Projectile appearance by tower type
+				const isIce =
+					line.towerType === 'disruptor' || line.towerType === 'stasis_field';
+				this.attackGraphics.fillStyle(isIce ? 0xa8def0 : 0x5a5a5a, alpha);
 				this.attackGraphics.fillCircle(px, py, 4);
-				this.attackGraphics.fillStyle(0x8c8c8c, alpha * 0.7);
+				this.attackGraphics.fillStyle(isIce ? 0xffffff : 0x8c8c8c, alpha * 0.7);
 				this.attackGraphics.fillCircle(px - 1, py - 1, 2);
 				// Trail dots
 				if (t > 0.1) {

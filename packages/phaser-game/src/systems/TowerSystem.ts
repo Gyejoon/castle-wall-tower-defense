@@ -18,7 +18,6 @@ import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
 import type { WorldGimmick } from './world-gimmicks/types';
-import { W3ArcaneGimmick } from './world-gimmicks/W3ArcaneGimmick';
 
 export interface TowerInstance {
 	data: PlacedTower;
@@ -312,13 +311,11 @@ export class TowerSystem {
 					closestUnit.element,
 				);
 				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
-				if (
-					this.worldGimmick instanceof W3ArcaneGimmick &&
-					this.worldGimmick.isTowerOnArcaneCircle(tower)
-				) {
-					baseDamage = Math.round(
-						baseDamage * (1 + this.worldGimmick.getCircleDamageBonus()),
-					);
+				if (this.worldGimmick) {
+					const bonus = this.worldGimmick.getDamageBonus(tower);
+					if (bonus > 0) {
+						baseDamage = Math.round(baseDamage * (1 + bonus));
+					}
 				}
 				const special = def.stats.special;
 

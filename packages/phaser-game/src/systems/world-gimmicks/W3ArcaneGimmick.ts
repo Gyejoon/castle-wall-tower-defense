@@ -76,6 +76,10 @@ export class W3ArcaneGimmick implements WorldGimmick {
 		return true; // arcane circles encourage placement, never block it
 	}
 
+	getDamageBonus(tower: TowerInstance): number {
+		return this.isTowerOnArcaneCircle(tower) ? this.cfg.damageBonus : 0;
+	}
+
 	destroy(): void {
 		this.activeArcaneCircles = [];
 	}
@@ -100,13 +104,16 @@ export class W3ArcaneGimmick implements WorldGimmick {
 		const cy =
 			half + Math.floor(Math.random() * (map.height - this.cfg.areaSize));
 
+		const startX = cx - half;
+		const startY = cy - half;
+		const endX = startX + this.cfg.areaSize - 1;
+		const endY = startY + this.cfg.areaSize - 1;
 		const now = this.ctx.getSceneTimeMs();
 		const stunUntil = now + this.cfg.stunMs;
 
 		for (const tower of this.ctx.getTowers()) {
-			const dx = Math.abs(tower.data.position.x - cx);
-			const dy = Math.abs(tower.data.position.y - cy);
-			if (dx <= half && dy <= half) {
+			const { x, y } = tower.data.position;
+			if (x >= startX && x <= endX && y >= startY && y <= endY) {
 				// Towers on arcane circles are immune
 				if (this.isTowerOnArcaneCircle(tower)) continue;
 				tower.disabledUntilMs = Math.max(tower.disabledUntilMs ?? 0, stunUntil);

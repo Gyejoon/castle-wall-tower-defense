@@ -48,6 +48,10 @@ export class W2FurnaceGimmick implements WorldGimmick {
 		return !this.furnaceTiles.some((t) => t.x === pos.x && t.y === pos.y);
 	}
 
+	getDamageBonus(_tower: TowerInstance): number {
+		return 0;
+	}
+
 	destroy(): void {
 		this.furnaceTiles = [];
 	}

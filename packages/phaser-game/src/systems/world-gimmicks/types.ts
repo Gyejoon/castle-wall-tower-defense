@@ -26,6 +26,8 @@ export interface WorldGimmick {
 	isTowerActive(tower: TowerInstance): boolean;
 	/** Tower placement UI consults this to block/allow placement on a given cell. */
 	canPlaceTowerAt(pos: Position): boolean;
+	/** Returns damage multiplier bonus for this tower (e.g. arcane circle +0.15). 0 = no bonus. */
+	getDamageBonus(tower: TowerInstance): number;
 	destroy(): void;
 }
 

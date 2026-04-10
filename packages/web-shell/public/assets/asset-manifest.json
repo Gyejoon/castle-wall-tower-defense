@@ -1269,6 +1269,24 @@
       "type": "image",
       "path": "assets/ui/stage-thumb-storm_citadel.png",
       "section": "ui"
+    },
+    {
+      "key": "structures-wall-stone",
+      "type": "image",
+      "path": "assets/structures/wall-stone.png",
+      "section": "preload"
+    },
+    {
+      "key": "structures-obelisk",
+      "type": "image",
+      "path": "assets/structures/obelisk.png",
+      "section": "preload"
+    },
+    {
+      "key": "structures-broken-tower",
+      "type": "image",
+      "path": "assets/structures/broken-tower.png",
+      "section": "preload"
     }
   ]
 }

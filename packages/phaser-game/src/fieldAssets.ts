@@ -296,3 +296,31 @@ export const TINY_SWORDS_DECORATION_ASSETS: TinySwordsDecorationAssetEntry[] = [
 export const TINY_SWORDS_DECORATION_BY_KEY = Object.fromEntries(
 	TINY_SWORDS_DECORATION_ASSETS.map((asset) => [asset.key, asset]),
 ) as Record<string, TinySwordsDecorationAssetEntry>;
+
+export interface StructureAssetEntry {
+	key: string;
+	kind: string;
+	variants: string[];
+	frameSize: { width: number; height: number };
+}
+
+export const STRUCTURE_ASSETS: StructureAssetEntry[] = [
+	{
+		key: 'structures-wall-stone',
+		kind: 'wall_stone',
+		variants: ['default', 'broken'],
+		frameSize: { width: 32, height: 32 },
+	},
+	{
+		key: 'structures-obelisk',
+		kind: 'obelisk',
+		variants: ['default'],
+		frameSize: { width: 32, height: 64 },
+	},
+	{
+		key: 'structures-broken-tower',
+		kind: 'broken_tower',
+		variants: ['default'],
+		frameSize: { width: 32, height: 64 },
+	},
+];

@@ -42,9 +42,16 @@ function makeBossCtx(overrides?: Partial<BossContext>): BossContext & {
 	};
 }
 
+function assertBehavior(
+	behavior: ReturnType<typeof createBossBehavior>,
+): asserts behavior is NonNullable<typeof behavior> {
+	expect(behavior).not.toBeNull();
+}
+
 describe('orcWarlord', () => {
 	it('does NOT summon at HP > 50%', () => {
-		const behavior = createBossBehavior('orc_warlord')!;
+		const behavior = createBossBehavior('orc_warlord');
+		assertBehavior(behavior);
 		const ctx = makeBossCtx();
 		behavior.onSpawn(ctx);
 		behavior.onDamageTaken(ctx, 0.8);
@@ -52,7 +59,8 @@ describe('orcWarlord', () => {
 	});
 
 	it('summons 4 battle_robot at HP ≤ 50%', () => {
-		const behavior = createBossBehavior('orc_warlord')!;
+		const behavior = createBossBehavior('orc_warlord');
+		assertBehavior(behavior);
 		const ctx = makeBossCtx();
 		behavior.onSpawn(ctx);
 		behavior.onDamageTaken(ctx, 0.5);
@@ -64,7 +72,8 @@ describe('orcWarlord', () => {
 	});
 
 	it('only summons once (second call at 30% HP does nothing)', () => {
-		const behavior = createBossBehavior('orc_warlord')!;
+		const behavior = createBossBehavior('orc_warlord');
+		assertBehavior(behavior);
 		const ctx = makeBossCtx();
 		behavior.onSpawn(ctx);
 		behavior.onDamageTaken(ctx, 0.5);
@@ -75,15 +84,18 @@ describe('orcWarlord', () => {
 
 describe('forgeMaster', () => {
 	it('does NOT seal before 10s', () => {
-		const behavior = createBossBehavior('forge_master')!;
-		const ctx = makeBossCtx({ sceneTimeMs: 0 });
-		behavior.onSpawn(ctx);
-		behavior.onTick(ctx, 9_999);
-		expect(ctx.disables).toHaveLength(0);
+		const behavior = createBossBehavior('forge_master');
+		assertBehavior(behavior);
+		const spawnCtx = makeBossCtx({ sceneTimeMs: 0 });
+		behavior.onSpawn(spawnCtx);
+		const tickCtx = makeBossCtx({ sceneTimeMs: 9_999 });
+		behavior.onTick(tickCtx, 1);
+		expect(tickCtx.disables).toHaveLength(0);
 	});
 
 	it('seals with __random__ at 10s', () => {
-		const behavior = createBossBehavior('forge_master')!;
+		const behavior = createBossBehavior('forge_master');
+		assertBehavior(behavior);
 		const spawnCtx = makeBossCtx({ sceneTimeMs: 0 });
 		behavior.onSpawn(spawnCtx);
 
@@ -96,7 +108,8 @@ describe('forgeMaster', () => {
 	});
 
 	it('seals again at 20s (interval repeats)', () => {
-		const behavior = createBossBehavior('forge_master')!;
+		const behavior = createBossBehavior('forge_master');
+		assertBehavior(behavior);
 
 		// onSpawn at t=0 initialises lastSealMs=0
 		behavior.onSpawn(makeBossCtx({ sceneTimeMs: 0 }));
@@ -117,7 +130,8 @@ describe('forgeMaster', () => {
 
 describe('corruptedArchmage', () => {
 	it('spawns a clone on onSpawn (isClone=true metadata)', () => {
-		const behavior = createBossBehavior('corrupted_archmage')!;
+		const behavior = createBossBehavior('corrupted_archmage');
+		assertBehavior(behavior);
 		const ctx = makeBossCtx();
 		behavior.onSpawn(ctx);
 		expect(ctx.spawns).toHaveLength(1);
@@ -127,7 +141,8 @@ describe('corruptedArchmage', () => {
 	});
 
 	it('does NOT spawn if boss.metadata.isClone is true (no recursion)', () => {
-		const behavior = createBossBehavior('corrupted_archmage')!;
+		const behavior = createBossBehavior('corrupted_archmage');
+		assertBehavior(behavior);
 		const ctx = makeBossCtx({
 			boss: {
 				instanceId: 'boss-clone',
@@ -143,17 +158,20 @@ describe('corruptedArchmage', () => {
 	});
 
 	it('isCcImmune returns true for corrupted_archmage', () => {
-		const behavior = createBossBehavior('corrupted_archmage')!;
+		const behavior = createBossBehavior('corrupted_archmage');
+		assertBehavior(behavior);
 		expect(behavior.isCcImmune()).toBe(true);
 	});
 
 	it('isCcImmune returns false for orc_warlord', () => {
-		const behavior = createBossBehavior('orc_warlord')!;
+		const behavior = createBossBehavior('orc_warlord');
+		assertBehavior(behavior);
 		expect(behavior.isCcImmune()).toBe(false);
 	});
 
 	it('isCcImmune returns false for forge_master', () => {
-		const behavior = createBossBehavior('forge_master')!;
+		const behavior = createBossBehavior('forge_master');
+		assertBehavior(behavior);
 		expect(behavior.isCcImmune()).toBe(false);
 	});
 });

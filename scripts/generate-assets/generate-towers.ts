@@ -566,14 +566,16 @@ function drawCatapultFireFrame(ctx: SKRSContext2D, ox: number, _tower: TowerAsse
   }
 }
 
-function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number) {
+function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number, skipBase = false) {
   // Catapult gets custom body rendering with animated arm
   if (tower.shape === 'catapult') {
     drawCatapultFireFrame(ctx, ox, tower, frame);
     return;
   }
 
-  drawTowerShape(ctx, ox, tower);
+  if (!skipBase) {
+    drawTowerShape(ctx, ox, tower);
+  }
   const cx = ox + 32;
   const t = frame / (FIRE_FRAME_COUNT - 1); // 0..1
 
@@ -708,17 +710,21 @@ export async function generate(): Promise<ManifestEntry[]> {
         });
       }
 
-      // Fire spritesheet — use legacy 64×80 path. drawFireFrame is
-      // calibrated for 64×80 (hardcoded cx = ox + 32 and y values like
-      // 38/40/34). Rendering it on the HQ canvas would shift all fire
-      // effects to the upper-left. Until drawFireFrame is refactored to
-      // accept a coordinate scale, pilot towers use legacy fire frames;
-      // the runtime renders them at 64×80 during the short attack animation.
+      // Fire spritesheet at 64×80 with HQ tower scaled down as base.
+      // drawFireFrame's fire effects are calibrated for 64×80 coords,
+      // so we render the HQ tower into a temp 128×160 canvas, scale it
+      // down to 64×80 as the base, then overlay fire effects only.
       {
         const fireW = 64 * FIRE_FRAME_COUNT;
         const { canvas, ctx } = makeCanvas(fireW, 80);
+        // Pre-render HQ tower once, reuse for all frames
+        const { canvas: hqTmp, ctx: hqCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawFn(hqCtx, 0, 0);
         for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-          drawFireFrame(ctx, f * 64, tower, f);
+          // Draw HQ tower scaled down to 64×80
+          ctx.drawImage(hqTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, f * 64, 0, 64, 80);
+          // Overlay fire effects only (skipBase=true)
+          drawFireFrame(ctx, f * 64, tower, f, true);
         }
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
         entries.push({

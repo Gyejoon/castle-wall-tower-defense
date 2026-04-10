@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { TiledRawMap } from '../src/maps/parseTiledMap';
+import type {
+	TiledObjectLayer,
+	TiledRawMap,
+	TiledTileLayer,
+} from '../src/maps/parseTiledMap';
 import { parseTiledMap } from '../src/maps/parseTiledMap';
 
 function makeRaw(overrides: Partial<TiledRawMap> = {}): TiledRawMap {
@@ -105,14 +109,22 @@ describe('parseTiledMap', () => {
 
 	it('throws when terrain GID is unknown', () => {
 		const bad = makeRaw();
-		const terrainLayer = bad.layers.find((l) => l.name === 'terrain') as any;
+		const terrainLayer = bad.layers.find(
+			(l): l is TiledTileLayer =>
+				l.name === 'terrain' && l.type === 'tilelayer',
+		);
+		if (!terrainLayer) throw new Error('missing terrain layer in test');
 		terrainLayer.data = [1, 1, 1, 999, 1, 1, 1, 1, 1];
 		expect(() => parseTiledMap(bad)).toThrow(/unknown terrain gid/i);
 	});
 
 	it('throws when path lane is disconnected', () => {
 		const bad = makeRaw();
-		const paths = bad.layers.find((l) => l.name === 'paths') as any;
+		const paths = bad.layers.find(
+			(l): l is TiledObjectLayer =>
+				l.name === 'paths' && l.type === 'objectgroup',
+		);
+		if (!paths) throw new Error('missing paths layer in test');
 		paths.objects[0].polyline = [
 			{ x: 0, y: 32 },
 			{ x: 64, y: 32 },
@@ -122,7 +134,11 @@ describe('parseTiledMap', () => {
 
 	it('parses a structure with blocksPlacement and blocksPath flags', () => {
 		const raw = makeRaw();
-		const structures = raw.layers.find((l) => l.name === 'structures') as any;
+		const structures = raw.layers.find(
+			(l): l is TiledObjectLayer =>
+				l.name === 'structures' && l.type === 'objectgroup',
+		);
+		if (!structures) throw new Error('missing structures layer in test');
 		structures.objects.push({
 			id: 10,
 			name: 'wall_0',
@@ -147,5 +163,25 @@ describe('parseTiledMap', () => {
 			blocksPlacement: true,
 			blocksPath: true,
 		});
+	});
+
+	it('includes blocked placement markers from the objects layer', () => {
+		const raw = makeRaw();
+		const objects = raw.layers.find(
+			(l): l is TiledObjectLayer =>
+				l.name === 'objects' && l.type === 'objectgroup',
+		);
+		if (!objects) throw new Error('missing objects layer in test');
+		objects.objects.push({
+			id: 20,
+			name: 'blocked_corner',
+			type: 'blocked_placement',
+			x: 64,
+			y: 64,
+			width: 0,
+			height: 0,
+		});
+		const result = parseTiledMap(raw);
+		expect(result.blockedPlacementPoints).toContainEqual({ x: 2, y: 2 });
 	});
 });

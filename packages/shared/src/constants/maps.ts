@@ -4,20 +4,20 @@ import type { Position } from '../types/grid';
 import type { MapLayout } from '../types/map';
 
 export {
+	ALL_MAPS,
 	FOREST_GATE_MAP,
+	getAllPathCells,
+	getMapPaths,
 	LAVA_FORTRESS_MAP,
 	STORM_CITADEL_MAP,
-	ALL_MAPS,
-	getMapPaths,
-	getAllPathCells,
 } from '../maps';
 
 import {
+	getMapById as _getMapById,
 	FOREST_GATE_MAP,
+	getMapPaths,
 	LAVA_FORTRESS_MAP,
 	STORM_CITADEL_MAP,
-	getMapById as _getMapById,
-	getMapPaths,
 } from '../maps';
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {
@@ -34,10 +34,7 @@ export function getMapById(mapId: string): MapLayout {
 	return map;
 }
 
-export function isMapUnlocked(
-	map: MapLayout,
-	playerLevel: number,
-): boolean {
+export function isMapUnlocked(map: MapLayout, playerLevel: number): boolean {
 	return map.unlockLevel === undefined || playerLevel >= map.unlockLevel;
 }
 

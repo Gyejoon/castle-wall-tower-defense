@@ -1,9 +1,9 @@
 import { TERRAIN_BUILDABLE } from '../constants/terrain';
 import type { Position } from '../types/grid';
 import type { MapLayout } from '../types/map';
-import { parseTiledMap, type TiledRawMap } from './parseTiledMap';
 import forestGateRaw from './forest-gate.tmj.json';
 import lavaFortressRaw from './lava-fortress.tmj.json';
+import { parseTiledMap, type TiledRawMap } from './parseTiledMap';
 import stormCitadelRaw from './storm-citadel.tmj.json';
 
 /**

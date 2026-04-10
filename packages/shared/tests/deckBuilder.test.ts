@@ -3,26 +3,24 @@ import { buildDeckCardsSafe, DEFAULT_DECK } from '../src';
 import { buildDeckCards, towerToRole } from '../src/constants/deck';
 import { ALL_TOWERS } from '../src/constants/towers';
 
+function findTower(id: string) {
+	const tower = ALL_TOWERS.find((t) => t.id === id);
+	if (!tower) throw new Error(`missing tower fixture: ${id}`);
+	return tower;
+}
+
 describe('towerToRole', () => {
 	it('maps splash tower to splash role', () => {
-		const plasma = ALL_TOWERS.find((t) => t.id === 'plasma');
-		expect(plasma).toBeDefined();
-		expect(towerToRole(plasma!)).toBe('splash');
+		expect(towerToRole(findTower('plasma'))).toBe('splash');
 	});
 	it('maps slow tower to slow role', () => {
-		const emp = ALL_TOWERS.find((t) => t.id === 'emp');
-		expect(emp).toBeDefined();
-		expect(towerToRole(emp!)).toBe('slow');
+		expect(towerToRole(findTower('emp'))).toBe('slow');
 	});
 	it('maps stun tower to stun role', () => {
-		const shield = ALL_TOWERS.find((t) => t.id === 'shield');
-		expect(shield).toBeDefined();
-		expect(towerToRole(shield!)).toBe('stun');
+		expect(towerToRole(findTower('shield'))).toBe('stun');
 	});
 	it('maps damage tower to attacker role', () => {
-		const archer = ALL_TOWERS.find((t) => t.id === 'archer');
-		expect(archer).toBeDefined();
-		expect(towerToRole(archer!)).toBe('attacker');
+		expect(towerToRole(findTower('archer'))).toBe('attacker');
 	});
 	it('categorizes all 18 towers without error', () => {
 		for (const tower of ALL_TOWERS) {

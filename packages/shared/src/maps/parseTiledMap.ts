@@ -178,7 +178,8 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 	const primaryIndex = laneObjects.findIndex((o) =>
 		prop<boolean>(o.properties, 'isPrimary', false),
 	);
-	const primary = primaryIndex >= 0 ? laneObjects[primaryIndex] : laneObjects[0];
+	const primary =
+		primaryIndex >= 0 ? laneObjects[primaryIndex] : laneObjects[0];
 	const primaryPath = polylineToCells(primary, tileSize);
 	const allLanes = laneObjects.map((o, i) =>
 		i === (primaryIndex >= 0 ? primaryIndex : 0)
@@ -203,6 +204,14 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 				blockedPlacementPoints.push({ x, y });
 			}
 		}
+	}
+	for (const marker of objectsLayer.objects.filter(
+		(o) => o.type === 'blocked_placement',
+	)) {
+		blockedPlacementPoints.push({
+			x: Math.round(marker.x / tileSize),
+			y: Math.round(marker.y / tileSize),
+		});
 	}
 	for (const s of structures) {
 		if (s.blocksPlacement) blockedPlacementPoints.push(s.position);

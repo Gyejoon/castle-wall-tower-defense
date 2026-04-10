@@ -132,7 +132,26 @@
       "y": 0,
       "opacity": 1,
       "visible": true,
-      "objects": []
+      "objects": [
+        {
+          "id": 100,
+          "name": "blocked_top_left",
+          "type": "blocked_placement",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": 101,
+          "name": "blocked_bottom_right",
+          "type": "blocked_placement",
+          "x": 224,
+          "y": 544,
+          "width": 0,
+          "height": 0
+        }
+      ]
     }
   ]
 }

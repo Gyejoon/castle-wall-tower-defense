@@ -48,8 +48,10 @@ describe('CC aura configs', () => {
 
 	it('stun_aoe_global has longest cooldown and duration', () => {
 		const global = CC_AURA_CONFIGS.stun_aoe_global;
-		expect(global.cooldownMs).toBe(5000);
-		expect(global.durationMs).toBe(2000);
-		expect(global.aoe).toBe(true);
+		expect(global).toEqual({
+			cooldownMs: 7000,
+			durationMs: 2000,
+			aoe: true,
+		});
 	});
 });

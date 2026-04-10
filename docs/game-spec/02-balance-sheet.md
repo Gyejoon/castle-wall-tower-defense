@@ -1,6 +1,6 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-08  
+> **Last Updated:** 2026-04-09  
 > **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
 > 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
 
@@ -144,10 +144,16 @@
 
 | 구간 | 집중 공격형 | 다중 공격형 | 슬로우 | 스턴 |
 |------|----------|----------|------|------|
-| LV.1~10 | atk +2/lv | atk +3/lv | cooldown -2%/lv | — |
-| LV.11~20 | atk +5%/lv | splash_radius +3%/lv | slow_duration +3%/lv | — |
-| LV.21~30 | armor_pen +1/lv | atk +8%/lv | target_count +1 @25,30 | — |
-| LV.31~50 | (미정 — 추후 밸런싱) | (미정) | (미정) | — |
+| LV.1~10 | atk +2/lv | atk +3/lv | cooldown -2%/lv | cooldown -1%/lv (누적 -9%) |
+| LV.11~20 | atk +5%/lv | splash_radius +3%/lv | slow_duration +3%/lv | cd -1%/lv + duration +2%/lv |
+| LV.21~30 | armor_pen +1/lv | atk +8%/lv | target_count +1 @25,30 | cooldown -1%/lv (누적 -29%) |
+| LV.31~50 | (미정) | (미정) | (미정) | duration +1%/lv (누적 dur +40%) |
+
+> **스턴 타워 LV.50 최종 배수**: cooldown ×0.71 (-29%), duration ×1.4 (+40%)
+> 코드 위치: `packages/shared/src/constants/meta.ts` — `stunCooldownMultiplier`, `stunDurationMultiplier`
+> 적용 대상:
+> - **Passive 스턴 타워** (shield T1 / holy_shrine T4 / divine_throne T5, `attackSpeed=0`): cooldown + duration 양쪽 스케일 적용
+> - **Active 스턴 타워** (fortress T2, `attackSpeed=1.0`): duration 스케일만 적용. 발동 cadence는 `attackInterval = 1000/attackSpeed`로 결정되며 `CC_AURA_CONFIGS.cooldownMs`는 참조하지 않음. 별도 cooldown 스케일은 attackSpeed 재설계가 필요하여 후속 세션에서 처리
 
 > MAX_TOWER_LEVEL = 50. unique→epic 승급에 LV.50 필요.
 
@@ -291,10 +297,49 @@ basePower:
 | 2026-04-08 | 물리 충돌 시스템 | 지상 유닛 겹침 방지, CC 연쇄, 비행 면제(titan) | 전술 깊이 증가, CC 타워 가치 상승 |
 | 2026-04-08 | 웨이브 테마 배치 | 3맵 10웨이브를 아키타입 테마로 재구성 (속도/탱크/혼합/보스) | 덱 다양성 요구, 전략적 변주 |
 | 2026-04-08 | 타워 판매 UI 개선 | "E+5" → 에너지 아이콘+숫자 (DeckDock/TopHud 패턴 통일) | 시각적 일관성 |
+| 2026-04-09 | arcane_spire 너프 | damage 50→35, range 6→5 (DPS 75→52.5) | T4 최고 사거리+관통+DPS 3박자로 정답 타워 고정. wind_spire(T3)와 근접한 수치로 재조정 (#104) |
+| 2026-04-09 | divine_throne 쿨다운 너프 | stun_aoe_global cooldownMs 5000→7000 | 글로벌 2초 스턴을 5초마다 → 7초마다. 글로벌 컨셉 유지한 채 빈도만 너프 (#103) |
+| 2026-04-09 | 스턴 타워 레벨 성장 공식 신설 | shield/fortress/holy_shrine/divine_throne 모두 cooldown -29%, duration +40% @LV.50 | 기존 스턴 타워는 레벨업 효과 미정의 → 실질 성장률 0. `stunCooldownMultiplier`/`stunDurationMultiplier` 도입 (#99) |
+| 2026-04-09 | 속성 상성 §13 섹션 추가 + UI CC 뱃지 | 밸런스 시트에 ELEMENT_MATCHUP 문서화, TowerBottomSheet에 CC duration/cooldown/aoe + range 999 "전체 맵" 뱃지 | 스펙 단일 진실 원천 유지, UI 가시성 개선 (#105, #103) |
 
 ---
 
-## 13. 미결 이슈
+## 13. 속성 상성 (Element Matchup)
+
+> 코드 위치: `packages/shared/src/constants/elements.ts` — `ELEMENT_MATCHUP`
+
+| 공격 \ 방어 | fire | water | lightning | neutral |
+|---|---|---|---|---|
+| fire | ×1.0 | **×0.7** | ×1.3 | ×1.0 |
+| water | ×1.3 | ×1.0 | **×0.7** | ×1.0 |
+| lightning | **×0.7** | ×1.3 | ×1.0 | ×1.0 |
+| neutral | ×1.0 | ×1.0 | ×1.0 | ×1.0 |
+
+### 상성 관계 요약
+- **fire ↔ water**: water 우세 (물이 불을 끈다)
+- **water ↔ lightning**: lightning 우세 (전기가 물을 친다)
+- **lightning ↔ fire**: fire 우세 (불이 번개를 삼킨다)
+- **neutral**: 모든 속성에 ×1.0 (유불리 없음)
+
+### 데미지 계산 순서
+1. 기본 데미지 = `baseDamage × enhancementStatMultiplier(level) × (1 + GRADE_BONUS[grade])`
+2. 속성 배수 적용 = `× getElementMultiplier(tower.element, enemy.element)`
+3. splash 스플래시 감쇠 = `× 0.5` (splash 대상에만)
+4. armor 감산 = `Math.max(1, result - enemy.armor)` (단 §7 방어 무시 대상 타워 제외)
+
+### 타워 속성 분포
+| 속성 | 타워 ID |
+|------|---------|
+| fire | plasma(중립 → 현재 neutral), nova_cannon, flame_tower, dragon_nest |
+| water | emp, disruptor, stasis_field |
+| lightning | wind_spire, arcane_spire, celestial |
+| neutral | 그 외 (archer, twin_archer, earth_golem, shield, fortress, holy_shrine, world_tree, divine_throne) |
+
+> plasma는 현재 `element: 'neutral'`로 정의되어 있어 상성 적용 없음. 속성 부여는 별도 밸런싱 검토 필요.
+
+---
+
+## 14. 미결 이슈
 
 - [ ] `missions.ts` — use_element 추가, 범위 조정 코드 반영
 - [ ] use_element 주간 속성 랜덤 지정 기능 (매주 화/수/번개 중 1개)

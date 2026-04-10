@@ -19,6 +19,21 @@ export function enhancementStatMultiplier(level: number): number {
 	return 1 + (level - 1) * 0.03;
 }
 
+export function stunCooldownMultiplier(level: number): number {
+	// LV.1~10: -1%/lv (누적 -9%), LV.11~30: -1%/lv 추가 (누적 -29%), LV.31~50: 플래토
+	if (level <= 10) return 1 - (level - 1) * 0.01;
+	if (level <= 30) return 0.91 - (level - 10) * 0.01;
+	return 0.71;
+}
+
+export function stunDurationMultiplier(level: number): number {
+	// LV.1~10: 1.0, LV.11~20: +2%/lv (1.0→1.2), LV.21~30: 플래토, LV.31~50: +1%/lv (1.2→1.4)
+	if (level <= 10) return 1.0;
+	if (level <= 20) return 1.0 + (level - 10) * 0.02;
+	if (level <= 30) return 1.2;
+	return 1.2 + (level - 30) * 0.01;
+}
+
 export const MAX_TOWER_LEVEL = 50;
 
 export const PROMOTION_CONFIG = {

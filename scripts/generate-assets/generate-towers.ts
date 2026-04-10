@@ -674,6 +674,65 @@ function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, fra
   }
 }
 
+/**
+ * Simplified fire effects for pilot towers.
+ * Archer: arrow only (no bow/bowstring), flame_tower: fireball only.
+ * Other shapes fall back to the standard drawFireFrame effects.
+ */
+function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number): void {
+  const cx = ox + 32;
+
+  if (tower.id === 'archer') {
+    // Simple arrow flight — no bow drawing
+    const arrowY = 38;
+    if (frame >= 1 && frame <= 5) {
+      const dist = (frame - 1) * 6;
+      // Arrow shaft
+      drawLine(ctx, cx + dist, arrowY, cx + dist + 8, arrowY, PALETTE.wood);
+      // Arrowhead
+      setPixel(ctx, cx + dist + 8, arrowY - 1, PALETTE.stoneLight);
+      setPixel(ctx, cx + dist + 8, arrowY + 1, PALETTE.stoneLight);
+      setPixel(ctx, cx + dist + 9, arrowY, PALETTE.stoneLight);
+      // Fletching
+      setPixel(ctx, cx + dist, arrowY - 1, PALETTE.fireRed);
+      setPixel(ctx, cx + dist, arrowY + 1, PALETTE.fireRed);
+    }
+    if (frame === 6) {
+      // Impact spark
+      setPixel(ctx, cx + 30, arrowY, PALETTE.gold);
+      setPixel(ctx, cx + 30, arrowY - 1, hexToRgba(PALETTE.gold, 0.5));
+      setPixel(ctx, cx + 30, arrowY + 1, hexToRgba(PALETTE.gold, 0.5));
+    }
+    return;
+  }
+
+  if (tower.id === 'flame_tower') {
+    // Fireball flight — no charge animation
+    const fireY = 34;
+    if (frame >= 1 && frame <= 5) {
+      const dist = (frame - 1) * 6;
+      // Fireball core
+      drawRect(ctx, cx + dist + 2, fireY - 2, 4, 4, '#f5b23b');
+      drawRect(ctx, cx + dist + 3, fireY - 1, 2, 2, '#ffe27a');
+      // Flame trail
+      if (dist > 0) {
+        drawRect(ctx, cx + dist - 2, fireY - 1, 3, 2, '#c54120');
+        setPixel(ctx, cx + dist - 3, fireY, hexToRgba('#c54120', 0.5));
+      }
+    }
+    if (frame === 6) {
+      // Impact burst
+      fillCircle(ctx, cx + 30, fireY, 3, '#c54120');
+      setPixel(ctx, cx + 28, fireY - 2, '#f5b23b');
+      setPixel(ctx, cx + 32, fireY + 2, '#f5b23b');
+    }
+    return;
+  }
+
+  // All other pilot towers: use standard fire effects (skipBase)
+  drawFireFrame(ctx, ox, tower, frame, true);
+}
+
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const entries: ManifestEntry[] = [];
@@ -723,8 +782,8 @@ export async function generate(): Promise<ManifestEntry[]> {
         for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
           // Draw HQ tower scaled down to 64×80
           ctx.drawImage(hqTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, f * 64, 0, 64, 80);
-          // Overlay fire effects only (skipBase=true)
-          drawFireFrame(ctx, f * 64, tower, f, true);
+          // Overlay simplified fire effects for pilot towers
+          drawPilotFireEffect(ctx, f * 64, tower, f);
         }
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
         entries.push({

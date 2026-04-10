@@ -5,11 +5,10 @@ import { useMetaStore } from '../stores/metaStore';
 
 export function useMissionTracker() {
 	const progressMission = useMetaStore((s) => s.progressMission);
-	// runId가 바뀔 때마다 effect 재실행 → maxWaveThisRun 리셋 보장 (game-over 없는 씬 종료 포함)
-	const _runId = useGameStore((s) => s.runId);
+	const runId = useGameStore((s) => s.runId);
 	const maxWaveThisRun = useRef(0);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: _runId is an intentional trigger dependency so the effect re-subscribes and resets maxWaveThisRun whenever a new run starts
+	// biome-ignore lint/correctness/useExhaustiveDependencies: runId is an intentional trigger dependency so the effect re-subscribes and resets maxWaveThisRun whenever a new run starts
 	useEffect(() => {
 		maxWaveThisRun.current = 0;
 
@@ -42,5 +41,5 @@ export function useMissionTracker() {
 			EventBus.off('boss-defeated', onBossDefeated);
 			EventBus.off('game-over', onGameOver);
 		};
-	}, [progressMission, _runId]);
+	}, [progressMission, runId]);
 }

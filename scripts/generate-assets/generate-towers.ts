@@ -739,19 +739,27 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
   }
 
   if (tower.id === 'earth_golem') {
-    // Golem throws a rock — arm raise + rock arc
-    const throwX = cx + 8;
-    const throwY = 36;
+    // Golem throws rock with BOTH arms — raise overhead, hurl forward
 
     if (frame === 1) {
-      // Arm raised — rock above head
-      drawRect(ctx, cx + 14, 28, 6, 4, '#6a5a3a');
-      fillCircle(ctx, cx + 17, 26, 3, PALETTE.stoneDark);
-      setPixel(ctx, cx + 16, 24, PALETTE.stoneLight);
+      // Both arms raised overhead, holding boulder
+      // Left arm up
+      drawRect(ctx, cx - 10, 24, 4, 8, '#6a5a3a');
+      drawRect(ctx, cx - 8, 20, 4, 4, '#7a6a4a');
+      // Right arm up
+      drawRect(ctx, cx + 6, 24, 4, 8, '#6a5a3a');
+      drawRect(ctx, cx + 4, 20, 4, 4, '#7a6a4a');
+      // Boulder held between hands
+      fillCircle(ctx, cx, 18, 4, PALETTE.stoneDark);
+      setPixel(ctx, cx - 1, 16, PALETTE.stoneLight);
+      setPixel(ctx, cx + 1, 16, PALETTE.stoneLight);
     }
     if (frame === 2) {
-      // Arm forward — rock released
-      drawRect(ctx, cx + 18, 32, 6, 3, '#6a5a3a');
+      // Both arms swinging forward — boulder released
+      // Left arm forward
+      drawRect(ctx, cx - 4, 28, 8, 3, '#6a5a3a');
+      // Right arm forward
+      drawRect(ctx, cx + 4, 28, 8, 3, '#7a6a4a');
     }
     if (frame >= 3 && frame <= 5) {
       // Rock flying in arc

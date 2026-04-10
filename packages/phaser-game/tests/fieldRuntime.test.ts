@@ -128,6 +128,7 @@ describe('GameScene field runtime', () => {
 	it('renders a single portrait field from raw Tiny Swords assets', async () => {
 		const addImage = vi.fn(() => createImage());
 		const addSprite = vi.fn(() => createImage());
+		const addTileSprite = vi.fn(() => createImage());
 		const addGraphics = vi.fn(() => createGraphics());
 		const addText = vi.fn(() => createText());
 		const tilemapData = {
@@ -165,6 +166,7 @@ describe('GameScene field runtime', () => {
 			add: {
 				image: addImage,
 				sprite: addSprite,
+				tileSprite: addTileSprite,
 				graphics: addGraphics,
 				text: addText,
 			},

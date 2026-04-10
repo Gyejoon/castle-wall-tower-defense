@@ -413,18 +413,30 @@ export class GameScene extends Phaser.Scene {
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
+	/** Center-fill grass frame index (row 1 col 1) — no edge decorations, tiles seamlessly. */
+	private static readonly GRASS_CENTER_FRAME = 10;
+
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
 		const tile = this.playerGrid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Solid ground fill — one seamless rectangle, no tile seams
-		const groundGfx = this.add.graphics();
-		const fillColor = dark ? 0x3a4558 : theme.groundFill;
-		groundGfx.fillStyle(fillColor, 1);
-		groundGfx.fillRect(0, 0, canvasW, canvasH);
-		groundGfx.setDepth(0);
+		// Seamless grass ground — tileSprite repeats one frame across the entire canvas
+		const grassTile = this.add.tileSprite(
+			canvasW / 2,
+			canvasH / 2,
+			canvasW,
+			canvasH,
+			TINY_SWORDS_PRIMARY_TILESET.key,
+			GameScene.GRASS_CENTER_FRAME,
+		);
+		grassTile.setDepth(0);
+		if (dark) {
+			grassTile.setTint(0x6b7899);
+		} else if (theme.groundTint !== 0xffffff) {
+			grassTile.setTint(theme.groundTint);
+		}
 
 		// Road tiles only for path cells
 		const roadFrame = TERRAIN_FRAME_MAP.road;

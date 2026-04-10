@@ -41,6 +41,10 @@ const manifest = JSON.parse(
 	}>;
 };
 
+// All 18 towers now have grade variants
+const PILOT_TOWER_IDS = ALL_TOWERS.map((t) => t.id);
+const GRADE_VARIANTS = ['rare', 'unique', 'epic'] as const;
+
 describe('asset integration', () => {
 	it('Preloader queues every tower sprite used by TowerSystem', async () => {
 		vi.stubGlobal('document', {
@@ -82,13 +86,25 @@ describe('asset integration', () => {
 		const towerImageCalls = image.mock.calls.filter(([key]) =>
 			String(key).startsWith('tower-'),
 		);
-		expect(towerImageCalls).toHaveLength(ALL_TOWERS.length);
+		// 18 base + 18×3 grade + 1 nova_cannon-barrel = 73
+		expect(towerImageCalls).toHaveLength(
+			ALL_TOWERS.length + PILOT_TOWER_IDS.length * GRADE_VARIANTS.length + 1,
+		);
 
 		for (const tower of ALL_TOWERS) {
 			expect(image).toHaveBeenCalledWith(
 				`tower-${tower.id}`,
 				`assets/towers/${tower.id}.png`,
 			);
+		}
+
+		for (const towerId of PILOT_TOWER_IDS) {
+			for (const grade of GRADE_VARIANTS) {
+				expect(image).toHaveBeenCalledWith(
+					`tower-${towerId}-${grade}`,
+					`assets/towers/${towerId}-${grade}.png`,
+				);
+			}
 		}
 
 		for (const asset of TINY_SWORDS_TILESET_ASSETS) {

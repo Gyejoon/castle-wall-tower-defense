@@ -312,5 +312,28 @@ export function drawIsoShadow(ctx: SKRSContext2D, cx: number, cy: number, rx: nu
   }
 }
 
+// === Isometric Cube ===
+export function drawIsoCube(
+  ctx: SKRSContext2D,
+  cx: number, cy: number,
+  hw: number, height: number,
+  topColor: string, leftColor: string, rightColor: string,
+): void {
+  const hh = Math.round(hw / 2);
+  for (let dy = -hh; dy <= hh; dy++) {
+    const ratio = 1 - Math.abs(dy) / hh;
+    const w = Math.round(hw * ratio);
+    for (let dx = -w; dx <= w; dx++) setPixel(ctx, cx + dx, cy + dy, topColor);
+  }
+  for (let h = 1; h <= height; h++) {
+    for (let row = 0; row <= hh; row++) {
+      const ratio = 1 - row / hh;
+      const w = Math.round(hw * ratio);
+      for (let dx = -w; dx < 0; dx++) setPixel(ctx, cx + dx, cy + row + h, leftColor);
+      for (let dx = 0; dx <= w; dx++) setPixel(ctx, cx + dx, cy + row + h, rightColor);
+    }
+  }
+}
+
 // === Manifest ===
 export type ManifestEntry = AssetManifestEntry;

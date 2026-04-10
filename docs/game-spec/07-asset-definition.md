@@ -90,7 +90,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 | 파일 | 해상도 | 프레임 | 설명 |
 |------|-------|-------|------|
-| `tower-{id}.png` | 64×80 | 1 (static) | 배치 상태 |
+| `tower-{id}.png` | 128×160 | 1 (static) | 배치 상태 (런타임 `setDisplaySize(64,80)`으로 표시) |
 | `tower-{id}-fire.png` | 512×80 | 8 (spritesheet) | 공격 애니메이션 (충전→발사→비행→잔상→복귀) |
 
 ### 발사체 스타일
@@ -120,6 +120,27 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | 3 | 유니크 | 1.10x | 속성 색 글로우 |
 | 4 | 에픽 | 1.15x | 메탈릭 + 오라 |
 | 5 | 전설 | 1.20x | 방사형 + 파티클 |
+
+### 3.5 타워 HQ 스프라이트 규격 (2026-04-10~)
+
+- 대상: 전체 18종 (파일럿 8종 + 나머지 10종 모두 전환 완료)
+- 스타일: `drawIsoCube` 기반 중세 픽셀 아트 (하드 엣지, PALETTE 색상)
+- 해상도: 정적 스프라이트 128×160, fire spritesheet 64×80×8=512×80 (HQ base를 64×80으로 축소 + fire 이펙트 overlay)
+- Grade variant: normal/rare/unique/epic 4종 (18×4=72 정적 스프라이트)
+  - 에셋 파일명: `assets/towers/{id}.png`, `assets/towers/{id}-rare.png`, `assets/towers/{id}-unique.png`, `assets/towers/{id}-epic.png`
+  - 매니페스트 key: `tower-{id}`, `tower-{id}-rare`, `tower-{id}-unique`, `tower-{id}-epic`
+  - Normal은 base 스프라이트, rare/unique/epic은 공통 decoration 헬퍼로 overlay
+- Grade decoration 헬퍼: `scripts/generate-assets/towers/grade-decoration.ts`
+  - rare: 청록 배너 + V 트림
+  - unique: rare + 보라 크리스탈 + glow
+  - epic: unique + 금색 아우라 + 부유 파편
+- 투사체 속도: `TowerStats.projectileSpeed` (tiles/sec). arc/arrow 타워는 투사체 비행 시간만큼 데미지 지연. beam 타워는 즉시
+  - arrow (archer/twin_archer): 8, arc-slow (plasma/nova_cannon/earth_golem): 3~4, arc-mid (disruptor/dragon_nest): 5, arc-fast (celestial): 6
+  - beam (emp/flame_tower/wind_spire/arcane_spire): 생략 = 즉시 적중
+- idle animation: Phaser runtime tween (scale pulse 1.03x, 1800ms yoyo, Sine.InOut, 위상 offset)
+- 승급 연출: 로비 `GradePromotionOverlay` one-shot (1.2s), React + CSS transition
+- 런타임 표시: `setDisplaySize(64, 80)`으로 그리드 크기 정규화
+- 공성대포(nova_cannon): body(128×160) + barrel(32×16) 분리. barrel은 별도 스프라이트로 가장 가까운 적 방향을 상시 추적
 
 ---
 
@@ -304,3 +325,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
 | 2026-04-10 | §1, §2, §5, §6 | 일반 몬스터 4종 에셋 강화: 3-tone+1px 아웃라인, walk 8f + idle 6f + death 6f, 유닛별 실루엣 훅, stealth_drone 추상형→캐릭터형, 공용 unit-death 폐기, §1 spritesheet 규격 idle/death 추가, 보스 §6 후속 이슈 주석 |
+| 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |

@@ -51,6 +51,7 @@ function createGraphics() {
 
 function createImage() {
 	return {
+		setDisplaySize: vi.fn().mockReturnThis(),
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
 		destroy: vi.fn(),
@@ -69,6 +70,9 @@ function createScene() {
 		},
 		anims: {
 			exists: vi.fn(() => false),
+		},
+		tweens: {
+			add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
 		},
 	};
 }

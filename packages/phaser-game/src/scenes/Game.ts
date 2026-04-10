@@ -354,6 +354,10 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private cacheDecorationData(): void {
+		if (!this.cache.tilemap.has(this.currentMap.tilemapKey)) {
+			this.decorationTiles = [];
+			return;
+		}
 		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
 		const decorLayer = tilemap.getObjectLayer?.('decorations');
 		if (!decorLayer) {

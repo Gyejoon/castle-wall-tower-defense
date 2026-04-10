@@ -176,6 +176,7 @@ describe('GameScene field runtime', () => {
 					})),
 				},
 				tilemap: {
+					has: vi.fn(() => true),
 					exists: vi.fn(() => false),
 					remove: vi.fn(),
 				},

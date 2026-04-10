@@ -1,5 +1,10 @@
-import type { GridConfig } from '@gld/shared';
-import { BOARD_TOP_PADDING, FOREST_GATE_MAP, ORTHO_TILE } from '@gld/shared';
+import type { GridConfig, MapLayout } from '@gld/shared';
+import {
+	BOARD_TOP_PADDING,
+	FOREST_GATE_MAP,
+	ORTHO_TILE,
+	type TerrainKind,
+} from '@gld/shared';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics
@@ -32,6 +37,35 @@ const TEST_CONFIG: GridConfig = {
 	spawnPoint: { x: 0, y: 5 },
 	exitPoint: { x: 5, y: 5 },
 };
+
+function makeTerrainMap(
+	terrain: TerrainKind[][],
+	overrides: Partial<MapLayout> = {},
+): MapLayout {
+	const height = terrain.length;
+	const width = terrain[0]?.length ?? 0;
+	return {
+		id: 'terrain_test',
+		name: 'Terrain Test',
+		width,
+		height,
+		tileSize: ORTHO_TILE,
+		path: [],
+		paths: [],
+		terrain,
+		structures: [],
+		blockedPlacementPoints: [],
+		buildablePoints: [],
+		spawnPoint: { x: 0, y: 0 },
+		exitPoint: { x: width - 1, y: height - 1 },
+		tilemapKey: 'tilemap-test',
+		tilesetKey: 'tileset-test',
+		recommendedPower: 1,
+		rewardMultiplier: 1,
+		difficultyHpMult: 1,
+		...overrides,
+	};
+}
 
 // Orthogonal offsets: offsetX = 0, offsetY = BOARD_TOP_PADDING
 const OFFSET_X = 0;
@@ -193,5 +227,53 @@ describe('GridManager', () => {
 		const grid = gm.getWalkabilityGrid();
 		expect(grid[3][2]).toBe(1);
 		expect(grid[0][0]).toBe(0);
+	});
+
+	it('terrain이 mountain이면 walkable이 false여야 한다', () => {
+		const gm = new GridManager(
+			makeTerrainMap([
+				['plain', 'mountain'],
+				['plain', 'plain'],
+			]),
+		);
+		expect(gm.isWalkable(1, 0)).toBe(false);
+		expect(gm.getWalkabilityGrid()[0][1]).toBe(1);
+	});
+
+	it('getTile이 terrain 값을 포함해야 한다', () => {
+		const gm = new GridManager(
+			makeTerrainMap([
+				['hill', 'plain'],
+				['plain', 'bog'],
+			]),
+		);
+		expect(gm.getTile(0, 0)).toMatchObject({ terrain: 'hill' });
+		expect(gm.getTile(1, 1)).toMatchObject({ terrain: 'bog' });
+	});
+
+	it('getTerrainAt이 좌표의 terrain을 반환해야 한다', () => {
+		const gm = new GridManager(
+			makeTerrainMap([
+				['plain', 'water'],
+				['cursed', 'lava'],
+			]),
+		);
+		expect(gm.getTerrainAt(1, 0)).toBe('water');
+		expect(gm.getTerrainAt(0, 1)).toBe('cursed');
+		expect(gm.getTerrainAt(9, 9)).toBeNull();
+	});
+
+	it('getCostGrid가 terrain cost를 반영해야 한다', () => {
+		const gm = new GridManager(
+			makeTerrainMap([
+				['plain', 'road', 'forest'],
+				['bog', 'hill', 'water'],
+			]),
+		);
+		const costGrid = gm.getCostGrid();
+		expect(costGrid[0]).toEqual([1, 0.9, 1.15]);
+		expect(costGrid[1][0]).toBe(1.4);
+		expect(costGrid[1][1]).toBe(1);
+		expect(costGrid[1][2]).toBe(Number.POSITIVE_INFINITY);
 	});
 });

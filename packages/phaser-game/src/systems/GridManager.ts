@@ -4,6 +4,8 @@ import {
 	getAllPathCells,
 	type MapLayout,
 	ORTHO_TILE,
+	TERRAIN_COST,
+	type TerrainKind,
 } from '@gld/shared';
 import type Phaser from 'phaser';
 
@@ -20,6 +22,7 @@ export class GridManager {
 	readonly orthoTile: number;
 	readonly spawnPoint: Position;
 	readonly exitPoint: Position;
+	private readonly mapConfig: GridConfig & Partial<MapLayout>;
 	private grid: Grid;
 	private readonly offsetX: number;
 	private readonly offsetY: number;
@@ -45,19 +48,21 @@ export class GridManager {
 
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
-		const mapConfig = config as GridConfig & Partial<MapLayout>;
+		this.mapConfig = config as GridConfig & Partial<MapLayout>;
 		this.buildablePointKeys = new Set(
-			(mapConfig.buildablePoints ?? []).map((point) => `${point.x},${point.y}`),
+			(this.mapConfig.buildablePoints ?? []).map(
+				(point) => `${point.x},${point.y}`,
+			),
 		);
 		this.blockedPlacementPointKeys = new Set(
-			(mapConfig.blockedPlacementPoints ?? []).map(
+			(this.mapConfig.blockedPlacementPoints ?? []).map(
 				(point) => `${point.x},${point.y}`,
 			),
 		);
 		// Include all path cells from all lanes
-		const allPathCells = mapConfig.paths
-			? getAllPathCells(mapConfig as MapLayout)
-			: (mapConfig.path ?? []);
+		const allPathCells = this.mapConfig.paths
+			? getAllPathCells(this.mapConfig as MapLayout)
+			: (this.mapConfig.path ?? []);
 		this.pathPointKeys = new Set(
 			allPathCells.map((point) => `${point.x},${point.y}`),
 		);
@@ -77,9 +82,11 @@ export class GridManager {
 		for (let y = 0; y < this.height; y++) {
 			const row: Tile[] = [];
 			for (let x = 0; x < this.width; x++) {
+				const terrain = this.getTerrainFromConfig(x, y);
 				row.push({
 					position: { x, y },
-					walkable: true,
+					terrain,
+					walkable: Number.isFinite(TERRAIN_COST[terrain]),
 					occupied: false,
 					towerId: null,
 				});
@@ -89,9 +96,17 @@ export class GridManager {
 		return grid;
 	}
 
+	private getTerrainFromConfig(x: number, y: number): TerrainKind {
+		return this.mapConfig.terrain?.[y]?.[x] ?? 'plain';
+	}
+
 	getTile(x: number, y: number): Tile | null {
 		if (!this.isInBounds(x, y)) return null;
 		return this.grid[y][x];
+	}
+
+	getTerrainAt(x: number, y: number): TerrainKind | null {
+		return this.getTile(x, y)?.terrain ?? null;
 	}
 
 	isInBounds(x: number, y: number): boolean {
@@ -188,6 +203,12 @@ export class GridManager {
 	getWalkabilityGrid(): number[][] {
 		return this.grid.map((row) =>
 			row.map((tile) => (tile.walkable && !tile.occupied ? 0 : 1)),
+		);
+	}
+
+	getCostGrid(): number[][] {
+		return this.grid.map((row) =>
+			row.map((tile) => TERRAIN_COST[tile.terrain ?? 'plain']),
 		);
 	}
 }

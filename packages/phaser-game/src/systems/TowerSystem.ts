@@ -483,6 +483,21 @@ export class TowerSystem {
 					impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
+
+				// Nova cannon: rotate barrel toward target
+				if (def.type === 'nova_cannon') {
+					const angle = Math.atan2(
+						closestUnit.y - towerWorld.y,
+						closestUnit.x - towerWorld.x,
+					);
+					this.scene.tweens.add({
+						targets: tower.sprite,
+						rotation: angle,
+						duration: 150,
+						ease: 'Sine.Out',
+					});
+				}
+
 				if (!hasProjectile) {
 					// Beam: instant impact VFX
 					this.spawnImpactVfx(

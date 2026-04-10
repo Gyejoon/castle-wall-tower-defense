@@ -676,24 +676,11 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
   }
 
   if (tower.id === 'flame_tower') {
-    // Fireball flight — no charge animation
-    const fireY = 34;
-    if (frame >= 1 && frame <= 5) {
-      const dist = (frame - 1) * 6;
-      // Fireball core
-      drawRect(ctx, cx + dist + 2, fireY - 2, 4, 4, '#f5b23b');
-      drawRect(ctx, cx + dist + 3, fireY - 1, 2, 2, '#ffe27a');
-      // Flame trail
-      if (dist > 0) {
-        drawRect(ctx, cx + dist - 2, fireY - 1, 3, 2, '#c54120');
-        setPixel(ctx, cx + dist - 3, fireY, hexToRgba('#c54120', 0.5));
-      }
-    }
-    if (frame === 6) {
-      // Impact burst
-      fillCircle(ctx, cx + 30, fireY, 3, '#c54120');
-      setPixel(ctx, cx + 28, fireY - 2, '#f5b23b');
-      setPixel(ctx, cx + 32, fireY + 2, '#f5b23b');
+    // Muzzle glow only — runtime handles actual projectile via arc system
+    if (frame === 2 || frame === 3) {
+      setPixel(ctx, cx + 4, 34, '#f5b23b');
+      setPixel(ctx, cx + 5, 33, hexToRgba('#c54120', 0.6));
+      setPixel(ctx, cx + 5, 35, hexToRgba('#c54120', 0.6));
     }
     return;
   }
@@ -719,20 +706,7 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
     drawPlasmaArm(armCtx, 0, 0, swing, showBoulder);
     ctx.drawImage(armTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
 
-    // Boulder in flight (after release)
-    if (frame >= 3 && frame <= 5) {
-      const t = (frame - 2) / 3;
-      const bx = Math.round(cx + 8 + t * 18);
-      const by = Math.round(24 - Math.sin(t * Math.PI) * 16);
-      fillCircle(ctx, bx, by, 3, PALETTE.stoneDark);
-      setPixel(ctx, bx - 1, by - 1, PALETTE.stoneLight);
-      if (t > 0.3) setPixel(ctx, bx - 4, by + 2, hexToRgba(PALETTE.dirtPath, 0.3));
-    }
-    if (frame === 6) {
-      addGlow(ctx, cx + 26, 22, 5, PALETTE.fireOrange, 0.3);
-      setPixel(ctx, cx + 24, 20, PALETTE.stoneDark);
-      setPixel(ctx, cx + 28, 24, PALETTE.stoneDark);
-    }
+    // No projectile in spritesheet — runtime arc system handles it
     return;
   }
 
@@ -759,22 +733,7 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
     drawEarthGolemArms(gArmCtx, 0, 0, pose, showBoulder);
     ctx.drawImage(gArmTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
 
-    // Rock flying in arc (after throw, frame 4-6)
-    if (frame >= 4 && frame <= 6) {
-      const t = (frame - 3) / 3;
-      const rx = Math.round(cx + 6 + t * 20);
-      const ry = Math.round(28 - Math.sin(t * Math.PI) * 16);
-      fillCircle(ctx, rx, ry, 3, PALETTE.stoneDark);
-      fillCircle(ctx, rx, ry, 2, PALETTE.stone);
-      setPixel(ctx, rx - 1, ry - 1, PALETTE.stoneLight);
-      if (t > 0.3) setPixel(ctx, rx - 4, ry + 1, hexToRgba(PALETTE.dirtPath, 0.3));
-    }
-    if (frame === 7) {
-      // Impact dust
-      addGlow(ctx, cx + 26, 24, 4, PALETTE.dirtPath, 0.2);
-      setPixel(ctx, cx + 24, 22, PALETTE.stoneDark);
-      setPixel(ctx, cx + 28, 26, PALETTE.stoneDark);
-    }
+    // No projectile in spritesheet — runtime arc system handles it
     return;
   }
 

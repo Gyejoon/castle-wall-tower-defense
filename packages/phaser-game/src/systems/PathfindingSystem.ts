@@ -32,12 +32,19 @@ export function findPath(
 	grid: number[][],
 	start: Position,
 	end: Position,
+	costGrid?: number[][],
 ): Position[] | null {
 	const height = grid.length;
 	if (height === 0) return null;
 	const width = grid[0].length;
+	const heuristicScale = getHeuristicScale(costGrid);
 
-	if (grid[start.y]?.[start.x] === 1 || grid[end.y]?.[end.x] === 1) {
+	if (
+		grid[start.y]?.[start.x] === 1 ||
+		grid[end.y]?.[end.x] === 1 ||
+		!Number.isFinite(costGrid?.[start.y]?.[start.x] ?? 1) ||
+		!Number.isFinite(costGrid?.[end.y]?.[end.x] ?? 1)
+	) {
 		return null;
 	}
 
@@ -48,8 +55,8 @@ export function findPath(
 		x: start.x,
 		y: start.y,
 		g: 0,
-		h: heuristic(start, end),
-		f: heuristic(start, end),
+		h: heuristic(start, end) * heuristicScale,
+		f: heuristic(start, end) * heuristicScale,
 		parent: null,
 	};
 	openSet.set(posKey(start.x, start.y), startNode);
@@ -83,11 +90,14 @@ export function findPath(
 			if (grid[ny][nx] === 1) continue;
 			if (closedSet.has(nKey)) continue;
 
-			const g = current.g + 1;
+			const stepCost = costGrid?.[ny]?.[nx] ?? 1;
+			if (!Number.isFinite(stepCost)) continue;
+
+			const g = current.g + stepCost;
 			const existing = openSet.get(nKey);
 
 			if (!existing || g < existing.g) {
-				const h = heuristic({ x: nx, y: ny }, end);
+				const h = heuristic({ x: nx, y: ny }, end) * heuristicScale;
 				const node: PathNode = {
 					x: nx,
 					y: ny,
@@ -115,25 +125,43 @@ function reconstructPath(node: PathNode): Position[] {
 	return path;
 }
 
+function getHeuristicScale(costGrid?: number[][]): number {
+	if (!costGrid) return 1;
+	let min = Number.POSITIVE_INFINITY;
+	for (const row of costGrid) {
+		for (const cost of row) {
+			if (Number.isFinite(cost) && cost > 0) {
+				min = Math.min(min, cost);
+			}
+		}
+	}
+	return Number.isFinite(min) ? min : 1;
+}
+
 /**
  * PathfindingSystem with caching.
  * Invalidate cache when grid changes (tower placed/removed).
  */
 export class PathfindingSystem {
 	private cachedPath: Position[] | null = null;
+	private cachedKey: string | null = null;
 
 	findPath(
 		grid: number[][],
 		start: Position,
 		end: Position,
+		costGrid?: number[][],
 	): Position[] | null {
-		if (this.cachedPath) return this.cachedPath;
-		this.cachedPath = findPath(grid, start, end);
+		const key = JSON.stringify({ grid, start, end, costGrid });
+		if (this.cachedKey === key) return this.cachedPath;
+		this.cachedKey = key;
+		this.cachedPath = findPath(grid, start, end, costGrid);
 		return this.cachedPath;
 	}
 
 	invalidateCache(): void {
 		this.cachedPath = null;
+		this.cachedKey = null;
 	}
 
 	getCachedPath(): Position[] | null {
@@ -148,9 +176,10 @@ export class PathfindingSystem {
 	validateAllPaths(
 		grid: number[][],
 		pairs: Array<{ spawn: Position; exit: Position }>,
+		costGrid?: number[][],
 	): boolean {
 		return pairs.every(
-			(pair) => findPath(grid, pair.spawn, pair.exit) !== null,
+			(pair) => findPath(grid, pair.spawn, pair.exit, costGrid) !== null,
 		);
 	}
 }

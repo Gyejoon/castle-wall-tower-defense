@@ -54,6 +54,61 @@ describe('PathfindingSystem.validateAllPaths', () => {
 		const sys = new PathfindingSystem();
 		expect(sys.validateAllPaths(openGrid(), [])).toBe(true);
 	});
+
+	it('validateAllPaths도 costGrid를 사용해 비싼 경로를 우회한다', () => {
+		const sys = new PathfindingSystem();
+		const grid = openGrid(3, 3);
+		const costGrid = [
+			[1, 50, 1],
+			[1, 1, 1],
+			[1, 1, 1],
+		];
+		const pairs = [{ spawn: { x: 0, y: 0 }, exit: { x: 2, y: 0 } }];
+		expect(sys.validateAllPaths(grid, pairs, costGrid)).toBe(true);
+		expect(
+			sys.findPath(grid, { x: 0, y: 0 }, { x: 2, y: 0 }, costGrid),
+		).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 0, y: 1 },
+			{ x: 1, y: 1 },
+			{ x: 2, y: 1 },
+			{ x: 2, y: 0 },
+		]);
+	});
+
+	it('findPath cache는 costGrid가 다르면 재사용되면 안 된다', () => {
+		const sys = new PathfindingSystem();
+		const grid = openGrid(3, 3);
+		const cheapTop = [
+			[1, 1, 1],
+			[50, 50, 50],
+			[1, 1, 1],
+		];
+		const cheapBottom = [
+			[1, 50, 1],
+			[1, 1, 1],
+			[1, 1, 1],
+		];
+		const first = sys.findPath(grid, { x: 0, y: 0 }, { x: 2, y: 0 }, cheapTop);
+		const second = sys.findPath(
+			grid,
+			{ x: 0, y: 0 },
+			{ x: 2, y: 0 },
+			cheapBottom,
+		);
+		expect(first).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 1, y: 0 },
+			{ x: 2, y: 0 },
+		]);
+		expect(second).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 0, y: 1 },
+			{ x: 1, y: 1 },
+			{ x: 2, y: 1 },
+			{ x: 2, y: 0 },
+		]);
+	});
 });
 
 describe('findPath (standalone)', () => {
@@ -71,5 +126,38 @@ describe('findPath (standalone)', () => {
 		grid[1][2] = 1;
 		const path = findPath(grid, { x: 0, y: 0 }, { x: 0, y: 2 });
 		expect(path).toBeNull();
+	});
+
+	it('costGrid가 주어지면 더 싼 경로를 선택한다', () => {
+		const grid = openGrid(3, 3);
+		const costGrid = [
+			[1, 50, 1],
+			[1, 1, 1],
+			[1, 1, 1],
+		];
+		const path = findPath(grid, { x: 0, y: 0 }, { x: 2, y: 0 }, costGrid);
+		expect(path).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 0, y: 1 },
+			{ x: 1, y: 1 },
+			{ x: 2, y: 1 },
+			{ x: 2, y: 0 },
+		]);
+	});
+
+	it('costGrid의 Infinity는 추가 차단 타일로 취급한다', () => {
+		const grid = openGrid(3, 2);
+		const costGrid = [
+			[1, Number.POSITIVE_INFINITY, 1],
+			[1, 1, 1],
+		];
+		const path = findPath(grid, { x: 0, y: 0 }, { x: 2, y: 0 }, costGrid);
+		expect(path).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 0, y: 1 },
+			{ x: 1, y: 1 },
+			{ x: 2, y: 1 },
+			{ x: 2, y: 0 },
+		]);
 	});
 });

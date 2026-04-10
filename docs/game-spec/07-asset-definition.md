@@ -133,6 +133,9 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
   - rare: 청록 배너 + V 트림
   - unique: rare + 보라 크리스탈 + glow
   - epic: unique + 금색 아우라 + 부유 파편
+- 투사체 속도: `TowerStats.projectileSpeed` (tiles/sec). arc/arrow 타워는 투사체 비행 시간만큼 데미지 지연. beam 타워는 즉시
+  - arrow (archer/twin_archer): 8, arc-slow (plasma/nova_cannon/earth_golem): 3~4, arc-mid (disruptor/dragon_nest): 5, arc-fast (celestial): 6
+  - beam (emp/flame_tower/wind_spire/arcane_spire): 생략 = 즉시 적중
 - idle animation: Phaser runtime tween (scale pulse 1.03x, 1800ms yoyo, Sine.InOut, 위상 offset)
 - 승급 연출: 로비 `GradePromotionOverlay` one-shot (1.2s), React + CSS transition
 - 런타임 표시: `setDisplaySize(64, 80)`으로 그리드 크기 정규화
@@ -308,4 +311,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
-| 2026-04-10 | §3, §3.5 | 전체 18종 128×160 HQ iso-cube 중세 픽셀 스프라이트 + normal/rare/unique/epic grade variant, layered grade decoration 헬퍼, idle breathing tween, 승급 연출 오버레이. legacy 64×80 경로 제거 |
+| 2026-04-10 | §3, §3.5 | 전체 18종 128×160 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed 투사체 속도 시스템 + normal/rare/unique/epic grade variant, layered grade decoration 헬퍼, idle breathing tween, 승급 연출 오버레이. legacy 64×80 경로 제거 |

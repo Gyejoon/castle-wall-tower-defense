@@ -27,7 +27,7 @@ export function isStageUnlocked(stageId: string, stars: StageStars): boolean {
 
 	const worldStages = getStagesByWorld(stage.worldId);
 	const prev = worldStages.find((s) => s.stageNumber === stage.stageNumber - 1);
-	if (!prev) return true;
+	if (!prev) return false;
 	return (stars[prev.id] ?? 0) >= 1;
 }
 

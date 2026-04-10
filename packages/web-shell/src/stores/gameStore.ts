@@ -173,7 +173,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
 	selectedStageId: DEFAULT_STAGE_ID,
-	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? 'w1_forest_a',
+	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? DEFAULT_MAP_ID,
 	selectedStar: 1 as StarRating,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,

@@ -909,6 +909,10 @@ export class UnitSystem {
 			position: { x: startGrid.x, y: startGrid.y },
 			hp: finalHp,
 			pathIndex: initialPathIndex,
+			shieldHp:
+				def.specialBehavior === 'damage_shield'
+					? (def.specialParams?.shieldHp ?? 0)
+					: undefined,
 			metadata,
 		};
 
@@ -952,6 +956,8 @@ export class UnitSystem {
 			waveSlot: 0,
 			shadow: null,
 			pathProgress: initialPathIndex,
+			animationState: 'walk',
+			pendingDestroy: false,
 		};
 		this.units.set(instanceId, instance);
 

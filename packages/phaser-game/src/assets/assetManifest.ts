@@ -18,6 +18,8 @@ const CORE_UNIT_IDS = [
 	'heavy_walker',
 	'stealth_drone',
 	'titan',
+	'flame_imp',
+	'lava_golem',
 	'arcane_mage',
 	'mana_shield',
 	'orc_warlord',

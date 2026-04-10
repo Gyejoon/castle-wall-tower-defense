@@ -12,7 +12,6 @@ import {
 import { useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
-import { colors } from '../styles/tokens';
 import { cn } from '../utils/cn';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -24,7 +23,7 @@ function pickInitialWorld(stars: Record<string, StarRating>): WorldId {
 		if (!isWorldUnlocked(id, stars)) continue;
 		const stages = getStagesByWorld(id);
 		const allCleared =
-			stages.length > 0 && stages.every((s) => (stars[s.id] ?? 0) >= 3);
+			stages.length > 0 && stages.every((s) => (stars[s.id] ?? 0) >= 1);
 		if (!allCleared) return id;
 	}
 	return 'w1_forest';
@@ -217,22 +216,20 @@ export function WorldMapPage() {
 								)}
 							>
 								{!worldUnlocked ? (
-									<>
-										{lockImgError ? (
-											<span className="text-[10px] text-text-secondary/50 select-none">
-												&#128274;
-											</span>
-										) : (
-											<img
-												src="assets/ui/icon-locked.webp"
-												alt=""
-												width={10}
-												height={10}
-												className="[image-rendering:pixelated] opacity-50"
-												onError={() => setLockImgError(true)}
-											/>
-										)}
-									</>
+									lockImgError ? (
+										<span className="text-[10px] text-text-secondary/50 select-none">
+											&#128274;
+										</span>
+									) : (
+										<img
+											src="assets/ui/icon-locked.webp"
+											alt=""
+											width={10}
+											height={10}
+											className="[image-rendering:pixelated] opacity-50"
+											onError={() => setLockImgError(true)}
+										/>
+									)
 								) : null}
 								<span className="leading-tight text-center">{world.name}</span>
 							</button>

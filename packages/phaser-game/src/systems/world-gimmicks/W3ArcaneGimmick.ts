@@ -98,9 +98,9 @@ export class W3ArcaneGimmick implements WorldGimmick {
 
 		// Random center within map bounds (leave margin for area)
 		const cx =
-			half + Math.floor(Math.random() * (map.width - this.cfg.areaSize));
+			half + Math.floor(Math.random() * (map.width - this.cfg.areaSize + 1));
 		const cy =
-			half + Math.floor(Math.random() * (map.height - this.cfg.areaSize));
+			half + Math.floor(Math.random() * (map.height - this.cfg.areaSize + 1));
 
 		const startX = cx - half;
 		const startY = cy - half;

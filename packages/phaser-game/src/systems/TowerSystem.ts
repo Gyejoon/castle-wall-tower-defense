@@ -144,7 +144,7 @@ export class TowerSystem {
 			this.worldGimmick &&
 			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
 		) {
-			return { success: false, reason: 'occupied' };
+			return { success: false, reason: 'gimmick_blocked' };
 		}
 
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
@@ -490,11 +490,18 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
+							let splashDamage = Math.round(
+								tower.effectiveDamage * splashElementMult * 0.5,
+							);
+							if (this.worldGimmick) {
+								const bonus = this.worldGimmick.getDamageBonus(tower);
+								if (bonus > 0) {
+									splashDamage = Math.round(splashDamage * (1 + bonus));
+								}
+							}
 							pendingBatch.push({
 								unitId: unit.instanceId,
-								damage: Math.round(
-									tower.effectiveDamage * splashElementMult * 0.5,
-								),
+								damage: splashDamage,
 								slow: splashSlow,
 							});
 						}

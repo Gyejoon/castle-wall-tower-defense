@@ -2044,7 +2044,7 @@ export function getWavesForStage(stageId: string): WaveDef[] {
 			`[getWavesForStage] No wave definitions for stage "${stageId}", falling back to w1_s1`,
 		);
 	}
-	return waves ?? STAGE_WAVES['w1_s1'] ?? WAVE_DEFS;
+	return waves ?? STAGE_WAVES.w1_s1 ?? WAVE_DEFS;
 }
 
 export function getTotalWavesForStage(stageId: string): number {

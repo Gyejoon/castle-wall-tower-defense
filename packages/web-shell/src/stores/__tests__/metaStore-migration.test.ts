@@ -429,7 +429,7 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		for (let i = 1; i <= 8; i++) {
 			expect(stars[`w1_s${i}`]).toBe(2);
 		}
-		expect(stars['forest_gate']).toBeUndefined();
+		expect(stars.forest_gate).toBeUndefined();
 		vi.unstubAllGlobals();
 	});
 
@@ -445,7 +445,7 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		for (let i = 1; i <= 8; i++) {
 			expect(stars[`w2_s${i}`]).toBe(1);
 		}
-		expect(stars['lava_fortress']).toBeUndefined();
+		expect(stars.lava_fortress).toBeUndefined();
 		vi.unstubAllGlobals();
 	});
 
@@ -461,7 +461,7 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		for (let i = 1; i <= 8; i++) {
 			expect(stars[`w3_s${i}`]).toBe(3);
 		}
-		expect(stars['storm_citadel']).toBeUndefined();
+		expect(stars.storm_citadel).toBeUndefined();
 		vi.unstubAllGlobals();
 	});
 
@@ -473,7 +473,7 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result!.progress.stageStars['w1_s3']).toBe(2);
+		expect(result?.progress.stageStars.w1_s3).toBe(2);
 		vi.unstubAllGlobals();
 	});
 
@@ -487,8 +487,8 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result!.profile.combatPower).toBe(9999);
-		expect(result!.settings.bgmVolume).toBe(0.3);
+		expect(result?.profile.combatPower).toBe(9999);
+		expect(result?.settings.bgmVolume).toBe(0.3);
 		vi.unstubAllGlobals();
 	});
 
@@ -506,12 +506,12 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result!.progress.highestWave.w1_s1).toBe(10);
-		expect(result!.progress.highestWave.w1_s8).toBe(10);
-		expect(result!.progress.highestWave.forest_gate).toBeUndefined();
-		expect(result!.progress.stagesCleared).toContain('w1_s1');
-		expect(result!.progress.stagesCleared).toContain('w1_s8');
-		expect(result!.progress.stagesCleared).not.toContain('forest_gate');
+		expect(result?.progress.highestWave.w1_s1).toBe(10);
+		expect(result?.progress.highestWave.w1_s8).toBe(10);
+		expect(result?.progress.highestWave.forest_gate).toBeUndefined();
+		expect(result?.progress.stagesCleared).toContain('w1_s1');
+		expect(result?.progress.stagesCleared).toContain('w1_s8');
+		expect(result?.progress.stagesCleared).not.toContain('forest_gate');
 		vi.unstubAllGlobals();
 	});
 
@@ -530,8 +530,8 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result!.version).toBe(5);
-		expect(result!.progress.stageStars).toEqual({ w1_s1: 3, w2_s4: 1 });
+		expect(result?.version).toBe(5);
+		expect(result?.progress.stageStars).toEqual({ w1_s1: 3, w2_s4: 1 });
 		vi.unstubAllGlobals();
 	});
 });

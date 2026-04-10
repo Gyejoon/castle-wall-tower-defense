@@ -309,8 +309,8 @@ describe('GamePage', () => {
 		const progress = useMetaStore.getState().progress;
 		expect(progress.stagesCleared).toContain('w1_s2');
 		expect(progress.stagesCleared).not.toContain('w1_forest_a');
-		expect(progress.stageStars['w1_s2']).toBe(2);
-		expect(progress.stageStars['w1_forest_a']).toBeUndefined();
+		expect(progress.stageStars.w1_s2).toBe(2);
+		expect(progress.stageStars.w1_forest_a).toBeUndefined();
 		expect(progress.highestWave['w1_s2:2']).toBe(10);
 		expect(progress.highestWave['w1_forest_a:2']).toBeUndefined();
 	});

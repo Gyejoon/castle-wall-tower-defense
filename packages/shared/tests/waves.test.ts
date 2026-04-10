@@ -97,7 +97,7 @@ describe('STAGE_WAVES', () => {
 describe('getWavesForMap', () => {
 	// legacy aliases now resolve to STAGE_WAVES entries, not the old WAVE_DEFS/LAVA_FORTRESS_WAVES
 	it('forest_gate 맵은 w1_s1 웨이브를 반환한다', () => {
-		expect(getWavesForMap('forest_gate')).toBe(STAGE_WAVES['w1_s1']);
+		expect(getWavesForMap('forest_gate')).toBe(STAGE_WAVES.w1_s1);
 	});
 
 	it('알 수 없는 맵은 기본 WAVE_DEFS로 fallback한다', () => {
@@ -114,19 +114,19 @@ describe('getWavesForMap', () => {
 	});
 
 	it('lava_fortress, storm_citadel 맵이 등록되어 있다', () => {
-		expect(getWavesForMap('lava_fortress')).toBe(STAGE_WAVES['w2_s1']);
-		expect(getWavesForMap('storm_citadel')).toBe(STAGE_WAVES['w3_s1']);
+		expect(getWavesForMap('lava_fortress')).toBe(STAGE_WAVES.w2_s1);
+		expect(getWavesForMap('storm_citadel')).toBe(STAGE_WAVES.w3_s1);
 	});
 });
 
 describe('getWavesForStage', () => {
 	it('알려진 stageId의 웨이브를 반환한다', () => {
-		expect(getWavesForStage('w1_s1')).toBe(STAGE_WAVES['w1_s1']);
-		expect(getWavesForStage('w2_s8')).toBe(STAGE_WAVES['w2_s8']);
-		expect(getWavesForStage('w3_s8')).toBe(STAGE_WAVES['w3_s8']);
+		expect(getWavesForStage('w1_s1')).toBe(STAGE_WAVES.w1_s1);
+		expect(getWavesForStage('w2_s8')).toBe(STAGE_WAVES.w2_s8);
+		expect(getWavesForStage('w3_s8')).toBe(STAGE_WAVES.w3_s8);
 	});
 
 	it('알 수 없는 stageId는 w1_s1으로 fallback한다', () => {
-		expect(getWavesForStage('nonexistent')).toBe(STAGE_WAVES['w1_s1']);
+		expect(getWavesForStage('nonexistent')).toBe(STAGE_WAVES.w1_s1);
 	});
 });

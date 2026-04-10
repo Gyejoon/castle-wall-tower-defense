@@ -2,9 +2,9 @@ import type { Position } from './grid';
 
 export interface GimmickTileSet {
 	/** W2 furnace tiles — towers on these tiles are disabled during the "ON" phase. */
-	furnaceTiles?: Array<{ x: number; y: number }>;
+	furnaceTiles?: Position[];
 	/** W3 arcane circle tiles — towers on these tiles get +15% damage and are immune to arcane bursts. */
-	arcaneCircleTiles?: Array<{ x: number; y: number }>;
+	arcaneCircleTiles?: Position[];
 }
 
 export interface MapLayout {

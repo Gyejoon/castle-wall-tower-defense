@@ -262,8 +262,8 @@ export class GameScene extends Phaser.Scene {
 			map: this.currentMap,
 			star: selectedStar,
 			eventBus: EventBus,
-			getSceneTimeMs: () => this.time.now,
-			getTowers: () => Array.from(this.playerTowers.getAllTowers()),
+			getSceneTimeMs: () => this.scaledGameTime,
+			getTowers: () => this.playerTowers.getAllTowers(),
 		});
 		this.worldGimmick?.init();
 		this.worldGimmick?.onBattleStart();
@@ -866,7 +866,7 @@ export class GameScene extends Phaser.Scene {
 		// Tick boss behaviors before combat so they can react with fresh sceneTime
 		for (const [instanceId, behavior] of this.bossBehaviors) {
 			const unit = this.playerUnits.getUnit(instanceId);
-			if (!unit) {
+			if (!unit || unit.pendingDestroy) {
 				behavior.destroy();
 				this.bossBehaviors.delete(instanceId);
 				continue;
@@ -971,7 +971,7 @@ export class GameScene extends Phaser.Scene {
 	): import('../systems/boss-ai/types').BossContext {
 		return {
 			boss,
-			sceneTimeMs: this.time.now,
+			sceneTimeMs: this.scaledGameTime,
 			spawnUnit: (unitId, pos, metadata) => {
 				this.playerUnits.spawnAdditionalUnit(unitId, pos, metadata);
 			},

@@ -38,7 +38,7 @@ export interface UnitDef {
 	specialBehavior?: UnitSpecialBehavior;
 	specialParams?: Record<string, number>;
 	/** Boss behavior handler id — looked up in the boss-ai registry at spawn time. */
-	bossBehaviorId?: string;
+	bossBehaviorId?: 'orc_warlord' | 'forge_master' | 'corrupted_archmage';
 }
 
 export interface ActiveUnit {

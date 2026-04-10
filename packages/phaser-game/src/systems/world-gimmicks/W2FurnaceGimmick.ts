@@ -66,11 +66,9 @@ export class W2FurnaceGimmick implements WorldGimmick {
 
 		for (const tile of this.furnaceTiles) {
 			if (tile.x === pos.x && tile.y === pos.y) return true;
-			if (cfg.expand) {
-				const dx = Math.abs(tile.x - pos.x);
-				const dy = Math.abs(tile.y - pos.y);
-				if (dx + dy === 1) return true; // Manhattan distance 1 = 4-way neighbor
-			}
+			const dx = Math.abs(tile.x - pos.x);
+			const dy = Math.abs(tile.y - pos.y);
+			if (dx + dy === 1) return true; // Manhattan distance 1 = 4-way neighbor
 		}
 		return false;
 	}

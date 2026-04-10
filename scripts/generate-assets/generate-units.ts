@@ -516,6 +516,8 @@ const REDESIGNED_UNIT_MODULES: Record<string, UnitDrawModule> = {
   heavy_walker: stoneTroll,
   stealth_drone: shadowAssassin,
   titan: goblinScavenger,
+  flame_imp: goblinScavenger,
+  lava_golem: stoneTroll,
   arcane_mage: goblinScavenger,
   mana_shield: stoneTroll,
   orc_warlord: orcVeteran,
@@ -529,6 +531,8 @@ const UNIT_IDS = [
   'heavy_walker',
   'stealth_drone',
   'titan',
+  'flame_imp',
+  'lava_golem',
   'arcane_mage',
   'mana_shield',
   'orc_warlord',
@@ -627,14 +631,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       'titan',
     );
     saveCanvas(canvas, `${OUTPUT_DIR}/titan.png`);
-    entries.push({
-      key: 'unit-titan',
-      type: 'spritesheet',
-      path: 'assets/units/titan.png',
-      frameWidth: FRAME_W,
-      frameHeight: FRAME_H,
-      frameCount: FRAME_COUNT,
-    });
+    // manifest entry for unit-titan is already emitted by the module loop above
   }
 
   assertRequiredOutputs();

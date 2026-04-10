@@ -124,14 +124,18 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			}
 		}
 
+		// Two-pass: first expand mapId keys, then let stageId keys overwrite
 		for (const [mapId, wave] of Object.entries(oldHighestWave)) {
 			const stages = MAP_TO_WORLD_STAGES[mapId];
 			if (stages) {
 				for (const stageId of stages) {
 					newHighestWave[stageId] = wave;
 				}
-			} else {
-				newHighestWave[mapId] = wave;
+			}
+		}
+		for (const [key, wave] of Object.entries(oldHighestWave)) {
+			if (!MAP_TO_WORLD_STAGES[key]) {
+				newHighestWave[key] = wave;
 			}
 		}
 

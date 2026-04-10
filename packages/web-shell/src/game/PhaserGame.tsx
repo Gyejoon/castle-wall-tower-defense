@@ -69,6 +69,15 @@ export function PhaserGame() {
 			}
 		});
 
+		// Sync selectedStageId to Phaser registry in real-time
+		let prevStageId = useGameStore.getState().selectedStageId;
+		const unsubStageId = useGameStore.subscribe((state) => {
+			if (state.selectedStageId !== prevStageId) {
+				prevStageId = state.selectedStageId;
+				gameRef.current?.registry.set('selectedStageId', prevStageId);
+			}
+		});
+
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -78,6 +87,7 @@ export function PhaserGame() {
 				unsubDmgNumbers();
 				unsubShake();
 				unsubStar();
+				unsubStageId();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

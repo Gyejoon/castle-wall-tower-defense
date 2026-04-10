@@ -785,41 +785,77 @@ export function drawStasisFieldHQ(ctx: SKRSContext2D, ox: number, oy: number): v
   setPixel(ctx, cx - 8, oy + 74, hexToRgba(PALETTE.iceGlow, 0.25));
 }
 
-export function drawEarthGolemHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+/** Earth golem body WITHOUT arms */
+export function drawEarthGolemBody(ctx: SKRSContext2D, ox: number, oy: number): void {
   const cx = ox + 64;
   const baseY = oy + 136;
   drawIsoShadow(ctx, cx, baseY + 6, 26, 9, 0.45);
 
-  // Legs — two stone pillars
+  // Legs
   drawIsoCube(ctx, cx - 8, oy + 110, 8, 18, '#6a5a3a', '#4a3a2a', '#7a6a4a');
   drawIsoCube(ctx, cx + 8, oy + 112, 8, 16, '#7a6a4a', '#4a3a2a', '#6a5a3a');
 
-  // Torso — large rock body
+  // Torso
   drawIsoCube(ctx, cx, oy + 82, 20, 26, '#8a7a5a', '#5a4a3a', '#7a6a4a');
 
-  // Arms — side blocks
-  drawIsoCube(ctx, cx - 22, oy + 88, 8, 16, '#6a5a3a', '#4a3a2a', '#7a6a4a');
-  drawIsoCube(ctx, cx + 22, oy + 90, 8, 14, '#7a6a4a', '#4a3a2a', '#6a5a3a');
-  // Fists
-  drawIsoCube(ctx, cx - 22, oy + 104, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
-  drawIsoCube(ctx, cx + 22, oy + 106, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
-
-  // Head — small rock
+  // Head
   drawIsoCube(ctx, cx, oy + 68, 12, 12, '#8a7a5a', '#5a4a3a', '#7a6a4a');
-  // Eyes
   setPixel(ctx, cx - 4, oy + 72, '#4ca04c');
   setPixel(ctx, cx + 4, oy + 72, '#4ca04c');
   setPixel(ctx, cx - 3, oy + 72, hexToRgba('#4ca04c', 0.5));
   setPixel(ctx, cx + 5, oy + 72, hexToRgba('#4ca04c', 0.5));
 
-  // Moss patches
+  // Moss + cracks
   setPixel(ctx, cx - 10, oy + 88, '#3d5a3e');
   setPixel(ctx, cx + 8, oy + 94, '#3d5a3e');
   setPixel(ctx, cx - 6, oy + 100, '#3d5a3e');
-
-  // Rock texture cracks
   drawLine(ctx, cx - 4, oy + 84, cx - 8, oy + 96, hexToRgba('#3a2a1a', 0.4));
   drawLine(ctx, cx + 6, oy + 86, cx + 10, oy + 98, hexToRgba('#3a2a1a', 0.4));
+}
+
+/**
+ * Earth golem arms at a given pose.
+ * pose 0 = idle (arms at sides), 1 = raised (arms up holding rock),
+ * 2 = thrown (arms forward)
+ */
+export function drawEarthGolemArms(
+  ctx: SKRSContext2D, ox: number, oy: number,
+  pose: 0 | 1 | 2, showBoulder: boolean,
+): void {
+  const cx = ox + 64;
+  if (pose === 0) {
+    // Idle: arms hanging at sides
+    drawIsoCube(ctx, cx - 22, oy + 88, 8, 16, '#6a5a3a', '#4a3a2a', '#7a6a4a');
+    drawIsoCube(ctx, cx + 22, oy + 90, 8, 14, '#7a6a4a', '#4a3a2a', '#6a5a3a');
+    drawIsoCube(ctx, cx - 22, oy + 104, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+    drawIsoCube(ctx, cx + 22, oy + 106, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+  } else if (pose === 1) {
+    // Raised: both arms up holding boulder overhead
+    // Left arm up
+    drawIsoCube(ctx, cx - 16, oy + 68, 7, 14, '#6a5a3a', '#4a3a2a', '#7a6a4a');
+    drawIsoCube(ctx, cx - 14, oy + 58, 5, 8, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+    // Right arm up
+    drawIsoCube(ctx, cx + 16, oy + 68, 7, 14, '#7a6a4a', '#4a3a2a', '#6a5a3a');
+    drawIsoCube(ctx, cx + 14, oy + 58, 5, 8, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+    // Boulder held between hands
+    if (showBoulder) {
+      fillCircle(ctx, cx, oy + 54, 6, PALETTE.stoneDark);
+      fillCircle(ctx, cx, oy + 54, 4, PALETTE.stone);
+      setPixel(ctx, cx - 1, oy + 51, PALETTE.stoneLight);
+    }
+  } else {
+    // Thrown: arms forward
+    drawIsoCube(ctx, cx - 14, oy + 82, 7, 10, '#6a5a3a', '#4a3a2a', '#7a6a4a');
+    drawIsoCube(ctx, cx + 14, oy + 82, 7, 10, '#7a6a4a', '#4a3a2a', '#6a5a3a');
+    // Fists extended
+    drawIsoCube(ctx, cx - 10, oy + 80, 5, 4, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+    drawIsoCube(ctx, cx + 10, oy + 80, 5, 4, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+  }
+}
+
+export function drawEarthGolemHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  drawEarthGolemBody(ctx, ox, oy);
+  drawEarthGolemArms(ctx, ox, oy, 0, false); // idle: arms at sides
 }
 
 export function drawHolyShrineHQ(ctx: SKRSContext2D, ox: number, oy: number): void {

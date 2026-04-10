@@ -23,7 +23,8 @@ import type { SKRSContext2D } from '@napi-rs/canvas';
 import {
   drawArcherHQ, drawPlasmaHQ, drawPlasmaBody, drawPlasmaArm, drawEmpHQ, drawShieldHQ,
   drawTwinArcherHQ, drawDisruptorHQ, drawNovaCannonHQ, drawFortressHQ,
-  drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ, drawEarthGolemHQ,
+  drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ,
+  drawEarthGolemHQ, drawEarthGolemBody, drawEarthGolemArms,
   drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
   drawCelestialHQ, drawDivineThroneHQ,
 } from './towers/pilot-draw';
@@ -736,48 +737,43 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
   }
 
   if (tower.id === 'earth_golem') {
-    // Golem throws rock with BOTH arms — raise overhead, hurl forward
+    // Golem throws rock — clear pre-rendered base (has static arms),
+    // redraw body + arms at correct pose per frame
+    ctx.clearRect(ox, 0, 64, 80);
 
-    if (frame === 1) {
-      // Both arms raised overhead, holding boulder
-      // Left arm up
-      drawRect(ctx, cx - 10, 24, 4, 8, '#6a5a3a');
-      drawRect(ctx, cx - 8, 20, 4, 4, '#7a6a4a');
-      // Right arm up
-      drawRect(ctx, cx + 6, 24, 4, 8, '#6a5a3a');
-      drawRect(ctx, cx + 4, 20, 4, 4, '#7a6a4a');
-      // Boulder held between hands
-      fillCircle(ctx, cx, 18, 4, PALETTE.stoneDark);
-      setPixel(ctx, cx - 1, 16, PALETTE.stoneLight);
-      setPixel(ctx, cx + 1, 16, PALETTE.stoneLight);
-    }
-    if (frame === 2) {
-      // Both arms swinging forward — boulder released
-      // Left arm forward
-      drawRect(ctx, cx - 4, 28, 8, 3, '#6a5a3a');
-      // Right arm forward
-      drawRect(ctx, cx + 4, 28, 8, 3, '#7a6a4a');
-    }
-    if (frame >= 3 && frame <= 5) {
-      // Rock flying in arc
-      const t = (frame - 2) / 3;
-      const rx = Math.round(cx + 12 + t * 18);
-      const ry = Math.round(28 - Math.sin(t * Math.PI) * 14);
+    // Draw body (no arms) scaled to 64×80
+    const { canvas: gBodyTmp, ctx: gBodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawEarthGolemBody(gBodyCtx, 0, 0);
+    ctx.drawImage(gBodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Arms pose per frame
+    //  0-1: idle arms at sides
+    //  2-3: arms raised overhead with boulder
+    //  4:   arms thrown forward (boulder released)
+    //  5-7: arms returning to idle
+    const { canvas: gArmTmp, ctx: gArmCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    let pose: 0 | 1 | 2 = 0;
+    let showBoulder = false;
+    if (frame >= 2 && frame <= 3) { pose = 1; showBoulder = true; }
+    else if (frame === 4) { pose = 2; }
+    drawEarthGolemArms(gArmCtx, 0, 0, pose, showBoulder);
+    ctx.drawImage(gArmTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Rock flying in arc (after throw, frame 4-6)
+    if (frame >= 4 && frame <= 6) {
+      const t = (frame - 3) / 3;
+      const rx = Math.round(cx + 6 + t * 20);
+      const ry = Math.round(28 - Math.sin(t * Math.PI) * 16);
       fillCircle(ctx, rx, ry, 3, PALETTE.stoneDark);
+      fillCircle(ctx, rx, ry, 2, PALETTE.stone);
       setPixel(ctx, rx - 1, ry - 1, PALETTE.stoneLight);
-      // Dust trail
-      if (t > 0.2) {
-        setPixel(ctx, rx - 3, ry + 1, hexToRgba(PALETTE.dirtPath, 0.3));
-      }
+      if (t > 0.3) setPixel(ctx, rx - 4, ry + 1, hexToRgba(PALETTE.dirtPath, 0.3));
     }
-    if (frame === 6) {
-      // Impact
-      addGlow(ctx, cx + 28, 26, 5, PALETTE.dirtPath, 0.3);
-      setPixel(ctx, cx + 26, 24, PALETTE.stoneDark);
-      setPixel(ctx, cx + 30, 28, PALETTE.stoneDark);
-      // Debris
-      setPixel(ctx, cx + 24, 22, '#6a5a3a');
-      setPixel(ctx, cx + 32, 26, '#6a5a3a');
+    if (frame === 7) {
+      // Impact dust
+      addGlow(ctx, cx + 26, 24, 4, PALETTE.dirtPath, 0.2);
+      setPixel(ctx, cx + 24, 22, PALETTE.stoneDark);
+      setPixel(ctx, cx + 28, 26, PALETTE.stoneDark);
     }
     return;
   }

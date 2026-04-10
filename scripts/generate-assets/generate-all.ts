@@ -22,6 +22,7 @@ import { generate as generateTutorialUi } from './generate-tutorial-ui';
 import { generate as generateGachaUi } from './generate-gacha-ui';
 import { generate as generateCheckBadge } from './generate-check-badge';
 import { generate as generateWorldmap } from './generate-worldmap';
+import { generateStructures } from './generate-structures';
 
 export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 	const staticEntries = [
@@ -77,6 +78,7 @@ export async function generateAllAssets() {
 		gachaUi,
 		checkBadge,
 		worldmap,
+		_structures,
 	] = await Promise.all([
 		Promise.resolve(collectStaticFieldAssetEntries()).then((result) => {
 			console.log('[vendor-field-assets] done');
@@ -145,6 +147,10 @@ export async function generateAllAssets() {
 		generateWorldmap().then((result) => {
 			console.log('[worldmap] done');
 			return result;
+		}),
+		generateStructures().then(() => {
+			console.log('[structures] done');
+			return [] as ManifestEntry[];
 		}),
 	]);
 

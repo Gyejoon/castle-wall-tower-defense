@@ -21,7 +21,7 @@ import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
 import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 import type { SKRSContext2D } from '@napi-rs/canvas';
 import {
-  drawArcherHQ, drawPlasmaHQ, drawEmpHQ, drawShieldHQ,
+  drawArcherHQ, drawPlasmaHQ, drawPlasmaBody, drawPlasmaArm, drawEmpHQ, drawShieldHQ,
   drawTwinArcherHQ, drawDisruptorHQ, drawNovaCannonHQ, drawFortressHQ,
   drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ, drawEarthGolemHQ,
   drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
@@ -698,39 +698,36 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
   }
 
   if (tower.id === 'plasma') {
-    // Catapult boulder arc — arm snaps, boulder flies in parabolic arc
-    const pivotX = cx - 2;
-    const pivotY = 40;
-    const armLen = 20;
+    // Catapult with arm swing — DON'T use HQ base (it includes static arm).
+    // Instead we skip the pre-rendered base and draw body+arm per frame.
+    // Clear the pre-rendered HQ base for this frame
+    ctx.clearRect(ox, 0, 64, 80);
 
-    if (frame >= 1 && frame <= 2) {
-      // Arm swinging (pixel lines)
-      const swing = frame === 1 ? 0.3 : 0.9;
-      const angle = -0.5 + 2.4 * swing;
-      const tipX = Math.round(pivotX + armLen * Math.cos(angle));
-      const tipY = Math.round(pivotY - armLen * Math.sin(angle));
-      drawLine(ctx, pivotX, pivotY, tipX, tipY, PALETTE.woodDark);
-      drawLine(ctx, pivotX + 1, pivotY, tipX + 1, tipY, PALETTE.wood);
-      // Boulder in sling (frame 1 only)
-      if (frame === 1) {
-        fillCircle(ctx, tipX, tipY, 3, PALETTE.stoneDark);
-        setPixel(ctx, tipX - 1, tipY - 1, PALETTE.stoneLight);
-      }
-    }
+    // Draw body (no arm) scaled to 64×80
+    const { canvas: bodyTmp, ctx: bodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawPlasmaBody(bodyCtx, 0, 0);
+    ctx.drawImage(bodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Arm swing timeline (same as legacy catapult)
+    const swingTable = [0.0, 0.05, 0.6, 1.0, 0.9, 0.4, 0.15, 0.0];
+    const swing = swingTable[frame] ?? 0;
+    const showBoulder = frame <= 1;
+
+    // Draw arm at 64×80 scale
+    const { canvas: armTmp, ctx: armCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawPlasmaArm(armCtx, 0, 0, swing, showBoulder);
+    ctx.drawImage(armTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Boulder in flight (after release)
     if (frame >= 3 && frame <= 5) {
-      // Boulder in flight (parabolic arc)
       const t = (frame - 2) / 3;
       const bx = Math.round(cx + 8 + t * 18);
       const by = Math.round(24 - Math.sin(t * Math.PI) * 16);
       fillCircle(ctx, bx, by, 3, PALETTE.stoneDark);
       setPixel(ctx, bx - 1, by - 1, PALETTE.stoneLight);
-      // Trail
-      if (t > 0.3) {
-        setPixel(ctx, bx - 4, by + 2, hexToRgba(PALETTE.dirtPath, 0.3));
-      }
+      if (t > 0.3) setPixel(ctx, bx - 4, by + 2, hexToRgba(PALETTE.dirtPath, 0.3));
     }
     if (frame === 6) {
-      // Impact
       addGlow(ctx, cx + 26, 22, 5, PALETTE.fireOrange, 0.3);
       setPixel(ctx, cx + 24, 20, PALETTE.stoneDark);
       setPixel(ctx, cx + 28, 24, PALETTE.stoneDark);

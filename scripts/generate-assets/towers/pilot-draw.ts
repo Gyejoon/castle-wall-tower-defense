@@ -503,7 +503,8 @@ export function drawDivineThroneHQ(ctx: SKRSContext2D, ox: number, oy: number): 
 // ██  Remaining 10 towers — medieval pixel style              ██
 // ══════════════════════════════════════════════════════════════
 
-export function drawPlasmaHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+/** Plasma body WITHOUT arm — arm is drawn separately for fire animation */
+export function drawPlasmaBody(ctx: SKRSContext2D, ox: number, oy: number): void {
   const cx = ox + 64;
   const baseY = oy + 132;
   drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.42);
@@ -520,20 +521,44 @@ export function drawPlasmaHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
   // Wooden frame body
   drawIsoCube(ctx, cx, oy + 96, 18, 16, PALETTE.wood, PALETTE.woodDark, hexToRgba(PALETTE.wood, 0.8));
 
-  // Arm (diagonal)
-  drawLine(ctx, cx - 8, oy + 92, cx + 12, oy + 58, PALETTE.woodDark);
-  drawLine(ctx, cx - 7, oy + 92, cx + 13, oy + 58, PALETTE.wood);
-
-  // Sling cup at tip
-  drawRect(ctx, cx + 10, oy + 54, 8, 6, PALETTE.woodLight);
-  drawRect(ctx, cx + 11, oy + 55, 6, 4, PALETTE.wood);
-  // Boulder
-  fillCircle(ctx, cx + 14, oy + 57, 5, PALETTE.stoneDark);
-  setPixel(ctx, cx + 13, oy + 55, PALETTE.stoneLight);
-
   // Support struts
   drawLine(ctx, cx - 6, oy + 96, cx - 6, oy + 82, PALETTE.woodDark);
   drawLine(ctx, cx + 6, oy + 96, cx + 8, oy + 82, PALETTE.woodDark);
+}
+
+/** Plasma arm at a given swing position (0=loaded, 1=fully flung) */
+export function drawPlasmaArm(
+  ctx: SKRSContext2D, ox: number, oy: number,
+  swing: number, showBoulder: boolean,
+): void {
+  const cx = ox + 64;
+  const pivotX = cx;
+  const pivotY = oy + 92;
+  const armLen = 34;
+  const angleStart = -0.5;
+  const angleEnd = 2.4;
+  const angle = angleStart + (angleEnd - angleStart) * swing;
+  const tipX = Math.round(pivotX + armLen * Math.cos(angle));
+  const tipY = Math.round(pivotY - armLen * Math.sin(angle));
+
+  // Pivot bolt
+  fillCircle(ctx, pivotX, pivotY, 2, PALETTE.woodDark);
+  // Arm shaft
+  drawLine(ctx, pivotX, pivotY, tipX, tipY, PALETTE.woodDark);
+  drawLine(ctx, pivotX + 1, pivotY, tipX + 1, tipY, PALETTE.wood);
+  // Sling cup
+  drawRect(ctx, tipX - 3, tipY - 3, 6, 5, PALETTE.woodLight);
+  drawRect(ctx, tipX - 2, tipY - 2, 4, 3, PALETTE.wood);
+  // Boulder
+  if (showBoulder) {
+    fillCircle(ctx, tipX, tipY, 4, PALETTE.stoneDark);
+    setPixel(ctx, tipX - 1, tipY - 1, PALETTE.stoneLight);
+  }
+}
+
+export function drawPlasmaHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  drawPlasmaBody(ctx, ox, oy);
+  drawPlasmaArm(ctx, ox, oy, 0, true); // idle: loaded position with boulder
 }
 
 export function drawEmpHQ(ctx: SKRSContext2D, ox: number, oy: number): void {

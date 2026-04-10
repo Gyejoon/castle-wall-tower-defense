@@ -82,57 +82,40 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const cx = ox + 20;
   const by = floatY(frame);
   const lean = driftX(frame);
-  const dSwing = armSwing(frame);
   const capeBillow = Math.round(Math.sin(walkPhase(frame)) * 2);
 
   // --- Hood (top of head) ---
   const hoodTop = HEAD_TOP + by;
-  // Hood outline: a rounded trapezoid
-  drawFadingRect(ctx, cx - 5 + lean, hoodTop, 10, 2, CLOAK.shadow);      // top rim
-  drawFadingRect(ctx, cx - 6 + lean, hoodTop + 2, 12, 4, CLOAK.base);    // hood body
-  drawFadingRect(ctx, cx - 7 + lean, hoodTop + 4, 14, 3, CLOAK.base);    // hood flare
-  // Hood highlight on top
+  drawFadingRect(ctx, cx - 5 + lean, hoodTop, 10, 2, CLOAK.shadow);
+  drawFadingRect(ctx, cx - 6 + lean, hoodTop + 2, 12, 4, CLOAK.base);
+  drawFadingRect(ctx, cx - 7 + lean, hoodTop + 4, 14, 3, CLOAK.base);
   drawFadingRect(ctx, cx - 4 + lean, hoodTop, 8, 1, CLOAK.highlight);
 
   // --- Face (darkness + eyes) ---
   const faceY = hoodTop + 5;
-  drawFadingRect(ctx, cx - 4 + lean, faceY, 8, 4, CLOAK.shadow);         // dark face area
+  drawFadingRect(ctx, cx - 4 + lean, faceY, 8, 4, CLOAK.shadow);
 
   // Glowing eyes
   const eyePulse = 0.8 + Math.sin(walkPhase(frame) * 2) * 0.2;
   const eyeY = faceY + 1;
   setPixel(ctx, cx - 2 + lean, eyeY, hexToRgba(EYE_COLOR, eyePulse));
   setPixel(ctx, cx + 1 + lean, eyeY, hexToRgba(EYE_COLOR, eyePulse));
-  // Eye glow
   addGlow(ctx, cx - 2 + lean, eyeY, 3, EYE_COLOR, eyePulse * 0.3);
   addGlow(ctx, cx + 1 + lean, eyeY, 3, EYE_COLOR, eyePulse * 0.3);
 
   // --- Shoulders & upper torso ---
   const shoulderY = hoodTop + 7;
-  drawFadingRect(ctx, cx - 8 + lean, shoulderY, 16, 2, CLOAK.base);      // wide shoulders
-  drawFadingRect(ctx, cx - 7 + lean, shoulderY + 2, 14, 3, CLOAK.base);  // upper chest
-  drawFadingRect(ctx, cx - 6 + lean, shoulderY + 5, 12, 3, CLOAK.shadow); // mid-chest
+  drawFadingRect(ctx, cx - 8 + lean, shoulderY, 16, 2, CLOAK.base);
+  drawFadingRect(ctx, cx - 7 + lean, shoulderY + 2, 14, 3, CLOAK.base);
+  drawFadingRect(ctx, cx - 6 + lean, shoulderY + 5, 12, 3, CLOAK.shadow);
 
-  // Inner cloak detail (subtle lighter area center)
+  // Inner cloak detail
   drawFadingRect(ctx, cx - 3 + lean, shoulderY + 2, 6, 4, INNER_CLOAK);
 
-  // --- Daggers crossed in front of chest ---
+  // --- Daggers crossed in front of chest (static, no swing) ---
   const daggerCY = shoulderY + 5;
-  // Left dagger: from upper-left to lower-right across chest
-  drawFadingLine(ctx,
-    cx - 6 + lean - dSwing, daggerCY - 3 + by,
-    cx + 2 + lean + dSwing, daggerCY + 4 + by,
-    BLADE_COLOR,
-  );
-  // Right dagger: from upper-right to lower-left across chest
-  drawFadingLine(ctx,
-    cx + 5 + lean + dSwing, daggerCY - 3 + by,
-    cx - 3 + lean - dSwing, daggerCY + 4 + by,
-    BLADE_COLOR,
-  );
-  // Dagger hilts (dark points at grip end)
-  setFadingPixel(ctx, cx - 6 + lean - dSwing, daggerCY - 3 + by, BLADE_DARK);
-  setFadingPixel(ctx, cx + 5 + lean + dSwing, daggerCY - 3 + by, BLADE_DARK);
+  drawFadingLine(ctx, cx - 5 + lean, daggerCY - 2 + by, cx + 2 + lean, daggerCY + 3 + by, BLADE_COLOR);
+  drawFadingLine(ctx, cx + 4 + lean, daggerCY - 2 + by, cx - 3 + lean, daggerCY + 3 + by, BLADE_COLOR);
 
   // --- Cape / Cloak billowing sides ---
   // Left cape edge

@@ -266,22 +266,22 @@ function drawDeath(ctx: SKRSContext2D, ox: number, frame: number): void {
       drawShadedRect(ctx, cx + 2, 39, 7, 6, PALETTE.heavyWalker);
       drawRect(ctx, cx + 1, 43, 9, 3, STONE_DARK.base);
 
-      // Body tilting forward (head goes down)
+      // Body tilting forward (head goes down, tiltY shifts body)
       // Shoulders
-      drawShadedRect(ctx, cx - 14, 18, 28, 5, PALETTE.heavyWalker);
+      drawShadedRect(ctx, cx - 14, 18 + tiltY, 28, 5, PALETTE.heavyWalker);
       // Torso
-      drawShadedRect(ctx, cx - 11, 23, 22, 8, PALETTE.heavyWalker);
-      drawShadedRect(ctx, cx - 8, 31, 16, 5, PALETTE.heavyWalker);
-      // Head dipping forward
-      drawShadedRect(ctx, cx - 2 + tiltX, 14, 6, 5, PALETTE.heavyWalker);
-      setPixel(ctx, cx + tiltX, 16, '#e0c020'); // one eye visible
+      drawShadedRect(ctx, cx - 11, 23 + tiltY, 22, 8, PALETTE.heavyWalker);
+      drawShadedRect(ctx, cx - 8, 31 + tiltY, 16, 5, PALETTE.heavyWalker);
+      // Head dipping forward (both tiltX and tiltY)
+      drawShadedRect(ctx, cx - 2 + tiltX, 14 + tiltY, 6, 5, PALETTE.heavyWalker);
+      setPixel(ctx, cx + tiltX, 16 + tiltY, '#e0c020'); // one eye visible
 
       // Club dropping
-      drawShadedRect(ctx, cx + 15, 20, 3, 16, PALETTE.leatherWorn);
-      drawShadedRect(ctx, cx + 13, 16, 7, 6, PALETTE.rust);
+      drawShadedRect(ctx, cx + 15, 20 + tiltY, 3, 16, PALETTE.leatherWorn);
+      drawShadedRect(ctx, cx + 13, 16 + tiltY, 7, 6, PALETTE.rust);
 
       // Loincloth
-      drawRect(ctx, cx - 6, 35, 12, 3, LEATHER.base);
+      drawRect(ctx, cx - 6, 35 + tiltY, 12, 3, LEATHER.base);
 
       // Cracks intensifying
       drawLine(ctx, cx - 10, 19, cx - 6, 25, STONE_DARK.shadow);

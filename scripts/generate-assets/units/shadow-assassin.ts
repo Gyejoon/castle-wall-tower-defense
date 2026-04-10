@@ -330,7 +330,7 @@ function drawDeath(ctx: SKRSContext2D, ox: number, frame: number): void {
 
     // Rising smoke particles
     for (let i = 0; i < 8; i++) {
-      const px = cx + Math.round((Math.random() * 2 - 1) * 8 + Math.sin(i * 1.5) * 4);
+      const px = cx + Math.round(Math.sin(i * 2.7 + frame * 1.3) * 8 + Math.sin(i * 1.5) * 4);
       const py = HEAD_TOP - Math.round(dissolveProgress * 10) + Math.round(Math.sin(i * 2.3) * 6);
       const pa = (1 - dissolveProgress) * 0.4;
       if (pa > 0.05) {

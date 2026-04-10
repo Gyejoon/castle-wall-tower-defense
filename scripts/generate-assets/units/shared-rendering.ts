@@ -109,7 +109,7 @@ export function drawShadedRect(
   // Top highlight (1px)
   drawRect(ctx, x, y, w, 1, highlight);
   // Bottom shadow (1px)
-  if (h > 2) drawRect(ctx, x, y + h - 1, w, 1, shadow);
+  if (h > 1) drawRect(ctx, x, y + h - 1, w, 1, shadow);
 }
 
 /** Death keyframe progress: 1-2f hit reaction, 3-4f fall, 5-6f settle */

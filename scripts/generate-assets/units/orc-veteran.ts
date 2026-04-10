@@ -279,7 +279,7 @@ function drawIdle(ctx: SKRSContext2D, ox: number, frame: number): void {
   // Heavy breathing: shoulders heave up/down
   const breathOffset = Math.round(Math.sin(phase) * 1);
   // Rope knots shift with breathing
-  const ropeShift = Math.round(Math.sin(phase + 0.5) * 0.5);
+  const ropeShift = Math.round(Math.sin(phase + 0.5) * 1.5);
 
   drawBody(ctx, cx, baseY, {
     bob: 0,

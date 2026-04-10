@@ -149,11 +149,11 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 | id | name | 크기 | walk 파일 | idle 파일 | death 파일 |
 |----|------|------|-----------|-----------|------------|
-| scout_drone | 고블린 scavenger | 작음 | `unit-scout_drone.png` 320×48 (8프레임) | `unit-scout_drone_idle.png` 240×48 (6프레임) | `unit-scout_drone_death.png` 240×48 (6프레임) |
-| battle_robot | orc veteran | 중간 | `unit-battle_robot.png` 320×48 (8프레임) | `unit-battle_robot_idle.png` 240×48 (6프레임) | `unit-battle_robot_death.png` 240×48 (6프레임) |
-| heavy_walker | stone troll | 큼 | `unit-heavy_walker.png` 320×48 (8프레임) | `unit-heavy_walker_idle.png` 240×48 (6프레임) | `unit-heavy_walker_death.png` 240×48 (6프레임) |
-| stealth_drone | shadow assassin | 가늘음 | `unit-stealth_drone.png` 320×48 (8프레임) | `unit-stealth_drone_idle.png` 240×48 (6프레임) | `unit-stealth_drone_death.png` 240×48 (6프레임) |
-| titan | 고대 드래곤 | 보스급 | `unit-titan.png` 320×48 (8프레임) | - | - |
+| scout_drone | 고블린 scavenger | 작음 | `scout_drone.png` 320×48 (8f) | `scout_drone_idle.png` 240×48 (6f) | `scout_drone_death.png` 240×48 (6f) |
+| battle_robot | orc veteran | 중간 | `battle_robot.png` 320×48 (8f) | `battle_robot_idle.png` 240×48 (6f) | `battle_robot_death.png` 240×48 (6f) |
+| heavy_walker | stone troll | 큼 | `heavy_walker.png` 320×48 (8f) | `heavy_walker_idle.png` 240×48 (6f) | `heavy_walker_death.png` 240×48 (6f) |
+| stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 320×48 (8f) | `stealth_drone_idle.png` 240×48 (6f) | `stealth_drone_death.png` 240×48 (6f) |
+| titan | 고대 드래곤 | 보스급 | `titan.png` 320×48 (8f) | — | — |
 
 공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트.
 일반 몬스터 4종은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.

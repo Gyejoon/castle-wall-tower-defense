@@ -371,7 +371,7 @@ export class UnitSystem {
 		actualDamage: number;
 	} | null {
 		const unit = this.units.get(unitId);
-		if (!unit) return null;
+		if (!unit || unit.pendingDestroy) return null;
 
 		if (unit.invulnerableMs > 0) {
 			return {

@@ -26,6 +26,8 @@ export interface TowerStats {
 	range: number;
 	attackSpeed: number; // attacks per second
 	special?: string;
+	/** Projectile speed in grid tiles per second. Omit for instant (beam). */
+	projectileSpeed?: number;
 }
 
 export interface TowerDef {

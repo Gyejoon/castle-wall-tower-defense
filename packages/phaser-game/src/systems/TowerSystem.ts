@@ -68,6 +68,14 @@ export class TowerSystem {
 		arrowIndex?: number;
 		targetUnitId?: string;
 		impactPending?: boolean;
+		pendingDamage?: Array<{
+			unitId: string;
+			damage: number;
+			armorPierce?: boolean;
+			slow?: { factor: number; duration: number };
+			stun?: { duration: number };
+		}>;
+		impactVfxKey?: string;
 	}> = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
@@ -318,7 +326,16 @@ export class TowerSystem {
 						: undefined;
 				// 집중 공격형 (no special) → armor pierce
 				const armorPierce = !special;
-				this.damageEventsBuffer.push({
+
+				// Collect damage events — delayed for projectile towers, instant for beams
+				const pendingBatch: Array<{
+					unitId: string;
+					damage: number;
+					armorPierce?: boolean;
+					slow?: { factor: number; duration: number };
+					stun?: { duration: number };
+				}> = [];
+				pendingBatch.push({
 					unitId: closestUnit.instanceId,
 					damage: baseDamage,
 					armorPierce,
@@ -334,7 +351,7 @@ export class TowerSystem {
 						const gdx = data.position.x - unitGrid.x;
 						const gdy = data.position.y - unitGrid.y;
 						if (gdx * gdx + gdy * gdy <= rangeSq) {
-							this.damageEventsBuffer.push({
+							pendingBatch.push({
 								unitId: unit.instanceId,
 								damage: 0,
 								slow: slowEffect,
@@ -358,7 +375,7 @@ export class TowerSystem {
 							const gdx = data.position.x - unitGrid.x;
 							const gdy = data.position.y - unitGrid.y;
 							if (gdx * gdx + gdy * gdy <= rangeSq) {
-								this.damageEventsBuffer.push({
+								pendingBatch.push({
 									unitId: unit.instanceId,
 									damage: 0,
 									stun: { duration: stunDuration },
@@ -366,7 +383,7 @@ export class TowerSystem {
 							}
 						}
 					} else {
-						this.damageEventsBuffer.push({
+						pendingBatch.push({
 							unitId: closestUnit.instanceId,
 							damage: 0,
 							stun: { duration: stunDuration },
@@ -397,7 +414,7 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
-							this.damageEventsBuffer.push({
+							pendingBatch.push({
 								unitId: unit.instanceId,
 								damage: Math.round(
 									tower.effectiveDamage * splashElementMult * 0.5,
@@ -424,7 +441,32 @@ export class TowerSystem {
 						this.arrowPool[idx].setVisible(true);
 					}
 				}
-				const maxTtl = style === 'arrow' ? 120 : 80;
+				// Calculate TTL from projectile speed (if defined) or use defaults
+				const projSpeed = def.stats.projectileSpeed;
+				let maxTtl: number;
+				if (projSpeed && projSpeed > 0) {
+					// Distance in grid tiles → travel time in ms
+					const dist = Math.sqrt(closestDistSq);
+					maxTtl = Math.round((dist / projSpeed) * 1000);
+					maxTtl = Math.max(40, Math.min(maxTtl, 500)); // clamp 40-500ms
+				} else {
+					maxTtl = style === 'arrow' ? 120 : 80;
+				}
+
+				const hasProjectile = style === 'arrow' || style === 'arc';
+
+				// For projectile towers, defer damage until impact.
+				// For beams, apply immediately.
+				if (!hasProjectile) {
+					for (const evt of pendingBatch) {
+						this.damageEventsBuffer.push(evt);
+					}
+				}
+
+				const impactVfxKey = this.hasSplash(special)
+					? 'vfx-explosion-sm'
+					: 'projectile-hit-flash';
+
 				this.attackLines.push({
 					x1: towerWorld.x,
 					y1: towerWorld.y,
@@ -435,11 +477,14 @@ export class TowerSystem {
 					maxTtl,
 					style,
 					arrowIndex,
-					targetUnitId: style === 'arrow' ? closestUnit.instanceId : undefined,
-					impactPending: style === 'arrow',
+					targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
+					impactPending: hasProjectile,
+					pendingDamage: hasProjectile ? pendingBatch : undefined,
+					impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
-				if (style !== 'arrow') {
+				if (!hasProjectile) {
+					// Beam: instant impact VFX
 					this.spawnImpactVfx(
 						this.hasSplash(special)
 							? 'vfx-explosion-sm'
@@ -549,8 +594,12 @@ export class TowerSystem {
 			const line = this.attackLines[i];
 			line.ttl -= delta;
 
-			// Track target for arrows: update x2/y2 to unit's current position
-			if (line.style === 'arrow' && line.targetUnitId && unitMap) {
+			// Track target for projectiles: update x2/y2 to unit's current position
+			if (
+				(line.style === 'arrow' || line.style === 'arc') &&
+				line.targetUnitId &&
+				unitMap
+			) {
 				const target = unitMap.get(line.targetUnitId);
 				if (target && target.hp > 0) {
 					line.x2 = target.x;
@@ -562,9 +611,18 @@ export class TowerSystem {
 				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
 					this.arrowPool[line.arrowIndex].setVisible(false);
 				}
-				// Spawn impact VFX + sound when arrow arrives
+				// Spawn impact VFX + flush pending damage when projectile arrives
 				if (line.impactPending) {
-					this.spawnImpactVfx('projectile-hit-flash', line.x2, line.y2);
+					this.spawnImpactVfx(
+						line.impactVfxKey ?? 'projectile-hit-flash',
+						line.x2,
+						line.y2,
+					);
+					if (line.pendingDamage) {
+						for (const evt of line.pendingDamage) {
+							this.damageEventsBuffer.push(evt);
+						}
+					}
 					soundGenerator.playArrowImpact();
 				}
 				continue;

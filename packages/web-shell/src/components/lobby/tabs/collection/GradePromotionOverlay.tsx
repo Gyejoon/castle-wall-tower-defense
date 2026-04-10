@@ -48,8 +48,8 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 
 	const spriteSrc =
 		toGrade === 'normal'
-			? `/assets/towers/${towerId}.png`
-			: `/assets/towers/${towerId}-${toGrade}.png`;
+			? `assets/towers/${towerId}.png`
+			: `assets/towers/${towerId}-${toGrade}.png`;
 
 	const color = GRADE_COLOR[toGrade];
 

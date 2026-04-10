@@ -25,7 +25,7 @@ describe('GradePromotionOverlay', () => {
 			/>,
 		);
 		const img = container.querySelector('img') as HTMLImageElement;
-		expect(img.getAttribute('src')).toBe('/assets/towers/archer-rare.png');
+		expect(img.getAttribute('src')).toBe('assets/towers/archer-rare.png');
 	});
 
 	it('uses base sprite for normal grade', () => {
@@ -37,6 +37,6 @@ describe('GradePromotionOverlay', () => {
 			/>,
 		);
 		const img = container.querySelector('img') as HTMLImageElement;
-		expect(img.getAttribute('src')).toBe('/assets/towers/archer.png');
+		expect(img.getAttribute('src')).toBe('assets/towers/archer.png');
 	});
 });

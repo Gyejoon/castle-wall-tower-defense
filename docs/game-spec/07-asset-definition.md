@@ -139,6 +139,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 - idle animation: Phaser runtime tween (scale pulse 1.03x, 1800ms yoyo, Sine.InOut, 위상 offset)
 - 승급 연출: 로비 `GradePromotionOverlay` one-shot (1.2s), React + CSS transition
 - 런타임 표시: `setDisplaySize(64, 80)`으로 그리드 크기 정규화
+- 공성대포(nova_cannon): body(128×160) + barrel(32×16) 분리. barrel은 별도 스프라이트로 가장 가까운 적 방향을 상시 추적
 
 ---
 

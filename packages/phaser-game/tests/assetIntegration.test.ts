@@ -86,8 +86,9 @@ describe('asset integration', () => {
 		const towerImageCalls = image.mock.calls.filter(([key]) =>
 			String(key).startsWith('tower-'),
 		);
+		// 18 base + 18×3 grade + 1 nova_cannon-barrel = 73
 		expect(towerImageCalls).toHaveLength(
-			ALL_TOWERS.length + PILOT_TOWER_IDS.length * GRADE_VARIANTS.length,
+			ALL_TOWERS.length + PILOT_TOWER_IDS.length * GRADE_VARIANTS.length + 1,
 		);
 
 		for (const tower of ALL_TOWERS) {

@@ -85,16 +85,16 @@ export function useGameEvents() {
 			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
-			const mapId = useGameStore.getState().selectedMapId;
+			const { selectedStageId: stageId } = useGameStore.getState();
 			const starKey =
-				data.selectedStar > 1 ? `${mapId}:${data.selectedStar}` : mapId;
+				data.selectedStar > 1 ? `${stageId}:${data.selectedStar}` : stageId;
 			meta.updateHighestWave(starKey, data.stats.wavesCleared);
 			if (data.result === 'victory') {
-				meta.recordStageClear(mapId);
+				meta.recordStageClear(stageId);
 
 				// ★ Record star clear
 				if (data.starCleared) {
-					meta.recordStarClear(mapId, data.selectedStar);
+					meta.recordStarClear(stageId, data.selectedStar);
 				}
 
 				// Awakening stone rewards (only when star condition is met)

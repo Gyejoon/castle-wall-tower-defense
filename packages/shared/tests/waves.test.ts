@@ -87,8 +87,9 @@ describe('STAGE_WAVES', () => {
 
 	it('boss stages (w1_s8, w2_s8, w3_s8) end with a boss wave', () => {
 		for (const stageId of ['w1_s8', 'w2_s8', 'w3_s8']) {
-			const waves = STAGE_WAVES[stageId]!;
-			expect(waves[waves.length - 1].kind).toBe('boss');
+			const waves = STAGE_WAVES[stageId];
+			expect(waves).toBeDefined();
+			expect(waves?.[waves.length - 1]?.kind).toBe('boss');
 		}
 	});
 });

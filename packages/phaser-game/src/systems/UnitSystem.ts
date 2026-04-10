@@ -839,12 +839,33 @@ export class UnitSystem {
 		}
 
 		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
-		const lanePathWorld = this.lanesWorld[laneIndex] ?? this.currentPathWorld;
 		if (lanePath.length === 0) return;
 
 		const instanceId = `unit_${this.nextId++}`;
-		const startGrid = lanePath[0];
-		const startWorld = lanePathWorld[0];
+		const clampedGrid = {
+			x: Math.max(0, Math.min(position.x, this.gridManager.width - 1)),
+			y: Math.max(0, Math.min(position.y, this.gridManager.height - 1)),
+		};
+		let initialPathIndex = 0;
+		let bestDist = Infinity;
+		for (let i = 0; i < lanePath.length; i++) {
+			const dx = lanePath[i].x - clampedGrid.x;
+			const dy = lanePath[i].y - clampedGrid.y;
+			const d = dx * dx + dy * dy;
+			if (d < bestDist) {
+				bestDist = d;
+				initialPathIndex = i;
+			}
+		}
+		initialPathIndex = Math.min(
+			initialPathIndex,
+			Math.max(0, lanePath.length - 2),
+		);
+		const startGrid = clampedGrid;
+		const startWorld = this.gridManager.gridToWorld(
+			clampedGrid.x,
+			clampedGrid.y,
+		);
 
 		EventBus.emit('unit-spawned', { unitType: def.type, count: 1 });
 
@@ -856,7 +877,7 @@ export class UnitSystem {
 			defId: def.id,
 			position: { x: startGrid.x, y: startGrid.y },
 			hp: finalHp,
-			pathIndex: 0,
+			pathIndex: initialPathIndex,
 			metadata,
 		};
 
@@ -899,7 +920,7 @@ export class UnitSystem {
 			ccImmunityChance: scaled.ccImmunityChance,
 			waveSlot: 0,
 			shadow: null,
-			pathProgress: 0,
+			pathProgress: initialPathIndex,
 		};
 		this.units.set(instanceId, instance);
 

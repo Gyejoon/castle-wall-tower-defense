@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-08T18:42:46.148Z",
+  "generated": "2026-04-09T17:14:47.814Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -464,6 +464,51 @@
       "key": "unit-titan",
       "type": "spritesheet",
       "path": "assets/units/titan.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-arcane_mage",
+      "type": "spritesheet",
+      "path": "assets/units/arcane_mage.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-mana_shield",
+      "type": "spritesheet",
+      "path": "assets/units/mana_shield.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-orc_warlord",
+      "type": "spritesheet",
+      "path": "assets/units/orc_warlord.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-forge_master",
+      "type": "spritesheet",
+      "path": "assets/units/forge_master.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-corrupted_archmage",
+      "type": "spritesheet",
+      "path": "assets/units/corrupted_archmage.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 8,
@@ -992,15 +1037,15 @@
       "section": "preload"
     },
     {
-      "key": "tilemap-lava_fortress",
+      "key": "tilemap-w2_forge_a",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/lava-fortress.json",
+      "path": "assets/maps/w2-forge_a.json",
       "section": "preload"
     },
     {
-      "key": "tilemap-storm_citadel",
+      "key": "tilemap-w3_tower_a",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/storm-citadel.json",
+      "path": "assets/maps/w3-tower_a.json",
       "section": "preload"
     },
     {
@@ -1256,6 +1301,12 @@
       "key": "ui-worldmap-bg",
       "type": "image",
       "path": "assets/ui/worldmap-bg.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-forest_gate",
+      "type": "image",
+      "path": "assets/ui/landmark-forest_gate.png",
       "section": "ui"
     },
     {

@@ -14,7 +14,7 @@ import {
 	getSpawnExitPairs,
 	getStageById,
 	getStarDifficultyMult,
-	getWavesForMap,
+	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
 	PHASER_COLORS,
@@ -233,27 +233,29 @@ export class GameScene extends Phaser.Scene {
 			this.bossBehaviors.set(instanceId, behavior);
 			behavior.onSpawn(this.buildBossContext(unit.data));
 		});
-		const mapWaves = getWavesForMap(mapId);
-		if (mapWaves.length === 0) {
-			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
-		}
-		this.currentSlotDef = mapWaves[0];
-		const rawStar = this.game.registry.get('selectedStar');
-		const selectedStar: StarRating =
-			rawStar === 2 || rawStar === 3 ? rawStar : 1;
-		this.selectedStar = selectedStar;
-		const starMult = getStarDifficultyMult(selectedStar);
-		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
-			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
-			armorMult: starMult.armor,
-			speedMult: starMult.speed,
-			ccResist: starMult.ccResist,
-		});
 		const rawStageId = this.game.registry.get('selectedStageId') as
 			| string
 			| undefined;
 		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
 		const stageDef = getStageById(stageId);
+		const stageWaves = getWavesForStage(stageDef.waveSetId);
+		if (stageWaves.length === 0) {
+			throw new Error(
+				`[GameScene] Stage "${stageId}" has empty wave definitions`,
+			);
+		}
+		this.currentSlotDef = stageWaves[0];
+		const rawStar = this.game.registry.get('selectedStar');
+		const selectedStar: StarRating =
+			rawStar === 2 || rawStar === 3 ? rawStar : 1;
+		this.selectedStar = selectedStar;
+		const starMult = getStarDifficultyMult(selectedStar);
+		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves, undefined, {
+			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
+			armorMult: starMult.armor,
+			speedMult: starMult.speed,
+			ccResist: starMult.ccResist,
+		});
 		this.worldGimmick = createWorldGimmick(stageDef.worldId as WorldId, {
 			worldId: stageDef.worldId as WorldId,
 			map: this.currentMap,
@@ -321,7 +323,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
-			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
+			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 			this.worldGimmick?.onWaveStart(data.wave);

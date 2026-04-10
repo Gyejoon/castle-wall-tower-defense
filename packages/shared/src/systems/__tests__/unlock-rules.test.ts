@@ -81,10 +81,11 @@ describe('getStageLockStatus', () => {
 
 	it('returns user-friendly reason for locked W2 stage', () => {
 		const status = getStageLockStatus('w2_s1', {});
+		const reason = status.reason;
 		expect(status.locked).toBe(true);
-		expect(status.reason).toBeTruthy();
+		expect(reason).toBeTruthy();
 		// Korean message should reference W1
-		expect(status.reason!.length).toBeGreaterThan(0);
+		expect(reason?.length).toBeGreaterThan(0);
 	});
 
 	it('returns previous-stage reason for locked mid-world stage', () => {

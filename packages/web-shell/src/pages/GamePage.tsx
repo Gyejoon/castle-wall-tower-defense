@@ -1,5 +1,5 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
-import { getTotalWavesForMap } from '@gld/shared';
+import { getStageById, getTotalWavesForStage } from '@gld/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
@@ -29,13 +29,14 @@ export function GamePage() {
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const selectedStar = useGameStore((s) => s.selectedStar);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
+	const selectedStageId = useGameStore((s) => s.selectedStageId);
+	const selectedStage = getStageById(selectedStageId);
+	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
 	const starKey =
-		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
-	const speed2xUnlocked =
-		(highestWave[starKey] ?? 0) >= getTotalWavesForMap(selectedMapId);
+		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
+	const speed2xUnlocked = (highestWave[starKey] ?? 0) >= totalStageWaves;
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);

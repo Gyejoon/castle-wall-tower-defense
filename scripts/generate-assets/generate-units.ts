@@ -699,9 +699,25 @@ const DRAW_FNS: Record<string, (ctx: ReturnType<typeof makeCanvas>['ctx'], ox: n
   heavy_walker: drawStoneTroll,
   stealth_drone: drawShadowAssassin,
   titan: drawAncientDragon,
+  arcane_mage: drawGoblinScout,
+  mana_shield: drawStoneTroll,
+  orc_warlord: drawOrcWarrior,
+  forge_master: drawStoneTroll,
+  corrupted_archmage: drawShadowAssassin,
 };
 
-const UNIT_IDS = ['scout_drone', 'battle_robot', 'heavy_walker', 'stealth_drone', 'titan'];
+const UNIT_IDS = [
+  'scout_drone',
+  'battle_robot',
+  'heavy_walker',
+  'stealth_drone',
+  'titan',
+  'arcane_mage',
+  'mana_shield',
+  'orc_warlord',
+  'forge_master',
+  'corrupted_archmage',
+] as const;
 
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });

@@ -2001,18 +2001,26 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 };
 
 // Legacy aliases + new map aliases
+function getRequiredStageWaves(stageId: string): WaveDef[] {
+	const waves = STAGE_WAVES[stageId];
+	if (!waves) {
+		throw new Error(`Missing stage waves for ${stageId}`);
+	}
+	return waves;
+}
+
 export const WAVE_REGISTRY: Record<string, WaveDef[]> = {
 	// Legacy (pre-v5 map ids)
-	forest_gate: STAGE_WAVES['w1_s1']!,
-	lava_fortress: STAGE_WAVES['w2_s1']!,
-	storm_citadel: STAGE_WAVES['w3_s1']!,
+	forest_gate: getRequiredStageWaves('w1_s1'),
+	lava_fortress: getRequiredStageWaves('w2_s1'),
+	storm_citadel: getRequiredStageWaves('w3_s1'),
 	// New map ids (default to first stage on that map)
-	w1_forest_a: STAGE_WAVES['w1_s1']!,
-	w1_forest_b: STAGE_WAVES['w1_s5']!,
-	w2_forge_a: STAGE_WAVES['w2_s1']!,
-	w2_forge_b: STAGE_WAVES['w2_s5']!,
-	w3_tower_a: STAGE_WAVES['w3_s1']!,
-	w3_tower_b: STAGE_WAVES['w3_s5']!,
+	w1_forest_a: getRequiredStageWaves('w1_s1'),
+	w1_forest_b: getRequiredStageWaves('w1_s5'),
+	w2_forge_a: getRequiredStageWaves('w2_s1'),
+	w2_forge_b: getRequiredStageWaves('w2_s5'),
+	w3_tower_a: getRequiredStageWaves('w3_s1'),
+	w3_tower_b: getRequiredStageWaves('w3_s5'),
 };
 
 export function getWavesForMap(mapId: string): WaveDef[] {

@@ -3,8 +3,9 @@ import {
 	getMapPaths,
 	getMaxGoldForMap,
 	getMaxXpForMap,
-	getTotalWavesForMap,
-	getWavesForMap,
+	getStageById,
+	getTotalWavesForStage,
+	getWavesForStage,
 	MAP_REGISTRY,
 	STAR_DIFFICULTY,
 	type StarRating,
@@ -22,12 +23,12 @@ const DeckEditSheet = lazy(() =>
 
 function isStarUnlocked(
 	star: StarRating,
-	mapId: string,
+	stageId: string,
 	stageStarsMap: Record<string, number>,
 ): boolean {
 	if (star === 1) return true;
-	if (star === 2) return (stageStarsMap[mapId] ?? 0) >= 1;
-	return (stageStarsMap[mapId] ?? 0) >= 2;
+	if (star === 2) return (stageStarsMap[stageId] ?? 0) >= 1;
+	return (stageStarsMap[stageId] ?? 0) >= 2;
 }
 
 const STAR_COLORS = {
@@ -88,15 +89,16 @@ export function StageDetailPage() {
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;
 
+	const stage = getStageById(selectedStageId);
 	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', thumb: '' };
 	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
 	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
-	const totalWaves = getTotalWavesForMap(selectedMapId);
-	const waves = getWavesForMap(selectedMapId);
+	const totalWaves = getTotalWavesForStage(stage.waveSetId);
+	const waves = getWavesForStage(stage.waveSetId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
 	const lanes = getMapPaths(map).length;
 	const starKey =
-		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
+		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
 	const best = highestWave[starKey] ?? 0;
 	const isCleared = best >= totalWaves;
 	const lvl = map.unlockLevel ?? 1;
@@ -270,7 +272,7 @@ export function StageDetailPage() {
 							{([1, 2, 3] as StarRating[]).map((star) => {
 								const unlocked = isStarUnlocked(
 									star,
-									selectedMapId,
+									selectedStageId,
 									stageStars,
 								);
 								const active = selectedStar === star;

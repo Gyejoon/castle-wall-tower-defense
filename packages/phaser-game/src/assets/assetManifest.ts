@@ -18,6 +18,11 @@ const CORE_UNIT_IDS = [
 	'heavy_walker',
 	'stealth_drone',
 	'titan',
+	'arcane_mage',
+	'mana_shield',
+	'orc_warlord',
+	'forge_master',
+	'corrupted_archmage',
 ] as const;
 
 export function getCoreUnitIds(): readonly string[] {

@@ -83,7 +83,16 @@ describe('metaStore v1→v5 migration', () => {
 		expect(s.progress.dailyMissions).toEqual([]);
 		expect(s.progress.weeklyMissions).toEqual([]);
 		expect(s.progress.tutorialCompleted).toBe(false);
-		expect(s.progress.highestWave).toEqual({ forest_gate: 5 });
+		expect(s.progress.highestWave).toEqual({
+			w1_s1: 5,
+			w1_s2: 5,
+			w1_s3: 5,
+			w1_s4: 5,
+			w1_s5: 5,
+			w1_s6: 5,
+			w1_s7: 5,
+			w1_s8: 5,
+		});
 		expect(s.settings.bgmVolume).toBe(0.7);
 		expect(s.settings.sfxVolume).toBe(0.8);
 		expect(s.settings.showDamageNumbers).toBe(false);
@@ -379,13 +388,17 @@ describe('sanitizeV5Save — v5 필드 누락 방어', () => {
 
 // ── v4 → v5 migration (stageStars mapId → stageId) ──────────────────────────
 
-function makeV4Save(stageStars: Record<string, number> = {}) {
+function makeV4Save(
+	stageStars: Record<string, number> = {},
+	progressPatch: Partial<ReturnType<typeof createDefaultSave>['progress']> = {},
+) {
 	const base = createDefaultSave();
 	return {
 		...base,
 		version: 4,
 		progress: {
 			...base.progress,
+			...progressPatch,
 			stageStars,
 		},
 	};
@@ -476,6 +489,29 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		expect(result).not.toBeNull();
 		expect(result!.profile.combatPower).toBe(9999);
 		expect(result!.settings.bgmVolume).toBe(0.3);
+		vi.unstubAllGlobals();
+	});
+
+	it('migrates legacy map-based highestWave and stagesCleared to stage-based progress', () => {
+		const save = makeV4Save(
+			{ forest_gate: 2 },
+			{
+				highestWave: { forest_gate: 10 },
+				stagesCleared: ['forest_gate'],
+			},
+		);
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.progress.highestWave.w1_s1).toBe(10);
+		expect(result!.progress.highestWave.w1_s8).toBe(10);
+		expect(result!.progress.highestWave.forest_gate).toBeUndefined();
+		expect(result!.progress.stagesCleared).toContain('w1_s1');
+		expect(result!.progress.stagesCleared).toContain('w1_s8');
+		expect(result!.progress.stagesCleared).not.toContain('forest_gate');
 		vi.unstubAllGlobals();
 	});
 

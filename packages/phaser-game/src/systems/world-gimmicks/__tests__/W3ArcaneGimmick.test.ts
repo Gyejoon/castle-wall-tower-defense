@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GimmickContext } from '../types';
 import { W3ArcaneGimmick } from '../W3ArcaneGimmick';
 
@@ -119,5 +119,41 @@ describe('W3ArcaneGimmick', () => {
 		const g = new W3ArcaneGimmick(ctx);
 		g.init();
 		expect(g.getCircleDamageBonus()).toBe(0.15);
+	});
+
+	it('★1 burst disables exactly a 2×2 area, not a 3×3 area', () => {
+		const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+		const towers = [
+			{ data: { position: { x: 3, y: 8 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 4, y: 8 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 3, y: 9 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 4, y: 9 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 2, y: 8 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 5, y: 9 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 3, y: 10 } }, disabledUntilMs: 0 },
+			{ data: { position: { x: 5, y: 10 } }, disabledUntilMs: 0 },
+		];
+		const ctx = {
+			...makeCtx(1),
+			getTowers: () =>
+				// biome-ignore lint/suspicious/noExplicitAny: test stub — partial TowerInstance
+				towers as any,
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: test stub — partial GimmickContext
+		const g = new W3ArcaneGimmick(ctx as any);
+		g.init();
+		g.onBattleStart();
+
+		g.onWaveStart(0);
+		g.onWaveStart(1);
+		g.onWaveStart(2);
+
+		expect(towers.slice(0, 4).every((tower) => tower.disabledUntilMs > 0)).toBe(
+			true,
+		);
+		expect(towers.slice(4).every((tower) => tower.disabledUntilMs === 0)).toBe(
+			true,
+		);
+		randomSpy.mockRestore();
 	});
 });

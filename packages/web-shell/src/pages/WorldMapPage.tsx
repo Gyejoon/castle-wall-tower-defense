@@ -4,6 +4,7 @@ import {
 	isStageUnlocked,
 	isWorldUnlocked,
 	type StageDef,
+	type StarRating,
 	WORLD_ORDER,
 	WORLDS,
 	type WorldId,
@@ -15,7 +16,7 @@ import { cn } from '../utils/cn';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function pickInitialWorld(stars: Record<string, number>): WorldId {
+function pickInitialWorld(stars: Record<string, StarRating>): WorldId {
 	for (const id of WORLD_ORDER) {
 		const world = WORLDS[id];
 		if (world.stageCount === 0) continue;
@@ -33,7 +34,7 @@ function pickInitialWorld(stars: Record<string, number>): WorldId {
 interface StageCardProps {
 	stage: StageDef;
 	worldOrder: number;
-	stars: Record<string, number>;
+	stars: Record<string, StarRating>;
 	lockImgError: boolean;
 	onLockImgError: () => void;
 	onSelect: (stageId: string) => void;
@@ -59,7 +60,7 @@ function StageCard({
 	function handleClick() {
 		if (unlocked) {
 			onSelect(stage.id);
-		} else if (lockStatus.locked) {
+		} else if (lockStatus.locked && lockStatus.reason) {
 			onLocked(lockStatus.reason);
 		}
 	}
@@ -239,7 +240,7 @@ export function WorldMapPage() {
 				</div>
 
 				{/* Stage grid */}
-				<div className="flex-1 min-h-0 overflow-y-auto bg-[#1a1208]">
+				<div className="flex-1 min-h-0 overflow-y-auto bg-bg">
 					{activeWorldDef.stageCount === 0 ? (
 						<div className="flex flex-col items-center justify-center h-full gap-3 px-6">
 							<span className="font-pixel text-[32px] text-text-secondary/30 select-none">

@@ -1,8 +1,12 @@
 import {
+	CC_AURA_CONFIGS,
 	enhancementCost,
+	GLOBAL_RANGE_THRESHOLD,
 	getEffectiveStats,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 	type TowerDef,
 	type TowerGrade,
 } from '@gld/shared';
@@ -159,7 +163,11 @@ export function TowerBottomSheet({
 				/>
 				<StatDisplay
 					label="사거리"
-					value={String(def.stats.range)}
+					value={
+						def.stats.range >= GLOBAL_RANGE_THRESHOLD
+							? '전체 맵'
+							: String(def.stats.range)
+					}
 					color={colors.textSecondary}
 				/>
 				<StatDisplay
@@ -176,11 +184,45 @@ export function TowerBottomSheet({
 				)}
 			</div>
 
-			{def.stats.special && (
-				<p className="font-pixel text-[11px] leading-[1.6] text-accent">
-					특수: {translateSpecial(def.stats.special)}
-				</p>
-			)}
+			{def.stats.special &&
+				(() => {
+					const special = def.stats.special;
+					const configKey = special.replace(/%/g, '');
+					const cfg = CC_AURA_CONFIGS[configKey];
+					const isStun = special.startsWith('stun');
+					// Active stun towers (fortress) use attackInterval as stun cadence,
+					// passive stun towers (shield/holy_shrine/divine_throne) use CC cooldown.
+					// Runtime scales duration for all stun towers and cooldown for passive only.
+					const isActiveStun = isStun && def.stats.attackSpeed > 0;
+					const scaledDurationMs =
+						cfg && isStun
+							? cfg.durationMs * stunDurationMultiplier(level)
+							: cfg?.durationMs;
+					const scaledCooldownMs =
+						cfg && isActiveStun
+							? 1000 / def.stats.attackSpeed
+							: cfg && isStun
+								? cfg.cooldownMs * stunCooldownMultiplier(level)
+								: cfg?.cooldownMs;
+					return (
+						<div className="flex flex-col gap-1">
+							<p className="font-pixel text-[11px] leading-[1.6] text-accent">
+								특수: {translateSpecial(special)}
+							</p>
+							{cfg && (
+								<p
+									className="font-pixel text-[10px] leading-[1.4]"
+									style={{ color: colors.textSecondary }}
+								>
+									{isStun ? '스턴' : '슬로우'}{' '}
+									{((scaledDurationMs ?? 0) / 1000).toFixed(1)}s / 쿨{' '}
+									{((scaledCooldownMs ?? 0) / 1000).toFixed(1)}s /{' '}
+									{cfg.aoe ? '광역' : '단일'}
+								</p>
+							)}
+						</div>
+					);
+				})()}
 
 			{/* Enhancement section */}
 			{owned && (

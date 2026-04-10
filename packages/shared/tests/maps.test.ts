@@ -157,7 +157,7 @@ describe('getAllPathCells', () => {
 		const stormCells = getAllPathCells(STORM_CITADEL_MAP);
 		const cellSet = new Set(stormCells.map((p) => `${p.x},${p.y}`));
 		expect(STORM_CITADEL_MAP.paths).toBeDefined();
-		for (const lane of STORM_CITADEL_MAP.paths!) {
+		for (const lane of STORM_CITADEL_MAP.paths ?? []) {
 			for (const p of lane) {
 				expect(cellSet.has(`${p.x},${p.y}`)).toBe(true);
 			}

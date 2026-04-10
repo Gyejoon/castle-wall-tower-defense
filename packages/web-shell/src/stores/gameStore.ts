@@ -179,7 +179,10 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
 	...createRunState(),
 
-	setRunStatus: (status) => set({ runStatus: status }),
+	setRunStatus: (status) =>
+		set((state) =>
+			state.runStatus === status ? state : { runStatus: status, toast: null },
+		),
 	setGameReady: (ready) => set({ gameReady: ready }),
 	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),

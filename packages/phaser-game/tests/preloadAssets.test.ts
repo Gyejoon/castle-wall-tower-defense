@@ -12,6 +12,12 @@ import {
 	TINY_SWORDS_TILESET_ASSETS,
 } from '../src/fieldAssets';
 
+// Ensure assetManifest uses the real implementation even when other test files
+// (e.g. GameScene.test.ts) mock it — prevents cross-file mock bleed under bun:test.
+vi.mock('../src/assets/assetManifest', async (importOriginal) => {
+	return await importOriginal();
+});
+
 vi.mock('phaser', () => ({
 	default: {
 		Scene: class {

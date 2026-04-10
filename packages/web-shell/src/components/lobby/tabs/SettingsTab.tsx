@@ -80,7 +80,8 @@ export function SettingsTab() {
 					<InfoRow label="빌드" value="2026.03.31" />
 				</SettingsSection>
 
-				{import.meta.env.DEV && <DevToolsSection />}
+				{(import.meta.env.DEV ||
+					import.meta.env.VITE_VERCEL_ENV === 'preview') && <DevToolsSection />}
 			</div>
 		</div>
 	);

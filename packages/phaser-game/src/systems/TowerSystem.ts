@@ -11,6 +11,8 @@ import {
 	CC_AURA_CONFIGS,
 	getEffectiveStats,
 	getElementMultiplier,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
@@ -321,7 +323,9 @@ export class TowerSystem {
 
 				if (this.isStunSpecial(special) && special) {
 					const configKey = special.replace(/%/g, '');
-					const stunDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const baseDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
+					const level = tower.data.level ?? 1;
+					const stunDuration = baseDuration * stunDurationMultiplier(level);
 					if (special.includes('aoe')) {
 						for (const unit of unitPositions) {
 							if (unit.hp <= 0) continue;
@@ -364,12 +368,19 @@ export class TowerSystem {
 								def.element,
 								unit.element,
 							);
+							// slow는 tower 사거리 내 splash unit에만 적용 (#98)
+							let splashSlow: typeof slowEffect;
+							if (slowEffect) {
+								const tdx = data.position.x - sUnitGrid.x;
+								const tdy = data.position.y - sUnitGrid.y;
+								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
+							}
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: Math.round(
 									tower.effectiveDamage * splashElementMult * 0.5,
 								),
-								slow: slowEffect,
+								slow: splashSlow,
 							});
 						}
 					}
@@ -434,7 +445,16 @@ export class TowerSystem {
 			const config = CC_AURA_CONFIGS[configKey];
 			if (!config) continue;
 
-			if (time - tower.lastAuraTime < config.cooldownMs) continue;
+			const level = tower.data.level ?? 1;
+			const stunScaled = this.isStunSpecial(special);
+			const effectiveCooldown = stunScaled
+				? config.cooldownMs * stunCooldownMultiplier(level)
+				: config.cooldownMs;
+			const effectiveDuration = stunScaled
+				? config.durationMs * stunDurationMultiplier(level)
+				: config.durationMs;
+
+			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
 			const rangeSq = def.stats.range ** 2;
@@ -450,7 +470,7 @@ export class TowerSystem {
 							this.damageEventsBuffer.push({
 								unitId: unit.instanceId,
 								damage: 0,
-								stun: { duration: config.durationMs },
+								stun: { duration: effectiveDuration },
 							});
 						}
 					}
@@ -472,7 +492,7 @@ export class TowerSystem {
 						this.damageEventsBuffer.push({
 							unitId: closest.instanceId,
 							damage: 0,
-							stun: { duration: config.durationMs },
+							stun: { duration: effectiveDuration },
 						});
 					}
 				}

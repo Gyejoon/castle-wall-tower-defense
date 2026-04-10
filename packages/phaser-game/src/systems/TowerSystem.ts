@@ -565,23 +565,9 @@ export class TowerSystem {
 						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 					});
 				}
-				if (def.type === 'nova_cannon' && tower.barrelSprite) {
-					// Barrel tip muzzle flash — red circle that fades quickly
-					const flash = this.scene.add.circle(
-						fireOriginX,
-						fireOriginY,
-						6,
-						0xc03020,
-						0.8,
-					);
-					flash.setDepth(tower.sprite.depth + 2);
-					this.scene.tweens.add({
-						targets: flash,
-						alpha: 0,
-						scale: 2,
-						duration: 150,
-						onComplete: () => flash.destroy(),
-					});
+				if (def.type === 'nova_cannon') {
+					// Use the same hit-flash asset at barrel tip
+					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
 				} else {
 					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				}

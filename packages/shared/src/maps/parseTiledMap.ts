@@ -1,6 +1,6 @@
 import { TERRAIN_GID_MAP, type TerrainKind } from '../constants/terrain';
 import type { Position } from '../types/grid';
-import type { MapLayout, StructureSpec } from '../types/map';
+import type { DecorationSpec, MapLayout, StructureSpec } from '../types/map';
 
 export interface TiledProperty {
 	name: string;
@@ -162,7 +162,20 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 		'structures',
 		'objectgroup',
 	);
-	getLayer<TiledObjectLayer>(raw, 'decorations', 'objectgroup');
+	const decorationsLayer = getLayer<TiledObjectLayer>(
+		raw,
+		'decorations',
+		'objectgroup',
+	);
+	const decorations: DecorationSpec[] = decorationsLayer.objects
+		.filter((o) => o.type === 'decoration')
+		.map((o) => ({
+			x: Math.round(o.x / tileSize),
+			y: Math.round(o.y / tileSize),
+			assetKey: prop<string>(o.properties, 'assetKey'),
+			kind: prop<string>(o.properties, 'kind'),
+			variant: prop<string>(o.properties, 'variant'),
+		}));
 	const objectsLayer = getLayer<TiledObjectLayer>(
 		raw,
 		'objects',
@@ -242,6 +255,7 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 		paths: allLanes,
 		terrain,
 		structures,
+		decorations,
 		blockedPlacementPoints,
 		buildablePoints,
 		spawnPoint: primaryPath[0],

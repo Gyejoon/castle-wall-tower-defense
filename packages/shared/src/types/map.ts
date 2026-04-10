@@ -13,6 +13,14 @@ export interface StructureSpec {
 	variant: string;
 }
 
+export interface DecorationSpec {
+	x: number; // grid x
+	y: number; // grid y
+	assetKey: string;
+	kind: string;
+	variant: string;
+}
+
 export interface MapLayout {
 	id: string;
 	name: string;
@@ -24,6 +32,7 @@ export interface MapLayout {
 	/** 2D grid: terrain[y][x] */
 	terrain: TerrainKind[][];
 	structures: StructureSpec[];
+	decorations: DecorationSpec[];
 	blockedPlacementPoints: Position[]; // non-buildable terrain blocked from tower placement
 	buildablePoints: Position[]; // valid tower placement tiles derived from board contract
 	spawnPoint: Position;

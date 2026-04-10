@@ -131,25 +131,7 @@ describe('GameScene field runtime', () => {
 		const addTileSprite = vi.fn(() => createImage());
 		const addGraphics = vi.fn(() => createGraphics());
 		const addText = vi.fn(() => createText());
-		const tilemapData = {
-			getObjectLayer: vi.fn(() => ({
-				objects: [
-					{
-						x: FOREST_GATE_MAP.tileSize * 4,
-						y: FOREST_GATE_MAP.tileSize * 1,
-						properties: [
-							{ name: 'kind', value: TINY_SWORDS_DECORATION_ASSETS[0].kind },
-							{ name: 'assetKey', value: TINY_SWORDS_DECORATION_ASSETS[0].key },
-							{
-								name: 'variant',
-								value: TINY_SWORDS_DECORATION_ASSETS[0].variant,
-							},
-						],
-					},
-				],
-			})),
-		};
-		const makeTilemap = vi.fn(() => tilemapData);
+		const makeTilemap = vi.fn(() => ({}));
 
 		const { GameScene } = await import('../src/scenes/Game');
 		const scene = new GameScene();
@@ -227,7 +209,8 @@ describe('GameScene field runtime', () => {
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,
 		).length;
-		expect(decorationCount).toBe(1);
+		// forest-gate has 2 decorations using the first asset key (tiny-swords-rock-1)
+		expect(decorationCount).toBe(2);
 
 		expect(addImage).not.toHaveBeenCalledWith(
 			expect.anything(),

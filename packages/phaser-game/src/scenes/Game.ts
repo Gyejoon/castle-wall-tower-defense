@@ -366,51 +366,13 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private cacheDecorationData(): void {
-		if (!this.cache.tilemap.has(this.currentMap.tilemapKey)) {
-			this.decorationTiles = [];
-			return;
-		}
-		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
-		const decorLayer = tilemap.getObjectLayer?.('decorations');
-		if (!decorLayer) {
-			this.decorationTiles = [];
-			return;
-		}
-
-		this.decorationTiles = decorLayer.objects
-			.map((object) => {
-				const properties = new Map(
-					(object.properties ?? []).map(
-						(property: { name: string; value: unknown }) => [
-							property.name,
-							property.value,
-						],
-					),
-				);
-				const assetKey = properties.get('assetKey');
-				const kind = properties.get('kind');
-				const variant = properties.get('variant');
-
-				if (
-					typeof assetKey !== 'string' ||
-					typeof kind !== 'string' ||
-					typeof variant !== 'string'
-				) {
-					return null;
-				}
-
-				const objectX = typeof object.x === 'number' ? object.x : 0;
-				const objectY = typeof object.y === 'number' ? object.y : 0;
-
-				return {
-					x: Math.round(objectX / this.currentMap.tileSize),
-					y: Math.round(objectY / this.currentMap.tileSize),
-					assetKey,
-					kind: kind as TinySwordsDecorationKind,
-					variant,
-				};
-			})
-			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+		this.decorationTiles = (this.currentMap.decorations ?? []).map((d) => ({
+			x: d.x,
+			y: d.y,
+			assetKey: d.assetKey,
+			kind: d.kind as TinySwordsDecorationKind,
+			variant: d.variant,
+		}));
 	}
 
 	/** Center-fill grass frame index (row 1 col 1) — no edge decorations, tiles seamlessly. */

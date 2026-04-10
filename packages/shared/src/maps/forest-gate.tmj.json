@@ -123,7 +123,14 @@
       "y": 0,
       "opacity": 1,
       "visible": true,
-      "objects": []
+      "objects": [
+        {"id":10000,"name":"decor_0","type":"decoration","x":0,"y":0,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"rock_large"},{"name":"assetKey","type":"string","value":"tiny-swords-rock-1"},{"name":"variant","type":"string","value":"Rock1.png"}]},
+        {"id":10001,"name":"decor_1","type":"decoration","x":0,"y":192,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"rock_large"},{"name":"assetKey","type":"string","value":"tiny-swords-rock-1"},{"name":"variant","type":"string","value":"Rock1.png"}]},
+        {"id":10002,"name":"decor_2","type":"decoration","x":224,"y":224,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"rock_large"},{"name":"assetKey","type":"string","value":"tiny-swords-rock-2"},{"name":"variant","type":"string","value":"Rock2.png"}]},
+        {"id":10003,"name":"decor_3","type":"decoration","x":0,"y":384,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"tree_large"},{"name":"assetKey","type":"string","value":"tiny-swords-tree-1"},{"name":"variant","type":"string","value":"Tree1.png"}]},
+        {"id":10004,"name":"decor_4","type":"decoration","x":224,"y":416,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"tree_large"},{"name":"assetKey","type":"string","value":"tiny-swords-tree-2"},{"name":"variant","type":"string","value":"Tree2.png"}]},
+        {"id":10005,"name":"decor_5","type":"decoration","x":224,"y":544,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"tree_large"},{"name":"assetKey","type":"string","value":"tiny-swords-tree-2"},{"name":"variant","type":"string","value":"Tree2.png"}]}
+      ]
     },
     {
       "name": "objects",

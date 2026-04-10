@@ -222,7 +222,10 @@
       "y": 0,
       "opacity": 1,
       "visible": true,
-      "objects": []
+      "objects": [
+        {"id":10000,"name":"decor_0","type":"decoration","x":160,"y":0,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"bush"},{"name":"assetKey","type":"string","value":"tiny-swords-bush-4"},{"name":"variant","type":"string","value":"Bushe4.png"}]},
+        {"id":10001,"name":"decor_1","type":"decoration","x":224,"y":512,"width":32,"height":32,"properties":[{"name":"kind","type":"string","value":"bush"},{"name":"assetKey","type":"string","value":"tiny-swords-bush-4"},{"name":"variant","type":"string","value":"Bushe4.png"}]}
+      ]
     },
     {
       "name": "objects",

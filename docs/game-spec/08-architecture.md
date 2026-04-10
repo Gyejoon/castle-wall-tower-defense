@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-07
+> **Last Updated:** 2026-04-10
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -97,6 +97,8 @@ EnergySystem.reset()
 | `energy-changed` | 에너지 변동 | useGameEvents → gameStore.setEnergy |
 | `tower-placed` | 배치 시도 결과 | useGameEvents → 피드백 처리 |
 | `deck-loaded` | 씬 초기화 | useGameEvents → gameStore.setDeckCards |
+| `wave-prep-started` | `WaveSystem.start()` 진입 시 (prep 페이즈, 모든 전투) | useGameEvents → gameStore.setCountdown + wavePhase='prep' |
+| `wave-prep-tick` | prep 페이즈 update() tick (매 프레임) | useGameEvents → gameStore.setCountdown |
 | `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
 | `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
 | `boss-warning` | pre_boss 웨이브 대기 진입 | useGameEvents → bossWarningVisible |
@@ -169,6 +171,7 @@ EnergySystem.reset()
 | ~12 | Towers | 타워 스프라이트 |
 | 15 | Selection | selectionGraphics (배치 가능 하이라이트) |
 | ~14–20 | Units | 유닛 스프라이트 |
+| 22 | Range overlay | 타워 선택 시 사거리 링 (gold fill 0.08 + stroke 0.6, Phaser tween fade 120ms) |
 | 80 | DamageNumbers | 피해 숫자 텍스트 |
 | 90 | VFX | 보스 경고 오버레이 |
 | 150 | Tutorial | 튜토리얼 오버레이 |
@@ -206,15 +209,16 @@ EnergySystem.reset()
        start()
           │
           ▼
-       spawning ──► combat  ──► waiting ──► spawning (다음 웨이브)
-                    boss ──►                     │
-                                            (최종 웨이브 후)
-                                                 ▼
-                                               ended
+       prep ──► spawning ──► combat  ──► waiting ──► spawning (다음 웨이브)
+       (매 전투)             boss ──►                     │
+                                                  (최종 웨이브 후)
+                                                          ▼
+                                                        ended
 ```
 
 | Phase | 조건 |
 |-------|------|
+| `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지와 킬 에너지만). |
 | `spawning` | `advanceToNextWave()` 호출 시 → 유닛 spawn |
 | `combat` | normal/pre_boss 웨이브 진행 중 |
 | `boss` | boss 웨이브 진행 중 |
@@ -222,6 +226,8 @@ EnergySystem.reset()
 | `ended` | 마지막 웨이브 클리어 완료 |
 
 보스 경고 메커니즘: `pre_boss` 웨이브가 `waiting`으로 전이될 때 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다.
+
+prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 모든 전투는 prep으로 시작하며 에너지 자연 증가가 정지된다(이슈 #93).
 
 ---
 
@@ -249,3 +255,11 @@ End-to-end 시퀀스.
                   onPlayerTowerCount → gameStore.setPlayerTowerCount
 8. React: DeckDock 선택 해제, 에너지 HUD 리렌더
 ```
+
+---
+
+## 변경 이력
+
+| 날짜 | 항목 | 변경 내용 |
+|------|------|---------|
+| 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |

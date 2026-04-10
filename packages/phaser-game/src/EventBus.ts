@@ -38,6 +38,8 @@ export interface GameEventMap {
 		};
 	};
 	'energy-changed': { energy: number };
+	'wave-prep-started': { durationMs: number };
+	'wave-prep-tick': { remainingMs: number };
 	'wave-started': {
 		wave: number;
 		totalWaves: number;

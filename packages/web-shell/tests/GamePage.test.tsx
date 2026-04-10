@@ -344,4 +344,34 @@ describe('GamePage', () => {
 
 		expect(view.getByRole('button', { name: /1x ▶/i })).toBeTruthy();
 	});
+
+	it('resets prep countdown UI when combat starts', () => {
+		const { emitSpy } = getEventBusHarness();
+		const view = render(<GamePage />);
+
+		act(() => {
+			emitSpy('wave-prep-started', { durationMs: 5000 });
+		});
+		expect(view.getByText('준비 5')).toBeTruthy();
+
+		act(() => {
+			emitSpy('wave-prep-tick', { remainingMs: 2000 });
+		});
+		expect(view.getByText('준비 2')).toBeTruthy();
+
+		act(() => {
+			emitSpy('wave-started', {
+				wave: 1,
+				totalWaves: 10,
+				slotIndex: 1,
+				phase: 'combat',
+				kind: 'normal',
+				startAtSec: 0,
+			});
+		});
+
+		expect(view.queryByText(/준비\s+\d/)).toBeNull();
+		expect(useGameStore.getState().wavePhase).toBe('combat');
+		expect(useGameStore.getState().countdown).toBe(0);
+	});
 });

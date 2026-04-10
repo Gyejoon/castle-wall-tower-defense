@@ -74,6 +74,7 @@ export {
 	enhancementCost,
 	enhancementStatMultiplier,
 	getEffectiveStats,
+	INITIAL_PREP_MS,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
 	stunCooldownMultiplier,

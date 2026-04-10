@@ -91,10 +91,14 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
 		};
+		scene.castleWall = { destroy: vi.fn() };
+		scene.spawnHut = { destroy: vi.fn() };
+		scene.energySystem = { reset: vi.fn() };
 
 		scene.cleanup();
 
@@ -131,10 +135,40 @@ describe('GameScene', () => {
 		);
 	});
 
+	it('clears selected tower state after a successful placement', () => {
+		const scene = createScene();
+		scene.energySystem = {
+			canAfford: vi.fn(() => true),
+			spend: vi.fn(),
+		};
+		scene.playerDeck = {
+			getCardByTowerId: vi.fn(() => ({ energyCost: 3 })),
+		};
+		scene.playerWaves = { getPhase: vi.fn(() => 'combat') };
+		scene.playerTowers = {
+			placeTower: vi.fn(() => ({ success: true })),
+			getTowers: vi.fn(() => [{}, {}]),
+		};
+		scene.playerUnits = { setPaths: vi.fn() };
+		scene.currentMap = { paths: [[{ x: 0, y: 0 }]] };
+		scene.renderPath = vi.fn();
+		scene.selectionGraphics = { clear: vi.fn() };
+		scene.clearRangeOverlay = vi.fn();
+		scene.selectedTowerId = 'archer';
+
+		scene.handlePlaceTower(1, 2, 'archer');
+
+		expect(scene.selectedTowerId).toBeNull();
+		expect(scene.selectionGraphics.clear).toHaveBeenCalledOnce();
+		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
+		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
+	});
+
 	it('emits a PVE victory payload when the final slot ends with no remaining player units', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
 		scene.damageNumbers = {
 			update: vi.fn(),
@@ -187,6 +221,7 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 5 };
 		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
@@ -309,6 +344,7 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

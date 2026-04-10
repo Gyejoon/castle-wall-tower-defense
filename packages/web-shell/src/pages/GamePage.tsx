@@ -27,6 +27,8 @@ export function GamePage() {
 	const bossWarningVisible = useGameStore((s) => s.bossWarningVisible);
 	const bossHpMap = useGameStore((s) => s.bossHpMap);
 	const gameOverStats = useGameStore((s) => s.gameOverStats);
+	const wavePhase = useGameStore((s) => s.wavePhase);
+	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
 	const selectedStar = useGameStore((s) => s.selectedStar);
@@ -156,6 +158,12 @@ export function GamePage() {
 					)}
 
 					<BossWarningOverlay visible={bossWarningVisible} />
+
+					{wavePhase === 'prep' && prepCountdown > 0 && (
+						<div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3] font-pixel text-3xl text-gold drop-shadow-[0_0_6px_rgba(0,0,0,0.8)] pointer-events-none">
+							준비 {prepCountdown}
+						</div>
+					)}
 
 					{!gameReady && (
 						<div

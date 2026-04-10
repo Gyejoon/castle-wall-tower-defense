@@ -122,6 +122,7 @@ export class GameScene extends Phaser.Scene {
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
+	private rangeOverlayGraphics!: Phaser.GameObjects.Graphics;
 	private pathGraphics?: Phaser.GameObjects.Graphics;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
@@ -291,6 +292,9 @@ export class GameScene extends Phaser.Scene {
 		this.hoverGraphics = this.add.graphics();
 		this.selectionGraphics = this.add.graphics();
 		this.selectionGraphics.setDepth(15);
+		this.rangeOverlayGraphics = this.add.graphics();
+		this.rangeOverlayGraphics.setDepth(22);
+		this.rangeOverlayGraphics.setAlpha(0);
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
@@ -313,12 +317,16 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+			this.clearRangeOverlay();
+			EventBus.emit('tower-deselected');
 			this.renderPlaceableHighlights();
 		};
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
 			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			EventBus.emit('tower-deselected');
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
@@ -362,6 +370,7 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('player-tower-count', {
 					count: this.playerTowers.getTowers().length,
 				});
+				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 			}
 		};
@@ -619,9 +628,42 @@ export class GameScene extends Phaser.Scene {
 					row: gridPos.y,
 					refund,
 				});
+				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
 				EventBus.emit('tower-deselected');
+				this.clearRangeOverlay();
 			}
+		});
+	}
+
+	private drawRangeOverlay(col: number, row: number, range: number): void {
+		this.rangeOverlayGraphics.clear();
+		this.tweens.killTweensOf(this.rangeOverlayGraphics);
+		const worldPos = this.playerGrid.gridToWorld(col, row);
+		const radius = range * this.playerGrid.tileSize;
+
+		this.rangeOverlayGraphics.fillStyle(PHASER_COLORS.gold, 0.08);
+		this.rangeOverlayGraphics.fillCircle(worldPos.x, worldPos.y, radius);
+		this.rangeOverlayGraphics.lineStyle(2, PHASER_COLORS.gold, 0.6);
+		this.rangeOverlayGraphics.strokeCircle(worldPos.x, worldPos.y, radius);
+
+		this.rangeOverlayGraphics.setAlpha(0);
+		this.tweens.add({
+			targets: this.rangeOverlayGraphics,
+			alpha: 1,
+			duration: 120,
+			ease: 'Quad.easeOut',
+		});
+	}
+
+	private clearRangeOverlay(): void {
+		this.tweens.killTweensOf(this.rangeOverlayGraphics);
+		this.tweens.add({
+			targets: this.rangeOverlayGraphics,
+			alpha: 0,
+			duration: 60,
+			ease: 'Quad.easeIn',
+			onComplete: () => this.rangeOverlayGraphics.clear(),
 		});
 	}
 
@@ -651,6 +693,7 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
+		this.rangeOverlayGraphics.clear();
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
@@ -731,6 +774,8 @@ export class GameScene extends Phaser.Scene {
 		this.energySystem.spend(energyCost);
 		this.selectedTowerId = null;
 		this.selectionGraphics.clear();
+		this.clearRangeOverlay();
+		EventBus.emit('tower-deselected');
 		EventBus.emit('tower-placed', {
 			col: gridX,
 			row: gridY,
@@ -813,7 +858,10 @@ export class GameScene extends Phaser.Scene {
 
 		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
-		this.energySystem.update(scaledDelta / 1000);
+		// prep 페이즈에는 에너지 자연 증가 없음 (초기 에너지 + 킬 에너지만)
+		if (this.playerWaves.getPhase() !== 'prep') {
+			this.energySystem.update(scaledDelta / 1000);
+		}
 
 		// Tick boss behaviors before combat so they can react with fresh sceneTime
 		for (const [instanceId, behavior] of this.bossBehaviors) {
@@ -969,6 +1017,7 @@ export class GameScene extends Phaser.Scene {
 		this.spawnHut?.destroy();
 
 		this.selectionGraphics.clear();
+		this.rangeOverlayGraphics.clear();
 		this.hoverGraphics?.destroy();
 		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();

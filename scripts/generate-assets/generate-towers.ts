@@ -13,14 +13,74 @@ import {
   ISO_TILE_W,
   ISO_TILE_H,
   drawIsoShadow,
+  drawIsoCube,
   type ManifestEntry,
 } from './shared';
 import { mkdirSync, existsSync } from 'fs';
 import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
 import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 import type { SKRSContext2D } from '@napi-rs/canvas';
+import {
+  drawArcherHQ, drawPlasmaHQ, drawPlasmaBody, drawPlasmaArm, drawEmpHQ, drawShieldHQ,
+  drawTwinArcherHQ, drawDisruptorHQ, drawNovaCannonHQ, drawFortressHQ,
+  drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ,
+  drawEarthGolemHQ, drawEarthGolemBody, drawEarthGolemArms,
+  drawNovaCannonBody, drawNovaCannonBarrel,
+  drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
+  drawCelestialHQ, drawDivineThroneHQ,
+} from './towers/pilot-draw';
+import { drawGradeDecoration, type GradeVariant } from './towers/grade-decoration';
 
 const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
+
+export const PILOT_IDS = [
+  'archer',
+  'plasma',
+  'emp',
+  'shield',
+  'twin_archer',
+  'disruptor',
+  'nova_cannon',
+  'fortress',
+  'stasis_field',
+  'flame_tower',
+  'wind_spire',
+  'earth_golem',
+  'holy_shrine',
+  'dragon_nest',
+  'arcane_spire',
+  'world_tree',
+  'celestial',
+  'divine_throne',
+] as const;
+export type PilotId = (typeof PILOT_IDS)[number];
+export const HQ_WIDTH = 128;
+export const HQ_HEIGHT = 160;
+
+const PILOT_DRAW: Record<PilotId, (ctx: SKRSContext2D, ox: number, oy: number) => void> = {
+  archer: drawArcherHQ,
+  plasma: drawPlasmaHQ,
+  emp: drawEmpHQ,
+  shield: drawShieldHQ,
+  twin_archer: drawTwinArcherHQ,
+  disruptor: drawDisruptorHQ,
+  nova_cannon: drawNovaCannonHQ,
+  fortress: drawFortressHQ,
+  stasis_field: drawStasisFieldHQ,
+  flame_tower: drawFlameTowerHQ,
+  wind_spire: drawWindSpireHQ,
+  earth_golem: drawEarthGolemHQ,
+  holy_shrine: drawHolyShrineHQ,
+  dragon_nest: drawDragonNestHQ,
+  arcane_spire: drawArcaneSpireHQ,
+  world_tree: drawWorldTreeHQ,
+  celestial: drawCelestialHQ,
+  divine_throne: drawDivineThroneHQ,
+};
+
+function isPilot(id: string): id is PilotId {
+  return (PILOT_IDS as readonly string[]).includes(id);
+}
 
 type GeneratedTowerShape = 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
 
@@ -53,47 +113,6 @@ const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, color, shape }) => ({
 
 const REQUIRED_FILES = TOWERS.flatMap((tower) => [`${tower.id}.png`, `${tower.id}-fire.png`]);
 
-// Draw an isometric cube: top diamond + left face (dark) + right face (medium)
-function drawIsoCube(
-  ctx: SKRSContext2D,
-  cx: number, cy: number,  // center of cube top diamond
-  hw: number,              // half-width of top diamond
-  height: number,          // cube height in pixels
-  topColor: string, leftColor: string, rightColor: string,
-): void {
-  const hh = Math.round(hw / 2); // iso 2:1 ratio
-
-  // Top face (diamond)
-  for (let dy = -hh; dy <= hh; dy++) {
-    const ratio = 1 - Math.abs(dy) / hh;
-    const w = Math.round(hw * ratio);
-    for (let dx = -w; dx <= w; dx++) {
-      setPixel(ctx, cx + dx, cy + dy, topColor);
-    }
-  }
-
-  // Left face
-  for (let h = 1; h <= height; h++) {
-    for (let row = 0; row <= hh; row++) {
-      const ratio = 1 - row / hh;
-      const w = Math.round(hw * ratio);
-      for (let dx = -w; dx < 0; dx++) {
-        setPixel(ctx, cx + dx, cy + row + h, leftColor);
-      }
-    }
-  }
-
-  // Right face
-  for (let h = 1; h <= height; h++) {
-    for (let row = 0; row <= hh; row++) {
-      const ratio = 1 - row / hh;
-      const w = Math.round(hw * ratio);
-      for (let dx = 0; dx <= w; dx++) {
-        setPixel(ctx, cx + dx, cy + row + h, rightColor);
-      }
-    }
-  }
-}
 
 function countOpaqueCoverage(canvas: ReturnType<typeof makeCanvas>['canvas'], width: number, height: number): number {
   const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
@@ -531,14 +550,16 @@ function drawCatapultFireFrame(ctx: SKRSContext2D, ox: number, _tower: TowerAsse
   }
 }
 
-function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number) {
+function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number, skipBase = false) {
   // Catapult gets custom body rendering with animated arm
   if (tower.shape === 'catapult') {
     drawCatapultFireFrame(ctx, ox, tower, frame);
     return;
   }
 
-  drawTowerShape(ctx, ox, tower);
+  if (!skipBase) {
+    drawTowerShape(ctx, ox, tower);
+  }
   const cx = ox + 32;
   const t = frame / (FIRE_FRAME_COUNT - 1); // 0..1
 
@@ -637,65 +658,165 @@ function drawFireFrame(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, fra
   }
 }
 
+/**
+ * Simplified fire effects for pilot towers.
+ * Archer: arrow only (no bow/bowstring), flame_tower: fireball only.
+ * Other shapes fall back to the standard drawFireFrame effects.
+ */
+function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDef, frame: number): void {
+  const cx = ox + 32;
+
+  if (tower.id === 'archer') {
+    // Brief muzzle flash only — no projectile
+    if (frame === 2 || frame === 3) {
+      setPixel(ctx, cx + 6, 38, PALETTE.gold);
+      setPixel(ctx, cx + 7, 37, hexToRgba(PALETTE.gold, 0.5));
+      setPixel(ctx, cx + 7, 39, hexToRgba(PALETTE.gold, 0.5));
+    }
+    return;
+  }
+
+  if (tower.id === 'flame_tower') {
+    // Muzzle glow only — runtime handles actual projectile via arc system
+    if (frame === 2 || frame === 3) {
+      setPixel(ctx, cx + 4, 34, '#f5b23b');
+      setPixel(ctx, cx + 5, 33, hexToRgba('#c54120', 0.6));
+      setPixel(ctx, cx + 5, 35, hexToRgba('#c54120', 0.6));
+    }
+    return;
+  }
+
+  if (tower.id === 'plasma') {
+    // Catapult with arm swing — DON'T use HQ base (it includes static arm).
+    // Instead we skip the pre-rendered base and draw body+arm per frame.
+    // Clear the pre-rendered HQ base for this frame
+    ctx.clearRect(ox, 0, 64, 80);
+
+    // Draw body (no arm) scaled to 64×80
+    const { canvas: bodyTmp, ctx: bodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawPlasmaBody(bodyCtx, 0, 0);
+    ctx.drawImage(bodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Arm swing timeline (same as legacy catapult)
+    const swingTable = [0.0, 0.05, 0.6, 1.0, 0.9, 0.4, 0.15, 0.0];
+    const swing = swingTable[frame] ?? 0;
+    const showBoulder = frame <= 1;
+
+    // Draw arm at 64×80 scale
+    const { canvas: armTmp, ctx: armCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawPlasmaArm(armCtx, 0, 0, swing, showBoulder);
+    ctx.drawImage(armTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // No projectile in spritesheet — runtime arc system handles it
+    return;
+  }
+
+  if (tower.id === 'earth_golem') {
+    // Golem throws rock — clear pre-rendered base (has static arms),
+    // redraw body + arms at correct pose per frame
+    ctx.clearRect(ox, 0, 64, 80);
+
+    // Draw body (no arms) scaled to 64×80
+    const { canvas: gBodyTmp, ctx: gBodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawEarthGolemBody(gBodyCtx, 0, 0);
+    ctx.drawImage(gBodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // Arms pose per frame
+    //  0-1: idle arms at sides
+    //  2-3: arms raised overhead with boulder
+    //  4:   arms thrown forward (boulder released)
+    //  5-7: arms returning to idle
+    const { canvas: gArmTmp, ctx: gArmCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    let pose: 0 | 1 | 2 = 0;
+    let showBoulder = false;
+    if (frame >= 2 && frame <= 3) { pose = 1; showBoulder = true; }
+    else if (frame === 4) { pose = 2; }
+    drawEarthGolemArms(gArmCtx, 0, 0, pose, showBoulder);
+    ctx.drawImage(gArmTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
+
+    // No projectile in spritesheet — runtime arc system handles it
+    return;
+  }
+
+  // All other pilot towers: use standard fire effects (skipBase)
+  drawFireFrame(ctx, ox, tower, frame, true);
+}
+
 export async function generate(): Promise<ManifestEntry[]> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const entries: ManifestEntry[] = [];
 
   for (const tower of TOWERS) {
-    // Static sprite (64x80)
-    {
-      const { canvas, ctx } = makeCanvas(64, 80);
-      renderWithGate(
-        canvas,
-        ctx,
-        64,
-        80,
-        `${tower.id}.png`,
-        (drawCtx) => drawTowerShape(drawCtx, 0, tower),
-        (drawCtx) => {
-          switch (tower.shape) {
-            case 'archer': drawArcherTowerFallback(drawCtx, 0); break;
-            case 'catapult': drawCatapultFallback(drawCtx, 0); break;
-            case 'frost': drawFrostTowerFallback(drawCtx, 0); break;
-            case 'paladin': drawPaladinShrineFallback(drawCtx, 0); break;
-            case 'star': drawStarTowerFallback(drawCtx, 0, tower); break;
-          }
-        },
-      );
-      saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
-      entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
-    }
+    const drawFn = PILOT_DRAW[tower.id as PilotId];
+    if (drawFn) {
+      const gradeCtx = {
+        cx: 64,
+        topY: 36,
+        width: 44,
+        height: 96,
+        accentColor: tower.color,
+      };
 
-    // Fire animation (8 frames of 64x80)
-    {
-      const fireW = 64 * FIRE_FRAME_COUNT;
-      const { canvas, ctx } = makeCanvas(fireW, 80);
-      renderWithGate(
-        canvas,
-        ctx,
-        fireW,
-        80,
-        `${tower.id}-fire.png`,
-        (drawCtx) => {
-          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-            drawFireFrame(drawCtx, f * 64, tower, f);
-          }
-        },
-        (drawCtx) => {
-          for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-            drawTowerShape(drawCtx, f * 64, tower);
-          }
-        },
-      );
-      saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
-      entries.push({
-        key: `tower-${tower.id}-fire`,
-        type: 'spritesheet',
-        path: `assets/towers/${tower.id}-fire.png`,
-        frameWidth: 64,
-        frameHeight: 80,
-        frameCount: FIRE_FRAME_COUNT,
-      });
+      // Normal (base HQ sprite)
+      {
+        const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        if (tower.id === 'nova_cannon') {
+          // Body only — barrel is a separate rotating sprite
+          drawNovaCannonBody(ctx, 0, 0);
+        } else {
+          drawFn(ctx, 0, 0);
+        }
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
+        entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
+      }
+
+      // Nova cannon barrel — separate 32×16 sprite for runtime rotation
+      if (tower.id === 'nova_cannon') {
+        const { canvas, ctx } = makeCanvas(32, 16);
+        drawNovaCannonBarrel(ctx, 0, 0);
+        saveCanvas(canvas, `${OUTPUT_DIR}/nova_cannon-barrel.png`);
+        entries.push({ key: 'tower-nova_cannon-barrel', type: 'image', path: 'assets/towers/nova_cannon-barrel.png' });
+      }
+
+      // Grade variants: rare / unique / epic
+      for (const grade of ['rare', 'unique', 'epic'] as GradeVariant[]) {
+        const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawFn(ctx, 0, 0);
+        drawGradeDecoration(ctx, grade, gradeCtx);
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-${grade}.png`);
+        entries.push({
+          key: `tower-${tower.id}-${grade}`,
+          type: 'image',
+          path: `assets/towers/${tower.id}-${grade}.png`,
+        });
+      }
+
+      // Fire spritesheet at 64×80 with HQ tower scaled down as base.
+      // drawFireFrame's fire effects are calibrated for 64×80 coords,
+      // so we render the HQ tower into a temp 128×160 canvas, scale it
+      // down to 64×80 as the base, then overlay fire effects only.
+      {
+        const fireW = 64 * FIRE_FRAME_COUNT;
+        const { canvas, ctx } = makeCanvas(fireW, 80);
+        // Pre-render HQ tower once, reuse for all frames
+        const { canvas: hqTmp, ctx: hqCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawFn(hqCtx, 0, 0);
+        for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
+          // Draw HQ tower scaled down to 64×80
+          ctx.drawImage(hqTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, f * 64, 0, 64, 80);
+          // Overlay simplified fire effects for pilot towers
+          drawPilotFireEffect(ctx, f * 64, tower, f);
+        }
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
+        entries.push({
+          key: `tower-${tower.id}-fire`,
+          type: 'spritesheet',
+          path: `assets/towers/${tower.id}-fire.png`,
+          frameWidth: 64,
+          frameHeight: 80,
+          frameCount: FIRE_FRAME_COUNT,
+        });
+      }
     }
   }
 

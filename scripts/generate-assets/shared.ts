@@ -43,6 +43,14 @@ export const PALETTE = {
   white:         '#fffffe',  // 흰색
   gray:          '#94a1b2',  // 회색
   shadow:        '#2a1f0a',  // 그림자
+  // Tiny-swords tone (unit asset enhancement)
+  leatherWorn:   '#5a3a1a',  // 낡은 가죽
+  ironDark:      '#4a4438',  // 어두운 철
+  orcSkin:       '#4a8028',  // 오크 초록 피부
+  bone:          '#d8c898',  // 뼈/상아
+  rust:          '#6a3a20',  // 녹/녹슨 금속
+  bloodStain:    '#6a1a10',  // 핏자국
+  outline:       '#1a0e14',  // 1px 다크 아웃라인
   // Legacy (일부 스크립트 호환용)
   green:         '#7ab648',
   pink:          '#c03020',
@@ -300,6 +308,29 @@ export function drawIsoShadow(ctx: SKRSContext2D, cx: number, cy: number, rx: nu
       if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1) {
         setPixel(ctx, cx + dx, cy + dy, hexToRgba('#000000', alpha));
       }
+    }
+  }
+}
+
+// === Isometric Cube ===
+export function drawIsoCube(
+  ctx: SKRSContext2D,
+  cx: number, cy: number,
+  hw: number, height: number,
+  topColor: string, leftColor: string, rightColor: string,
+): void {
+  const hh = Math.round(hw / 2);
+  for (let dy = -hh; dy <= hh; dy++) {
+    const ratio = 1 - Math.abs(dy) / hh;
+    const w = Math.round(hw * ratio);
+    for (let dx = -w; dx <= w; dx++) setPixel(ctx, cx + dx, cy + dy, topColor);
+  }
+  for (let h = 1; h <= height; h++) {
+    for (let row = 0; row <= hh; row++) {
+      const ratio = 1 - row / hh;
+      const w = Math.round(hw * ratio);
+      for (let dx = -w; dx < 0; dx++) setPixel(ctx, cx + dx, cy + row + h, leftColor);
+      for (let dx = 0; dx <= w; dx++) setPixel(ctx, cx + dx, cy + row + h, rightColor);
     }
   }
 }

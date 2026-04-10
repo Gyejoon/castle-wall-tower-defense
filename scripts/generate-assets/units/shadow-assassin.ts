@@ -150,13 +150,16 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
 
   // --- Lower body: cloak continues with narrowing + alpha gradient ---
   const waistTop = shoulderY + 8; // ~23+by area
+  // Lateral sway increases toward feet (walking feel without visible legs)
+  const smokeBaseShift = Math.round(Math.sin(walkPhase(frame)) * 1.5);
   for (let dy = 0; dy < (BOTTOM_Y - waistTop); dy++) {
     const y = waistTop + dy;
     const t = dy / (BOTTOM_Y - waistTop);
     // Narrows from 12px wide to 6px as smoke disperses
     const halfW = Math.round(6 - t * 3);
+    const lateralSway = Math.round(smokeBaseShift * t);
     const smokeJitter = Math.round(Math.sin(walkPhase(frame) + dy * 0.5) * (t * 2));
-    drawFadingRect(ctx, cx - halfW + lean + smokeJitter, y, halfW * 2, 1, CLOAK.base);
+    drawFadingRect(ctx, cx - halfW + lean + smokeJitter + lateralSway, y, halfW * 2, 1, CLOAK.base);
   }
 
   // --- Smoke wisps at feet ---

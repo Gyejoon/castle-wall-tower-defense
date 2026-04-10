@@ -121,18 +121,22 @@ function drawBody(
   // ── Shoulders / Pauldrons ─────────────────────────
   const shoulderY = torsoY - 1 + breath;
 
-  // LEFT pauldron: large steel plate (stolen knight)
-  drawShadedRect(ctx, cx - 10 + splitX, shoulderY, 5, 4, PALETTE.stoneLight);
-  setPixel(ctx, cx - 9 + splitX, shoulderY + 1, STEEL.highlight); // rivet
-  setPixel(ctx, cx - 7 + splitX, shoulderY + 2, STEEL.shadow);
+  // LEFT pauldron: large steel plate (stolen knight) — taller for silhouette asymmetry
+  drawShadedRect(ctx, cx - 10 + splitX, shoulderY - 3, 5, 7, PALETTE.stoneLight);
+  setPixel(ctx, cx - 9 + splitX, shoulderY - 1, STEEL.highlight); // rivet
+  setPixel(ctx, cx - 7 + splitX, shoulderY + 1, STEEL.shadow);
+  // Ridge on tall pauldron
+  drawRect(ctx, cx - 10 + splitX, shoulderY - 3, 5, 1, STEEL.highlight);
 
-  // RIGHT pauldron: bone + leather tribal decoration
+  // RIGHT pauldron: bone + leather tribal decoration — shorter, organic
   drawRect(ctx, cx + 5 - splitX, shoulderY, 5, 3, LEATHER.base);
   drawRect(ctx, cx + 5 - splitX, shoulderY, 5, 1, LEATHER.highlight);
-  // bone spikes sticking up
+  // bone spikes sticking up (taller, more dramatic)
   setPixel(ctx, cx + 6 - splitX, shoulderY - 1, BONE_C.base);
   setPixel(ctx, cx + 6 - splitX, shoulderY - 2, BONE_C.highlight);
+  setPixel(ctx, cx + 6 - splitX, shoulderY - 3, BONE_C.highlight);
   setPixel(ctx, cx + 8 - splitX, shoulderY - 1, BONE_C.base);
+  setPixel(ctx, cx + 8 - splitX, shoulderY - 2, BONE_C.base);
 
   // ── Arms ──────────────────────────────────────────
   const armY = torsoY + 2 + breath;

@@ -105,11 +105,13 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   setPixel(ctx, hx + 5, hy + 2, skinShade.base);
   setPixel(ctx, hx + 6, hy + 1, skinShade.highlight);
 
-  // Dark eye sockets with yellow eye dots
+  // Dark eye sockets with yellow eye dots + subtle glow
   setPixel(ctx, hx - 1, hy + 3, '#0a0a0a');
   setPixel(ctx, hx + 1, hy + 3, '#0a0a0a');
   setPixel(ctx, hx - 1, hy + 3, PALETTE.gold); // yellow eye dot overwrites socket center
   setPixel(ctx, hx + 1, hy + 3, PALETTE.gold);
+  addGlow(ctx, hx - 1, hy + 3, 2, PALETTE.gold, 0.2);
+  addGlow(ctx, hx + 1, hy + 3, 2, PALETTE.gold, 0.2);
 
   // Greedy crooked-tooth smile
   setPixel(ctx, hx - 1, hy + 5, skinShade.shadow); // mouth shadow

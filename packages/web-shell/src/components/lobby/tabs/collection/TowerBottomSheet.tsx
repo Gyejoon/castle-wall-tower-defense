@@ -18,6 +18,7 @@ import {
 	TIER_DOT_KEYS,
 	translateSpecial,
 } from './constants';
+import { GradePromotionOverlay } from './GradePromotionOverlay';
 import { StatDisplay } from './StatDisplay';
 
 export function TowerBottomSheet({
@@ -39,6 +40,10 @@ export function TowerBottomSheet({
 	const [promotionResult, setPromotionResult] = useState<
 		'success' | 'fail' | null
 	>(null);
+	const [promotion, setPromotion] = useState<{
+		from: TowerGrade;
+		to: TowerGrade;
+	} | null>(null);
 	const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
 	useEffect(() => {
@@ -65,6 +70,10 @@ export function TowerBottomSheet({
 			setPromoting(false);
 			if (result === 'success') {
 				setPromotionResult('success');
+				setPromotion({
+					from: grade,
+					to: promoConfig.nextGrade as TowerGrade,
+				});
 				pushToast('승급 성공!', 'success');
 			} else if (result === 'fail') {
 				setPromotionResult('fail');
@@ -292,6 +301,14 @@ export function TowerBottomSheet({
 				<span className="text-center font-pixel text-[11px] text-text-secondary">
 					소환의 제단에서 타워를 획득하세요!
 				</span>
+			)}
+			{promotion && (
+				<GradePromotionOverlay
+					fromGrade={promotion.from}
+					toGrade={promotion.to}
+					towerId={def.id}
+					onDone={() => setPromotion(null)}
+				/>
 			)}
 		</div>
 	);

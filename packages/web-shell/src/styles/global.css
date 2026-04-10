@@ -202,7 +202,7 @@ body {
   50% { opacity: 0.6; }
 }
 
-/* Gacha card stagger animations — transform+opacity only for 60fps */
+/* Gacha card stagger animations — transform+opacity for 60fps (Legend uses filter for visual punch) */
 @keyframes cardFlipIn {
   0%   { opacity: 0; transform: scale(0.72) rotateY(180deg); }
   60%  { opacity: 1; transform: scale(1.04) rotateY(10deg); }
@@ -301,7 +301,8 @@ body {
   .matchmaking-dots::after,
   .hud-flash,
   .claimable-badge,
-  [class*="gachaPulse"] {
+  [class*="gachaPulse"],
+  [class*="cardFlipIn"] {
     animation: none;
   }
   @keyframes fadeIn {

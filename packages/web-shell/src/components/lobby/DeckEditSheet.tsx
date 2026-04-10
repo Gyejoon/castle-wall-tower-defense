@@ -15,10 +15,10 @@ interface DeckEditSheetProps {
 /** 덱 편집 맥락용 서브톤 티어 색상 (가차 공개보다 절제된 톤) */
 const DECK_TIER_COLORS: Record<number, string> = {
 	1: colors.textSecondary,
-	2: '#5bc8e8',
-	3: '#c060f0',
+	2: colors.info,
+	3: colors.gradeUnique,
 	4: colors.gold,
-	5: '#ffe870',
+	5: colors.tierBright,
 };
 
 export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
@@ -102,7 +102,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 														prev.filter((x) => x !== tower.id),
 													);
 												}}
-												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-[#0a0804] font-pixel text-[10px] text-text hover:bg-[#e04030] active:scale-90 transition-transform cursor-pointer"
+												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg font-pixel text-[10px] text-text hover:brightness-125 active:scale-90 transition-transform cursor-pointer"
 											>
 												×
 											</button>

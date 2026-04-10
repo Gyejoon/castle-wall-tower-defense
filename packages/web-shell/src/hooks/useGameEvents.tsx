@@ -7,6 +7,7 @@ import {
 	type PlacementFailureReason,
 	STAR_REWARD_MULTIPLIERS,
 	type StarRating,
+	type WavePhase,
 } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
@@ -115,7 +116,7 @@ export function useGameEvents() {
 			wave: number;
 			totalWaves: number;
 			slotIndex: number;
-			phase: 'combat' | 'waiting' | 'boss' | 'ended';
+			phase: WavePhase;
 			kind: 'normal' | 'pre_boss' | 'boss';
 			startAtSec: number;
 		}) => {
@@ -136,6 +137,8 @@ export function useGameEvents() {
 							? 'Boss Soon'
 							: `Wave ${data.wave}/${data.totalWaves}`,
 			});
+			setWavePhase(data.phase);
+			setCountdown(0);
 			setPlacementFeedback(null);
 		};
 		const onTowerPlaced = (data: {
@@ -154,7 +157,17 @@ export function useGameEvents() {
 		};
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
-		const onResetRun = () => resetRun();
+		const onResetRun = () => {
+			if (waitIntervalRef.current) {
+				clearInterval(waitIntervalRef.current);
+				waitIntervalRef.current = null;
+			}
+			setWaitCountdown(0);
+			setCountdown(0);
+			setWavePhase('combat');
+			setSelectedTower(null);
+			resetRun();
+		};
 		const onWaveCompleted = (data: {
 			wave: number;
 			totalWaves: number;

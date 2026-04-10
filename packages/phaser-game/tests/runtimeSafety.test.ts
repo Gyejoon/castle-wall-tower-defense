@@ -191,6 +191,77 @@ describe('runtime safety fixes', () => {
 		);
 	});
 
+	it('enters prep phase when tutorialCompleted is false', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(
+			unitSystem as never,
+			WAVE_DEFS,
+			undefined,
+			{
+				tutorialCompleted: false,
+			},
+		);
+		waveSystem.start();
+
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-started', {
+			durationMs: 5000,
+		});
+
+		// Tick 3 seconds — still prep
+		waveSystem.update(3000, 0);
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-tick', {
+			remainingMs: 2000,
+		});
+
+		// Tick past 5s total — transitions to combat
+		waveSystem.update(2100, 0);
+		expect(waveSystem.getPhase()).toBe('combat');
+		expect(emitSpy).toHaveBeenCalledWith(
+			'wave-started',
+			expect.objectContaining({ slotIndex: 1, phase: 'combat' }),
+		);
+	});
+
+	it('skips prep phase when tutorialCompleted is true', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(
+			unitSystem as never,
+			WAVE_DEFS,
+			undefined,
+			{
+				tutorialCompleted: true,
+			},
+		);
+		emitSpy.mockClear();
+		waveSystem.start();
+
+		expect(waveSystem.getPhase()).toBe('combat');
+		expect(emitSpy).not.toHaveBeenCalledWith(
+			'wave-prep-started',
+			expect.anything(),
+		);
+		expect(emitSpy).toHaveBeenCalledWith(
+			'wave-started',
+			expect.objectContaining({ slotIndex: 1, phase: 'combat' }),
+		);
+	});
+
 	it('disconnects audio nodes once playback ends', () => {
 		const oscillator = {
 			type: 'sine' as OscillatorType,

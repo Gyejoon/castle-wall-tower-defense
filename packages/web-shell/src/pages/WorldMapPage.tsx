@@ -2,19 +2,20 @@ import { isMapUnlocked, MAP_REGISTRY } from '@gld/shared';
 import { useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
+import { colors } from '../styles/tokens';
 import { cn } from '../utils/cn';
 
 const MAP_THEMES: Record<string, { borderColor: string; landmark: string }> = {
 	forest_gate: {
-		borderColor: '#4a8a2a',
+		borderColor: colors.success,
 		landmark: 'assets/ui/landmark-forest_gate.webp',
 	},
 	lava_fortress: {
-		borderColor: '#c04020',
+		borderColor: colors.bossPhase1,
 		landmark: 'assets/ui/landmark-lava_fortress.webp',
 	},
 	storm_citadel: {
-		borderColor: '#5a6aaa',
+		borderColor: colors.info,
 		landmark: 'assets/ui/landmark-storm_citadel.webp',
 	},
 };
@@ -130,7 +131,7 @@ export function WorldMapPage() {
 									>
 										{locked
 											? `Lv.${map.unlockLevel} 해금`
-											: `Lv.${map.unlockLevel ?? 1} · 추천 ${map.recommendedPower ?? '-'}`}
+											: `Lv.${map.unlockLevel ?? 1} · 권장 전투력 ${map.recommendedPower ?? '-'}`}
 									</span>
 									{/* Stars */}
 									<div className="flex gap-0.5 mt-0.5">

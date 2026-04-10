@@ -58,7 +58,11 @@ function createScene() {
 			})),
 		},
 		textures: { exists: vi.fn(() => false) },
-		anims: { exists: vi.fn(() => false) },
+		anims: {
+			exists: vi.fn(
+				(key: string) => !['titan-idle', 'titan-death'].includes(key),
+			),
+		},
 	};
 }
 
@@ -367,6 +371,25 @@ describe('UnitSystem', () => {
 			expect(result).not.toBeNull();
 			expect(result?.isBoss).toBe(true);
 		});
+
+		it('plays unit-specific death animation on the sprite before cleanup', () => {
+			system.setPaths([LANE_A]);
+			system.queueUnits('scout_drone', 1);
+			system.update(0, 300);
+
+			const sprite = scene.add.sprite.mock.results[0]?.value;
+			const unitId = system.getUnitPositions()[0].instanceId;
+			const result = system.applyDamage(unitId, 30);
+
+			expect(result?.killed).toBe(true);
+			expect(sprite.play).toHaveBeenCalledWith('scout_drone-death');
+			expect(sprite.once).toHaveBeenCalledWith(
+				'animationcomplete',
+				expect.any(Function),
+			);
+			expect(sprite.destroy).not.toHaveBeenCalled();
+			expect(system.getUnitPositions()).toHaveLength(0);
+		});
 	});
 
 	describe('getActiveCount', () => {
@@ -497,6 +520,46 @@ describe('Boss phase system', () => {
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
+	});
+});
+
+describe('Boss animation fallback', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('does not request missing titan idle animation when boss is stunned', () => {
+		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const sprite = scene.add.sprite.mock.results[0]?.value;
+		const unitId = system.getUnitPositions()[0].instanceId;
+		system.applyStun(unitId, 1000);
+
+		expect(sprite.play).not.toHaveBeenCalledWith('titan-idle');
+	});
+
+	it('does not request missing titan death animation when boss dies', () => {
+		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const sprite = scene.add.sprite.mock.results[0]?.value;
+		const unitId = system.getUnitPositions()[0].instanceId;
+		const result = system.applyDamage(unitId, 600, true);
+
+		expect(result?.killed).toBe(true);
+		expect(sprite.play).not.toHaveBeenCalledWith('titan-death');
 	});
 });
 

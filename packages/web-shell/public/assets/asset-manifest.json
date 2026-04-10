@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-08T18:42:46.148Z",
+  "generated": "2026-04-10T03:52:00.313Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -434,12 +434,48 @@
       "section": "preload"
     },
     {
+      "key": "unit-scout_drone-idle",
+      "type": "spritesheet",
+      "path": "assets/units/scout_drone_idle.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
+      "key": "unit-scout_drone-death",
+      "type": "spritesheet",
+      "path": "assets/units/scout_drone_death.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
       "key": "unit-battle_robot",
       "type": "spritesheet",
       "path": "assets/units/battle_robot.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 8,
+      "section": "preload"
+    },
+    {
+      "key": "unit-battle_robot-idle",
+      "type": "spritesheet",
+      "path": "assets/units/battle_robot_idle.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
+      "key": "unit-battle_robot-death",
+      "type": "spritesheet",
+      "path": "assets/units/battle_robot_death.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
       "section": "preload"
     },
     {
@@ -452,6 +488,24 @@
       "section": "preload"
     },
     {
+      "key": "unit-heavy_walker-idle",
+      "type": "spritesheet",
+      "path": "assets/units/heavy_walker_idle.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
+      "key": "unit-heavy_walker-death",
+      "type": "spritesheet",
+      "path": "assets/units/heavy_walker_death.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
       "key": "unit-stealth_drone",
       "type": "spritesheet",
       "path": "assets/units/stealth_drone.png",
@@ -461,18 +515,27 @@
       "section": "preload"
     },
     {
-      "key": "unit-titan",
+      "key": "unit-stealth_drone-idle",
       "type": "spritesheet",
-      "path": "assets/units/titan.png",
+      "path": "assets/units/stealth_drone_idle.png",
       "frameWidth": 40,
       "frameHeight": 48,
-      "frameCount": 8,
+      "frameCount": 6,
       "section": "preload"
     },
     {
-      "key": "unit-death",
+      "key": "unit-stealth_drone-death",
       "type": "spritesheet",
-      "path": "assets/units/unit-death.png",
+      "path": "assets/units/stealth_drone_death.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 6,
+      "section": "preload"
+    },
+    {
+      "key": "unit-titan",
+      "type": "spritesheet",
+      "path": "assets/units/titan.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 8,
@@ -1256,6 +1319,12 @@
       "key": "ui-worldmap-bg",
       "type": "image",
       "path": "assets/ui/worldmap-bg.png",
+      "section": "ui"
+    },
+    {
+      "key": "ui-landmark-forest_gate",
+      "type": "image",
+      "path": "assets/ui/landmark-forest_gate.png",
       "section": "ui"
     },
     {

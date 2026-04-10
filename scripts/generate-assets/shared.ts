@@ -43,6 +43,14 @@ export const PALETTE = {
   white:         '#fffffe',  // 흰색
   gray:          '#94a1b2',  // 회색
   shadow:        '#2a1f0a',  // 그림자
+  // Tiny-swords tone (unit asset enhancement)
+  leatherWorn:   '#5a3a1a',  // 낡은 가죽
+  ironDark:      '#4a4438',  // 어두운 철
+  orcSkin:       '#4a8028',  // 오크 초록 피부
+  bone:          '#d8c898',  // 뼈/상아
+  rust:          '#6a3a20',  // 녹/녹슨 금속
+  bloodStain:    '#6a1a10',  // 핏자국
+  outline:       '#1a0e14',  // 1px 다크 아웃라인
   // Legacy (일부 스크립트 호환용)
   green:         '#7ab648',
   pink:          '#c03020',

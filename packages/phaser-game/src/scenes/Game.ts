@@ -405,23 +405,6 @@ export class GameScene extends Phaser.Scene {
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
-	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
-		const graphics = this.add.graphics();
-		const theme = getMapTheme(this.currentMap.id);
-		const pathColor = dark ? 0x5c6585 : theme.pathColor;
-
-		const allCells = getAllPathCells(this.currentMap);
-		for (const point of allCells) {
-			grid.fillTileRect(
-				graphics,
-				point.x,
-				point.y,
-				pathColor,
-				dark ? 0.4 : 0.52,
-			);
-		}
-	}
-
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
 		const tile = this.playerGrid.orthoTile;
@@ -441,11 +424,17 @@ export class GameScene extends Phaser.Scene {
 		const startY = -extraTop;
 		const endY = this.currentMap.height + extraBottom;
 
+		const plainFrame = TERRAIN_FRAME_MAP.plain;
+		const roadFrame = TERRAIN_FRAME_MAP.road;
+		const pathSet = new Set(
+			getAllPathCells(this.currentMap).map((p) => `${p.x},${p.y}`),
+		);
+
 		for (let y = startY; y < endY; y++) {
 			for (let x = startX; x < endX; x++) {
 				const world = grid.gridToWorld(x, y);
-				const terrain = grid.getTerrainAt(x, y) ?? 'plain';
-				const frame = TERRAIN_FRAME_MAP[terrain];
+				const isPath = pathSet.has(`${x},${y}`);
+				const frame = isPath ? roadFrame : plainFrame;
 				const sprite = this.add.sprite(
 					world.x,
 					world.y,
@@ -464,7 +453,6 @@ export class GameScene extends Phaser.Scene {
 			}
 		}
 
-		this.renderFieldPathOverlay(grid, dark);
 		this.renderDecorations(grid, dark);
 	}
 

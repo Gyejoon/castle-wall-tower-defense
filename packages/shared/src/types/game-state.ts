@@ -1,4 +1,4 @@
-export type WavePhase = 'combat' | 'waiting' | 'boss' | 'ended';
+export type WavePhase = 'prep' | 'combat' | 'waiting' | 'boss' | 'ended';
 
 export interface CombatHudState {
 	currentSlot: number;

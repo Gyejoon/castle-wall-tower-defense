@@ -76,6 +76,7 @@ vi.mock('phaser', () => ({
 function createGraphics() {
 	return {
 		setDepth: vi.fn().mockReturnThis(),
+		setAlpha: vi.fn().mockReturnThis(),
 		clear: vi.fn().mockReturnThis(),
 		fillStyle: vi.fn().mockReturnThis(),
 		fillPoints: vi.fn().mockReturnThis(),
@@ -86,6 +87,7 @@ function createGraphics() {
 		lineTo: vi.fn().mockReturnThis(),
 		strokePath: vi.fn().mockReturnThis(),
 		fillCircle: vi.fn().mockReturnThis(),
+		strokeCircle: vi.fn().mockReturnThis(),
 		destroy: vi.fn(),
 	};
 }

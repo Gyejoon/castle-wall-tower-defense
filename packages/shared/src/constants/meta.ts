@@ -88,6 +88,9 @@ export function getEffectiveStats(
 	);
 }
 
+/** Wave 1 시작 전 플레이어 준비 시간(ms) — 튜토리얼 1회차 한정 */
+export const INITIAL_PREP_MS = 5000;
+
 const DEFAULT_STARTER_IDS = ['archer', 'plasma', 'emp', 'shield'];
 
 export function createDefaultSave(): SaveData {

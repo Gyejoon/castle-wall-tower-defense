@@ -15,10 +15,10 @@ interface DeckEditSheetProps {
 /** 덱 편집 맥락용 서브톤 티어 색상 (가차 공개보다 절제된 톤) */
 const DECK_TIER_COLORS: Record<number, string> = {
 	1: colors.textSecondary,
-	2: '#5bc8e8',
-	3: '#c060f0',
+	2: colors.info,
+	3: colors.gradeUnique,
 	4: colors.gold,
-	5: '#ffe870',
+	5: colors.tierBright,
 };
 
 export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
@@ -73,7 +73,71 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 					<CloseButton onClick={handleClose} />
 				</div>
 
-				{/* Tower list */}
+				{/* === 상단 고정: 4슬롯 프리뷰 === */}
+				<div className="shrink-0 px-4 py-3 bg-panel border-b-2 border-border">
+					<div className="grid grid-cols-4 gap-2">
+						{Array.from({ length: 4 }, (_, i) => {
+							const towerId = selected[i];
+							const tower = towerId
+								? ALL_TOWERS.find((t) => t.id === towerId)
+								: null;
+							return (
+								<div
+									key={i}
+									className={cn(
+										'relative min-h-[64px] border-2 flex flex-col items-center justify-center gap-1 py-1.5 px-1',
+										tower
+											? 'border-gold bg-gold/8'
+											: 'border-dashed border-border bg-panel/60',
+									)}
+								>
+									{tower ? (
+										<>
+											<button
+												type="button"
+												aria-label={`${tower.name} 슬롯에서 제거`}
+												onClick={(e) => {
+													e.stopPropagation();
+													setSelected((prev) =>
+														prev.filter((x) => x !== tower.id),
+													);
+												}}
+												className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center hover:brightness-125 hover:scale-110 active:scale-90 transition-transform cursor-pointer after:absolute after:inset-[-10px] after:content-['']"
+											>
+												<img
+													src="assets/ui/icon-close-x.webp"
+													alt="제거"
+													width={20}
+													height={20}
+													className="[image-rendering:pixelated] drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
+												/>
+											</button>
+											<img
+												src={`assets/towers/${tower.type}.webp`}
+												alt={tower.name}
+												width={28}
+												height={28}
+												className="[image-rendering:pixelated] shrink-0"
+											/>
+											<span className="font-pixel text-[10px] leading-tight text-gold text-center w-full truncate">
+												{tower.name}
+											</span>
+										</>
+									) : (
+										<span className="font-pixel text-[15px] text-border">
+											{i + 1}
+										</span>
+									)}
+								</div>
+							);
+						})}
+					</div>
+					<p className="mt-2 font-pixel text-[10px] text-text-secondary text-center">
+						× 버튼으로 제거 · 하단에서 타워 선택
+					</p>
+				</div>
+
+				{/* === 하단 스크롤: 소유 타워 리스트 === */}
 				<div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
 					{towersByTier.map(({ tier, towers }) => (
 						<div key={tier}>
@@ -83,7 +147,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							>
 								T{tier} {TIER_LABELS[tier]}
 							</div>
-							<div className="grid grid-cols-2 gap-1.5">
+							<div className="grid grid-cols-2 gap-2">
 								{towers.map((tower) => {
 									const isSelected = selected.includes(tower.id);
 									const slotNum = selected.indexOf(tower.id) + 1;
@@ -95,13 +159,13 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											type="button"
 											onClick={() => !isFull && toggle(tower.id)}
 											className={cn(
-												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left',
+												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left transition-transform',
 												isSelected
-													? 'bg-[rgba(240,208,96,0.12)] border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
-													: 'bg-panel border-border shadow-none',
+													? 'bg-gold/12 border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
+													: 'bg-panel border-border',
 												isFull
 													? 'cursor-not-allowed opacity-35'
-													: 'cursor-pointer opacity-100',
+													: 'cursor-pointer opacity-100 active:scale-[0.98]',
 											)}
 										>
 											{isSelected && (
@@ -146,53 +210,13 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 					))}
 				</div>
 
-				{/* Bottom preview + confirm */}
-				<div className="shrink-0 px-4 py-3 bg-panel border-t-2 border-border flex flex-col gap-2.5">
-					{/* 4 slot preview */}
-					<div className="grid grid-cols-4 gap-1.5">
-						{Array.from({ length: 4 }, (_, i) => {
-							const towerId = selected[i];
-							const tower = towerId
-								? ALL_TOWERS.find((t) => t.id === towerId)
-								: null;
-							return (
-								<div
-									key={i}
-									className={cn(
-										'min-h-[52px] border-2 flex flex-col items-center justify-center gap-1 py-1.5 px-1',
-										tower
-											? 'border-gold bg-[rgba(240,208,96,0.08)]'
-											: 'border-border bg-[rgba(42,32,16,0.6)]',
-									)}
-								>
-									{tower ? (
-										<>
-											<img
-												src={`assets/towers/${tower.type}.webp`}
-												alt={tower.name}
-												width={24}
-												height={24}
-												className="[image-rendering:pixelated] shrink-0"
-											/>
-											<span className="font-pixel text-[9px] leading-tight text-gold text-center w-full truncate">
-												{tower.name}
-											</span>
-										</>
-									) : (
-										<span className="font-pixel text-xs text-border">
-											{i + 1}
-										</span>
-									)}
-								</div>
-							);
-						})}
-					</div>
-
+				{/* === 하단 고정: 확인 버튼 === */}
+				<div className="shrink-0 px-4 py-3 bg-panel border-t-2 border-border">
 					<PixelButton
 						variant="gold"
 						disabled={selected.length !== 4}
 						onClick={handleConfirm}
-						style={{ width: '100%', fontSize: '14px', padding: '12px' }}
+						style={{ width: '100%', fontSize: '13px', padding: '12px' }}
 					>
 						확인 ({selected.length}/4)
 					</PixelButton>

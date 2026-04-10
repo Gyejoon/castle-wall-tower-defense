@@ -1,5 +1,6 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	INITIAL_PREP_MS,
 	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
@@ -28,6 +29,7 @@ export class WaveSystem {
 	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
 	private waitTimerMs = 0;
+	private prepTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 
@@ -60,11 +62,15 @@ export class WaveSystem {
 
 	start(): void {
 		this.currentWaveIndex = -1;
-		this.phase = 'combat';
 		this.waitTimerMs = 0;
 		this.hasSpawnedCurrentWave = false;
 		this.elapsedMs = 0;
-		this.advanceToNextWave();
+
+		// 모든 전투는 prep 페이즈로 시작한다.
+		// prep 중에는 타워를 자유롭게 배치할 수 있고, 에너지는 증가하지 않는다.
+		this.phase = 'prep';
+		this.prepTimerMs = INITIAL_PREP_MS;
+		EventBus.emit('wave-prep-started', { durationMs: INITIAL_PREP_MS });
 	}
 
 	/**
@@ -77,6 +83,18 @@ export class WaveSystem {
 		const MAX_DELTA_MS = 5000;
 		const clampedDelta = Math.min(delta, MAX_DELTA_MS);
 		this.elapsedMs += clampedDelta;
+
+		if (this.phase === 'prep') {
+			this.prepTimerMs -= clampedDelta;
+			EventBus.emit('wave-prep-tick', {
+				remainingMs: Math.max(0, this.prepTimerMs),
+			});
+			if (this.prepTimerMs <= 0) {
+				// advanceToNextWave() sets phase based on wave.kind
+				this.advanceToNextWave();
+			}
+			return;
+		}
 
 		if (this.phase === 'combat' || this.phase === 'boss') {
 			// Wait for all units to be cleared (killed or leaked)

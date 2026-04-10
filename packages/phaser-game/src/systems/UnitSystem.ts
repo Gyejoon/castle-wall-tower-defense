@@ -31,6 +31,8 @@ interface SpawnQueueEntry {
 	ccResist: number;
 }
 
+type UnitAnimationState = 'walk' | 'idle' | 'death';
+
 interface UnitInstance {
 	data: ActiveUnit;
 	def: UnitDef;
@@ -55,6 +57,8 @@ interface UnitInstance {
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
 	shadow: Phaser.GameObjects.Ellipse | null;
+	animationState: UnitAnimationState;
+	pendingDestroy: boolean;
 }
 
 interface QueueUnitsOptions {
@@ -266,6 +270,8 @@ export class UnitSystem {
 			waveSlot: entry.waveSlot,
 			shadow,
 			pathProgress: 0,
+			animationState: 'walk',
+			pendingDestroy: false,
 		};
 		this.units.set(instanceId, instance);
 
@@ -317,6 +323,17 @@ export class UnitSystem {
 		}
 	}
 
+	private setUnitAnimationState(
+		unit: UnitInstance,
+		state: UnitAnimationState,
+	): void {
+		if (unit.animationState === state || !unit.sprite.active) return;
+		const animationKey = `${unit.def.id}-${state}`;
+		if (!this.scene.anims.exists(animationKey)) return;
+		unit.animationState = state;
+		unit.sprite.play(animationKey);
+	}
+
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
@@ -337,6 +354,7 @@ export class UnitSystem {
 		}
 		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
 		unit.sprite.setTint(0xffff44);
+		this.setUnitAnimationState(unit, 'idle');
 	}
 
 	applyDamage(
@@ -353,7 +371,7 @@ export class UnitSystem {
 		actualDamage: number;
 	} | null {
 		const unit = this.units.get(unitId);
-		if (!unit) return null;
+		if (!unit || unit.pendingDestroy) return null;
 
 		if (unit.invulnerableMs > 0) {
 			return {
@@ -403,21 +421,26 @@ export class UnitSystem {
 					waveSlot: unit.waveSlot,
 				});
 			}
-			unit.sprite.destroy();
-			unit.shadow?.destroy();
-			unit.hpBar.destroy();
-			const deathFx = this.scene.add.sprite(
-				unit.worldX,
-				unit.worldY,
-				'unit-death',
-			);
-			deathFx.setDisplaySize(40, 48);
+			unit.pendingDestroy = true;
+			unit.data.hp = 0;
+			this.removeFromLaneUnits(unit);
 			const deathGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			deathFx.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
-			deathFx.play('unit-death');
-			deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
-				deathFx.destroy(),
-			);
+			unit.sprite.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
+			const deathAnimationKey = `${unit.def.id}-death`;
+			if (this.scene.anims.exists(deathAnimationKey)) {
+				this.setUnitAnimationState(unit, 'death');
+				unit.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+					unit.sprite.destroy();
+					unit.shadow?.destroy();
+					unit.hpBar.destroy();
+					this.units.delete(unitId);
+				});
+			} else {
+				unit.sprite.destroy();
+				unit.shadow?.destroy();
+				unit.hpBar.destroy();
+				this.units.delete(unitId);
+			}
 			this.spawnOptionalVfx(
 				unit.def.id === 'titan' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
 				unit.worldX,
@@ -425,8 +448,6 @@ export class UnitSystem {
 				unit.def.id === 'titan' ? 64 : 32,
 				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
-			this.units.delete(unitId);
-			this.removeFromLaneUnits(unit);
 			return {
 				killed: true,
 				bounty: unit.bounty,
@@ -467,7 +488,10 @@ export class UnitSystem {
 	}
 
 	hasActiveUnits(): boolean {
-		return this.units.size > 0;
+		for (const unit of this.units.values()) {
+			if (!unit.pendingDestroy) return true;
+		}
+		return false;
 	}
 
 	hasQueuedUnits(): boolean {
@@ -477,6 +501,7 @@ export class UnitSystem {
 	getActiveCount(): number {
 		let count = 0;
 		for (const unit of this.units.values()) {
+			if (unit.pendingDestroy) continue;
 			if (unit.countsTowardClear) count += 1;
 		}
 		for (const entry of this.spawnQueue) {
@@ -558,6 +583,9 @@ export class UnitSystem {
 		const dt = delta / 1000;
 
 		for (const [id, unit] of this.units) {
+			if (unit.pendingDestroy) {
+				continue;
+			}
 			if (unit.invulnerableMs > 0) {
 				unit.invulnerableMs -= delta;
 			}
@@ -596,10 +624,12 @@ export class UnitSystem {
 					} else {
 						unit.sprite.setTint(0x88ccff);
 					}
+					this.setUnitAnimationState(unit, 'walk');
 				}
 				continue; // skip movement while stunned
 			}
 
+			this.setUnitAnimationState(unit, 'walk');
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
 			const phase2Mult =
@@ -701,6 +731,7 @@ export class UnitSystem {
 	}> {
 		this.unitPositionsBuffer.length = 0;
 		for (const unit of this.units.values()) {
+			if (unit.pendingDestroy) continue;
 			this.unitPositionsBuffer.push({
 				instanceId: unit.data.instanceId,
 				x: unit.worldX,

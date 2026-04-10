@@ -4,6 +4,7 @@ import type {
 	PlacedTower,
 	PlacementFailureReason,
 	Position,
+	TerrainKind,
 	TowerDef,
 } from '@gld/shared';
 import {
@@ -11,12 +12,26 @@ import {
 	CC_AURA_CONFIGS,
 	getEffectiveStats,
 	getElementMultiplier,
+	TERRAIN_BUILDABLE,
+	TERRAIN_MODIFIERS,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
+
+export function canPlaceOnTerrain(terrain: TerrainKind): boolean {
+	return TERRAIN_BUILDABLE[terrain];
+}
+
+export function terrainRangeBonus(terrain: TerrainKind): number {
+	return TERRAIN_MODIFIERS[terrain].rangeBonus ?? 0;
+}
+
+export function terrainAttackMult(terrain: TerrainKind): number {
+	return TERRAIN_MODIFIERS[terrain].attackMult ?? 1;
+}
 
 interface TowerInstance {
 	data: PlacedTower;
@@ -102,6 +117,11 @@ export class TowerSystem {
 
 		if (!this.gridManager.isInBounds(gridX, gridY)) {
 			return { success: false, reason: 'out_of_bounds' };
+		}
+
+		const terrain = this.gridManager.getTerrainAt(gridX, gridY);
+		if (terrain && !canPlaceOnTerrain(terrain)) {
+			return { success: false, reason: 'occupied' };
 		}
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
@@ -262,7 +282,13 @@ export class TowerSystem {
 				data.position.x,
 				data.position.y,
 			);
-			const rangeSq = def.stats.range ** 2;
+			const towerTerrain = this.gridManager.getTerrainAt(
+				data.position.x,
+				data.position.y,
+			);
+			const bonusRange = towerTerrain ? terrainRangeBonus(towerTerrain) : 0;
+			const effectiveRange = def.stats.range + bonusRange;
+			const rangeSq = effectiveRange ** 2;
 
 			let closestUnit: (typeof unitPositions)[0] | null = null;
 			let closestDistSq = Infinity;
@@ -285,7 +311,10 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				const baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				const tAttackMult = towerTerrain ? terrainAttackMult(towerTerrain) : 1;
+				const baseDamage = Math.round(
+					tower.effectiveDamage * elementMult * tAttackMult,
+				);
 				const special = def.stats.special;
 
 				const slowEffect =

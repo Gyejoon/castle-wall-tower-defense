@@ -187,6 +187,7 @@ describe('optional combat vfx', () => {
 			placeTower: vi.fn(() => true),
 			removeTower: vi.fn(),
 			getWalkabilityGrid: vi.fn(() => []),
+			getTerrainAt: vi.fn(() => null),
 			spawnPoint: { x: 0, y: 0 },
 			exitPoint: { x: 4, y: 17 },
 			gridToWorld: vi.fn(() => ({ x: 100, y: 120 })),

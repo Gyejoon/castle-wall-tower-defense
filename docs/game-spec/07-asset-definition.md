@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-10  
 > **Source:** Obsidian `ai/product/specs/게임 에셋 제작 specs.md`  
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 
@@ -119,6 +119,24 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | 3 | 유니크 | 1.10x | 속성 색 글로우 |
 | 4 | 에픽 | 1.15x | 메탈릭 + 오라 |
 | 5 | 전설 | 1.20x | 방사형 + 파티클 |
+
+### 3.5 파일럿 타워 고해상도 규격 (2026-04-10~)
+
+- 대상: archer, flame_tower, dragon_nest, wind_spire, arcane_spire, world_tree, celestial, divine_throne (8종)
+- 해상도: 128×160 (정적), 1024×160 (8-frame fire spritesheet)
+- Grade variant: normal/rare/unique/epic 4종
+  - 파일명: `{id}.png`, `{id}-rare.png`, `{id}-unique.png`, `{id}-epic.png`
+  - Normal은 base 스프라이트, rare/unique/epic은 공통 decoration 헬퍼로 overlay
+- Grade decoration 헬퍼: `scripts/generate-assets/towers/grade-decoration.ts`
+  - rare: 청록 배너 + V 트림
+  - unique: rare + 보라 크리스탈 + glow
+  - epic: unique + 금색 아우라 + 부유 파편
+- idle animation: 에셋 없음 — Phaser runtime tween (scale 1→1.03 yoyo, 1800ms, Sine.InOut, 위상 offset)
+- 승급 연출: 로비 `GradePromotionOverlay` one-shot (1.2s), React + CSS transition
+
+### 3.6 비파일럿 타워 (legacy, 10종)
+
+plasma, emp, shield, twin_archer, disruptor, nova_cannon, fortress, stasis_field, earth_golem, holy_shrine — 기존 64×80 procedural 유지. 후속 plan에서 파일럿 파이프라인으로 확장 예정.
 
 ---
 

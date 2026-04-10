@@ -97,17 +97,53 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 	4: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const oldStars = (progress.stageStars ?? {}) as Record<string, unknown>;
+		const oldHighestWave = (progress.highestWave ?? {}) as Record<
+			string,
+			unknown
+		>;
+		const oldStagesCleared = Array.isArray(progress.stagesCleared)
+			? progress.stagesCleared
+			: [];
 		const newStars: Record<string, unknown> = {};
+		const newHighestWave: Record<string, unknown> = {};
+		const newStagesCleared = new Set<string>();
 
+		// Process old-format (mapId) keys first so new-format (stageId) keys win on conflict
 		for (const [mapId, starRating] of Object.entries(oldStars)) {
 			const stages = MAP_TO_WORLD_STAGES[mapId];
 			if (stages) {
 				for (const stageId of stages) {
 					newStars[stageId] = starRating;
 				}
+			}
+		}
+		for (const [key, starRating] of Object.entries(oldStars)) {
+			if (!MAP_TO_WORLD_STAGES[key]) {
+				// new-format stageId or unknown key: preserve (overwrites spread values)
+				newStars[key] = starRating;
+			}
+		}
+
+		for (const [mapId, wave] of Object.entries(oldHighestWave)) {
+			const stages = MAP_TO_WORLD_STAGES[mapId];
+			if (stages) {
+				for (const stageId of stages) {
+					newHighestWave[stageId] = wave;
+				}
 			} else {
-				// unknown key: preserve as-is (new format or unrecognised)
-				newStars[mapId] = starRating;
+				newHighestWave[mapId] = wave;
+			}
+		}
+
+		for (const entry of oldStagesCleared) {
+			if (typeof entry !== 'string') continue;
+			const stages = MAP_TO_WORLD_STAGES[entry];
+			if (stages) {
+				for (const stageId of stages) {
+					newStagesCleared.add(stageId);
+				}
+			} else {
+				newStagesCleared.add(entry);
 			}
 		}
 
@@ -117,6 +153,8 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			progress: {
 				...progress,
 				stageStars: newStars,
+				highestWave: newHighestWave,
+				stagesCleared: [...newStagesCleared],
 			},
 		};
 	},

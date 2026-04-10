@@ -209,12 +209,9 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const baseY = 2;
   const bob = bobY(frame);
   const [lLeg, rLeg] = legStep(frame);
-  const arm = armSwing(frame);
 
   drawBody(ctx, cx, baseY, {
     bob,
-    leftArmDy: -arm,
-    rightArmDy: arm,
     leftLegDy: lLeg,
     rightLegDy: rLeg,
   });

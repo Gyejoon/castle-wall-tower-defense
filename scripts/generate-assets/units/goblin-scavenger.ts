@@ -27,25 +27,20 @@ const boneShade = shade3(PALETTE.bone);            // bone/ivory
 function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const cx = ox + 20;
   const by = bobY(frame);
-  const lean = bodyLean(frame);
   const [lL, lR] = legStep(frame);
-  const as = armSwing(frame);
 
   // --- Scrawny green legs (barefoot) ---
   const leftLen = 8 + lL;
   const rightLen = 8 + lR;
-  // Left leg
-  drawRect(ctx, cx - 4 + lean, 32 + by, 3, leftLen, skinShade.base);
-  drawRect(ctx, cx - 4 + lean, 32 + by, 3, 1, skinShade.highlight);
-  drawRect(ctx, cx - 4 + lean, 32 + by + leftLen - 1, 4, 1, skinShade.shadow); // bare foot
-  // Right leg
-  drawRect(ctx, cx + 1 + lean, 32 + by, 3, rightLen, skinShade.base);
-  drawRect(ctx, cx + 1 + lean, 32 + by, 3, 1, skinShade.highlight);
-  drawRect(ctx, cx + 1 + lean, 32 + by + rightLen - 1, 4, 1, skinShade.shadow); // bare foot
+  drawRect(ctx, cx - 4, 32 + by, 3, leftLen, skinShade.base);
+  drawRect(ctx, cx - 4, 32 + by, 3, 1, skinShade.highlight);
+  drawRect(ctx, cx - 4, 32 + by + leftLen - 1, 4, 1, skinShade.shadow);
+  drawRect(ctx, cx + 1, 32 + by, 3, rightLen, skinShade.base);
+  drawRect(ctx, cx + 1, 32 + by, 3, 1, skinShade.highlight);
+  drawRect(ctx, cx + 1, 32 + by + rightLen - 1, 4, 1, skinShade.shadow);
 
   // --- Hunched torso (leather vest) ---
-  // The body leans forward from the pack weight — shift torso 1px right of center
-  const tx = cx + lean + 1;
+  const tx = cx + 1; // offset 1px right for pack weight
   drawShadedRect(ctx, tx - 5, 21 + by, 10, 10, PALETTE.leatherWorn);
   // Leather stitch highlight
   drawLine(ctx, tx - 1, 22 + by, tx - 1, 29 + by, leatherShade.highlight);

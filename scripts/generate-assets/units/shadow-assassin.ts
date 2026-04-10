@@ -81,8 +81,8 @@ function drawFadingLine(
 function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const cx = ox + 20;
   const by = floatY(frame);
-  const lean = driftX(frame);
-  const capeBillow = Math.round(Math.sin(walkPhase(frame)) * 2);
+  const lean = 0; // no lateral drift
+  const capeBillow = 0; // no cape swing
 
   // --- Hood (top of head) ---
   const hoodTop = HEAD_TOP + by;
@@ -139,7 +139,7 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   // --- Lower body: cloak continues with narrowing + alpha gradient ---
   const waistTop = shoulderY + 8; // ~23+by area
   // Lateral sway increases toward feet (walking feel without visible legs)
-  const smokeBaseShift = Math.round(Math.sin(walkPhase(frame)) * 1.5);
+  const smokeBaseShift = 0; // no lateral sway
   for (let dy = 0; dy < (BOTTOM_Y - waistTop); dy++) {
     const y = waistTop + dy;
     const t = dy / (BOTTOM_Y - waistTop);

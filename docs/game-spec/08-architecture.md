@@ -30,8 +30,9 @@
 ### 초기화 순서 (`Game.ts create()`)
 
 ```
-GridManager
-    └─► PathfindingSystem
+GridManager (terrain + buildable + paths 주입)
+    └─► StructureSystem  (scene, gridManager, structures)
+    └─► PathfindingSystem (terrain cost grid)
     └─► TowerSystem  (GridManager, PathfindingSystem, collection, spawnExitPairs)
     └─► UnitSystem   (GridManager)
         └─► WaveSystem   (UnitSystem, mapWaves, difficultyHpMult)
@@ -77,10 +78,31 @@ DamageNumberSystem.destroy()
 TowerSystem.destroy()
 UnitSystem.destroy()
 WaveSystem.destroy()
+StructureSystem.destroy()
 DeckSystem.reset()
 EnergySystem.reset()
 옵셔널 에셋 언로드
 ```
+
+### 맵 파이프라인 (.tmj.json → GridManager)
+
+맵 데이터는 Tiled 호환 `.tmj.json`을 단일 진실 원천으로 사용한다. 런타임 매니페스트에 `tilemap-*` 키는 없고, Vite가 JSON을 번들에 포함한다.
+
+```
+.tmj.json (source, Tiled 편집)
+  ↓ Vite JSON import
+parseTiledMap
+  ↓
+MapLayout (terrain + structures + paths)
+  ↓
+GridManager.setTerrain → PathfindingSystem / UnitSystem / TowerSystem / StructureSystem
+  ↓
+Game.ts renderField / renderStructures
+```
+
+- `parseTiledMap(raw)`은 Tiled 레이어(terrain, structures, paths)를 `MapLayout`으로 정규화한다.
+- `GridManager.setTerrain()`이 각 시스템에 필요한 뷰를 전달한다: PathfindingSystem은 terrain 코스트 그리드, UnitSystem은 speed modifier 조회, TowerSystem은 buildable/hill 체크, StructureSystem은 정적 오브젝트 렌더.
+- `Game.ts renderField`는 `TERRAIN_FRAME_MAP`을 사용해 지형 프레임을 그리고, `renderStructures`는 StructureSystem 스프라이트를 배치한다.
 
 ---
 
@@ -162,8 +184,9 @@ EnergySystem.reset()
 
 | Depth | 레이어 | 대상 |
 |-------|--------|------|
-| 0 | Ground | TinySwords 배경 타일 |
+| 0 | Ground | TinySwords 배경 타일 (terrain 프레임) |
 | 0.1-0.9 | Gimmick VFX | 용암 glow(0.1), 역병 안개(0.5), 마력 폭발(0.9) |
+| 3 + x + y | Structures | wall_stone, obelisk, broken_tower (StructureSystem) |
 | 3 + x + y + depthOffset | Decorations | 나무, 바위 등 장식 스프라이트 (`gridManager.getDepth()` 기반) |
 | 5 | Path | 경로 라인 오버레이 |
 | ~12 | Towers | 타워 스프라이트 |

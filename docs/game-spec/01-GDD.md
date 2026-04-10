@@ -70,6 +70,27 @@
 | Boss/Encounter | 웨이브 5, 10에 보스 등장 — 세션 피크 | boss timing, warning telegraph, phase, reward |
 | GimmickSystem | 월드별 고유 기믹 처리 (용광로 폭발, 마력 폭주, 묘지 부활, 역병 확산, 마왕의 시련). 타일 상태 변경 → 타워 비활성화/버프. ★ 등급에 따라 기믹 강도 차등 | gimmick_id, active_tiles, intensity_by_star |
 
+### 맵 지형 (Terrain Modifiers)
+
+맵은 타일별 지형 타입을 가진다. 지형은 유닛 이동, 타워 배치, 기믹 효과에 영향을 준다. GimmickSystem의 동적 이벤트(월드별 기믹)와 구분되는 정적 타일 속성이다.
+
+| 지형 | 이동 배수 | 배치 | 특수 효과 |
+|---|---|---|---|
+| plain (평원) | 1.00x | ✓ | — |
+| road (길) | 1.10x | ✗ | 경로용 |
+| forest (숲) | 0.85x | ✓ | — |
+| bog (늪) | 0.70x | ✗ | 위 유닛 CC 지속 -50% |
+| hill (언덕) | 1.00x | ✓ | 타워 사거리 +1 |
+| cursed (저주) | 1.00x | ✓ | 타워 공격력 -10% |
+| water (물) | 통과 불가 | ✗ | 비행만 통과 |
+| lava (용암) | 통과 불가 | ✗ | 비행 유닛 5 DMG/sec DOT |
+| mountain (산) | 통과 불가 | ✗ | 벽 |
+
+맵별 지형 팔레트:
+- **Forest Gate:** plain + forest + hill
+- **Lava Fortress:** plain + road + lava + mountain + hill + 구조물(wall_stone, broken_tower)
+- **Storm Citadel:** plain + road + water + cursed + mountain + 구조물(obelisk)
+
 ---
 
 ## 5. Content Plan

@@ -74,8 +74,9 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | VFX | 4 spritesheet | `generate-vfx.ts` | 부분 완료 |
 | UI (PVE) | ~34 PNG+WebP | `generate-ui.ts`, `generate-match-ui.ts` | PVP 혼재 |
 | UI 모바일 | ~44 PNG+WebP | `generate-ui-mobile.ts` | ✅ 완료 |
-| 타일 | tileset PNG | `generate-tiles.ts`, `generate-tileset.ts` | forest만 완료 |
-| 맵 | 1 JSON | `generate-map.ts` | forest_gate만 완료 |
+| 타일 | tileset PNG | `generate-tiles.ts`, `generate-tileset.ts` | Tiny Swords 팩 기반 |
+| 맵 소스 | 3 `.tmj.json` | `packages/shared/src/maps/*.tmj.json` (Tiled 편집) | ✅ 3 스테이지 완료 |
+| 구조물 | 3 PNG+WebP | `generate-structures.ts` | ✅ 완료 |
 | 아이콘 | ~8 PNG+WebP | `generate-icons.ts` | ✅ 완료 |
 | vendor | tiny-swords 팩 | N/A | ✅ 완료 |
 
@@ -241,11 +242,41 @@ sin 기반 8프레임 워크 사이클:
 
 ## 9. 맵 에셋 (3 스테이지)
 
-| stage_id | 테마 | 상태 |
-|---------|------|------|
-| forest_gate | 초록/갈색 자연 톤, 단일 경로 | ✅ 완료 |
-| lava_fortress | 붉은/주황 화산 톤, 2경로 | ⬜ 미구현 |
-| storm_citadel | 짙은 파랑/보라 전기 톤, 3경로 | ⬜ 미구현 |
+### 맵 소스
+
+맵 데이터의 원본은 **`packages/shared/src/maps/*.tmj.json`** (Tiled 호환 JSON). Vite JSON import로 런타임에 로드되며, `asset-manifest.json`에 `tilemap-*` 키는 존재하지 않는다. 에디터에서 직접 편집하려면 Tiled로 `.tmj.json`을 열면 된다.
+
+| stage_id | 소스 | 테마 | 지형 팔레트 | 구조물 |
+|---------|------|------|-----------|-------|
+| forest_gate | `forest_gate.tmj.json` | 초록/갈색 자연 톤, 단일 경로 | plain + forest + hill | — |
+| lava_fortress | `lava_fortress.tmj.json` | 붉은/주황 화산 톤, 2경로 | plain + road + lava + mountain + hill | wall_stone, broken_tower |
+| storm_citadel | `storm_citadel.tmj.json` | 짙은 파랑/보라 전기 톤, 3경로 | plain + road + water + cursed + mountain | obelisk |
+
+### 지형 타일 카탈로그 (9종)
+
+9종 지형 타일은 `TERRAIN_FRAME_MAP`으로 Tiny Swords 타일셋 프레임에 매핑된다. `Game.ts renderField`가 `GridManager.terrain`을 읽어 프레임을 그린다.
+
+| 지형 | TerrainKind | 매핑 출처 |
+|---|---|---|
+| plain | `plain` | Tiny Swords grass |
+| road | `road` | Tiny Swords road |
+| forest | `forest` | Tiny Swords forest |
+| bog | `bog` | Tiny Swords swamp |
+| hill | `hill` | Tiny Swords elevation |
+| cursed | `cursed` | Tiny Swords cursed ground |
+| water | `water` | Tiny Swords water |
+| lava | `lava` | Tiny Swords lava |
+| mountain | `mountain` | Tiny Swords mountain |
+
+### 구조물 카탈로그 (3종)
+
+정적 맵 오브젝트로, `StructureSystem`이 렌더·관리한다. 생성 스크립트는 `scripts/generate-assets/generate-structures.ts`.
+
+| id | 해상도 | 용도 |
+|---|---|---|
+| `wall_stone` | 32×32 | 단일 타일 벽 (lava_fortress) |
+| `obelisk` | 32×64 | 2타일 높이 오벨리스크 (storm_citadel) |
+| `broken_tower` | 32×64 | 2타일 높이 파괴된 탑 (lava_fortress) |
 
 ---
 
@@ -260,11 +291,13 @@ unit-{id}            # 유닛 walk cycle
 projectile-{type}    # 투사체
 vfx-{name}           # VFX
 ui-{element}         # UI 요소
-tilemap-{stage-id}   # 타일맵
+structure-{id}       # 구조물 (wall_stone, obelisk, broken_tower)
 icon-{category}-{id} # 아이콘
 ```
 
 > 현재 코드는 `-` 구분자 기반 (`tower-laser`, `unit-scout-drone`). **기존 패턴 유지.**
+>
+> **맵 소스는 매니페스트 키가 아니다.** `.tmj.json` 파일을 `packages/shared/src/maps/`에서 직접 import하며, `tilemap-{stage-id}` 키는 존재하지 않는다.
 
 ---
 
@@ -291,3 +324,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
+| 2026-04-09 | §2, §9, §10 | Terrain 시스템 도입: 맵 소스 `.tmj.json`으로 전환, 지형 타일 카탈로그 9종, 구조물 카탈로그 3종 추가. 네이밍 규칙에서 `tilemap-{stage-id}` 제거 |

@@ -102,9 +102,15 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 														prev.filter((x) => x !== tower.id),
 													);
 												}}
-												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg font-pixel text-[10px] text-text hover:brightness-125 active:scale-90 transition-transform cursor-pointer"
+												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg hover:brightness-125 active:scale-90 transition-transform cursor-pointer"
 											>
-												×
+												<img
+													src="assets/ui/icon-close-x.webp"
+													alt="제거"
+													width={12}
+													height={12}
+													className="[image-rendering:pixelated]"
+												/>
 											</button>
 											<img
 												src={`assets/towers/${tower.type}.webp`}

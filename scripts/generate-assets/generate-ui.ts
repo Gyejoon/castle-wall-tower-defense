@@ -466,6 +466,29 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
   }
 
+  // Close-X icon (16x16) — medieval iron X mark for slot removal
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+    const iron = '#8a8a94';
+    const ironDark = '#5a5a62';
+    // Diagonal lines (2px thick Bresenham X)
+    for (let i = 2; i <= 13; i++) {
+      // Top-left to bottom-right
+      setPixel(ctx, i, i, iron);
+      setPixel(ctx, i + 1, i, ironDark);
+      setPixel(ctx, i, i + 1, ironDark);
+      // Top-right to bottom-left
+      setPixel(ctx, 15 - i, i, iron);
+      setPixel(ctx, 14 - i, i, ironDark);
+      setPixel(ctx, 15 - i, i + 1, ironDark);
+    }
+    // Center highlight
+    setPixel(ctx, 7, 7, PALETTE.white);
+    setPixel(ctx, 8, 8, PALETTE.white);
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-close-x.png`);
+    entries.push({ key: 'ui-icon-close-x', type: 'image', path: 'assets/ui/icon-close-x.png' });
+  }
+
   // Ad button (120x40)
   {
     const { canvas, ctx } = makeCanvas(120, 40);

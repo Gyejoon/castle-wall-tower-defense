@@ -39,28 +39,36 @@ import {
 
 /** Per-map theme palette for ground tiles, path overlay, and decorations */
 interface MapTheme {
+	groundFill: number;
 	groundTint: number;
 	decorTint: number;
+	pathTint: number;
 	pathColor: number;
 	pathLineColor: number;
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
 	forest_gate: {
-		groundTint: 0xffffff, // no tint — natural green/brown
+		groundFill: 0x7a9a3a, // solid grass green
+		groundTint: 0xffffff,
 		decorTint: 0xffffff,
+		pathTint: 0xffffff,
 		pathColor: 0x9f8258,
 		pathLineColor: 0xb8956a,
 	},
 	lava_fortress: {
-		groundTint: 0xd4a070, // warm orange/brown cast
+		groundFill: 0x8a6a3a, // warm brown earth
+		groundTint: 0xd4a070,
 		decorTint: 0xc89060,
+		pathTint: 0xd4a070,
 		pathColor: 0xb05030,
 		pathLineColor: 0xc06040,
 	},
 	storm_citadel: {
-		groundTint: 0x8898c0, // cool blue/purple cast
+		groundFill: 0x4a5a3a, // dark muted green
+		groundTint: 0x8898c0,
 		decorTint: 0x7888b0,
+		pathTint: 0x8898c0,
 		pathColor: 0x5060a0,
 		pathLineColor: 0x6070b0,
 	},
@@ -411,45 +419,32 @@ export class GameScene extends Phaser.Scene {
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Calculate how many extra tiles needed to fill the canvas beyond the grid
-		const gridPixelW = tile * this.currentMap.width;
-		const gridPixelH = tile * this.currentMap.height;
-		const extraLeft = Math.ceil((canvasW - gridPixelW) / 2 / tile) + 1;
-		const extraRight = extraLeft;
-		const extraTop = Math.ceil((canvasH - gridPixelH) / 2 / tile) + 1;
-		const extraBottom = extraTop;
+		// Solid ground fill — one seamless rectangle, no tile seams
+		const groundGfx = this.add.graphics();
+		const fillColor = dark ? 0x3a4558 : theme.groundFill;
+		groundGfx.fillStyle(fillColor, 1);
+		groundGfx.fillRect(0, 0, canvasW, canvasH);
+		groundGfx.setDepth(0);
 
-		const startX = -extraLeft;
-		const endX = this.currentMap.width + extraRight;
-		const startY = -extraTop;
-		const endY = this.currentMap.height + extraBottom;
-
-		const plainFrame = TERRAIN_FRAME_MAP.plain;
+		// Road tiles only for path cells
 		const roadFrame = TERRAIN_FRAME_MAP.road;
-		const pathSet = new Set(
-			getAllPathCells(this.currentMap).map((p) => `${p.x},${p.y}`),
-		);
+		const pathCells = getAllPathCells(this.currentMap);
+		for (const p of pathCells) {
+			const world = grid.gridToWorld(p.x, p.y);
+			const sprite = this.add.sprite(
+				world.x,
+				world.y,
+				TINY_SWORDS_PRIMARY_TILESET.key,
+				roadFrame,
+			);
+			sprite.setDisplaySize(tile, tile);
+			sprite.setOrigin(0.5, 0.5);
+			sprite.setDepth(0.5);
 
-		for (let y = startY; y < endY; y++) {
-			for (let x = startX; x < endX; x++) {
-				const world = grid.gridToWorld(x, y);
-				const isPath = pathSet.has(`${x},${y}`);
-				const frame = isPath ? roadFrame : plainFrame;
-				const sprite = this.add.sprite(
-					world.x,
-					world.y,
-					TINY_SWORDS_PRIMARY_TILESET.key,
-					frame,
-				);
-				sprite.setDisplaySize(tile, tile);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(0);
-
-				if (dark) {
-					sprite.setTint(0x6b7899);
-				} else if (theme.groundTint !== 0xffffff) {
-					sprite.setTint(theme.groundTint);
-				}
+			if (dark) {
+				sprite.setTint(0x5c6585);
+			} else if (theme.pathTint !== 0xffffff) {
+				sprite.setTint(theme.pathTint);
 			}
 		}
 

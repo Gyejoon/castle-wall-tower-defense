@@ -219,10 +219,8 @@ describe('GameScene field runtime', () => {
 		const floorCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_PRIMARY_TILESET.key,
 		).length;
-		// Floor tiles now extend beyond the grid to fill the canvas
-		expect(floorCount).toBeGreaterThanOrEqual(
-			FOREST_GATE_MAP.width * FOREST_GATE_MAP.height,
-		);
+		// Ground is solid fill now; only path cells use tileset sprites
+		expect(floorCount).toBe(FOREST_GATE_MAP.path.length);
 
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,

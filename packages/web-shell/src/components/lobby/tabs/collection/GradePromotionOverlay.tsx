@@ -88,20 +88,26 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 			/>
 			{/* Particles */}
 			{phase !== 'enter' &&
-				Array.from({ length: 16 }).map((_, i) => (
-					<span
-						key={i}
-						className="absolute rounded-full"
-						style={{
-							width: 4,
-							height: 4,
-							background: color,
-							transform: `translate(${Math.cos((i / 16) * Math.PI * 2) * 140}px, ${Math.sin((i / 16) * Math.PI * 2) * 140}px)`,
-							transition: 'transform 900ms ease-out, opacity 900ms ease-out',
-							opacity: phase === 'reveal' || phase === 'exit' ? 0 : 1,
-						}}
-					/>
-				))}
+				Array.from({ length: 16 }).map((_, i) => {
+					const angle = (i / 16) * Math.PI * 2;
+					const atTarget = phase === 'reveal' || phase === 'exit';
+					return (
+						<span
+							key={i}
+							className="absolute rounded-full"
+							style={{
+								width: 4,
+								height: 4,
+								background: color,
+								transform: atTarget
+									? `translate(${Math.cos(angle) * 140}px, ${Math.sin(angle) * 140}px)`
+									: 'translate(0, 0)',
+								transition: 'transform 600ms ease-out, opacity 900ms ease-out',
+								opacity: atTarget ? 0 : 1,
+							}}
+						/>
+					);
+				})}
 		</div>
 	);
 }

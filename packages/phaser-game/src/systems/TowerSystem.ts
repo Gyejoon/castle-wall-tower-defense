@@ -35,33 +35,11 @@ export type TowerPlacementResult =
 	| { success: true; tower: PlacedTower }
 	| { success: false; reason: PlacementFailureReason };
 
-const TOWER_GRADE_VARIANT_IDS = new Set([
-	'archer',
-	'plasma',
-	'emp',
-	'shield',
-	'twin_archer',
-	'disruptor',
-	'nova_cannon',
-	'fortress',
-	'stasis_field',
-	'flame_tower',
-	'wind_spire',
-	'earth_golem',
-	'holy_shrine',
-	'dragon_nest',
-	'arcane_spire',
-	'world_tree',
-	'celestial',
-	'divine_throne',
-]);
-
 export function resolveTowerTextureKey(
 	defId: string,
 	grade: 'normal' | 'rare' | 'unique' | 'epic',
 ): string {
 	if (grade === 'normal') return `tower-${defId}`;
-	if (!TOWER_GRADE_VARIANT_IDS.has(defId)) return `tower-${defId}`;
 	return `tower-${defId}-${grade}`;
 }
 

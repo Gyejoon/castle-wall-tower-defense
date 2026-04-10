@@ -2,6 +2,7 @@ import type { SKRSContext2D } from '@napi-rs/canvas';
 import {
   PALETTE,
   drawIsoShadow,
+  drawIsoCube,
   drawRect,
   fillCircle,
   setPixel,
@@ -11,34 +12,6 @@ import {
 } from '../shared';
 
 // ── Pixel-art iso helpers (medieval + pixel style) ──────────────
-
-/**
- * Iso cube — the core building block for all medieval structures.
- * Exact copy of generate-towers.ts drawIsoCube for consistency.
- */
-function drawIsoCube(
-  ctx: SKRSContext2D,
-  cx: number, cy: number,
-  hw: number, height: number,
-  topColor: string, leftColor: string, rightColor: string,
-): void {
-  const hh = Math.round(hw / 2);
-  for (let dy = -hh; dy <= hh; dy++) {
-    const ratio = 1 - Math.abs(dy) / hh;
-    const w = Math.round(hw * ratio);
-    for (let dx = -w; dx <= w; dx++) {
-      setPixel(ctx, cx + dx, cy + dy, topColor);
-    }
-  }
-  for (let h = 1; h <= height; h++) {
-    for (let row = 0; row <= hh; row++) {
-      const ratio = 1 - row / hh;
-      const w = Math.round(hw * ratio);
-      for (let dx = -w; dx < 0; dx++) setPixel(ctx, cx + dx, cy + row + h, leftColor);
-      for (let dx = 0; dx <= w; dx++) setPixel(ctx, cx + dx, cy + row + h, rightColor);
-    }
-  }
-}
 
 /** Stone base platform — iso diamond with depth, same as legacy drawBase but scaled */
 function drawBase(ctx: SKRSContext2D, cx: number, baseY: number, hw: number): void {

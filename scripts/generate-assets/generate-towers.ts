@@ -13,6 +13,7 @@ import {
   ISO_TILE_W,
   ISO_TILE_H,
   drawIsoShadow,
+  drawIsoCube,
   type ManifestEntry,
 } from './shared';
 import { mkdirSync, existsSync } from 'fs';
@@ -110,47 +111,6 @@ const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, color, shape }) => ({
 
 const REQUIRED_FILES = TOWERS.flatMap((tower) => [`${tower.id}.png`, `${tower.id}-fire.png`]);
 
-// Draw an isometric cube: top diamond + left face (dark) + right face (medium)
-function drawIsoCube(
-  ctx: SKRSContext2D,
-  cx: number, cy: number,  // center of cube top diamond
-  hw: number,              // half-width of top diamond
-  height: number,          // cube height in pixels
-  topColor: string, leftColor: string, rightColor: string,
-): void {
-  const hh = Math.round(hw / 2); // iso 2:1 ratio
-
-  // Top face (diamond)
-  for (let dy = -hh; dy <= hh; dy++) {
-    const ratio = 1 - Math.abs(dy) / hh;
-    const w = Math.round(hw * ratio);
-    for (let dx = -w; dx <= w; dx++) {
-      setPixel(ctx, cx + dx, cy + dy, topColor);
-    }
-  }
-
-  // Left face
-  for (let h = 1; h <= height; h++) {
-    for (let row = 0; row <= hh; row++) {
-      const ratio = 1 - row / hh;
-      const w = Math.round(hw * ratio);
-      for (let dx = -w; dx < 0; dx++) {
-        setPixel(ctx, cx + dx, cy + row + h, leftColor);
-      }
-    }
-  }
-
-  // Right face
-  for (let h = 1; h <= height; h++) {
-    for (let row = 0; row <= hh; row++) {
-      const ratio = 1 - row / hh;
-      const w = Math.round(hw * ratio);
-      for (let dx = 0; dx <= w; dx++) {
-        setPixel(ctx, cx + dx, cy + row + h, rightColor);
-      }
-    }
-  }
-}
 
 function countOpaqueCoverage(canvas: ReturnType<typeof makeCanvas>['canvas'], width: number, height: number): number {
   const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
@@ -746,8 +706,8 @@ export async function generate(): Promise<ManifestEntry[]> {
   const entries: ManifestEntry[] = [];
 
   for (const tower of TOWERS) {
-    if (isPilot(tower.id)) {
-      const drawFn = PILOT_DRAW[tower.id];
+    const drawFn = PILOT_DRAW[tower.id as PilotId];
+    if (drawFn) {
       const gradeCtx = {
         cx: 64,
         topY: 36,
@@ -793,63 +753,6 @@ export async function generate(): Promise<ManifestEntry[]> {
           // Overlay simplified fire effects for pilot towers
           drawPilotFireEffect(ctx, f * 64, tower, f);
         }
-        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
-        entries.push({
-          key: `tower-${tower.id}-fire`,
-          type: 'spritesheet',
-          path: `assets/towers/${tower.id}-fire.png`,
-          frameWidth: 64,
-          frameHeight: 80,
-          frameCount: FIRE_FRAME_COUNT,
-        });
-      }
-    } else {
-      // Legacy path: 64×80 — unchanged for non-pilot towers
-      // Static sprite (64x80)
-      {
-        const { canvas, ctx } = makeCanvas(64, 80);
-        renderWithGate(
-          canvas,
-          ctx,
-          64,
-          80,
-          `${tower.id}.png`,
-          (drawCtx) => drawTowerShape(drawCtx, 0, tower),
-          (drawCtx) => {
-            switch (tower.shape) {
-              case 'archer': drawArcherTowerFallback(drawCtx, 0); break;
-              case 'catapult': drawCatapultFallback(drawCtx, 0); break;
-              case 'frost': drawFrostTowerFallback(drawCtx, 0); break;
-              case 'paladin': drawPaladinShrineFallback(drawCtx, 0); break;
-              case 'star': drawStarTowerFallback(drawCtx, 0, tower); break;
-            }
-          },
-        );
-        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
-        entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
-      }
-
-      // Fire animation (8 frames of 64x80)
-      {
-        const fireW = 64 * FIRE_FRAME_COUNT;
-        const { canvas, ctx } = makeCanvas(fireW, 80);
-        renderWithGate(
-          canvas,
-          ctx,
-          fireW,
-          80,
-          `${tower.id}-fire.png`,
-          (drawCtx) => {
-            for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-              drawFireFrame(drawCtx, f * 64, tower, f);
-            }
-          },
-          (drawCtx) => {
-            for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-              drawTowerShape(drawCtx, f * 64, tower);
-            }
-          },
-        );
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
         entries.push({
           key: `tower-${tower.id}-fire`,

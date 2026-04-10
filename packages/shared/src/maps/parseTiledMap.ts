@@ -200,7 +200,13 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 	for (let y = 0; y < raw.height; y++) {
 		for (let x = 0; x < raw.width; x++) {
 			const t = terrain[y][x];
-			if (t === 'water' || t === 'mountain' || t === 'bog' || t === 'road') {
+			if (
+				t === 'water' ||
+				t === 'mountain' ||
+				t === 'bog' ||
+				t === 'road' ||
+				t === 'lava'
+			) {
 				blockedPlacementPoints.push({ x, y });
 			}
 		}

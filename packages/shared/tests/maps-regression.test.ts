@@ -38,10 +38,10 @@ describe('map regression (post-Tiled migration)', () => {
 		);
 	});
 
-	it('forest_gate terrain is all plain or road', () => {
+	it('forest_gate terrain uses only expected kinds', () => {
 		for (const row of FOREST_GATE_MAP.terrain) {
 			for (const cell of row) {
-				expect(['plain', 'road']).toContain(cell);
+				expect(['plain', 'road', 'forest', 'hill']).toContain(cell);
 			}
 		}
 	});

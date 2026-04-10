@@ -138,24 +138,7 @@ function drawBody(
   setPixel(ctx, cx + 8 - splitX, shoulderY - 1, BONE_C.base);
   setPixel(ctx, cx + 8 - splitX, shoulderY - 2, BONE_C.base);
 
-  // ── Arms ──────────────────────────────────────────
-  const armY = torsoY + 2 + breath;
-
-  // LEFT arm: steel plated
-  drawRect(ctx, cx - 10 + splitX, armY + 3 + lArmDy, 3, 8, SKIN.base);
-  drawRect(ctx, cx - 10 + splitX, armY + 3 + lArmDy, 3, 4, STEEL.base);
-  drawRect(ctx, cx - 10 + splitX, armY + 3 + lArmDy, 3, 1, STEEL.highlight);
-  // fist
-  drawRect(ctx, cx - 10 + splitX, armY + 11 + lArmDy, 3, 2, SKIN.shadow);
-
-  // RIGHT arm: bare green with leather bracer
-  drawRect(ctx, cx + 7 - splitX, armY + 3 + rArmDy, 3, 8, SKIN.base);
-  drawRect(ctx, cx + 7 - splitX, armY + 3 + rArmDy, 3, 1, SKIN.highlight);
-  // leather bracer
-  drawRect(ctx, cx + 7 - splitX, armY + 6 + rArmDy, 3, 2, LEATHER.base);
-  drawRect(ctx, cx + 7 - splitX, armY + 6 + rArmDy, 3, 1, LEATHER.highlight);
-  // fist
-  drawRect(ctx, cx + 7 - splitX, armY + 11 + rArmDy, 3, 2, SKIN.shadow);
+  // ── Right arm only (holds axe, no left arm visible) ──
 
   // ── Head / Helmet ─────────────────────────────────
   const headY = baseY + 8 + bob + tiltY;

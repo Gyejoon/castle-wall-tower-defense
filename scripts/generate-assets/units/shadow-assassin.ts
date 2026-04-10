@@ -112,10 +112,13 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   // Inner cloak detail
   drawFadingRect(ctx, cx - 3 + lean, shoulderY + 2, 6, 4, INNER_CLOAK);
 
-  // --- Daggers crossed in front of chest (static, no swing) ---
-  const daggerCY = shoulderY + 5;
-  drawFadingLine(ctx, cx - 5 + lean, daggerCY - 2 + by, cx + 2 + lean, daggerCY + 3 + by, BLADE_COLOR);
-  drawFadingLine(ctx, cx + 4 + lean, daggerCY - 2 + by, cx - 3 + lean, daggerCY + 3 + by, BLADE_COLOR);
+  // --- Left hand: single dagger (fixed, no motion) ---
+  const daggerCY = shoulderY + 4;
+  // Left arm (fixed position, tucked against body)
+  drawFadingRect(ctx, cx - 8 + lean, daggerCY, 2, 5, CLOAK.shadow);
+  // Dagger blade pointing down
+  drawFadingLine(ctx, cx - 8 + lean, daggerCY + 5 + by, cx - 8 + lean, daggerCY + 10 + by, BLADE_COLOR);
+  setFadingPixel(ctx, cx - 8 + lean, daggerCY + 10 + by, BLADE_DARK); // tip
 
   // --- Cape / Cloak billowing sides ---
   // Left cape edge

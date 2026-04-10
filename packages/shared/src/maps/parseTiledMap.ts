@@ -220,7 +220,16 @@ export function parseTiledMap(raw: TiledRawMap): MapLayout {
 		});
 	}
 	for (const s of structures) {
-		if (s.blocksPlacement) blockedPlacementPoints.push(s.position);
+		if (s.blocksPlacement) {
+			for (let dy = 0; dy < s.height; dy++) {
+				for (let dx = 0; dx < s.width; dx++) {
+					blockedPlacementPoints.push({
+						x: s.position.x + dx,
+						y: s.position.y + dy,
+					});
+				}
+			}
+		}
 	}
 
 	return {

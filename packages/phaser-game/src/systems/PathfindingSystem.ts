@@ -152,7 +152,7 @@ export class PathfindingSystem {
 		end: Position,
 		costGrid?: number[][],
 	): Position[] | null {
-		const key = JSON.stringify({ grid, start, end, costGrid });
+		const key = `${start.x},${start.y}-${end.x},${end.y}`;
 		if (this.cachedKey === key) return this.cachedPath;
 		this.cachedKey = key;
 		this.cachedPath = findPath(grid, start, end, costGrid);

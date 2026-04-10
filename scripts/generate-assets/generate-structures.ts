@@ -13,8 +13,9 @@ function drawWallStone(): Buffer {
   ctx.strokeRect(0.5, 8.5, 31, 19);
   ctx.fillStyle = '#8a8985';
   for (let i = 0; i < 4; i++) {
-    ctx.fillRect(1 + i * 8, 10, 6, 6);
-    ctx.fillRect(1 + i * 8 + 4, 18, 6, 6);
+    const x = 1 + i * 7;
+    ctx.fillRect(x, 10, 6, 6);
+    ctx.fillRect(Math.min(x + 3, 25), 18, 6, 6);
   }
   return canvas.toBuffer('image/png');
 }

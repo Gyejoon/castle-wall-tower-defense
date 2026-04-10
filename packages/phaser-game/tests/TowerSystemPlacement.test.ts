@@ -96,7 +96,7 @@ describe('TowerSystem placement contract', () => {
 
 		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'archer')).toEqual({
 			success: false,
-			reason: 'occupied',
+			reason: 'unbuildable_terrain',
 		});
 		expect(scene.add.image).not.toHaveBeenCalled();
 	});

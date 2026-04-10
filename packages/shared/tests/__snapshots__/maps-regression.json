@@ -9,12 +9,12 @@
     "laneCount": 2,
     "spawn": { "x": 1, "y": 0 },
     "exit": { "x": 3, "y": 17 },
-    "buildableCount": 58
+    "buildableCount": 57
   },
   "storm_citadel": {
     "laneCount": 3,
     "spawn": { "x": 0, "y": 0 },
     "exit": { "x": 3, "y": 17 },
-    "buildableCount": 60
+    "buildableCount": 58
   }
 }

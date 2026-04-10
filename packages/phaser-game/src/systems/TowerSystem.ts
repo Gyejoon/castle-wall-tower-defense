@@ -123,7 +123,7 @@ export class TowerSystem {
 
 		const terrain = this.gridManager.getTerrainAt(gridX, gridY);
 		if (terrain && !canPlaceOnTerrain(terrain)) {
-			return { success: false, reason: 'occupied' };
+			return { success: false, reason: 'unbuildable_terrain' };
 		}
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {

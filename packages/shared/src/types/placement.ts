@@ -3,4 +3,5 @@ export type PlacementFailureReason =
 	| 'insufficient_energy'
 	| 'occupied'
 	| 'blocked_path'
-	| 'out_of_bounds';
+	| 'out_of_bounds'
+	| 'unbuildable_terrain';

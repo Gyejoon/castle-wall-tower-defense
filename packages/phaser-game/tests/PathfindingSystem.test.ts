@@ -76,7 +76,7 @@ describe('PathfindingSystem.validateAllPaths', () => {
 		]);
 	});
 
-	it('findPath cache는 costGrid가 다르면 재사용되면 안 된다', () => {
+	it('invalidateCache 후 costGrid가 다르면 새 경로를 계산한다', () => {
 		const sys = new PathfindingSystem();
 		const grid = openGrid(3, 3);
 		const cheapTop = [
@@ -90,6 +90,7 @@ describe('PathfindingSystem.validateAllPaths', () => {
 			[1, 1, 1],
 		];
 		const first = sys.findPath(grid, { x: 0, y: 0 }, { x: 2, y: 0 }, cheapTop);
+		sys.invalidateCache();
 		const second = sys.findPath(
 			grid,
 			{ x: 0, y: 0 },

@@ -259,11 +259,12 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 ### 최종 데미지 계산식 (cursed 땅 포함)
 
 ```
-finalDamage = baseDamage
-            × elementMultiplier    // 속성 상성 0.7x / 1.0x / 1.3x (§속성 상성표)
-            × terrainAttackMult    // cursed=0.9, 그 외=1.0
-            × (1 - armorReduction) // 기존 armor/pierce 공식
-            × tierBonus            // LV 구간별 보정 (§타워 성장)
+preDamage  = baseDamage
+           × elementMultiplier    // 속성 상성 0.7x / 1.0x / 1.3x (§속성 상성표)
+           × terrainAttackMult    // cursed=0.9, 그 외=1.0
+           × tierBonus            // LV 구간별 보정 (§타워 성장)
+
+finalDamage = max(1, preDamage - armor)  // §7 armor 감산 (pierce 타워는 armor=0 취급)
 ```
 
 모든 배수는 **곱셈 누적**. cursed 위에서 공격하는 수 속성 타워가 화 속성 적을 때리면 `base × 1.3 × 0.9 × ...`.

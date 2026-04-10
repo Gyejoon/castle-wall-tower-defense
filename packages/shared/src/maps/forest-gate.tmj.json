@@ -16,7 +16,7 @@
     { "name": "recommendedPower", "type": "int", "value": 55 },
     { "name": "rewardMultiplier", "type": "int", "value": 1 },
     { "name": "difficultyHpMult", "type": "float", "value": 1.0 },
-    { "name": "tilemapKey", "type": "string", "value": "tilemap-forest-gate" },
+    { "name": "tilemapKey", "type": "string", "value": "tilemap-forest_gate" },
     { "name": "tilesetKey", "type": "string", "value": "tileset" }
   ],
   "layers": [

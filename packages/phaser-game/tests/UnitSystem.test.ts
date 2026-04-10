@@ -1,4 +1,4 @@
-import type { Position } from '@gld/shared';
+import type { Position, TerrainKind } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('phaser', () => ({
@@ -62,7 +62,7 @@ function createScene() {
 	};
 }
 
-function createGridManager(tileSize = 32) {
+function createGridManager(tileSize = 32, terrain?: TerrainKind[][]) {
 	return {
 		orthoTile: tileSize,
 		gridToWorld: vi.fn((x: number, y: number) => ({
@@ -74,6 +74,7 @@ function createGridManager(tileSize = 32) {
 			y: Math.floor(y / tileSize),
 		})),
 		getDepth: vi.fn(() => 10),
+		getTerrainAt: vi.fn((x: number, y: number) => terrain?.[y]?.[x] ?? 'plain'),
 	};
 }
 
@@ -223,6 +224,42 @@ describe('UnitSystem', () => {
 	});
 
 	describe('unit movement along lanes', () => {
+		it('bog 타일에서는 지상 유닛이 plain 타일보다 더 느리게 이동한다', () => {
+			const terrain: TerrainKind[][] = [['plain', 'bog', 'plain', 'plain']];
+			grid = createGridManager(32, terrain);
+			system = new UnitSystem(scene as never, grid as never);
+			system.setPaths([LANE_A]);
+			system.queueUnits('scout_drone', 1);
+			system.update(0, 301);
+			system.update(0, 334);
+			system.update(0, 200);
+			const bogX = system.getUnitPositions()[0]?.x ?? 0;
+
+			grid = createGridManager(32, [['plain', 'plain', 'plain', 'plain']]);
+			system = new UnitSystem(scene as never, grid as never);
+			system.setPaths([LANE_A]);
+			system.queueUnits('scout_drone', 1);
+			system.update(0, 301);
+			system.update(0, 334);
+			system.update(0, 200);
+			const plainX = system.getUnitPositions()[0]?.x ?? 0;
+
+			expect(bogX).toBeLessThan(plainX);
+		});
+
+		it('lava 타일 위의 비행 유닛은 지속 피해를 받는다', () => {
+			grid = createGridManager(32, [['lava', 'plain', 'plain', 'plain']]);
+			system = new UnitSystem(scene as never, grid as never);
+			system.setPaths([LANE_A]);
+			system.queueUnits('titan', 1);
+			system.update(0, 301);
+			system.update(0, 1000);
+
+			const titan = system.getUnitPositions()[0];
+			expect(titan).toBeDefined();
+			expect(titan?.hp).toBeLessThan(500);
+		});
+
 		it('units reach exit and are removed', () => {
 			const shortLane: Position[] = [
 				{ x: 0, y: 0 },

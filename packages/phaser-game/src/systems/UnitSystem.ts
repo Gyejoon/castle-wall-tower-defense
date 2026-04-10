@@ -6,6 +6,8 @@ import {
 	PHASER_COLORS,
 	type Position,
 	scaleUnitStats,
+	TERRAIN_MODIFIERS,
+	TERRAIN_SPEED,
 	UNITS,
 	type UnitDef,
 } from '@gld/shared';
@@ -606,11 +608,25 @@ export class UnitSystem {
 				unit.isBoss && unit.bossPhase === 2
 					? BOSS_CONFIG.phase2SpeedMultiplier
 					: 1;
+			const terrain = this.gridManager.getTerrainAt?.(
+				unit.data.position.x,
+				unit.data.position.y,
+			);
+			const terrainSpeed =
+				!unit.def.flying && terrain ? (TERRAIN_SPEED[terrain] ?? 1) : 1;
+			if (unit.def.flying && terrain) {
+				const flyingDotPerSec =
+					TERRAIN_MODIFIERS[terrain]?.flyingDotPerSec ?? 0;
+				if (flyingDotPerSec > 0) {
+					unit.data.hp = Math.max(0, unit.data.hp - flyingDotPerSec * dt);
+				}
+			}
 			const speed =
 				unit.baseSpeed *
 				phase2Mult *
 				this.gridManager.orthoTile *
-				unit.slowFactor;
+				unit.slowFactor *
+				terrainSpeed;
 
 			const dx = targetWorld.x - unit.worldX;
 			const dy = targetWorld.y - unit.worldY;

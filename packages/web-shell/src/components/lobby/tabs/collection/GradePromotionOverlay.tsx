@@ -51,7 +51,7 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 
 	return (
 		<div
-			className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center transition-opacity duration-300"
+			className="fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-300"
 			style={{
 				backgroundColor: 'rgba(0,0,0,0.6)',
 				opacity: phase === 'exit' ? 0 : 1,

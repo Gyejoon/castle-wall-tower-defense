@@ -61,7 +61,10 @@ export function TowerBottomSheet({
 	};
 
 	const handlePromote = () => {
-		if (!owned || promoting) return;
+		if (!owned || promoting || promotion) return;
+		// Clear stale timers from previous attempts
+		for (const t of timersRef.current) clearTimeout(t);
+		timersRef.current.length = 0;
 		setPromoting(true);
 		setPromotionResult(null);
 		const rollTimer = setTimeout(() => {

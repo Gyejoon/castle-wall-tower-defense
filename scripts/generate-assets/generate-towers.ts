@@ -20,8 +20,10 @@ import { ALL_TOWERS } from '../../packages/shared/src/constants/towers';
 import type { TowerDef as SharedTowerDef } from '../../packages/shared/src/types/tower';
 import type { SKRSContext2D } from '@napi-rs/canvas';
 import {
-  drawArcherHQ, drawFlameTowerHQ, drawDragonNestHQ,
-  drawWindSpireHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
+  drawArcherHQ, drawPlasmaHQ, drawEmpHQ, drawShieldHQ,
+  drawTwinArcherHQ, drawDisruptorHQ, drawNovaCannonHQ, drawFortressHQ,
+  drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ, drawEarthGolemHQ,
+  drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
   drawCelestialHQ, drawDivineThroneHQ,
 } from './towers/pilot-draw';
 import { drawGradeDecoration, type GradeVariant } from './towers/grade-decoration';
@@ -30,9 +32,19 @@ const OUTPUT_DIR = 'packages/web-shell/public/assets/towers';
 
 export const PILOT_IDS = [
   'archer',
+  'plasma',
+  'emp',
+  'shield',
+  'twin_archer',
+  'disruptor',
+  'nova_cannon',
+  'fortress',
+  'stasis_field',
   'flame_tower',
-  'dragon_nest',
   'wind_spire',
+  'earth_golem',
+  'holy_shrine',
+  'dragon_nest',
   'arcane_spire',
   'world_tree',
   'celestial',
@@ -44,9 +56,19 @@ export const HQ_HEIGHT = 160;
 
 const PILOT_DRAW: Record<PilotId, (ctx: SKRSContext2D, ox: number, oy: number) => void> = {
   archer: drawArcherHQ,
+  plasma: drawPlasmaHQ,
+  emp: drawEmpHQ,
+  shield: drawShieldHQ,
+  twin_archer: drawTwinArcherHQ,
+  disruptor: drawDisruptorHQ,
+  nova_cannon: drawNovaCannonHQ,
+  fortress: drawFortressHQ,
+  stasis_field: drawStasisFieldHQ,
   flame_tower: drawFlameTowerHQ,
-  dragon_nest: drawDragonNestHQ,
   wind_spire: drawWindSpireHQ,
+  earth_golem: drawEarthGolemHQ,
+  holy_shrine: drawHolyShrineHQ,
+  dragon_nest: drawDragonNestHQ,
   arcane_spire: drawArcaneSpireHQ,
   world_tree: drawWorldTreeHQ,
   celestial: drawCelestialHQ,

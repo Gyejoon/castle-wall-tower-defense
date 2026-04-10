@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-10T16:34:39.694Z",
+  "generated": "2026-04-10T16:50:59.734Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -194,6 +194,24 @@
       "section": "preload"
     },
     {
+      "key": "tower-plasma-rare",
+      "type": "image",
+      "path": "assets/towers/plasma-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-plasma-unique",
+      "type": "image",
+      "path": "assets/towers/plasma-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-plasma-epic",
+      "type": "image",
+      "path": "assets/towers/plasma-epic.png",
+      "section": "preload"
+    },
+    {
       "key": "tower-plasma-fire",
       "type": "spritesheet",
       "path": "assets/towers/plasma-fire.png",
@@ -206,6 +224,24 @@
       "key": "tower-emp",
       "type": "image",
       "path": "assets/towers/emp.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-emp-rare",
+      "type": "image",
+      "path": "assets/towers/emp-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-emp-unique",
+      "type": "image",
+      "path": "assets/towers/emp-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-emp-epic",
+      "type": "image",
+      "path": "assets/towers/emp-epic.png",
       "section": "preload"
     },
     {
@@ -224,6 +260,24 @@
       "section": "preload"
     },
     {
+      "key": "tower-shield-rare",
+      "type": "image",
+      "path": "assets/towers/shield-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-shield-unique",
+      "type": "image",
+      "path": "assets/towers/shield-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-shield-epic",
+      "type": "image",
+      "path": "assets/towers/shield-epic.png",
+      "section": "preload"
+    },
+    {
       "key": "tower-shield-fire",
       "type": "spritesheet",
       "path": "assets/towers/shield-fire.png",
@@ -236,6 +290,24 @@
       "key": "tower-twin_archer",
       "type": "image",
       "path": "assets/towers/twin_archer.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-rare",
+      "type": "image",
+      "path": "assets/towers/twin_archer-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-unique",
+      "type": "image",
+      "path": "assets/towers/twin_archer-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-epic",
+      "type": "image",
+      "path": "assets/towers/twin_archer-epic.png",
       "section": "preload"
     },
     {
@@ -254,6 +326,24 @@
       "section": "preload"
     },
     {
+      "key": "tower-disruptor-rare",
+      "type": "image",
+      "path": "assets/towers/disruptor-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-unique",
+      "type": "image",
+      "path": "assets/towers/disruptor-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-epic",
+      "type": "image",
+      "path": "assets/towers/disruptor-epic.png",
+      "section": "preload"
+    },
+    {
       "key": "tower-disruptor-fire",
       "type": "spritesheet",
       "path": "assets/towers/disruptor-fire.png",
@@ -266,6 +356,24 @@
       "key": "tower-nova_cannon",
       "type": "image",
       "path": "assets/towers/nova_cannon.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-nova_cannon-rare",
+      "type": "image",
+      "path": "assets/towers/nova_cannon-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-nova_cannon-unique",
+      "type": "image",
+      "path": "assets/towers/nova_cannon-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-nova_cannon-epic",
+      "type": "image",
+      "path": "assets/towers/nova_cannon-epic.png",
       "section": "preload"
     },
     {
@@ -284,6 +392,24 @@
       "section": "preload"
     },
     {
+      "key": "tower-fortress-rare",
+      "type": "image",
+      "path": "assets/towers/fortress-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-fortress-unique",
+      "type": "image",
+      "path": "assets/towers/fortress-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-fortress-epic",
+      "type": "image",
+      "path": "assets/towers/fortress-epic.png",
+      "section": "preload"
+    },
+    {
       "key": "tower-fortress-fire",
       "type": "spritesheet",
       "path": "assets/towers/fortress-fire.png",
@@ -296,6 +422,24 @@
       "key": "tower-stasis_field",
       "type": "image",
       "path": "assets/towers/stasis_field.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-stasis_field-rare",
+      "type": "image",
+      "path": "assets/towers/stasis_field-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-stasis_field-unique",
+      "type": "image",
+      "path": "assets/towers/stasis_field-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-stasis_field-epic",
+      "type": "image",
+      "path": "assets/towers/stasis_field-epic.png",
       "section": "preload"
     },
     {
@@ -380,6 +524,24 @@
       "section": "preload"
     },
     {
+      "key": "tower-earth_golem-rare",
+      "type": "image",
+      "path": "assets/towers/earth_golem-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-earth_golem-unique",
+      "type": "image",
+      "path": "assets/towers/earth_golem-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-earth_golem-epic",
+      "type": "image",
+      "path": "assets/towers/earth_golem-epic.png",
+      "section": "preload"
+    },
+    {
       "key": "tower-earth_golem-fire",
       "type": "spritesheet",
       "path": "assets/towers/earth_golem-fire.png",
@@ -392,6 +554,24 @@
       "key": "tower-holy_shrine",
       "type": "image",
       "path": "assets/towers/holy_shrine.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-rare",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-unique",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-epic",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-epic.png",
       "section": "preload"
     },
     {

@@ -525,3 +525,342 @@ export function drawDivineThroneHQ(ctx: SKRSContext2D, ox: number, oy: number): 
   setPixel(ctx, cx + 4, oy + 70, '#ffe89a');
   setPixel(ctx, cx, oy + 60, '#ffffff');
 }
+
+// ══════════════════════════════════════════════════════════════
+// ██  Remaining 10 towers — medieval pixel style              ██
+// ══════════════════════════════════════════════════════════════
+
+export function drawPlasmaHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.42);
+  drawBase(ctx, cx, baseY, 26);
+
+  // Wheels
+  fillCircle(ctx, cx - 16, baseY - 2, 7, PALETTE.woodDark);
+  fillCircle(ctx, cx - 16, baseY - 2, 5, PALETTE.wood);
+  setPixel(ctx, cx - 16, baseY - 2, PALETTE.woodDark);
+  fillCircle(ctx, cx + 16, baseY - 2, 7, PALETTE.woodDark);
+  fillCircle(ctx, cx + 16, baseY - 2, 5, PALETTE.wood);
+  setPixel(ctx, cx + 16, baseY - 2, PALETTE.woodDark);
+
+  // Wooden frame body
+  drawIsoCube(ctx, cx, oy + 96, 18, 16, PALETTE.wood, PALETTE.woodDark, hexToRgba(PALETTE.wood, 0.8));
+
+  // Arm (diagonal)
+  drawLine(ctx, cx - 8, oy + 92, cx + 12, oy + 58, PALETTE.woodDark);
+  drawLine(ctx, cx - 7, oy + 92, cx + 13, oy + 58, PALETTE.wood);
+
+  // Sling cup at tip
+  drawRect(ctx, cx + 10, oy + 54, 8, 6, PALETTE.woodLight);
+  drawRect(ctx, cx + 11, oy + 55, 6, 4, PALETTE.wood);
+  // Boulder
+  fillCircle(ctx, cx + 14, oy + 57, 5, PALETTE.stoneDark);
+  setPixel(ctx, cx + 13, oy + 55, PALETTE.stoneLight);
+
+  // Support struts
+  drawLine(ctx, cx - 6, oy + 96, cx - 6, oy + 82, PALETTE.woodDark);
+  drawLine(ctx, cx + 6, oy + 96, cx + 8, oy + 82, PALETTE.woodDark);
+}
+
+export function drawEmpHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 24, 8, 0.42);
+  drawBase(ctx, cx, baseY, 24);
+
+  // Ice-tinted stone tower
+  drawIsoCube(ctx, cx, oy + 90, 16, 34, PALETTE.stoneDark, PALETTE.stoneDark, PALETTE.stone);
+  drawIsoCube(ctx, cx, oy + 72, 14, 16, hexToRgba(PALETTE.ice, 0.5), PALETTE.stoneDark, hexToRgba(PALETTE.iceGlow, 0.4));
+
+  // Ice overlay on right face
+  for (let y = oy + 78; y <= oy + 108; y += 3) {
+    setPixel(ctx, cx + 4, y, hexToRgba(PALETTE.iceGlow, 0.3));
+    setPixel(ctx, cx + 8, y + 1, hexToRgba(PALETTE.ice, 0.2));
+  }
+
+  // Center ice crystal — pixel triangle
+  drawLine(ctx, cx, oy + 44, cx - 6, oy + 60, PALETTE.ice);
+  drawLine(ctx, cx, oy + 44, cx + 6, oy + 60, PALETTE.ice);
+  drawLine(ctx, cx - 6, oy + 60, cx + 6, oy + 60, PALETTE.ice);
+  setPixel(ctx, cx, oy + 48, '#ffffff');
+  setPixel(ctx, cx, oy + 50, '#ffffff');
+
+  // Side crystals
+  drawLine(ctx, cx - 10, oy + 50, cx - 14, oy + 62, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx + 10, oy + 50, cx + 14, oy + 62, hexToRgba(PALETTE.ice, 0.7));
+
+  // Frost shards on face
+  setPixel(ctx, cx + 3, oy + 88, PALETTE.ice);
+  setPixel(ctx, cx + 6, oy + 94, PALETTE.ice);
+  setPixel(ctx, cx - 2, oy + 100, hexToRgba(PALETTE.ice, 0.6));
+
+  addGlow(ctx, cx, oy + 72, 6, PALETTE.iceGlow, 0.15);
+}
+
+export function drawShieldHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.42);
+  drawBase(ctx, cx, baseY, 26);
+
+  // Wide altar base
+  drawIsoCube(ctx, cx, oy + 106, 22, 8, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  // Gold trim
+  for (let dx = -18; dx <= 18; dx++) {
+    setPixel(ctx, cx + dx, oy + 104, hexToRgba(PALETTE.gold, 0.4));
+  }
+
+  // Pillar
+  drawIsoCube(ctx, cx, oy + 82, 10, 22, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Golden cross — pixel rectangles
+  drawRect(ctx, cx - 2, oy + 50, 4, 26, PALETTE.gold);
+  drawRect(ctx, cx - 2, oy + 52, 1, 24, hexToRgba('#ffffff', 0.3));
+  drawRect(ctx, cx - 12, oy + 58, 24, 4, PALETTE.gold);
+  drawRect(ctx, cx - 10, oy + 58, 20, 1, hexToRgba('#ffffff', 0.3));
+
+  addGlow(ctx, cx, oy + 62, 8, PALETTE.magicGold, 0.2);
+  addGlow(ctx, cx, oy + 62, 4, PALETTE.gold, 0.3);
+}
+
+export function drawTwinArcherHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 30, 10, 0.42);
+  drawBase(ctx, cx, baseY, 28);
+
+  // Left tower
+  drawIsoCube(ctx, cx - 12, oy + 82, 12, 40, PALETTE.stoneLight, PALETTE.stoneDark, PALETTE.stone);
+  drawIsoCube(ctx, cx - 14, oy + 72, 6, 6, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawIsoCube(ctx, cx - 8, oy + 72, 6, 6, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  // Right tower
+  drawIsoCube(ctx, cx + 12, oy + 86, 12, 36, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawIsoCube(ctx, cx + 10, oy + 78, 6, 5, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawIsoCube(ctx, cx + 16, oy + 78, 6, 5, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Connecting bridge
+  drawRect(ctx, cx - 6, oy + 88, 12, 3, PALETTE.stone);
+  drawRect(ctx, cx - 6, oy + 91, 12, 1, PALETTE.stoneDark);
+
+  // Arrow slits on both towers
+  drawRect(ctx, cx - 10, oy + 96, 2, 6, '#1a1208');
+  drawRect(ctx, cx + 12, oy + 100, 2, 6, '#1a1208');
+
+  // Flags
+  drawFlag(ctx, cx - 8, oy + 48, 22, PALETTE.fireRed);
+  drawFlag(ctx, cx + 14, oy + 54, 22, PALETTE.fireRed);
+
+  drawMortarLines(ctx, cx - 12, oy + 88, 10, 5);
+  drawMortarLines(ctx, cx + 12, oy + 92, 10, 4);
+}
+
+export function drawDisruptorHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 24, 8, 0.42);
+  drawBase(ctx, cx, baseY, 24);
+
+  // Ice tower body
+  drawIsoCube(ctx, cx, oy + 88, 16, 36, PALETTE.stoneDark, PALETTE.stoneDark, PALETTE.stone);
+  drawIsoCube(ctx, cx, oy + 68, 14, 18, hexToRgba(PALETTE.ice, 0.4), PALETTE.stoneDark, hexToRgba(PALETTE.iceGlow, 0.35));
+
+  // Large ice crystal cluster on top
+  drawLine(ctx, cx, oy + 38, cx - 8, oy + 58, PALETTE.ice);
+  drawLine(ctx, cx, oy + 38, cx + 8, oy + 58, PALETTE.ice);
+  drawLine(ctx, cx - 4, oy + 42, cx - 10, oy + 56, hexToRgba(PALETTE.ice, 0.7));
+  drawLine(ctx, cx + 4, oy + 42, cx + 10, oy + 56, hexToRgba(PALETTE.ice, 0.7));
+  setPixel(ctx, cx, oy + 40, '#ffffff');
+
+  // Blizzard ring
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    setPixel(ctx, Math.round(cx + 12 * Math.cos(a)), Math.round(oy + 72 + 5 * Math.sin(a)), hexToRgba(PALETTE.ice, 0.4));
+  }
+
+  // Frost particles
+  setPixel(ctx, cx - 8, oy + 64, PALETTE.ice);
+  setPixel(ctx, cx + 6, oy + 60, hexToRgba(PALETTE.ice, 0.6));
+  setPixel(ctx, cx - 12, oy + 76, hexToRgba(PALETTE.iceGlow, 0.4));
+
+  addGlow(ctx, cx, oy + 48, 5, PALETTE.iceGlow, 0.15);
+}
+
+export function drawNovaCannonHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.45);
+  drawBase(ctx, cx, baseY, 26);
+
+  // Heavy platform
+  drawIsoCube(ctx, cx, oy + 104, 20, 10, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Cannon base mount
+  drawIsoCube(ctx, cx, oy + 88, 14, 14, PALETTE.stoneDark, '#3a3a3a', '#5a5a5a');
+
+  // Barrel — thick horizontal rectangle
+  drawRect(ctx, cx + 2, oy + 72, 22, 8, '#5a5a5a');
+  drawRect(ctx, cx + 2, oy + 72, 22, 2, '#6a6a6a');
+  drawRect(ctx, cx + 2, oy + 78, 22, 2, '#4a4a4a');
+  // Barrel mouth
+  drawRect(ctx, cx + 22, oy + 70, 4, 12, '#3a3a3a');
+  drawRect(ctx, cx + 23, oy + 72, 2, 8, '#1a1a1a');
+  // Bore
+  drawRect(ctx, cx + 24, oy + 74, 2, 4, '#0a0a0a');
+
+  // Muzzle glow hint
+  setPixel(ctx, cx + 25, oy + 75, hexToRgba(PALETTE.fireOrange, 0.3));
+  setPixel(ctx, cx + 25, oy + 76, hexToRgba(PALETTE.fireOrange, 0.3));
+
+  // Rivets
+  setPixel(ctx, cx + 4, oy + 74, '#7a7a7a');
+  setPixel(ctx, cx + 10, oy + 74, '#7a7a7a');
+  setPixel(ctx, cx + 16, oy + 74, '#7a7a7a');
+
+  // Support struts
+  drawLine(ctx, cx - 4, oy + 88, cx + 2, oy + 80, PALETTE.woodDark);
+  drawLine(ctx, cx - 6, oy + 90, cx, oy + 82, PALETTE.wood);
+}
+
+export function drawFortressHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 30, 10, 0.45);
+  drawBase(ctx, cx, baseY, 28);
+
+  // Thick fortress body — wider than archer
+  drawIsoCube(ctx, cx, oy + 86, 24, 38, PALETTE.stoneLight, PALETTE.stoneDark, PALETTE.stone);
+  drawIsoCube(ctx, cx, oy + 66, 22, 18, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Battlements — wide top
+  for (let i = 0; i < 5; i++) {
+    const mx = cx - 20 + i * 10;
+    drawIsoCube(ctx, mx, oy + 58, 4, 6, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  }
+
+  drawMortarLines(ctx, cx, oy + 72, 20, 8);
+
+  // Shield emblem on front face — golden rectangle
+  drawRect(ctx, cx - 4, oy + 86, 8, 10, PALETTE.gold);
+  drawRect(ctx, cx - 3, oy + 87, 6, 8, PALETTE.magicGold);
+  // Cross on shield
+  drawRect(ctx, cx - 1, oy + 87, 2, 8, '#ffffff');
+  drawRect(ctx, cx - 3, oy + 90, 6, 2, '#ffffff');
+
+  // Small windows
+  drawRect(ctx, cx - 12, oy + 78, 2, 4, '#1a1208');
+  drawRect(ctx, cx + 12, oy + 78, 2, 4, '#1a1208');
+}
+
+export function drawStasisFieldHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 26, 9, 0.42);
+  drawBase(ctx, cx, baseY, 24);
+
+  // Stone altar base
+  drawIsoCube(ctx, cx, oy + 104, 20, 8, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Frost pillar
+  drawIsoCube(ctx, cx, oy + 78, 12, 24, hexToRgba(PALETTE.ice, 0.6), PALETTE.stoneDark, hexToRgba(PALETTE.iceGlow, 0.5));
+
+  // Frost aura ring
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const r = 18;
+    setPixel(ctx, Math.round(cx + r * Math.cos(a)), Math.round(oy + 90 + 6 * Math.sin(a)), hexToRgba(PALETTE.ice, 0.35));
+  }
+
+  // Ice cap on top
+  drawIsoCube(ctx, cx, oy + 68, 14, 4, PALETTE.ice, hexToRgba(PALETTE.ice, 0.6), PALETTE.iceGlow);
+
+  // Crystal tip
+  drawLine(ctx, cx, oy + 52, cx - 4, oy + 64, PALETTE.ice);
+  drawLine(ctx, cx, oy + 52, cx + 4, oy + 64, PALETTE.ice);
+  setPixel(ctx, cx, oy + 54, '#ffffff');
+
+  addGlow(ctx, cx, oy + 68, 5, PALETTE.iceGlow, 0.12);
+
+  // Frost particles
+  setPixel(ctx, cx - 14, oy + 86, hexToRgba(PALETTE.ice, 0.3));
+  setPixel(ctx, cx + 12, oy + 82, hexToRgba(PALETTE.ice, 0.3));
+  setPixel(ctx, cx - 8, oy + 74, hexToRgba(PALETTE.iceGlow, 0.25));
+}
+
+export function drawEarthGolemHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 136;
+  drawIsoShadow(ctx, cx, baseY + 6, 26, 9, 0.45);
+
+  // Legs — two stone pillars
+  drawIsoCube(ctx, cx - 8, oy + 110, 8, 18, '#6a5a3a', '#4a3a2a', '#7a6a4a');
+  drawIsoCube(ctx, cx + 8, oy + 112, 8, 16, '#7a6a4a', '#4a3a2a', '#6a5a3a');
+
+  // Torso — large rock body
+  drawIsoCube(ctx, cx, oy + 82, 20, 26, '#8a7a5a', '#5a4a3a', '#7a6a4a');
+
+  // Arms — side blocks
+  drawIsoCube(ctx, cx - 22, oy + 88, 8, 16, '#6a5a3a', '#4a3a2a', '#7a6a4a');
+  drawIsoCube(ctx, cx + 22, oy + 90, 8, 14, '#7a6a4a', '#4a3a2a', '#6a5a3a');
+  // Fists
+  drawIsoCube(ctx, cx - 22, oy + 104, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+  drawIsoCube(ctx, cx + 22, oy + 106, 6, 6, '#5a4a3a', '#3a2a1a', '#6a5a3a');
+
+  // Head — small rock
+  drawIsoCube(ctx, cx, oy + 68, 12, 12, '#8a7a5a', '#5a4a3a', '#7a6a4a');
+  // Eyes
+  setPixel(ctx, cx - 4, oy + 72, '#4ca04c');
+  setPixel(ctx, cx + 4, oy + 72, '#4ca04c');
+  setPixel(ctx, cx - 3, oy + 72, hexToRgba('#4ca04c', 0.5));
+  setPixel(ctx, cx + 5, oy + 72, hexToRgba('#4ca04c', 0.5));
+
+  // Moss patches
+  setPixel(ctx, cx - 10, oy + 88, '#3d5a3e');
+  setPixel(ctx, cx + 8, oy + 94, '#3d5a3e');
+  setPixel(ctx, cx - 6, oy + 100, '#3d5a3e');
+
+  // Rock texture cracks
+  drawLine(ctx, cx - 4, oy + 84, cx - 8, oy + 96, hexToRgba('#3a2a1a', 0.4));
+  drawLine(ctx, cx + 6, oy + 86, cx + 10, oy + 98, hexToRgba('#3a2a1a', 0.4));
+}
+
+export function drawHolyShrineHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 132;
+  drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.42);
+  drawBase(ctx, cx, baseY, 26);
+
+  // Shrine base — 2 tier platform
+  drawIsoCube(ctx, cx, oy + 108, 22, 6, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+  drawIsoCube(ctx, cx, oy + 100, 18, 6, PALETTE.stoneLight, PALETTE.stoneDark, PALETTE.stone);
+
+  // Shrine body — arched structure
+  drawIsoCube(ctx, cx, oy + 78, 16, 20, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
+
+  // Arch opening
+  drawRect(ctx, cx - 6, oy + 84, 12, 14, '#1a1208');
+  drawRect(ctx, cx - 5, oy + 82, 10, 2, PALETTE.stoneDark);
+
+  // Holy light inside arch
+  drawRect(ctx, cx - 2, oy + 86, 4, 10, hexToRgba(PALETTE.gold, 0.3));
+  setPixel(ctx, cx, oy + 88, hexToRgba(PALETTE.gold, 0.6));
+
+  // Roof peak
+  for (let i = 0; i < 8; i++) {
+    const w = 16 - i * 2;
+    drawRect(ctx, cx - w, oy + 70 - i, w * 2, 1, i % 2 === 0 ? PALETTE.stone : PALETTE.stoneLight);
+  }
+  setPixel(ctx, cx, oy + 62, PALETTE.stoneLight);
+
+  // Holy symbol on roof
+  drawRect(ctx, cx - 1, oy + 56, 2, 8, PALETTE.gold);
+  drawRect(ctx, cx - 4, oy + 58, 8, 2, PALETTE.gold);
+
+  addGlow(ctx, cx, oy + 60, 5, PALETTE.magicGold, 0.15);
+
+  // Candles on altar steps
+  drawRect(ctx, cx - 14, oy + 98, 1, 4, PALETTE.wood);
+  setPixel(ctx, cx - 14, oy + 97, '#f5b23b');
+  drawRect(ctx, cx + 14, oy + 98, 1, 4, PALETTE.wood);
+  setPixel(ctx, cx + 14, oy + 97, '#f5b23b');
+}

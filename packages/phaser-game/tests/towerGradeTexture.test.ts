@@ -27,8 +27,8 @@ describe('resolveTowerTextureKey', () => {
 		);
 	});
 
-	it('non-pilot tower ignores grade (uses base)', () => {
-		expect(resolveTowerTextureKey('plasma', 'rare')).toBe('tower-plasma');
+	it('all towers now support grade variants', () => {
+		expect(resolveTowerTextureKey('plasma', 'rare')).toBe('tower-plasma-rare');
 	});
 
 	it('non-pilot tower normal', () => {

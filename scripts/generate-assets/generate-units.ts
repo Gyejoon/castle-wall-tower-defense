@@ -46,6 +46,24 @@ function drawShadow(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number): void
   drawIsoShadow(ctx, cx, 43, 10, 5, 0.3);
 }
 
+// Per-unit shadow: size proportional to body, assassin gets faint dispersed shadow
+const UNIT_SHADOWS: Record<string, { rx: number; ry: number; alpha: number }> = {
+  scout_drone:   { rx: 8,  ry: 4, alpha: 0.25 },  // small goblin
+  battle_robot:  { rx: 10, ry: 5, alpha: 0.28 },  // medium orc
+  heavy_walker:  { rx: 11, ry: 5, alpha: 0.28 },  // large troll
+  stealth_drone: { rx: 6,  ry: 3, alpha: 0.12 },  // faint, floating
+};
+
+function drawUnitShadow(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, unitId: string): void {
+  const cx = ox + 20;
+  const s = UNIT_SHADOWS[unitId];
+  if (s) {
+    drawIsoShadow(ctx, cx, 43, s.rx, s.ry, s.alpha);
+  } else {
+    drawIsoShadow(ctx, cx, 43, 10, 5, 0.3);
+  }
+}
+
 function assertRequiredOutputs(): void {
   const missing = REQUIRED_FILES.filter((file) => !existsSync(`${OUTPUT_DIR}/${file}`));
   if (missing.length > 0) {
@@ -511,14 +529,14 @@ export async function generate(): Promise<ManifestEntry[]> {
     renderSheetWithGate(
       (sheetCtx) => {
         for (let f = 0; f < FRAME_COUNT; f++) {
-          drawShadow(sheetCtx, f * FRAME_W);
+          drawUnitShadow(sheetCtx, f * FRAME_W, id);
           module.drawWalk(sheetCtx, f * FRAME_W, f);
         }
         applyOutlineToSheet(sheetCtx, FRAME_COUNT);
       },
       (sheetCtx) => {
         for (let f = 0; f < FRAME_COUNT; f++) {
-          drawShadow(sheetCtx, f * FRAME_W);
+          drawUnitShadow(sheetCtx, f * FRAME_W, id);
           module.drawWalkFallback(sheetCtx, f * FRAME_W, f);
         }
         applyOutlineToSheet(sheetCtx, FRAME_COUNT);
@@ -540,7 +558,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     const idleSheetW = FRAME_W * IDLE_FRAMES;
     const { canvas: idleCanvas, ctx: idleCtx } = makeCanvas(idleSheetW, FRAME_H);
     for (let f = 0; f < IDLE_FRAMES; f++) {
-      drawShadow(idleCtx, f * FRAME_W);
+      drawUnitShadow(idleCtx, f * FRAME_W, id);
       module.drawIdle(idleCtx, f * FRAME_W, f);
     }
     applyOutlineToSheet(idleCtx, IDLE_FRAMES);

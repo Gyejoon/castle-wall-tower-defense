@@ -506,6 +506,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       [11,4,xGold],[10,4,xShadow],
       [10,5,xGold],[9,5,xShadow],
       [9,6,xGold],[8,6,xShadow],
+      [8,7,xGold],[7,8,xGold],
       [6,9,xGold],[5,9,xShadow],
       [5,10,xGold],[4,10,xShadow],
       [4,11,xGold],[3,11,xShadow],

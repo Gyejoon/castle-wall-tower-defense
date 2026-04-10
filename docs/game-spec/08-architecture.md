@@ -210,7 +210,7 @@ EnergySystem.reset()
           │
           ▼
        prep ──► spawning ──► combat  ──► waiting ──► spawning (다음 웨이브)
-       (초회)                boss ──►                     │
+       (매 전투)             boss ──►                     │
                                                   (최종 웨이브 후)
                                                           ▼
                                                         ended

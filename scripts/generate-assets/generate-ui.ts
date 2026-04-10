@@ -466,58 +466,72 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
   }
 
-  // Close-X icon (16x16) — warm medieval dismiss mark (gold X on dark gem)
+  // Close-X icon (16x16) — medieval wood medallion with chunky pixel X
   {
     const { canvas, ctx } = makeCanvas(16, 16);
-    const bg = '#3a1a10';       // dark ruby background
-    const bgEdge = '#2a0e08';   // darker edge
-    const ruby = '#8a2a1a';     // ruby mid-tone
-    const rubyLight = '#b03820'; // ruby highlight
-    const xGold = PALETTE.gold;  // #f0d060 — gold X strokes
-    const xHighlight = '#ffe89a'; // bright gold highlight
-    const xShadow = '#a08030';   // gold shadow
 
-    // Round ruby gem background (6px radius circle centered at 7.5, 7.5)
-    for (let y = 0; y < 16; y++) {
-      for (let x = 0; x < 16; x++) {
-        const dx = x - 7.5, dy = y - 7.5;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= 7) {
-          if (dist >= 6) setPixel(ctx, x, y, bgEdge);
-          else if (dy < -2) setPixel(ctx, x, y, rubyLight);
-          else if (dy < 1) setPixel(ctx, x, y, ruby);
-          else setPixel(ctx, x, y, bg);
-        }
+    // Wood medallion palette (matches PALETTE.wood* family)
+    const woodDark  = '#4a2a14';  // dark wood base
+    const woodMid   = '#6a4428';  // mid wood
+    const woodLight = '#8a6040';  // light wood (top-left highlight)
+    const woodEdge  = '#2a1a0a';  // outer border shadow
+    const goldBright = '#ffe89a'; // X highlight (top-left lit)
+    const goldMid    = PALETTE.gold; // #f0d060 — X main color
+    const goldDark   = '#b08830'; // X shadow (bottom-right)
+
+    // --- Circular wood medallion (hand-placed pixel art) ---
+    // Row-by-row circle fill for consistent pixel art look
+    const rows: [number, number, number][] = [
+      // [y, xStart, xEnd] — inclusive range per row
+      [1, 5, 10], [2, 3, 12], [3, 2, 13], [4, 2, 13],
+      [5, 1, 14], [6, 1, 14], [7, 1, 14], [8, 1, 14],
+      [9, 1, 14], [10, 1, 14], [11, 2, 13], [12, 2, 13],
+      [13, 3, 12], [14, 5, 10],
+    ];
+    for (const [y, x0, x1] of rows) {
+      for (let x = x0; x <= x1; x++) {
+        // Shade: top-left light, bottom-right dark, mid center
+        const isEdge = x === x0 || x === x1 || y === rows[0][0] || y === rows[rows.length - 1][0];
+        if (isEdge) setPixel(ctx, x, y, woodEdge);
+        else if (x - 7.5 + y - 7.5 < -4) setPixel(ctx, x, y, woodLight);
+        else if (x - 7.5 + y - 7.5 > 4) setPixel(ctx, x, y, woodDark);
+        else setPixel(ctx, x, y, woodMid);
       }
     }
-
-    // Gold X strokes (2px thick, inset 3px from edge)
-    const xPixels: [number, number, string][] = [
-      // Top-left to bottom-right stroke
-      [4,4,xGold],[5,4,xShadow],
-      [5,5,xGold],[6,5,xShadow],
-      [6,6,xGold],[7,6,xShadow],
-      [7,7,xHighlight],[8,7,xShadow],
-      [8,8,xHighlight],[9,8,xShadow],
-      [9,9,xGold],[10,9,xShadow],
-      [10,10,xGold],[11,10,xShadow],
-      [11,11,xGold],[12,11,xShadow],
-      // Top-right to bottom-left stroke
-      [11,4,xGold],[10,4,xShadow],
-      [10,5,xGold],[9,5,xShadow],
-      [9,6,xGold],[8,6,xShadow],
-      [8,7,xGold],[7,8,xGold],
-      [6,9,xGold],[5,9,xShadow],
-      [5,10,xGold],[4,10,xShadow],
-      [4,11,xGold],[3,11,xShadow],
+    // Gold border ring (1px inset from edge)
+    const ringPixels: [number, number][] = [
+      [5,2],[6,2],[7,2],[8,2],[9,2],[10,2],
+      [3,3],[4,3],[11,3],[12,3],
+      [3,4],[12,4],
+      [2,5],[13,5],[2,6],[13,6],[2,7],[13,7],[2,8],[13,8],[2,9],[13,9],[2,10],[13,10],
+      [3,11],[12,11],[3,12],[12,12],
+      [5,13],[6,13],[7,13],[8,13],[9,13],[10,13],
     ];
-    for (const [px, py, c] of xPixels) setPixel(ctx, px, py, c);
+    for (const [x, y] of ringPixels) setPixel(ctx, x, y, goldDark);
 
-    // Tiny corner gems (bronze rivets at 4 corners of the X)
-    const rivetColor = '#b8944a';
-    for (const [rx, ry] of [[3,3],[12,3],[3,12],[12,12]]) {
-      setPixel(ctx, rx, ry, rivetColor);
-    }
+    // --- Chunky gold X (2px wide strokes, well-defined pixel art) ---
+    // Each pixel is hand-placed: highlight=top-left, shadow=bottom-right
+    const xMark: [number, number, string][] = [
+      // Top-left to bottom-right (main stroke — 2px wide)
+      [4,4,goldBright],[5,4,goldMid],
+      [4,5,goldMid],[5,5,goldBright],[6,5,goldMid],
+      [5,6,goldMid],[6,6,goldBright],[7,6,goldMid],
+      [6,7,goldMid],[7,7,goldBright],[8,7,goldMid],
+      [7,8,goldMid],[8,8,goldBright],[9,8,goldMid],
+      [8,9,goldMid],[9,9,goldBright],[10,9,goldMid],
+      [9,10,goldMid],[10,10,goldBright],[11,10,goldDark],
+      [10,11,goldMid],[11,11,goldDark],
+      // Top-right to bottom-left (2px wide)
+      [10,4,goldMid],[11,4,goldBright],
+      [9,5,goldMid],[10,5,goldBright],[11,5,goldDark],
+      [8,6,goldMid],[9,6,goldBright],[10,6,goldDark],
+      [8,7,goldBright],[9,7,goldDark],
+      [6,8,goldMid],[7,8,goldBright],
+      [5,9,goldMid],[6,9,goldBright],[7,9,goldDark],
+      [4,10,goldMid],[5,10,goldBright],[6,10,goldDark],
+      [4,11,goldMid],[5,11,goldDark],
+    ];
+    for (const [px, py, c] of xMark) setPixel(ctx, px, py, c);
 
     saveCanvas(canvas, `${OUTPUT_DIR}/icon-close-x.png`);
     entries.push({ key: 'ui-icon-close-x', type: 'image', path: 'assets/ui/icon-close-x.png' });

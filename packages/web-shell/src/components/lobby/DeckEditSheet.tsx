@@ -102,14 +102,14 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 														prev.filter((x) => x !== tower.id),
 													);
 												}}
-												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg hover:brightness-125 active:scale-90 transition-transform cursor-pointer after:absolute after:inset-[-10px] after:content-['']"
+												className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center hover:brightness-125 hover:scale-110 active:scale-90 transition-transform cursor-pointer after:absolute after:inset-[-10px] after:content-['']"
 											>
 												<img
 													src="assets/ui/icon-close-x.webp"
 													alt="제거"
-													width={12}
-													height={12}
-													className="[image-rendering:pixelated]"
+													width={20}
+													height={20}
+													className="[image-rendering:pixelated] drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
 												/>
 											</button>
 											<img

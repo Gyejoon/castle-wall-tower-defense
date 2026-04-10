@@ -466,25 +466,58 @@ export async function generate(): Promise<ManifestEntry[]> {
     entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
   }
 
-  // Close-X icon (16x16) — medieval iron X mark for slot removal
+  // Close-X icon (16x16) — warm medieval dismiss mark (gold X on dark gem)
   {
     const { canvas, ctx } = makeCanvas(16, 16);
-    const iron = '#8a8a94';
-    const ironDark = '#5a5a62';
-    // Diagonal lines (2px thick Bresenham X)
-    for (let i = 2; i <= 13; i++) {
-      // Top-left to bottom-right
-      setPixel(ctx, i, i, iron);
-      setPixel(ctx, i + 1, i, ironDark);
-      setPixel(ctx, i, i + 1, ironDark);
-      // Top-right to bottom-left
-      setPixel(ctx, 15 - i, i, iron);
-      setPixel(ctx, 14 - i, i, ironDark);
-      setPixel(ctx, 15 - i, i + 1, ironDark);
+    const bg = '#3a1a10';       // dark ruby background
+    const bgEdge = '#2a0e08';   // darker edge
+    const ruby = '#8a2a1a';     // ruby mid-tone
+    const rubyLight = '#b03820'; // ruby highlight
+    const xGold = PALETTE.gold;  // #f0d060 — gold X strokes
+    const xHighlight = '#ffe89a'; // bright gold highlight
+    const xShadow = '#a08030';   // gold shadow
+
+    // Round ruby gem background (6px radius circle centered at 7.5, 7.5)
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const dx = x - 7.5, dy = y - 7.5;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= 7) {
+          if (dist >= 6) setPixel(ctx, x, y, bgEdge);
+          else if (dy < -2) setPixel(ctx, x, y, rubyLight);
+          else if (dy < 1) setPixel(ctx, x, y, ruby);
+          else setPixel(ctx, x, y, bg);
+        }
+      }
     }
-    // Center highlight
-    setPixel(ctx, 7, 7, PALETTE.white);
-    setPixel(ctx, 8, 8, PALETTE.white);
+
+    // Gold X strokes (2px thick, inset 3px from edge)
+    const xPixels: [number, number, string][] = [
+      // Top-left to bottom-right stroke
+      [4,4,xGold],[5,4,xShadow],
+      [5,5,xGold],[6,5,xShadow],
+      [6,6,xGold],[7,6,xShadow],
+      [7,7,xHighlight],[8,7,xShadow],
+      [8,8,xHighlight],[9,8,xShadow],
+      [9,9,xGold],[10,9,xShadow],
+      [10,10,xGold],[11,10,xShadow],
+      [11,11,xGold],[12,11,xShadow],
+      // Top-right to bottom-left stroke
+      [11,4,xGold],[10,4,xShadow],
+      [10,5,xGold],[9,5,xShadow],
+      [9,6,xGold],[8,6,xShadow],
+      [6,9,xGold],[5,9,xShadow],
+      [5,10,xGold],[4,10,xShadow],
+      [4,11,xGold],[3,11,xShadow],
+    ];
+    for (const [px, py, c] of xPixels) setPixel(ctx, px, py, c);
+
+    // Tiny corner gems (bronze rivets at 4 corners of the X)
+    const rivetColor = '#b8944a';
+    for (const [rx, ry] of [[3,3],[12,3],[3,12],[12,12]]) {
+      setPixel(ctx, rx, ry, rivetColor);
+    }
+
     saveCanvas(canvas, `${OUTPUT_DIR}/icon-close-x.png`);
     entries.push({ key: 'ui-icon-close-x', type: 'image', path: 'assets/ui/icon-close-x.png' });
   }

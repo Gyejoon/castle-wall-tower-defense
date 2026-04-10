@@ -41,16 +41,8 @@ const manifest = JSON.parse(
 	}>;
 };
 
-const PILOT_TOWER_IDS = [
-	'archer',
-	'flame_tower',
-	'dragon_nest',
-	'wind_spire',
-	'arcane_spire',
-	'world_tree',
-	'celestial',
-	'divine_throne',
-] as const;
+// All 18 towers now have grade variants
+const PILOT_TOWER_IDS = ALL_TOWERS.map((t) => t.id);
 const GRADE_VARIANTS = ['rare', 'unique', 'epic'] as const;
 
 describe('asset integration', () => {

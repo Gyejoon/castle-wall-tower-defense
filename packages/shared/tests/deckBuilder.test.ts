@@ -11,16 +11,24 @@ function findTower(id: string) {
 
 describe('towerToRole', () => {
 	it('maps splash tower to splash role', () => {
-		expect(towerToRole(findTower('plasma'))).toBe('splash');
+		const plasma = ALL_TOWERS.find((t) => t.id === 'plasma');
+		expect(plasma).toBeDefined();
+		if (plasma) expect(towerToRole(plasma)).toBe('splash');
 	});
 	it('maps slow tower to slow role', () => {
-		expect(towerToRole(findTower('emp'))).toBe('slow');
+		const emp = ALL_TOWERS.find((t) => t.id === 'emp');
+		expect(emp).toBeDefined();
+		if (emp) expect(towerToRole(emp)).toBe('slow');
 	});
 	it('maps stun tower to stun role', () => {
-		expect(towerToRole(findTower('shield'))).toBe('stun');
+		const shield = ALL_TOWERS.find((t) => t.id === 'shield');
+		expect(shield).toBeDefined();
+		if (shield) expect(towerToRole(shield)).toBe('stun');
 	});
 	it('maps damage tower to attacker role', () => {
-		expect(towerToRole(findTower('archer'))).toBe('attacker');
+		const archer = ALL_TOWERS.find((t) => t.id === 'archer');
+		expect(archer).toBeDefined();
+		if (archer) expect(towerToRole(archer)).toBe('attacker');
 	});
 	it('categorizes all 18 towers without error', () => {
 		for (const tower of ALL_TOWERS) {

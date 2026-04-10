@@ -117,26 +117,21 @@ function drawTrollBody(
   drawRect(ctx, cx - 15, 20 + by, 3, 1, LEATHER.base);
 
   // --- Club (massive, with iron bands and spikes) ---
-  const clubBaseX = cx + 14;
+  const clubBaseX = cx + 13;
   const clubTop = 6 + by + clubAngle;
   // Club shaft (thick wooden)
   drawShadedRect(ctx, clubBaseX, clubTop + 7, 3, 18, PALETTE.leatherWorn);
-  // Club head (massive stone/wood block)
+  // Club head (stone/wood block)
   drawShadedRect(ctx, clubBaseX - 2, clubTop, 7, 8, PALETTE.rust);
   drawRect(ctx, clubBaseX - 1, clubTop + 1, 5, 6, PALETTE.leatherWorn);
   // Iron bands (2 horizontal)
   drawRect(ctx, clubBaseX - 2, clubTop + 2, 7, 1, IRON.base);
   drawRect(ctx, clubBaseX - 2, clubTop + 6, 7, 1, IRON.base);
-  // 4 Iron spikes protruding from club head
-  setPixel(ctx, clubBaseX - 4, clubTop + 1, IRON.highlight);
-  setPixel(ctx, clubBaseX - 4, clubTop + 5, IRON.highlight);
-  setPixel(ctx, clubBaseX + 5, clubTop + 3, IRON.highlight);
-  setPixel(ctx, clubBaseX + 5, clubTop + 6, IRON.highlight);
-  // Spike shafts
-  setPixel(ctx, clubBaseX - 5, clubTop + 1, IRON.base);
-  setPixel(ctx, clubBaseX - 5, clubTop + 5, IRON.base);
-  setPixel(ctx, clubBaseX + 6, clubTop + 3, IRON.base);
-  setPixel(ctx, clubBaseX + 6, clubTop + 6, IRON.base);
+  // 4 Iron spikes — connected to club head edges (2px lines, not isolated dots)
+  drawLine(ctx, clubBaseX - 2, clubTop + 1, clubBaseX - 3, clubTop, IRON.highlight);
+  drawLine(ctx, clubBaseX - 2, clubTop + 5, clubBaseX - 3, clubTop + 4, IRON.highlight);
+  drawLine(ctx, clubBaseX + 4, clubTop + 2, clubBaseX + 5, clubTop + 1, IRON.highlight);
+  drawLine(ctx, clubBaseX + 4, clubTop + 5, clubBaseX + 5, clubTop + 4, IRON.highlight);
 }
 
 // ===================================================================

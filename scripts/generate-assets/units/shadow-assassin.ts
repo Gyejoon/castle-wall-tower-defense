@@ -18,9 +18,11 @@ import type { SKRSContext2D } from '@napi-rs/canvas';
 // ---------------------------------------------------------------------------
 const WALK_FRAMES = 8;
 function walkPhase(frame: number): number { return (frame / WALK_FRAMES) * Math.PI * 2; }
-function bobY(frame: number): number { return Math.round(Math.sin(walkPhase(frame) * 2) * 1.5); }
-function bodyLean(frame: number): number { return Math.round(Math.sin(walkPhase(frame)) * 0.5); }
-function armSwing(frame: number): number { return Math.round(Math.sin(walkPhase(frame) + Math.PI) * 3); }
+// Floating bob: slow, gentle ±1px (NOT walking bounce)
+function floatY(frame: number): number { return Math.round(Math.sin(walkPhase(frame)) * 1); }
+// Lateral drift: slow ±1px side-to-side glide
+function driftX(frame: number): number { return Math.round(Math.sin(walkPhase(frame) * 0.5) * 1); }
+function armSwing(frame: number): number { return Math.round(Math.sin(walkPhase(frame) + Math.PI) * 2); }
 
 // ---------------------------------------------------------------------------
 // Color constants
@@ -78,8 +80,8 @@ function drawFadingLine(
 // ---------------------------------------------------------------------------
 function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const cx = ox + 20;
-  const by = bobY(frame);
-  const lean = bodyLean(frame);
+  const by = floatY(frame);
+  const lean = driftX(frame);
   const dSwing = armSwing(frame);
   const capeBillow = Math.round(Math.sin(walkPhase(frame)) * 2);
 

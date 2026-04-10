@@ -697,6 +697,86 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
     return;
   }
 
+  if (tower.id === 'plasma') {
+    // Catapult boulder arc — arm snaps, boulder flies in parabolic arc
+    const pivotX = cx - 2;
+    const pivotY = 40;
+    const armLen = 20;
+
+    if (frame >= 1 && frame <= 2) {
+      // Arm swinging (pixel lines)
+      const swing = frame === 1 ? 0.3 : 0.9;
+      const angle = -0.5 + 2.4 * swing;
+      const tipX = Math.round(pivotX + armLen * Math.cos(angle));
+      const tipY = Math.round(pivotY - armLen * Math.sin(angle));
+      drawLine(ctx, pivotX, pivotY, tipX, tipY, PALETTE.woodDark);
+      drawLine(ctx, pivotX + 1, pivotY, tipX + 1, tipY, PALETTE.wood);
+      // Boulder in sling (frame 1 only)
+      if (frame === 1) {
+        fillCircle(ctx, tipX, tipY, 3, PALETTE.stoneDark);
+        setPixel(ctx, tipX - 1, tipY - 1, PALETTE.stoneLight);
+      }
+    }
+    if (frame >= 3 && frame <= 5) {
+      // Boulder in flight (parabolic arc)
+      const t = (frame - 2) / 3;
+      const bx = Math.round(cx + 8 + t * 18);
+      const by = Math.round(24 - Math.sin(t * Math.PI) * 16);
+      fillCircle(ctx, bx, by, 3, PALETTE.stoneDark);
+      setPixel(ctx, bx - 1, by - 1, PALETTE.stoneLight);
+      // Trail
+      if (t > 0.3) {
+        setPixel(ctx, bx - 4, by + 2, hexToRgba(PALETTE.dirtPath, 0.3));
+      }
+    }
+    if (frame === 6) {
+      // Impact
+      addGlow(ctx, cx + 26, 22, 5, PALETTE.fireOrange, 0.3);
+      setPixel(ctx, cx + 24, 20, PALETTE.stoneDark);
+      setPixel(ctx, cx + 28, 24, PALETTE.stoneDark);
+    }
+    return;
+  }
+
+  if (tower.id === 'earth_golem') {
+    // Golem throws a rock — arm raise + rock arc
+    const throwX = cx + 8;
+    const throwY = 36;
+
+    if (frame === 1) {
+      // Arm raised — rock above head
+      drawRect(ctx, cx + 14, 28, 6, 4, '#6a5a3a');
+      fillCircle(ctx, cx + 17, 26, 3, PALETTE.stoneDark);
+      setPixel(ctx, cx + 16, 24, PALETTE.stoneLight);
+    }
+    if (frame === 2) {
+      // Arm forward — rock released
+      drawRect(ctx, cx + 18, 32, 6, 3, '#6a5a3a');
+    }
+    if (frame >= 3 && frame <= 5) {
+      // Rock flying in arc
+      const t = (frame - 2) / 3;
+      const rx = Math.round(cx + 12 + t * 18);
+      const ry = Math.round(28 - Math.sin(t * Math.PI) * 14);
+      fillCircle(ctx, rx, ry, 3, PALETTE.stoneDark);
+      setPixel(ctx, rx - 1, ry - 1, PALETTE.stoneLight);
+      // Dust trail
+      if (t > 0.2) {
+        setPixel(ctx, rx - 3, ry + 1, hexToRgba(PALETTE.dirtPath, 0.3));
+      }
+    }
+    if (frame === 6) {
+      // Impact
+      addGlow(ctx, cx + 28, 26, 5, PALETTE.dirtPath, 0.3);
+      setPixel(ctx, cx + 26, 24, PALETTE.stoneDark);
+      setPixel(ctx, cx + 30, 28, PALETTE.stoneDark);
+      // Debris
+      setPixel(ctx, cx + 24, 22, '#6a5a3a');
+      setPixel(ctx, cx + 32, 26, '#6a5a3a');
+    }
+    return;
+  }
+
   // All other pilot towers: use standard fire effects (skipBase)
   drawFireFrame(ctx, ox, tower, frame, true);
 }

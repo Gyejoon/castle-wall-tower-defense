@@ -986,24 +986,6 @@
       "section": "icons"
     },
     {
-      "key": "tilemap-forest-gate",
-      "type": "tilemapTiledJSON",
-      "path": "assets/maps/forest-gate.json",
-      "section": "preload"
-    },
-    {
-      "key": "tilemap-lava_fortress",
-      "type": "tilemapTiledJSON",
-      "path": "assets/maps/lava-fortress.json",
-      "section": "preload"
-    },
-    {
-      "key": "tilemap-storm_citadel",
-      "type": "tilemapTiledJSON",
-      "path": "assets/maps/storm-citadel.json",
-      "section": "preload"
-    },
-    {
       "key": "ui-rarity-frame-common",
       "type": "image",
       "path": "assets/ui/rarity-frame-common.png",

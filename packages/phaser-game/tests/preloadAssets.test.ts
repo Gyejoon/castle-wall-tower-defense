@@ -108,13 +108,6 @@ describe('field asset preload alignment', () => {
 				section: 'preload',
 			});
 		}
-
-		expect(manifest.assets).toContainEqual({
-			key: 'tilemap-forest-gate',
-			type: 'tilemapTiledJSON',
-			path: 'assets/maps/forest-gate.json',
-			section: 'preload',
-		});
 	});
 
 	it('boot preloads the asset manifest before the main preloader runs', async () => {
@@ -192,11 +185,6 @@ describe('field asset preload alignment', () => {
 				frameHeight: 48,
 			},
 		);
-		expect(tilemapTiledJSON).toHaveBeenCalledWith(
-			'tilemap-forest-gate',
-			manifestByKey.get('tilemap-forest-gate')?.path,
-		);
-
 		expect(image).not.toHaveBeenCalledWith(
 			'ui-hp-bar',
 			manifestByKey.get('ui-hp-bar')?.path,
@@ -298,7 +286,7 @@ describe('field asset preload alignment', () => {
 			},
 			cache: {
 				tilemap: {
-					exists: vi.fn((key: string) => key === 'tilemap-forest-gate'),
+					exists: vi.fn(() => false),
 					remove: removeTilemap,
 				},
 			},
@@ -314,6 +302,7 @@ describe('field asset preload alignment', () => {
 		expect(removeTexture).toHaveBeenCalledWith(
 			TINY_SWORDS_TILESET_ASSETS[0].key,
 		);
-		expect(removeTilemap).toHaveBeenCalledWith('tilemap-forest-gate');
+		// No tilemap entries in manifest after migration to shared source
+		expect(removeTilemap).not.toHaveBeenCalled();
 	});
 });

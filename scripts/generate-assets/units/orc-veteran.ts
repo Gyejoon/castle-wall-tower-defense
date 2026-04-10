@@ -198,29 +198,26 @@ function drawBody(
   setPixel(ctx, cx + 2, headY + 8, BONE_C.base);
   setPixel(ctx, cx + 2, headY + 9, BONE_C.shadow);
 
-  // ── Greatsword (carried diagonally behind/beside) ─
-  const swordX = cx + 9 - splitX;
-  const swordY = baseY + 6 + bob + tiltY;
+  // ── Battle axe (crude, heavy) ─
+  const axeX = cx + 9 - splitX;
+  const axeY = baseY + 8 + bob + tiltY;
 
-  // Blade (chipped, crude)
-  drawRect(ctx, swordX, swordY, 2, 22, IRON.base);
-  drawRect(ctx, swordX, swordY, 2, 1, IRON.highlight);
-  drawRect(ctx, swordX, swordY + 21, 2, 1, IRON.shadow);
-  // Chips in blade
-  setPixel(ctx, swordX, swordY + 5, STEEL.shadow);
-  setPixel(ctx, swordX + 1, swordY + 10, STEEL.shadow);
-  setPixel(ctx, swordX, swordY + 15, STEEL.shadow);
-  // Blood stains on blade
-  setPixel(ctx, swordX, swordY + 7, BLOOD);
-  setPixel(ctx, swordX + 1, swordY + 8, BLOOD);
-  setPixel(ctx, swordX, swordY + 13, BLOOD);
-  // Crossguard
-  drawRect(ctx, swordX - 2, swordY + 22, 6, 2, RUST.base);
-  drawRect(ctx, swordX - 2, swordY + 22, 6, 1, RUST.highlight);
-  // Grip (wrapped leather)
-  drawRect(ctx, swordX, swordY + 24, 2, 5, LEATHER.shadow);
-  setPixel(ctx, swordX, swordY + 25, LEATHER.base);
-  setPixel(ctx, swordX + 1, swordY + 27, LEATHER.base);
+  // Axe handle (long wooden shaft)
+  drawRect(ctx, axeX, axeY, 2, 24, LEATHER.shadow);
+  setPixel(ctx, axeX, axeY + 6, LEATHER.base);  // grip wrap
+  setPixel(ctx, axeX + 1, axeY + 10, LEATHER.base);
+  setPixel(ctx, axeX, axeY + 14, LEATHER.base);
+  // Axe head (wide iron blade on top)
+  drawRect(ctx, axeX - 3, axeY, 3, 7, IRON.base);      // blade left side
+  drawRect(ctx, axeX - 3, axeY, 3, 1, IRON.highlight);  // top edge highlight
+  drawRect(ctx, axeX - 3, axeY + 6, 3, 1, IRON.shadow); // bottom edge
+  // Blade edge (sharp left side)
+  setPixel(ctx, axeX - 4, axeY + 1, STEEL.highlight);
+  setPixel(ctx, axeX - 4, axeY + 3, STEEL.base);
+  setPixel(ctx, axeX - 4, axeY + 5, STEEL.highlight);
+  // Blood stain on blade
+  setPixel(ctx, axeX - 3, axeY + 3, BLOOD);
+  setPixel(ctx, axeX - 2, axeY + 4, BLOOD);
 }
 
 // ── drawWalk ───────────────────────────────────────────────────

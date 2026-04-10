@@ -119,14 +119,13 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   setPixel(ctx, hx + 1, hy + 5, skinShade.shadow); // gap
   setPixel(ctx, hx + 2, hy + 5, boneShade.base);   // tooth right (crooked — offset)
 
-  // --- Dagger arm (right) — rusty dagger held forward ---
-  const dagY = 24 + by + as;
-  drawLine(ctx, tx - 6, 23 + by, tx - 9, dagY, skinShade.base); // arm
-  // Dagger blade
-  drawLine(ctx, tx - 9, dagY, tx - 13, dagY - 3, ironShade.base);
-  setPixel(ctx, tx - 13, dagY - 3, ironShade.highlight); // tip glint
-  // Dagger handle
-  setPixel(ctx, tx - 9, dagY + 1, rustShade.base);
+  // --- Right arm — wooden stick held forward ---
+  const stickY = 24 + by + as;
+  drawLine(ctx, tx - 6, 23 + by, tx - 9, stickY, skinShade.base); // arm
+  // Wooden stick (long, thin, brown)
+  drawLine(ctx, tx - 9, stickY, tx - 9, stickY - 8, leatherShade.base);
+  drawLine(ctx, tx - 9, stickY - 8, tx - 9, stickY - 10, leatherShade.highlight); // tip
+  setPixel(ctx, tx - 9, stickY + 1, leatherShade.shadow); // grip
 
   // --- Left arm (swings behind) ---
   drawLine(ctx, tx + 4, 23 + by, tx + 3, 27 + by - as, skinShade.base);

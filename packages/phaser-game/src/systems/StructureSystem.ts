@@ -5,7 +5,7 @@ import type { GridManager } from './GridManager';
 const STRUCTURE_DEPTH_BASE = 3;
 
 export class StructureSystem {
-	private sprites: Phaser.GameObjects.Sprite[] = [];
+	private images: Phaser.GameObjects.Image[] = [];
 
 	constructor(
 		private scene: Phaser.Scene,
@@ -15,20 +15,16 @@ export class StructureSystem {
 	spawnFromMap(map: MapLayout): void {
 		for (const spec of map.structures) {
 			const world = this.grid.gridToWorld(spec.position.x, spec.position.y);
-			const sprite = this.scene.add.sprite(
-				world.x,
-				world.y,
-				spec.assetKey,
-				spec.variant,
-			);
-			sprite.setDepth(STRUCTURE_DEPTH_BASE + spec.position.x + spec.position.y);
-			sprite.setOrigin(0.5, 0.8);
-			this.sprites.push(sprite);
+			// Use image (not sprite with frame) — structure assets are single images
+			const img = this.scene.add.image(world.x, world.y, spec.assetKey);
+			img.setDepth(STRUCTURE_DEPTH_BASE + spec.position.x + spec.position.y);
+			img.setOrigin(0.5, 0.8);
+			this.images.push(img);
 		}
 	}
 
 	destroy(): void {
-		for (const s of this.sprites) s.destroy();
-		this.sprites = [];
+		for (const img of this.images) img.destroy();
+		this.images = [];
 	}
 }

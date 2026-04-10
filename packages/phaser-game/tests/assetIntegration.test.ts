@@ -35,6 +35,18 @@ const manifest = JSON.parse(
 	}>;
 };
 
+const PILOT_TOWER_IDS = [
+	'archer',
+	'flame_tower',
+	'dragon_nest',
+	'wind_spire',
+	'arcane_spire',
+	'world_tree',
+	'celestial',
+	'divine_throne',
+] as const;
+const GRADE_VARIANTS = ['rare', 'unique', 'epic'] as const;
+
 describe('asset integration', () => {
 	it('Preloader queues every tower sprite used by TowerSystem', async () => {
 		vi.stubGlobal('document', {
@@ -76,13 +88,24 @@ describe('asset integration', () => {
 		const towerImageCalls = image.mock.calls.filter(([key]) =>
 			String(key).startsWith('tower-'),
 		);
-		expect(towerImageCalls).toHaveLength(ALL_TOWERS.length);
+		expect(towerImageCalls).toHaveLength(
+			ALL_TOWERS.length + PILOT_TOWER_IDS.length * GRADE_VARIANTS.length,
+		);
 
 		for (const tower of ALL_TOWERS) {
 			expect(image).toHaveBeenCalledWith(
 				`tower-${tower.id}`,
 				`assets/towers/${tower.id}.png`,
 			);
+		}
+
+		for (const towerId of PILOT_TOWER_IDS) {
+			for (const grade of GRADE_VARIANTS) {
+				expect(image).toHaveBeenCalledWith(
+					`tower-${towerId}-${grade}`,
+					`assets/towers/${towerId}-${grade}.png`,
+				);
+			}
 		}
 
 		for (const asset of TINY_SWORDS_TILESET_ASSETS) {

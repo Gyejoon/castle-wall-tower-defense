@@ -22,7 +22,7 @@ describe('GradePromotionOverlay', () => {
 	});
 
 	it('renders new grade sprite src', () => {
-		render(
+		const { container } = render(
 			<GradePromotionOverlay
 				fromGrade="normal"
 				toGrade="rare"
@@ -30,12 +30,12 @@ describe('GradePromotionOverlay', () => {
 				onDone={() => {}}
 			/>,
 		);
-		const img = document.querySelector('img')!;
+		const img = container.querySelector('img')!;
 		expect(img.getAttribute('src')).toBe('/assets/towers/archer-rare.png');
 	});
 
 	it('uses base sprite for normal grade', () => {
-		render(
+		const { container } = render(
 			<GradePromotionOverlay
 				fromGrade="normal"
 				toGrade="normal"
@@ -43,7 +43,7 @@ describe('GradePromotionOverlay', () => {
 				onDone={() => {}}
 			/>,
 		);
-		const img = document.querySelector('img')!;
+		const img = container.querySelector('img')!;
 		expect(img.getAttribute('src')).toBe('/assets/towers/archer.png');
 	});
 });

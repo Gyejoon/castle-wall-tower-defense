@@ -177,6 +177,9 @@ describe('optional combat vfx', () => {
 					].includes(key),
 				),
 			},
+			tweens: {
+				add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
+			},
 		};
 
 		const gridManager = {
@@ -216,6 +219,8 @@ describe('optional combat vfx', () => {
 		]);
 
 		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-archer-fire');
+		const fireSprite = addSprite.mock.results[0]?.value;
+		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(128, 160);
 
 		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
 		// Drive the TTL to zero with a second update.

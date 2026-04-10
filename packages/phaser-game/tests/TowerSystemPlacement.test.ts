@@ -70,6 +70,9 @@ function createScene() {
 		anims: {
 			exists: vi.fn(() => false),
 		},
+		tweens: {
+			add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
+		},
 	};
 }
 

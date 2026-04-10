@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-10  
 > **Source:** Obsidian `ai/product/specs/게임 에셋 제작 specs.md`  
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 
@@ -24,7 +24,7 @@
 |------|---|
 | Base Resolution | 64×80px (타워), 40×48px (유닛), 64×64px (타일) |
 | 보스 해상도 | 96×96px |
-| Spritesheet | 8프레임, 가로 연결 (예: 타워 512×80, 유닛 320×48) |
+| Spritesheet | walk/fire: 8프레임, idle: 6프레임, death: 6프레임, 가로 연결 (예: 유닛 walk 320×48, idle 240×48) |
 | Pivot/Origin | center (0.5, 0.5) |
 | Trim | 불허 — 고정 프레임 크기 유지 |
 | 색상 팔레트 | `scripts/generate-assets/shared.ts`의 PALETTE 상수 |
@@ -69,7 +69,8 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | 타워 스태틱 | 18 PNG+WebP | `generate-towers.ts` | ✅ 완료 |
 | 타워 공격 애니 | 18 spritesheet | `generate-towers.ts` | ✅ 완료 |
 | 유닛 walk | 5 spritesheet | `generate-units.ts` | ✅ 완료 |
-| 유닛 death | 1 spritesheet | `generate-units.ts` | ✅ 완료 |
+| 유닛 idle | 4 spritesheet (6f, 240×48) | `generate-units.ts` | ✅ 완료 |
+| 유닛 death | 4 spritesheet (6f, 유닛별 특화) | `generate-units.ts` | ✅ 완료 |
 | 투사체 | 4 spritesheet | `generate-projectiles.ts` | 부분 완료 |
 | VFX | 4 spritesheet | `generate-vfx.ts` | 부분 완료 |
 | UI (PVE) | ~34 PNG+WebP | `generate-ui.ts`, `generate-match-ui.ts` | PVP 혼재 |
@@ -146,34 +147,43 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ## 5. 적 유닛 에셋 (5종)
 
-| id | name | 크기 | 파일 | 해상도 |
-|----|------|------|------|-------|
-| scout_drone | 고블린 정찰병 | 작음 | `unit-scout_drone.png` | 320×48 (8프레임) |
-| battle_robot | 오크 전사 | 중간 | `unit-battle_robot.png` | 320×48 |
-| heavy_walker | 돌 트롤 | 큼 | `unit-heavy_walker.png` | 320×48 |
-| stealth_drone | 그림자 암살자 | 가늘음 | `unit-stealth_drone.png` | 320×48 |
-| titan | 고대 드래곤 | 보스급 | `unit-titan.png` | 320×48 |
+| id | name | 크기 | walk 파일 | idle 파일 | death 파일 |
+|----|------|------|-----------|-----------|------------|
+| scout_drone | 고블린 scavenger | 작음 | `scout_drone.png` 320×48 (8f) | `scout_drone_idle.png` 240×48 (6f) | `scout_drone_death.png` 240×48 (6f) |
+| battle_robot | orc veteran | 중간 | `battle_robot.png` 320×48 (8f) | `battle_robot_idle.png` 240×48 (6f) | `battle_robot_death.png` 240×48 (6f) |
+| heavy_walker | stone troll | 큼 | `heavy_walker.png` 320×48 (8f) | `heavy_walker_idle.png` 240×48 (6f) | `heavy_walker_death.png` 240×48 (6f) |
+| stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 320×48 (8f) | `stealth_drone_idle.png` 240×48 (6f) | `stealth_drone_death.png` 240×48 (6f) |
+| titan | 고대 드래곤 | 보스급 | `titan.png` 320×48 (8f) | — | — |
 
-공용: `unit-death.png` (320×48, 8프레임 — 플래시→파편→연기→소멸)
+공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트.
+일반 몬스터 4종은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
-### 걷기 애니메이션 시스템
+### 애니메이션 상태 시스템
+
+일반 몬스터 4종은 `walk → idle → death` 상태를 사용한다.
+- `walk`: sin 기반 8프레임 워크 사이클
+- `idle`: 6프레임 대기 루프
+- `death`: 6프레임 전용 사망 애니메이션 후 sprite destroy
+- stun 중에는 `idle`, 이동 중에는 `walk`, 사망 시에는 공용 death FX 대신 유닛 본체 `death`를 재생한다.
+
+### walk 모션 공통 규칙
 
 sin 기반 8프레임 워크 사이클:
 - `bobY`: 상하 바운스 (±1.5px)
 - `legStep`: 다리 교대 길이 변화 (±3px) — 한쪽 디딤/다른쪽 들림
 - `armSwing`: 팔 수직 스윙 (±3px, 다리 반대 방향)
 
-| 유닛 | 특수 모션 |
-|------|----------|
-| 고블린 정찰병 | 단검 흔들림, 빠른 교대 |
-| 오크 전사 | 도끼/방패 수직 스윙 |
-| 돌 트롤 | 짧은 보폭, 스쿼시&스트레치 |
-| 그림자 암살자 | 투명도 펄스 (0.55~0.85), 단검 교차 |
+| 유닛 | walk/idle/death 연출 |
+|------|----------------------|
+| 고블린 scavenger | 등짐과 잡동사니가 흔들리고, idle에서 하중 sway, death에서 잡동사니/금화가 흩어진다 |
+| orc veteran | 비대칭 갑옷과 대검 실루엣, idle 호흡, death에서 갑주 분리와 붕괴를 표현한다 |
+| stone troll | 거대한 어깨와 곤봉, idle heavy breathing, death에서 rubble pile로 무너진다 |
+| shadow assassin | 하체 alpha gradient와 눈 glow, idle pulse, death에서 연기와 cape fragment로 소멸한다 |
 | 고대 드래곤 | 날개 ±5px 펄럭, 꼬리 스윙, 화염 입김 |
 
 ---
 
-## 6. 보스 에셋 (titan)
+## 6. 보스 에셋 (titan) <!-- 이번 리비전 대상 외 — 후속 이슈 #76 -->
 
 | 상태 | 설명 | 특이사항 |
 |------|------|---------|
@@ -257,6 +267,8 @@ sin 기반 8프레임 워크 사이클:
 tower-{id}           # 타워 스태틱
 tower-{id}-fire      # 타워 공격 애니메이션
 unit-{id}            # 유닛 walk cycle
+unit-{id}-idle       # 유닛 idle cycle
+unit-{id}-death      # 유닛 death cycle
 projectile-{type}    # 투사체
 vfx-{name}           # VFX
 ui-{element}         # UI 요소
@@ -291,3 +303,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
+| 2026-04-10 | §1, §2, §5, §6 | 일반 몬스터 4종 에셋 강화: 3-tone+1px 아웃라인, walk 8f + idle 6f + death 6f, 유닛별 실루엣 훅, stealth_drone 추상형→캐릭터형, 공용 unit-death 폐기, §1 spritesheet 규격 idle/death 추가, 보스 §6 후속 이슈 주석 |

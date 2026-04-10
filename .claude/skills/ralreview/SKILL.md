@@ -47,6 +47,9 @@ ralph-loop이 없으면 아래 Phase 0-10을 수동으로 수행한다. 총점 6
 - 이름 명확화, 과한 중첩 완화
 - 테스트에서만 필요한 보조 코드가 런타임 코드에 섞여 있는지 점검
 - **공유 타입 속성 접근**: `@gld/shared` 타입의 속성을 사용할 때 추측하지 않고 실제 타입 정의를 확인한다. dev 서버에선 에러가 안 나도 CI `tsc`에서 터진다
+- **Math.round 정밀도 함정**: `Math.round(Math.sin(x) * amplitude)`에서 amplitude < 1이면 이산 입력에 대해 항상 0을 반환한다. 픽셀 아트에서 1px 이동을 의도하면 amplitude ≥ 1.0이어야 한다. 계산 결과가 항상 0인 변수는 죽은 코드와 동일하다
+- **계산 후 미참조 변수**: `const x = 계산식;`인데 이후 어디에도 `x`가 사용되지 않으면 의도 누락이다. 특히 death/idle 애니메이션에서 `tiltY`, `fadeAlpha` 등을 계산하고 실제 draw 호출에 적용하지 않는 패턴
+- **신규 유틸 함수 경계값 검사**: diff에서 새로 작성된 함수에 `> N`, `>= N`, `< N` 등 경계 조건이 있으면, N-1/N/N+1 입력에 대해 동작이 올바른지 확인한다. off-by-one은 신규 코드에서 가장 흔한 버그
 
 ### Tailwind 정밀도 (변경 파일에 Tailwind 클래스가 있을 때만)
 
@@ -64,6 +67,8 @@ ralph-loop이 없으면 아래 Phase 0-10을 수동으로 수행한다. 총점 6
 - **형제 컴포넌트 스타일 패리티**: 유사 컴포넌트(CoinIcon/DiamondIcon, LockIcon/UnlockIcon 등)가 존재하면 display, verticalAlign 등 구조적 CSS 속성이 동일한지 확인한다
 - **에셋 스펙 정합성**: generate-assets 스크립트가 생성하는 에셋 크기(width × height)가 `docs/game-spec/`의 스펙 정의와 일치하는지 확인한다
 - **generate-assets 파이프라인 등록**: 새 `generate-*.ts` 스크립트를 추가했으면 `generate-all.ts`에 import + Promise.all + allEntries 전개가 빠짐없이 등록되었는지 확인한다. 누락하면 전체 에셋 재생성 시 해당 에셋이 소실된다
+- **에셋 생성 비결정성**: `scripts/generate-assets/` 내에서 `Math.random()` 사용은 금지. 매 빌드마다 다른 PNG가 생성되어 불필요한 에셋 diff가 발생한다. 결정적 대안: `Math.sin(i * seed + frame * offset)` 패턴 사용
+- **문서 내 파일명과 실제 경로 교차 검증**: `docs/game-spec/`의 에셋 테이블에 기재된 파일명이 실제 `public/assets/` 디스크 경로와 일치하는지 확인한다. manifest key(`unit-{id}-idle`)와 파일명(`{id}_idle.png`)이 다른 네이밍 규칙을 따를 수 있으므로, 코드의 `path:` 필드와 문서를 대조한다
 
 ### 문서 구조 정합성 (변경 파일에 .md가 있을 때만)
 
@@ -104,6 +109,7 @@ ralph-loop이 없으면 아래 Phase 0-10을 수동으로 수행한다. 총점 6
 | 18 | 타이머 산술이 실제 호출 주기와 일치 | update()가 throttle 간격으로 실행되는데 매 프레임 `delta` 누적 → 타이머 18배 느림 | -1 |
 | 19 | 공유 자원 풀에서 할당 즉시 점유 표시 | 풀에서 빈 슬롯을 찾아 할당하되 점유 표시를 지연하면, 같은 틱에 여러 소비자가 동일 슬롯을 받음 | -2 |
 | 20 | 복합 이펙트의 모든 레이어가 동일 throttle 범위 안에 있는지 | 메인 레이어만 throttle하고 부수 레이어(noise, particle 등)를 별도 호출하면 부수 레이어가 매 프레임 누적 | -2 |
+| 21 | 상태 전환 중 객체에 대한 public 메서드 재진입 방어 | `pendingDestroy=true`인 유닛에 `applyDamage()` 재호출 → 이중 사망/바운티 중복. 상태 플래그(`alive`, `pendingDestroy`, `isTransitioning`)가 있으면 해당 객체의 모든 public 메서드 진입점에서 가드하는지 확인 | -2 |
 
 기본 10점, 위반별 감점, 최소 0점.
 

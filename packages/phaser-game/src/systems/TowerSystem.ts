@@ -173,10 +173,12 @@ export class TowerSystem {
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
+		const baseScaleX = sprite.scaleX;
+		const baseScaleY = sprite.scaleY;
 		const idleTween = this.scene.tweens.add({
 			targets: sprite,
-			scaleX: { from: 1, to: 1.03 },
-			scaleY: { from: 1, to: 1.03 },
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
 			y: { from: sprite.y, to: sprite.y - 1 },
 			duration: 1800,
 			yoyo: true,

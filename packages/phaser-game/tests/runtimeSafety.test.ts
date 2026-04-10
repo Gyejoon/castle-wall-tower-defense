@@ -118,7 +118,7 @@ describe('runtime safety fixes', () => {
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 	});
 
-	it('event-based wave progression: start → clear → wait → next wave', () => {
+	it('event-based wave progression: prep → clear → wait → next wave', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
@@ -130,7 +130,11 @@ describe('runtime safety fixes', () => {
 		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
 		waveSystem.start();
 
-		// Wave 1 starts immediately
+		// Enters prep phase first
+		expect(waveSystem.getPhase()).toBe('prep');
+
+		// Tick past 5s prep — wave 1 starts
+		waveSystem.update(5100, 0);
 		expect(emitSpy).toHaveBeenCalledWith(
 			'wave-started',
 			expect.objectContaining({
@@ -173,6 +177,9 @@ describe('runtime safety fixes', () => {
 		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
 		waveSystem.start();
 
+		// Consume prep phase (5s)
+		waveSystem.update(5100, 0);
+
 		// Advance through waves 1-8 (clear immediately since activeCount=0)
 		for (let i = 0; i < 8; i++) {
 			waveSystem.update(100, 0); // clear current wave
@@ -189,6 +196,42 @@ describe('runtime safety fixes', () => {
 				bossSlotIndex: 10,
 			}),
 		);
+	});
+
+	it('enters prep phase on start and transitions to combat after INITIAL_PREP_MS', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		waveSystem.start();
+
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-started', {
+			durationMs: 5000,
+		});
+		// Units must NOT spawn during prep
+		expect(unitSystem.queueUnits).not.toHaveBeenCalled();
+
+		// Tick 3 seconds — still prep
+		waveSystem.update(3000, 0);
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-tick', {
+			remainingMs: 2000,
+		});
+
+		// Tick past 5s total — transitions to combat and spawns wave 1
+		waveSystem.update(2100, 0);
+		expect(waveSystem.getPhase()).toBe('combat');
+		expect(emitSpy).toHaveBeenCalledWith(
+			'wave-started',
+			expect.objectContaining({ slotIndex: 1, phase: 'combat' }),
+		);
+		expect(unitSystem.queueUnits).toHaveBeenCalled();
 	});
 
 	it('disconnects audio nodes once playback ends', () => {

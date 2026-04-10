@@ -546,14 +546,16 @@ export class TowerSystem {
 						shotArrowIndex = arrowIndex;
 					}
 					const offsetY = shotCount > 1 ? (shot === 0 ? -4 : 4) : 0;
+					// Stagger second arrow by 80ms so damage numbers appear separately
+					const shotTtl = shot > 0 ? maxTtl + 80 : maxTtl;
 					this.attackLines.push({
 						x1: fireOriginX,
 						y1: fireOriginY + offsetY,
 						x2: closestUnit.x,
 						y2: closestUnit.y + offsetY,
 						color,
-						ttl: maxTtl,
-						maxTtl,
+						ttl: shotTtl,
+						maxTtl: shotTtl,
 						style,
 						towerType: def.type,
 						arrowIndex: shotArrowIndex,

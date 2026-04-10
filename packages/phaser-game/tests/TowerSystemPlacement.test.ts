@@ -51,6 +51,7 @@ function createGraphics() {
 
 function createImage() {
 	return {
+		setDisplaySize: vi.fn().mockReturnThis(),
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
 		destroy: vi.fn(),

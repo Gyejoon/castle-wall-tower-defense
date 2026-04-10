@@ -168,6 +168,7 @@ export class TowerSystem {
 		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
 		const base = this.scene.add.graphics();
 		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
+		sprite.setDisplaySize(64, 80);
 		sprite.setY(worldPos.y - 20);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);

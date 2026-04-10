@@ -664,10 +664,9 @@ export class TowerSystem {
 			towerWorld.y - 20,
 			textureKey,
 		);
-		effect.setDisplaySize(
-			TOWER_GRADE_VARIANT_IDS.has(towerDefId) ? 128 : 64,
-			TOWER_GRADE_VARIANT_IDS.has(towerDefId) ? 160 : 80,
-		);
+		// Fire spritesheets are always 64×80 regardless of base tower resolution;
+		// see the note in generate-towers.ts about drawFireFrame's coordinate system.
+		effect.setDisplaySize(64, 80);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
 		const restoreVisibility = () => {

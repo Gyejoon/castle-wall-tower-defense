@@ -229,16 +229,19 @@ function drawHeatCracks(
   halfW: number,
   count: number,
 ): void {
+  // Positions expressed as ratios of halfW so cracks adapt to body width.
   const crackData = [
-    { x1: -8, y1: 0, x2: -12, y2: 14 },
-    { x1: 6, y1: 4, x2: 10, y2: 18 },
-    { x1: -2, y1: 8, x2: 4, y2: 24 },
+    { x1r: -0.333, y1: 0, x2r: -0.5, y2: 14 },
+    { x1r: 0.25, y1: 4, x2r: 0.417, y2: 18 },
+    { x1r: -0.083, y1: 8, x2r: 0.167, y2: 24 },
   ];
   for (let i = 0; i < Math.min(count, crackData.length); i++) {
     const c = crackData[i];
-    drawLine(ctx, cx + c.x1, startY + c.y1, cx + c.x2, startY + c.y2, hexToRgba('#c54120', 0.6));
+    const x1 = Math.round(c.x1r * halfW);
+    const x2 = Math.round(c.x2r * halfW);
+    drawLine(ctx, cx + x1, startY + c.y1, cx + x2, startY + c.y2, hexToRgba('#c54120', 0.6));
     // Glow along crack
-    setPixel(ctx, cx + c.x2, startY + c.y2, hexToRgba('#f5b23b', 0.5));
+    setPixel(ctx, cx + x2, startY + c.y2, hexToRgba('#f5b23b', 0.5));
   }
 }
 
@@ -650,15 +653,19 @@ function drawLifeSparkles(
   count: number,
   color: string,
 ): void {
+  // Positions as ratios of foliage radius so sparkles stay inside the crown.
   const positions = [
-    { dx: -6, dy: -8 }, { dx: 8, dy: -4 }, { dx: -12, dy: 2 },
-    { dx: 4, dy: 6 }, { dx: -2, dy: -12 }, { dx: 10, dy: 4 },
-    { dx: -8, dy: -2 }, { dx: 14, dy: -6 },
+    { dxr: -0.136, dyr: -0.182 }, { dxr: 0.182, dyr: -0.091 },
+    { dxr: -0.273, dyr: 0.045 }, { dxr: 0.091, dyr: 0.136 },
+    { dxr: -0.045, dyr: -0.273 }, { dxr: 0.227, dyr: 0.091 },
+    { dxr: -0.182, dyr: -0.045 }, { dxr: 0.318, dyr: -0.136 },
   ];
   for (let i = 0; i < Math.min(count, positions.length); i++) {
     const p = positions[i];
-    setPixel(ctx, cx + p.dx, cy + p.dy, color);
-    setPixel(ctx, cx + p.dx + 1, cy + p.dy, hexToRgba(color, 0.5));
+    const dx = Math.round(p.dxr * r);
+    const dy = Math.round(p.dyr * r);
+    setPixel(ctx, cx + dx, cy + dy, color);
+    setPixel(ctx, cx + dx + 1, cy + dy, hexToRgba(color, 0.5));
   }
 }
 

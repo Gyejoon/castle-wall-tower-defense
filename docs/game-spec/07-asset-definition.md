@@ -123,9 +123,10 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 ### 3.5 파일럿 타워 고해상도 규격 (2026-04-10~)
 
 - 대상: archer, flame_tower, dragon_nest, wind_spire, arcane_spire, world_tree, celestial, divine_throne (8종)
-- 해상도: 128×160 (정적), 1024×160 (8-frame fire spritesheet)
+- 해상도: 정적 스프라이트 128×160, fire spritesheet은 기존 64×80×8=512×80 유지 (`drawFireFrame` 좌표계가 64×80 기준이므로 HQ 좌표계 리팩토링 전까지 legacy 경로 사용)
 - Grade variant: normal/rare/unique/epic 4종
-  - 파일명: `{id}.png`, `{id}-rare.png`, `{id}-unique.png`, `{id}-epic.png`
+  - 에셋 파일명: `assets/towers/{id}.png`, `assets/towers/{id}-rare.png`, `assets/towers/{id}-unique.png`, `assets/towers/{id}-epic.png`
+  - 매니페스트 key: `tower-{id}`, `tower-{id}-rare`, `tower-{id}-unique`, `tower-{id}-epic` (§3·§10 네이밍 규칙 준수)
   - Normal은 base 스프라이트, rare/unique/epic은 공통 decoration 헬퍼로 overlay
 - Grade decoration 헬퍼: `scripts/generate-assets/towers/grade-decoration.ts`
   - rare: 청록 배너 + V 트림
@@ -309,3 +310,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
+| 2026-04-10 | §3.5, §3.6 | 파일럿 타워 8종(archer/flame_tower/dragon_nest/wind_spire/arcane_spire/world_tree/celestial/divine_throne) 128×160 HQ 스프라이트 + normal/rare/unique/epic grade variant, layered grade decoration 헬퍼, idle breathing tween, 승급 연출 오버레이. 비파일럿 10종은 기존 64×80 유지 |

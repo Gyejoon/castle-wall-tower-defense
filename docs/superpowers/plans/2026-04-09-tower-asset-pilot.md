@@ -16,7 +16,7 @@
 
 **왜 이 작업을 하는가.**
 - 현재 타워 스프라이트(64×80 procedural)는 너무 단순하다. archer는 회색 돌탑에 빨간 깃발 하나, dragon_nest는 "별 모양"이 전부라 도저히 드래곤 둥지로 안 보인다. 사용자 메모리 `feedback_ui_quality`에도 "Graphics+이모지 수준은 허접" 명시.
-- GitHub 이슈 3개가 같은 시각 파이프라인을 건드린다 — #73(전체 화질 상향), #75(idle/attack/upgrade 애니), #52(승급 시스템). 한 번에 묶어 파이프라인을 확립한 뒤 나머지 15개 타워로 확장하는 게 효율적.
+- GitHub 이슈 3개가 같은 시각 파이프라인을 건드린다 — #73(전체 화질 상향), #75(idle/attack/upgrade 애니), #52(승급 시스템). 한 번에 묶어 파이프라인을 확립한 뒤 나머지 10개 타워로 확장하는 게 효율적.
 - 데이터 레이어(`OwnedTower.grade`, `owned.level`)는 이미 존재한다 — 시각 레이어만 비어 있다.
 
 **스코프 결정 (사용자 확정).**
@@ -49,7 +49,7 @@
 
 **신규 파일**
 - `scripts/generate-assets/towers/pilot-draw.ts` — 파일럿 8개 타워 전용 고해상도 draw 함수 (`drawArcherHQ`, `drawFlameTowerHQ`, `drawDragonNestHQ`, `drawWindSpireHQ`, `drawArcaneSpireHQ`, `drawWorldTreeHQ`, `drawCelestialHQ`, `drawDivineThroneHQ`). 재사용 draw primitive는 기존 `./shared`에서 가져와 확장.
-- `scripts/generate-assets/towers/grade-decoration.ts` — 공통 grade overlay 함수 (`drawRareBanner`, `drawUniqueCrystal`, `drawEpicAura`). 입력: ctx, ox, tower color. 이 헬퍼는 이후 나머지 15개 타워에도 그대로 적용될 것을 전제로 설계.
+- `scripts/generate-assets/towers/grade-decoration.ts` — 공통 grade overlay 함수 (`drawRareBanner`, `drawUniqueCrystal`, `drawEpicAura`). 입력: ctx, ox, tower color. 이 헬퍼는 이후 나머지 10개 타워에도 그대로 적용될 것을 전제로 설계.
 - `packages/web-shell/src/components/lobby/tabs/collection/GradePromotionOverlay.tsx` — 승급 성공 시 1.2s one-shot 오버레이 (flash + particle + 새 grade 스프라이트 reveal).
 - `scripts/generate-assets/__tests__/tower-pilot.test.ts` — 파일럿 에셋 파일 존재 + 사이즈 검증.
 - `packages/phaser-game/tests/towerGradeTexture.test.ts` — `placeTower`가 grade에 맞는 텍스처 키를 고르는지 검증.
@@ -477,7 +477,7 @@ export function drawCelestialHQ(ctx: SKRSContext2D, ox: number, oy: number): voi
   // 은하 구
   drawGalaxyOrb(ctx, cx, cy, 18, '#0a0820', '#2a1a5e', '#5a3ab0');
   drawNebulaNoise(ctx, cx, cy, 18, '#ffffff', 12); // 12개 점
-  // 공전 별 4개
+  // 공전 별 5개
   const starPositions: Array<[number, number, number]> = [
     [cx - 32, cy - 10, 3],   // 좌상
     [cx + 30, cy - 4, 2],    // 우
@@ -546,7 +546,7 @@ git commit -m "feat(assets): high-quality divine_throne 128x160 (marble steps + 
 **Files:**
 - Create: `scripts/generate-assets/towers/grade-decoration.ts`
 
-**설계:** 각 데코 함수는 `(ctx, cx, topY, width, height, accentColor) => void` 시그니처. 타워 실루엣 위에 overlay로 그려진다. **타워 형태에 독립적**이어야 함 (나머지 15개 타워에도 그대로 적용될 예정).
+**설계:** 각 데코 함수는 `(ctx, cx, topY, width, height, accentColor) => void` 시그니처. 타워 실루엣 위에 overlay로 그려진다. **타워 형태에 독립적**이어야 함 (나머지 10개 타워에도 그대로 적용될 예정).
 
 - [ ] **Step 1: 파일 생성**
 
@@ -1224,7 +1224,7 @@ EOF
 
 - [ ] **Step 2: 이슈 #73, #75, #52에 "파일럿 PR 링크 + 후속 확장 계획" 댓글**
 
-Run: `gh issue comment 73 --body "파일럿 3종(archer/flame_tower/dragon_nest) PR #XXX 에서 진행. 나머지 15개 타워는 파일럿 승인 후 확장 plan."` (#75, #52도 동일)
+Run: `gh issue comment 73 --body "파일럿 8종(archer/flame_tower/dragon_nest/wind_spire/arcane_spire/world_tree/celestial/divine_throne) PR #XXX 에서 진행. 나머지 10개 타워는 파일럿 승인 후 확장 plan."` (#75, #52도 동일)
 
 ---
 

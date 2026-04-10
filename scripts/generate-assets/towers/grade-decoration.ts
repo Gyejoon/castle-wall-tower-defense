@@ -43,9 +43,10 @@ export function drawGradeDecoration(
 /** Rare: teal banner across tower midsection + white trim + V-tail */
 function drawRareBanner(ctx: SKRSContext2D, g: GradeContext): void {
   const y = g.topY + Math.round(g.height * 0.55);
-  const halfW = Math.round(g.width * 0.55);
-  drawRect(ctx, g.cx - halfW, y, g.width + 12, 6, '#2dd4bf');
-  drawRect(ctx, g.cx - halfW, y + 6, g.width + 12, 1, '#ffffff');
+  // Banner spans tower width + 6px flare per side, centered on g.cx
+  const halfW = Math.round(g.width / 2) + 6;
+  drawRect(ctx, g.cx - halfW, y, halfW * 2, 6, '#2dd4bf');
+  drawRect(ctx, g.cx - halfW, y + 6, halfW * 2, 1, '#ffffff');
   // V-tail trim
   drawLine(ctx, g.cx - 4, y + 6, g.cx, y + 10, '#2dd4bf');
   drawLine(ctx, g.cx + 4, y + 6, g.cx, y + 10, '#2dd4bf');

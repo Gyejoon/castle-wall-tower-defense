@@ -220,7 +220,9 @@ describe('optional combat vfx', () => {
 
 		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-archer-fire');
 		const fireSprite = addSprite.mock.results[0]?.value;
-		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(128, 160);
+		// Fire spritesheet always uses 64×80 regardless of base tower resolution
+		// (drawFireFrame coordinate system is calibrated for 64×80).
+		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(64, 80);
 
 		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
 		// Drive the TTL to zero with a second update.

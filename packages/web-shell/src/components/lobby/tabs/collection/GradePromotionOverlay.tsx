@@ -1,5 +1,5 @@
 import type { TowerGrade } from '@gld/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
 	toGrade: TowerGrade;
@@ -19,6 +19,10 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 		'enter',
 	);
 
+	// Stabilize onDone so parent re-renders don't restart the animation sequence.
+	const onDoneRef = useRef(onDone);
+	onDoneRef.current = onDone;
+
 	const prefersReducedMotion =
 		typeof window !== 'undefined' &&
 		typeof window.matchMedia === 'function' &&
@@ -27,20 +31,20 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 	useEffect(() => {
 		if (prefersReducedMotion) {
 			setPhase('reveal');
-			const t = setTimeout(onDone, 400);
+			const t = setTimeout(() => onDoneRef.current(), 400);
 			return () => clearTimeout(t);
 		}
 		const t1 = setTimeout(() => setPhase('flash'), 150);
 		const t2 = setTimeout(() => setPhase('reveal'), 450);
 		const t3 = setTimeout(() => setPhase('exit'), 1000);
-		const t4 = setTimeout(onDone, 1300);
+		const t4 = setTimeout(() => onDoneRef.current(), 1300);
 		return () => {
 			clearTimeout(t1);
 			clearTimeout(t2);
 			clearTimeout(t3);
 			clearTimeout(t4);
 		};
-	}, [onDone, prefersReducedMotion]);
+	}, [prefersReducedMotion]);
 
 	const spriteSrc =
 		toGrade === 'normal'

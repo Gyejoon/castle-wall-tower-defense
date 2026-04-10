@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-09T14:48:30.425Z",
+  "generated": "2026-04-10T03:53:33.229Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -182,8 +182,8 @@
       "key": "tower-archer-fire",
       "type": "spritesheet",
       "path": "assets/towers/archer-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -335,8 +335,8 @@
       "key": "tower-flame_tower-fire",
       "type": "spritesheet",
       "path": "assets/towers/flame_tower-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -368,8 +368,8 @@
       "key": "tower-wind_spire-fire",
       "type": "spritesheet",
       "path": "assets/towers/wind_spire-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -431,8 +431,8 @@
       "key": "tower-dragon_nest-fire",
       "type": "spritesheet",
       "path": "assets/towers/dragon_nest-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -464,8 +464,8 @@
       "key": "tower-arcane_spire-fire",
       "type": "spritesheet",
       "path": "assets/towers/arcane_spire-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -497,8 +497,8 @@
       "key": "tower-world_tree-fire",
       "type": "spritesheet",
       "path": "assets/towers/world_tree-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -530,8 +530,8 @@
       "key": "tower-celestial-fire",
       "type": "spritesheet",
       "path": "assets/towers/celestial-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
@@ -563,8 +563,8 @@
       "key": "tower-divine_throne-fire",
       "type": "spritesheet",
       "path": "assets/towers/divine_throne-fire.png",
-      "frameWidth": 128,
-      "frameHeight": 160,
+      "frameWidth": 64,
+      "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },

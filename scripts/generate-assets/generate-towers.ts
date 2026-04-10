@@ -708,23 +708,25 @@ export async function generate(): Promise<ManifestEntry[]> {
         });
       }
 
-      // HQ fire spritesheet (128×160 per frame × 8 frames)
+      // Fire spritesheet — use legacy 64×80 path. drawFireFrame is
+      // calibrated for 64×80 (hardcoded cx = ox + 32 and y values like
+      // 38/40/34). Rendering it on the HQ canvas would shift all fire
+      // effects to the upper-left. Until drawFireFrame is refactored to
+      // accept a coordinate scale, pilot towers use legacy fire frames;
+      // the runtime renders them at 64×80 during the short attack animation.
       {
-        const fireW = HQ_WIDTH * FIRE_FRAME_COUNT;
-        const { canvas, ctx } = makeCanvas(fireW, HQ_HEIGHT);
+        const fireW = 64 * FIRE_FRAME_COUNT;
+        const { canvas, ctx } = makeCanvas(fireW, 80);
         for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
-          // Draw HQ base tower at each frame offset, then layer fire effects at 2× scale
-          drawFn(ctx, f * HQ_WIDTH, 0);
-          // Scale up the fire effect coordinates (2× from 64×80 baseline)
-          drawFireFrame(ctx, f * HQ_WIDTH, tower, f);
+          drawFireFrame(ctx, f * 64, tower, f);
         }
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
         entries.push({
           key: `tower-${tower.id}-fire`,
           type: 'spritesheet',
           path: `assets/towers/${tower.id}-fire.png`,
-          frameWidth: HQ_WIDTH,
-          frameHeight: HQ_HEIGHT,
+          frameWidth: 64,
+          frameHeight: 80,
           frameCount: FIRE_FRAME_COUNT,
         });
       }

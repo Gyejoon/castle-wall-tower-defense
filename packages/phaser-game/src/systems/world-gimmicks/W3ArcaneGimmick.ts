@@ -66,8 +66,6 @@ export class W3ArcaneGimmick implements WorldGimmick {
 
 	onTick(_deltaMs: number): void {}
 
-	onTowerPlaced(_tower: TowerInstance): void {}
-
 	isTowerActive(_tower: TowerInstance): boolean {
 		return true; // stun is applied via TowerInstance.disabledUntilMs directly
 	}

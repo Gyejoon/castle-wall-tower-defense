@@ -38,8 +38,6 @@ export class W2FurnaceGimmick implements WorldGimmick {
 		// cycle state is computed on demand
 	}
 
-	onTowerPlaced(_tower: TowerInstance): void {}
-
 	isTowerActive(tower: TowerInstance): boolean {
 		return !this.isFurnaceTileActiveAt(tower.data.position);
 	}

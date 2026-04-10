@@ -21,7 +21,6 @@ export interface WorldGimmick {
 	onBattleStart(): void;
 	onWaveStart(waveIndex: number): void;
 	onTick(deltaMs: number): void;
-	onTowerPlaced(tower: TowerInstance): void;
 	/** Scene consults this per tower per tick to decide if the tower can fire. */
 	isTowerActive(tower: TowerInstance): boolean;
 	/** Tower placement UI consults this to block/allow placement on a given cell. */

@@ -97,7 +97,7 @@ EnergySystem.reset()
 | `energy-changed` | 에너지 변동 | useGameEvents → gameStore.setEnergy |
 | `tower-placed` | 배치 시도 결과 | useGameEvents → 피드백 처리 |
 | `deck-loaded` | 씬 초기화 | useGameEvents → gameStore.setDeckCards |
-| `wave-prep-started` | 튜토리얼 1회차 `WaveSystem.start()` 진입 시 (prep 페이즈) | useGameEvents → gameStore.setCountdown + wavePhase='prep' |
+| `wave-prep-started` | `WaveSystem.start()` 진입 시 (prep 페이즈, 모든 전투) | useGameEvents → gameStore.setCountdown + wavePhase='prep' |
 | `wave-prep-tick` | prep 페이즈 update() tick (매 프레임) | useGameEvents → gameStore.setCountdown |
 | `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
 | `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
@@ -262,4 +262,4 @@ End-to-end 시퀀스.
 
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
-| 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 튜토리얼 1회차 한정 5초 준비). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
+| 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |

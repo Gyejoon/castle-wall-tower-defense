@@ -280,7 +280,7 @@
 - **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). 각 아이콘에 수령 가능 카운트 뱃지(`-top-1 -right-1`, `bg-danger`, `text-[8px] font-pixel`, `warningPulse 1.6s` 애니메이션, `aria-label`에 카운트 포함, `useClaimableCounts` 훅이 `metaStore`에서 `current >= target && !claimed` 집계). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
 - **WorldMapPage** (스테이지 선택): 세로 카드 리스트 레이아웃. 각 카드는 좌측 64×64 landmark 썸네일 + 중앙 맵 이름(subtitle 13px) + 해금조건/추천 레벨(label 10px) + 별 진행도(★1/★2/★3 10×10 아이콘) + 우측 진입 화살표(해금 시만). 해금/잠금 상태 시각 구분: 해금=맵별 theme borderColor + accent 텍스트, 잠금=border #4a3a20 + opacity 45% + grayscale + 🔒 오버레이. 카드 간 간격 8px, 카드 내부 패딩 12px, 썸네일-정보 간격 12px (8/16/32/64 그리드 리듬). 터치 타겟 카드 전체 ≥ 88×358px (44×44 기준 초과). 상단 고정 헤더("스테이지 선택" + 좌측 돌아가기 + 우측 Lv 뱃지). 월드맵 괴리감 해소 및 맵 목록 스캔 용이성 우선.
 - **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 2배속 가이드(클리어 완료 시 "▶▶ 클리어 완료 — 2배속 플레이 가능" 표시) + 출전 덱 4슬롯 미리보기 + 게임 시작
-- **Deck/Build Panel**: 보유 타워 컬렉션, 4개 카드 선택 → 에너지 배치
+- **Deck/Build Panel (DeckEditSheet)**: 상단 고정 4슬롯 프리뷰(border-dashed 빈 슬롯, 루비 보석 × 아이콘으로 개별 제거) + 하단 스크롤 티어별 소유 타워 리스트(2열 그리드). 슬롯 탭 = × 아이콘, 리스트 탭 = 추가 (모드 혼동 방지). 확인 버튼 하단 고정.
 - **Tower Sell Panel**: 배치된 타워 탭 시 하단 중앙에 표시 (타워 이름 + "판매 E+N" danger 버튼)
 - **Exit Modal**: "나가기" 텍스트 버튼 탭 → 확인 모달 (게임 일시정지, "나가기"/"계속하기")
 - **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀
@@ -439,4 +439,4 @@ screenShake 동기화:
 | 2026-04-07 | §4, §6, §7, §8 | 웨이브 재설계(초반 완만→후반 가파름), WAVE_SCALING 10단계, difficultyHpMult 맵별 차등(1/1.3/1.6), 타워 판매(50%), 게임 나가기(확인 모달+일시정지), 보스 leak 즉시 패배, iOS AudioContext unlock, 덱 편집 버그 수정 |
 | 2026-04-08 | §8, §9 | 월드맵 px 고정 레이아웃(430×640)+권장 스테이지 자동 스크롤, 클리어 배지 픽셀 아트 에셋, 2배속 가이드 UI, SFX→soundGenerator 연결, screenShake metaStore 영속화+registry 동기화, iOS async unlock(try-catch+리스너 선제거), 전역 스크롤바 숨김 |
 | 2026-04-09 | §8 UI/UX | FloatingNavButtons 수령 가능 뱃지(`useClaimableCounts` + warningPulse), LoadingScreen 2단 타이포(`>_` 터미널 프리픽스, context별 카피), GamePage 부팅 오버레이 통일, 페이지 전환 `fadeSlideIn 220ms`(`key={phase}`로 GamePage 안정성 보장), 폰트/이미지 preload(Galmuri11 woff2 link preload, Press Start 2P CSS @import→HTML link, UI 이미지 17개 boot 시점 사전 로드) |
-| 2026-04-09 | §8, §10 | WorldMapPage를 세로 카드 리스트로 재정의(이슈 #94 플레이어 피드백 — "월드맵 괴리감"). 첫 세션 5초 prep 페이즈 도입(이슈 #93 진입장벽 완화, 튜토리얼 1회차 한정). |
+| 2026-04-09 | §8, §10 | WorldMapPage를 세로 카드 리스트로 재정의(이슈 #94). 5초 prep 페이즈를 모든 전투에 도입(이슈 #93, 에너지 증가 정지). 10연 가차 순차 등장 애니메이션(이슈 #83). 타워 사거리 오버레이(이슈 #103). 덱 편집 상단 고정 4슬롯 + 루비 보석 제거 아이콘(이슈 #85). |

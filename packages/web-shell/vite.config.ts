@@ -25,6 +25,11 @@ const createNonPhaserChunkBudgetWarning = (): RollupPlugin => ({
 });
 
 export default defineConfig({
+	define: {
+		'import.meta.env.VITE_VERCEL_ENV': JSON.stringify(
+			process.env.VERCEL_ENV ?? '',
+		),
+	},
 	plugins: [
 		tailwindcss(),
 		react(),

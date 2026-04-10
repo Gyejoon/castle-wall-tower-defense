@@ -285,7 +285,18 @@ export const UNIT_DEATH_CONFIG = {
 };
 
 // === Palette for Post-Processing ===
-export const FULL_PALETTE: string[] = Object.values(PALETTE);
+function flattenPalette(obj: Record<string, unknown>): string[] {
+  const result: string[] = [];
+  for (const val of Object.values(obj)) {
+    if (typeof val === 'string') {
+      result.push(val);
+    } else if (typeof val === 'object' && val !== null) {
+      result.push(...flattenPalette(val as Record<string, unknown>));
+    }
+  }
+  return result;
+}
+export const FULL_PALETTE: string[] = flattenPalette(PALETTE);
 
 // === Manifest Helpers ===
 export function toManifestEntry(config: AssetPromptConfig): ManifestEntry {

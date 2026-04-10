@@ -17,6 +17,7 @@ test-results/
 .idea/
 .vs/
 .vscode/
+.obsidian/
 *.swp
 
 # OS

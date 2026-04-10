@@ -26,6 +26,7 @@ export {
 	CC_AURA_CONFIGS,
 	ELEMENT_MATCHUP,
 	ELEMENT_TINT_COLORS,
+	GLOBAL_RANGE_THRESHOLD,
 	getElementMultiplier,
 } from './constants/elements';
 export {
@@ -75,6 +76,8 @@ export {
 	getEffectiveStats,
 	MAX_TOWER_LEVEL,
 	PROMOTION_CONFIG,
+	stunCooldownMultiplier,
+	stunDurationMultiplier,
 	xpToNextLevel,
 } from './constants/meta';
 export {

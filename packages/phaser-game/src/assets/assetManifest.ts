@@ -177,6 +177,7 @@ export function getManifestSectionEntries(
 	manifest: AssetManifest,
 	section: AssetManifestSection,
 ): AssetManifestEntry[] {
+	if (!manifest?.assets) return [];
 	return manifest.assets
 		.map(normalizeAssetEntry)
 		.filter((asset) => asset.section === section);

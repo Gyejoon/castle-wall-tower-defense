@@ -312,4 +312,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-07 | 애니메이션 강화 | 4→8프레임, 투석기 포물선/사운드, 보스 idle spritesheet, 걷기 모션 시스템 |
 | 2026-04-09 | §8 World Map Assets | 월드맵 배경 + 랜드마크 에셋 추가 |
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
-| 2026-04-10 | §3, §3.5 | 전체 18종 128×160 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed 투사체 속도 시스템 + normal/rare/unique/epic grade variant, layered grade decoration 헬퍼, idle breathing tween, 승급 연출 오버레이. legacy 64×80 경로 제거 |
+| 2026-04-10 | §3, §3.5 | 전체 18종 128×160 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed 투사체 속도 시스템 + 사거리 밸런스 조정(plasma/earth_golem/nova_cannon↑, arcane_spire↓) + 공성대포 barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + normal/rare/unique/epic grade variant, layered grade decoration 헬퍼, idle breathing tween, 승급 연출 오버레이. legacy 64×80 경로 제거 |

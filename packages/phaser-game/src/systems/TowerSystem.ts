@@ -409,11 +409,12 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
-				const style = this.hasSplash(special)
-					? ('arc' as const)
-					: def.type === 'archer' || def.type === 'twin_archer'
-						? ('arrow' as const)
-						: ('beam' as const);
+				const style =
+					this.hasSplash(special) || def.type === 'earth_golem'
+						? ('arc' as const)
+						: def.type === 'archer' || def.type === 'twin_archer'
+							? ('arrow' as const)
+							: ('beam' as const);
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {
 					this.ensureArrowPool();

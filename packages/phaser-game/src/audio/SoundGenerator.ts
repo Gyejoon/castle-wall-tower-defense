@@ -440,6 +440,13 @@ export class SoundGenerator {
 				type: 'triangle',
 				volume: 0.1,
 			},
+			earth_golem: {
+				frequency: 100,
+				endFrequency: 50,
+				duration: 100,
+				type: 'triangle',
+				volume: 0.18,
+			},
 		};
 		const recipe = recipes[towerType];
 		if (recipe) {
@@ -474,6 +481,43 @@ export class SoundGenerator {
 						volume: 0.1,
 						filterType: 'lowpass',
 						filterFreq: 200,
+					});
+				});
+			} else if (towerType === 'earth_golem') {
+				// Stone throw grunt — low rumble
+				this.playNoise({
+					noiseType: 'brown',
+					duration: 50,
+					volume: 0.14,
+					filterType: 'lowpass',
+					filterFreq: 200,
+				});
+				// Stone whoosh in flight
+				this.schedule(40, () => {
+					this.playNoise({
+						noiseType: 'white',
+						duration: 50,
+						volume: 0.03,
+						filterType: 'bandpass',
+						filterFreq: 400,
+						filterQ: 1.5,
+					});
+				});
+				// Dull stone impact — heavy thud
+				this.schedule(90, () => {
+					this.playNoise({
+						noiseType: 'brown',
+						duration: 70,
+						volume: 0.16,
+						filterType: 'lowpass',
+						filterFreq: 150,
+					});
+					this.play({
+						frequency: 70,
+						endFrequency: 35,
+						duration: 60,
+						type: 'triangle',
+						volume: 0.12,
 					});
 				});
 			} else if (towerType === 'archer' || towerType === 'twin_archer') {

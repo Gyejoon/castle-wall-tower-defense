@@ -1,0 +1,20 @@
+{
+  "forest_gate": {
+    "pathLength": 39,
+    "spawn": { "x": 3, "y": 0 },
+    "exit": { "x": 4, "y": 17 },
+    "buildableCount": 103
+  },
+  "lava_fortress": {
+    "laneCount": 2,
+    "spawn": { "x": 1, "y": 0 },
+    "exit": { "x": 3, "y": 17 },
+    "buildableCount": 80
+  },
+  "storm_citadel": {
+    "laneCount": 3,
+    "spawn": { "x": 0, "y": 0 },
+    "exit": { "x": 3, "y": 17 },
+    "buildableCount": 72
+  }
+}

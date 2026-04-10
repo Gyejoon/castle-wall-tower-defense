@@ -65,6 +65,8 @@ function createScene() {
 function createGridManager(tileSize = 32) {
 	return {
 		orthoTile: tileSize,
+		width: 10,
+		height: 10,
 		gridToWorld: vi.fn((x: number, y: number) => ({
 			x: x * tileSize,
 			y: y * tileSize,
@@ -395,6 +397,29 @@ describe('UnitSystem', () => {
 			expect(system.hasQueuedUnits()).toBe(false);
 		});
 	});
+
+	describe('spawnAdditionalUnit', () => {
+		it('spawns near the requested position instead of lane start', () => {
+			system.setPaths([LANE_A]);
+			system.spawnAdditionalUnit('scout_drone', { x: 2, y: 0 });
+
+			const positions = system.getUnitPositions();
+			expect(positions).toHaveLength(1);
+			expect(positions[0]?.x).toBe(2 * 32);
+			expect(positions[0]?.y).toBe(0);
+		});
+
+		it('keeps moving forward from the requested lane position on the next update', () => {
+			system.setPaths([LANE_A]);
+			system.spawnAdditionalUnit('scout_drone', { x: 2, y: 0 });
+
+			system.update(0, 100);
+
+			const positions = system.getUnitPositions();
+			expect(positions).toHaveLength(1);
+			expect(positions[0]?.x).toBeGreaterThan(2 * 32);
+		});
+	});
 });
 
 describe('Boss phase system', () => {
@@ -557,5 +582,169 @@ describe('CC immunity', () => {
 		// (0 > 0 is false, so the immunity check is skipped)
 		system.applySlow(unitId, 0.5, 2000);
 		// Slow should be applied (no resistance at level 1)
+	});
+});
+
+describe('damage_shield absorption', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('shield absorbs full damage when shieldHp > damage — HP unchanged, shieldHp reduced', () => {
+		// mana_shield: hp=250, armor=10, shieldHp=300
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300); // spawn
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// armorPierce to bypass armor; damage=100 < shieldHp=300
+		const result = system.applyDamage(unitId, 100, true);
+		expect(result?.killed).toBe(false);
+		expect(result?.actualDamage).toBe(0);
+
+		const pos = system.getUnitPositions()[0];
+		expect(pos.hp).toBe(250); // HP untouched
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(200); // 300 - 100
+	});
+
+	it('shield partially absorbs — shieldHp becomes 0, remaining damage hits HP', () => {
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// damage=350 > shieldHp=300 → leftover=50 hits HP
+		const result = system.applyDamage(unitId, 350, true);
+		expect(result?.killed).toBe(false);
+
+		const pos = system.getUnitPositions()[0];
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+		expect(pos.hp).toBe(200); // 250 - 50
+	});
+
+	it('no shield (shieldHp undefined) — damage goes straight to HP', () => {
+		// scout_drone has no damage_shield behavior
+		system.queueUnits('scout_drone', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// scout_drone: hp=30, armor=0
+		system.applyDamage(unitId, 10);
+
+		const pos = system.getUnitPositions()[0];
+		expect(pos.hp).toBe(20);
+		expect(system.getUnit(unitId)?.data.shieldHp).toBeUndefined();
+	});
+
+	it('shield depleted (shieldHp = 0) — damage goes straight to HP', () => {
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Drain the shield first
+		system.applyDamage(unitId, 300, true);
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+
+		// Now further damage should hit HP
+		system.applyDamage(unitId, 50, true);
+
+		const pos = system.getUnitPositions()[0];
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+		expect(pos.hp).toBe(200); // 250 - 50
+	});
+});
+
+describe('ranged_tower_attack behavior', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	function makeTowerSystem(
+		towers: Array<{ instanceId: string; position: { x: number; y: number } }>,
+	) {
+		return {
+			getTowers: vi.fn(() => towers),
+			disableTower: vi.fn(),
+		};
+	}
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('calls disableTower on nearest tower within range after cooldown', () => {
+		// arcane_mage: specialBehavior=ranged_tower_attack, range=2, damage=25, cooldownMs=3000
+		// LANE_A starts at grid (0,0) → world (0,0)
+		const towers = [{ instanceId: 'tower-1', position: { x: 1, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300); // spawn at (0,0)
+
+		// Advance time past cooldown (3000ms) without spawning another unit
+		system.update(3100, 1); // time=3100ms, delta=1ms
+
+		expect(towerSystem.disableTower).toHaveBeenCalledWith(
+			'tower-1',
+			expect.any(Number),
+		);
+	});
+
+	it('does not call disableTower when no tower is in range', () => {
+		// Tower is at (10,0), far from unit at (0,0), range=2
+		const towers = [{ instanceId: 'tower-far', position: { x: 10, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+		system.update(3100, 1);
+
+		expect(towerSystem.disableTower).not.toHaveBeenCalled();
+	});
+
+	it('respects cooldown — does not attack again before cooldownMs elapses', () => {
+		const towers = [{ instanceId: 'tower-1', position: { x: 1, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+
+		// First attack fires at t=3100
+		system.update(3100, 1);
+		expect(towerSystem.disableTower).toHaveBeenCalledTimes(1);
+
+		// Second update at t=3200 — still within cooldown
+		system.update(3200, 1);
+		expect(towerSystem.disableTower).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not attack without towerSystem injected', () => {
+		// No setTowerSystem call — should not crash
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+		expect(() => system.update(3100, 1)).not.toThrow();
 	});
 });

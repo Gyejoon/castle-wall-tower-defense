@@ -32,7 +32,6 @@ export class WaveSystem {
 	private prepTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
-	private tutorialCompleted: boolean;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -43,7 +42,6 @@ export class WaveSystem {
 			armorMult?: number;
 			speedMult?: number;
 			ccResist?: number;
-			tutorialCompleted?: boolean;
 		},
 	) {
 		this.unitSystem = unitSystem;
@@ -56,7 +54,6 @@ export class WaveSystem {
 		this.armorMult = options?.armorMult ?? 1;
 		this.speedMult = options?.speedMult ?? 1;
 		this.ccResist = options?.ccResist ?? 0;
-		this.tutorialCompleted = options?.tutorialCompleted ?? true;
 	}
 
 	setMaxWaves(count: number): void {
@@ -69,18 +66,11 @@ export class WaveSystem {
 		this.hasSpawnedCurrentWave = false;
 		this.elapsedMs = 0;
 
-		if (!this.tutorialCompleted) {
-			// 튜토리얼 1회차 한정: prep 페이즈 진입
-			// 재도전/재진입 시에는 "즉시 시작" 유지 (01-GDD §10 Edge Point)
-			this.phase = 'prep';
-			this.prepTimerMs = INITIAL_PREP_MS;
-			EventBus.emit('wave-prep-started', { durationMs: INITIAL_PREP_MS });
-			return;
-		}
-
-		// 튜토리얼 완료: 기존 동작 유지
-		this.phase = 'combat';
-		this.advanceToNextWave();
+		// 모든 전투는 prep 페이즈로 시작한다.
+		// prep 중에는 타워를 자유롭게 배치할 수 있고, 에너지는 증가하지 않는다.
+		this.phase = 'prep';
+		this.prepTimerMs = INITIAL_PREP_MS;
+		EventBus.emit('wave-prep-started', { durationMs: INITIAL_PREP_MS });
 	}
 
 	/**
@@ -100,7 +90,7 @@ export class WaveSystem {
 				remainingMs: Math.max(0, this.prepTimerMs),
 			});
 			if (this.prepTimerMs <= 0) {
-				this.phase = 'combat';
+				// advanceToNextWave() sets phase based on wave.kind
 				this.advanceToNextWave();
 			}
 			return;

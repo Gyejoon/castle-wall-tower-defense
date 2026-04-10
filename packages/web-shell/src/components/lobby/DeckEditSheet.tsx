@@ -153,7 +153,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											type="button"
 											onClick={() => !isFull && toggle(tower.id)}
 											className={cn(
-												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left transition-all',
+												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left transition-transform',
 												isSelected
 													? 'bg-[rgba(240,208,96,0.12)] border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
 													: 'bg-panel border-border',

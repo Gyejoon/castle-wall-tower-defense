@@ -216,13 +216,11 @@ export class GameScene extends Phaser.Scene {
 			rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
-		const tutorialDone = this.game.registry.get('tutorialCompleted') === true;
 		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
 			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
 			armorMult: starMult.armor,
 			speedMult: starMult.speed,
 			ccResist: starMult.ccResist,
-			tutorialCompleted: tutorialDone,
 		});
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards =
@@ -800,7 +798,10 @@ export class GameScene extends Phaser.Scene {
 		this.scaledGameTime += scaledDelta;
 
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
-		this.energySystem.update(scaledDelta / 1000);
+		// prep 페이즈에는 에너지 자연 증가 없음 (초기 에너지 + 킬 에너지만)
+		if (this.playerWaves.getPhase() !== 'prep') {
+			this.energySystem.update(scaledDelta / 1000);
+		}
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,

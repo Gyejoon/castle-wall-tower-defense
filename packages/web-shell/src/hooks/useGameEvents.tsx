@@ -162,9 +162,14 @@ export function useGameEvents() {
 				clearInterval(waitIntervalRef.current);
 				waitIntervalRef.current = null;
 			}
+			if (bossWarningTimerRef.current) {
+				clearTimeout(bossWarningTimerRef.current);
+				bossWarningTimerRef.current = null;
+			}
 			setWaitCountdown(0);
 			setCountdown(0);
 			setWavePhase('combat');
+			setBossWarningVisible(false);
 			setSelectedTower(null);
 			resetRun();
 		};

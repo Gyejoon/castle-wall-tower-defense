@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-07
+> **Last Updated:** 2026-04-10
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -218,7 +218,7 @@ EnergySystem.reset()
 
 | Phase | 조건 |
 |-------|------|
-| `prep` | `start()` 호출 시 튜토리얼 미완료(`tutorialCompleted === false`)면 진입. `INITIAL_PREP_MS`(5000ms) 타이머 후 `advanceToNextWave()` 호출. 튜토리얼 완료자는 이 단계를 스킵하고 바로 `spawning`. |
+| `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지와 킬 에너지만). |
 | `spawning` | `advanceToNextWave()` 호출 시 → 유닛 spawn |
 | `combat` | normal/pre_boss 웨이브 진행 중 |
 | `boss` | boss 웨이브 진행 중 |
@@ -227,7 +227,7 @@ EnergySystem.reset()
 
 보스 경고 메커니즘: `pre_boss` 웨이브가 `waiting`으로 전이될 때 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다.
 
-prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 이 단계는 이슈 #93 초심자 진입장벽 완화 용도이며, 튜토리얼 1회차 한정으로 "즉시 시작" Edge Point(§10)를 희석하지 않는다.
+prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 모든 전투는 prep으로 시작하며 에너지 자연 증가가 정지된다(이슈 #93).
 
 ---
 

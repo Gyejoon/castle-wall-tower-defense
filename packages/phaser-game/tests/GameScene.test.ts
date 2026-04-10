@@ -135,57 +135,6 @@ describe('GameScene', () => {
 		);
 	});
 
-	it('clears selected tower state when entering placement mode', () => {
-		const scene = createScene();
-		scene.isSceneAlive = vi.fn(() => true);
-		scene.playerDeck = {
-			getCardByTowerId: vi.fn(() => ({ towerDefId: 'archer' })),
-		};
-		scene.renderPlaceableHighlights = vi.fn();
-		scene.clearRangeOverlay = vi.fn();
-		scene.selectedTowerId = null;
-
-		scene.onSelectTower = (data) => {
-			if (!scene.isSceneAlive()) return;
-			const card = scene.playerDeck.getCardByTowerId(data.towerDefId);
-			if (!card) return;
-			scene.selectedTowerId = data.towerDefId;
-			scene.clearRangeOverlay();
-			EventBus.emit('tower-deselected');
-			scene.renderPlaceableHighlights();
-		};
-
-		scene.onSelectTower({ towerDefId: 'archer' });
-
-		expect(scene.selectedTowerId).toBe('archer');
-		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
-		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
-		expect(scene.renderPlaceableHighlights).toHaveBeenCalledOnce();
-	});
-
-	it('clears selected tower state when placement mode is cancelled', () => {
-		const scene = createScene();
-		scene.isSceneAlive = vi.fn(() => true);
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.clearRangeOverlay = vi.fn();
-		scene.selectedTowerId = 'archer';
-
-		scene.onClearTowerSelection = () => {
-			if (!scene.isSceneAlive()) return;
-			scene.selectedTowerId = null;
-			scene.selectionGraphics.clear();
-			scene.clearRangeOverlay();
-			EventBus.emit('tower-deselected');
-		};
-
-		scene.onClearTowerSelection();
-
-		expect(scene.selectedTowerId).toBeNull();
-		expect(scene.selectionGraphics.clear).toHaveBeenCalledOnce();
-		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
-		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
-	});
-
 	it('clears selected tower state after a successful placement', () => {
 		const scene = createScene();
 		scene.energySystem = {

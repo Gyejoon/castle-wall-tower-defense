@@ -684,7 +684,8 @@ export function drawDisruptorHQ(ctx: SKRSContext2D, ox: number, oy: number): voi
   addGlow(ctx, cx, oy + 48, 5, PALETTE.iceGlow, 0.15);
 }
 
-export function drawNovaCannonHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+/** Nova cannon body WITHOUT barrel — barrel is a separate sprite */
+export function drawNovaCannonBody(ctx: SKRSContext2D, ox: number, oy: number): void {
   const cx = ox + 64;
   const baseY = oy + 132;
   drawIsoShadow(ctx, cx, baseY + 10, 28, 9, 0.45);
@@ -693,31 +694,54 @@ export function drawNovaCannonHQ(ctx: SKRSContext2D, ox: number, oy: number): vo
   // Heavy platform
   drawIsoCube(ctx, cx, oy + 104, 20, 10, PALETTE.stone, PALETTE.stoneDark, PALETTE.stoneLight);
 
-  // Cannon base mount
+  // Cannon base mount (turret ring)
   drawIsoCube(ctx, cx, oy + 88, 14, 14, PALETTE.stoneDark, '#3a3a3a', '#5a5a5a');
-
-  // Barrel — thick horizontal rectangle
-  drawRect(ctx, cx + 2, oy + 72, 22, 8, '#5a5a5a');
-  drawRect(ctx, cx + 2, oy + 72, 22, 2, '#6a6a6a');
-  drawRect(ctx, cx + 2, oy + 78, 22, 2, '#4a4a4a');
-  // Barrel mouth
-  drawRect(ctx, cx + 22, oy + 70, 4, 12, '#3a3a3a');
-  drawRect(ctx, cx + 23, oy + 72, 2, 8, '#1a1a1a');
-  // Bore
-  drawRect(ctx, cx + 24, oy + 74, 2, 4, '#0a0a0a');
-
-  // Muzzle glow hint
-  setPixel(ctx, cx + 25, oy + 75, hexToRgba(PALETTE.fireOrange, 0.3));
-  setPixel(ctx, cx + 25, oy + 76, hexToRgba(PALETTE.fireOrange, 0.3));
-
-  // Rivets
-  setPixel(ctx, cx + 4, oy + 74, '#7a7a7a');
-  setPixel(ctx, cx + 10, oy + 74, '#7a7a7a');
-  setPixel(ctx, cx + 16, oy + 74, '#7a7a7a');
 
   // Support struts
   drawLine(ctx, cx - 4, oy + 88, cx + 2, oy + 80, PALETTE.woodDark);
   drawLine(ctx, cx - 6, oy + 90, cx, oy + 82, PALETTE.wood);
+}
+
+/** Nova cannon barrel — drawn centered for rotation. 32×16 sprite. */
+export function drawNovaCannonBarrel(ctx: SKRSContext2D, ox: number, oy: number): void {
+  // Barrel drawn horizontally centered at (ox+16, oy+8)
+  // so Phaser can rotate it around its center
+  const cx = ox + 16;
+  const cy = oy + 8;
+
+  // Barrel body
+  drawRect(ctx, cx - 2, cy - 4, 20, 8, '#5a5a5a');
+  drawRect(ctx, cx - 2, cy - 4, 20, 2, '#6a6a6a');
+  drawRect(ctx, cx - 2, cy + 2, 20, 2, '#4a4a4a');
+  // Barrel mouth
+  drawRect(ctx, cx + 16, cy - 6, 4, 12, '#3a3a3a');
+  drawRect(ctx, cx + 17, cy - 4, 2, 8, '#1a1a1a');
+  // Bore
+  drawRect(ctx, cx + 18, cy - 2, 2, 4, '#0a0a0a');
+  // Muzzle glow
+  setPixel(ctx, cx + 19, cy - 1, hexToRgba(PALETTE.fireOrange, 0.3));
+  setPixel(ctx, cx + 19, cy, hexToRgba(PALETTE.fireOrange, 0.3));
+  // Rivets
+  setPixel(ctx, cx, cy - 2, '#7a7a7a');
+  setPixel(ctx, cx + 6, cy - 2, '#7a7a7a');
+  setPixel(ctx, cx + 12, cy - 2, '#7a7a7a');
+}
+
+export function drawNovaCannonHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  drawNovaCannonBody(ctx, ox, oy);
+  // Draw barrel at default position (pointing right) for static sprite
+  const cx = ox + 64;
+  drawRect(ctx, cx + 2, oy + 72, 22, 8, '#5a5a5a');
+  drawRect(ctx, cx + 2, oy + 72, 22, 2, '#6a6a6a');
+  drawRect(ctx, cx + 2, oy + 78, 22, 2, '#4a4a4a');
+  drawRect(ctx, cx + 22, oy + 70, 4, 12, '#3a3a3a');
+  drawRect(ctx, cx + 23, oy + 72, 2, 8, '#1a1a1a');
+  drawRect(ctx, cx + 24, oy + 74, 2, 4, '#0a0a0a');
+  setPixel(ctx, cx + 25, oy + 75, hexToRgba(PALETTE.fireOrange, 0.3));
+  setPixel(ctx, cx + 25, oy + 76, hexToRgba(PALETTE.fireOrange, 0.3));
+  setPixel(ctx, cx + 4, oy + 74, '#7a7a7a');
+  setPixel(ctx, cx + 10, oy + 74, '#7a7a7a');
+  setPixel(ctx, cx + 16, oy + 74, '#7a7a7a');
 }
 
 export function drawFortressHQ(ctx: SKRSContext2D, ox: number, oy: number): void {

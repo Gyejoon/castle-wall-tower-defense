@@ -26,6 +26,7 @@ interface TowerInstance {
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
+	barrelSprite?: Phaser.GameObjects.Image;
 	idleTween?: Phaser.Tweens.Tween;
 	lastAttackTime: number;
 	lastAuraTime: number;
@@ -183,6 +184,21 @@ export class TowerSystem {
 			delay: (this.nextId * 137) % 1800,
 		});
 
+		// Nova cannon: add separate rotating barrel sprite
+		let barrelSprite: Phaser.GameObjects.Image | undefined;
+		if (
+			towerDefId === 'nova_cannon' &&
+			this.scene.textures.exists('tower-nova_cannon-barrel')
+		) {
+			barrelSprite = this.scene.add.image(
+				worldPos.x,
+				sprite.y,
+				'tower-nova_cannon-barrel',
+			);
+			barrelSprite.setDisplaySize(16, 8);
+			barrelSprite.setDepth(sprite.depth + 1);
+		}
+
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
@@ -193,6 +209,7 @@ export class TowerSystem {
 			),
 			base,
 			sprite,
+			barrelSprite,
 			idleTween,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
@@ -282,6 +299,33 @@ export class TowerSystem {
 		stun?: { duration: number };
 	}> {
 		this.damageEventsBuffer.length = 0;
+
+		// Nova cannon barrel tracking — rotate toward nearest enemy
+		for (const tower of this.towers.values()) {
+			if (tower.def.type !== 'nova_cannon' || !tower.barrelSprite) continue;
+			const towerWorld = this.gridManager.gridToWorld(
+				tower.data.position.x,
+				tower.data.position.y,
+			);
+			let nearestDist = Infinity;
+			let nearestUnit: { x: number; y: number } | null = null;
+			for (const unit of unitPositions) {
+				if (unit.hp <= 0) continue;
+				const dx = unit.x - towerWorld.x;
+				const dy = unit.y - towerWorld.y;
+				const dist = dx * dx + dy * dy;
+				if (dist < nearestDist) {
+					nearestDist = dist;
+					nearestUnit = unit;
+				}
+			}
+			if (nearestUnit) {
+				tower.barrelSprite.rotation = Math.atan2(
+					nearestUnit.y - towerWorld.y,
+					nearestUnit.x - towerWorld.x,
+				);
+			}
+		}
 
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
@@ -483,20 +527,6 @@ export class TowerSystem {
 					impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 				});
 				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
-
-				// Nova cannon: rotate barrel toward target
-				if (def.type === 'nova_cannon') {
-					const angle = Math.atan2(
-						closestUnit.y - towerWorld.y,
-						closestUnit.x - towerWorld.x,
-					);
-					this.scene.tweens.add({
-						targets: tower.sprite,
-						rotation: angle,
-						duration: 150,
-						ease: 'Sine.Out',
-					});
-				}
 
 				if (!hasProjectile) {
 					// Beam: instant impact VFX
@@ -805,6 +835,7 @@ export class TowerSystem {
 
 		targetInstance.idleTween?.stop();
 		targetInstance.idleTween?.remove();
+		targetInstance.barrelSprite?.destroy();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
 		this.towers.delete(targetKey);
@@ -843,6 +874,7 @@ export class TowerSystem {
 		for (const tower of this.towers.values()) {
 			tower.idleTween?.stop();
 			tower.idleTween?.remove();
+			tower.barrelSprite?.destroy();
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}

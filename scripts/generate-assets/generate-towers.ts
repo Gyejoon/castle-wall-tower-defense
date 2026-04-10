@@ -25,6 +25,7 @@ import {
   drawTwinArcherHQ, drawDisruptorHQ, drawNovaCannonHQ, drawFortressHQ,
   drawStasisFieldHQ, drawFlameTowerHQ, drawWindSpireHQ,
   drawEarthGolemHQ, drawEarthGolemBody, drawEarthGolemArms,
+  drawNovaCannonBody, drawNovaCannonBarrel,
   drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
   drawCelestialHQ, drawDivineThroneHQ,
 } from './towers/pilot-draw';
@@ -759,9 +760,22 @@ export async function generate(): Promise<ManifestEntry[]> {
       // Normal (base HQ sprite)
       {
         const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
-        drawFn(ctx, 0, 0);
+        if (tower.id === 'nova_cannon') {
+          // Body only — barrel is a separate rotating sprite
+          drawNovaCannonBody(ctx, 0, 0);
+        } else {
+          drawFn(ctx, 0, 0);
+        }
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
         entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
+      }
+
+      // Nova cannon barrel — separate 32×16 sprite for runtime rotation
+      if (tower.id === 'nova_cannon') {
+        const { canvas, ctx } = makeCanvas(32, 16);
+        drawNovaCannonBarrel(ctx, 0, 0);
+        saveCanvas(canvas, `${OUTPUT_DIR}/nova_cannon-barrel.png`);
+        entries.push({ key: 'tower-nova_cannon-barrel', type: 'image', path: 'assets/towers/nova_cannon-barrel.png' });
       }
 
       // Grade variants: rare / unique / epic

@@ -78,6 +78,7 @@ import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { SpawnHutSystem } from '../systems/SpawnHutSystem';
+import { StructureSystem } from '../systems/StructureSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
@@ -92,6 +93,7 @@ export class GameScene extends Phaser.Scene {
 	private playerDeck!: DeckSystem;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
+	private structureSystem?: StructureSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
 		if (!this.isSceneAlive()) return;
@@ -193,6 +195,8 @@ export class GameScene extends Phaser.Scene {
 			canvasHeight: canvasH,
 		});
 		this.playerPathfinding = new PathfindingSystem();
+		this.structureSystem = new StructureSystem(this, this.playerGrid);
+		this.structureSystem.spawnFromMap(this.currentMap);
 		const collection = this.game.registry.get('collection') as
 			| import('@gld/shared').OwnedTower[]
 			| undefined;
@@ -860,6 +864,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();
+		this.structureSystem?.destroy();
 
 		this.selectionGraphics.clear();
 		this.hoverGraphics?.destroy();

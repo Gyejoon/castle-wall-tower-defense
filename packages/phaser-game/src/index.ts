@@ -10,6 +10,7 @@ export { getPlacementGuardFailure } from './placementRules';
 export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
+export { StructureSystem } from './systems/StructureSystem';
 export { WaveSystem } from './systems/WaveSystem';
 
 export function startGame(

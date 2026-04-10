@@ -71,11 +71,11 @@ function StageCard({
 			disabled={false}
 			onClick={handleClick}
 			className={cn(
-				'relative flex flex-col gap-1 p-2.5 border-2 transition-all duration-150 text-left',
+				'relative flex flex-col gap-1.5 p-3 border-2 transition-all duration-150 text-left',
 				'bg-panel border-border',
 				unlocked
-					? 'cursor-pointer hover:scale-[1.04] hover:border-accent/60 active:scale-[0.97]'
-					: 'cursor-pointer opacity-60',
+					? 'cursor-pointer hover:scale-[1.04] hover:border-gold/70 hover:shadow-[0_0_12px_rgba(200,160,74,0.15)] active:scale-[0.97] border-accent/40'
+					: 'cursor-pointer opacity-50 grayscale-[30%]',
 			)}
 		>
 			{/* Lock overlay */}
@@ -107,7 +107,7 @@ function StageCard({
 			<div className="flex items-center justify-between">
 				<span className="font-pixel text-[8px] text-accent">{label}</span>
 				{stage.isBossStage && (
-					<span className="font-pixel text-[6px] text-danger bg-danger/15 border border-danger/40 px-1 py-0.5 leading-none">
+					<span className="font-pixel text-[7px] text-danger bg-danger/20 border border-danger/50 px-1.5 py-0.5 leading-none shadow-[0_0_6px_rgba(200,60,60,0.3)]">
 						BOSS
 					</span>
 				)}
@@ -254,7 +254,7 @@ export function WorldMapPage() {
 							</span>
 						</div>
 					) : (
-						<div className="grid grid-cols-2 gap-2 p-3">
+						<div className="grid grid-cols-2 gap-2.5 p-4">
 							{stages.map((stage) => (
 								<StageCard
 									key={stage.id}

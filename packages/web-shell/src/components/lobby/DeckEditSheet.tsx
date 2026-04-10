@@ -87,8 +87,8 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 									className={cn(
 										'relative min-h-[64px] border-2 flex flex-col items-center justify-center gap-1 py-1.5 px-1',
 										tower
-											? 'border-gold bg-[rgba(240,208,96,0.08)]'
-											: 'border-dashed border-border bg-[rgba(42,32,16,0.6)]',
+											? 'border-gold bg-gold/8'
+											: 'border-dashed border-border bg-panel/60',
 									)}
 								>
 									{tower ? (
@@ -102,7 +102,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 														prev.filter((x) => x !== tower.id),
 													);
 												}}
-												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg hover:brightness-125 active:scale-90 transition-transform cursor-pointer"
+												className="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center bg-danger border-2 border-bg hover:brightness-125 active:scale-90 transition-transform cursor-pointer after:absolute after:inset-[-10px] after:content-['']"
 											>
 												<img
 													src="assets/ui/icon-close-x.webp"
@@ -119,12 +119,12 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												height={28}
 												className="[image-rendering:pixelated] shrink-0"
 											/>
-											<span className="font-pixel text-[9px] leading-tight text-gold text-center w-full truncate">
+											<span className="font-pixel text-[10px] leading-tight text-gold text-center w-full truncate">
 												{tower.name}
 											</span>
 										</>
 									) : (
-										<span className="font-pixel text-base text-border">
+										<span className="font-pixel text-[15px] text-border">
 											{i + 1}
 										</span>
 									)}
@@ -132,7 +132,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							);
 						})}
 					</div>
-					<p className="mt-2 font-pixel text-[9px] text-text-secondary text-center">
+					<p className="mt-2 font-pixel text-[10px] text-text-secondary text-center">
 						× 버튼으로 제거 · 하단에서 타워 선택
 					</p>
 				</div>
@@ -147,7 +147,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 							>
 								T{tier} {TIER_LABELS[tier]}
 							</div>
-							<div className="grid grid-cols-2 gap-1.5">
+							<div className="grid grid-cols-2 gap-2">
 								{towers.map((tower) => {
 									const isSelected = selected.includes(tower.id);
 									const slotNum = selected.indexOf(tower.id) + 1;
@@ -161,7 +161,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 											className={cn(
 												'relative flex items-center gap-2 px-2.5 py-2 border-2 text-left transition-transform',
 												isSelected
-													? 'bg-[rgba(240,208,96,0.12)] border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
+													? 'bg-gold/12 border-gold shadow-[0_0_6px_rgba(240,208,96,0.3)]'
 													: 'bg-panel border-border',
 												isFull
 													? 'cursor-not-allowed opacity-35'
@@ -216,7 +216,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 						variant="gold"
 						disabled={selected.length !== 4}
 						onClick={handleConfirm}
-						style={{ width: '100%', fontSize: '14px', padding: '12px' }}
+						style={{ width: '100%', fontSize: '13px', padding: '12px' }}
 					>
 						확인 ({selected.length}/4)
 					</PixelButton>

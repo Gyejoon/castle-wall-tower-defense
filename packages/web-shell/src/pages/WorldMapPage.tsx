@@ -37,7 +37,7 @@ export function WorldMapPage() {
 				<div className="relative flex items-center justify-center px-3 py-4 bg-panel border-b-2 border-border z-10 shrink-0">
 					<button
 						type="button"
-						className="absolute left-3 font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
+						className="absolute left-3 min-h-[44px] min-w-[44px] flex items-center font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
 						onClick={enterLobby}
 					>
 						<span className="inline-flex items-center gap-1">
@@ -51,7 +51,9 @@ export function WorldMapPage() {
 							돌아가기
 						</span>
 					</button>
-					<span className="font-pixel text-base text-gold">스테이지 선택</span>
+					<span className="font-pixel text-[15px] text-gold">
+						스테이지 선택
+					</span>
 					<span className="absolute right-3 font-pixel text-[9px] text-text-secondary px-2 py-0.5 bg-panel border border-border">
 						Lv.{playerLevel}
 					</span>
@@ -72,7 +74,7 @@ export function WorldMapPage() {
 								disabled={locked}
 								onClick={() => !locked && enterStageDetail(map.id)}
 								className={cn(
-									'w-full flex items-center gap-3 p-3 border-2 text-left transition-all',
+									'w-full flex items-center gap-3 p-3 border-2 text-left transition-[border-color,transform]',
 									locked
 										? 'border-border bg-panel/60 opacity-45 grayscale cursor-not-allowed'
 										: 'border-border bg-panel hover:border-gold active:scale-[0.99] cursor-pointer',

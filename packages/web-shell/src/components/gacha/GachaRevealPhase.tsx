@@ -59,7 +59,7 @@ export function GachaRevealPhase({
 				// 단일 공개
 				<div className="flex flex-col items-center gap-3 animate-[fadeIn_500ms_ease-out]">
 					<p
-						className="font-pixel text-sm"
+						className="font-pixel text-[13px]"
 						style={{ color: TIER_COLORS[results[0].tier] ?? colors.text }}
 					>
 						{results[0].towerName}
@@ -92,10 +92,10 @@ export function GachaRevealPhase({
 								className={cn(
 									'aspect-square border-2 flex flex-col items-center justify-center p-1',
 									isVisible
-										? `transition-all duration-200 ${animationForTier(r.tier, isVisible)}`
+										? `transition-[border-color,background-color] duration-200 ${animationForTier(r.tier, isVisible)}`
 										: 'opacity-0 scale-90',
 									flippedCards.has(i)
-										? 'border-gold bg-[rgba(240,208,96,0.1)]'
+										? 'border-gold bg-gold/10'
 										: 'border-border bg-panel-90 cursor-pointer',
 								)}
 							>
@@ -108,7 +108,7 @@ export function GachaRevealPhase({
 											{r.towerName}
 										</span>
 										{r.isDuplicate && (
-											<span className="font-pixel text-[7px] text-text-secondary">
+											<span className="font-pixel text-[8px] text-text-secondary">
 												+50G
 											</span>
 										)}

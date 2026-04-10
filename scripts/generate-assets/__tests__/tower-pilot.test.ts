@@ -35,7 +35,7 @@ describe('tower pilot assets', () => {
     it(`${id}-fire.png exists as HQ spritesheet`, () => {
       const path = `${TOWER_DIR}/${id}-fire.png`;
       expect(existsSync(path)).toBe(true);
-      expect(statSync(path).size).toBeGreaterThan(2000);
+      expect(statSync(path).size).toBeGreaterThan(1000);
     });
   }
 

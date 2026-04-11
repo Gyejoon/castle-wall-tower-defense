@@ -96,10 +96,10 @@ export async function generate(): Promise<ManifestEntry[]> {
 
     // 고대 드래곤
     ox = 128;
-    fillCircle(ctx, ox + 16, cy, 7, hexToRgba(PALETTE.titan, 0.7));
-    drawCircle(ctx, ox + 16, cy, 7, PALETTE.titan);
-    drawLine(ctx, ox + 8, cy - 3, ox + 5, cy - 7, PALETTE.titan);  // wing
-    drawLine(ctx, ox + 24, cy - 3, ox + 27, cy - 7, PALETTE.titan);  // wing
+    fillCircle(ctx, ox + 16, cy, 7, hexToRgba(PALETTE.dragon, 0.7));
+    drawCircle(ctx, ox + 16, cy, 7, PALETTE.dragon);
+    drawLine(ctx, ox + 8, cy - 3, ox + 5, cy - 7, PALETTE.dragon);  // wing
+    drawLine(ctx, ox + 24, cy - 3, ox + 27, cy - 7, PALETTE.dragon);  // wing
     setPixel(ctx, ox + 15, cy - 2, '#ffe040');
     setPixel(ctx, ox + 17, cy - 2, '#ffe040');
     addGlow(ctx, ox + 16, cy, 4, PALETTE.fireOrange, 0.2);

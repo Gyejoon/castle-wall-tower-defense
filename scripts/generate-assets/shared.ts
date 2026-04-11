@@ -37,7 +37,7 @@ export const PALETTE = {
   battleRobot:   '#7a7a6a',  // 오크 전사 (회색 피부)
   heavyWalker:   '#8c8c7a',  // 돌 트롤 (돌 회색)
   stealthDrone:  '#302040',  // 그림자 암살자 (검보라)
-  titan:         '#c04020',  // 고대 드래곤 (불꽃 빨강)
+  dragon:         '#c04020',  // 고대 드래곤 (불꽃 빨강)
   // UI
   gold:          '#f0d060',  // 황금 장식
   white:         '#fffffe',  // 흰색

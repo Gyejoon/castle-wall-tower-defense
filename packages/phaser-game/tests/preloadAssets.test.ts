@@ -282,9 +282,9 @@ describe('field asset preload alignment', () => {
 							section: 'preload',
 						},
 						{
-							key: 'unit-titan',
+							key: 'unit-dragon',
 							type: 'spritesheet',
-							path: 'assets/units/titan.png',
+							path: 'assets/units/dragon.png',
 							frameWidth: 40,
 							frameHeight: 48,
 							frameCount: 8,

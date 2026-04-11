@@ -17,7 +17,7 @@ const CORE_UNIT_IDS = [
 	'battle_robot',
 	'heavy_walker',
 	'stealth_drone',
-	'titan',
+	'dragon',
 	'flame_imp',
 	'lava_golem',
 	'arcane_mage',

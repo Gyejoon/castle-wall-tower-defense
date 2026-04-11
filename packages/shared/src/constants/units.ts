@@ -38,9 +38,9 @@ export const UNITS: UnitDef[] = [
 		isPremium: false,
 	},
 	{
-		id: 'titan',
+		id: 'dragon',
 		name: '고대 드래곤',
-		type: 'titan',
+		type: 'dragon',
 		stats: { hp: 500, speed: 0.5, armor: 25 },
 		element: 'fire',
 		bounty: 60,

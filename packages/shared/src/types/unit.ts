@@ -7,7 +7,7 @@ export type UnitType =
 	| 'battle_robot'
 	| 'heavy_walker'
 	| 'stealth_drone'
-	| 'titan'
+	| 'dragon'
 	// W2 enemies
 	| 'flame_imp'
 	| 'lava_golem'

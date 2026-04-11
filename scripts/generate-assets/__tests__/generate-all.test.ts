@@ -17,7 +17,7 @@ describe('generate-all field asset contract', () => {
 });
 
 describe('generate-units asset contract', () => {
-  it('emits walk, idle, and death sheets for the four redesigned units and keeps titan boss sheets', async () => {
+  it('emits walk, idle, and death sheets for the four redesigned units and keeps dragon boss sheets', async () => {
     const entries = await generateUnits();
     const byKey = new Map(entries.map((entry) => [entry.key, entry]));
 
@@ -54,27 +54,27 @@ describe('generate-units asset contract', () => {
     }
 
     expect(byKey.has('unit-death')).toBe(false);
-    expect(byKey.get('unit-titan')).toMatchObject({
-      key: 'unit-titan',
+    expect(byKey.get('unit-dragon')).toMatchObject({
+      key: 'unit-dragon',
       type: 'spritesheet',
-      path: 'assets/units/titan.png',
+      path: 'assets/units/dragon.png',
       frameWidth: 40,
       frameHeight: 48,
       frameCount: 8,
     });
-    expect(byKey.get('unit-titan-boss')).toMatchObject({
-      key: 'unit-titan-boss',
+    expect(byKey.get('unit-dragon-boss')).toMatchObject({
+      key: 'unit-dragon-boss',
       type: 'spritesheet',
-      path: 'assets/units/titan-boss.png',
+      path: 'assets/units/dragon-boss.png',
       frameWidth: 96,
       frameHeight: 96,
       frameCount: 8,
       section: 'preload',
     });
-    expect(byKey.get('unit-titan-boss-rage')).toMatchObject({
-      key: 'unit-titan-boss-rage',
+    expect(byKey.get('unit-dragon-boss-rage')).toMatchObject({
+      key: 'unit-dragon-boss-rage',
       type: 'spritesheet',
-      path: 'assets/units/titan-boss-rage.png',
+      path: 'assets/units/dragon-boss-rage.png',
       frameWidth: 96,
       frameHeight: 96,
       frameCount: 8,

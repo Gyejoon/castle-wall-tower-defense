@@ -488,10 +488,10 @@ export class UnitSystem {
 				this.units.delete(unitId);
 			}
 			this.spawnOptionalVfx(
-				unit.def.id === 'titan' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
+				unit.def.id === 'dragon' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
 				unit.worldX,
 				unit.worldY,
-				unit.def.id === 'titan' ? 64 : 32,
+				unit.def.id === 'dragon' ? 64 : 32,
 				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
 			return {

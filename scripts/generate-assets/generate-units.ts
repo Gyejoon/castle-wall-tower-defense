@@ -38,7 +38,7 @@ const REQUIRED_FILES = [
   'stealth_drone.png',
   'stealth_drone_idle.png',
   'stealth_drone_death.png',
-  'titan.png',
+  'dragon.png',
 ];
 
 function drawShadow(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number): void {
@@ -557,7 +557,7 @@ const UNIT_IDS = [
   'battle_robot',
   'heavy_walker',
   'stealth_drone',
-  'titan',
+  'dragon',
   'flame_imp',
   'lava_golem',
   'arcane_mage',
@@ -655,13 +655,13 @@ export async function generate(): Promise<ManifestEntry[]> {
       },
       canvas,
       ctx,
-      'titan',
+      'dragon',
     );
-    saveCanvas(canvas, `${OUTPUT_DIR}/titan.png`);
+    saveCanvas(canvas, `${OUTPUT_DIR}/dragon.png`);
     entries.push({
-      key: 'unit-titan',
+      key: 'unit-dragon',
       type: 'spritesheet',
-      path: 'assets/units/titan.png',
+      path: 'assets/units/dragon.png',
       frameWidth: FRAME_W,
       frameHeight: FRAME_H,
       frameCount: FRAME_COUNT,
@@ -670,7 +670,7 @@ export async function generate(): Promise<ManifestEntry[]> {
 
   assertRequiredOutputs();
 
-  // Boss titan — animated idle (96x96, 8 frames) — breathing + wing + fire aura
+  // Boss dragon — animated idle (96x96, 8 frames) — breathing + wing + fire aura
   const BOSS_SIZE = 96;
   const BOSS_FRAMES = 8;
   {
@@ -683,11 +683,11 @@ export async function generate(): Promise<ManifestEntry[]> {
       drawBossFrame(ctx, BOSS_SIZE, f, false);
       ctx.restore();
     }
-    saveCanvas(canvas, `${OUTPUT_DIR}/titan-boss.png`);
+    saveCanvas(canvas, `${OUTPUT_DIR}/dragon-boss.png`);
     entries.push({
-      key: 'unit-titan-boss',
+      key: 'unit-dragon-boss',
       type: 'spritesheet',
-      path: 'assets/units/titan-boss.png',
+      path: 'assets/units/dragon-boss.png',
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,
@@ -695,7 +695,7 @@ export async function generate(): Promise<ManifestEntry[]> {
     });
   }
 
-  // Boss titan phase 2 — rage variant (red tint + more fire)
+  // Boss dragon phase 2 — rage variant (red tint + more fire)
   {
     const { canvas, ctx } = makeCanvas(BOSS_SIZE * BOSS_FRAMES, BOSS_SIZE);
     for (let f = 0; f < BOSS_FRAMES; f++) {
@@ -707,11 +707,11 @@ export async function generate(): Promise<ManifestEntry[]> {
       // Apply rage tint per-frame at absolute coordinates (getImageData ignores translate)
       applyColorTint(ctx, BOSS_SIZE, BOSS_SIZE, PALETTE.fireRed, 0.25, ox, 0);
     }
-    saveCanvas(canvas, `${OUTPUT_DIR}/titan-boss-rage.png`);
+    saveCanvas(canvas, `${OUTPUT_DIR}/dragon-boss-rage.png`);
     entries.push({
-      key: 'unit-titan-boss-rage',
+      key: 'unit-dragon-boss-rage',
       type: 'spritesheet',
-      path: 'assets/units/titan-boss-rage.png',
+      path: 'assets/units/dragon-boss-rage.png',
       frameWidth: BOSS_SIZE,
       frameHeight: BOSS_SIZE,
       frameCount: BOSS_FRAMES,

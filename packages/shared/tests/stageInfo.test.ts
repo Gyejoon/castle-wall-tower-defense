@@ -51,10 +51,10 @@ describe('stageInfo', () => {
 		});
 
 		// storm_citadel → w3_s1: arcane_mage(30), mana_shield(45), battle_robot(12),
-		// heavy_walker(25), stealth_drone(18), titan(60)
+		// heavy_walker(25), stealth_drone(18), dragon(60)
 		// W1:12×10+30×2=180, W2:45×3=135, W3:30×4+12×6=192, W4:25×4+45×2=190
 		// W5:30×5+18×5=240, W6:45×4+12×8=276, W7:25×5+30×3=215
-		// titan→heavy_walker 교체로 바운티 변경
+		// dragon→heavy_walker 교체로 바운티 변경
 		it('storm_citadel returns correct gold (×3 multiplier, W3 unit bounties)', () => {
 			expect(getMaxGoldForMap('storm_citadel')).toBe(5754);
 		});

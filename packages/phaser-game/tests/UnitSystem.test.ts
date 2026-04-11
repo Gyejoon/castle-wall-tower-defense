@@ -61,7 +61,7 @@ function createScene() {
 		textures: { exists: vi.fn(() => false) },
 		anims: {
 			exists: vi.fn(
-				(key: string) => !['titan-idle', 'titan-death'].includes(key),
+				(key: string) => !['dragon-idle', 'dragon-death'].includes(key),
 			),
 		},
 	};
@@ -366,7 +366,7 @@ describe('UnitSystem', () => {
 
 		it('returns isBoss=true for boss unit', () => {
 			system.setPaths([LANE_A]);
-			system.queueUnits('titan', 1, { isBoss: true });
+			system.queueUnits('dragon', 1, { isBoss: true });
 			system.update(0, 300);
 
 			const unitId = system.getUnitPositions()[0].instanceId;
@@ -463,8 +463,8 @@ describe('Boss phase system', () => {
 	});
 
 	it('transitions to phase 2 when HP drops to 50%', () => {
-		// titan: hp=500, armor=10, phase transition at 50% = 250 HP
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		// dragon: hp=500, armor=10, phase transition at 50% = 250 HP
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -487,7 +487,7 @@ describe('Boss phase system', () => {
 	});
 
 	it('blocks damage during invulnerability', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -507,8 +507,8 @@ describe('Boss phase system', () => {
 	});
 
 	it('applies hpMultiplier for wave 10 boss', () => {
-		// titan base hp=500, hpMultiplier=2 → final HP = 1000
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 2 });
+		// dragon base hp=500, hpMultiplier=2 → final HP = 1000
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 2 });
 		system.update(0, 300); // spawn
 
 		const positions = system.getUnitPositions();
@@ -516,7 +516,7 @@ describe('Boss phase system', () => {
 	});
 
 	it('kills boss in phase 2 when HP reaches 0', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -531,12 +531,12 @@ describe('Boss phase system', () => {
 		const result = system.applyDamage(unitId, 300, true);
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
-		expect(result?.bounty).toBe(60); // titan bounty
+		expect(result?.bounty).toBe(60); // dragon bounty
 		expect(system.getUnitPositions()).toHaveLength(0);
 	});
 
 	it('kills boss on one-shot without triggering phase transition', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -565,19 +565,19 @@ describe('Boss animation fallback', () => {
 		vi.clearAllMocks();
 	});
 
-	it('does not request missing titan idle animation when boss is stunned', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+	it('does not request missing dragon idle animation when boss is stunned', () => {
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const sprite = scene.add.sprite.mock.results[0]?.value;
 		const unitId = system.getUnitPositions()[0].instanceId;
 		system.applyStun(unitId, 1000);
 
-		expect(sprite.play).not.toHaveBeenCalledWith('titan-idle');
+		expect(sprite.play).not.toHaveBeenCalledWith('dragon-idle');
 	});
 
-	it('does not request missing titan death animation when boss dies', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+	it('does not request missing dragon death animation when boss dies', () => {
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const sprite = scene.add.sprite.mock.results[0]?.value;
@@ -585,7 +585,7 @@ describe('Boss animation fallback', () => {
 		const result = system.applyDamage(unitId, 600, true);
 
 		expect(result?.killed).toBe(true);
-		expect(sprite.play).not.toHaveBeenCalledWith('titan-death');
+		expect(sprite.play).not.toHaveBeenCalledWith('dragon-death');
 	});
 });
 
@@ -606,7 +606,7 @@ describe('CC immunity', () => {
 	});
 
 	it('resists slow when RNG rolls below ccImmunityChance', () => {
-		// Spawn titan at stage level 1 (ccImmunity=0 by default)
+		// Spawn dragon at stage level 1 (ccImmunity=0 by default)
 		// Override stageLevel to 15 (band 2, ccImmunity=0.1)
 		system.setStageLevel(15);
 		system.setRng(() => 0.05); // always below 0.1 → always resist

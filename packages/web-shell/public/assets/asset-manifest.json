@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-10T19:21:25.242Z",
+  "generated": "2026-04-11T12:24:35.496Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -863,27 +863,27 @@
       "section": "preload"
     },
     {
-      "key": "unit-titan",
+      "key": "unit-dragon",
       "type": "spritesheet",
-      "path": "assets/units/titan.png",
+      "path": "assets/units/dragon.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 8,
       "section": "preload"
     },
     {
-      "key": "unit-titan-idle",
+      "key": "unit-dragon-idle",
       "type": "spritesheet",
-      "path": "assets/units/titan_idle.png",
+      "path": "assets/units/dragon_idle.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 6,
       "section": "preload"
     },
     {
-      "key": "unit-titan-death",
+      "key": "unit-dragon-death",
       "type": "spritesheet",
-      "path": "assets/units/titan_death.png",
+      "path": "assets/units/dragon_death.png",
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 6,
@@ -1079,18 +1079,18 @@
       "section": "preload"
     },
     {
-      "key": "unit-titan-boss",
+      "key": "unit-dragon-boss",
       "type": "spritesheet",
-      "path": "assets/units/titan-boss.png",
+      "path": "assets/units/dragon-boss.png",
       "frameWidth": 96,
       "frameHeight": 96,
       "frameCount": 8,
       "section": "preload"
     },
     {
-      "key": "unit-titan-boss-rage",
+      "key": "unit-dragon-boss-rage",
       "type": "spritesheet",
-      "path": "assets/units/titan-boss-rage.png",
+      "path": "assets/units/dragon-boss-rage.png",
       "frameWidth": 96,
       "frameHeight": 96,
       "frameCount": 8,

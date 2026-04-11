@@ -211,7 +211,7 @@ describe('GameScene', () => {
 			hpRemaining: 20,
 			stats: {
 				wavesCleared: 20,
-				totalWaves: 10,
+				totalWaves: 5,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
@@ -270,7 +270,7 @@ describe('GameScene', () => {
 			hpRemaining: 0,
 			stats: {
 				wavesCleared: 4, // finalSlot-1
-				totalWaves: 10,
+				totalWaves: 5,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,

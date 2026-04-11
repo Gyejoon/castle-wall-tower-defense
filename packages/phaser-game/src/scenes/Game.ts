@@ -13,7 +13,7 @@ import {
 	getSpawnExitPairs,
 	getStageById,
 	getStarDifficultyMult,
-	getTotalWavesForMap,
+	getTotalWavesForStage,
 	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
@@ -119,6 +119,7 @@ export class GameScene extends Phaser.Scene {
 	private goldEarned = 0;
 	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
+	private currentStageId!: string;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
@@ -248,6 +249,7 @@ export class GameScene extends Phaser.Scene {
 			| string
 			| undefined;
 		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
+		this.currentStageId = stageId;
 		const stageDef = getStageById(stageId);
 		const stageWaves = getWavesForStage(stageDef.waveSetId);
 		if (stageWaves.length === 0) {
@@ -744,7 +746,7 @@ export class GameScene extends Phaser.Scene {
 					payload.result === 'victory'
 						? payload.finalSlot
 						: Math.max(0, payload.finalSlot - 1),
-				totalWaves: getTotalWavesForMap(mapId),
+				totalWaves: getTotalWavesForStage(this.currentStageId),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
 				goldEarned: this.goldEarned * this.rewardMultiplier,

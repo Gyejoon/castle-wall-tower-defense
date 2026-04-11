@@ -100,6 +100,7 @@ interface GameStoreState {
 	tutorialMessage: string | null;
 	gameSpeed: 1 | 2;
 	selectedStar: StarRating;
+	stageDetailFrom: 'lobby' | 'stageSelect';
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -179,6 +180,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? DEFAULT_MAP_ID,
 	selectedWorldId: STAGES[DEFAULT_STAGE_ID]?.worldId ?? 'w1_forest',
 	selectedStar: 1 as StarRating,
+	stageDetailFrom: 'stageSelect' as const,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -319,11 +321,12 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			console.warn(`[gameStore] enterStageDetail unknown stage: ${stageId}`);
 			return;
 		}
-		set({
+		set((state) => ({
 			runStatus: 'stageDetail',
 			selectedStageId: stageId,
 			selectedMapId: stage.mapId,
 			selectedWorldId: stage.worldId,
-		});
+			stageDetailFrom: state.runStatus === 'lobby' ? 'lobby' : 'stageSelect',
+		}));
 	},
 }));

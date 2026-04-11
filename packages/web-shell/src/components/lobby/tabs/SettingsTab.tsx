@@ -36,7 +36,7 @@ export function SettingsTab() {
 		<div
 			id="tabpanel-settings"
 			role="tabpanel"
-			aria-label="영주실"
+			aria-label="설정"
 			className="relative flex-1 overflow-hidden flex flex-col"
 		>
 			{/* Background */}

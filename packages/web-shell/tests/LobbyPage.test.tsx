@@ -38,7 +38,7 @@ describe('LobbyPage', () => {
 	it('switches tabs on click', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		// Tab order: [전쟁탁자, 마당, 영주실]
+		// Tab order: [전쟁탁자, 마당, 설정]
 		const collectionTab = tabs[0];
 		const settingsTab = tabs[2];
 
@@ -82,7 +82,7 @@ describe('LobbyPage', () => {
 	it('shows settings tab with toggles', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const settingsTab = tabs[2]; // 영주실 is last
+		const settingsTab = tabs[2]; // 설정 is last
 
 		expect(settingsTab).toBeTruthy();
 		if (!settingsTab) {
@@ -91,7 +91,7 @@ describe('LobbyPage', () => {
 
 		fireEvent.click(settingsTab);
 
-		expect(view.getByText('설정')).toBeTruthy();
+		expect(view.getAllByText('설정').length).toBeGreaterThanOrEqual(1);
 		expect(view.getByText('BGM')).toBeTruthy();
 	});
 });

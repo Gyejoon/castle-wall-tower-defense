@@ -6,10 +6,10 @@ import {
 	getStageById,
 	getTotalWavesForStage,
 	getWavesForStage,
-	WORLD_ORDER,
 	MAP_REGISTRY,
 	STAR_DIFFICULTY,
 	type StarRating,
+	WORLD_ORDER,
 } from '@gld/shared';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
@@ -79,6 +79,8 @@ export function StageDetailPage() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const selectedStageId = useGameStore((s) => s.selectedStageId);
 	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
+	const enterLobby = useGameStore((s) => s.enterLobby);
+	const stageDetailFrom = useGameStore((s) => s.stageDetailFrom);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
@@ -146,7 +148,9 @@ export function StageDetailPage() {
 					<button
 						type="button"
 						className="absolute left-3 font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
-						onClick={enterStageSelect}
+						onClick={
+							stageDetailFrom === 'lobby' ? enterLobby : enterStageSelect
+						}
 					>
 						<span className="inline-flex items-center gap-1">
 							<img
@@ -181,7 +185,8 @@ export function StageDetailPage() {
 							}}
 						/>
 						<span className="absolute bottom-3 left-4 font-pixel text-[15px] text-text z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-							{WORLD_ORDER.indexOf(stage.worldId) + 1}-{stage.stageNumber} {stage.name}
+							{WORLD_ORDER.indexOf(stage.worldId) + 1}-{stage.stageNumber}{' '}
+							{stage.name}
 						</span>
 						<div className="absolute bottom-2 right-4 flex flex-col items-end gap-1 z-10">
 							<span className="font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.85)] px-2 py-0.5 border border-border">

@@ -24,7 +24,7 @@ const tabs: [TabDef, TabDef, TabDef] = [
 	},
 	{
 		id: 'settings',
-		label: '영주실',
+		label: '설정',
 		activeIcon: uiMobileArt.settingsTabIconActive,
 		inactiveIcon: uiMobileArt.settingsTabIconInactive,
 	},
@@ -63,9 +63,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 								disabled
 									? 'cursor-not-allowed opacity-50'
 									: 'cursor-pointer active:scale-95',
-								isActive
-									? 'border-gold bg-panel'
-									: 'border-border/50 bg-panel',
+								isActive ? 'border-gold bg-panel' : 'border-border/50 bg-panel',
 							)}
 							style={
 								isActive
@@ -86,9 +84,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 								/>
 							)}
 							<img
-								src={
-									isActive ? tab.activeIcon : tab.inactiveIcon
-								}
+								src={isActive ? tab.activeIcon : tab.inactiveIcon}
 								alt=""
 								width={28}
 								height={28}

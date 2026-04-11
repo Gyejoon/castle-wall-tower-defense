@@ -68,9 +68,9 @@ export function HomeTab() {
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 	const next = getNextStage(stageStars);
 	const worldName = next
-		? WORLDS[getStageById(next.stageId).worldId]?.name ?? ''
+		? (WORLDS[getStageById(next.stageId).worldId]?.name ?? '')
 		: '';
-	const thumb = next ? MAP_THUMBS[next.mapId] ?? '' : '';
+	const thumb = next ? (MAP_THUMBS[next.mapId] ?? '') : '';
 
 	return (
 		<div
@@ -162,16 +162,12 @@ export function HomeTab() {
 					<PixelButton
 						variant="gold"
 						onClick={() =>
-							next
-								? enterStageDetail(next.stageId)
-								: enterStageSelect()
+							next ? enterStageDetail(next.stageId) : enterStageSelect()
 						}
 						style={{
 							flex: 1,
 							padding: '16px 20px',
 							fontSize: '16px',
-							boxShadow:
-								'0 0 0 1px rgba(240,208,96,0.28), 0 8px 20px rgba(240,208,96,0.12)',
 						}}
 					>
 						<span className="inline-flex items-center gap-2">

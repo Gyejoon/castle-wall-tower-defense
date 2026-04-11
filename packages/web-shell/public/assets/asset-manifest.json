@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-11T12:24:35.496Z",
+  "generated": "2026-04-11T17:46:58.639Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -863,33 +863,6 @@
       "section": "preload"
     },
     {
-      "key": "unit-dragon",
-      "type": "spritesheet",
-      "path": "assets/units/dragon.png",
-      "frameWidth": 40,
-      "frameHeight": 48,
-      "frameCount": 8,
-      "section": "preload"
-    },
-    {
-      "key": "unit-dragon-idle",
-      "type": "spritesheet",
-      "path": "assets/units/dragon_idle.png",
-      "frameWidth": 40,
-      "frameHeight": 48,
-      "frameCount": 6,
-      "section": "preload"
-    },
-    {
-      "key": "unit-dragon-death",
-      "type": "spritesheet",
-      "path": "assets/units/dragon_death.png",
-      "frameWidth": 40,
-      "frameHeight": 48,
-      "frameCount": 6,
-      "section": "preload"
-    },
-    {
       "key": "unit-flame_imp",
       "type": "spritesheet",
       "path": "assets/units/flame_imp.png",
@@ -1076,6 +1049,15 @@
       "frameWidth": 40,
       "frameHeight": 48,
       "frameCount": 6,
+      "section": "preload"
+    },
+    {
+      "key": "unit-dragon",
+      "type": "spritesheet",
+      "path": "assets/units/dragon.png",
+      "frameWidth": 40,
+      "frameHeight": 48,
+      "frameCount": 8,
       "section": "preload"
     },
     {

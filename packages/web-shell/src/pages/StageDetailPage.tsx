@@ -156,7 +156,7 @@ export function StageDetailPage() {
 								height={10}
 								className="[image-rendering:pixelated]"
 							/>
-							월드맵
+							뒤로가기
 						</span>
 					</button>
 					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-base text-gold">

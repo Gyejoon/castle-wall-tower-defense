@@ -152,12 +152,13 @@ export function WorldMapPage() {
 	const enterLobby = useGameStore((s) => s.enterLobby);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
 	const pushToast = useGameStore((s) => s.pushToast);
+	const selectedWorldId = useGameStore((s) => s.selectedWorldId);
+	const setSelectedWorldId = useGameStore((s) => s.setSelectedWorldId);
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 
-	const [activeWorld, setActiveWorld] = useState<WorldId>(() =>
-		pickInitialWorld(stageStars),
-	);
+	const activeWorld = (selectedWorldId as WorldId) || pickInitialWorld(stageStars);
+	const setActiveWorld = (worldId: WorldId) => setSelectedWorldId(worldId);
 	const [lockImgError, setLockImgError] = useState(false);
 
 	const activeWorldDef = WORLDS[activeWorld];

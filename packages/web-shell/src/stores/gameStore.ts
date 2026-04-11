@@ -74,6 +74,7 @@ interface GameStoreState {
 	lives: number;
 	selectedMapId: string;
 	selectedStageId: string;
+	selectedWorldId: string;
 	selectedTowerId: string | null;
 	deckCards: readonly DeckCardDef[];
 	selectedCardIndex: number | null;
@@ -105,6 +106,7 @@ interface GameStoreState {
 	setEnergy: (energy: number) => void;
 	setLives: (lives: number) => void;
 	setSelectedMapId: (mapId: string) => void;
+	setSelectedWorldId: (worldId: string) => void;
 	setSelectedStageId: (stageId: string) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setDeckCards: (cards: readonly DeckCardDef[]) => void;
@@ -175,6 +177,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	runStatus: 'lobby',
 	selectedStageId: DEFAULT_STAGE_ID,
 	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? DEFAULT_MAP_ID,
+	selectedWorldId: STAGES[DEFAULT_STAGE_ID]?.worldId ?? 'w1_forest',
 	selectedStar: 1 as StarRating,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
@@ -193,6 +196,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),
 	setSelectedMapId: (mapId) => set({ selectedMapId: mapId }),
+	setSelectedWorldId: (worldId) => set({ selectedWorldId: worldId }),
 	setSelectedStageId: (stageId) => {
 		const stage = STAGES[stageId];
 		if (!stage) {
@@ -319,6 +323,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runStatus: 'stageDetail',
 			selectedStageId: stageId,
 			selectedMapId: stage.mapId,
+			selectedWorldId: stage.worldId,
 		});
 	},
 }));

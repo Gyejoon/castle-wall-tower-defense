@@ -140,7 +140,6 @@ export {
 	MAX_WAVE_DURATION_MS,
 	STAGE_WAVES,
 	TOTAL_WAVES,
-	WAVE_DEFS,
 	WAVE_SCALING,
 } from './constants/waves';
 export {

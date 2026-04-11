@@ -5,7 +5,6 @@ import {
 	getWavesForStage,
 	STAGE_WAVES,
 	TOTAL_WAVES,
-	WAVE_DEFS,
 	WAVE_REGISTRY,
 } from '../src/constants/waves';
 
@@ -22,29 +21,26 @@ const validUnitIds = new Set([
 	'corrupted_archmage',
 ]);
 
-describe('WAVE_DEFS', () => {
-	it('defines exactly 10 waves', () => {
-		expect(TOTAL_WAVES).toBe(10);
-		expect(WAVE_DEFS).toHaveLength(10);
+describe('STAGE_WAVES.w1_s1 (default stage)', () => {
+	const w1s1 = STAGE_WAVES.w1_s1;
 
-		for (let index = 0; index < WAVE_DEFS.length; index += 1) {
-			expect(WAVE_DEFS[index].slotIndex).toBe(index + 1);
+	it('defines exactly 5 waves and TOTAL_WAVES matches', () => {
+		expect(w1s1).toHaveLength(5);
+		expect(TOTAL_WAVES).toBe(5);
+
+		for (let index = 0; index < w1s1.length; index += 1) {
+			expect(w1s1[index].slotIndex).toBe(index + 1);
 		}
 	});
 
-	it('has boss waves at positions 5 and 10', () => {
-		expect(WAVE_DEFS[4].kind).toBe('boss');
-		expect(WAVE_DEFS[4].slotIndex).toBe(5);
-		expect(WAVE_DEFS[9].kind).toBe('boss');
-		expect(WAVE_DEFS[9].slotIndex).toBe(10);
-	});
-
-	it('has pre_boss warning before final boss', () => {
-		expect(WAVE_DEFS[8].kind).toBe('pre_boss');
+	it('all waves are normal kind', () => {
+		for (const slot of w1s1) {
+			expect(slot.kind).toBe('normal');
+		}
 	});
 
 	it('uses only valid unit IDs and positive unit counts', () => {
-		for (const slot of WAVE_DEFS) {
+		for (const slot of w1s1) {
 			for (const group of slot.groups) {
 				expect(validUnitIds.has(group.unitId)).toBe(true);
 				expect(group.count).toBeGreaterThan(0);
@@ -54,13 +50,13 @@ describe('WAVE_DEFS', () => {
 
 	it('assigns only valid wave kinds', () => {
 		const validKinds = new Set(['normal', 'pre_boss', 'boss']);
-		for (const slot of WAVE_DEFS) {
+		for (const slot of w1s1) {
 			expect(validKinds.has(slot.kind)).toBe(true);
 		}
 	});
 
 	it('has non-negative delay values', () => {
-		for (const slot of WAVE_DEFS) {
+		for (const slot of w1s1) {
 			expect(slot.delayAfterClearSec).toBeGreaterThanOrEqual(0);
 		}
 	});
@@ -95,13 +91,13 @@ describe('STAGE_WAVES', () => {
 });
 
 describe('getWavesForMap', () => {
-	// legacy aliases now resolve to STAGE_WAVES entries, not the old WAVE_DEFS/LAVA_FORTRESS_WAVES
+	// legacy aliases now resolve to STAGE_WAVES entries
 	it('forest_gate 맵은 w1_s1 웨이브를 반환한다', () => {
 		expect(getWavesForMap('forest_gate')).toBe(STAGE_WAVES.w1_s1);
 	});
 
-	it('알 수 없는 맵은 기본 WAVE_DEFS로 fallback한다', () => {
-		expect(getWavesForMap('unknown_map')).toBe(WAVE_DEFS);
+	it('알 수 없는 맵은 기본 w1_s1로 fallback한다', () => {
+		expect(getWavesForMap('unknown_map')).toBe(STAGE_WAVES.w1_s1);
 	});
 
 	it('모든 등록된 맵이 비어 있지 않은 웨이브를 가진다', () => {

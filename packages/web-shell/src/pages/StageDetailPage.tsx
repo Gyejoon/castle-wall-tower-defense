@@ -170,7 +170,7 @@ export function StageDetailPage() {
 						<img
 							src={theme.thumb}
 							alt={map.name}
-							className="absolute inset-0 w-full h-full object-cover scale-150"
+							className="absolute inset-0 w-full h-full object-cover"
 						/>
 						<div
 							className="absolute inset-0"

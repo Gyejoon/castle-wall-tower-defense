@@ -115,7 +115,7 @@ EnergySystem.reset()
 | `wave-prep-tick` | prep 페이즈 update() tick (매 프레임) | useGameEvents → gameStore.setCountdown |
 | `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
 | `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
-| `boss-warning` | pre_boss 웨이브 대기 진입 | useGameEvents → bossWarningVisible |
+| `boss-warning` | boss 웨이브 진입 시 | useGameEvents → bossWarningVisible |
 | `boss-hp-update` | 보스 피격 | useGameEvents → setBossHp |
 | `boss-phase-change` | 보스 2페이즈 돌입 | useGameEvents → 토스트 |
 | `boss-defeated` | 보스 사망 | useGameEvents → setBossHp 초기화 |
@@ -236,12 +236,12 @@ EnergySystem.reset()
 |-------|------|
 | `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지 40으로 전략적 배치). 킬 보상은 제거됨 — 에너지 획득은 자연 재생(1/sec)과 웨이브 클리어 보상(+5)만 존재. |
 | `spawning` | `advanceToNextWave()` 호출 시 → 유닛 spawn |
-| `combat` | normal/pre_boss 웨이브 진행 중. 30초 타이머(MAX_WAVE_DURATION_MS) 적용, 만료 시 잔존 몬스터 유지한 채 다음 웨이브로 강제 진행 |
+| `combat` | normal 웨이브 진행 중. 30초 타이머(MAX_WAVE_DURATION_MS) 적용, 만료 시 잔존 몬스터 유지한 채 다음 웨이브로 강제 진행 |
 | `boss` | boss 웨이브 진행 중. 마지막 웨이브는 타이머 면제(무제한) |
 | `waiting` | 웨이브 클리어(유닛 0) 또는 타이머 만료 → 다음 웨이브까지 딜레이 타이머 (타이머 만료 시 딜레이 0) |
 | `ended` | 마지막 웨이브 클리어 완료 |
 
-보스 경고 메커니즘: `pre_boss` 웨이브가 `waiting`으로 전이될 때 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다.
+보스 경고 메커니즘: `boss` 웨이브 진입 시 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다. `WaveSlotKind`는 `'normal' | 'boss'`만 존재하며 `pre_boss`는 완전 제거되었다.
 
 prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 모든 전투는 prep으로 시작하며 에너지 자연 증가가 정지된다(이슈 #93).
 

@@ -67,7 +67,7 @@
 | Element | 화/수/번개/무 속성 상성으로 데미지 배율 적용 | element_type, matchup_multiplier (0.7x/1.0x/1.3x) |
 | Gacha/Box | 상자에서 히든 타워 획득 (무료/광고/다이아) | box_type, cost, rate_table, pity(50회) |
 | Upgrade | 골드 소비 레벨업 + 등급 승급 (확률 기반) | level, grade, stat growth |
-| Boss/Encounter | 보스 판정: `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. pre_boss(웨이브 5)에서 경고 트리거, boss(웨이브 10)에서 최종 보스. 보스 leak 즉시 패배는 boss-kind 웨이브에서만 | boss timing, warning telegraph, phase, reward |
+| Boss/Encounter | 보스 판정: `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. boss(웨이브 10)에서 최종 보스. 보스 leak 즉시 패배는 boss-kind 웨이브에서만. 월드별 보스: orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | boss timing, warning telegraph, phase, reward |
 | GimmickSystem | 월드별 고유 기믹 처리 (용광로 폭발, 마력 폭주, 묘지 부활, 역병 확산, 마왕의 시련). 타일 상태 변경 → 타워 비활성화/버프. ★ 등급에 따라 기믹 강도 차등 | gimmick_id, active_tiles, intensity_by_star |
 
 ---
@@ -77,10 +77,10 @@
 | 분류 | 수량 | 해금 조건 |
 |------|------|---------|
 | 타워 | 18종 × 5티어 | 기본 풀 + 가챠 획득 |
-| 적 유형 | 5종 (scout, warrior, troll, assassin, titan) | 기본 제공 |
-| 보스 | 월드별 보스 (2페이즈) | 보스 스테이지(s8): pre_boss 웨이브 5, boss 웨이브 10 |
-| 스테이지 | 3개 (forest_gate, lava_fortress, storm_citadel) | 기본 / LV.3 / LV.7 |
-| 웨이브 | 10웨이브 구조 (보스 2회) | — |
+| 적 유형 | 9종 (W1: scout_drone, battle_robot, heavy_walker, stealth_drone, dragon / W2: flame_imp, lava_golem / W3: arcane_mage, mana_shield) | 월드별 제공 |
+| 보스 | 월드별 보스 3종 (orc_warlord, forge_master, corrupted_archmage) — 2페이즈 | 보스 스테이지(s8): boss 웨이브 10 |
+| 스테이지 | 3월드 × 8스테이지 = 24스테이지 | 기본 / LV.3 / LV.7 |
+| 웨이브 | 10웨이브 구조 (보스 1회, 최종 웨이브) | — |
 
 ### ★ 별 등급 시스템 (M1)
 - 각 스테이지에 ★1(정복)/★2(정예)/★3(지옥) 3단계 난이도
@@ -140,17 +140,41 @@
 | 번개 | 0.7x | 1.3x | 1.0x | 1.0x |
 | 무 | 1.0x | 1.0x | 1.0x | 1.0x |
 
-### 적 5종
+### 적 유닛 (9종 + 보스 3종)
+
+#### W1 숲의 문 (일반)
 
 | id | name | element | hp | speed | armor | bounty | 특성 |
 |----|------|---------|-----|-------|-------|--------|------|
 | scout_drone | 고블린 정찰병 | 무 | 30 | 3.0 | 0 | 5 | — |
-| battle_robot | 오크 전사 | 무 | 80 | 1.5 | 2 | 12 | — |
-| heavy_walker | 돌 트롤 | 화 | 200 | 0.8 | 5 | 25 | — |
+| battle_robot | 오크 전사 | 무 | 80 | 1.5 | 5 | 12 | — |
+| heavy_walker | 돌 트롤 | 화 | 200 | 0.8 | 12 | 25 | — |
 | stealth_drone | 그림자 암살자 | 번개 | 50 | 2.5 | 0 | 18 | — |
-| titan | 고대 드래곤 | 화 | 500 | 0.5 | 10 | 60 | **비행** (충돌 면제) |
+| dragon | 고대 드래곤 | 화 | 500 | 0.5 | 25 | 60 | **비행** (충돌 면제) |
 
-> titan은 `flying: true`로 지상 물리 충돌에서 면제. 다른 유닛을 통과하여 이동.
+#### W2 용광로 (추가)
+
+| id | name | element | hp | speed | armor | bounty | 특성 |
+|----|------|---------|-----|-------|-------|--------|------|
+| flame_imp | 화염 임프 | 화 | 80 | 2.2 | 0 | 12 | — |
+| lava_golem | 용암 골렘 | 화 | 900 | 0.6 | 30 | 80 | — |
+
+#### W3 폭풍 성채 (추가)
+
+| id | name | element | hp | speed | armor | bounty | 특성 |
+|----|------|---------|-----|-------|-------|--------|------|
+| arcane_mage | 마법사 유닛 | 번개 | 180 | 1.0 | 5 | 30 | ranged_tower_attack (사거리 2, 데미지 25, 쿨 3초) |
+| mana_shield | 마력 방패병 | 번개 | 250 | 0.9 | 10 | 45 | damage_shield (방패 HP 300) |
+
+#### 보스 유닛
+
+| id | name | element | hp | speed | armor | bounty | bossBehaviorId | 특수 능력 |
+|----|------|---------|-----|-------|-------|--------|----------------|----------|
+| orc_warlord | 오크 전쟁 대장 | 무 | 4,000 | 0.8 | 20 | 300 | orc_warlord | HP 50% 이하 시 battle_robot 4마리 소환 |
+| forge_master | 단조장의 군주 | 화 | 12,000 | 0.7 | 35 | 500 | forge_master | 10초마다 랜덤 타워 5초 비활성화 |
+| corrupted_archmage | 타락한 대마법사 | 번개 | 25,000 | 0.8 | 30 | 800 | corrupted_archmage | 스폰 시 클론 소환, CC 면역 |
+
+> dragon은 `flying: true`로 지상 물리 충돌에서 면제. 다른 유닛을 통과하여 이동.
 
 ### 물리 충돌 시스템
 
@@ -166,11 +190,8 @@
 
 | wave | kind | 역할 |
 |------|------|------|
-| 1~4 | normal | 일반 적 조합, 난이도 점진 상승 |
-| **5** | **pre_boss** | 중간 보스 경고 트리거 (boss-warning 이벤트 emit) |
-| 6~8 | normal | 보스 후 후반전 |
-| 9 | normal | 최종 러시 (pre_boss 아님) |
-| **10** | **boss** | 최종 보스 |
+| 1~9 | normal | 일반 적 조합, 난이도 점진 상승 |
+| **10** | **boss** | 최종 보스 (boss-warning 이벤트 emit 후 스폰) |
 
 비보스 스테이지(s1~s7)는 5~9웨이브 구성이며 보스 없이 normal 웨이브만 포함한다.
 
@@ -218,18 +239,17 @@
 |------|------|
 | Objective | 성문이 무너지기 전에 10웨이브 + 보스 2회 생존 |
 | Map Structure | 세로형 단일 필드 / 고정 레인 / buildable tile 분리 |
-| Danger Points | 고속 러시, 고장갑 탱커, 보스 웨이브(5, 10) |
-| Difficulty Spike | 웨이브 5 (1차 보스), 웨이브 8~9 (고밀도), 웨이브 10 (최종 보스) |
-| Boss Leak Rule | boss-kind 웨이브에서 보스가 경로 끝 도달 시 HP 관계없이 즉시 패배 (pre_boss/normal 웨이브의 보스 유닛은 일반 HP 감소만) |
+| Danger Points | 고속 러시, 고장갑 탱커, 보스 웨이브(10) |
+| Difficulty Spike | 웨이브 8~9 (고밀도), 웨이브 10 (최종 보스) |
+| Boss Leak Rule | boss-kind 웨이브(웨이브 10)에서 보스가 경로 끝 도달 시 HP 관계없이 즉시 패배 |
 | Checkpoint | 없음 — 실패 시 즉시 재도전 또는 로비 복귀 |
 
 ### 보스 연출 시퀀스
 
 | 타이밍 | 연출 |
 |--------|------|
-| 웨이브 5 (pre_boss) 클리어 직후 | "WARNING" + boss-warning 이벤트 + 보스 에셋 prefetch |
-| 웨이브 6~9 (normal) | 일반 웨이브 진행 |
-| 웨이브 9 클리어 직후 | boss 웨이브 직전이지만 pre_boss가 아니므로, boss 웨이브 진입 시 자동으로 boss-warning emit |
+| 웨이브 1~9 (normal) | 일반 웨이브 진행 |
+| 웨이브 10 진입 시 | boss-warning 이벤트 emit + "WARNING" 표시 |
 | 웨이브 10 보스 스폰 | 강화 보스 (FINAL_BOSS_HP_MULTIPLIER 2×) + 호위 동시 스폰 + 흔들림 |
 | 최종 클리어 | 슬로모션 + "STAGE CLEAR" + 보상 팝업 |
 

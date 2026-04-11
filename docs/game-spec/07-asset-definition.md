@@ -174,7 +174,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | battle_robot | orc veteran | 중간 | `battle_robot.png` 320×48 (8f) | `battle_robot_idle.png` 240×48 (6f) | `battle_robot_death.png` 240×48 (6f) |
 | heavy_walker | stone troll | 큼 | `heavy_walker.png` 320×48 (8f) | `heavy_walker_idle.png` 240×48 (6f) | `heavy_walker_death.png` 240×48 (6f) |
 | stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 320×48 (8f) | `stealth_drone_idle.png` 240×48 (6f) | `stealth_drone_death.png` 240×48 (6f) |
-| titan | 고대 드래곤 | 보스급 | `titan.png` 320×48 (8f) | — | — |
+| dragon | 고대 드래곤 | 보스급 | `dragon.png` 320×48 (8f) | `dragon_idle.png` 240×48 (6f) | `dragon_death.png` 240×48 (6f) |
 
 공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트.
 일반 몬스터 4종은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
@@ -204,12 +204,12 @@ sin 기반 8프레임 워크 사이클:
 
 ---
 
-## 6. 보스 에셋 (titan) <!-- 이번 리비전 대상 외 — 후속 이슈 #76 -->
+## 6. 보스 에셋 (dragon)
 
 | 상태 | 설명 | 특이사항 |
 |------|------|---------|
-| Phase 1 idle | 768×96 (8프레임 spritesheet), 호흡+날개+화염 | `titan-boss.png` |
-| Phase 2 rage | 동일 + fireRed 틴트 (0.25), 프레임별 절대좌표 적용 | `titan-boss-rage.png` |
+| Phase 1 idle | 768×96 (8프레임 spritesheet), 호흡+날개+화염 | `dragon-boss.png` |
+| Phase 2 rage | 동일 + fireRed 틴트 (0.25), 프레임별 절대좌표 적용 | `dragon-boss-rage.png` |
 | Weak point | 수 속성 집중 화력에 취약 — 하이라이트 영역 | |
 | Death | 소멸 이펙트 | 보스 전용 (미구현) |
 

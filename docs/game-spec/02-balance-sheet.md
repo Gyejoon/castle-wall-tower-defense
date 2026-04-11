@@ -200,7 +200,7 @@
 | battle_robot | 오크 전사 | 5 | (구: 2) 초반부터 armor 체감 |
 | heavy_walker | 돌 트롤 | 12 | (구: 5) 중반 armor 체크 역할 |
 | stealth_drone | 그림자 암살자 | 0 | 변경 없음 (속도형) |
-| titan | 고대 드래곤 | 25 | (구: 10) 보스전 방어 무시 필수화 |
+| dragon | 고대 드래곤 | 25 | (구: 10) 보스전 방어 무시 필수화 |
 
 ### 방어 무시 (Armor Pierce) 메커니즘
 
@@ -230,7 +230,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | scout_drone | 0 | 15.0 | 20.0 |
 | battle_robot | 5 | 15.0 | 16.0 |
 | heavy_walker | 12 | 15.0 | 10.4 |
-| titan | 25 | 15.0 | 0.8 (min1) |
+| dragon | 25 | 15.0 | 0.8 (min1) |
 
 ---
 
@@ -312,12 +312,12 @@ basePower:
 | 2026-04-06 | 주간 미션 재설계 | use_element 추가, clear_stage [3,4]→[30,50], defeat_boss [5,7]→[30,50] | 주 3회+ 전제 난이도 |
 | 2026-04-06 | 출석 체크 미션 추가 | 일일 5💎, 주간 30💎 | 앱 오픈 최소 보상 보장 |
 | 2026-04-06 | 전체 미션 10x 상향 | reach_wave→[50,80], place_towers→[100,200] 등 | 기존 1~2판으로 달성 가능 → 너무 쉬움 |
-| 2026-04-07 | 적 armor 상향 | battle_robot 2→5, heavy_walker 5→12, titan 10→25 | splash vs 집중형 전략 선택 발생 |
+| 2026-04-07 | 적 armor 상향 | battle_robot 2→5, heavy_walker 5→12, dragon 10→25 | splash vs 집중형 전략 선택 발생 |
 | 2026-04-07 | forest_gate 웨이브 3 조정 | heavy_walker ×1 추가, battle_robot ×4→×3 | 웨이브 3에서 armor 체감 학습 유도 |
 | 2026-04-07 | TowerBottomSheet 방어 무시 UI 추가 | 집중 공격형 타워에 "방어 무시 - 적용" 표시 | 방어 무시 메커니즘 인지 개선 |
 | 2026-04-08 | MAX_TOWER_LEVEL 50 | 30→50 확장, LV.31~50 구간 추가 (구체적 성장은 미정) | unique→epic 승급 게이트(LV.50) 지원 |
 | 2026-04-08 | 승급 레벨 게이트 구현 | 코드에 requiredLevel 20/30/50 체크 추가, UI 잠금 표시 | GDD 스펙 반영 |
-| 2026-04-08 | 물리 충돌 시스템 | 지상 유닛 겹침 방지, CC 연쇄, 비행 면제(titan) | 전술 깊이 증가, CC 타워 가치 상승 |
+| 2026-04-08 | 물리 충돌 시스템 | 지상 유닛 겹침 방지, CC 연쇄, 비행 면제(dragon) | 전술 깊이 증가, CC 타워 가치 상승 |
 | 2026-04-08 | 웨이브 테마 배치 | 3맵 10웨이브를 아키타입 테마로 재구성 (속도/탱크/혼합/보스) | 덱 다양성 요구, 전략적 변주 |
 | 2026-04-08 | 타워 판매 UI 개선 | "E+5" → 에너지 아이콘+숫자 (DeckDock/TopHud 패턴 통일) | 시각적 일관성 |
 | 2026-04-09 | arcane_spire 너프 | damage 50→35, range 6→5 (DPS 75→52.5) | T4 최고 사거리+관통+DPS 3박자로 정답 타워 고정. wind_spire(T3)와 근접한 수치로 재조정 (#104) |
@@ -326,8 +326,11 @@ basePower:
 | 2026-04-09 | 속성 상성 §13 섹션 추가 + UI CC 뱃지 | 밸런스 시트에 ELEMENT_MATCHUP 문서화, TowerBottomSheet에 CC duration/cooldown/aoe + range 999 "전체 맵" 뱃지 | 스펙 단일 진실 원천 유지, UI 가시성 개선 (#105, #103) |
 | 2026-04-11 | 에너지 시스템 오버홀 | INITIAL_ENERGY 10→40, 킬 보상(ENERGY_PER_KILL/ENERGY_PER_BOSS_KILL) 제거, ENERGY_PER_WAVE_CLEAR=5 신설, 마지막 보스 웨이브 리젠+클리어 보상 비활성화 | 에너지 관리 단순화, 전략적 초기 배치 강화 |
 | 2026-04-11 | 웨이브 30초 타이머 | MAX_WAVE_DURATION_MS=30000, 만료 시 잔존 몬스터 유지+다음 웨이브 즉시 스폰, 마지막 웨이브 면제 | 세션 길이 보장, 거북한 플레이 방지 |
-| 2026-04-11 | 웨이브 패턴 재구성 | wave 5: pre_boss (중간 보스 경고), wave 9: normal (최종 러시, pre_boss 아님), wave 10: boss (최종 보스). STAGE_WAVES 단일 원천, 레거시 배열 제거 | 보스 경고 타이밍 명확화 |
+| 2026-04-11 | 웨이브 패턴 재구성 | pre_boss 완전 제거. WaveSlotKind = 'normal' \| 'boss'. wave 1~9: normal, wave 10: boss. STAGE_WAVES 단일 원천, 레거시 배열 제거 | 보스 경고 타이밍 단순화 |
 | 2026-04-11 | 보스 판정 로직 변경 | isBoss = wave.kind === 'boss' \|\| unitDef.bossBehaviorId. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용 | 하드코딩 titan 제거, 다양한 보스 지원 |
+| 2026-04-11 | titan→dragon rename | 일반 유닛 ID titan을 dragon으로 전면 변경 | 최종보스 전용 예약 → 일반 비행 유닛으로 재정의 |
+| 2026-04-11 | W2/W3 유닛 추가 | flame_imp, lava_golem (W2), arcane_mage, mana_shield (W3) | 월드별 고유 적 조합 |
+| 2026-04-11 | 월드별 보스 3종 추가 | orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | bossBehaviorId 기반 보스 AI |
 
 ---
 

@@ -99,6 +99,7 @@ export const UNITS: UnitDef[] = [
 		bounty: 300,
 		isPremium: false,
 		bossBehaviorId: 'orc_warlord',
+		bossCcResist: 0.5,
 	},
 	{
 		id: 'forge_master',
@@ -109,6 +110,7 @@ export const UNITS: UnitDef[] = [
 		bounty: 500,
 		isPremium: false,
 		bossBehaviorId: 'forge_master',
+		bossCcResist: 0.7,
 	},
 	{
 		id: 'corrupted_archmage',
@@ -119,5 +121,6 @@ export const UNITS: UnitDef[] = [
 		bounty: 800,
 		isPremium: false,
 		bossBehaviorId: 'corrupted_archmage',
+		bossCcResist: 1.0,
 	},
 ];

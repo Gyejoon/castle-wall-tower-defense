@@ -117,6 +117,13 @@ export interface GameEventMap {
 	'request-start-game-from-stage': { mapId: string };
 	'request-deck-edit': undefined;
 
+	// Gimmick VFX
+	'furnace-cycle': { active: boolean; tiles: Array<{ x: number; y: number }> };
+	'arcane-burst': {
+		area: { startX: number; startY: number; endX: number; endY: number };
+		stunMs: number;
+	};
+
 	// Internal
 	'current-scene-ready': Phaser.Scene;
 }

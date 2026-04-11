@@ -232,6 +232,17 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | heavy_walker | 12 | 15.0 | 10.4 |
 | dragon | 25 | 15.0 | 0.8 (min1) |
 
+### 보스 CC 저항 (Boss CC Resistance)
+
+| 보스 | bossCcResist | 효과 | 밸런스 근거 |
+|------|-------------|------|-----------|
+| orc_warlord (W1) | 0.5 | stun/slow 50% 확률 무효 | 첫 보스, CC 학습 허용 |
+| forge_master (W2) | 0.7 | stun/slow 70% 확률 무효 | 용광로 기믹과 CC 중첩 방지 |
+| corrupted_archmage (W3) | 1.0 | CC 완전 면역 | isCcImmune()과 일관 |
+
+> ★2/★3 스타 등급의 CC 저항(20%/40%)과 합산된다.
+> 예: forge_master ★2 = 0.7 + 0.2 = 0.9 (90% CC 저항)
+
 ---
 
 ## 8. 적 스케일링

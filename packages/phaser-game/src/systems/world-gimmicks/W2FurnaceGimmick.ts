@@ -21,6 +21,7 @@ export class W2FurnaceGimmick implements WorldGimmick {
 	readonly id = 'w2_furnace';
 	private furnaceTiles: Position[] = [];
 	private cycleStartMs = 0;
+	private lastCycleActive: boolean | null = null;
 
 	constructor(private readonly ctx: GimmickContext) {}
 
@@ -35,7 +36,31 @@ export class W2FurnaceGimmick implements WorldGimmick {
 	onWaveStart(_waveIndex: number): void {}
 
 	onTick(_deltaMs: number): void {
-		// cycle state is computed on demand
+		if (this.furnaceTiles.length === 0) return;
+		const cfg = CYCLE_BY_STAR[this.ctx.star];
+		const elapsed = this.ctx.getSceneTimeMs() - this.cycleStartMs;
+		if (elapsed < 0) return;
+		const period = cfg.offMs + cfg.onMs;
+		const phase = elapsed % period;
+		const isActive = phase >= cfg.offMs;
+
+		if (isActive !== this.lastCycleActive) {
+			this.lastCycleActive = isActive;
+			const tiles = [...this.furnaceTiles];
+			if (isActive && cfg.expand) {
+				for (const tile of this.furnaceTiles) {
+					for (const [dx, dy] of [
+						[-1, 0],
+						[1, 0],
+						[0, -1],
+						[0, 1],
+					] as const) {
+						tiles.push({ x: tile.x + dx, y: tile.y + dy });
+					}
+				}
+			}
+			this.ctx.eventBus.emit('furnace-cycle', { active: isActive, tiles });
+		}
 	}
 
 	isTowerActive(tower: TowerInstance): boolean {
@@ -66,9 +91,11 @@ export class W2FurnaceGimmick implements WorldGimmick {
 
 		for (const tile of this.furnaceTiles) {
 			if (tile.x === pos.x && tile.y === pos.y) return true;
-			const dx = Math.abs(tile.x - pos.x);
-			const dy = Math.abs(tile.y - pos.y);
-			if (dx + dy === 1) return true; // Manhattan distance 1 = 4-way neighbor
+			if (cfg.expand) {
+				const dx = Math.abs(tile.x - pos.x);
+				const dy = Math.abs(tile.y - pos.y);
+				if (dx + dy === 1) return true; // Manhattan distance 1 = 4-way neighbor
+			}
 		}
 		return false;
 	}

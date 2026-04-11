@@ -178,6 +178,15 @@ export class GameScene extends Phaser.Scene {
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
 	private worldGimmick: WorldGimmick | null = null;
+	private furnaceTintOverlays: Phaser.GameObjects.Rectangle[] = [];
+	private onFurnaceCycle!: (data: {
+		active: boolean;
+		tiles: Array<{ x: number; y: number }>;
+	}) => void;
+	private onArcaneBurst!: (data: {
+		area: { startX: number; startY: number; endX: number; endY: number };
+		stunMs: number;
+	}) => void;
 	private bossBehaviors = new Map<string, BossBehavior>(); // key = unit instanceId
 
 	constructor() {
@@ -405,7 +414,17 @@ export class GameScene extends Phaser.Scene {
 		};
 
 		this.onPlaceTowerAt = (data) => {
-			if (!this.isSceneAlive() || this.gameOver) return;
+			if (!this.isSceneAlive()) return;
+			if (this.gameOver) {
+				EventBus.emit('tower-placed', {
+					col: -1,
+					row: -1,
+					towerId: data.towerDefId,
+					success: false,
+					reason: 'scene_unavailable',
+				});
+				return;
+			}
 			const canvas = this.game.canvas;
 			const rect = canvas.getBoundingClientRect();
 			const scaleX = canvas.width / rect.width;
@@ -416,6 +435,70 @@ export class GameScene extends Phaser.Scene {
 			this.handlePlaceTower(gridPos.x, gridPos.y, data.towerDefId);
 		};
 		this.onDragDrop = this.onPlaceTowerAt;
+
+		this.onFurnaceCycle = ({ active, tiles }) => {
+			if (!this.isSceneAlive()) return;
+
+			if (!active) {
+				// OFF transition: fadeOut 300ms then destroy
+				for (const overlay of this.furnaceTintOverlays) {
+					this.tweens.add({
+						targets: overlay,
+						alpha: 0,
+						duration: 300,
+						ease: 'Quad.easeIn',
+						onComplete: () => overlay.destroy(),
+					});
+				}
+				this.furnaceTintOverlays = [];
+				return;
+			}
+
+			// Clear any leftover overlays before creating new ones
+			for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+			this.furnaceTintOverlays = [];
+
+			for (const tile of tiles) {
+				const world = this.playerGrid.gridToWorld(tile.x, tile.y);
+				const size = this.playerGrid.orthoTile;
+				const rect = this.add.rectangle(
+					world.x,
+					world.y,
+					size,
+					size,
+					0xcc6600,
+					0.3,
+				);
+				rect.setDepth(0.5);
+				this.furnaceTintOverlays.push(rect);
+				this.tweens.add({
+					targets: rect,
+					alpha: { from: 0, to: 0.3 },
+					duration: 200,
+					ease: 'Quad.easeOut',
+				});
+			}
+		};
+
+		this.onArcaneBurst = ({ area, stunMs: _stunMs }) => {
+			if (!this.isSceneAlive()) return;
+			const topLeft = this.playerGrid.gridToWorld(area.startX, area.startY);
+			const bottomRight = this.playerGrid.gridToWorld(area.endX, area.endY);
+			const tileSize = this.playerGrid.orthoTile;
+			const cx = (topLeft.x + bottomRight.x) / 2;
+			const cy = (topLeft.y + bottomRight.y) / 2;
+			const w = bottomRight.x - topLeft.x + tileSize;
+			const h = bottomRight.y - topLeft.y + tileSize;
+			const flash = this.add.rectangle(cx, cy, w, h, 0x8040c0, 0.4);
+			flash.setDepth(0.9);
+			this.tweens.add({
+				targets: flash,
+				alpha: 0,
+				duration: 600,
+				ease: 'Quad.easeOut',
+				onComplete: () => flash.destroy(),
+			});
+		};
 
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
@@ -428,6 +511,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
+		EventBus.on('furnace-cycle', this.onFurnaceCycle);
+		EventBus.on('arcane-burst', this.onArcaneBurst);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -733,6 +818,10 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		EventBus.off('furnace-cycle', this.onFurnaceCycle);
+		EventBus.off('arcane-burst', this.onArcaneBurst);
+		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+		this.furnaceTintOverlays = [];
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
@@ -1039,11 +1128,16 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		EventBus.off('furnace-cycle', this.onFurnaceCycle);
+		EventBus.off('arcane-burst', this.onArcaneBurst);
 		this.game.registry.events.off(
 			'changedata-showDamageNumbers',
 			this.onDmgNumbersChange,
 		);
 		soundGenerator.reset();
+
+		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+		this.furnaceTintOverlays = [];
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;

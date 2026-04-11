@@ -346,6 +346,18 @@ export class TowerSystem {
 			}
 		}
 
+		// Update disabled tint for all towers
+		for (const tower of this.towers.values()) {
+			const isDisabled =
+				(tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) ||
+				(this.worldGimmick !== null && !this.worldGimmick.isTowerActive(tower));
+			if (isDisabled && tower.sprite.tintTopLeft !== 0x666666) {
+				tower.sprite.setTint(0x666666);
+			} else if (!isDisabled && tower.sprite.tintTopLeft === 0x666666) {
+				tower.sprite.clearTint();
+			}
+		}
+
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
 			if (def.stats.attackSpeed <= 0) continue;

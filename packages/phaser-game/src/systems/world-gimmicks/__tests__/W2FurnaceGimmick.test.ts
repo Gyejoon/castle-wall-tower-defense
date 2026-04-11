@@ -103,6 +103,31 @@ describe('W2FurnaceGimmick', () => {
 		expect(g.isFurnaceTileActiveAt({ x: 1, y: 1 })).toBe(false);
 	});
 
+	it('★1: does NOT expand to neighbors during ON phase (expand=false)', () => {
+		const ctx = makeCtx(1, [{ x: 3, y: 3 }]);
+		const g = new W2FurnaceGimmick(ctx);
+		g.init();
+		g.onBattleStart();
+
+		ctx._now.value = 12_000; // ON (★1 cycle)
+		expect(g.isFurnaceTileActiveAt({ x: 3, y: 3 })).toBe(true); // center
+		expect(g.isFurnaceTileActiveAt({ x: 2, y: 3 })).toBe(false); // left — no expand
+		expect(g.isFurnaceTileActiveAt({ x: 4, y: 3 })).toBe(false); // right
+		expect(g.isFurnaceTileActiveAt({ x: 3, y: 2 })).toBe(false); // up
+		expect(g.isFurnaceTileActiveAt({ x: 3, y: 4 })).toBe(false); // down
+	});
+
+	it('★2: does NOT expand to neighbors during ON phase (expand=false)', () => {
+		const ctx = makeCtx(2, [{ x: 3, y: 3 }]);
+		const g = new W2FurnaceGimmick(ctx);
+		g.init();
+		g.onBattleStart();
+
+		ctx._now.value = 10_000; // ON (★2 cycle)
+		expect(g.isFurnaceTileActiveAt({ x: 3, y: 3 })).toBe(true); // center
+		expect(g.isFurnaceTileActiveAt({ x: 2, y: 3 })).toBe(false); // left — no expand
+	});
+
 	it('★3: expands to 4 cardinal neighbors during ON phase', () => {
 		const ctx = makeCtx(3, [{ x: 3, y: 3 }]);
 		const g = new W2FurnaceGimmick(ctx);

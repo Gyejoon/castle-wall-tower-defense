@@ -118,7 +118,10 @@ export class W3ArcaneGimmick implements WorldGimmick {
 			}
 		}
 
-		// TODO: emit arcane_burst VFX event once GameEventMap is extended
+		this.ctx.eventBus.emit('arcane-burst', {
+			area: { startX, startY, endX, endY },
+			stunMs: this.cfg.stunMs,
+		});
 	}
 }
 

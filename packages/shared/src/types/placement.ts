@@ -4,4 +4,5 @@ export type PlacementFailureReason =
 	| 'occupied'
 	| 'gimmick_blocked'
 	| 'blocked_path'
-	| 'out_of_bounds';
+	| 'out_of_bounds'
+	| 'scene_unavailable';

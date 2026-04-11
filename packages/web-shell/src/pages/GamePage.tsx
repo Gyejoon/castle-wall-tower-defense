@@ -147,7 +147,26 @@ export function GamePage() {
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
-			<div className="flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+				{!gameReady && (
+					<div
+						className="absolute inset-0 z-[5] flex flex-col items-center justify-center"
+						style={{ background: 'var(--color-bg, #1a1208)' }}
+					>
+						<div
+							className="font-pixel text-[15px] text-accent"
+							style={{ letterSpacing: '0.16em' }}
+						>
+							&gt;_ 전투 개시
+						</div>
+						<div
+							className="font-pixel text-[10px] text-text-secondary mt-2 matchmaking-dots"
+							style={{ letterSpacing: '0.1em' }}
+						>
+							그리드 초기화 중
+						</div>
+					</div>
+				)}
 				<TopHud
 					lives={lives}
 					energy={energy}
@@ -191,25 +210,7 @@ export function GamePage() {
 						</div>
 					)}
 
-					{!gameReady && (
-						<div
-							className="absolute inset-0 z-[2] flex flex-col items-center pt-[40%]"
-							style={{ background: 'rgba(26, 18, 8, 0.76)' }}
-						>
-							<div
-								className="font-pixel text-[15px] text-accent"
-								style={{ letterSpacing: '0.16em' }}
-							>
-								&gt;_ 전투 개시
-							</div>
-							<div
-								className="font-pixel text-[10px] text-text-secondary mt-2 matchmaking-dots"
-								style={{ letterSpacing: '0.1em' }}
-							>
-								그리드 초기화 중
-							</div>
-						</div>
-					)}
+					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
 
@@ -289,10 +290,10 @@ export function GamePage() {
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
 							stageName={
-							currentStageDef
-								? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
-								: null
-						}
+								currentStageDef
+									? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
+									: null
+							}
 							onRestart={resetRun}
 							onLobby={enterLobby}
 							onNextStage={

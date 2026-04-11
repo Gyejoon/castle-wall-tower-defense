@@ -286,7 +286,12 @@ export class UnitSystem {
 			maxHp: finalHp,
 			baseSpeed: scaled.speed * entry.waveSpeedMult,
 			baseArmor: scaled.armor * entry.armorMult,
-			ccImmunityChance: Math.min(1, scaled.ccImmunityChance + entry.ccResist),
+			ccImmunityChance: Math.min(
+				1,
+				scaled.ccImmunityChance +
+					entry.ccResist +
+					(entry.def.bossCcResist ?? 0),
+			),
 			waveSlot: entry.waveSlot,
 			shadow,
 			pathProgress: 0,

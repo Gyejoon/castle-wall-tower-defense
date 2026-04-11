@@ -76,8 +76,8 @@ function drawEpicAura(ctx: SKRSContext2D, g: GradeContext): void {
   drawUniqueCrystal(ctx, g);
   // Golden aura around tower body
   const midY = g.topY + Math.round(g.height * 0.5);
-  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.9), PALETTE.gold, 0.35);
-  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.6), '#fde68a', 0.3);
+  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.45), PALETTE.gold, 0.20);
+  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.30), '#fde68a', 0.15);
   // Gold trim at base
   const baseHw = Math.round(g.width * 0.6);
   drawRect(ctx, g.cx - baseHw, g.topY + g.height - 4, baseHw * 2, 2, PALETTE.gold);

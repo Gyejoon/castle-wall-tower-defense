@@ -101,6 +101,7 @@ export {
 } from './constants/stageInfo';
 export {
 	DEFAULT_STAGE_ID,
+	getNextStageId,
 	getStageById,
 	getStagesByWorld,
 	STAGE_ORDER,

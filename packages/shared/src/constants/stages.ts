@@ -275,4 +275,10 @@ export function getStagesByWorld(worldId: WorldId): StageDef[] {
 	);
 }
 
+export function getNextStageId(currentStageId: string): string | null {
+	const idx = STAGE_ORDER.indexOf(currentStageId);
+	if (idx === -1 || idx >= STAGE_ORDER.length - 1) return null;
+	return STAGE_ORDER[idx + 1];
+}
+
 export const DEFAULT_STAGE_ID = 'w1_s1';

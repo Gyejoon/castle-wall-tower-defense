@@ -13,6 +13,7 @@ interface GameOverScreenProps {
 		selectedStar?: 1 | 2 | 3;
 		starCleared?: boolean;
 	} | null;
+	stageName?: string | null;
 	onRestart: () => void;
 	onLobby: () => void;
 	onNextStage?: () => void;
@@ -21,6 +22,7 @@ interface GameOverScreenProps {
 export function GameOverScreen({
 	runStatus,
 	gameOverStats,
+	stageName,
 	onRestart,
 	onLobby,
 	onNextStage,
@@ -57,6 +59,11 @@ export function GameOverScreen({
 					>
 						{runStatus === 'victory' ? '⚔ 방어 성공 ⚔' : '✕ 방어 실패 ✕'}
 					</span>
+					{stageName && (
+						<span className="font-pixel text-[10px] text-accent">
+							{stageName}
+						</span>
+					)}
 					<span className="font-pixel text-[11px] text-text-secondary">
 						{runStatus === 'defeat'
 							? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`

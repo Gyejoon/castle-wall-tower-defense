@@ -1,6 +1,6 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
 import {
-	getNextMapInWorld,
+	getNextStageId,
 	getStageById,
 	getTotalWavesForStage,
 } from '@gld/shared';
@@ -98,17 +98,24 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
-	const nextMapId = useMemo(
-		() => getNextMapInWorld(selectedMapId),
-		[selectedMapId],
+	const nextStageId = useMemo(
+		() => getNextStageId(selectedStageId),
+		[selectedStageId],
+	);
+
+	const currentStageDef = useMemo(
+		() => {
+			try { return getStageById(selectedStageId); } catch { return null; }
+		},
+		[selectedStageId],
 	);
 
 	const handleNextStage = useCallback(() => {
-		if (!nextMapId) return;
+		if (!nextStageId) return;
 		const store = useGameStore.getState();
-		store.setSelectedMapId(nextMapId);
+		store.setSelectedStageId(nextStageId);
 		store.resetRun();
-	}, [nextMapId]);
+	}, [nextStageId]);
 
 	const handleExitRequest = useCallback(() => {
 		if (runStatus !== 'running') return;
@@ -279,10 +286,11 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
+							stageName={currentStageDef?.name ?? null}
 							onRestart={resetRun}
 							onLobby={enterLobby}
 							onNextStage={
-								runStatus === 'victory' && nextMapId
+								runStatus === 'victory' && nextStageId
 									? handleNextStage
 									: undefined
 							}

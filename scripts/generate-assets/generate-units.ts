@@ -515,7 +515,6 @@ const REDESIGNED_UNIT_MODULES: Record<string, UnitDrawModule> = {
   battle_robot: orcVeteran,
   heavy_walker: stoneTroll,
   stealth_drone: shadowAssassin,
-  titan: goblinScavenger,
   flame_imp: goblinScavenger,
   lava_golem: stoneTroll,
   arcane_mage: goblinScavenger,
@@ -631,7 +630,14 @@ export async function generate(): Promise<ManifestEntry[]> {
       'titan',
     );
     saveCanvas(canvas, `${OUTPUT_DIR}/titan.png`);
-    // manifest entry for unit-titan is already emitted by the module loop above
+    entries.push({
+      key: 'unit-titan',
+      type: 'spritesheet',
+      path: 'assets/units/titan.png',
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
+      frameCount: FRAME_COUNT,
+    });
   }
 
   assertRequiredOutputs();

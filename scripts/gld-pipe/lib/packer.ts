@@ -52,6 +52,9 @@ function tryPack(
   let cursorX = 0;
 
   for (const rect of rects) {
+    // Reject rects that exceed atlas bounds entirely
+    if (rect.w + padding > maxW || rect.h + padding > maxH) return null;
+
     const pw = rect.w + padding;
     const ph = rect.h + padding;
 

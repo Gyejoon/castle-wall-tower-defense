@@ -73,6 +73,11 @@ export async function runPack(options: { dryRun?: boolean; sections?: string[] }
       }
     }
 
+    if (rects.length < 2) {
+      console.log(`    Only ${rects.length} readable — skipping`);
+      continue;
+    }
+
     // Pack
     try {
       const result = shelfPack(rects);

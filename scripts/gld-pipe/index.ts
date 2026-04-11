@@ -24,7 +24,9 @@ function getFlag(name: string): boolean {
 function getOption(name: string): string | undefined {
   const idx = args.indexOf(`--${name}`);
   if (idx === -1 || idx + 1 >= args.length) return undefined;
-  return args[idx + 1];
+  const val = args[idx + 1];
+  if (val.startsWith('--')) return undefined; // Avoid treating another flag as a value
+  return val;
 }
 
 function getListOption(name: string): string[] | undefined {

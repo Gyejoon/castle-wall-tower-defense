@@ -17,7 +17,7 @@ export async function runConvert(options: {
   force?: boolean;
   dryRun?: boolean;
 }): Promise<void> {
-  const quality = options.quality ?? 90;
+  const quality = Math.max(0, Math.min(100, options.quality ?? 90));
 
   console.log(`\n🔄 gld-pipe convert (WebP, quality=${quality})\n`);
 

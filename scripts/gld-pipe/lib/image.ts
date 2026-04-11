@@ -13,9 +13,7 @@ export interface ImageData {
 }
 
 export async function readImage(path: string): Promise<ImageData> {
-  const img = sharp(path);
-  const meta = await img.metadata();
-  const { data, info } = await img.raw().ensureAlpha().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(path).raw().ensureAlpha().toBuffer({ resolveWithObject: true });
   return {
     width: info.width,
     height: info.height,

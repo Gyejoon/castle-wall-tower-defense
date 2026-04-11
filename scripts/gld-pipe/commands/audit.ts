@@ -157,7 +157,9 @@ function checkUnused(): AuditIssue[] {
 
   // Check each manifest key
   for (const entry of manifest.assets) {
-    if (!allSource.includes(entry.key)) {
+    // Use word-boundary matching to avoid partial key matches
+    const keyPattern = new RegExp(`['"\`]${entry.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`);
+    if (!keyPattern.test(allSource)) {
       issues.push({
         level: 'info',
         check: 'UNUSED',

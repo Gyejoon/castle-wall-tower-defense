@@ -162,6 +162,7 @@ export class GameScene extends Phaser.Scene {
 		totalWaves: number;
 		slotIndex: number;
 		delaySec: number;
+		cleared: boolean;
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
@@ -358,10 +359,14 @@ export class GameScene extends Phaser.Scene {
 			this.showBossWarningOverlay();
 		};
 
-		this.onWaveCompleted = (data: { wave: number; totalWaves: number }) => {
+		this.onWaveCompleted = (data: {
+			wave: number;
+			totalWaves: number;
+			cleared: boolean;
+		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			if (data.wave < data.totalWaves) {
+			if (data.cleared && data.wave < data.totalWaves) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
 		};

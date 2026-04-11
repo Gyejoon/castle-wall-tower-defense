@@ -118,12 +118,13 @@ export class WaveSystem {
 				(this.hasSpawnedCurrentWave && activeUnitCount === 0) ||
 				timerExpired
 			) {
-				// Emit wave completed (rewards apply even on timer expiry)
+				const cleared = !timerExpired;
 				EventBus.emit('wave-completed', {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
 					slotIndex: currentWave.slotIndex,
 					delaySec: timerExpired ? 0 : currentWave.delayAfterClearSec,
+					cleared,
 				});
 
 				// Check if this was the last wave
@@ -132,18 +133,6 @@ export class WaveSystem {
 						this.phase = 'ended';
 					}
 					return;
-				}
-
-				// Emit boss warning when pre_boss wave is cleared
-				if (currentWave.kind === 'pre_boss') {
-					const nextWave = this.waves[this.currentWaveIndex + 1];
-					if (nextWave) {
-						EventBus.emit('boss-warning', {
-							slotIndex: currentWave.slotIndex,
-							bossSlotIndex: nextWave.slotIndex,
-							startAtSec: Math.round(this.elapsedMs / 1000),
-						});
-					}
 				}
 
 				// Timer expired → advance immediately; natural clear → wait
@@ -215,7 +204,18 @@ export class WaveSystem {
 		this.waveStartMs = this.elapsedMs;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
-		// Emit boss warning if no pre_boss wave already emitted it
+		// Emit boss warning when pre_boss wave STARTS (upcoming boss)
+		if (wave.kind === 'pre_boss') {
+			const nextWave = this.waves[this.currentWaveIndex + 1];
+			if (nextWave) {
+				EventBus.emit('boss-warning', {
+					slotIndex: wave.slotIndex,
+					bossSlotIndex: nextWave.slotIndex,
+					startAtSec: Math.round(this.elapsedMs / 1000),
+				});
+			}
+		}
+		// Emit boss warning for boss wave if no pre_boss preceded it
 		const prevWave =
 			this.currentWaveIndex > 0
 				? this.waves[this.currentWaveIndex - 1]

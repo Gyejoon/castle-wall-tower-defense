@@ -3,6 +3,7 @@ import {
 	getNextStageId,
 	getStageById,
 	getTotalWavesForStage,
+	WORLD_ORDER,
 } from '@gld/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
@@ -287,7 +288,11 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
-							stageName={currentStageDef?.name ?? null}
+							stageName={
+							currentStageDef
+								? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
+								: null
+						}
 							onRestart={resetRun}
 							onLobby={enterLobby}
 							onNextStage={

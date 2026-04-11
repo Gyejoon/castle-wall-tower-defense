@@ -55,6 +55,7 @@ export interface GameEventMap {
 		totalWaves: number;
 		slotIndex: number;
 		delaySec: number;
+		cleared: boolean;
 	};
 	'boss-warning': {
 		slotIndex: number;

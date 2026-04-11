@@ -1,5 +1,6 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	MAX_WAVE_DURATION_MS,
 	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
@@ -30,6 +31,7 @@ export class WaveSystem {
 	private waitTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
+	private waveStartMs = 0;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -79,25 +81,37 @@ export class WaveSystem {
 		this.elapsedMs += clampedDelta;
 
 		if (this.phase === 'combat' || this.phase === 'boss') {
-			// Wait for all units to be cleared (killed or leaked)
-			if (this.hasSpawnedCurrentWave && activeUnitCount === 0) {
-				const currentWave = this.getCurrentWaveDef();
-				if (!currentWave) {
-					this.phase = 'ended';
-					return;
-				}
+			const currentWave = this.getCurrentWaveDef();
+			if (!currentWave) {
+				this.phase = 'ended';
+				return;
+			}
 
-				// Emit wave completed
+			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS (skip on last wave)
+			const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+			const timerExpired =
+				!isLastWave &&
+				this.hasSpawnedCurrentWave &&
+				this.elapsedMs - this.waveStartMs > MAX_WAVE_DURATION_MS;
+
+			// Wave cleared naturally or timer expired
+			if (
+				(this.hasSpawnedCurrentWave && activeUnitCount === 0) ||
+				timerExpired
+			) {
+				// Emit wave completed (rewards apply even on timer expiry)
 				EventBus.emit('wave-completed', {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
 					slotIndex: currentWave.slotIndex,
-					delaySec: currentWave.delayAfterClearSec,
+					delaySec: timerExpired ? 0 : currentWave.delayAfterClearSec,
 				});
 
 				// Check if this was the last wave
-				if (this.currentWaveIndex >= this.maxWaves - 1) {
-					this.phase = 'ended';
+				if (isLastWave) {
+					if (activeUnitCount === 0) {
+						this.phase = 'ended';
+					}
 					return;
 				}
 
@@ -113,9 +127,13 @@ export class WaveSystem {
 					}
 				}
 
-				// Transition to waiting
-				this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
-				this.phase = 'waiting';
+				// Timer expired → advance immediately; natural clear → wait
+				if (timerExpired) {
+					this.advanceToNextWave();
+				} else {
+					this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
+					this.phase = 'waiting';
+				}
 			}
 		} else if (this.phase === 'waiting') {
 			this.waitTimerMs -= clampedDelta;
@@ -171,6 +189,7 @@ export class WaveSystem {
 		}
 
 		this.hasSpawnedCurrentWave = false;
+		this.waveStartMs = this.elapsedMs;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
 		// Emit boss warning if no pre_boss wave already emitted it
@@ -190,10 +209,11 @@ export class WaveSystem {
 		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
 		const waveHpMult = waveScale?.hp ?? 1;
 		const waveSpeedMult = waveScale?.speed ?? 1;
+		const isLastWaveSlot = this.currentWaveIndex >= this.maxWaves - 1;
 		for (const group of wave.groups) {
-			const isBoss = group.unitId === 'titan';
+			const isBoss = group.unitId === 'titan' || wave.kind === 'boss';
 			const hpMultiplier =
-				(isBoss && wave.slotIndex === 10 ? FINAL_BOSS_HP_MULTIPLIER : 1) *
+				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
 				this.difficultyHpMult;
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',

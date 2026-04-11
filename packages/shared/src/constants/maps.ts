@@ -398,6 +398,14 @@ export function getSpawnExitPairs(
 		}));
 }
 
+/** Returns the next map in the world after the given mapId, or null if last. */
+export function getNextMapInWorld(currentMapId: string): string | null {
+	const keys = Object.keys(MAP_REGISTRY);
+	const idx = keys.indexOf(currentMapId);
+	if (idx === -1 || idx >= keys.length - 1) return null;
+	return keys[idx + 1];
+}
+
 /** Returns all path cells across all lanes (deduplicated). */
 export function getAllPathCells(map: MapLayout): Position[] {
 	const paths = getMapPaths(map);

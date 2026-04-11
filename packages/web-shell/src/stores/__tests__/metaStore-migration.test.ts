@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v4
+// Migration tests for metaStore v1→v5
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
 import {
@@ -9,7 +9,7 @@ import {
 	SAVE_VERSION,
 } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseSave, sanitizeV4Save } from '../meta/persistence';
+import { parseSave, sanitizeSave } from '../meta/persistence';
 import { useMetaStore } from '../metaStore';
 
 // localStorage mock helper
@@ -74,7 +74,7 @@ describe('metaStore v1→v4 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
@@ -160,7 +160,7 @@ describe('metaStore v1→v4 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(SAVE_VERSION);
 		// v1에 없던 새 필드가 기본값으로 채워짐
 		expect(s.progress.gachaPityCount).toBe(0);
 		expect(s.progress.lastAttendanceDate).toBeNull();
@@ -237,7 +237,7 @@ describe('metaStore v1→v4 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(4);
+		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.profile.diamond).toBe(50);
 		expect(s.profile.nickname).toBe('V2User');
 		expect(s.progress.gachaPityCount).toBe(12);
@@ -303,7 +303,7 @@ describe('metaStore v1→v4 migration', () => {
 		const result = parseSave();
 
 		expect(result).not.toBeNull();
-		expect(result?.version).toBe(4);
+		expect(result?.version).toBe(SAVE_VERSION);
 		expect(result?.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(result?.collection[0].defId).toBe('archer');
 		expect(result?.collection[1].defId).toBe('twin_archer');
@@ -313,11 +313,11 @@ describe('metaStore v1→v4 migration', () => {
 	});
 });
 
-describe('sanitizeV4Save — v4 필드 누락 방어', () => {
+describe('sanitizeSave — v4 필드 누락 방어', () => {
 	it('achievements 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).achievements;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeSave(save);
 		expect(result.progress.achievements).toEqual({
 			claimed: [],
 			progress: {},
@@ -327,7 +327,7 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 	it('stageStars 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).stageStars;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeSave(save);
 		expect(result.progress.stageStars).toEqual({});
 	});
 
@@ -336,7 +336,7 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 		const tower = save.collection[0] as unknown as Record<string, unknown>;
 		delete tower.awakening;
 		delete tower.duplicateCount;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeSave(save);
 		expect(result.collection[0].awakening).toBe(0);
 		expect(result.collection[0].duplicateCount).toBe(0);
 	});
@@ -344,14 +344,14 @@ describe('sanitizeV4Save — v4 필드 누락 방어', () => {
 	it('combatPower 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.profile as unknown as Record<string, unknown>).combatPower;
-		const result = sanitizeV4Save(save);
+		const result = sanitizeSave(save);
 		expect(result.profile.combatPower).toBe(0);
 	});
 
 	it('collection이 배열이 아니면 기본 컬렉션으로 대체', () => {
 		const save = createDefaultSave();
 		(save as unknown as Record<string, unknown>).collection = 'corrupted';
-		const result = sanitizeV4Save(save);
+		const result = sanitizeSave(save);
 		expect(Array.isArray(result.collection)).toBe(true);
 		expect(result.collection.length).toBeGreaterThan(0);
 	});

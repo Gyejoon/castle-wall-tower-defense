@@ -1,6 +1,6 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
-import { getTotalWavesForMap } from '@gld/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { getNextMapInWorld, getTotalWavesForMap } from '@gld/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
@@ -89,6 +89,18 @@ export function GamePage() {
 		const timeout = window.setTimeout(() => clearToast(), 1800);
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
+
+	const nextMapId = useMemo(
+		() => getNextMapInWorld(selectedMapId),
+		[selectedMapId],
+	);
+
+	const handleNextStage = useCallback(() => {
+		if (!nextMapId) return;
+		const store = useGameStore.getState();
+		store.setSelectedMapId(nextMapId);
+		store.resetRun();
+	}, [nextMapId]);
 
 	const handleExitRequest = useCallback(() => {
 		if (runStatus !== 'running') return;
@@ -255,6 +267,11 @@ export function GamePage() {
 							gameOverStats={gameOverStats}
 							onRestart={resetRun}
 							onLobby={enterLobby}
+							onNextStage={
+								runStatus === 'victory' && nextMapId
+									? handleNextStage
+									: undefined
+							}
 						/>
 					)}
 				</div>

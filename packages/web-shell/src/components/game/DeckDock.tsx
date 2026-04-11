@@ -1,5 +1,6 @@
 import { EventBus } from '@gld/phaser-game';
 import { ALL_TOWERS, type DeckCardDef } from '@gld/shared';
+import { useCallback, useRef } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
@@ -11,6 +12,14 @@ export function DeckDock() {
 	const selectedCardIndex = useGameStore((s) => s.selectedCardIndex);
 	const energy = useGameStore((s) => s.energy);
 	const setSelectedCardIndex = useGameStore((s) => s.setSelectedCardIndex);
+	const touchDragRef = useRef<{
+		towerDefId: string;
+		index: number;
+		startX: number;
+		startY: number;
+		active: boolean;
+		timer: ReturnType<typeof setTimeout> | null;
+	} | null>(null);
 
 	const handleCardTap = (index: number, card: DeckCardDef) => {
 		if (selectedCardIndex === index) {
@@ -21,6 +30,67 @@ export function DeckDock() {
 			EventBus.emit('request-select-tower', { towerDefId: card.towerDefId });
 		}
 	};
+
+	const handleDragStart = useCallback(
+		(e: React.DragEvent, card: DeckCardDef, index: number) => {
+			e.dataTransfer.setData('towerDefId', card.towerDefId);
+			e.dataTransfer.effectAllowed = 'move';
+			setSelectedCardIndex(index);
+			EventBus.emit('request-select-tower', { towerDefId: card.towerDefId });
+		},
+		[setSelectedCardIndex],
+	);
+
+	const handleTouchStart = useCallback(
+		(e: React.TouchEvent, card: DeckCardDef, index: number) => {
+			const touch = e.touches[0];
+			const timer = setTimeout(() => {
+				if (touchDragRef.current) {
+					touchDragRef.current.active = true;
+					setSelectedCardIndex(index);
+					EventBus.emit('request-select-tower', {
+						towerDefId: card.towerDefId,
+					});
+				}
+			}, 300);
+			touchDragRef.current = {
+				towerDefId: card.towerDefId,
+				index,
+				startX: touch.clientX,
+				startY: touch.clientY,
+				active: false,
+				timer,
+			};
+		},
+		[setSelectedCardIndex],
+	);
+
+	const handleTouchMove = useCallback((e: React.TouchEvent) => {
+		const drag = touchDragRef.current;
+		if (!drag?.active) return;
+		e.preventDefault();
+		const touch = e.touches[0];
+		EventBus.emit('drag-hover', {
+			clientX: touch.clientX,
+			clientY: touch.clientY,
+		});
+	}, []);
+
+	const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+		const drag = touchDragRef.current;
+		if (drag?.timer) clearTimeout(drag.timer);
+		if (!drag?.active) {
+			touchDragRef.current = null;
+			return;
+		}
+		const touch = e.changedTouches[0];
+		EventBus.emit('drag-drop', {
+			towerDefId: drag.towerDefId,
+			clientX: touch.clientX,
+			clientY: touch.clientY,
+		});
+		touchDragRef.current = null;
+	}, []);
 
 	return (
 		<div
@@ -38,8 +108,13 @@ export function DeckDock() {
 					<button
 						key={card.towerDefId}
 						type="button"
+						draggable
 						data-testid={`deck-card-${i}`}
 						onClick={() => handleCardTap(i, card)}
+						onDragStart={(e) => handleDragStart(e, card, i)}
+						onTouchStart={(e) => handleTouchStart(e, card, i)}
+						onTouchMove={handleTouchMove}
+						onTouchEnd={handleTouchEnd}
 						className={cn(
 							'flex-1 min-w-0 h-[86px] bg-panel flex flex-col items-center justify-center gap-1 cursor-pointer p-0 border-2 transition-[border-color,box-shadow,opacity] duration-150',
 							isSelected

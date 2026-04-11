@@ -4,13 +4,13 @@ import {
 	checkStarClear,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
-	ENERGY_PER_BOSS_KILL,
-	ENERGY_PER_KILL,
+	ENERGY_PER_WAVE_CLEAR,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
 	getStarDifficultyMult,
+	getTotalWavesForMap,
 	getWavesForMap,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
@@ -115,6 +115,16 @@ export class GameScene extends Phaser.Scene {
 	private onSellTower!: (data: { col: number; row: number }) => void;
 	private onPause!: () => void;
 	private onResume!: () => void;
+	private onPlaceTowerAt!: (data: {
+		towerDefId: string;
+		clientX: number;
+		clientY: number;
+	}) => void;
+	private onDragDrop!: (data: {
+		towerDefId: string;
+		clientX: number;
+		clientY: number;
+	}) => void;
 	private onWaveStartedLifecycle!: (data: {
 		wave: number;
 		totalWaves: number;
@@ -293,6 +303,7 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveCompleted = () => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
+			this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 		};
 
 		this.onSetSpeed = ({ multiplier }) => {
@@ -327,11 +338,26 @@ export class GameScene extends Phaser.Scene {
 			this.scene.resume();
 		};
 
+		this.onPlaceTowerAt = (data) => {
+			if (!this.isSceneAlive() || this.gameOver) return;
+			const canvas = this.game.canvas;
+			const rect = canvas.getBoundingClientRect();
+			const scaleX = canvas.width / rect.width;
+			const scaleY = canvas.height / rect.height;
+			const worldX = data.clientX * scaleX;
+			const worldY = data.clientY * scaleY;
+			const gridPos = this.playerGrid.worldToGrid(worldX, worldY);
+			this.handlePlaceTower(gridPos.x, gridPos.y, data.towerDefId);
+		};
+		this.onDragDrop = this.onPlaceTowerAt;
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('request-sell-tower', this.onSellTower);
 		EventBus.on('request-pause', this.onPause);
 		EventBus.on('request-resume', this.onResume);
+		EventBus.on('request-place-tower-at', this.onPlaceTowerAt);
+		EventBus.on('drag-drop', this.onDragDrop);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
@@ -615,8 +641,10 @@ export class GameScene extends Phaser.Scene {
 				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
 				: false;
 
+		const mapId = this.currentMap.id;
 		EventBus.emit('game-over', {
 			...payload,
+			mapId,
 			selectedStar: this.selectedStar,
 			starCleared,
 			hpRemaining: Math.max(0, this.playerHp),
@@ -625,6 +653,7 @@ export class GameScene extends Phaser.Scene {
 					payload.result === 'victory'
 						? payload.finalSlot
 						: Math.max(0, payload.finalSlot - 1),
+				totalWaves: getTotalWavesForMap(mapId),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
 				goldEarned: this.goldEarned * this.rewardMultiplier,
@@ -728,10 +757,6 @@ export class GameScene extends Phaser.Scene {
 				}
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
-					const energyReward = result.isBoss
-						? ENERGY_PER_BOSS_KILL
-						: ENERGY_PER_KILL;
-					this.energySystem.add(energyReward);
 					onKill();
 				}
 			}
@@ -841,6 +866,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-sell-tower', this.onSellTower);
 		EventBus.off('request-pause', this.onPause);
 		EventBus.off('request-resume', this.onResume);
+		EventBus.off('request-place-tower-at', this.onPlaceTowerAt);
+		EventBus.off('drag-drop', this.onDragDrop);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);

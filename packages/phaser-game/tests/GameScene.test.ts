@@ -64,19 +64,19 @@ describe('GameScene', () => {
 
 	it('energySystem spends energy and updates balance', () => {
 		const scene = createScene();
-		// INITIAL_ENERGY is 10, accumulate energy (delta clamped to 5s)
+		// INITIAL_ENERGY is 40, accumulate energy (delta clamped to 5s)
 		scene.energySystem.update(5);
 		scene.energySystem.update(5);
-		scene.energySystem.update(5); // 10 + 15 = 25 energy total
+		scene.energySystem.update(5); // 40 + 15 = 55 energy total
 		expect(scene.energySystem.canAfford(10)).toBe(true);
 		expect(scene.energySystem.spend(10)).toBe(true);
-		expect(scene.energySystem.getEnergy()).toBe(15); // 25 - 10
+		expect(scene.energySystem.getEnergy()).toBe(45); // 55 - 10
 	});
 
 	it('energySystem rejects spend when insufficient', () => {
 		const scene = createScene();
 		expect(scene.energySystem.spend(100)).toBe(false);
-		expect(scene.energySystem.getEnergy()).toBe(10); // unchanged (INITIAL_ENERGY is 10)
+		expect(scene.energySystem.getEnergy()).toBe(40); // unchanged (INITIAL_ENERGY is 40)
 	});
 
 	it('cleanup unregisters EventBus listeners before destroying systems', () => {
@@ -136,6 +136,7 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
+		scene.currentMap = { id: 'forest_gate' };
 		scene.damageNumbers = {
 			update: vi.fn(),
 			show: vi.fn(),
@@ -170,11 +171,13 @@ describe('GameScene', () => {
 			result: 'victory',
 			reason: 'all_waves_cleared',
 			finalSlot: 20,
+			mapId: 'forest_gate',
 			selectedStar: 1,
 			starCleared: true,
 			hpRemaining: 20,
 			stats: {
 				wavesCleared: 20,
+				totalWaves: 10,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
@@ -188,6 +191,7 @@ describe('GameScene', () => {
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 5 };
+		scene.currentMap = { id: 'forest_gate' };
 		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
 		scene.spawnHut = { setActive: vi.fn(), destroy: vi.fn() };
@@ -225,11 +229,13 @@ describe('GameScene', () => {
 			result: 'defeat',
 			reason: 'base_hp_depleted',
 			finalSlot: 5,
+			mapId: 'forest_gate',
 			selectedStar: 1,
 			starCleared: false,
 			hpRemaining: 0,
 			stats: {
 				wavesCleared: 4, // finalSlot-1
+				totalWaves: 10,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,

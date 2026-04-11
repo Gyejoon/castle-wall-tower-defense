@@ -446,7 +446,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'battle_robot', count: 4 },
 			],
 		},
@@ -493,7 +493,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'battle_robot', count: 3 },
 			],
 		},
@@ -796,7 +796,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'lava_golem', count: 2 },
 			],
 		},
@@ -870,7 +870,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'battle_robot', count: 8 },
 				{ unitId: 'flame_imp', count: 6 },
 			],
@@ -945,7 +945,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'lava_golem', count: 4 },
 			],
 		},
@@ -992,7 +992,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'flame_imp', count: 10 },
 			],
 		},
@@ -1017,7 +1017,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'lava_golem', count: 7 },
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 			],
 		},
 	],
@@ -1063,7 +1063,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'titan', count: 2 },
+				{ unitId: 'heavy_walker', count: 2 },
 				{ unitId: 'flame_imp', count: 4 },
 			],
 		},
@@ -1186,7 +1186,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'arcane_mage', count: 4 },
 			],
 		},
@@ -1263,7 +1263,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'mana_shield', count: 3 },
 			],
 		},
@@ -1328,7 +1328,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'arcane_mage', count: 4 },
 			],
 		},
@@ -1405,7 +1405,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 1 },
 				{ unitId: 'mana_shield', count: 4 },
 			],
 		},
@@ -1481,7 +1481,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			slotIndex: 8,
 			kind: 'normal',
 			delayAfterClearSec: 3,
-			groups: [{ unitId: 'titan', count: 2 }],
+			groups: [{ unitId: 'heavy_walker', count: 2 }],
 		},
 		{
 			slotIndex: 9,
@@ -1553,7 +1553,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 2 },
+				{ unitId: 'heavy_walker', count: 2 },
 				{ unitId: 'mana_shield', count: 5 },
 			],
 		},
@@ -1612,7 +1612,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'titan', count: 2 },
+				{ unitId: 'heavy_walker', count: 2 },
 				{ unitId: 'arcane_mage', count: 6 },
 			],
 		},
@@ -1639,7 +1639,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'titan', count: 2 },
+				{ unitId: 'heavy_walker', count: 2 },
 				{ unitId: 'heavy_walker', count: 10 },
 			],
 		},
@@ -1680,7 +1680,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'titan', count: 3 },
+				{ unitId: 'heavy_walker', count: 3 },
 				{ unitId: 'mana_shield', count: 3 },
 			],
 		},

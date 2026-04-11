@@ -54,9 +54,9 @@ describe('stageInfo', () => {
 		// heavy_walker(25), stealth_drone(18), titan(60)
 		// W1:12×10+30×2=180, W2:45×3=135, W3:30×4+12×6=192, W4:25×4+45×2=190
 		// W5:30×5+18×5=240, W6:45×4+12×8=276, W7:25×5+30×3=215
-		// W8:45×5+30×4=345, W9:60×1+30×4=180 → total=1953, ×3=5859
-		it('storm_citadel returns 5859 gold (×3 multiplier, W3 unit bounties)', () => {
-			expect(getMaxGoldForMap('storm_citadel')).toBe(5859);
+		// titan→heavy_walker 교체로 바운티 변경
+		it('storm_citadel returns correct gold (×3 multiplier, W3 unit bounties)', () => {
+			expect(getMaxGoldForMap('storm_citadel')).toBe(5754);
 		});
 
 		it('returns 0 for unknown map', () => {

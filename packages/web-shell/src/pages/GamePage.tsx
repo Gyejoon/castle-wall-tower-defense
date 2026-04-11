@@ -114,6 +114,7 @@ export function GamePage() {
 		if (!nextStageId) return;
 		const store = useGameStore.getState();
 		store.setSelectedStageId(nextStageId);
+		store.setSelectedStar(1);
 		store.resetRun();
 	}, [nextStageId]);
 

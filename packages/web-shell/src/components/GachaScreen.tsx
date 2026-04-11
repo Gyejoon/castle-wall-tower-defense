@@ -100,7 +100,7 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 			diamond < GACHA_COSTS.diamond_single.diamond);
 
 	return (
-		<div className="fixed inset-0 z-10 bg-overlay-heavy flex flex-col items-center justify-start pt-8 gap-4 p-5 overflow-auto">
+		<div className="fixed inset-0 z-20 bg-overlay-heavy flex flex-col items-center justify-start pt-8 gap-4 p-5 overflow-auto">
 			<h2 className="text-gold font-pixel text-lg">소환의 제단</h2>
 
 			{/* Pity 진행 바 */}

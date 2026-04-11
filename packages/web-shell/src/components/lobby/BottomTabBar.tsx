@@ -65,7 +65,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 									: 'cursor-pointer active:scale-95',
 								isActive
 									? 'border-gold bg-panel'
-									: 'border-transparent bg-transparent -mt-0',
+									: 'border-border/50 bg-panel',
 							)}
 							style={
 								isActive

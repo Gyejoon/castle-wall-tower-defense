@@ -102,96 +102,124 @@ function renderSheetWithGate(
 
 // (Legacy draw functions removed — replaced by modular units in ./units/)
 
-// 고대 드래곤: 큰 몸, 날개, 비늘, 불꽃 오라 — smooth wing flap + fire breath cycle
+// 고대 드래곤: 다크 중세 판타지 드래곤 — DRAGON 팔레트 사용
 function drawAncientDragon(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
   const cx = ox + 20;
-  const bodyCy = 26;
-  // Smooth wing flap (sinusoidal)
-  const wingFlap = Math.round(Math.sin(walkPhase(frame)) * 5);
-  const by = Math.round(Math.sin(walkPhase(frame) * 2) * 1);
+  const by = Math.round(Math.sin(walkPhase(frame) * 2) * 1); // gentle bob
+  const wingFlap = Math.round(Math.sin(walkPhase(frame)) * 4);
   const tailSwing = Math.round(Math.sin(walkPhase(frame) + 1) * 3);
 
-  // Wings (spread) — smooth up/down
-  // Left wing
-  drawLine(ctx, cx - 5, bodyCy - 3 + by, cx - 17, bodyCy - 10 + wingFlap + by, PALETTE.titan);
-  drawLine(ctx, cx - 17, bodyCy - 10 + wingFlap + by, cx - 14, bodyCy - 1 + wingFlap + by, hexToRgba(PALETTE.titan, 0.6));
-  drawLine(ctx, cx - 14, bodyCy - 1 + wingFlap + by, cx - 5, bodyCy + 4 + by, hexToRgba(PALETTE.titan, 0.4));
-  // Wing membrane fill (left)
-  for (let dy = bodyCy - 8 + wingFlap + by; dy < bodyCy + 2 + by; dy++) {
-    const t = (dy - (bodyCy - 8 + wingFlap + by)) / 10;
-    const x0 = Math.round(cx - 5 - t * 12);
-    for (let x = x0; x < cx - 5; x++) {
-      setPixel(ctx, x, dy, hexToRgba(PALETTE.titan, 0.2 + t * 0.15));
+  // --- Tail (behind body) ---
+  drawLine(ctx, cx, 34 + by, cx - 6 + tailSwing, 40 + by, DRAGON.body);
+  drawLine(ctx, cx - 6 + tailSwing, 40 + by, cx - 8 + tailSwing, 42 + by, DRAGON.bodyLight);
+  setPixel(ctx, cx - 8 + tailSwing, 43 + by, DRAGON.fireOrange); // tail tip glow
+
+  // --- Wings (behind body) ---
+  const wingY = 18 + by;
+  // Left wing bone
+  drawLine(ctx, cx - 4, wingY + 2, cx - 14, wingY - 6 + wingFlap, DRAGON.wingBone);
+  drawLine(ctx, cx - 14, wingY - 6 + wingFlap, cx - 16, wingY - 3 + wingFlap, DRAGON.wingBone);
+  // Left wing membrane
+  for (let dy = wingY - 5 + wingFlap; dy < wingY + 5; dy++) {
+    const t = Math.max(0, Math.min(1, (dy - (wingY - 5 + wingFlap)) / 10));
+    const x0 = Math.round(cx - 4 - t * 10);
+    for (let x = x0; x < cx - 4; x++) {
+      setPixel(ctx, x, dy, hexToRgba(DRAGON.wingMem, 0.4 + t * 0.2));
     }
   }
-  // Right wing
-  drawLine(ctx, cx + 5, bodyCy - 3 + by, cx + 17, bodyCy - 10 + wingFlap + by, PALETTE.titan);
-  drawLine(ctx, cx + 17, bodyCy - 10 + wingFlap + by, cx + 14, bodyCy - 1 + wingFlap + by, hexToRgba(PALETTE.titan, 0.6));
-  drawLine(ctx, cx + 14, bodyCy - 1 + wingFlap + by, cx + 5, bodyCy + 4 + by, hexToRgba(PALETTE.titan, 0.4));
-  // Wing membrane fill (right)
-  for (let dy = bodyCy - 8 + wingFlap + by; dy < bodyCy + 2 + by; dy++) {
-    const t = (dy - (bodyCy - 8 + wingFlap + by)) / 10;
-    const x1 = Math.round(cx + 5 + t * 12);
-    for (let x = cx + 5; x < x1; x++) {
-      setPixel(ctx, x, dy, hexToRgba(PALETTE.titan, 0.2 + t * 0.15));
-    }
-  }
-
-  // Body (large, scaled)
-  fillCircle(ctx, cx, bodyCy + by, 9, hexToRgba(PALETTE.titan, 0.72));
-  drawCircle(ctx, cx, bodyCy + by, 9, PALETTE.titan);
-  // Scale pattern — rotating slowly
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 + walkPhase(frame) * 0.1;
-    setPixel(ctx, cx + Math.round(5 * Math.cos(angle)), bodyCy + by + Math.round(5 * Math.sin(angle)), '#e06040');
-  }
-
-  // Head
-  drawRect(ctx, cx - 5, 10 + by, 10, 8, PALETTE.titan);
-  drawRect(ctx, cx - 5, 10 + by, 10, 1, '#e06040');
-  // Horns
-  setPixel(ctx, cx - 4, 8 + by, '#4a3a1e');
-  setPixel(ctx, cx + 4, 8 + by, '#4a3a1e');
-  setPixel(ctx, cx - 5, 7 + by, '#4a3a1e');
-  setPixel(ctx, cx + 5, 7 + by, '#4a3a1e');
-  // Eyes
-  setPixel(ctx, cx - 1, 13 + by, '#ffe040');
-  setPixel(ctx, cx + 1, 13 + by, '#ffe040');
-
-  // Fire aura — pulsing
-  const auraAlpha = 0.15 + Math.sin(walkPhase(frame) * 2) * 0.1;
-  addGlow(ctx, cx, bodyCy + by, 10, PALETTE.fireOrange, auraAlpha);
-
-  // Fire breath particles — cycle through
-  const breathFrame = frame % 4;
-  if (breathFrame >= 1) {
-    const bDist = breathFrame * 3;
-    setPixel(ctx, cx, 7 + by - bDist, PALETTE.fireOrange);
-    setPixel(ctx, cx + 1, 6 + by - bDist, PALETTE.gold);
-    if (breathFrame >= 2) {
-      setPixel(ctx, cx - 1, 8 + by - bDist, hexToRgba(PALETTE.fireRed, 0.6));
+  // Right wing bone
+  drawLine(ctx, cx + 4, wingY + 2, cx + 14, wingY - 6 + wingFlap, DRAGON.wingBone);
+  drawLine(ctx, cx + 14, wingY - 6 + wingFlap, cx + 16, wingY - 3 + wingFlap, DRAGON.wingBone);
+  // Right wing membrane
+  for (let dy = wingY - 5 + wingFlap; dy < wingY + 5; dy++) {
+    const t = Math.max(0, Math.min(1, (dy - (wingY - 5 + wingFlap)) / 10));
+    const x1 = Math.round(cx + 4 + t * 10);
+    for (let x = cx + 4; x < x1; x++) {
+      setPixel(ctx, x, dy, hexToRgba(DRAGON.wingMem, 0.4 + t * 0.2));
     }
   }
 
-  // Legs
-  drawRect(ctx, cx - 5, bodyCy + 8 + by, 4, 7, hexToRgba(PALETTE.titan, 0.8));
-  drawRect(ctx, cx + 2, bodyCy + 8 + by, 4, 7, hexToRgba(PALETTE.titan, 0.8));
+  // --- Body (dark, muscular) ---
+  // Torso
+  drawRect(ctx, cx - 5, 20 + by, 10, 14, DRAGON.body);
+  drawRect(ctx, cx - 4, 22 + by, 8, 10, DRAGON.bodyMid);
+  // Belly stripe (lighter, warm)
+  drawRect(ctx, cx - 2, 24 + by, 4, 8, DRAGON.belly);
+  // Scale highlights
+  for (let i = 0; i < 4; i++) {
+    setPixel(ctx, cx - 3 + i * 2, 23 + by, DRAGON.bodyLight);
+    setPixel(ctx, cx - 2 + i * 2, 27 + by, DRAGON.bodyLight);
+  }
 
-  // Tail — swings
-  drawLine(ctx, cx - 4, bodyCy + 6 + by, cx - 11 + tailSwing, bodyCy + 13 + by, hexToRgba(PALETTE.titan, 0.6));
-  drawLine(ctx, cx - 11 + tailSwing, bodyCy + 13 + by, cx - 13 + tailSwing, bodyCy + 15 + by, hexToRgba(PALETTE.titan, 0.4));
+  // --- Spine ridge ---
+  for (let i = 0; i < 5; i++) {
+    setPixel(ctx, cx, 14 + i * 3 + by, DRAGON.spine);
+    setPixel(ctx, cx, 13 + i * 3 + by, DRAGON.horn);
+  }
+
+  // --- Head ---
+  drawRect(ctx, cx - 5, 10 + by, 10, 8, DRAGON.body);
+  drawRect(ctx, cx - 4, 11 + by, 8, 6, DRAGON.bodyMid);
+  // Snout
+  drawRect(ctx, cx - 3, 9 + by, 6, 3, DRAGON.bodyLight);
+  // Nostrils
+  setPixel(ctx, cx - 1, 9 + by, DRAGON.bodyDeep);
+  setPixel(ctx, cx + 1, 9 + by, DRAGON.bodyDeep);
+  // Horns (curved back)
+  drawLine(ctx, cx - 4, 12 + by, cx - 6, 7 + by, DRAGON.horn);
+  setPixel(ctx, cx - 7, 6 + by, DRAGON.hornTip);
+  drawLine(ctx, cx + 4, 12 + by, cx + 6, 7 + by, DRAGON.horn);
+  setPixel(ctx, cx + 7, 6 + by, DRAGON.hornTip);
+  // Eyes (glowing amber)
+  const eyePulse = 0.8 + Math.sin(walkPhase(frame) * 2) * 0.2;
+  setPixel(ctx, cx - 2, 13 + by, hexToRgba(DRAGON.eyeNorm, eyePulse));
+  setPixel(ctx, cx + 2, 13 + by, hexToRgba(DRAGON.eyeNorm, eyePulse));
+  addGlow(ctx, cx - 2, 13 + by, 2, DRAGON.eyeNorm, 0.3);
+  addGlow(ctx, cx + 2, 13 + by, 2, DRAGON.eyeNorm, 0.3);
+
+  // --- Legs (short, thick) ---
+  const legStep = Math.round(Math.sin(walkPhase(frame)) * 2);
+  drawRect(ctx, cx - 5, 33 + by - legStep, 3, 6, DRAGON.bodyDark);
+  drawRect(ctx, cx + 3, 33 + by + legStep, 3, 6, DRAGON.bodyDark);
+  // Claws
+  setPixel(ctx, cx - 5, 38 + by - legStep, DRAGON.claw);
+  setPixel(ctx, cx - 4, 39 + by - legStep, DRAGON.claw);
+  setPixel(ctx, cx + 3, 38 + by + legStep, DRAGON.claw);
+  setPixel(ctx, cx + 4, 39 + by + legStep, DRAGON.claw);
+
+  // --- Fire aura (subtle belly glow) ---
+  const auraAlpha = 0.1 + Math.sin(walkPhase(frame) * 2) * 0.06;
+  addGlow(ctx, cx, 28 + by, 8, DRAGON.fireOrange, auraAlpha);
+
+  // --- Fire breath particles (every other frame) ---
+  if (frame % 3 === 0) {
+    const bDist = 3;
+    setPixel(ctx, cx, 7 + by, DRAGON.fireCore);
+    setPixel(ctx, cx - 1, 6 + by, DRAGON.fireOrange);
+    setPixel(ctx, cx + 1, 5 + by, hexToRgba(DRAGON.fireRed, 0.6));
+  } else if (frame % 3 === 1) {
+    setPixel(ctx, cx, 8 + by, hexToRgba(DRAGON.smoke, 0.4));
+    setPixel(ctx, cx + 1, 7 + by, hexToRgba(DRAGON.smoke, 0.3));
+  }
 }
 
 function drawAncientDragonFallback(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, frame: number): void {
   const cx = ox + 20;
-  const bodyCy = 26;
+  const by = frame % 2 === 0 ? 0 : -1;
   const wingFlap = frame % 2 === 0 ? -2 : 2;
-  drawLine(ctx, cx - 5, bodyCy - 2, cx - 15, bodyCy - 8 + wingFlap, PALETTE.titan);
-  drawLine(ctx, cx + 5, bodyCy - 2, cx + 15, bodyCy - 8 + wingFlap, PALETTE.titan);
-  fillCircle(ctx, cx, bodyCy, 8, hexToRgba(PALETTE.titan, 0.7));
-  drawRect(ctx, cx - 4, 10, 8, 7, PALETTE.titan);
-  drawRect(ctx, cx - 4, bodyCy + 8, 4, 7, hexToRgba(PALETTE.titan, 0.8));
-  drawRect(ctx, cx + 1, bodyCy + 8, 4, 7, hexToRgba(PALETTE.titan, 0.8));
+  // Wings
+  drawLine(ctx, cx - 4, 20, cx - 14, 14 + wingFlap, DRAGON.wingBone);
+  drawLine(ctx, cx + 4, 20, cx + 14, 14 + wingFlap, DRAGON.wingBone);
+  // Body
+  drawRect(ctx, cx - 5, 18 + by, 10, 16, DRAGON.body);
+  drawRect(ctx, cx - 2, 22 + by, 4, 8, DRAGON.belly);
+  // Head
+  drawRect(ctx, cx - 4, 10 + by, 8, 8, DRAGON.bodyMid);
+  setPixel(ctx, cx - 2, 13 + by, DRAGON.eyeNorm);
+  setPixel(ctx, cx + 2, 13 + by, DRAGON.eyeNorm);
+  // Legs
+  drawRect(ctx, cx - 5, 33 + by, 3, 6, DRAGON.bodyDark);
+  drawRect(ctx, cx + 3, 33 + by, 3, 6, DRAGON.bodyDark);
 }
 
 // === Dragon Boss Palette (dark & evil medieval dragon) ===

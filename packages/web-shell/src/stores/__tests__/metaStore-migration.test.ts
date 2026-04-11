@@ -74,7 +74,6 @@ describe('metaStore v1→v5 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.version).toBe(5);
 		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
@@ -169,7 +168,7 @@ describe('metaStore v1→v5 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(5);
+		expect(s.version).toBe(SAVE_VERSION);
 		// v1에 없던 새 필드가 기본값으로 채워짐
 		expect(s.progress.gachaPityCount).toBe(0);
 		expect(s.progress.lastAttendanceDate).toBeNull();
@@ -246,7 +245,7 @@ describe('metaStore v1→v5 migration', () => {
 		useMetaStore.getState().loadSave();
 		const s = useMetaStore.getState();
 
-		expect(s.version).toBe(5);
+		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.profile.diamond).toBe(50);
 		expect(s.profile.nickname).toBe('V2User');
 		expect(s.progress.gachaPityCount).toBe(12);
@@ -312,7 +311,7 @@ describe('metaStore v1→v5 migration', () => {
 		const result = parseSave();
 
 		expect(result).not.toBeNull();
-		expect(result?.version).toBe(5);
+		expect(result?.version).toBe(SAVE_VERSION);
 		expect(result?.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
 		expect(result?.collection[0].defId).toBe('archer');
 		expect(result?.collection[1].defId).toBe('twin_archer');

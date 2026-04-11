@@ -266,6 +266,60 @@ function DevToolsSection() {
 		window.location.reload();
 	};
 
+	const applyMaxDiamond = () => {
+		const meta = useMetaStore.getState();
+		const save = {
+			version: SAVE_VERSION,
+			profile: { ...meta.profile, diamond: 99999 },
+			collection: meta.collection,
+			progress: meta.progress,
+			settings: meta.settings,
+			selectedDeck: meta.selectedDeck,
+		};
+		useMetaStore.setState({ profile: save.profile });
+		writeSave(save);
+		window.location.reload();
+	};
+
+	const applyMaxLevel = () => {
+		const meta = useMetaStore.getState();
+		const save = {
+			version: SAVE_VERSION,
+			profile: { ...meta.profile, level: 99 },
+			collection: meta.collection,
+			progress: meta.progress,
+			settings: meta.settings,
+			selectedDeck: meta.selectedDeck,
+		};
+		useMetaStore.setState({ profile: save.profile });
+		writeSave(save);
+		window.location.reload();
+	};
+
+	const applyMaxTowers = () => {
+		const now = Date.now();
+		const meta = useMetaStore.getState();
+		const maxCollection = ALL_TOWERS.map<OwnedTower>((t) => ({
+			defId: t.id,
+			level: 50,
+			grade: 'epic' as const,
+			acquiredAt: now,
+			awakening: 5 as 0 | 1 | 2 | 3,
+			duplicateCount: 0,
+		}));
+		const save = {
+			version: SAVE_VERSION,
+			profile: meta.profile,
+			collection: maxCollection,
+			progress: meta.progress,
+			settings: meta.settings,
+			selectedDeck: meta.selectedDeck,
+		};
+		useMetaStore.setState({ collection: maxCollection });
+		writeSave(save);
+		window.location.reload();
+	};
+
 	const resetSave = () => {
 		const save = createDefaultSave();
 		useMetaStore.setState({
@@ -290,6 +344,38 @@ function DevToolsSection() {
 				<span className="font-pixel text-xs text-gold">MAX 전투력 세팅</span>
 				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
 					Lv.10 / 타워 18종 / 전 맵 ★3 클리어 / 99999G
+				</span>
+			</button>
+			<button
+				type="button"
+				onClick={applyMaxDiamond}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-gold">최대 보석(다이아)</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					다이아 99,999개 세팅
+				</span>
+			</button>
+			<button
+				type="button"
+				onClick={applyMaxLevel}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-gold">최대 레벨</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					Lv.99 세팅
+				</span>
+			</button>
+			<button
+				type="button"
+				onClick={applyMaxTowers}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-gold">
+					전 타워 최대 업그레이드
+				</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					전 타워 Lv.50 / Epic / 각성 5
 				</span>
 			</button>
 			<button

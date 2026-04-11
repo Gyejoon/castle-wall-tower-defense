@@ -5,6 +5,7 @@ interface GameOverScreenProps {
 	runStatus: 'victory' | 'defeat';
 	gameOverStats: {
 		wavesCleared: number;
+		totalWaves: number;
 		towersPlaced: number;
 		timeSurvivedSec: number;
 		goldEarned: number;
@@ -14,6 +15,7 @@ interface GameOverScreenProps {
 	} | null;
 	onRestart: () => void;
 	onLobby: () => void;
+	onNextStage?: () => void;
 }
 
 export function GameOverScreen({
@@ -21,6 +23,7 @@ export function GameOverScreen({
 	gameOverStats,
 	onRestart,
 	onLobby,
+	onNextStage,
 }: GameOverScreenProps) {
 	return (
 		<div
@@ -57,7 +60,8 @@ export function GameOverScreen({
 					<span className="font-pixel text-[11px] text-text-secondary">
 						{runStatus === 'defeat'
 							? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
-							: gameOverStats?.wavesCleared === 10
+							: gameOverStats?.wavesCleared ===
+									(gameOverStats?.totalWaves ?? 10)
 								? '✨ 완벽한 방어! 왕국을 성공적으로 지켜냈습니다!'
 								: '왕국을 성공적으로 지켜냈습니다!'}
 					</span>
@@ -121,7 +125,8 @@ export function GameOverScreen({
 							클리어 웨이브
 						</span>
 						<span className="font-pixel text-sm text-text">
-							{gameOverStats?.wavesCleared ?? 0} / 10
+							{gameOverStats?.wavesCleared ?? 0} /{' '}
+							{gameOverStats?.totalWaves ?? 10}
 						</span>
 					</div>
 					<div
@@ -193,8 +198,19 @@ export function GameOverScreen({
 				</div>
 
 				{/* 버튼 */}
+				{onNextStage && runStatus === 'victory' && (
+					<PixelButton
+						variant="gold"
+						style={{ width: '100%' }}
+						onClick={onNextStage}
+					>
+						다음 스테이지
+					</PixelButton>
+				)}
 				<PixelButton
-					variant="gold"
+					variant={
+						onNextStage && runStatus === 'victory' ? 'secondary' : 'gold'
+					}
 					style={{ width: '100%' }}
 					onClick={onRestart}
 				>

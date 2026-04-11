@@ -2052,3 +2052,5 @@ export function getTotalWavesForStage(stageId: string): number {
 }
 
 export const TOTAL_WAVES = WAVE_DEFS.length;
+
+export const MAX_WAVE_DURATION_MS = 30_000;

@@ -95,6 +95,7 @@ const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 	4: (data) => {
+		// v4 → v5: stageStars mapId→stageId migration + mission mapId support
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const oldStars = (progress.stageStars ?? {}) as Record<string, unknown>;
 		const oldHighestWave = (progress.highestWave ?? {}) as Record<

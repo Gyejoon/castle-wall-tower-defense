@@ -83,7 +83,7 @@ export const WAVE_DEFS: WaveDef[] = [
 	},
 	{
 		slotIndex: 9,
-		kind: 'pre_boss',
+		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'heavy_walker', count: 3 },
@@ -140,7 +140,7 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 	},
 	{
 		slotIndex: 5,
-		kind: 'boss',
+		kind: 'pre_boss',
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'titan', count: 1 },
@@ -178,7 +178,7 @@ export const LAVA_FORTRESS_WAVES: WaveDef[] = [
 	},
 	{
 		slotIndex: 9,
-		kind: 'pre_boss',
+		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'heavy_walker', count: 4 },
@@ -236,7 +236,7 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 	},
 	{
 		slotIndex: 5,
-		kind: 'boss',
+		kind: 'pre_boss',
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'titan', count: 2 },
@@ -273,7 +273,7 @@ export const STORM_CITADEL_WAVES: WaveDef[] = [
 	},
 	{
 		slotIndex: 9,
-		kind: 'pre_boss',
+		kind: 'normal',
 		delayAfterClearSec: 5,
 		groups: [
 			{ unitId: 'battle_robot', count: 5 },
@@ -695,7 +695,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 6,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'heavy_walker', count: 4 },
@@ -769,7 +769,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'boss',
+			kind: 'pre_boss',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 1 },
@@ -805,7 +805,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 9,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'heavy_walker', count: 6 },
@@ -1292,7 +1292,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 9,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'lava_golem', count: 7 },
@@ -1339,7 +1339,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'boss',
+			kind: 'pre_boss',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 2 },
@@ -1375,7 +1375,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 9,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'heavy_walker', count: 8 },
@@ -1956,7 +1956,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'boss',
+			kind: 'pre_boss',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 3 },
@@ -1992,7 +1992,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 9,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'heavy_walker', count: 12 },

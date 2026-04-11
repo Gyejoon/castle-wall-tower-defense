@@ -187,7 +187,7 @@ export function HomeTab() {
 							fontSize: '11px',
 						}}
 					>
-						원정
+						월드
 					</PixelButton>
 				</div>
 			</div>

@@ -59,7 +59,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 							disabled={disabled}
 							onClick={() => !disabled && setLobbyTab(tab.id)}
 							className={cn(
-								'relative flex-1 flex flex-col items-center -mt-3 mx-1 pt-3 pb-2 border-2 touch-manipulation transition-all duration-200',
+								'relative z-10 flex-1 flex flex-col items-center -mt-3 mx-1 pt-3 pb-2 border-2 touch-manipulation transition-all duration-200',
 								disabled
 									? 'cursor-not-allowed opacity-50'
 									: 'cursor-pointer active:scale-95',

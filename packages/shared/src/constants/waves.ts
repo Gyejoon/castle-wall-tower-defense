@@ -1339,9 +1339,12 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'boss',
 			delayAfterClearSec: 5,
-			groups: [{ unitId: 'titan', count: 2 }],
+			groups: [
+				{ unitId: 'titan', count: 2 },
+				{ unitId: 'flame_imp', count: 4 },
+			],
 		},
 		{
 			slotIndex: 6,
@@ -1912,7 +1915,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 9,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 2 },
@@ -1953,9 +1956,12 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'boss',
 			delayAfterClearSec: 5,
-			groups: [{ unitId: 'titan', count: 3 }],
+			groups: [
+				{ unitId: 'titan', count: 3 },
+				{ unitId: 'mana_shield', count: 3 },
+			],
 		},
 		{
 			slotIndex: 6,

@@ -4,6 +4,7 @@ interface MissionTemplate {
 	type: MissionType;
 	target: number; // 고정값 (10 단위)
 	reward: { type: 'diamond' | 'gold'; amount: number };
+	mapId?: string;
 }
 
 const DAILY_TEMPLATES: MissionTemplate[] = [
@@ -25,6 +26,18 @@ const WEEKLY_TEMPLATES: MissionTemplate[] = [
 	},
 	{ type: 'defeat_boss', target: 30, reward: { type: 'diamond', amount: 100 } },
 	{ type: 'attendance', target: 5, reward: { type: 'diamond', amount: 30 } },
+	{
+		type: 'clear_map',
+		mapId: 'lava_fortress',
+		target: 3,
+		reward: { type: 'diamond', amount: 60 },
+	},
+	{
+		type: 'defeat_boss_map',
+		mapId: 'storm_citadel',
+		target: 5,
+		reward: { type: 'diamond', amount: 80 },
+	},
 ];
 
 // 구조 변경 감지용 — refreshMissions에서 기존 저장 데이터와 비교
@@ -42,6 +55,7 @@ export function generateDailyMissions(): MissionProgress[] {
 		current: 0,
 		reward: t.reward,
 		claimed: false,
+		...(t.mapId ? { mapId: t.mapId } : {}),
 	}));
 }
 
@@ -53,6 +67,7 @@ export function generateWeeklyMissions(): MissionProgress[] {
 		current: 0,
 		reward: t.reward,
 		claimed: false,
+		...(t.mapId ? { mapId: t.mapId } : {}),
 	}));
 }
 
@@ -111,4 +126,6 @@ export const MISSION_LABELS: Record<MissionType, string> = {
 	clear_stage: '스테이지 클리어',
 	use_element: '속성 타워 사용',
 	attendance: '출석 체크',
+	clear_map: '맵 클리어',
+	defeat_boss_map: '맵 보스 처치',
 };

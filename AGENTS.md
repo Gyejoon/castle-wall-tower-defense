@@ -44,7 +44,7 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·합성·판매(50% 에너지 환급), 유닛 5종(Titan 비행), A* 경로탐색, 에너지 기반 덱 경제(시작 10, 킬 +2, 보스킬 +5), 이벤트 기반 10웨이브 진행, 맵별 아키타입 테마 웨이브(Scout/Speed/Tank/Stealth/Boss), 웨이브 스케일링(HP 1.0x~3.5x), 맵별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌(지상 유닛 분리, 스턴/슬로우 체이닝, 비행 면제), 보스 리크(경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 2배속 토글(첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
+**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·판매(50% 에너지 환급), 적 9종(W1: scout_drone/battle_robot/heavy_walker/stealth_drone/dragon(비행) · W2: flame_imp/lava_golem · W3: arcane_mage/mana_shield) + 보스 3종(orc_warlord/forge_master/corrupted_archmage), A* 경로탐색, 에너지 기반 덱 경제(시작 40, 웨이브 클리어 +5, 킬 보상 없음), 이벤트 기반 10웨이브 진행(WaveSlotKind: normal | boss), 3월드×8스테이지(24스테이지), 웨이브 스케일링(HP 1.0x~3.5x), 월드별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌 비활성화(유닛 서로 통과), 보스 리크(boss-kind 웨이브에서 경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 2배속 토글(첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적.
 
 **아직 구현되지 않은 것:** 속성 시스템 전투 적용, 메타 성장(저장/타워 강화·승급 LV.50 캡/컬렉션 영속화), 가챠·미션·튜토리얼. 로비의 프로필·컬렉션 데이터는 현재 목(mock) 데이터다.
 
@@ -102,7 +102,7 @@ lobby → building → running → victory | defeat → lobby
 
 ### 에너지 경제
 
-에너지가 초당 1씩 자동 축적된다 (최대 100). 시작 에너지 10. 타워 랜덤 롤에 에너지 10을 소비. 일반 유닛 처치 시 +2, 보스 처치 시 +5 에너지 보상.
+에너지가 초당 1씩 자동 축적된다 (최대 100). 시작 에너지 40. 타워 배치 에너지: 공격형 10 / CC형 20. 웨이브 클리어 시 +5. 킬 보상 없음. 마지막 보스 웨이브에서는 리젠과 클리어 보상 비활성화.
 
 ## 하이시그널 파일
 
@@ -129,11 +129,13 @@ lobby → building → running → victory | defeat → lobby
 | `GridManager.ts` | 8×18 세로 그리드, 타일 점유, 좌표 변환 |
 | `PathfindingSystem.ts` | A* 경로탐색, 패스 캐싱 |
 | `TowerSystem.ts` | 타워 배치·판매, 범위 공격, Slow/Splash/Boost |
-| `MergeSystem.ts` | 동일 타워 합성 (같은 defId + tier < 5 → 다음 티어 랜덤) |
+| `DeckSystem.ts` | 4타워 덱 관리, 카드 선택·배치 |
 | `UnitSystem.ts` | 유닛 스폰, 경로 이동, HP/아머/슬로우 |
-| `WaveSystem.ts` | 10웨이브, 이벤트 기반 진행 (combat→waiting→next), 보스 경고 |
-| `EnergySystem.ts` | 에너지 축적 (1/sec), 타워 롤 비용 관리 |
-| `RandomTowerSystem.ts` | 랜덤 타워 롤 |
+| `WaveSystem.ts` | 10웨이브, 이벤트 기반 진행 (prep→spawning→combat→waiting→next), 보스 경고 |
+| `EnergySystem.ts` | 에너지 축적 (1/sec), 타워 배치 비용 관리 |
+| `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
+| `GimmickSystem.ts` | 월드별 고유 기믹 (용광로 폭발, 마력 폭주 등) |
+| `TutorialSystem.ts` | 첫 세션 튜토리얼 오버레이 |
 
 ## 커맨드
 
@@ -157,6 +159,7 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **shared 이벤트/타입 변경 시** Phaser(`EventBus.ts`, `GameEventMap`)와 React(`gameStore`, UI 컴포넌트) 양쪽 소비자를 반드시 동기화할 것.
 - **로비 프로필/컬렉션 데이터는 현재 mock.** 이 영역을 수정할 때 실제 API가 없음을 인지할 것.
 - **에셋은 커밋된 산출물이다.** `packages/web-shell/public/assets/` 전체가 git에 트래킹되며 CI/Vercel 배포는 커밋된 파일을 그대로 사용한다. 에셋을 변경하려면 `scripts/generate-assets/`의 생성 스크립트를 수정한 뒤 `bun generate:assets`를 로컬에서 실행하고 산출물을 함께 커밋해야 한다. 생성 스크립트만 수정하고 산출물을 커밋하지 않으면 프로덕션에 반영되지 않는다.
+- **`bun generate:assets`는 유저가 명시적으로 요청할 때만 실행한다.** ComfyUI 기반 에셋(stage-thumb 등)은 AI 생성 고품질 이미지인데, ComfyUI가 없는 환경에서 실행하면 플레이스홀더로 대체되어 원본이 소실된다. 에셋 확인이 필요하면 파일을 직접 읽거나 git log로 확인할 것.
 - **Phaser 씬 클린업 순서:** EventBus off → system destroy. shutdown 시 역순 정리 필수.
 - **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 

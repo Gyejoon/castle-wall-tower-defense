@@ -1,4 +1,4 @@
-import { TOTAL_WAVES, WAVE_DEFS } from '@gld/shared';
+import { STAGE_WAVES, TOTAL_WAVES } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
 
@@ -106,15 +106,15 @@ describe('runtime safety fixes', () => {
 
 		const waveSystem = new WaveSystem(
 			unitSystem as never,
-			WAVE_DEFS,
-			WAVE_DEFS.length + 5,
+			STAGE_WAVES.w1_s1,
+			STAGE_WAVES.w1_s1.length + 5,
 		);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 
 		waveSystem.setMaxWaves(0);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(1);
 
-		waveSystem.setMaxWaves(WAVE_DEFS.length + 10);
+		waveSystem.setMaxWaves(STAGE_WAVES.w1_s1.length + 10);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 	});
 
@@ -127,7 +127,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
 		waveSystem.start();
 
 		// Enters prep phase first
@@ -165,7 +165,7 @@ describe('runtime safety fixes', () => {
 		);
 	});
 
-	it('emits boss-warning when pre_boss wave is cleared', () => {
+	it('emits boss-warning when boss wave starts', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
@@ -173,22 +173,21 @@ describe('runtime safety fixes', () => {
 			getActiveCount: vi.fn(() => 0),
 		};
 
+		// Use w1_s8 which has boss at wave 10
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s8);
 		waveSystem.start();
 
 		// Consume prep phase (5s)
 		waveSystem.update(5100, 0);
 
-		// Advance through waves 1-8 (clear immediately since activeCount=0)
-		for (let i = 0; i < 8; i++) {
+		// Advance through waves 1-9 (clear immediately since activeCount=0)
+		for (let i = 0; i < 9; i++) {
 			waveSystem.update(100, 0); // clear current wave
 			waveSystem.update(5100, 0); // wait through delay
 		}
 
-		// Now on wave 9 (pre_boss). Clear it.
-		waveSystem.update(100, 0);
-
+		// Now on wave 10 (boss). boss-warning should have been emitted when it started.
 		expect(emitSpy).toHaveBeenCalledWith(
 			'boss-warning',
 			expect.objectContaining({
@@ -207,7 +206,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
 		waveSystem.start();
 
 		expect(waveSystem.getPhase()).toBe('prep');
@@ -304,6 +303,8 @@ describe('runtime safety fixes', () => {
 					play: vi.fn(),
 					setDepth: vi.fn(),
 					setPosition: vi.fn(),
+					setRotation: vi.fn(),
+					setFlipX: vi.fn(),
 					destroy: vi.fn(),
 					setTint: vi.fn(),
 					clearTint: vi.fn(),

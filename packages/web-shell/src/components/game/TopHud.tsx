@@ -104,24 +104,28 @@ export function TopHud({
 						/>
 					</div>
 				</div>
-				<div
-					data-testid="hud-timer"
-					className={cn(
-						'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
-						isBossPhase ? 'text-gold' : 'text-text',
-					)}
-					style={{
-						background: isBossPhase
-							? 'rgba(240,208,96,0.16)'
-							: 'rgba(42,32,16,0.82)',
-					}}
-				>
-					{combatHud.bossWarning
-						? '보스 임박'
-						: combatHud.phase === 'waiting' && waitCountdown > 0
-							? `다음 ${waitCountdown}s`
-							: formatTimerLabel(combatHud.timerLabel)}
-				</div>
+				{(combatHud.bossWarning ||
+					(combatHud.phase === 'waiting' && waitCountdown > 0) ||
+					combatHud.timerLabel) && (
+					<div
+						data-testid="hud-timer"
+						className={cn(
+							'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+							isBossPhase ? 'text-gold' : 'text-text',
+						)}
+						style={{
+							background: isBossPhase
+								? 'rgba(240,208,96,0.16)'
+								: 'rgba(42,32,16,0.82)',
+						}}
+					>
+						{combatHud.bossWarning
+							? '보스 임박'
+							: combatHud.phase === 'waiting' && waitCountdown > 0
+								? `다음 ${waitCountdown}s`
+								: formatTimerLabel(combatHud.timerLabel)}
+					</div>
+				)}
 				<div className="ml-auto flex items-center gap-1">
 					{runStatus === 'running' && speed2xUnlocked && (
 						<button

@@ -1,6 +1,11 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
-import { getTotalWavesForMap } from '@gld/shared';
-import { useCallback, useEffect, useState } from 'react';
+import {
+	getNextStageId,
+	getStageById,
+	getTotalWavesForStage,
+	WORLD_ORDER,
+} from '@gld/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
@@ -31,13 +36,14 @@ export function GamePage() {
 	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const selectedStar = useGameStore((s) => s.selectedStar);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
+	const selectedStageId = useGameStore((s) => s.selectedStageId);
+	const selectedStage = getStageById(selectedStageId);
+	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
 	const starKey =
-		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
-	const speed2xUnlocked =
-		(highestWave[starKey] ?? 0) >= getTotalWavesForMap(selectedMapId);
+		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
+	const speed2xUnlocked = (highestWave[starKey] ?? 0) >= totalStageWaves;
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
@@ -92,6 +98,27 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
+	const nextStageId = useMemo(
+		() => getNextStageId(selectedStageId),
+		[selectedStageId],
+	);
+
+	const currentStageDef = useMemo(() => {
+		try {
+			return getStageById(selectedStageId);
+		} catch {
+			return null;
+		}
+	}, [selectedStageId]);
+
+	const handleNextStage = useCallback(() => {
+		if (!nextStageId) return;
+		const store = useGameStore.getState();
+		store.setSelectedStageId(nextStageId);
+		store.setSelectedStar(1);
+		store.resetRun();
+	}, [nextStageId]);
+
 	const handleExitRequest = useCallback(() => {
 		if (runStatus !== 'running') return;
 		setShowExitModal(true);
@@ -120,7 +147,26 @@ export function GamePage() {
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
-			<div className="flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+				{!gameReady && (
+					<div
+						className="absolute inset-0 z-[5] flex flex-col items-center justify-center"
+						style={{ background: 'var(--color-bg, #1a1208)' }}
+					>
+						<div
+							className="font-pixel text-[15px] text-accent"
+							style={{ letterSpacing: '0.16em' }}
+						>
+							&gt;_ 전투 개시
+						</div>
+						<div
+							className="font-pixel text-[10px] text-text-secondary mt-2 matchmaking-dots"
+							style={{ letterSpacing: '0.1em' }}
+						>
+							그리드 초기화 중
+						</div>
+					</div>
+				)}
 				<TopHud
 					lives={lives}
 					energy={energy}
@@ -164,25 +210,7 @@ export function GamePage() {
 						</div>
 					)}
 
-					{!gameReady && (
-						<div
-							className="absolute inset-0 z-[2] flex flex-col items-center pt-[40%]"
-							style={{ background: 'rgba(26, 18, 8, 0.76)' }}
-						>
-							<div
-								className="font-pixel text-[15px] text-accent"
-								style={{ letterSpacing: '0.16em' }}
-							>
-								&gt;_ 전투 개시
-							</div>
-							<div
-								className="font-pixel text-[10px] text-text-secondary mt-2 matchmaking-dots"
-								style={{ letterSpacing: '0.1em' }}
-							>
-								그리드 초기화 중
-							</div>
-						</div>
-					)}
+					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
 
@@ -261,8 +289,18 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
+							stageName={
+								currentStageDef
+									? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
+									: null
+							}
 							onRestart={resetRun}
 							onLobby={enterLobby}
+							onNextStage={
+								runStatus === 'victory' && nextStageId
+									? handleNextStage
+									: undefined
+							}
 						/>
 					)}
 				</div>

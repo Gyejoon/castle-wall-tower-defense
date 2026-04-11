@@ -70,26 +70,7 @@ function drawUniqueCrystal(ctx: SKRSContext2D, g: GradeContext): void {
   drawRareBanner(ctx, g);
 }
 
-/** Epic: unique (crystal + banner) + golden aura + gold trim + floating particles */
-function drawEpicAura(ctx: SKRSContext2D, g: GradeContext): void {
-  // Crystal + banner from unique
-  drawUniqueCrystal(ctx, g);
-  // Golden aura around tower body
-  const midY = g.topY + Math.round(g.height * 0.5);
-  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.9), PALETTE.gold, 0.35);
-  addGlow(ctx, g.cx, midY, Math.round(g.width * 0.6), '#fde68a', 0.3);
-  // Gold trim at base
-  const baseHw = Math.round(g.width * 0.6);
-  drawRect(ctx, g.cx - baseHw, g.topY + g.height - 4, baseHw * 2, 2, PALETTE.gold);
-  // Floating golden particles (4 around tower)
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2 + Math.PI / 8;
-    fillCircle(
-      ctx,
-      Math.round(g.cx + Math.cos(a) * (g.width * 0.65)),
-      Math.round(midY + Math.sin(a) * (g.height * 0.3)),
-      2,
-      hexToRgba(PALETTE.gold, 0.85),
-    );
-  }
+/** Epic: no overlay decoration — tower texture speaks for itself */
+function drawEpicAura(_ctx: SKRSContext2D, _g: GradeContext): void {
+  // intentionally empty — epic grade is distinguished by texture alone
 }

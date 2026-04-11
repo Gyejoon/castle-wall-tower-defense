@@ -19,8 +19,9 @@ import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
+import type { WorldGimmick } from './world-gimmicks/types';
 
-interface TowerInstance {
+export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
 	effectiveDamage: number;
@@ -30,6 +31,7 @@ interface TowerInstance {
 	idleTween?: Phaser.Tweens.Tween;
 	lastAttackTime: number;
 	lastAuraTime: number;
+	disabledUntilMs?: number;
 }
 
 export type TowerPlacementResult =
@@ -56,6 +58,7 @@ export class TowerSystem {
 	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
 	private destroyed = false;
+	private worldGimmick: WorldGimmick | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -99,6 +102,14 @@ export class TowerSystem {
 		this.attackGraphics.setDepth(10);
 	}
 
+	setWorldGimmick(gimmick: WorldGimmick | null): void {
+		this.worldGimmick = gimmick;
+	}
+
+	getAllTowers(): TowerInstance[] {
+		return Array.from(this.towers.values());
+	}
+
 	private ensureArrowPool(): void {
 		if (this.arrowPoolInitialized) return;
 		const textureKey = 'projectile-arrow';
@@ -127,6 +138,13 @@ export class TowerSystem {
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
 			return { success: false, reason: 'occupied' };
+		}
+
+		if (
+			this.worldGimmick &&
+			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
+		) {
+			return { success: false, reason: 'gimmick_blocked' };
 		}
 
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
@@ -328,9 +346,28 @@ export class TowerSystem {
 			}
 		}
 
+		// Update disabled tint for all towers
+		for (const tower of this.towers.values()) {
+			const isDisabled =
+				(tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) ||
+				(this.worldGimmick !== null && !this.worldGimmick.isTowerActive(tower));
+			if (isDisabled && tower.sprite.tintTopLeft !== 0x666666) {
+				tower.sprite.setTint(0x666666);
+			} else if (!isDisabled && tower.sprite.tintTopLeft === 0x666666) {
+				tower.sprite.clearTint();
+			}
+		}
+
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
 			if (def.stats.attackSpeed <= 0) continue;
+
+			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
+				continue; // tower is disabled by an enemy ranged attack
+			}
+
+			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
+				continue;
 
 			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
@@ -362,7 +399,13 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				const baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				if (this.worldGimmick) {
+					const bonus = this.worldGimmick.getDamageBonus(tower);
+					if (bonus > 0) {
+						baseDamage = Math.round(baseDamage * (1 + bonus));
+					}
+				}
 				const special = def.stats.special;
 
 				const slowEffect =
@@ -459,11 +502,18 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
+							let splashDamage = Math.round(
+								tower.effectiveDamage * splashElementMult * 0.5,
+							);
+							if (this.worldGimmick) {
+								const bonus = this.worldGimmick.getDamageBonus(tower);
+								if (bonus > 0) {
+									splashDamage = Math.round(splashDamage * (1 + bonus));
+								}
+							}
 							pendingBatch.push({
 								unitId: unit.instanceId,
-								damage: Math.round(
-									tower.effectiveDamage * splashElementMult * 0.5,
-								),
+								damage: splashDamage,
 								slow: splashSlow,
 							});
 						}
@@ -908,6 +958,12 @@ export class TowerSystem {
 
 	getTowers(): PlacedTower[] {
 		return Array.from(this.towers.values()).map((t) => t.data);
+	}
+
+	disableTower(towerId: string, untilMs: number): void {
+		const t = this.towers.get(towerId);
+		if (!t) return;
+		t.disabledUntilMs = Math.max(t.disabledUntilMs ?? 0, untilMs);
 	}
 
 	getTowerSprite(instanceId: string): Phaser.GameObjects.Image | null {

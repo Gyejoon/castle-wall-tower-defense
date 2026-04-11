@@ -5,6 +5,27 @@ import {
 	TINY_SWORDS_PRIMARY_TILESET,
 } from '../src/fieldAssets';
 
+const { waveSystemCtorSpy } = vi.hoisted(() => ({
+	waveSystemCtorSpy: vi.fn(),
+}));
+
+vi.mock('../src/systems/WaveSystem', () => ({
+	WaveSystem: class {
+		constructor(...args: unknown[]) {
+			waveSystemCtorSpy(...args);
+		}
+		start() {}
+		update() {}
+		destroy() {}
+		getElapsedMs() {
+			return 0;
+		}
+		getPhase() {
+			return 'combat';
+		}
+	},
+}));
+
 vi.mock('phaser', () => ({
 	Events: {
 		EventEmitter: class {
@@ -127,6 +148,94 @@ function createText() {
 }
 
 describe('GameScene field runtime', () => {
+	it('uses selectedStageId wave set instead of map default wave set', async () => {
+		waveSystemCtorSpy.mockClear();
+		const addSprite = vi.fn(() => createImage());
+		const addGraphics = vi.fn(() => createGraphics());
+		const addText = vi.fn(() => createText());
+		const tilemapData = {
+			getObjectLayer: vi.fn(() => ({ objects: [] })),
+		};
+		const makeTilemap = vi.fn(() => tilemapData);
+
+		const { GameScene } = await import('../src/scenes/Game');
+		const scene = new GameScene();
+
+		Object.assign(scene, {
+			game: {
+				registry: {
+					get: vi.fn((key: string) => {
+						if (key === 'selectedStageId') return 'w1_s2';
+						if (key === 'selectedStar') return 1;
+						return undefined;
+					}),
+					set: vi.fn(),
+					events: { on: vi.fn() },
+				},
+			},
+			scale: { width: 424, height: 960 },
+			add: {
+				image: vi.fn(() => createImage()),
+				sprite: addSprite,
+				graphics: addGraphics,
+				text: addText,
+				rectangle: vi.fn(() => ({ setDepth: vi.fn(), destroy: vi.fn() })),
+			},
+			cache: {
+				json: {
+					get: vi.fn(() => ({
+						generated: '2026-04-02T00:00:00.000Z',
+						assets: [],
+					})),
+				},
+				tilemap: {
+					exists: vi.fn(() => false),
+					remove: vi.fn(),
+				},
+			},
+			load: {
+				image: vi.fn(),
+				spritesheet: vi.fn(),
+				tilemapTiledJSON: vi.fn(),
+				once: vi.fn((_event: string, callback: () => void) => callback()),
+				start: vi.fn(),
+			},
+			textures: {
+				exists: vi.fn(() => false),
+				remove: vi.fn(),
+			},
+			make: {
+				tilemap: makeTilemap,
+			},
+			input: {
+				on: vi.fn(),
+				setDraggable: vi.fn(),
+			},
+			events: {
+				on: vi.fn(),
+			},
+			time: { timeScale: 1 },
+			anims: {
+				globalTimeScale: 1,
+				exists: vi.fn(() => false),
+				create: vi.fn(),
+				generateFrameNumbers: vi.fn(() => []),
+			},
+			tweens: { add: vi.fn(), addCounter: vi.fn() },
+			cameras: { main: { shake: vi.fn() } },
+			scene: { pause: vi.fn(), resume: vi.fn() },
+		});
+
+		scene.create();
+
+		const waveDefs = waveSystemCtorSpy.mock.calls[0]?.[1] as Array<{
+			groups: Array<{ unitId: string; count: number }>;
+		}>;
+		expect(waveDefs?.[0]?.groups).toEqual([
+			{ unitId: 'scout_drone', count: 5 },
+		]);
+	});
+
 	it('renders a single portrait field from raw Tiny Swords assets', async () => {
 		const addImage = vi.fn(() => createImage());
 		const addSprite = vi.fn(() => createImage());

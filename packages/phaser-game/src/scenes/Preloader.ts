@@ -65,7 +65,7 @@ export class Preloader extends Phaser.Scene {
 		}
 
 		// Boss walk animations (looping)
-		for (const bossKey of ['unit-titan-boss', 'unit-titan-boss-rage']) {
+		for (const bossKey of ['unit-dragon-boss', 'unit-dragon-boss-rage']) {
 			const entry = manifest.assets.find((a) => a.key === bossKey);
 			if (!entry) continue;
 			const endFrame = (entry.frameCount ?? 8) - 1;

@@ -1,12 +1,15 @@
 // packages/shared/src/constants/achievements.ts
 
+import { MAP_REGISTRY } from './maps';
+
 export interface AchievementDef {
 	id: string;
-	category: 'combat_power' | 'level' | 'tower' | 'progress';
+	category: 'combat_power' | 'level' | 'tower' | 'progress' | 'map_progress';
 	name: string;
 	description: string;
 	target: number;
 	reward: { diamond: number };
+	mapId?: string;
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
@@ -198,7 +201,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
 		category: 'progress',
 		name: '정예 정복자',
 		description: '모든 스테이지 ★2 클리어',
-		target: 3,
+		target: Object.keys(MAP_REGISTRY).length,
 		reward: { diamond: 500 },
 	},
 	{
@@ -206,8 +209,91 @@ export const ACHIEVEMENTS: AchievementDef[] = [
 		category: 'progress',
 		name: '지옥 정복자',
 		description: '모든 스테이지 ★3 클리어',
-		target: 3,
+		target: Object.keys(MAP_REGISTRY).length,
 		reward: { diamond: 2000 },
+	},
+
+	// Map progress achievements
+	{
+		id: 'clear_forest_gate',
+		category: 'map_progress',
+		name: '숲의 문지기',
+		description: '숲의 성문 첫 클리어',
+		target: 1,
+		reward: { diamond: 30 },
+		mapId: 'forest_gate',
+	},
+	{
+		id: 'clear_lava_fortress',
+		category: 'map_progress',
+		name: '용암의 정복자',
+		description: '용암 요새 첫 클리어',
+		target: 1,
+		reward: { diamond: 50 },
+		mapId: 'lava_fortress',
+	},
+	{
+		id: 'clear_storm_citadel',
+		category: 'map_progress',
+		name: '폭풍의 주인',
+		description: '폭풍 성채 첫 클리어',
+		target: 1,
+		reward: { diamond: 80 },
+		mapId: 'storm_citadel',
+	},
+	{
+		id: 'star2_forest_gate',
+		category: 'map_progress',
+		name: '숲의 정예',
+		description: '숲의 성문 ★2 클리어',
+		target: 1,
+		reward: { diamond: 50 },
+		mapId: 'forest_gate',
+	},
+	{
+		id: 'star2_lava_fortress',
+		category: 'map_progress',
+		name: '용암의 정예',
+		description: '용암 요새 ★2 클리어',
+		target: 1,
+		reward: { diamond: 80 },
+		mapId: 'lava_fortress',
+	},
+	{
+		id: 'star2_storm_citadel',
+		category: 'map_progress',
+		name: '폭풍의 정예',
+		description: '폭풍 성채 ★2 클리어',
+		target: 1,
+		reward: { diamond: 120 },
+		mapId: 'storm_citadel',
+	},
+	{
+		id: 'star3_forest_gate',
+		category: 'map_progress',
+		name: '숲의 전설',
+		description: '숲의 성문 ★3 클리어',
+		target: 1,
+		reward: { diamond: 100 },
+		mapId: 'forest_gate',
+	},
+	{
+		id: 'star3_lava_fortress',
+		category: 'map_progress',
+		name: '용암의 전설',
+		description: '용암 요새 ★3 클리어',
+		target: 1,
+		reward: { diamond: 150 },
+		mapId: 'lava_fortress',
+	},
+	{
+		id: 'star3_storm_citadel',
+		category: 'map_progress',
+		name: '폭풍의 전설',
+		description: '폭풍 성채 ★3 클리어',
+		target: 1,
+		reward: { diamond: 200 },
+		mapId: 'storm_citadel',
 	},
 ];
 

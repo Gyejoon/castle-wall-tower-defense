@@ -268,10 +268,10 @@ export const UNIT_PROMPTS: UnitPromptConfig[] = [
     directions: 4,
   },
   {
-    key: 'unit-titan',
+    key: 'unit-dragon',
     name: 'ancient dragon',
     description: 'fire-red dragon, wings folded, scales, breathing embers, imposing',
-    outputPath: `${AI_OUTPUT_DIR}/units/titan.png`,
+    outputPath: `${AI_OUTPUT_DIR}/units/dragon.png`,
     directions: 4,
   },
 ];

@@ -1,6 +1,6 @@
 import { EventBus, startGame } from '@gld/phaser-game';
 import type Phaser from 'phaser';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 
@@ -36,6 +36,10 @@ export function PhaserGame() {
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
+		game.registry.set(
+			'selectedStageId',
+			useGameStore.getState().selectedStageId,
+		);
 		gameRef.current = game;
 
 		// Sync showDamageNumbers setting to Phaser registry in real-time
@@ -65,6 +69,15 @@ export function PhaserGame() {
 			}
 		});
 
+		// Sync selectedStageId to Phaser registry in real-time
+		let prevStageId = useGameStore.getState().selectedStageId;
+		const unsubStageId = useGameStore.subscribe((state) => {
+			if (state.selectedStageId !== prevStageId) {
+				prevStageId = state.selectedStageId;
+				gameRef.current?.registry.set('selectedStageId', prevStageId);
+			}
+		});
+
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -74,6 +87,7 @@ export function PhaserGame() {
 				unsubDmgNumbers();
 				unsubShake();
 				unsubStar();
+				unsubStageId();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);
@@ -81,11 +95,28 @@ export function PhaserGame() {
 		};
 	}, [setGameReady, selectedMapId]);
 
+	const handleDragOver = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+	}, []);
+
+	const handleDrop = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		const towerDefId = e.dataTransfer.getData('towerDefId');
+		if (!towerDefId || !containerRef.current) return;
+		const rect = containerRef.current.getBoundingClientRect();
+		const clientX = e.clientX - rect.left;
+		const clientY = e.clientY - rect.top;
+		EventBus.emit('request-place-tower-at', { towerDefId, clientX, clientY });
+	}, []);
+
 	return (
 		<div
 			ref={containerRef}
 			id="game-container"
 			className="w-full h-full touch-none"
+			onDragOver={handleDragOver}
+			onDrop={handleDrop}
 		/>
 	);
 }

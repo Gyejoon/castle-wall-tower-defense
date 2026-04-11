@@ -72,26 +72,26 @@ export const createProfileSlice: SliceCreator<
 		debouncedSave(get());
 	},
 
-	updateHighestWave: (mapId, wave) => {
+	updateHighestWave: (stageKey, wave) => {
 		set((s) => ({
 			progress: {
 				...s.progress,
 				highestWave: {
 					...s.progress.highestWave,
-					[mapId]: Math.max(s.progress.highestWave[mapId] ?? 0, wave),
+					[stageKey]: Math.max(s.progress.highestWave[stageKey] ?? 0, wave),
 				},
 			},
 		}));
 		debouncedSave(get());
 	},
 
-	recordStageClear: (mapId) => {
+	recordStageClear: (stageId) => {
 		set((s) => {
-			if (s.progress.stagesCleared.includes(mapId)) return s;
+			if (s.progress.stagesCleared.includes(stageId)) return s;
 			return {
 				progress: {
 					...s.progress,
-					stagesCleared: [...s.progress.stagesCleared, mapId],
+					stagesCleared: [...s.progress.stagesCleared, stageId],
 				},
 			};
 		});
@@ -102,14 +102,14 @@ export const createProfileSlice: SliceCreator<
 		debouncedSave(get());
 	},
 
-	recordStarClear: (mapId, star) => {
+	recordStarClear: (stageId, star) => {
 		set((s) => {
-			const current = s.progress.stageStars[mapId] ?? 0;
+			const current = s.progress.stageStars[stageId] ?? 0;
 			if (star <= current) return s;
 			return {
 				progress: {
 					...s.progress,
-					stageStars: { ...s.progress.stageStars, [mapId]: star },
+					stageStars: { ...s.progress.stageStars, [stageId]: star },
 				},
 			};
 		});

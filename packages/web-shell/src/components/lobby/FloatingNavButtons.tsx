@@ -42,7 +42,7 @@ export function FloatingNavButtons() {
 							height={20}
 							className="[image-rendering:pixelated]"
 						/>
-						<span className="font-pixel text-[9px] text-text-secondary leading-none">
+						<span className="font-pixel text-[10px] text-text-secondary leading-none">
 							{btn.label}
 						</span>
 						{btn.count > 0 && (

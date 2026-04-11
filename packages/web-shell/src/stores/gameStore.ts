@@ -4,12 +4,14 @@ import {
 	DEFAULT_DECK,
 	DEFAULT_DECK_IDS,
 	DEFAULT_MAP_ID,
+	DEFAULT_STAGE_ID,
 	type DeckCardDef,
 	INITIAL_ENERGY,
 	INITIAL_PLAYER_HP,
 	isMapUnlocked,
 	MAP_REGISTRY,
 	type PlacementFailureReason,
+	STAGES,
 	type StarRating,
 	type WavePhase,
 } from '@gld/shared';
@@ -55,6 +57,7 @@ export interface BossHpEntry {
 /** Phaser emits wavesCleared~goldEarned; xpEarned is computed in the React layer via battleXp(). */
 export interface GameOverStats {
 	wavesCleared: number;
+	totalWaves: number;
 	towersPlaced: number;
 	timeSurvivedSec: number;
 	goldEarned: number;
@@ -70,6 +73,8 @@ interface GameStoreState {
 	energy: number;
 	lives: number;
 	selectedMapId: string;
+	selectedStageId: string;
+	selectedWorldId: string;
 	selectedTowerId: string | null;
 	deckCards: readonly DeckCardDef[];
 	selectedCardIndex: number | null;
@@ -95,12 +100,15 @@ interface GameStoreState {
 	tutorialMessage: string | null;
 	gameSpeed: 1 | 2;
 	selectedStar: StarRating;
+	stageDetailFrom: 'lobby' | 'stageSelect';
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
 	setEnergy: (energy: number) => void;
 	setLives: (lives: number) => void;
 	setSelectedMapId: (mapId: string) => void;
+	setSelectedWorldId: (worldId: string) => void;
+	setSelectedStageId: (stageId: string) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setDeckCards: (cards: readonly DeckCardDef[]) => void;
 	setSelectedCardIndex: (index: number | null) => void;
@@ -132,14 +140,14 @@ interface GameStoreState {
 	setGameSpeed: (speed: 1 | 2) => void;
 	setSelectedStar: (star: StarRating) => void;
 	enterStageSelect: () => void;
-	enterStageDetail: (mapId: string) => void;
+	enterStageDetail: (stageId: string) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
 	currentSlot: 1,
 	phase: 'combat',
 	bossWarning: false,
-	timerLabel: 'Slot 1',
+	timerLabel: '',
 });
 
 const createRunState = () => ({
@@ -168,8 +176,11 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
-	selectedMapId: 'forest_gate',
+	selectedStageId: DEFAULT_STAGE_ID,
+	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? DEFAULT_MAP_ID,
+	selectedWorldId: STAGES[DEFAULT_STAGE_ID]?.worldId ?? 'w1_forest',
 	selectedStar: 1 as StarRating,
+	stageDetailFrom: 'stageSelect' as const,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -187,6 +198,15 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),
 	setSelectedMapId: (mapId) => set({ selectedMapId: mapId }),
+	setSelectedWorldId: (worldId) => set({ selectedWorldId: worldId }),
+	setSelectedStageId: (stageId) => {
+		const stage = STAGES[stageId];
+		if (!stage) {
+			console.warn(`[gameStore] Unknown stage id: ${stageId}`);
+			return;
+		}
+		set({ selectedStageId: stageId, selectedMapId: stage.mapId });
+	},
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setDeckCards: (cards) => set({ deckCards: cards }),
 	setSelectedCardIndex: (index) => set({ selectedCardIndex: index }),
@@ -224,11 +244,17 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 				!map || !isMapUnlocked(map, level)
 					? DEFAULT_MAP_ID
 					: state.selectedMapId;
+			const currentStage = STAGES[state.selectedStageId];
+			const safeStageId =
+				currentStage && currentStage.mapId === safeMapId
+					? state.selectedStageId
+					: DEFAULT_STAGE_ID;
 			return {
 				runId: state.runId + 1,
 				runStatus: 'building',
 				lobbyTab: 'home',
 				selectedMapId: safeMapId,
+				selectedStageId: safeStageId,
 				...createRunState(),
 			};
 		});
@@ -289,6 +315,18 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	},
 	setSelectedStar: (star) => set({ selectedStar: star }),
 	enterStageSelect: () => set({ runStatus: 'stageSelect', lobbyTab: 'home' }),
-	enterStageDetail: (mapId: string) =>
-		set({ runStatus: 'stageDetail', selectedMapId: mapId }),
+	enterStageDetail: (stageId: string) => {
+		const stage = STAGES[stageId];
+		if (!stage) {
+			console.warn(`[gameStore] enterStageDetail unknown stage: ${stageId}`);
+			return;
+		}
+		set((state) => ({
+			runStatus: 'stageDetail',
+			selectedStageId: stageId,
+			selectedMapId: stage.mapId,
+			selectedWorldId: stage.worldId,
+			stageDetailFrom: state.runStatus === 'lobby' ? 'lobby' : 'stageSelect',
+		}));
+	},
 }));

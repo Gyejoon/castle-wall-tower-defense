@@ -22,9 +22,9 @@ describe('Batch 1: element/boss/result assets', () => {
     }
   });
 
-  it('titan boss sprites exist', () => {
-    expect(existsSync(`${ASSETS_DIR}/units/titan-boss.png`)).toBe(true);
-    expect(existsSync(`${ASSETS_DIR}/units/titan-boss-rage.png`)).toBe(true);
+  it('dragon boss sprites exist', () => {
+    expect(existsSync(`${ASSETS_DIR}/units/dragon-boss.png`)).toBe(true);
+    expect(existsSync(`${ASSETS_DIR}/units/dragon-boss-rage.png`)).toBe(true);
   });
 
   it('boss VFX exist', () => {

@@ -26,11 +26,13 @@ export interface GameEventMap {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
 		finalSlot: number;
+		mapId: string;
 		selectedStar: StarRating;
 		starCleared: boolean;
 		hpRemaining: number;
 		stats: {
 			wavesCleared: number;
+			totalWaves: number;
 			towersPlaced: number;
 			timeSurvivedSec: number;
 			goldEarned: number;
@@ -53,6 +55,7 @@ export interface GameEventMap {
 		totalWaves: number;
 		slotIndex: number;
 		delaySec: number;
+		cleared: boolean;
 	};
 	'boss-warning': {
 		slotIndex: number;
@@ -97,6 +100,13 @@ export interface GameEventMap {
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
 	'request-set-speed': { multiplier: 1 | 2 };
+	'request-place-tower-at': {
+		towerDefId: string;
+		clientX: number;
+		clientY: number;
+	};
+	'drag-hover': { clientX: number; clientY: number };
+	'drag-drop': { towerDefId: string; clientX: number; clientY: number };
 
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
@@ -107,11 +117,18 @@ export interface GameEventMap {
 	'request-start-game-from-stage': { mapId: string };
 	'request-deck-edit': undefined;
 
+	// Gimmick VFX
+	'furnace-cycle': { active: boolean; tiles: Array<{ x: number; y: number }> };
+	'arcane-burst': {
+		area: { startX: number; startY: number; endX: number; endY: number };
+		stunMs: number;
+	};
+
 	// Internal
 	'current-scene-ready': Phaser.Scene;
 }
 
-class TypedEventBus {
+export class TypedEventBus {
 	private emitter = new Events.EventEmitter();
 
 	emit<K extends keyof GameEventMap>(

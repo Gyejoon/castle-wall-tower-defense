@@ -13,8 +13,8 @@ describe('inferAssetManifestSection — new sections', () => {
 	it('routes /boss/ paths to boss section', () => {
 		expect(
 			inferAssetManifestSection({
-				key: 'boss-titan',
-				path: 'assets/boss/titan.png',
+				key: 'boss-dragon',
+				path: 'assets/boss/dragon.png',
 			}),
 		).toBe('boss');
 	});

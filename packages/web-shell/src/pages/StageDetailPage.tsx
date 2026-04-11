@@ -3,11 +3,13 @@ import {
 	getMapPaths,
 	getMaxGoldForMap,
 	getMaxXpForMap,
-	getTotalWavesForMap,
-	getWavesForMap,
+	getStageById,
+	getTotalWavesForStage,
+	getWavesForStage,
 	MAP_REGISTRY,
 	STAR_DIFFICULTY,
 	type StarRating,
+	WORLD_ORDER,
 } from '@gld/shared';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { PixelButton } from '../components/ui/PixelButton';
@@ -22,12 +24,12 @@ const DeckEditSheet = lazy(() =>
 
 function isStarUnlocked(
 	star: StarRating,
-	mapId: string,
+	stageId: string,
 	stageStarsMap: Record<string, number>,
 ): boolean {
 	if (star === 1) return true;
-	if (star === 2) return (stageStarsMap[mapId] ?? 0) >= 1;
-	return (stageStarsMap[mapId] ?? 0) >= 2;
+	if (star === 2) return (stageStarsMap[stageId] ?? 0) >= 1;
+	return (stageStarsMap[stageId] ?? 0) >= 2;
 }
 
 const STAR_COLORS = {
@@ -48,24 +50,37 @@ const STAR_COLORS = {
 	},
 } as const;
 
+const FOREST_THEME = {
+	gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
+	thumb: 'assets/ui/stage-thumb-forest_gate.webp',
+};
+const LAVA_THEME = {
+	gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
+	thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
+};
+const STORM_THEME = {
+	gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
+	thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
+};
+
 const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
-	forest_gate: {
-		gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
-		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
-	},
-	lava_fortress: {
-		gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
-		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
-	},
-	storm_citadel: {
-		gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
-		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
-	},
+	forest_gate: FOREST_THEME,
+	w1_forest_a: FOREST_THEME,
+	w1_forest_b: FOREST_THEME,
+	lava_fortress: LAVA_THEME,
+	w2_forge_a: LAVA_THEME,
+	w2_forge_b: LAVA_THEME,
+	storm_citadel: STORM_THEME,
+	w3_tower_a: STORM_THEME,
+	w3_tower_b: STORM_THEME,
 };
 
 export function StageDetailPage() {
 	const selectedMapId = useGameStore((s) => s.selectedMapId);
+	const selectedStageId = useGameStore((s) => s.selectedStageId);
 	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
+	const enterLobby = useGameStore((s) => s.enterLobby);
+	const stageDetailFrom = useGameStore((s) => s.stageDetailFrom);
 	const resetRun = useGameStore((s) => s.resetRun);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
@@ -75,7 +90,7 @@ export function StageDetailPage() {
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
 
 	// Guard: reset selectedStar if locked on current map
-	const highestStar = (stageStars[selectedMapId] ?? 0) as 0 | 1 | 2 | 3;
+	const highestStar = (stageStars[selectedStageId] ?? 0) as 0 | 1 | 2 | 3;
 	const maxUnlocked: StarRating =
 		highestStar >= 2 ? 3 : highestStar >= 1 ? 2 : 1;
 	useEffect(() => {
@@ -87,17 +102,19 @@ export function StageDetailPage() {
 	const map = MAP_REGISTRY[selectedMapId];
 	if (!map) return null;
 
+	const stage = getStageById(selectedStageId);
 	const theme = MAP_THEMES[selectedMapId] ?? { gradient: '#2a2010', thumb: '' };
 	const maxXp = getMaxXpForMap(selectedMapId, selectedStar);
 	const maxGold = getMaxGoldForMap(selectedMapId, selectedStar);
-	const totalWaves = getTotalWavesForMap(selectedMapId);
-	const waves = getWavesForMap(selectedMapId);
+	const totalWaves = getTotalWavesForStage(stage.waveSetId);
+	const waves = getWavesForStage(stage.waveSetId);
 	const hasBoss = waves.some((w) => w.kind === 'boss');
 	const lanes = getMapPaths(map).length;
 	const starKey =
-		selectedStar > 1 ? `${selectedMapId}:${selectedStar}` : selectedMapId;
-	const best = highestWave[starKey] ?? 0;
-	const isCleared = best >= totalWaves;
+		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
+	const rawBest = highestWave[starKey] ?? 0;
+	const best = Math.min(rawBest, totalWaves);
+	const isCleared = rawBest >= totalWaves;
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [
@@ -131,7 +148,9 @@ export function StageDetailPage() {
 					<button
 						type="button"
 						className="absolute left-3 font-pixel text-[10px] text-accent cursor-pointer hover:text-gold transition-colors"
-						onClick={enterStageSelect}
+						onClick={
+							stageDetailFrom === 'lobby' ? enterLobby : enterStageSelect
+						}
 					>
 						<span className="inline-flex items-center gap-1">
 							<img
@@ -141,7 +160,7 @@ export function StageDetailPage() {
 								height={10}
 								className="[image-rendering:pixelated]"
 							/>
-							월드맵
+							뒤로가기
 						</span>
 					</button>
 					<span className="absolute left-1/2 -translate-x-1/2 font-pixel text-base text-gold">
@@ -149,14 +168,14 @@ export function StageDetailPage() {
 					</span>
 				</div>
 
-				{/* Scrollable content */}
-				<div className="flex-1 min-h-0 overflow-auto flex flex-col">
+				{/* Content — no scroll at 670px */}
+				<div className="flex-1 min-h-0 flex flex-col">
 					{/* Hero */}
-					<div className="relative h-[140px] overflow-hidden flex-shrink-0">
+					<div className="relative h-[100px] overflow-hidden flex-shrink-0">
 						<img
 							src={theme.thumb}
 							alt={map.name}
-							className="absolute inset-0 w-full h-full object-cover scale-150"
+							className="absolute inset-0 w-full h-full object-cover"
 						/>
 						<div
 							className="absolute inset-0"
@@ -166,7 +185,8 @@ export function StageDetailPage() {
 							}}
 						/>
 						<span className="absolute bottom-3 left-4 font-pixel text-[15px] text-text z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-							{map.name}
+							{WORLD_ORDER.indexOf(stage.worldId) + 1}-{stage.stageNumber}{' '}
+							{stage.name}
 						</span>
 						<div className="absolute bottom-2 right-4 flex flex-col items-end gap-1 z-10">
 							<span className="font-pixel text-[10px] text-accent bg-[rgba(26,18,8,0.85)] px-2 py-0.5 border border-border">
@@ -189,7 +209,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Info cards 2x2 */}
-					<div className="grid grid-cols-2 gap-2 p-3">
+					<div className="grid grid-cols-2 gap-1.5 px-3 py-2">
 						{infoCards.map((card) => (
 							<div
 								key={card.label}
@@ -209,7 +229,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Clear record */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
 							클리어 기록
 						</p>
@@ -235,7 +255,7 @@ export function StageDetailPage() {
 								<img
 									key={s}
 									src={
-										s <= (stageStars[selectedMapId] ?? 0)
+										s <= (stageStars[selectedStageId] ?? 0)
 											? 'assets/ui/icon-star-active.png'
 											: 'assets/ui/icon-star-inactive.png'
 									}
@@ -261,7 +281,7 @@ export function StageDetailPage() {
 					)}
 
 					{/* Star difficulty selector */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
 							난이도 선택
 						</p>
@@ -269,7 +289,7 @@ export function StageDetailPage() {
 							{([1, 2, 3] as StarRating[]).map((star) => {
 								const unlocked = isStarUnlocked(
 									star,
-									selectedMapId,
+									selectedStageId,
 									stageStars,
 								);
 								const active = selectedStar === star;
@@ -316,7 +336,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Deck preview */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<div className="flex items-center justify-between mb-2">
 							<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider">
 								출전 덱
@@ -374,10 +394,10 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Spacer pushes button to bottom when content is short */}
-					<div className="flex-1 min-h-4" />
+					<div className="flex-1 min-h-2" />
 
 					{/* Game start button */}
-					<div className="p-3">
+					<div className="px-3 py-2">
 						<PixelButton
 							variant="gold"
 							onClick={resetRun}

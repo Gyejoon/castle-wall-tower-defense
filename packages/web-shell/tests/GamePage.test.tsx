@@ -1,3 +1,4 @@
+import { createDefaultSave } from '@gld/shared';
 import { act, render } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import {
@@ -10,6 +11,7 @@ import {
 	vi,
 } from 'vitest';
 import { useGameStore } from '../src/stores/gameStore';
+import { useMetaStore } from '../src/stores/metaStore';
 
 type EventHandler = (payload?: unknown) => void;
 
@@ -125,6 +127,7 @@ describe('GamePage', () => {
 		offSpy.mockClear();
 		removeAllListenersSpy.mockClear();
 		listeners.clear();
+		useMetaStore.setState(createDefaultSave());
 		useGameStore.setState(useGameStore.getInitialState());
 		useGameStore.getState().resetRun();
 	});
@@ -277,6 +280,69 @@ describe('GamePage', () => {
 			});
 		});
 		expect(view.getByText('에너지 부족')).toBeTruthy();
+	});
+
+	it('records victory progress by selectedStageId, not selectedMapId', () => {
+		const { emitSpy } = getEventBusHarness();
+		useGameStore.setState({
+			selectedMapId: 'w1_forest_a',
+			selectedStageId: 'w1_s2',
+		});
+		render(<GamePage />);
+
+		act(() => {
+			emitSpy('game-over', {
+				result: 'victory',
+				selectedStar: 2,
+				starCleared: true,
+				hpRemaining: 20,
+				stats: {
+					wavesCleared: 10,
+					towersPlaced: 5,
+					timeSurvivedSec: 180,
+					goldEarned: 200,
+					rewardMultiplier: 1,
+				},
+			});
+		});
+
+		const progress = useMetaStore.getState().progress;
+		expect(progress.stagesCleared).toContain('w1_s2');
+		expect(progress.stagesCleared).not.toContain('w1_forest_a');
+		expect(progress.stageStars.w1_s2).toBe(2);
+		expect(progress.stageStars.w1_forest_a).toBeUndefined();
+		expect(progress.highestWave['w1_s2:2']).toBe(10);
+		expect(progress.highestWave['w1_forest_a:2']).toBeUndefined();
+	});
+
+	it('keeps 2x speed locked when selected stage is not fully cleared', () => {
+		const save = createDefaultSave();
+		save.progress.highestWave = { w1_s3: 5 };
+		useMetaStore.setState(save);
+		useGameStore.setState({
+			runStatus: 'running',
+			selectedMapId: 'w1_forest_a',
+			selectedStageId: 'w1_s3',
+			selectedStar: 1,
+		});
+		const view = render(<GamePage />);
+
+		expect(view.queryByRole('button', { name: /1x ▶/i })).toBeNull();
+	});
+
+	it('unlocks 2x speed from selectedStageId highest wave, not selectedMapId', () => {
+		const save = createDefaultSave();
+		save.progress.highestWave = { w1_s3: 7 };
+		useMetaStore.setState(save);
+		useGameStore.setState({
+			runStatus: 'running',
+			selectedMapId: 'w1_forest_a',
+			selectedStageId: 'w1_s3',
+			selectedStar: 1,
+		});
+		const view = render(<GamePage />);
+
+		expect(view.getByRole('button', { name: /1x ▶/i })).toBeTruthy();
 	});
 
 	it('resets prep countdown UI when combat starts', () => {

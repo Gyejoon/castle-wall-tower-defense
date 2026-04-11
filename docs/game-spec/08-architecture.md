@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-10
+> **Last Updated:** 2026-04-11
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -59,6 +59,20 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 
 `speedMultiplier`(1× or 2×)는 `scaledDelta`에만 적용된다. DamageNumberSystem은 시각 효과이므로 실제 delta를 사용한다.
 
+### 유닛 이동 방향 표현
+
+| 유닛 타입 | 방향 표현 | 비고 |
+|-----------|----------|------|
+| 비행 보스 (`flying: true`) | `setRotation(moveAngle - π/2)` | 이동 방향을 바라봄 |
+| 지상 보스 | `flipX` only | 좌우 반전만, 회전 없음 |
+| 일반 유닛 | `flipX` | 이동 방향에 따라 좌우 반전 |
+
+> 코드: `packages/phaser-game/src/systems/UnitSystem.ts` — update() 내 스프라이트 방향 처리
+
+### 몬스터 충돌
+
+`sweepCollisions()`는 비활성화 상태 (즉시 반환). 스폰 차단 로직도 제거되어 몬스터가 서로를 통과하여 이동한다.
+
 ### 시스템 간 의존 관계
 
 ```
@@ -101,7 +115,7 @@ EnergySystem.reset()
 | `wave-prep-tick` | prep 페이즈 update() tick (매 프레임) | useGameEvents → gameStore.setCountdown |
 | `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
 | `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
-| `boss-warning` | pre_boss 웨이브 대기 진입 | useGameEvents → bossWarningVisible |
+| `boss-warning` | boss 웨이브 진입 시 | useGameEvents → bossWarningVisible |
 | `boss-hp-update` | 보스 피격 | useGameEvents → setBossHp |
 | `boss-phase-change` | 보스 2페이즈 돌입 | useGameEvents → 토스트 |
 | `boss-defeated` | 보스 사망 | useGameEvents → setBossHp 초기화 |
@@ -119,6 +133,8 @@ EnergySystem.reset()
 | `request-select-tower` | DeckDock | Game.ts onSelectTower |
 | `request-clear-tower-selection` | UI | Game.ts onClearTowerSelection |
 | `request-place-tower` | UI | Game.ts (pointerdown 대체 경로) |
+| `drag-drop` | DeckDock (HTML5 Drag API / 터치 롱프레스) | Game.ts — 드래그 앤 드롭 타워 배치 |
+| `drag-hover` | DeckDock (터치 이동 중) | Game.ts — 드래그 중 배치 가능 하이라이트 |
 | `request-sell-tower` | UI | TowerSystem |
 | `request-start-game` | UI | 씬 전환 |
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
@@ -218,14 +234,14 @@ EnergySystem.reset()
 
 | Phase | 조건 |
 |-------|------|
-| `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지와 킬 에너지만). |
+| `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지 40으로 전략적 배치). 킬 보상은 제거됨 — 에너지 획득은 자연 재생(1/sec)과 웨이브 클리어 보상(+5)만 존재. |
 | `spawning` | `advanceToNextWave()` 호출 시 → 유닛 spawn |
-| `combat` | normal/pre_boss 웨이브 진행 중 |
-| `boss` | boss 웨이브 진행 중 |
-| `waiting` | 웨이브 클리어(유닛 0) → 다음 웨이브까지 딜레이 타이머 |
+| `combat` | normal 웨이브 진행 중. 30초 타이머(MAX_WAVE_DURATION_MS) 적용, 만료 시 잔존 몬스터 유지한 채 다음 웨이브로 강제 진행 |
+| `boss` | boss 웨이브 진행 중. 마지막 웨이브는 타이머 면제(무제한) |
+| `waiting` | 웨이브 클리어(유닛 0) 또는 타이머 만료 → 다음 웨이브까지 딜레이 타이머 (타이머 만료 시 딜레이 0) |
 | `ended` | 마지막 웨이브 클리어 완료 |
 
-보스 경고 메커니즘: `pre_boss` 웨이브가 `waiting`으로 전이될 때 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다.
+보스 경고 메커니즘: `boss` 웨이브 진입 시 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다. `WaveSlotKind`는 `'normal' | 'boss'`만 존재하며 `pre_boss`는 완전 제거되었다.
 
 prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 모든 전투는 prep으로 시작하며 에너지 자연 증가가 정지된다(이슈 #93).
 
@@ -233,14 +249,22 @@ prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null�
 
 ## §8 데이터 흐름 예시: 타워 배치
 
-End-to-end 시퀀스.
+End-to-end 시퀀스. 두 가지 경로 지원: 탭 선택 + 탭 배치, 또는 드래그 앤 드롭(HTML5 Drag API + 터치 롱프레스 300ms 폴백).
 
 ```
+경로 A (탭):
 1. React: DeckDock에서 타워 카드 탭
 2. React → EventBus: emit('request-select-tower', { towerDefId })
 3. Game.ts: onSelectTower() → selectedTowerId 설정, 배치 가능 하이라이트 렌더
 4. 사용자: 그리드 셀 탭
 5. Game.ts: pointerdown → handlePlaceTower(gridX, gridY, towerDefId)
+
+경로 B (드래그 앤 드롭):
+1. React: DeckDock에서 타워 카드 드래그 시작 (HTML5 dragstart / 터치 롱프레스 300ms)
+2. 드래그 중: 타워 에셋 고스트가 커서/손가락을 따라감
+3. React → EventBus: emit('drag-drop', { towerDefId, clientX, clientY })
+4. Game.ts: 좌표를 그리드로 변환 → handlePlaceTower()
+이후 동일:
    a. DeckSystem.getCardByTowerId() → energyCost 확인
    b. EnergySystem.canAfford(energyCost) → 부족 시 'insufficient_energy' emit
    c. getPlacementGuardFailure({ phase }) → combat 중 배치 불가 등 guard 체크
@@ -263,3 +287,4 @@ End-to-end 시퀀스.
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
 | 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
+| 2026-04-11 | §2, §3, §7 | 유닛 이동 방향 표현 추가(비행 보스 setRotation, 지상 보스/일반 유닛 flipX). 몬스터 충돌 비활성화(sweepCollisions disabled). 웨이브 30초 타이머(마지막 웨이브 면제). drag-drop/drag-hover 이벤트 추가(드래그 앤 드롭 타워 배치). |

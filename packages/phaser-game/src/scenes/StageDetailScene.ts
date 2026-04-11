@@ -1,10 +1,12 @@
 import {
 	ALL_TOWERS,
+	DEFAULT_STAGE_ID,
 	getMapPaths,
 	getMaxGoldForMap,
 	getMaxXpForMap,
-	getTotalWavesForMap,
-	getWavesForMap,
+	getStageById,
+	getTotalWavesForStage,
+	getWavesForStage,
 	MAP_REGISTRY,
 } from '@gld/shared';
 import Phaser from 'phaser';
@@ -23,6 +25,11 @@ export class StageDetailScene extends Phaser.Scene {
 		this.events.on('shutdown', this.onShutdown, this);
 
 		const { mapId } = data;
+		const rawStageId =
+			(this.game.registry.get('selectedStageId') as string | undefined) ??
+			DEFAULT_STAGE_ID;
+		const stage = getStageById(rawStageId);
+		const stageId = stage.id;
 		const map = MAP_REGISTRY[mapId];
 		if (!map) {
 			EventBus.emit('request-enter-stage-select');
@@ -88,8 +95,8 @@ export class StageDetailScene extends Phaser.Scene {
 		const cardH = 52;
 		const maxXp = getMaxXpForMap(mapId);
 		const maxGold = getMaxGoldForMap(mapId);
-		const totalWaves = getTotalWavesForMap(mapId);
-		const waves = getWavesForMap(mapId);
+		const totalWaves = getTotalWavesForStage(stage.waveSetId);
+		const waves = getWavesForStage(stage.waveSetId);
 		const hasBoss = waves.some((w) => w.kind === 'boss');
 		const lanes = getMapPaths(map).length;
 
@@ -125,7 +132,7 @@ export class StageDetailScene extends Phaser.Scene {
 		// ===== Clear record =====
 		const highestWave =
 			(this.game.registry.get('highestWave') as Record<string, number>) ?? {};
-		const best = highestWave[mapId] ?? 0;
+		const best = highestWave[stageId] ?? 0;
 
 		this.add.text(16, yOffset, '클리어 기록', {
 			fontFamily: '"Press Start 2P"',

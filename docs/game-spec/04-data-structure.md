@@ -1,6 +1,6 @@
 # 데이터 Structure
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-11  
 > **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md` §13  
 > 스키마가 변경될 때 이 문서를 먼저 업데이트한다.
 
@@ -75,6 +75,20 @@
 
 **마이그레이션:** v3→v4, 새 필드는 기본값(0, {}, [])으로 초기화
 
+### SaveData v5 추가 필드
+
+**MissionProgress 확장:**
+- `mapId?: string` — 맵 바인딩 미션용 (clear_map, defeat_boss_map)
+
+**MissionType 확장:**
+- `clear_map` — 특정 맵 클리어
+- `defeat_boss_map` — 특정 맵 보스 처치
+
+**AchievementCategory 확장:**
+- `map_progress` — 맵별 진행 업적 (9종: 3맵 × 3★)
+
+**마이그레이션:** v4→v5, stageStars 키를 mapId에서 stageId로 변환
+
 ---
 
 ## 2. 저장 시점
@@ -144,7 +158,7 @@ type StarRating = 1 | 2 | 3;
 ### AchievementCategory
 
 ```typescript
-type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
+type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress' | 'map_progress';
 ```
 
 ---
@@ -201,3 +215,4 @@ type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | GDD §13 기반 |
 | 2026-04-07 | §7 | React↔Phaser 설정 동기화 아키텍처 추가 |
+| 2026-04-11 | §1, §5 | SaveData v5: MissionProgress.mapId 필드, MissionType에 clear_map/defeat_boss_map 추가, AchievementCategory에 map_progress 추가 (9종 맵별 업적), SAVE_VERSION 4→5 |

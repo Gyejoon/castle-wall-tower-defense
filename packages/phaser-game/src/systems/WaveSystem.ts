@@ -2,6 +2,7 @@ import {
 	FINAL_BOSS_HP_MULTIPLIER,
 	INITIAL_PREP_MS,
 	MAX_WAVE_DURATION_MS,
+	UNITS,
 	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
@@ -233,7 +234,9 @@ export class WaveSystem {
 		const waveSpeedMult = waveScale?.speed ?? 1;
 		const isLastWaveSlot = this.currentWaveIndex >= this.maxWaves - 1;
 		for (const group of wave.groups) {
-			const isBoss = group.unitId === 'titan' || wave.kind === 'boss';
+			const unitDef = UNITS.find((u) => u.id === group.unitId);
+			const isBoss =
+				wave.kind === 'boss' || !!unitDef?.bossBehaviorId;
 			const hpMultiplier =
 				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
 				this.difficultyHpMult;

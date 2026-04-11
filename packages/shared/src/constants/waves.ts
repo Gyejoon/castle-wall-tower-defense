@@ -769,9 +769,12 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'boss',
 			delayAfterClearSec: 5,
-			groups: [{ unitId: 'titan', count: 1 }],
+			groups: [
+				{ unitId: 'titan', count: 1 },
+				{ unitId: 'battle_robot', count: 3 },
+			],
 		},
 		{
 			slotIndex: 6,
@@ -797,7 +800,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			delayAfterClearSec: 3,
 			groups: [
 				{ unitId: 'battle_robot', count: 10 },
-				{ unitId: 'titan', count: 1 },
+				{ unitId: 'heavy_walker', count: 3 },
 			],
 		},
 		{

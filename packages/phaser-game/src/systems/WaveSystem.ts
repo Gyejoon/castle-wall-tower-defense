@@ -178,6 +178,10 @@ export class WaveSystem {
 		return this.elapsedMs;
 	}
 
+	isLastWave(): boolean {
+		return this.currentWaveIndex >= this.maxWaves - 1;
+	}
+
 	destroy(): void {
 		this.phase = 'ended';
 	}

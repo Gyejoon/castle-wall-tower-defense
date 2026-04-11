@@ -358,10 +358,12 @@ export class GameScene extends Phaser.Scene {
 			this.showBossWarningOverlay();
 		};
 
-		this.onWaveCompleted = () => {
+		this.onWaveCompleted = (data: { wave: number; totalWaves: number }) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			if (data.wave < data.totalWaves) {
+				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			}
 		};
 
 		this.onSetSpeed = ({ multiplier }) => {
@@ -885,8 +887,10 @@ export class GameScene extends Phaser.Scene {
 
 		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
-		// prep 페이즈에는 에너지 자연 증가 없음 (초기 에너지 + 킬 에너지만)
-		if (this.playerWaves.getPhase() !== 'prep') {
+		// prep/마지막 보스 페이즈에는 에너지 자연 증가 없음
+		const phase = this.playerWaves.getPhase();
+		const isLastBoss = phase === 'boss' && this.playerWaves.isLastWave();
+		if (phase !== 'prep' && !isLastBoss) {
 			this.energySystem.update(scaledDelta / 1000);
 		}
 

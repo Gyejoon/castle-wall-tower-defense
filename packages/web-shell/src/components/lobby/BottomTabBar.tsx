@@ -9,144 +9,121 @@ interface TabDef {
 	inactiveIcon: string;
 }
 
-const leftTab: TabDef = {
-	id: 'collection',
-	label: '전쟁탁자',
-	activeIcon: uiMobileArt.collectionTabIconActive,
-	inactiveIcon: uiMobileArt.collectionTabIconInactive,
-};
-
-const centerTab: TabDef = {
-	id: 'home',
-	label: '마당',
-	activeIcon: uiMobileArt.homeTabIconActive,
-	inactiveIcon: uiMobileArt.homeTabIconInactive,
-};
-
-const rightTab: TabDef = {
-	id: 'settings',
-	label: '영주실',
-	activeIcon: uiMobileArt.settingsTabIconActive,
-	inactiveIcon: uiMobileArt.settingsTabIconInactive,
-};
-
-function SideTab({
-	tab,
-	isActive,
-	disabled,
-	onClick,
-}: {
-	tab: TabDef;
-	isActive: boolean;
-	disabled: boolean;
-	onClick: () => void;
-}) {
-	return (
-		<button
-			type="button"
-			role="tab"
-			aria-selected={isActive}
-			aria-label={tab.label}
-			aria-controls={`tabpanel-${tab.id}`}
-			disabled={disabled}
-			onClick={() => !disabled && onClick()}
-			className={cn(
-				'flex flex-col items-center gap-[3px] px-4 py-1.5 bg-transparent border-none min-w-[60px] touch-manipulation',
-				disabled
-					? 'cursor-not-allowed opacity-50'
-					: 'cursor-pointer opacity-100',
-			)}
-		>
-			<img
-				src={isActive ? tab.activeIcon : tab.inactiveIcon}
-				alt=""
-				width={20}
-				height={20}
-				className="[image-rendering:pixelated]"
-				aria-hidden="true"
-			/>
-			<span
-				className={cn(
-					'font-pixel text-[10px] transition-colors duration-150',
-					isActive ? 'text-gold' : 'text-text-secondary',
-				)}
-			>
-				{tab.label}
-			</span>
-		</button>
-	);
-}
+const tabs: [TabDef, TabDef, TabDef] = [
+	{
+		id: 'collection',
+		label: '전쟁탁자',
+		activeIcon: uiMobileArt.collectionTabIconActive,
+		inactiveIcon: uiMobileArt.collectionTabIconInactive,
+	},
+	{
+		id: 'home',
+		label: '마당',
+		activeIcon: uiMobileArt.homeTabIconActive,
+		inactiveIcon: uiMobileArt.homeTabIconInactive,
+	},
+	{
+		id: 'settings',
+		label: '영주실',
+		activeIcon: uiMobileArt.settingsTabIconActive,
+		inactiveIcon: uiMobileArt.settingsTabIconInactive,
+	},
+];
 
 export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 	const lobbyTab = useGameStore((s) => s.lobbyTab);
 	const setLobbyTab = useGameStore((s) => s.setLobbyTab);
-	const isCenterActive = lobbyTab === centerTab.id;
 
 	return (
 		<div
 			role="tablist"
 			aria-label="로비 탭"
-			className="flex justify-around items-end bg-[rgba(26,18,8,0.95)] border-t border-border"
+			className="relative flex justify-around items-end bg-[rgba(20,14,6,0.98)] border-t-2 border-border"
 			style={{
-				padding: '0 0 calc(4px + env(safe-area-inset-bottom, 0px))',
+				paddingBottom: 'calc(4px + env(safe-area-inset-bottom, 0px))',
 			}}
 		>
-			{/* Left: 전쟁탁자 */}
-			<SideTab
-				tab={leftTab}
-				isActive={lobbyTab === leftTab.id}
-				disabled={disabled}
-				onClick={() => setLobbyTab(leftTab.id)}
-			/>
+			{tabs.map((tab) => {
+				const isActive = lobbyTab === tab.id;
+				const isCenter = tab.id === 'home';
 
-			{/* Center: 마당 (elevated, larger) */}
-			<button
-				type="button"
-				role="tab"
-				aria-selected={isCenterActive}
-				aria-label={centerTab.label}
-				aria-controls={`tabpanel-${centerTab.id}`}
-				disabled={disabled}
-				onClick={() => !disabled && setLobbyTab(centerTab.id)}
-				className={cn(
-					'flex flex-col items-center gap-1 -mt-4 px-3 py-2 border-2 touch-manipulation transition-all duration-200',
-					disabled
-						? 'cursor-not-allowed opacity-50'
-						: 'cursor-pointer opacity-100',
-					isCenterActive
-						? 'border-gold bg-[rgba(240,208,96,0.12)] shadow-[0_0_12px_rgba(240,208,96,0.25)]'
-						: 'border-border bg-[rgba(26,18,8,0.95)]',
-				)}
-			>
-				<img
-					src={
-						isCenterActive
-							? centerTab.activeIcon
-							: centerTab.inactiveIcon
-					}
-					alt=""
-					width={28}
-					height={28}
-					className="[image-rendering:pixelated]"
-					aria-hidden="true"
-				/>
-				<span
-					className={cn(
-						'font-pixel text-[11px] transition-colors duration-150',
-						isCenterActive ? 'text-gold' : 'text-text-secondary',
-					)}
-				>
-					{centerTab.label}
-				</span>
-			</button>
+				if (isCenter) {
+					return (
+						<button
+							type="button"
+							key={tab.id}
+							role="tab"
+							aria-selected={isActive}
+							aria-label={tab.label}
+							aria-controls={`tabpanel-${tab.id}`}
+							disabled={disabled}
+							onClick={() => !disabled && setLobbyTab(tab.id)}
+							className={cn(
+								'relative flex flex-col items-center -mt-5 px-5 pt-2.5 pb-1.5 border-2 touch-manipulation transition-all duration-200',
+								disabled
+									? 'cursor-not-allowed opacity-50'
+									: 'cursor-pointer',
+								isActive
+									? 'border-gold bg-[rgba(240,208,96,0.1)] shadow-[0_-4px_16px_rgba(240,208,96,0.2)]'
+									: 'border-border bg-[rgba(20,14,6,0.98)]',
+							)}
+						>
+							<img
+								src={isActive ? tab.activeIcon : tab.inactiveIcon}
+								alt=""
+								width={30}
+								height={30}
+								className="[image-rendering:pixelated]"
+								aria-hidden="true"
+							/>
+							<span
+								className={cn(
+									'font-pixel text-[11px] mt-1 transition-colors duration-150',
+									isActive ? 'text-gold' : 'text-text-secondary',
+								)}
+							>
+								{tab.label}
+							</span>
+						</button>
+					);
+				}
 
-			{/* Right: 영주실 */}
-			<SideTab
-				tab={rightTab}
-				isActive={lobbyTab === rightTab.id}
-				disabled={disabled}
-				onClick={() => setLobbyTab(rightTab.id)}
-			/>
+				return (
+					<button
+						type="button"
+						key={tab.id}
+						role="tab"
+						aria-selected={isActive}
+						aria-label={tab.label}
+						aria-controls={`tabpanel-${tab.id}`}
+						disabled={disabled}
+						onClick={() => !disabled && setLobbyTab(tab.id)}
+						className={cn(
+							'flex flex-col items-center gap-[2px] px-5 py-2 bg-transparent border-none min-w-[60px] touch-manipulation',
+							disabled
+								? 'cursor-not-allowed opacity-50'
+								: 'cursor-pointer',
+						)}
+					>
+						<img
+							src={isActive ? tab.activeIcon : tab.inactiveIcon}
+							alt=""
+							width={22}
+							height={22}
+							className="[image-rendering:pixelated]"
+							aria-hidden="true"
+						/>
+						<span
+							className={cn(
+								'font-pixel text-[10px] transition-colors duration-150',
+								isActive ? 'text-gold' : 'text-text-secondary',
+							)}
+						>
+							{tab.label}
+						</span>
+					</button>
+				);
+			})}
 		</div>
 	);
 }

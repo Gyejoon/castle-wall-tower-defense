@@ -1,11 +1,78 @@
+import {
+	getStageById,
+	getTotalWavesForStage,
+	isStageUnlocked,
+	STAGE_ORDER,
+	type StarRating,
+	WORLD_ORDER,
+	WORLDS,
+} from '@gld/shared';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
+import { useMetaStore } from '../../../stores/metaStore';
 import { PixelButton } from '../../ui/PixelButton';
 import { FloatingNavButtons } from '../FloatingNavButtons';
 import { TabBackground } from '../TabBackground';
 
+const MAP_THUMBS: Record<string, string> = {
+	w1_forest_a: 'assets/ui/stage-thumb-forest_gate.webp',
+	w1_forest_b: 'assets/ui/stage-thumb-forest_gate.webp',
+	w2_forge_a: 'assets/ui/stage-thumb-lava_fortress.webp',
+	w2_forge_b: 'assets/ui/stage-thumb-lava_fortress.webp',
+	w3_tower_a: 'assets/ui/stage-thumb-storm_citadel.webp',
+	w3_tower_b: 'assets/ui/stage-thumb-storm_citadel.webp',
+};
+
+function getNextStage(stageStars: Record<string, StarRating>): {
+	stageId: string;
+	worldNum: number;
+	stageNum: number;
+	name: string;
+	mapId: string;
+	totalWaves: number;
+	cleared: boolean;
+} | null {
+	for (const stageId of STAGE_ORDER) {
+		if (!isStageUnlocked(stageId, stageStars)) continue;
+		const stage = getStageById(stageId);
+		const cleared = (stageStars[stageId] ?? 0) >= 1;
+		if (!cleared) {
+			const worldNum = WORLD_ORDER.indexOf(stage.worldId) + 1;
+			return {
+				stageId,
+				worldNum,
+				stageNum: stage.stageNumber,
+				name: stage.name,
+				mapId: stage.mapId,
+				totalWaves: getTotalWavesForStage(stage.waveSetId),
+				cleared: false,
+			};
+		}
+	}
+	// All cleared — return last stage
+	const lastId = STAGE_ORDER[STAGE_ORDER.length - 1];
+	const last = getStageById(lastId);
+	const worldNum = WORLD_ORDER.indexOf(last.worldId) + 1;
+	return {
+		stageId: lastId,
+		worldNum,
+		stageNum: last.stageNumber,
+		name: last.name,
+		mapId: last.mapId,
+		totalWaves: getTotalWavesForStage(last.waveSetId),
+		cleared: true,
+	};
+}
+
 export function HomeTab() {
 	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
+	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
+	const stageStars = useMetaStore((s) => s.progress.stageStars);
+	const next = getNextStage(stageStars);
+	const worldName = next
+		? WORLDS[getStageById(next.stageId).worldId]?.name ?? ''
+		: '';
+	const thumb = next ? MAP_THUMBS[next.mapId] ?? '' : '';
 
 	return (
 		<div
@@ -19,7 +86,6 @@ export function HomeTab() {
 				src={uiMobileArt.courtyardBg}
 				gradient="linear-gradient(180deg, #0d1a2a 0%, #14233a 50%, #1a1208 100%)"
 			/>
-			{/* Ambient animations */}
 			<div className="torch torch-left" />
 			<div className="torch torch-right" />
 			<div className="castle-flag" />
@@ -28,36 +94,108 @@ export function HomeTab() {
 			{/* Floating mission/achievement buttons */}
 			<FloatingNavButtons />
 
-			{/* Content overlay */}
+			{/* Center stage card + start button */}
 			<div
-				className="relative z-1 flex flex-col justify-end h-full p-4 gap-3"
+				className="relative z-[1] flex flex-col items-center justify-center h-full px-5 gap-3"
 				style={{
 					background:
-						'linear-gradient(180deg, transparent 0%, transparent 40%, rgba(26,18,8,0.7) 70%, rgba(26,18,8,0.92) 100%)',
+						'linear-gradient(180deg, transparent 0%, rgba(26,18,8,0.3) 30%, rgba(26,18,8,0.85) 70%, rgba(26,18,8,0.95) 100%)',
 				}}
 			>
-				<PixelButton
-					variant="gold"
-					onClick={() => enterStageSelect()}
-					style={{
-						width: '100%',
-						padding: '14px 20px',
-						fontSize: '15px',
-						boxShadow:
-							'0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
-					}}
-				>
-					<span className="inline-flex items-center gap-2">
-						<img
-							src="assets/ui/icon-sword.webp"
-							alt=""
-							width={16}
-							height={16}
-							className="[image-rendering:pixelated]"
-						/>
-						성벽 막기
-					</span>
-				</PixelButton>
+				{/* Stage card */}
+				{next && (
+					<div
+						className="w-full max-w-[320px] border-2 border-border overflow-hidden"
+						style={{
+							background: 'rgba(26, 18, 8, 0.92)',
+							boxShadow:
+								'0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
+						}}
+					>
+						{/* Stage thumbnail */}
+						{thumb && (
+							<div className="relative h-[120px] overflow-hidden">
+								<img
+									src={thumb}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
+								<div
+									className="absolute inset-0"
+									style={{
+										background:
+											'linear-gradient(to bottom, transparent 30%, rgba(26,18,8,0.95) 100%)',
+									}}
+								/>
+								<span className="absolute top-2 left-3 font-pixel text-[9px] text-accent bg-[rgba(26,18,8,0.8)] px-2 py-0.5 border border-border">
+									{worldName}
+								</span>
+							</div>
+						)}
+
+						{/* Stage info */}
+						<div className="px-4 py-3 -mt-6 relative">
+							<p className="font-pixel text-[18px] text-gold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+								{next.worldNum}-{next.stageNum}. {next.name}
+							</p>
+							<p className="font-pixel text-[10px] text-text-secondary mt-1">
+								웨이브 {next.totalWaves}
+								{next.cleared
+									? ' · 클리어 완료'
+									: ''}
+							</p>
+						</div>
+					</div>
+				)}
+
+				{/* Start button */}
+				<div className="w-full max-w-[320px] flex gap-2">
+					<PixelButton
+						variant="gold"
+						onClick={() =>
+							next
+								? enterStageDetail(next.stageId)
+								: enterStageSelect()
+						}
+						style={{
+							flex: 1,
+							padding: '16px 20px',
+							fontSize: '16px',
+							boxShadow:
+								'0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
+						}}
+					>
+						<span className="inline-flex items-center gap-2">
+							<img
+								src="assets/ui/icon-sword.webp"
+								alt=""
+								width={18}
+								height={18}
+								className="[image-rendering:pixelated]"
+							/>
+							{next?.cleared ? '재도전' : '시작'}
+						</span>
+					</PixelButton>
+					<PixelButton
+						variant="secondary"
+						onClick={() => enterStageSelect()}
+						style={{
+							padding: '16px',
+							fontSize: '11px',
+						}}
+					>
+						<span className="inline-flex items-center gap-1">
+							<img
+								src="assets/ui/icon-arrow-left.webp"
+								alt=""
+								width={10}
+								height={10}
+								className="[image-rendering:pixelated] rotate-180"
+							/>
+							지도
+						</span>
+					</PixelButton>
+				</div>
 			</div>
 		</div>
 	);

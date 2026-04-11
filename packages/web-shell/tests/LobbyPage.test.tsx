@@ -28,17 +28,18 @@ describe('LobbyPage', () => {
 
 		const tabs = view.getAllByRole('tab');
 		expect(tabs).toHaveLength(3);
-		expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
+		// Center tab (마당/home) is index 1, should be selected by default
+		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
-		expect(view.getByText('성벽 막기')).toBeTruthy();
+		expect(view.getByText('시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
-		expect(view.queryByText('상대를 찾는 중...')).toBeNull();
 	});
 
 	it('switches tabs on click', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const collectionTab = tabs[1];
+		// Tab order: [전쟁탁자, 마당, 영주실]
+		const collectionTab = tabs[0];
 		const settingsTab = tabs[2];
 
 		expect(collectionTab).toBeTruthy();
@@ -55,17 +56,17 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('enters stage select on button click', () => {
+	it('enters stage detail on start button click', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('성벽 막기'));
+		fireEvent.click(view.getByText('시작'));
 
-		expect(useGameStore.getState().runStatus).toBe('stageSelect');
+		expect(useGameStore.getState().runStatus).toBe('stageDetail');
 	});
 
 	it('shows collection tab with tower grid', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const collectionTab = tabs[1];
+		const collectionTab = tabs[0]; // 전쟁탁자 is first
 
 		expect(collectionTab).toBeTruthy();
 		if (!collectionTab) {
@@ -81,7 +82,7 @@ describe('LobbyPage', () => {
 	it('shows settings tab with toggles', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const settingsTab = tabs[2];
+		const settingsTab = tabs[2]; // 영주실 is last
 
 		expect(settingsTab).toBeTruthy();
 		if (!settingsTab) {

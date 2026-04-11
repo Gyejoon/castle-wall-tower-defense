@@ -8,6 +8,7 @@ const CATEGORIES = [
 	{ id: 'level', label: '레벨' },
 	{ id: 'tower', label: '타워' },
 	{ id: 'progress', label: '진행' },
+	{ id: 'map_progress', label: '월드' },
 ] as const;
 
 export function AchievementPage() {

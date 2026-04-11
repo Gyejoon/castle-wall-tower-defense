@@ -1,8 +1,10 @@
 import {
 	ALL_TOWERS,
 	createDefaultSave,
+	getTotalWavesForStage,
 	type OwnedTower,
 	SAVE_VERSION,
+	STAGE_ORDER,
 } from '@gld/shared';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
@@ -320,6 +322,36 @@ function DevToolsSection() {
 		window.location.reload();
 	};
 
+	const applyAllCleared = () => {
+		const meta = useMetaStore.getState();
+		const highestWave: Record<string, number> = {};
+		const stageStars: Record<string, 1 | 2 | 3> = {};
+		for (const stageId of STAGE_ORDER) {
+			const total = getTotalWavesForStage(stageId);
+			highestWave[stageId] = total;
+			highestWave[`${stageId}:2`] = total;
+			highestWave[`${stageId}:3`] = total;
+			stageStars[stageId] = 3;
+		}
+		const save = {
+			version: SAVE_VERSION,
+			profile: meta.profile,
+			collection: meta.collection,
+			progress: {
+				...meta.progress,
+				highestWave,
+				stagesCleared: [...STAGE_ORDER],
+				stageStars,
+				tutorialCompleted: true,
+			},
+			settings: meta.settings,
+			selectedDeck: meta.selectedDeck,
+		};
+		useMetaStore.setState({ progress: save.progress });
+		writeSave(save);
+		window.location.reload();
+	};
+
 	const resetSave = () => {
 		const save = createDefaultSave();
 		useMetaStore.setState({
@@ -376,6 +408,16 @@ function DevToolsSection() {
 				</span>
 				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
 					전 타워 Lv.50 / Epic / 각성 5
+				</span>
+			</button>
+			<button
+				type="button"
+				onClick={applyAllCleared}
+				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
+			>
+				<span className="font-pixel text-xs text-gold">전 맵 클리어</span>
+				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
+					전 스테이지 ★3 클리어 상태로 세팅
 				</span>
 			</button>
 			<button

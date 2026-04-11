@@ -165,7 +165,7 @@ describe('runtime safety fixes', () => {
 		);
 	});
 
-	it('emits boss-warning when pre_boss wave is cleared', () => {
+	it('emits boss-warning when boss wave starts', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
@@ -173,7 +173,7 @@ describe('runtime safety fixes', () => {
 			getActiveCount: vi.fn(() => 0),
 		};
 
-		// Use w1_s8 which has pre_boss at wave 5 and boss at wave 10
+		// Use w1_s8 which has boss at wave 10
 		const emitSpy = vi.spyOn(EventBus, 'emit');
 		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s8);
 		waveSystem.start();
@@ -181,20 +181,18 @@ describe('runtime safety fixes', () => {
 		// Consume prep phase (5s)
 		waveSystem.update(5100, 0);
 
-		// Advance through waves 1-4 (clear immediately since activeCount=0)
-		for (let i = 0; i < 4; i++) {
+		// Advance through waves 1-9 (clear immediately since activeCount=0)
+		for (let i = 0; i < 9; i++) {
 			waveSystem.update(100, 0); // clear current wave
 			waveSystem.update(5100, 0); // wait through delay
 		}
 
-		// Now on wave 5 (pre_boss). Clear it.
-		waveSystem.update(100, 0);
-
+		// Now on wave 10 (boss). boss-warning should have been emitted when it started.
 		expect(emitSpy).toHaveBeenCalledWith(
 			'boss-warning',
 			expect.objectContaining({
-				slotIndex: 5,
-				bossSlotIndex: 6,
+				slotIndex: 9,
+				bossSlotIndex: 10,
 			}),
 		);
 	});

@@ -140,7 +140,7 @@ export function useGameEvents() {
 			totalWaves: number;
 			slotIndex: number;
 			phase: WavePhase;
-			kind: 'normal' | 'pre_boss' | 'boss';
+			kind: 'normal' | 'boss';
 			startAtSec: number;
 		}) => {
 			setRunStatus('running');
@@ -152,13 +152,11 @@ export function useGameEvents() {
 			patchCombatHud({
 				currentSlot: data.slotIndex,
 				phase: data.phase,
-				bossWarning: data.kind === 'pre_boss',
+				bossWarning: false,
 				timerLabel:
 					data.phase === 'boss'
 						? `Boss ${data.slotIndex}`
-						: data.kind === 'pre_boss'
-							? 'Boss Soon'
-							: `Wave ${data.wave}/${data.totalWaves}`,
+						: `Wave ${data.wave}/${data.totalWaves}`,
 			});
 			setWavePhase(data.phase);
 			setCountdown(0);

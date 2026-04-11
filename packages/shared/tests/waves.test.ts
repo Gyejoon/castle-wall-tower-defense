@@ -49,7 +49,7 @@ describe('STAGE_WAVES.w1_s1 (default stage)', () => {
 	});
 
 	it('assigns only valid wave kinds', () => {
-		const validKinds = new Set(['normal', 'pre_boss', 'boss']);
+		const validKinds = new Set(['normal', 'boss']);
 		for (const slot of w1s1) {
 			expect(validKinds.has(slot.kind)).toBe(true);
 		}
@@ -68,7 +68,7 @@ describe('STAGE_WAVES', () => {
 	});
 
 	it('each stage entry has valid unit IDs and positive counts', () => {
-		const validKinds = new Set(['normal', 'pre_boss', 'boss']);
+		const validKinds = new Set(['normal', 'boss']);
 		for (const [_stageId, waves] of Object.entries(STAGE_WAVES)) {
 			for (const wave of waves) {
 				expect(validKinds.has(wave.kind)).toBe(true);

@@ -5,7 +5,7 @@ export interface WaveGroup {
 	count: number;
 }
 
-export type WaveSlotKind = 'normal' | 'pre_boss' | 'boss';
+export type WaveSlotKind = 'normal' | 'boss';
 
 export interface WaveDef {
 	slotIndex: number;
@@ -490,7 +490,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 1 },
@@ -1060,7 +1060,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 2 },
@@ -1677,7 +1677,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 		},
 		{
 			slotIndex: 5,
-			kind: 'pre_boss',
+			kind: 'normal',
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 3 },

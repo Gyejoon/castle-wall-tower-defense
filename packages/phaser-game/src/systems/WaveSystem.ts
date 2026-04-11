@@ -17,7 +17,7 @@ import type { UnitSystem } from './UnitSystem';
  *   spawning → combat (units alive) → waiting (delay timer) → spawning (next wave)
  *   After final wave cleared → ended
  *
- * Boss warning: emitted when a pre_boss wave transitions to waiting.
+ * Boss warning: emitted when a boss wave starts.
  */
 export class WaveSystem {
 	private unitSystem: UnitSystem;
@@ -204,23 +204,12 @@ export class WaveSystem {
 		this.waveStartMs = this.elapsedMs;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
-		// Emit boss warning when pre_boss wave STARTS (upcoming boss)
-		if (wave.kind === 'pre_boss') {
-			const nextWave = this.waves[this.currentWaveIndex + 1];
-			if (nextWave) {
-				EventBus.emit('boss-warning', {
-					slotIndex: wave.slotIndex,
-					bossSlotIndex: nextWave.slotIndex,
-					startAtSec: Math.round(this.elapsedMs / 1000),
-				});
-			}
-		}
-		// Emit boss warning for boss wave if no pre_boss preceded it
-		const prevWave =
-			this.currentWaveIndex > 0
-				? this.waves[this.currentWaveIndex - 1]
-				: undefined;
-		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
+		// Emit boss warning when a boss wave starts
+		if (wave.kind === 'boss') {
+			const prevWave =
+				this.currentWaveIndex > 0
+					? this.waves[this.currentWaveIndex - 1]
+					: undefined;
 			EventBus.emit('boss-warning', {
 				slotIndex: prevWave?.slotIndex ?? wave.slotIndex - 1,
 				bossSlotIndex: wave.slotIndex,

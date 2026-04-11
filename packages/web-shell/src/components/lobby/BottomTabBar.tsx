@@ -64,7 +64,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 									? 'cursor-not-allowed opacity-50'
 									: 'cursor-pointer active:scale-95',
 								isActive
-									? 'border-gold bg-[rgba(240,208,96,0.08)]'
+									? 'border-gold bg-panel'
 									: 'border-border/50 bg-panel',
 							)}
 							style={
@@ -140,12 +140,6 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						>
 							{tab.label}
 						</span>
-						{isActive && (
-							<div
-								className="w-4 h-[2px] mt-0.5"
-								style={{ background: 'var(--color-gold)' }}
-							/>
-						)}
 					</button>
 				);
 			})}

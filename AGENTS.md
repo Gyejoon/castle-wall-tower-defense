@@ -157,6 +157,7 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **shared 이벤트/타입 변경 시** Phaser(`EventBus.ts`, `GameEventMap`)와 React(`gameStore`, UI 컴포넌트) 양쪽 소비자를 반드시 동기화할 것.
 - **로비 프로필/컬렉션 데이터는 현재 mock.** 이 영역을 수정할 때 실제 API가 없음을 인지할 것.
 - **에셋은 커밋된 산출물이다.** `packages/web-shell/public/assets/` 전체가 git에 트래킹되며 CI/Vercel 배포는 커밋된 파일을 그대로 사용한다. 에셋을 변경하려면 `scripts/generate-assets/`의 생성 스크립트를 수정한 뒤 `bun generate:assets`를 로컬에서 실행하고 산출물을 함께 커밋해야 한다. 생성 스크립트만 수정하고 산출물을 커밋하지 않으면 프로덕션에 반영되지 않는다.
+- **`bun generate:assets`는 유저가 명시적으로 요청할 때만 실행한다.** ComfyUI 기반 에셋(stage-thumb 등)은 AI 생성 고품질 이미지인데, ComfyUI가 없는 환경에서 실행하면 플레이스홀더로 대체되어 원본이 소실된다. 에셋 확인이 필요하면 파일을 직접 읽거나 git log로 확인할 것.
 - **Phaser 씬 클린업 순서:** EventBus off → system destroy. shutdown 시 역순 정리 필수.
 - **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 

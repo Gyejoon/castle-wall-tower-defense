@@ -13,7 +13,8 @@
     "test:web": "bun run --filter web-shell test",
     "lint": "bun run --filter '*' lint",
     "lint:check": "bunx biome check .",
-    "generate:assets": "bun run scripts/generate-assets/generate-all.ts"
+    "generate:assets": "bun run scripts/generate-assets/generate-all.ts",
+    "gld-pipe": "bun run scripts/gld-pipe/index.ts"
   },
   "engines": {
     "node": ">=22"

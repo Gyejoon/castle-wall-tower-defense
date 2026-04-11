@@ -105,7 +105,7 @@ export function HomeTab() {
 			<div className="relative z-[1] flex flex-col items-center justify-center flex-1 px-5 gap-4">
 				{/* World label */}
 				{next && (
-					<span className="font-pixel text-[10px] text-accent tracking-wider uppercase">
+					<span className="font-pixel text-[12px] text-accent tracking-wider uppercase">
 						{worldName}
 					</span>
 				)}
@@ -113,13 +113,19 @@ export function HomeTab() {
 				{/* Stage card */}
 				{next && (
 					<div
-						className="w-full max-w-[300px] border-2 border-border overflow-hidden"
+						className="relative w-full max-w-[300px] border-2 border-border"
 						style={{
 							background: 'rgba(26, 18, 8, 0.85)',
 							boxShadow:
 								'0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
 						}}
 					>
+						{/* Corner brackets */}
+						<div className="absolute top-1 left-1 w-3 h-3 border-t-2 border-l-2 border-gold/40 z-10" />
+						<div className="absolute top-1 right-1 w-3 h-3 border-t-2 border-r-2 border-gold/40 z-10" />
+						<div className="absolute bottom-1 left-1 w-3 h-3 border-b-2 border-l-2 border-gold/40 z-10" />
+						<div className="absolute bottom-1 right-1 w-3 h-3 border-b-2 border-r-2 border-gold/40 z-10" />
+
 						{/* Thumbnail */}
 						{thumb && (
 							<div className="relative h-[130px] overflow-hidden">
@@ -143,7 +149,7 @@ export function HomeTab() {
 							<p className="font-pixel text-[20px] text-gold drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
 								{next.worldNum}-{next.stageNum}. {next.name}
 							</p>
-							<p className="font-pixel text-[10px] text-text-secondary mt-1.5">
+							<p className="font-pixel text-[11px] text-text-secondary mt-1.5">
 								웨이브 {next.totalWaves}
 								{next.cleared ? ' · 클리어 완료' : ''}
 							</p>
@@ -184,7 +190,7 @@ export function HomeTab() {
 						onClick={() => enterStageSelect()}
 						style={{
 							padding: '16px 14px',
-							fontSize: '11px',
+							fontSize: '13px',
 						}}
 					>
 						월드

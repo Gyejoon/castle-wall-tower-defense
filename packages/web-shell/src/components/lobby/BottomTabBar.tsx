@@ -118,7 +118,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						disabled={disabled}
 						onClick={() => !disabled && setLobbyTab(tab.id)}
 						className={cn(
-							'flex-1 flex flex-col items-center gap-[2px] py-2.5 bg-transparent border-none touch-manipulation transition-all duration-150',
+							'flex-1 flex flex-col items-center gap-1 py-2.5 bg-transparent border-none touch-manipulation transition-all duration-150',
 							disabled
 								? 'cursor-not-allowed opacity-50'
 								: 'cursor-pointer active:scale-95',
@@ -134,7 +134,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						/>
 						<span
 							className={cn(
-								'font-pixel text-[10px] transition-colors duration-150',
+								'font-pixel text-[11px] transition-colors duration-150',
 								isActive ? 'text-gold' : 'text-text-secondary',
 							)}
 						>

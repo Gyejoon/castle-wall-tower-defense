@@ -12,7 +12,6 @@ import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 import { PixelButton } from '../../ui/PixelButton';
 import { FloatingNavButtons } from '../FloatingNavButtons';
-import { TabBackground } from '../TabBackground';
 
 const MAP_THUMBS: Record<string, string> = {
 	w1_forest_a: 'assets/ui/stage-thumb-forest_gate.webp',
@@ -49,7 +48,6 @@ function getNextStage(stageStars: Record<string, StarRating>): {
 			};
 		}
 	}
-	// All cleared — return last stage
 	const lastId = STAGE_ORDER[STAGE_ORDER.length - 1];
 	const last = getStageById(lastId);
 	const worldNum = WORLD_ORDER.indexOf(last.worldId) + 1;
@@ -79,42 +77,52 @@ export function HomeTab() {
 			id="tabpanel-home"
 			role="tabpanel"
 			aria-label="마당"
-			className="relative flex-1 overflow-hidden"
+			className="relative flex-1 overflow-hidden flex flex-col"
+			style={{ background: '#1a1208' }}
 		>
-			{/* Background scene */}
-			<TabBackground
-				src={uiMobileArt.courtyardBg}
-				gradient="linear-gradient(180deg, #0d1a2a 0%, #14233a 50%, #1a1208 100%)"
-			/>
-			<div className="torch torch-left" />
-			<div className="torch torch-right" />
-			<div className="castle-flag" />
-			<div className="stars-overlay" />
+			{/* Background: stage thumbnail as full bleed */}
+			{thumb && (
+				<>
+					<img
+						src={thumb}
+						alt=""
+						className="absolute inset-0 w-full h-full object-cover opacity-30"
+					/>
+					<div
+						className="absolute inset-0"
+						style={{
+							background:
+								'linear-gradient(180deg, rgba(26,18,8,0.6) 0%, rgba(26,18,8,0.4) 40%, rgba(26,18,8,0.9) 75%, #1a1208 100%)',
+						}}
+					/>
+				</>
+			)}
 
 			{/* Floating mission/achievement buttons */}
 			<FloatingNavButtons />
 
-			{/* Center stage card + start button */}
-			<div
-				className="relative z-[1] flex flex-col items-center justify-center h-full px-5 gap-3"
-				style={{
-					background:
-						'linear-gradient(180deg, transparent 0%, rgba(26,18,8,0.3) 30%, rgba(26,18,8,0.85) 70%, rgba(26,18,8,0.95) 100%)',
-				}}
-			>
+			{/* Content */}
+			<div className="relative z-[1] flex flex-col items-center justify-center flex-1 px-5 gap-4">
+				{/* World label */}
+				{next && (
+					<span className="font-pixel text-[10px] text-accent tracking-wider uppercase">
+						{worldName}
+					</span>
+				)}
+
 				{/* Stage card */}
 				{next && (
 					<div
-						className="w-full max-w-[320px] border-2 border-border overflow-hidden"
+						className="w-full max-w-[300px] border-2 border-border overflow-hidden"
 						style={{
-							background: 'rgba(26, 18, 8, 0.92)',
+							background: 'rgba(26, 18, 8, 0.85)',
 							boxShadow:
-								'0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
+								'0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
 						}}
 					>
-						{/* Stage thumbnail */}
+						{/* Thumbnail */}
 						{thumb && (
-							<div className="relative h-[120px] overflow-hidden">
+							<div className="relative h-[130px] overflow-hidden">
 								<img
 									src={thumb}
 									alt=""
@@ -124,32 +132,27 @@ export function HomeTab() {
 									className="absolute inset-0"
 									style={{
 										background:
-											'linear-gradient(to bottom, transparent 30%, rgba(26,18,8,0.95) 100%)',
+											'linear-gradient(to bottom, transparent 40%, rgba(26,18,8,0.95) 100%)',
 									}}
 								/>
-								<span className="absolute top-2 left-3 font-pixel text-[9px] text-accent bg-[rgba(26,18,8,0.8)] px-2 py-0.5 border border-border">
-									{worldName}
-								</span>
 							</div>
 						)}
 
 						{/* Stage info */}
-						<div className="px-4 py-3 -mt-6 relative">
-							<p className="font-pixel text-[18px] text-gold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+						<div className="px-4 py-3 -mt-8 relative">
+							<p className="font-pixel text-[20px] text-gold drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
 								{next.worldNum}-{next.stageNum}. {next.name}
 							</p>
-							<p className="font-pixel text-[10px] text-text-secondary mt-1">
+							<p className="font-pixel text-[10px] text-text-secondary mt-1.5">
 								웨이브 {next.totalWaves}
-								{next.cleared
-									? ' · 클리어 완료'
-									: ''}
+								{next.cleared ? ' · 클리어 완료' : ''}
 							</p>
 						</div>
 					</div>
 				)}
 
-				{/* Start button */}
-				<div className="w-full max-w-[320px] flex gap-2">
+				{/* Buttons */}
+				<div className="w-full max-w-[300px] flex gap-2">
 					<PixelButton
 						variant="gold"
 						onClick={() =>
@@ -162,7 +165,7 @@ export function HomeTab() {
 							padding: '16px 20px',
 							fontSize: '16px',
 							boxShadow:
-								'0 0 0 1px rgba(240,208,96,0.28), 0 12px 24px rgba(240,208,96,0.14)',
+								'0 0 0 1px rgba(240,208,96,0.28), 0 8px 20px rgba(240,208,96,0.12)',
 						}}
 					>
 						<span className="inline-flex items-center gap-2">
@@ -180,20 +183,11 @@ export function HomeTab() {
 						variant="secondary"
 						onClick={() => enterStageSelect()}
 						style={{
-							padding: '16px',
+							padding: '16px 14px',
 							fontSize: '11px',
 						}}
 					>
-						<span className="inline-flex items-center gap-1">
-							<img
-								src="assets/ui/icon-arrow-left.webp"
-								alt=""
-								width={10}
-								height={10}
-								className="[image-rendering:pixelated] rotate-180"
-							/>
-							지도
-						</span>
+						원정
 					</PixelButton>
 				</div>
 			</div>

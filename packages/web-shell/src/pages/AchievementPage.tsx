@@ -35,26 +35,37 @@ export function AchievementPage() {
 
 			{/* Category tabs */}
 			<div className="flex border-b border-border">
-				{CATEGORIES.map((cat) => (
-					<button
-						key={cat.id}
-						type="button"
-						onClick={() => setCategory(cat.id)}
-						className="flex-1 py-2.5 font-pixel text-[10px] text-center cursor-pointer transition-colors"
-						style={{
-							color:
-								category === cat.id
-									? 'var(--color-accent)'
-									: 'var(--color-text-secondary)',
-							borderBottom:
-								category === cat.id
-									? '2px solid var(--color-accent)'
-									: '2px solid transparent',
-						}}
-					>
-						{cat.label}
-					</button>
-				))}
+				{CATEGORIES.map((cat) => {
+					const hasClaimable = ACHIEVEMENTS.some(
+						(a) =>
+							a.category === cat.id &&
+							(achievements.progress[a.id] ?? 0) >= a.target &&
+							!achievements.claimed.includes(a.id),
+					);
+					return (
+						<button
+							key={cat.id}
+							type="button"
+							onClick={() => setCategory(cat.id)}
+							className="relative flex-1 py-2.5 font-pixel text-[10px] text-center cursor-pointer transition-colors"
+							style={{
+								color:
+									category === cat.id
+										? 'var(--color-accent)'
+										: 'var(--color-text-secondary)',
+								borderBottom:
+									category === cat.id
+										? '2px solid var(--color-accent)'
+										: '2px solid transparent',
+							}}
+						>
+							{cat.label}
+							{hasClaimable && (
+								<span className="absolute top-1.5 right-2 w-2 h-2 bg-danger rounded-full" />
+							)}
+						</button>
+					);
+				})}
 			</div>
 
 			{/* Achievement list */}

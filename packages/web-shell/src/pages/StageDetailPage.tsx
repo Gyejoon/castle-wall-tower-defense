@@ -49,19 +49,29 @@ const STAR_COLORS = {
 	},
 } as const;
 
+const FOREST_THEME = {
+	gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
+	thumb: 'assets/ui/stage-thumb-forest_gate.webp',
+};
+const LAVA_THEME = {
+	gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
+	thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
+};
+const STORM_THEME = {
+	gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
+	thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
+};
+
 const MAP_THEMES: Record<string, { gradient: string; thumb: string }> = {
-	forest_gate: {
-		gradient: 'linear-gradient(135deg, #2d5a1e, #1a3a10)',
-		thumb: 'assets/ui/stage-thumb-forest_gate.webp',
-	},
-	lava_fortress: {
-		gradient: 'linear-gradient(135deg, #8a2a0a, #5a1a08)',
-		thumb: 'assets/ui/stage-thumb-lava_fortress.webp',
-	},
-	storm_citadel: {
-		gradient: 'linear-gradient(135deg, #2a3a6a, #1a2848)',
-		thumb: 'assets/ui/stage-thumb-storm_citadel.webp',
-	},
+	forest_gate: FOREST_THEME,
+	w1_forest_a: FOREST_THEME,
+	w1_forest_b: FOREST_THEME,
+	lava_fortress: LAVA_THEME,
+	w2_forge_a: LAVA_THEME,
+	w2_forge_b: LAVA_THEME,
+	storm_citadel: STORM_THEME,
+	w3_tower_a: STORM_THEME,
+	w3_tower_b: STORM_THEME,
 };
 
 export function StageDetailPage() {
@@ -152,10 +162,10 @@ export function StageDetailPage() {
 					</span>
 				</div>
 
-				{/* Scrollable content */}
-				<div className="flex-1 min-h-0 overflow-auto flex flex-col">
+				{/* Content — no scroll at 670px */}
+				<div className="flex-1 min-h-0 flex flex-col">
 					{/* Hero */}
-					<div className="relative h-[140px] overflow-hidden flex-shrink-0">
+					<div className="relative h-[100px] overflow-hidden flex-shrink-0">
 						<img
 							src={theme.thumb}
 							alt={map.name}
@@ -192,7 +202,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Info cards 2x2 */}
-					<div className="grid grid-cols-2 gap-2 p-3">
+					<div className="grid grid-cols-2 gap-1.5 px-3 py-2">
 						{infoCards.map((card) => (
 							<div
 								key={card.label}
@@ -212,7 +222,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Clear record */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
 							클리어 기록
 						</p>
@@ -264,7 +274,7 @@ export function StageDetailPage() {
 					)}
 
 					{/* Star difficulty selector */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider mb-2">
 							난이도 선택
 						</p>
@@ -319,7 +329,7 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Deck preview */}
-					<div className="px-3 pb-3">
+					<div className="px-3 pb-2">
 						<div className="flex items-center justify-between mb-2">
 							<p className="font-pixel text-[10px] text-text-secondary uppercase tracking-wider">
 								출전 덱
@@ -377,10 +387,10 @@ export function StageDetailPage() {
 					</div>
 
 					{/* Spacer pushes button to bottom when content is short */}
-					<div className="flex-1 min-h-4" />
+					<div className="flex-1 min-h-2" />
 
 					{/* Game start button */}
-					<div className="p-3">
+					<div className="px-3 py-2">
 						<PixelButton
 							variant="gold"
 							onClick={resetRun}

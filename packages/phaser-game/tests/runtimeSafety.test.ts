@@ -175,10 +175,7 @@ describe('runtime safety fixes', () => {
 
 		// Use w1_s8 which has pre_boss at wave 5 and boss at wave 10
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(
-			unitSystem as never,
-			STAGE_WAVES.w1_s8,
-		);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s8);
 		waveSystem.start();
 
 		// Consume prep phase (5s)

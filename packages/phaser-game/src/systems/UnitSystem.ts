@@ -93,10 +93,7 @@ export class UnitSystem {
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
-	private readonly MIN_SEPARATION = 0.8; // tiles
-	private readonly SPAWN_BLOCK_TIMEOUT = 2000; // ms
 	private laneUnits: Map<number, UnitInstance[]> = new Map();
-	private spawnBlockTimer = 0;
 	/** Called after any unit (wave-queue or additional) is physically spawned. */
 	private unitSpawnedCallback:
 		| ((instanceId: string, defId: string, isBoss: boolean) => void)
@@ -963,48 +960,9 @@ export class UnitSystem {
 		if (idx !== -1) arr.splice(idx, 1);
 	}
 
-	private readonly COLLISION_LERP = 0.3; // smooth deceleration factor
-
 	private sweepCollisions(): void {
 		// Collision disabled — monsters pass through each other
 		return;
-	}
-
-	private setUnitPathProgress(unit: UnitInstance, progress: number): void {
-		const lane = this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
-		const laneGrid = this.lanes[unit.laneIndex] ?? this.currentPath;
-		if (lane.length < 2) return;
-
-		const idx = Math.min(Math.floor(progress), lane.length - 2);
-		const frac = Math.max(0, Math.min(1, progress - idx));
-
-		const startW = lane[idx];
-		const endW = lane[idx + 1];
-		unit.worldX = startW.x + (endW.x - startW.x) * frac;
-		unit.worldY = startW.y + (endW.y - startW.y) * frac;
-
-		unit.data.pathIndex = idx;
-		unit.pathProgress = progress;
-
-		const startG = laneGrid[idx];
-		const endG = laneGrid[idx + 1];
-		unit.data.position = {
-			x: Math.round(startG.x + (endG.x - startG.x) * frac),
-			y: Math.round(startG.y + (endG.y - startG.y) * frac),
-		};
-
-		unit.sprite.setPosition(unit.worldX, unit.worldY);
-		const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-		unit.sprite.setDepth(
-			this.gridManager.getDepth(currentGrid.x, currentGrid.y),
-		);
-		this.renderHpBar(
-			unit.hpBar,
-			unit.worldX,
-			unit.worldY,
-			unit.maxHp,
-			unit.data.hp,
-		);
 	}
 
 	destroy(): void {

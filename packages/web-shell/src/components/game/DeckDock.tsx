@@ -190,9 +190,7 @@ export function DeckDock() {
 					>
 						<img
 							src={getTowerSrc(card.towerDefId)}
-							alt={
-								TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId
-							}
+							alt={TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 							width={32}
 							height={32}
 							className="[image-rendering:pixelated]"

@@ -38,7 +38,6 @@ export function GamePage() {
 	const selectedStar = useGameStore((s) => s.selectedStar);
 	const highestWave = useMetaStore((s) => s.progress.highestWave);
 	const selectedStageId = useGameStore((s) => s.selectedStageId);
-	const selectedMapId = useGameStore((s) => s.selectedMapId);
 	const selectedStage = getStageById(selectedStageId);
 	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
 	const starKey =
@@ -103,12 +102,13 @@ export function GamePage() {
 		[selectedStageId],
 	);
 
-	const currentStageDef = useMemo(
-		() => {
-			try { return getStageById(selectedStageId); } catch { return null; }
-		},
-		[selectedStageId],
-	);
+	const currentStageDef = useMemo(() => {
+		try {
+			return getStageById(selectedStageId);
+		} catch {
+			return null;
+		}
+	}, [selectedStageId]);
 
 	const handleNextStage = useCallback(() => {
 		if (!nextStageId) return;

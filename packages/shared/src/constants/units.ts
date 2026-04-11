@@ -94,7 +94,7 @@ export const UNITS: UnitDef[] = [
 		id: 'orc_warlord',
 		name: '오크 전쟁 대장',
 		type: 'orc_warlord',
-		stats: { hp: 800, speed: 0.8, armor: 10 },
+		stats: { hp: 4000, speed: 0.8, armor: 20 },
 		element: 'neutral',
 		bounty: 300,
 		isPremium: false,

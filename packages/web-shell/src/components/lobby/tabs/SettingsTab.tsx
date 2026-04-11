@@ -231,21 +231,20 @@ function DevToolsSection() {
 			awakening: 0,
 			duplicateCount: 0,
 		}));
+		const highestWave: Record<string, number> = {};
+		const stageStars: Record<string, 1 | 2 | 3> = {};
+		for (const stageId of STAGE_ORDER) {
+			const total = getTotalWavesForStage(stageId);
+			highestWave[stageId] = total;
+			highestWave[`${stageId}:2`] = total;
+			highestWave[`${stageId}:3`] = total;
+			stageStars[stageId] = 3;
+		}
 		save.progress = {
 			...save.progress,
-			highestWave: {
-				forest_gate: 10,
-				'forest_gate:2': 10,
-				'forest_gate:3': 10,
-				lava_fortress: 10,
-				'lava_fortress:2': 10,
-				'lava_fortress:3': 10,
-				storm_citadel: 10,
-				'storm_citadel:2': 10,
-				'storm_citadel:3': 10,
-			},
-			stagesCleared: ['forest_gate', 'lava_fortress', 'storm_citadel'],
-			stageStars: { forest_gate: 3, lava_fortress: 3, storm_citadel: 3 },
+			highestWave,
+			stagesCleared: [...STAGE_ORDER],
+			stageStars,
 			totalBattles: 30,
 			tutorialCompleted: true,
 		};

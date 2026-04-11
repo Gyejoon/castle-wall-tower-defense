@@ -147,7 +147,7 @@ const createCombatHud = (): CombatHudState => ({
 	currentSlot: 1,
 	phase: 'combat',
 	bossWarning: false,
-	timerLabel: 'Slot 1',
+	timerLabel: '',
 });
 
 const createRunState = () => ({

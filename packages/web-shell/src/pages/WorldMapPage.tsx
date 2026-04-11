@@ -141,9 +141,6 @@ function StageCard({
 						/>
 					))}
 				</div>
-				<span className="font-pixel text-[6px] text-text-secondary/70">
-					{stage.recommendedPower.toLocaleString()}
-				</span>
 			</div>
 		</button>
 	);

@@ -7,11 +7,13 @@ type StageStars = Record<string, StarRating>;
 
 export function isWorldUnlocked(worldId: WorldId, stars: StageStars): boolean {
 	const world = getWorldById(worldId);
+	// Worlds with no stages are not yet released — always locked
+	if (world.stageCount === 0) return false;
 	const rule = world.unlockRule;
 	if (rule.kind === 'always') return true;
 	if (rule.kind === 'world_star_all') {
 		const prevStages = getStagesByWorld(rule.worldId);
-		if (prevStages.length === 0) return false; // prerequisite world has no playable stages
+		if (prevStages.length === 0) return false;
 		return prevStages.every((s) => (stars[s.id] ?? 0) >= rule.star);
 	}
 	return false;

@@ -493,9 +493,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'pre_boss',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'heavy_walker', count: 6 },
-				{ unitId: 'battle_robot', count: 6 },
-				{ unitId: 'stealth_drone', count: 4 },
+				{ unitId: 'titan', count: 1 },
+				{ unitId: 'battle_robot', count: 3 },
 			],
 		},
 		{

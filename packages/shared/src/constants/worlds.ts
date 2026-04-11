@@ -4,7 +4,7 @@ import type { WorldDef, WorldId } from '../types/stage';
 export const WORLDS: Record<WorldId, WorldDef> = {
 	w1_forest: {
 		id: 'w1_forest',
-		name: '변경의 숲',
+		name: '숲의 성문',
 		order: 1,
 		unlockRule: { kind: 'always' },
 		mapPool: ['w1_forest_a', 'w1_forest_b'],
@@ -13,7 +13,7 @@ export const WORLDS: Record<WorldId, WorldDef> = {
 	},
 	w2_forge: {
 		id: 'w2_forge',
-		name: '불의 단조장',
+		name: '용암 요새',
 		order: 2,
 		unlockRule: { kind: 'world_star_all', worldId: 'w1_forest', star: 1 },
 		mapPool: ['w2_forge_a', 'w2_forge_b'],
@@ -22,7 +22,7 @@ export const WORLDS: Record<WorldId, WorldDef> = {
 	},
 	w3_tower: {
 		id: 'w3_tower',
-		name: '마탑 성채',
+		name: '폭풍 성채',
 		order: 3,
 		unlockRule: { kind: 'world_star_all', worldId: 'w2_forge', star: 1 },
 		mapPool: ['w3_tower_a', 'w3_tower_b'],

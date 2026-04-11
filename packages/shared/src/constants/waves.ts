@@ -736,8 +736,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'battle_robot', count: 6 },
-				{ unitId: 'scout_drone', count: 6 },
+				{ unitId: 'battle_robot', count: 4 },
+				{ unitId: 'scout_drone', count: 4 },
 			],
 		},
 		{
@@ -745,8 +745,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'heavy_walker', count: 4 },
-				{ unitId: 'stealth_drone', count: 4 },
+				{ unitId: 'heavy_walker', count: 3 },
+				{ unitId: 'stealth_drone', count: 3 },
 			],
 		},
 		{
@@ -754,8 +754,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'battle_robot', count: 8 },
-				{ unitId: 'heavy_walker', count: 3 },
+				{ unitId: 'battle_robot', count: 5 },
+				{ unitId: 'heavy_walker', count: 2 },
 			],
 		},
 		{
@@ -763,8 +763,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'stealth_drone', count: 8 },
-				{ unitId: 'battle_robot', count: 4 },
+				{ unitId: 'stealth_drone', count: 5 },
+				{ unitId: 'battle_robot', count: 3 },
 			],
 		},
 		{
@@ -773,7 +773,7 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			delayAfterClearSec: 5,
 			groups: [
 				{ unitId: 'titan', count: 1 },
-				{ unitId: 'battle_robot', count: 3 },
+				{ unitId: 'scout_drone', count: 2 },
 			],
 		},
 		{
@@ -781,8 +781,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'heavy_walker', count: 5 },
-				{ unitId: 'battle_robot', count: 5 },
+				{ unitId: 'heavy_walker', count: 3 },
+				{ unitId: 'battle_robot', count: 4 },
 			],
 		},
 		{
@@ -790,8 +790,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'stealth_drone', count: 10 },
-				{ unitId: 'heavy_walker', count: 4 },
+				{ unitId: 'stealth_drone', count: 6 },
+				{ unitId: 'heavy_walker', count: 3 },
 			],
 		},
 		{
@@ -799,8 +799,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'normal',
 			delayAfterClearSec: 3,
 			groups: [
-				{ unitId: 'battle_robot', count: 10 },
-				{ unitId: 'heavy_walker', count: 3 },
+				{ unitId: 'battle_robot', count: 6 },
+				{ unitId: 'heavy_walker', count: 2 },
 			],
 		},
 		{
@@ -808,8 +808,8 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			kind: 'pre_boss',
 			delayAfterClearSec: 5,
 			groups: [
-				{ unitId: 'heavy_walker', count: 6 },
-				{ unitId: 'battle_robot', count: 6 },
+				{ unitId: 'heavy_walker', count: 4 },
+				{ unitId: 'battle_robot', count: 4 },
 			],
 		},
 		{

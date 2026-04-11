@@ -253,7 +253,7 @@ export class UnitSystem {
 
 		// Flying boss: add ground shadow and offset sprite upward
 		let shadow: Phaser.GameObjects.Ellipse | null = null;
-		if (entry.isBoss) {
+		if (entry.isBoss && entry.def.flying) {
 			shadow = this.scene.add.ellipse(
 				startWorld.x,
 				startWorld.y,
@@ -732,7 +732,7 @@ export class UnitSystem {
 			}
 
 			// Boss flies above ground with bobbing; shadow stays on ground
-			if (unit.isBoss) {
+			if (unit.isBoss && unit.def.flying) {
 				const flyBob = Math.sin(time * 0.003) * 3;
 				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
 				if (unit.shadow) {
@@ -741,10 +741,17 @@ export class UnitSystem {
 			} else {
 				unit.sprite.setPosition(unit.worldX, unit.worldY);
 			}
-			// Rotate boss sprite to face movement direction (sprite default: head pointing down = PI/2)
+			// Flying boss: rotate to face movement direction
+			// Ground boss/units: flip sprite horizontally based on movement
 			if (unit.isBoss && dist > 0.01) {
-				const moveAngle = Math.atan2(dy, dx);
-				unit.sprite.setRotation(moveAngle - Math.PI / 2);
+				if (unit.def.flying) {
+					const moveAngle = Math.atan2(dy, dx);
+					unit.sprite.setRotation(moveAngle - Math.PI / 2);
+				} else {
+					unit.sprite.setFlipX(dx < 0);
+				}
+			} else if (!unit.isBoss && dist > 0.01) {
+				unit.sprite.setFlipX(dx < 0);
 			}
 			const currentGrid = this.gridManager.worldToGrid(
 				unit.worldX,

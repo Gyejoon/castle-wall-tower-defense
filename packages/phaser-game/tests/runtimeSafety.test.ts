@@ -304,6 +304,8 @@ describe('runtime safety fixes', () => {
 					play: vi.fn(),
 					setDepth: vi.fn(),
 					setPosition: vi.fn(),
+					setRotation: vi.fn(),
+					setFlipX: vi.fn(),
 					destroy: vi.fn(),
 					setTint: vi.fn(),
 					clearTint: vi.fn(),

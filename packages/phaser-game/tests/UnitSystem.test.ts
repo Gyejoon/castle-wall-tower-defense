@@ -30,6 +30,7 @@ function createSprite() {
 		clearTint: vi.fn().mockReturnThis(),
 		setTexture: vi.fn().mockReturnThis(),
 		setRotation: vi.fn().mockReturnThis(),
+		setFlipX: vi.fn().mockReturnThis(),
 		play: vi.fn().mockReturnThis(),
 		once: vi.fn(),
 		destroy: vi.fn(),

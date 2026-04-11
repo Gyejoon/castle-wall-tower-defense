@@ -1,6 +1,6 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-09  
+> **Last Updated:** 2026-04-11  
 > **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
 > 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
 
@@ -117,13 +117,36 @@
 
 ## 5. 세션 경제
 
+### 에너지 시스템
+
+> 코드 위치: `packages/shared/src/constants/energy.ts`
+
+| 항목 | 값 | 비고 |
+|------|-----|------|
+| INITIAL_ENERGY | 40 | 게임 시작 시 초기 에너지 |
+| ENERGY_PER_SEC | 1 | 자연 재생 (prep 페이즈 중 정지) |
+| ENERGY_CAP | 100 | 최대 에너지 |
+| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (마지막 웨이브 제외) |
+| 킬 보상 | 없음 | ENERGY_PER_KILL, ENERGY_PER_BOSS_KILL 제거됨 |
+| 마지막 보스 웨이브 | 에너지 리젠 + 웨이브 클리어 보상 비활성화 | — |
+
+### 웨이브 타이머
+
+| 항목 | 값 |
+|------|-----|
+| MAX_WAVE_DURATION_MS | 30,000 (30초) |
+| 타이머 만료 시 | 잔존 몬스터 유지 + 다음 웨이브 즉시 스폰 |
+| 마지막 웨이브 | 타이머 면제 (보스전 무제한) |
+
+> 코드 위치: `packages/shared/src/constants/waves.ts`, `packages/phaser-game/src/systems/WaveSystem.ts`
+
 ### 1판 플레이 기댓값
 
 | 항목 | 획득량 | 비고 |
 |------|-------|------|
 | 골드 (클리어) | ~1000G | 웨이브 보상 + 보스 보너스 |
 | 골드 (실패) | ~400~600G | 웨이브별 가변 |
-| 타워 배치 수 | 15~20회 | 에너지 360/판 기준 |
+| 타워 배치 수 | 15~20회 | 초기 에너지 40 + 자연 재생 기준 |
 
 ### 주간 플레이 패턴
 
@@ -301,6 +324,10 @@ basePower:
 | 2026-04-09 | divine_throne 쿨다운 너프 | stun_aoe_global cooldownMs 5000→7000 | 글로벌 2초 스턴을 5초마다 → 7초마다. 글로벌 컨셉 유지한 채 빈도만 너프 (#103) |
 | 2026-04-09 | 스턴 타워 레벨 성장 공식 신설 | shield/fortress/holy_shrine/divine_throne 모두 cooldown -29%, duration +40% @LV.50 | 기존 스턴 타워는 레벨업 효과 미정의 → 실질 성장률 0. `stunCooldownMultiplier`/`stunDurationMultiplier` 도입 (#99) |
 | 2026-04-09 | 속성 상성 §13 섹션 추가 + UI CC 뱃지 | 밸런스 시트에 ELEMENT_MATCHUP 문서화, TowerBottomSheet에 CC duration/cooldown/aoe + range 999 "전체 맵" 뱃지 | 스펙 단일 진실 원천 유지, UI 가시성 개선 (#105, #103) |
+| 2026-04-11 | 에너지 시스템 오버홀 | INITIAL_ENERGY 10→40, 킬 보상(ENERGY_PER_KILL/ENERGY_PER_BOSS_KILL) 제거, ENERGY_PER_WAVE_CLEAR=5 신설, 마지막 보스 웨이브 리젠+클리어 보상 비활성화 | 에너지 관리 단순화, 전략적 초기 배치 강화 |
+| 2026-04-11 | 웨이브 30초 타이머 | MAX_WAVE_DURATION_MS=30000, 만료 시 잔존 몬스터 유지+다음 웨이브 즉시 스폰, 마지막 웨이브 면제 | 세션 길이 보장, 거북한 플레이 방지 |
+| 2026-04-11 | 웨이브 패턴 재구성 | wave 5: pre_boss (중간 보스 경고), wave 9: normal (최종 러시, pre_boss 아님), wave 10: boss (최종 보스). STAGE_WAVES 단일 원천, 레거시 배열 제거 | 보스 경고 타이밍 명확화 |
+| 2026-04-11 | 보스 판정 로직 변경 | isBoss = wave.kind === 'boss' \|\| unitDef.bossBehaviorId. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용 | 하드코딩 titan 제거, 다양한 보스 지원 |
 
 ---
 

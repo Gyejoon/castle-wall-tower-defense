@@ -155,9 +155,42 @@ function checkUnused(): AuditIssue[] {
     } catch { /* dir may not exist */ }
   }
 
+  // Detect which sections are bulk-loaded via preloadAssetSection / prefetchAssetSections
+  const bulkLoadedSections = new Set<string>();
+  const sectionPattern = /preloadAssetSection.*?['"`](\w+)['"`]|prefetchAssetSections.*?\[([^\]]+)\]/g;
+  let sectionMatch: RegExpExecArray | null;
+  while ((sectionMatch = sectionPattern.exec(allSource)) !== null) {
+    if (sectionMatch[1]) {
+      bulkLoadedSections.add(sectionMatch[1]);
+    }
+    if (sectionMatch[2]) {
+      // Parse array contents like 'ui', 'vfx', 'projectiles'
+      for (const m of sectionMatch[2].matchAll(/['"`](\w+)['"`]/g)) {
+        bulkLoadedSections.add(m[1]);
+      }
+    }
+  }
+  // 'preload' section is always loaded in Preloader scene
+  bulkLoadedSections.add('preload');
+
+  // Detect dynamic key patterns like `unit-${id}`, `tower-${type}`
+  const dynamicPrefixes = new Set<string>();
+  const dynPattern = /['"`](\w+)-\$\{/g;
+  let dynMatch: RegExpExecArray | null;
+  while ((dynMatch = dynPattern.exec(allSource)) !== null) {
+    dynamicPrefixes.add(dynMatch[1]);
+  }
+
   // Check each manifest key
   for (const entry of manifest.assets) {
-    // Use word-boundary matching to avoid partial key matches
+    // Skip assets in bulk-loaded sections — they're loaded by section, not by key
+    if (entry.section && bulkLoadedSections.has(entry.section)) continue;
+
+    // Skip assets matching dynamic key patterns (e.g., tower-*, unit-*)
+    const keyPrefix = entry.key.split('-')[0];
+    if (dynamicPrefixes.has(keyPrefix)) continue;
+
+    // Use word-boundary matching for remaining keys
     const keyPattern = new RegExp(`['"\`]${entry.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`);
     if (!keyPattern.test(allSource)) {
       issues.push({
@@ -298,6 +331,10 @@ export async function runAudit(options: { checks?: string[]; verbose?: boolean }
 
   // Group by check
   for (const check of allChecks) {
+    if (!enabledChecks.includes(check)) {
+      console.log(`  ⏭️  [${check}] Skipped`);
+      continue;
+    }
     const checkIssues = issues.filter(i => i.check === check);
     if (checkIssues.length === 0) {
       console.log(`  ✅ [${check}] All clear`);

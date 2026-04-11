@@ -9,10 +9,16 @@ import sharp from 'sharp';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, relative, basename } from 'path';
 import { shelfPack, type PackRect } from '../lib/packer';
+import { findPngFiles } from '../lib/image';
 import type { AssetManifest, AssetManifestSection } from '../../../packages/shared/src/assets/manifest';
 
 const ASSETS_DIR = 'packages/web-shell/public/assets';
 const OUTPUT_DIR = 'packages/web-shell/public/assets/atlases';
+
+/** Directories with assets not tracked in asset-manifest.json */
+const UNMANIFESTED_DIRS: Record<string, string> = {
+  mobile: join(ASSETS_DIR, 'ui-mobile'),
+};
 
 interface PhaserFrameData {
   frame: { x: number; y: number; w: number; h: number };
@@ -45,20 +51,39 @@ export async function runPack(options: { dryRun?: boolean; sections?: string[] }
   const targetSections = options.sections?.map(s => s as AssetManifestSection) ?? PACKABLE_SECTIONS;
 
   for (const section of targetSections) {
-    const entries = manifest.assets.filter(
+    // Collect images from manifest + unmanifested directories
+    const manifestEntries = manifest.assets.filter(
       a => a.section === section && a.type === 'image'
     );
 
-    if (entries.length < 2) {
-      console.log(`  [${section}] ${entries.length} images — skipping (need ≥2)`);
+    // For sections with unmanifested dirs, scan the directory directly
+    const unmanifestedDir = UNMANIFESTED_DIRS[section];
+    const dirEntries: { key: string; path: string }[] = [];
+    if (unmanifestedDir) {
+      try {
+        const pngs = findPngFiles(unmanifestedDir);
+        for (const png of pngs) {
+          const key = basename(png, '.png');
+          // Skip if already in manifest
+          if (!manifestEntries.some(e => e.key === key)) {
+            dirEntries.push({ key, path: png });
+          }
+        }
+      } catch { /* dir may not exist */ }
+    }
+
+    const totalCount = manifestEntries.length + dirEntries.length;
+    if (totalCount < 2) {
+      console.log(`  [${section}] ${totalCount} images — skipping (need ≥2)`);
       continue;
     }
 
-    console.log(`  [${section}] ${entries.length} images`);
+    console.log(`  [${section}] ${totalCount} images (${manifestEntries.length} manifest + ${dirEntries.length} dir-scan)`);
 
     // Read all image dimensions
     const rects: (PackRect & { path: string })[] = [];
-    for (const entry of entries) {
+
+    for (const entry of manifestEntries) {
       try {
         const fullPath = join('packages/web-shell/public', entry.path);
         const meta = await sharp(fullPath).metadata();
@@ -67,6 +92,20 @@ export async function runPack(options: { dryRun?: boolean; sections?: string[] }
           w: meta.width ?? 0,
           h: meta.height ?? 0,
           path: fullPath,
+        });
+      } catch {
+        console.log(`    ⚠️  Cannot read: ${entry.path}`);
+      }
+    }
+
+    for (const entry of dirEntries) {
+      try {
+        const meta = await sharp(entry.path).metadata();
+        rects.push({
+          key: entry.key,
+          w: meta.width ?? 0,
+          h: meta.height ?? 0,
+          path: entry.path,
         });
       } catch {
         console.log(`    ⚠️  Cannot read: ${entry.path}`);

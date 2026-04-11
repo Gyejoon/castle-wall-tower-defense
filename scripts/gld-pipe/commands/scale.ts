@@ -6,9 +6,10 @@
  */
 
 import sharp from 'sharp';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, relative, dirname, basename } from 'path';
+import { readFileSync, mkdirSync } from 'fs';
+import { join, relative, dirname } from 'path';
 import { findPngFiles } from '../lib/image';
+import type { AssetManifest } from '../../../packages/shared/src/assets/manifest';
 
 const ASSETS_DIR = 'packages/web-shell/public/assets';
 
@@ -111,7 +112,25 @@ export async function runScale(options: {
     return;
   }
 
+  // Load manifest to detect spritesheets and scale them frame-by-frame
+  const manifestPath = join(ASSETS_DIR, 'asset-manifest.json');
+  let manifest: AssetManifest | null = null;
+  try {
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+  } catch { /* proceed without manifest */ }
+
+  const spritesheetMap = new Map<string, { frameWidth: number; frameHeight: number }>();
+  if (manifest) {
+    for (const entry of manifest.assets) {
+      if (entry.type === 'spritesheet' && entry.frameWidth && entry.frameHeight) {
+        const fullPath = join('packages/web-shell/public', entry.path);
+        spritesheetMap.set(fullPath, { frameWidth: entry.frameWidth, frameHeight: entry.frameHeight });
+      }
+    }
+  }
+
   let processed = 0;
+  let skippedSheets = 0;
   for (const file of filteredFiles) {
     const relPath = relative(ASSETS_DIR, file);
     const outPath = join(outDir, relPath);
@@ -123,19 +142,69 @@ export async function runScale(options: {
       .toBuffer({ resolveWithObject: true });
 
     const src = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    const sheetInfo = spritesheetMap.get(file);
 
-    let result = scale2x(src, info.width, info.height);
+    if (sheetInfo) {
+      // Spritesheet: scale each frame individually, then reassemble
+      const fw = sheetInfo.frameWidth;
+      const fh = sheetInfo.frameHeight;
+      const cols = Math.floor(info.width / fw);
+      const rows = Math.floor(info.height / fh);
 
-    // Apply twice for 4x
-    if (factor === 4) {
-      result = scale2x(result.data, result.width, result.height);
+      if (cols === 0 || rows === 0) {
+        skippedSheets++;
+        continue;
+      }
+
+      const scaledFw = fw * factor;
+      const scaledFh = fh * factor;
+      const dstW = cols * scaledFw;
+      const dstH = rows * scaledFh;
+      const dst = new Uint8Array(dstW * dstH * 4);
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          // Extract frame
+          const frame = new Uint8Array(fw * fh * 4);
+          for (let y = 0; y < fh; y++) {
+            const srcOffset = ((row * fh + y) * info.width + col * fw) * 4;
+            const dstOffset = y * fw * 4;
+            frame.set(src.subarray(srcOffset, srcOffset + fw * 4), dstOffset);
+          }
+
+          // Scale frame
+          let scaled = scale2x(frame, fw, fh);
+          if (factor === 4) {
+            scaled = scale2x(scaled.data, scaled.width, scaled.height);
+          }
+
+          // Place scaled frame into destination
+          for (let y = 0; y < scaledFh; y++) {
+            const srcOff = y * scaledFw * 4;
+            const dstOff = ((row * scaledFh + y) * dstW + col * scaledFw) * 4;
+            dst.set(scaled.data.subarray(srcOff, srcOff + scaledFw * 4), dstOff);
+          }
+        }
+      }
+
+      await sharp(Buffer.from(dst.buffer), {
+        raw: { width: dstW, height: dstH, channels: 4 },
+      })
+        .png()
+        .toFile(outPath);
+    } else {
+      // Single image: scale as whole
+      let result = scale2x(src, info.width, info.height);
+      if (factor === 4) {
+        result = scale2x(result.data, result.width, result.height);
+      }
+
+      await sharp(Buffer.from(result.data.buffer), {
+        raw: { width: result.width, height: result.height, channels: 4 },
+      })
+        .png()
+        .toFile(outPath);
     }
-
-    await sharp(Buffer.from(result.data.buffer), {
-      raw: { width: result.width, height: result.height, channels: 4 },
-    })
-      .png()
-      .toFile(outPath);
 
     processed++;
     if (processed % 50 === 0) {
@@ -143,5 +212,8 @@ export async function runScale(options: {
     }
   }
 
+  if (skippedSheets > 0) {
+    console.log(`  ⚠️  ${skippedSheets} spritesheets skipped (invalid frame dimensions)`);
+  }
   console.log(`\n  ✅ ${processed} files scaled to ${factor}x → ${outDir}\n`);
 }

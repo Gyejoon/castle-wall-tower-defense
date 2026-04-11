@@ -64,15 +64,14 @@ export const createMissionSlice: SliceCreator<
 		debouncedSave(get());
 	},
 
-	progressMission: (type, amount, mapId?) => {
+	progressMission: (type, amount) => {
 		set((s) => {
 			const updateList = (missions: typeof s.progress.dailyMissions) =>
-				missions.map((m) => {
-					if (m.type !== type || m.claimed) return m;
-					// For map-bound missions, only progress if mapId matches
-					if (m.mapId && m.mapId !== mapId) return m;
-					return { ...m, current: Math.min(m.current + amount, m.target) };
-				});
+				missions.map((m) =>
+					m.type === type && !m.claimed
+						? { ...m, current: Math.min(m.current + amount, m.target) }
+						: m,
+				);
 			return {
 				progress: {
 					...s.progress,

@@ -523,10 +523,35 @@ export class UnitSystem {
 			this.spawnTimer = 0;
 			const front = this.spawnQueue[0];
 
-			this.spawnUnit(front);
-			front.remaining--;
-			if (front.remaining <= 0) {
-				this.spawnQueue.shift();
+			// Spawn blocking: check if a stunned/stuck unit blocks the spawn point
+			let spawnBlocked = false;
+			if (!front.def.flying) {
+				const laneIndex =
+					this.lanes.length > 1 ? this.nextLane % this.lanes.length : 0;
+				const arr = this.laneUnits.get(laneIndex);
+				if (arr) {
+					// Count units near spawn. Block only if 2+ units are piled up at spawn
+					let nearSpawnCount = 0;
+					for (let i = arr.length - 1; i >= 0; i--) {
+						if (arr[i].pathProgress < this.MIN_SEPARATION) {
+							nearSpawnCount++;
+						} else {
+							break; // sorted array, no more near spawn
+						}
+					}
+					if (nearSpawnCount >= 2) spawnBlocked = true;
+				}
+			}
+
+			if (spawnBlocked && this.spawnBlockTimer < this.SPAWN_BLOCK_TIMEOUT) {
+				this.spawnBlockTimer += this.SPAWN_INTERVAL;
+			} else {
+				this.spawnBlockTimer = 0;
+				this.spawnUnit(front);
+				front.remaining--;
+				if (front.remaining <= 0) {
+					this.spawnQueue.shift();
+				}
 			}
 		}
 
@@ -708,8 +733,26 @@ export class UnitSystem {
 	private readonly COLLISION_LERP = 0.3; // smooth deceleration factor
 
 	private sweepCollisions(): void {
-		// Collision disabled — monsters pass through each other
-		return;
+		for (const arr of this.laneUnits.values()) {
+			if (arr.length < 2) continue;
+			// Sort descending by pathProgress (front first)
+			arr.sort((a, b) => b.pathProgress - a.pathProgress);
+			// Sweep front→back: ensure minimum separation with smooth lerp
+			for (let i = 1; i < arr.length; i++) {
+				const front = arr[i - 1];
+				const rear = arr[i];
+				const sep = front.pathProgress - rear.pathProgress;
+				if (sep < this.MIN_SEPARATION) {
+					const target = front.pathProgress - this.MIN_SEPARATION;
+					const clamped = Math.max(0, target);
+					// Lerp toward target for smooth deceleration instead of instant snap
+					const lerped =
+						rear.pathProgress +
+						(clamped - rear.pathProgress) * this.COLLISION_LERP;
+					this.setUnitPathProgress(rear, Math.max(0, lerped));
+				}
+			}
+		}
 	}
 
 	private setUnitPathProgress(unit: UnitInstance, progress: number): void {

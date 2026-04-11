@@ -30,9 +30,9 @@ describe('EnergySystem', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('starts with INITIAL_ENERGY (40)', () => {
+	it('starts with INITIAL_ENERGY (10)', () => {
 		const system = new EnergySystem();
-		expect(system.getEnergy()).toBe(40);
+		expect(system.getEnergy()).toBe(10);
 	});
 
 	it('accumulates energy at 1/sec', () => {

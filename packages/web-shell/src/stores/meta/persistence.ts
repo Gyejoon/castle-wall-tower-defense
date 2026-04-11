@@ -61,15 +61,6 @@ type SaveMigration = (
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
-	4: (data) => {
-		// v4 → v5: mission mapId support, new MissionTypes (clear_map, defeat_boss_map)
-		// Existing mission data remains valid — new map-bound missions will be generated
-		// on next refresh. No structural changes needed beyond version bump.
-		return {
-			...data,
-			version: 5,
-		};
-	},
 	3: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const profile = (data.profile ?? {}) as Record<string, unknown>;
@@ -169,8 +160,8 @@ function migrateSave(
 
 const _defaults = createDefaultSave();
 
-/** Ensure all required fields exist — guards against incomplete saves. */
-export function sanitizeSave(save: SaveData): SaveData {
+/** Ensure all v4 required fields exist — guards against incomplete saves. */
+export function sanitizeV4Save(save: SaveData): SaveData {
 	const dp = _defaults.progress;
 	const dpr = _defaults.profile;
 	const dt = _defaults.collection[0];
@@ -210,10 +201,10 @@ export function parseSave(context?: {
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (parsed.version === SAVE_VERSION)
-			return sanitizeSave(parsed as SaveData);
+			return sanitizeV4Save(parsed as SaveData);
 		// Attempt migration from older version
 		const migrated = migrateSave(parsed, context);
-		return migrated ? sanitizeSave(migrated) : null;
+		return migrated ? sanitizeV4Save(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

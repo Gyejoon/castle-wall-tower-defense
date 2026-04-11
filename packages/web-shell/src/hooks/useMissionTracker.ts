@@ -23,18 +23,10 @@ export function useMissionTracker() {
 			}
 		};
 
-		const onBossDefeated = () => {
-			progressMission('defeat_boss', 1);
-			const mapId = useGameStore.getState().selectedMapId;
-			progressMission('defeat_boss_map', 1, mapId);
-		};
+		const onBossDefeated = () => progressMission('defeat_boss', 1);
 
-		const onGameOver = (d: { result: string; mapId?: string }) => {
-			if (d.result === 'victory') {
-				progressMission('clear_stage', 1);
-				const mapId = d.mapId ?? useGameStore.getState().selectedMapId;
-				progressMission('clear_map', 1, mapId);
-			}
+		const onGameOver = (d: { result: string }) => {
+			if (d.result === 'victory') progressMission('clear_stage', 1);
 			maxWaveThisRun.current = 0;
 		};
 

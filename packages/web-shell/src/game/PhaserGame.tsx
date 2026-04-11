@@ -1,6 +1,6 @@
 import { EventBus, startGame } from '@gld/phaser-game';
 import type Phaser from 'phaser';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 
@@ -81,28 +81,11 @@ export function PhaserGame() {
 		};
 	}, [setGameReady, selectedMapId]);
 
-	const handleDragOver = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		e.dataTransfer.dropEffect = 'move';
-	}, []);
-
-	const handleDrop = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		const towerDefId = e.dataTransfer.getData('towerDefId');
-		if (!towerDefId || !containerRef.current) return;
-		const rect = containerRef.current.getBoundingClientRect();
-		const clientX = e.clientX - rect.left;
-		const clientY = e.clientY - rect.top;
-		EventBus.emit('request-place-tower-at', { towerDefId, clientX, clientY });
-	}, []);
-
 	return (
 		<div
 			ref={containerRef}
 			id="game-container"
 			className="w-full h-full touch-none"
-			onDragOver={handleDragOver}
-			onDrop={handleDrop}
 		/>
 	);
 }

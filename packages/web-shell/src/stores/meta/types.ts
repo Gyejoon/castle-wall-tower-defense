@@ -28,7 +28,7 @@ export interface MetaActions {
 	updateSettings: (patch: Partial<SaveData['settings']>) => void;
 	addDiamond: (amount: number) => void;
 	refreshMissions: () => void;
-	progressMission: (type: MissionType, amount: number, mapId?: string) => void;
+	progressMission: (type: MissionType, amount: number) => void;
 	claimMission: (
 		missionId: string,
 		period: 'daily' | 'weekly',

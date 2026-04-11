@@ -44,9 +44,9 @@ describe('generateDailyMissions', () => {
 });
 
 describe('generateWeeklyMissions', () => {
-	it('6개 미션 반환 (전역 4 + 맵별 2)', () => {
+	it('4개 미션 반환', () => {
 		const missions = generateWeeklyMissions();
-		expect(missions).toHaveLength(6);
+		expect(missions).toHaveLength(4);
 	});
 
 	it('id가 weekly-{i} 형식', () => {

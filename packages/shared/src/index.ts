@@ -31,8 +31,9 @@ export {
 } from './constants/elements';
 export {
 	ENERGY_CAP,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
 	ENERGY_PER_SEC,
-	ENERGY_PER_WAVE_CLEAR,
 	INITIAL_ENERGY,
 } from './constants/energy';
 export type { GachaResult } from './constants/gacha';
@@ -61,7 +62,6 @@ export {
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
-	getNextMapInWorld,
 	getSpawnExitPairs,
 	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
@@ -126,7 +126,6 @@ export type {
 export {
 	getTotalWavesForMap,
 	getWavesForMap,
-	MAX_WAVE_DURATION_MS,
 	TOTAL_WAVES,
 	WAVE_DEFS,
 	WAVE_SCALING,

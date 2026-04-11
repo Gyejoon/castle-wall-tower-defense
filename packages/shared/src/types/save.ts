@@ -1,6 +1,6 @@
 import type { StarRating } from '../constants/starDifficulty';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 4;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -40,9 +40,7 @@ export type MissionType =
 	| 'defeat_boss'
 	| 'clear_stage'
 	| 'use_element'
-	| 'attendance'
-	| 'clear_map'
-	| 'defeat_boss_map';
+	| 'attendance';
 
 export interface MissionProgress {
 	id: string;
@@ -51,7 +49,6 @@ export interface MissionProgress {
 	current: number;
 	reward: { type: 'diamond' | 'gold'; amount: number };
 	claimed: boolean;
-	mapId?: string;
 }
 
 export interface ProgressData {

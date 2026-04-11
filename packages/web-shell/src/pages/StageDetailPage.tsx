@@ -109,8 +109,9 @@ export function StageDetailPage() {
 	const lanes = getMapPaths(map).length;
 	const starKey =
 		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
-	const best = highestWave[starKey] ?? 0;
-	const isCleared = best >= totalWaves;
+	const rawBest = highestWave[starKey] ?? 0;
+	const best = Math.min(rawBest, totalWaves);
+	const isCleared = rawBest >= totalWaves;
 	const lvl = map.unlockLevel ?? 1;
 
 	const infoCards = [

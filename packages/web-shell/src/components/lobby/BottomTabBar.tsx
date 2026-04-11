@@ -38,9 +38,9 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 		<div
 			role="tablist"
 			aria-label="로비 탭"
-			className="relative flex justify-around items-end bg-[rgba(20,14,6,0.98)] border-t-2 border-border"
+			className="relative flex items-end bg-panel border-t-2 border-border"
 			style={{
-				paddingBottom: 'calc(4px + env(safe-area-inset-bottom, 0px))',
+				paddingBottom: 'env(safe-area-inset-bottom, 0px)',
 			}}
 		>
 			{tabs.map((tab) => {
@@ -59,20 +59,39 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 							disabled={disabled}
 							onClick={() => !disabled && setLobbyTab(tab.id)}
 							className={cn(
-								'relative flex flex-col items-center -mt-5 px-5 pt-2.5 pb-1.5 border-2 touch-manipulation transition-all duration-200',
+								'relative flex-1 flex flex-col items-center -mt-3 mx-1 pt-3 pb-2 border-2 touch-manipulation transition-all duration-200',
 								disabled
 									? 'cursor-not-allowed opacity-50'
-									: 'cursor-pointer',
+									: 'cursor-pointer active:scale-95',
 								isActive
-									? 'border-gold bg-[rgba(240,208,96,0.1)] shadow-[0_-4px_16px_rgba(240,208,96,0.2)]'
-									: 'border-border bg-[rgba(20,14,6,0.98)]',
+									? 'border-gold bg-[rgba(240,208,96,0.08)]'
+									: 'border-border/50 bg-panel',
 							)}
+							style={
+								isActive
+									? {
+											boxShadow:
+												'0 -2px 12px rgba(240,208,96,0.15), inset 0 1px 0 rgba(240,208,96,0.1)',
+										}
+									: undefined
+							}
 						>
+							{isActive && (
+								<div
+									className="absolute -top-[2px] left-3 right-3 h-[2px]"
+									style={{
+										background:
+											'linear-gradient(90deg, transparent, var(--color-gold), transparent)',
+									}}
+								/>
+							)}
 							<img
-								src={isActive ? tab.activeIcon : tab.inactiveIcon}
+								src={
+									isActive ? tab.activeIcon : tab.inactiveIcon
+								}
 								alt=""
-								width={30}
-								height={30}
+								width={28}
+								height={28}
 								className="[image-rendering:pixelated]"
 								aria-hidden="true"
 							/>
@@ -99,10 +118,10 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						disabled={disabled}
 						onClick={() => !disabled && setLobbyTab(tab.id)}
 						className={cn(
-							'flex flex-col items-center gap-[2px] px-5 py-2 bg-transparent border-none min-w-[60px] touch-manipulation',
+							'flex-1 flex flex-col items-center gap-[2px] py-2.5 bg-transparent border-none touch-manipulation transition-all duration-150',
 							disabled
 								? 'cursor-not-allowed opacity-50'
-								: 'cursor-pointer',
+								: 'cursor-pointer active:scale-95',
 						)}
 					>
 						<img
@@ -121,6 +140,12 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						>
 							{tab.label}
 						</span>
+						{isActive && (
+							<div
+								className="w-4 h-[2px] mt-0.5"
+								style={{ background: 'var(--color-gold)' }}
+							/>
+						)}
 					</button>
 				);
 			})}

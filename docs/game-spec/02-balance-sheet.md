@@ -164,21 +164,20 @@
 
 > 전체 스탯: GDD §6-1 참조
 
-### 레벨 강화 구간별 성장
+### 레벨 강화 성장 (flat 4%/lv)
 
-| 구간 | 집중 공격형 | 다중 공격형 | 슬로우 | 스턴 |
-|------|----------|----------|------|------|
-| LV.1~10 | atk +2/lv | atk +3/lv | cooldown -2%/lv | cooldown -1%/lv (누적 -9%) |
-| LV.11~20 | atk +5%/lv | splash_radius +3%/lv | slow_duration +3%/lv | cd -1%/lv + duration +2%/lv |
-| LV.21~30 | armor_pen +1/lv | atk +8%/lv | target_count +1 @25,30 | cooldown -1%/lv (누적 -29%) |
-| LV.31~50 | (미정) | (미정) | (미정) | duration +1%/lv (누적 dur +40%) |
+`enhancementStatMultiplier(L) = 1 + (L − 1) × 0.04`
 
-> **스턴 타워 LV.50 최종 배수**: cooldown ×0.71 (-29%), duration ×1.4 (+40%)
-> 코드 위치: `packages/shared/src/constants/meta.ts` — `stunCooldownMultiplier`, `stunDurationMultiplier`
-> 적용 대상:
-> - **Passive 스턴 타워** (shield T1 / holy_shrine T4 / divine_throne T5, `attackSpeed=0`): cooldown + duration 양쪽 스케일 적용
-> - **Active 스턴 타워** (fortress T2, `attackSpeed=1.0`): duration 스케일만 적용. 발동 cadence는 `attackInterval = 1000/attackSpeed`로 결정되며 `CC_AURA_CONFIGS.cooldownMs`는 참조하지 않음. 별도 cooldown 스케일은 attackSpeed 재설계가 필요하여 후속 세션에서 처리
+| Level | Multiplier |
+|-------|-----------|
+| 1     | 1.00      |
+| 10    | 1.36      |
+| 20    | 1.76      |
+| 30    | 2.16      |
+| 50    | 2.96      |
 
+> 2026-04-12: 기존의 구간별(LV.1~10 +2/lv 등) 아키타입별 성장 설계는 미구현 상태로 drift 되어 있었다. 스턴 타워의 cooldown/duration 스케일링(`stunCooldownMultiplier`, `stunDurationMultiplier`)은 별도 함수로 유지된다.
+>
 > 등급별 최대 레벨: normal=20, rare=30, unique=50, epic=50 (`GRADE_MAX_LEVEL`).
 
 ### 타워 등급 시스템
@@ -187,15 +186,29 @@
 
 **등급별 최대 레벨 / 강화비 배수 / 스탯 보너스**
 
-| 등급 | 최대 레벨 | 강화비 배수 | GRADE_BONUS (데미지/체력) |
-|------|---------|---------|----------------------|
-| normal | 20 | ×1.0 | +0% |
-| rare | 30 | ×2.0 | +70% |
-| unique | 50 | ×4.0 | +250% |
-| epic | 50 | ×8.0 | +800% |
+| 등급 | 최대 레벨 | 강화비 배수 | GRADE_BONUS | 스탯 배수 |
+|------|---------|---------|-------------|-----------|
+| normal | 20 | ×1.0 | 0     | ×1.0  |
+| rare   | 30 | ×2.0 | +0.8  | ×1.8  |
+| unique | 50 | ×4.0 | +3.5  | ×4.5  |
+| epic   | 50 | ×8.0 | +13.0 | ×14.0 |
 
-> GRADE_BONUS 설계 원칙: 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 보장 (예: rare Lv.30 < unique Lv.1).
-> 강화 비용 공식: `(50 + level * 20) × TIER_COST_MULT[tier] × GRADE_COST_MULT[grade]`.
+**강화 비용 공식 (quadratic)**
+
+`enhancementCost(L, tier, grade) = floor((100 + 40L + 3L²) × TIER_COST_MULT[tier] × GRADE_COST_MULT[grade])`
+
+| Level | Tier1 Normal | Tier3 Normal | Tier5 Normal |
+|-------|--------------|--------------|--------------|
+| 1     | 143          | 286          | 715          |
+| 10    | 800          | 1,600        | 4,000        |
+| 20    | 2,100        | 4,200        | 10,500       |
+| 30    | 4,000        | 8,000        | 20,000       |
+| 50    | 9,600        | 19,200       | 48,000       |
+
+- `TIER_COST_MULT = [0, 1, 1.5, 2, 3, 5]`
+- `GRADE_COST_MULT`: normal ×1.0, rare ×2.0, unique ×4.0, epic ×8.0
+
+> **승급 파워 게이트** (코드 테스트로 보증): normal L20 (1.76) < rare L1 (1.80), rare L30 (3.888) < unique L1 (4.50), unique L50 (13.32) < epic L1 (14.00).
 
 ### 타워 승급 확률
 
@@ -258,10 +271,10 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 |------|-------------|------|-----------|
 | orc_warlord (W1) | 0.5 | stun/slow 50% 확률 무효 | 첫 보스, CC 학습 허용 |
 | forge_master (W2) | 0.7 | stun/slow 70% 확률 무효 | 용광로 기믹과 CC 중첩 방지 |
-| corrupted_archmage (W3) | 1.0 | CC 완전 면역 | isCcImmune()과 일관 |
+| corrupted_archmage (W3) | 0.7 | stun/slow 이론상 30% 통과 (실제 W3 밴드 누적 0.9 저항 → 10% 적용) | CC 완전 면역 해제 (2026-04-12), 스턴 덱 유효성 확보 |
 
 > ★2/★3 스타 등급의 CC 저항(20%/40%)과 합산된다.
-> 예: forge_master ★2 = 0.7 + 0.2 = 0.9 (90% CC 저항)
+> forge_master ★2 = 0.7 + 0.2 = 0.9 ; corrupted_archmage ★2 = 0.7 + 0.2 = 0.9 ; ★3 = 0.7 + 0.4 = 1.0 (완전 면역)
 
 ---
 
@@ -270,8 +283,11 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | 구간 | HP 배율 | armor 배율 | speed 배율 | bounty 배율 | 특수효과 면역 |
 |------|--------|----------|---------|-----------|------------|
 | LV.1~10 | ×1 | ×1 | ×1 | ×1 | 0% |
-| LV.11~20 | ×8 | ×5 | ×1.2 | ×3 | 10% |
-| LV.21~30 | ×50 | ×20 | ×1.5 | ×8 | 20% |
+| LV.11~20 | ×6 | ×4 | ×1.15 | ×3 | 10% |
+| LV.21~30 | ×30 | ×12 | ×1.35 | ×8 | 20% |
+
+> 2026-04-12: 이전 ×8/×5/×1.2, ×50/×20/×1.5 에서 완화. Pure PVE 생존 커브로 재조정. W3 파이널 보스 HP = `25000 × 30 × 3.5 × 1.5 = 3,937,500` (이전 8,750,000, −55%).
+> `FINAL_BOSS_HP_MULTIPLIER`: 2 → **1.5** (`packages/shared/src/constants/boss.ts`).
 
 ---
 
@@ -297,31 +313,62 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 ## 10. 전투력 공식
 
 > 코드 위치: `packages/shared/src/utils/combatPower.ts`
+> 2026-04-12: issue #81 해결을 위해 피어싱 분기 + 레퍼런스 아머 모델로 재작성.
 
-```
-전투력 = Σ (출전덱 4타워에 대해: basePower × 등급배수 × 레벨배수 × 각성배수)
+### 분기 구조
 
-basePower:
-  - 공격 타워: damage × attackSpeed (DPS 기반)
-  - 서포트 타워: 유틸리티 가중치 (stun 15, stun_aoe_extended 40, stun_aoe_global 80, slow_30_aoe 20, 기타 10)
+| 타워 종류 | 판단 기준 | DPS 경로 |
+|-----------|-----------|----------|
+| 피어싱 공격형 | `!special` (특수효과 없음) | `dmg × Lmult × Gmult × AS` |
+| 비피어싱 공격형 | `splash` / `slow_*` / `stun_*` 중 하나 | `max(0, dmg × Lmult × Gmult − REFERENCE_ARMOR) × AS` |
+| 순 유틸리티 | `damage === 0` | `UTILITY_BASE[key]` (없으면 10) |
+| 하이브리드 | `damage > 0 && (slow_* \|\| splash)` | 위 DPS + 0.5 × UTILITY_BASE |
 
-등급배수: normal 1.0 / rare 1.1 / unique 1.25 / epic 1.45
-레벨배수: 1 + (level - 1) × 0.03
-각성배수: 0각성 1.0 / 1각성 1.2 / 2각성 1.5 / 3각성 2.0
-```
+최종: `round((dpsPower + utilityValue) × awakenMult)`.
 
-> 전투력은 전체 보유 컬렉션이 아닌 **출전덱(selectedDeck) 4타워**만 합산한다.
-> 덱 변경 시 즉시 재계산되며, 전투력 업적 진행도도 함께 갱신된다.
+### 상수
 
-### 전투력 마일스톤
+- `REFERENCE_ARMOR = 6` — 중반 적의 전형 아머 (비피어싱 타워 체감 보정).
+- `enhancementStatMultiplier(L) = 1 + (L − 1) × 0.04` (참고 §6).
+- `GRADE_BONUS`: normal 0 / rare 0.8 / unique 3.5 / epic 13.0 (참고 §6).
+- `AWAKENING_MULTIPLIER = [1.0, 1.2, 1.5, 2.0]` (0~3각성).
+
+### UTILITY_BASE
+
+| Key | Weight | 소유 타워 |
+|-----|--------|-----------|
+| stun | 15 | shield, fortress |
+| stun_aoe | 25 | (T2~T3 일부) |
+| stun_aoe_extended | 40 | holy_shrine |
+| stun_aoe_global | 80 | divine_throne |
+| slow_30 | 10 | emp |
+| slow_30_aoe | 20 | disruptor |
+| slow_40_aoe | 28 | world_tree |
+| slow_50_splash | 22 | stasis_field |
+
+> 폴백: 알 수 없는 유틸리티 키 → 10.
+
+### 알려진 한계
+
+- 원소 매치업(±30%) 미반영 — 코드는 in-game 에서만 적용됨. 후속 작업 예정 (issue #81 follow-up).
+- splash 50% 감쇠 / 범위 데미지의 군중 밀도 의존성 미반영.
+
+### 출전덱 합산
+
+전투력은 전체 보유 컬렉션이 아닌 **출전덱(selectedDeck) 4타워** 만 합산한다. 덱 변경 시 즉시 재계산되며, 전투력 업적 진행도도 함께 갱신된다.
+
+### 전투력 마일스톤 (2026-04-12 재조정 후)
+
 | 전투력 | 프로필 프레임 색상 |
 |--------|-----------------|
-| 0-499 | border #4a3a20 |
-| 500-999 | success #7ab648 |
-| 1K-4,999 | accent #c8a04a |
-| 5K-9,999 | gold #f0d060 + glow |
-| 10K-49,999 | gradeUnique #9060e0 + glow |
-| 50K+ | tierBright #ffe870 + pulse |
+| 0-999 | border #4a3a20 |
+| 1K-1,999 | success #7ab648 |
+| 2K-9,999 | accent #c8a04a |
+| 10K-19,999 | gold #f0d060 + glow |
+| 20K-99,999 | gradeUnique #9060e0 + glow |
+| 100K+ | tierBright #ffe870 + pulse |
+
+> 마일스톤 임계값은 새 GRADE_BONUS (epic 13.0) 와 4%/lv 커브에 맞춰 약 2× 상향 (peak 파워 22.23× → 41.44×). UI 코드(프로필 프레임 계산) 는 별도 후속 PR 로 추적.
 
 ## 11. 승급 레벨 리셋
 
@@ -365,6 +412,7 @@ basePower:
 | 2026-04-12 | 보스 웨이브 에너지 시스템 통일 | 마지막 보스 웨이브에서 에너지 리젠 + ENERGY_PER_WAVE_CLEAR 비활성화 제거. 전 웨이브 동일 적용 | 보스전 중 타워 배치/업그레이드 유연성 확보, 예외 케이스 제거 (DRIFT-2) |
 | 2026-04-12 | armor 데미지 공식 MISS 전환 | `Math.max(1, rawDamage - armor)` → `rawDamage - armor` (0 이하 시 MISS). 최종 데미지 `Math.floor` 정수화 | 최소 1 데미지 보장 제거로 armor 전략성 강화, 소수점 데미지 표기 버그 수정 |
 | 2026-04-12 | 타워 승급 시스템 개선 (#52) | 등급별 최대 레벨 (normal=20/rare=30/unique=50/epic=50), GRADE_BONUS (0/+70%/+250%/+800%), GRADE_COST_MULT (1x/2x/4x/8x). 승급 확률 20/10/5% → 80/50/25% | 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 재밸런스, 승급 성공률 현실화 |
+| 2026-04-12 | 밸런스 대수정 (#81, #111) | (1) 전투력: 피어싱 분기 + REFERENCE_ARMOR=6 도입, UTILITY_BASE 확장. (2) 강화: 비용 `(100+40L+3L²)`, 효율 4%/lv. (3) GRADE_BONUS: rare 0.7→0.8, unique 2.5→3.5, epic 8.0→13.0 (승급 게이트 유지). (4) 적 스케일 band2 ×8/×5/×1.2 → ×6/×4/×1.15, band3 ×50/×20/×1.5 → ×30/×12/×1.35. (5) FINAL_BOSS_HP_MULTIPLIER 2→1.5. (6) corrupted_archmage bossCcResist 1.0→0.7. | 전투력 표시-in game 괴리 해소, pure PVE 생존 커브 확보, 승급 체감 상향 |
 
 ---
 

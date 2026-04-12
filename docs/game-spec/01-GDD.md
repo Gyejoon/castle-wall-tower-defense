@@ -250,7 +250,7 @@
 |--------|------|
 | 웨이브 1~9 (normal) | 일반 웨이브 진행 |
 | 웨이브 10 진입 시 | boss-warning 이벤트 emit + "WARNING" 표시 |
-| 웨이브 10 보스 스폰 | 강화 보스 (FINAL_BOSS_HP_MULTIPLIER 2×) + 호위 동시 스폰 + 흔들림 |
+| 웨이브 10 보스 스폰 | 강화 보스 (FINAL_BOSS_HP_MULTIPLIER 1.5×) + 호위 동시 스폰 + 흔들림 |
 | 최종 클리어 | 슬로모션 + "STAGE CLEAR" + 보상 팝업 |
 
 ---

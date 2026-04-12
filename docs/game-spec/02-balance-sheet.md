@@ -274,7 +274,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | corrupted_archmage (W3) | 0.7 | stun/slow 이론상 30% 통과 (실제 W3 밴드 누적 0.9 저항 → 10% 적용) | CC 완전 면역 해제 (2026-04-12), 스턴 덱 유효성 확보 |
 
 > ★2/★3 스타 등급의 CC 저항(20%/40%)과 합산된다.
-> forge_master ★2 = 0.7 + 0.2 = 0.9 ; corrupted_archmage ★2 = 0.7 + 0.2 = 0.9 ; ★3 = 0.7 + 0.4 = 1.0 (완전 면역)
+> forge_master ★2 = 0.7 + 0.2 = 0.9 ; corrupted_archmage ★2 = 0.7 + 0.2 = 0.9 ; ★3 = min(0.7 + 0.4, 1.0) = 1.0 (완전 면역, `UnitSystem.ts` 에서 clamp)
 
 ---
 
@@ -286,7 +286,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | LV.11~20 | ×6 | ×4 | ×1.15 | ×3 | 10% |
 | LV.21~30 | ×30 | ×12 | ×1.35 | ×8 | 20% |
 
-> 2026-04-12: 이전 ×8/×5/×1.2, ×50/×20/×1.5 에서 완화. Pure PVE 생존 커브로 재조정. W3 파이널 보스 HP = `25000 × 30 × 3.5 × 1.5 = 3,937,500` (이전 8,750,000, −55%).
+> 2026-04-12: 이전 ×8/×5/×1.2, ×50/×20/×1.5 에서 완화. Pure PVE 생존 커브로 재조정. W3 파이널 보스 HP = `25000 × 30 × 3.5 × 1.5 = 3,937,500` (`difficultyHpMult` 제외 기준; storm_citadel ×1.6 = 6,300,000 in-game). 이전 8,750,000, −55%.
 > `FINAL_BOSS_HP_MULTIPLIER`: 2 → **1.5** (`packages/shared/src/constants/boss.ts`).
 
 ---

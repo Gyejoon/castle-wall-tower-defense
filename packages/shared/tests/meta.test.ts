@@ -80,18 +80,18 @@ describe('getEffectiveStats', () => {
 		expect(getEffectiveStats(10, 10, 'epic')).toBeCloseTo(190.4, 1);
 	});
 	it('higher grade Lv.1 > previous grade max level (promotion power gate)', () => {
-		// normal max Lv.20: 10 * 1.57 = 15.7
-		// rare Lv.1: 10 * 1.0 * 1.7 = 17.0 > 15.7 ✓
+		// normal max Lv.20: 10 × 1.76 = 17.6
+		// rare Lv.1: 10 × 1.0 × 1.8 = 18.0 > 17.6 ✓
 		expect(getEffectiveStats(10, 1, 'rare')).toBeGreaterThan(
 			getEffectiveStats(10, 20, 'normal'),
 		);
-		// rare max Lv.30: 10 * 1.87 * 1.7 = 31.79
-		// unique Lv.1: 10 * 1.0 * 3.5 = 35.0 > 31.79 ✓
+		// rare max Lv.30: 10 × 2.16 × 1.8 = 38.88
+		// unique Lv.1: 10 × 1.0 × 4.5 = 45.0 > 38.88 ✓
 		expect(getEffectiveStats(10, 1, 'unique')).toBeGreaterThan(
 			getEffectiveStats(10, 30, 'rare'),
 		);
-		// unique max Lv.50: 10 * 2.47 * 3.5 = 86.45
-		// epic Lv.1: 10 * 1.0 * 9.0 = 90.0 > 86.45 ✓
+		// unique max Lv.50: 10 × 2.96 × 4.5 = 133.2
+		// epic Lv.1: 10 × 1.0 × 14.0 = 140.0 > 133.2 ✓
 		expect(getEffectiveStats(10, 1, 'epic')).toBeGreaterThan(
 			getEffectiveStats(10, 50, 'unique'),
 		);

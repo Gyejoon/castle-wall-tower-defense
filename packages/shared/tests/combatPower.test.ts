@@ -38,7 +38,10 @@ describe('calcTowerPower — pierce towers (no special, ignore armor)', () => {
 	});
 
 	it('flame_tower (damage 40, AS 1.5, no special = pierce) L1 = 60', () => {
-		// flame_tower has no special → pierce; dps = 40 × 1.0 × 1.0 × 1.5 = 60
+		// Note: plan originally listed `fortress` here, but fortress has
+		// special: 'stun_aoe' so it is a damage+stun hybrid, not pierce.
+		// Substituted flame_tower (no special) as the correct pierce example.
+		// dps = 40 × 1.0 × 1.0 × 1.5 = 60
 		expect(calcTowerPower(makeTower({ defId: 'flame_tower' }))).toBe(60);
 	});
 });
@@ -106,5 +109,29 @@ describe('calcCombatPower', () => {
 			makeTower({ defId: 'plasma' }),
 		];
 		expect(calcCombatPower(collection, ['archer'])).toBe(15);
+	});
+
+	it('with deckIds filters 4-tower collection to deck towers only', () => {
+		const collection: OwnedTower[] = [
+			makeTower({ defId: 'archer' }), // 15
+			makeTower({ defId: 'plasma' }), // 15
+			makeTower({ defId: 'emp' }), // 5
+			makeTower({ defId: 'shield' }), // 15
+		];
+		// archer(15) + plasma(15) = 30
+		expect(calcCombatPower(collection, ['archer', 'plasma'])).toBe(30);
+	});
+
+	it('with missing tower in deckIds, returns partial sum (no throw)', () => {
+		const collection: OwnedTower[] = [
+			makeTower({ defId: 'archer' }), // 15
+		];
+		// nonexistent id silently skipped; archer still summed
+		expect(calcCombatPower(collection, ['archer', 'nonexistent'])).toBe(15);
+	});
+
+	it('empty deckIds array returns 0 (distinct from omitting deckIds)', () => {
+		const collection: OwnedTower[] = [makeTower({ defId: 'archer' })];
+		expect(calcCombatPower(collection, [])).toBe(0);
 	});
 });

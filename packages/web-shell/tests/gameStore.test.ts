@@ -197,13 +197,10 @@ describe('gameStore', () => {
 
 	it('toggles accessibility feedback flags', () => {
 		expect(useGameStore.getState().screenShake).toBe(true);
-		expect(useGameStore.getState().showDamageNumbers).toBe(true);
 
 		useGameStore.getState().toggleScreenShake();
-		useGameStore.getState().toggleDamageNumbers();
 
 		expect(useGameStore.getState().screenShake).toBe(false);
-		expect(useGameStore.getState().showDamageNumbers).toBe(false);
 	});
 
 	it('toggleScreenShake persists to metaStore', async () => {
@@ -274,7 +271,7 @@ describe('gameStore', () => {
 			currentSlot: 1,
 			phase: 'combat',
 			bossWarning: false,
-			timerLabel: 'Slot 1',
+			timerLabel: '',
 		});
 	});
 });

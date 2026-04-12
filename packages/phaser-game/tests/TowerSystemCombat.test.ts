@@ -23,7 +23,7 @@ vi.mock('phaser', () => ({
 }));
 
 vi.mock('../src/audio/SoundGenerator', () => ({
-	soundGenerator: { playTowerAttack: vi.fn() },
+	soundGenerator: { playTowerAttack: vi.fn(), playArrowImpact: vi.fn() },
 }));
 
 function createGraphics() {
@@ -66,6 +66,9 @@ function createScene() {
 		},
 		textures: { exists: vi.fn(() => false) },
 		anims: { exists: vi.fn(() => false) },
+		tweens: {
+			add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
+		},
 	};
 }
 
@@ -325,22 +328,25 @@ describe('TowerSystem combat', () => {
 
 		const unitWorld1 = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
 		const unitWorld2 = gridManager.gridToWorld(pos.gridX + 1, pos.gridY + 1);
-		const events = towerSystem.update(1000, 16, [
+		const units = [
 			{
 				instanceId: 'u1',
 				x: unitWorld1.x,
 				y: unitWorld1.y,
 				hp: 100,
-				element: 'neutral',
+				element: 'neutral' as const,
 			},
 			{
 				instanceId: 'u2',
 				x: unitWorld2.x,
 				y: unitWorld2.y,
 				hp: 100,
-				element: 'neutral',
+				element: 'neutral' as const,
 			},
-		]);
+		];
+		towerSystem.update(1000, 16, units);
+		// Drain projectile TTL
+		const events = towerSystem.update(1000, 600, units);
 
 		// Primary target gets slow
 		const primarySlow = events.find((e) => e.unitId === 'u1' && e.slow);
@@ -362,22 +368,25 @@ describe('TowerSystem combat', () => {
 		// u2 at y+5 → distSq 30.5 (out of range) but 1.0 from u1 (within splash 2.25).
 		const unitWorld1 = gridManager.gridToWorld(pos.gridX, pos.gridY + 4);
 		const unitWorld2 = gridManager.gridToWorld(pos.gridX, pos.gridY + 5);
-		const events = towerSystem.update(1000, 16, [
+		const units = [
 			{
 				instanceId: 'u1',
 				x: unitWorld1.x,
 				y: unitWorld1.y,
 				hp: 100,
-				element: 'neutral',
+				element: 'neutral' as const,
 			},
 			{
 				instanceId: 'u2',
 				x: unitWorld2.x,
 				y: unitWorld2.y,
 				hp: 100,
-				element: 'neutral',
+				element: 'neutral' as const,
 			},
-		]);
+		];
+		towerSystem.update(1000, 16, units);
+		// Drain projectile TTL
+		const events = towerSystem.update(1000, 600, units);
 
 		// u1 in range → slowed + damaged
 		const primary = events.find((e) => e.unitId === 'u1');
@@ -394,15 +403,16 @@ describe('TowerSystem combat', () => {
 		const pos = placeTowerAndGetWorld(towerSystem, gridManager, 'archer');
 
 		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY + 1);
-		const events = towerSystem.update(1000, 16, [
-			{
-				instanceId: 'u1',
-				x: unitWorld.x,
-				y: unitWorld.y,
-				hp: 100,
-				element: 'neutral',
-			},
-		]);
+		const unit = {
+			instanceId: 'u1',
+			x: unitWorld.x,
+			y: unitWorld.y,
+			hp: 100,
+			element: 'neutral' as const,
+		};
+		towerSystem.update(1000, 16, [unit]);
+		// Second update drains projectile TTL → damage flush
+		const events = towerSystem.update(1000, 600, [unit]);
 
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();
@@ -416,15 +426,16 @@ describe('TowerSystem combat', () => {
 		// plasma range=2, place unit on same tile to guarantee in-range
 		// plasma attackSpeed=0.8 → interval 1250ms, need time > 1250
 		const unitWorld = gridManager.gridToWorld(pos.gridX, pos.gridY);
-		const events = towerSystem.update(2000, 16, [
-			{
-				instanceId: 'u1',
-				x: unitWorld.x,
-				y: unitWorld.y,
-				hp: 100,
-				element: 'neutral',
-			},
-		]);
+		const unit = {
+			instanceId: 'u1',
+			x: unitWorld.x,
+			y: unitWorld.y,
+			hp: 100,
+			element: 'neutral' as const,
+		};
+		towerSystem.update(2000, 16, [unit]);
+		// Drain projectile TTL to flush pending damage
+		const events = towerSystem.update(2000, 600, [unit]);
 
 		const damageEvt = events.find((e) => e.unitId === 'u1' && e.damage > 0);
 		expect(damageEvt).toBeDefined();

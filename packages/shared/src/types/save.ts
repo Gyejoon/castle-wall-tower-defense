@@ -1,6 +1,6 @@
 import type { StarRating } from '../constants/starDifficulty';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 6;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -40,7 +40,9 @@ export type MissionType =
 	| 'defeat_boss'
 	| 'clear_stage'
 	| 'use_element'
-	| 'attendance';
+	| 'attendance'
+	| 'clear_map'
+	| 'defeat_boss_map';
 
 export interface MissionProgress {
 	id: string;
@@ -49,6 +51,7 @@ export interface MissionProgress {
 	current: number;
 	reward: { type: 'diamond' | 'gold'; amount: number };
 	claimed: boolean;
+	mapId?: string;
 }
 
 export interface ProgressData {
@@ -65,6 +68,7 @@ export interface ProgressData {
 	lastDailyMissionResetAt: string | null;
 	lastWeeklyMissionResetAt: string | null;
 	lastAttendanceDate: string | null;
+	/** Key is stageId (e.g. "w1_s1"). Pre-v5 saves used mapId keys and are migrated. */
 	stageStars: Record<string, StarRating>;
 	achievements: {
 		claimed: string[];
@@ -77,7 +81,6 @@ export interface SettingsData {
 	bgmVolume: number; // 0~1, default 0.7
 	sfxVolume: number; // 0~1, default 0.8
 	screenShake: boolean;
-	showDamageNumbers: boolean;
 	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';
 }
 

@@ -1,5 +1,12 @@
 import type { Position } from './grid';
 
+export interface GimmickTileSet {
+	/** W2 furnace tiles — towers on these tiles are disabled during the "ON" phase. */
+	furnaceTiles?: Position[];
+	/** W3 arcane circle tiles — towers on these tiles get +15% damage and are immune to arcane bursts. */
+	arcaneCircleTiles?: Position[];
+}
+
 export interface MapLayout {
 	id: string;
 	name: string;
@@ -21,4 +28,6 @@ export interface MapLayout {
 	rewardMultiplier: number;
 	/** HP multiplier applied to all spawned units. Default 1. */
 	difficultyHpMult: number;
+	/** Optional world-gimmick tile data. Scene consults this when constructing the world gimmick. */
+	gimmickTiles?: GimmickTileSet;
 }

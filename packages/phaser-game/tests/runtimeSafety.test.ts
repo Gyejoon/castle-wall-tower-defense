@@ -1,4 +1,4 @@
-import { TOTAL_WAVES, WAVE_DEFS } from '@gld/shared';
+import { STAGE_WAVES, TOTAL_WAVES } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
 
@@ -106,19 +106,19 @@ describe('runtime safety fixes', () => {
 
 		const waveSystem = new WaveSystem(
 			unitSystem as never,
-			WAVE_DEFS,
-			WAVE_DEFS.length + 5,
+			STAGE_WAVES.w1_s1,
+			STAGE_WAVES.w1_s1.length + 5,
 		);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 
 		waveSystem.setMaxWaves(0);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(1);
 
-		waveSystem.setMaxWaves(WAVE_DEFS.length + 10);
+		waveSystem.setMaxWaves(STAGE_WAVES.w1_s1.length + 10);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 	});
 
-	it('event-based wave progression: start → clear → wait → next wave', () => {
+	it('event-based wave progression: prep → clear → wait → next wave', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
@@ -127,10 +127,14 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
 		waveSystem.start();
 
-		// Wave 1 starts immediately
+		// Enters prep phase first
+		expect(waveSystem.getPhase()).toBe('prep');
+
+		// Tick past 5s prep — wave 1 starts
+		waveSystem.update(5100, 0);
 		expect(emitSpy).toHaveBeenCalledWith(
 			'wave-started',
 			expect.objectContaining({
@@ -161,7 +165,39 @@ describe('runtime safety fixes', () => {
 		);
 	});
 
-	it('emits boss-warning when pre_boss wave is cleared', () => {
+	it('emits boss-warning when boss wave starts', () => {
+		const unitSystem = {
+			queueUnits: vi.fn(),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+
+		// Use w1_s8 which has boss at wave 10
+		const emitSpy = vi.spyOn(EventBus, 'emit');
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s8);
+		waveSystem.start();
+
+		// Consume prep phase (5s)
+		waveSystem.update(5100, 0);
+
+		// Advance through waves 1-9 (clear immediately since activeCount=0)
+		for (let i = 0; i < 9; i++) {
+			waveSystem.update(100, 0); // clear current wave
+			waveSystem.update(5100, 0); // wait through delay
+		}
+
+		// Now on wave 10 (boss). boss-warning should have been emitted when it started.
+		expect(emitSpy).toHaveBeenCalledWith(
+			'boss-warning',
+			expect.objectContaining({
+				slotIndex: 9,
+				bossSlotIndex: 10,
+			}),
+		);
+	});
+
+	it('enters prep phase on start and transitions to combat after INITIAL_PREP_MS', () => {
 		const unitSystem = {
 			queueUnits: vi.fn(),
 			hasActiveUnits: vi.fn(() => false),
@@ -170,25 +206,31 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, WAVE_DEFS);
+		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
 		waveSystem.start();
 
-		// Advance through waves 1-8 (clear immediately since activeCount=0)
-		for (let i = 0; i < 8; i++) {
-			waveSystem.update(100, 0); // clear current wave
-			waveSystem.update(5100, 0); // wait through delay
-		}
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-started', {
+			durationMs: 5000,
+		});
+		// Units must NOT spawn during prep
+		expect(unitSystem.queueUnits).not.toHaveBeenCalled();
 
-		// Now on wave 9 (pre_boss). Clear it.
-		waveSystem.update(100, 0);
+		// Tick 3 seconds — still prep
+		waveSystem.update(3000, 0);
+		expect(waveSystem.getPhase()).toBe('prep');
+		expect(emitSpy).toHaveBeenCalledWith('wave-prep-tick', {
+			remainingMs: 2000,
+		});
 
+		// Tick past 5s total — transitions to combat and spawns wave 1
+		waveSystem.update(2100, 0);
+		expect(waveSystem.getPhase()).toBe('combat');
 		expect(emitSpy).toHaveBeenCalledWith(
-			'boss-warning',
-			expect.objectContaining({
-				slotIndex: 9,
-				bossSlotIndex: 10,
-			}),
+			'wave-started',
+			expect.objectContaining({ slotIndex: 1, phase: 'combat' }),
 		);
+		expect(unitSystem.queueUnits).toHaveBeenCalled();
 	});
 
 	it('disconnects audio nodes once playback ends', () => {
@@ -261,6 +303,8 @@ describe('runtime safety fixes', () => {
 					play: vi.fn(),
 					setDepth: vi.fn(),
 					setPosition: vi.fn(),
+					setRotation: vi.fn(),
+					setFlipX: vi.fn(),
 					destroy: vi.fn(),
 					setTint: vi.fn(),
 					clearTint: vi.fn(),

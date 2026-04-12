@@ -3,7 +3,7 @@
 import {
 	createDefaultSave,
 	generateWeeklyMissions,
-	MAX_TOWER_LEVEL,
+	maxLevelForGrade,
 	SAVE_VERSION,
 	toKSTDateStr,
 } from '@gld/shared';
@@ -111,15 +111,39 @@ describe('metaStore', () => {
 		expect(result).toBe('no_gold');
 	});
 
-	it('enhanceTower returns max_level at MAX_TOWER_LEVEL', () => {
+	it('enhanceTower returns max_level at grade cap (normal = 20)', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: MAX_TOWER_LEVEL } : t,
+				t.defId === 'archer' ? { ...t, level: maxLevelForGrade('normal') } : t,
 			),
 		}));
 		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('max_level');
+	});
+
+	it('enhanceTower enforces rare grade cap (30)', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 99999 },
+			collection: s.collection.map((t) =>
+				t.defId === 'archer' ? { ...t, level: 30, grade: 'rare' as const } : t,
+			),
+		}));
+		expect(useMetaStore.getState().enhanceTower('archer')).toBe('max_level');
+	});
+
+	it('enhanceTower allows rare up to 30 but blocks 31', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 99999 },
+			collection: s.collection.map((t) =>
+				t.defId === 'archer' ? { ...t, level: 29, grade: 'rare' as const } : t,
+			),
+		}));
+		expect(useMetaStore.getState().enhanceTower('archer')).toBe('success');
+		// now at Lv.30, next attempt blocked
+		expect(useMetaStore.getState().enhanceTower('archer')).toBe('max_level');
 	});
 
 	it('promoteTower upgrades grade on success', () => {

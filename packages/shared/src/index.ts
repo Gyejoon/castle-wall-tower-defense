@@ -31,9 +31,8 @@ export {
 } from './constants/elements';
 export {
 	ENERGY_CAP,
-	ENERGY_PER_BOSS_KILL,
-	ENERGY_PER_KILL,
 	ENERGY_PER_SEC,
+	ENERGY_PER_WAVE_CLEAR,
 	INITIAL_ENERGY,
 } from './constants/energy';
 export type { GachaResult } from './constants/gacha';
@@ -62,6 +61,7 @@ export {
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
+	getNextMapInWorld,
 	getSpawnExitPairs,
 	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
@@ -73,8 +73,12 @@ export {
 	createDefaultSave,
 	enhancementCost,
 	enhancementStatMultiplier,
+	GRADE_BONUS,
+	GRADE_MAX_LEVEL,
 	getEffectiveStats,
+	INITIAL_PREP_MS,
 	MAX_TOWER_LEVEL,
+	maxLevelForGrade,
 	PROMOTION_CONFIG,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
@@ -98,6 +102,14 @@ export {
 	getMaxXpForMap,
 	getTotalRewardMultiplier,
 } from './constants/stageInfo';
+export {
+	DEFAULT_STAGE_ID,
+	getNextStageId,
+	getStageById,
+	getStagesByWorld,
+	STAGE_ORDER,
+	STAGES,
+} from './constants/stages';
 export type { StarRating } from './constants/starDifficulty';
 export {
 	checkStarClear,
@@ -125,14 +137,27 @@ export type {
 } from './constants/waves';
 export {
 	getTotalWavesForMap,
+	getTotalWavesForStage,
 	getWavesForMap,
+	getWavesForStage,
+	MAX_WAVE_DURATION_MS,
+	STAGE_WAVES,
 	TOTAL_WAVES,
-	WAVE_DEFS,
 	WAVE_SCALING,
 } from './constants/waves';
+export {
+	getWorldById,
+	WORLD_ORDER,
+	WORLDS,
+} from './constants/worlds';
+export {
+	getStageLockStatus,
+	isStageUnlocked,
+	isWorldUnlocked,
+} from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
-export type { MapLayout } from './types/map';
+export type { GimmickTileSet, MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
 	MissionProgress,
@@ -146,6 +171,13 @@ export type {
 } from './types/save';
 export { SAVE_STORAGE_KEY, SAVE_VERSION, TOWER_GRADES } from './types/save';
 export type {
+	StageDef,
+	StageLockStatus,
+	WorldDef,
+	WorldId,
+	WorldUnlockRule,
+} from './types/stage';
+export type {
 	FusionTowerType,
 	PlacedTower,
 	TowerDef,
@@ -154,5 +186,11 @@ export type {
 	TowerType,
 } from './types/tower';
 export { TIER_NAMES } from './types/tower';
-export type { ActiveUnit, UnitDef, UnitStats, UnitType } from './types/unit';
+export type {
+	ActiveUnit,
+	UnitDef,
+	UnitSpecialBehavior,
+	UnitStats,
+	UnitType,
+} from './types/unit';
 export { calcCombatPower, calcTowerPower } from './utils/combatPower';

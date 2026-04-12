@@ -1,23 +1,28 @@
 import {
+	type ActiveUnit,
 	type AssetManifest,
 	buildDeckCardsSafe,
 	checkStarClear,
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
-	ENERGY_PER_BOSS_KILL,
-	ENERGY_PER_KILL,
+	DEFAULT_STAGE_ID,
+	ENERGY_PER_WAVE_CLEAR,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
+	getStageById,
 	getStarDifficultyMult,
-	getWavesForMap,
+	getTotalWavesForStage,
+	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
 	PHASER_COLORS,
 	type StarRating,
+	UNITS,
 	type WaveDef,
 	type WavePhase,
+	type WorldId,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import {
@@ -71,7 +76,16 @@ function getMapTheme(mapId: string): MapTheme {
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
+import { createBossBehavior } from '../systems/boss-ai/registry';
+import type { BossBehavior } from '../systems/boss-ai/types';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
+import '../systems/boss-ai/orcWarlord';
+import '../systems/boss-ai/forgeMaster';
+import '../systems/boss-ai/corruptedArchmage';
+import { createWorldGimmick } from '../systems/world-gimmicks/registry';
+import type { WorldGimmick } from '../systems/world-gimmicks/types';
+import '../systems/world-gimmicks/W2FurnaceGimmick';
+import '../systems/world-gimmicks/W3ArcaneGimmick';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
@@ -93,10 +107,6 @@ export class GameScene extends Phaser.Scene {
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
-	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
-		if (!this.isSceneAlive()) return;
-		this.damageNumbers.setEnabled(value);
-	};
 	private playerHp = INITIAL_PLAYER_HP;
 	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
@@ -105,9 +115,11 @@ export class GameScene extends Phaser.Scene {
 	private goldEarned = 0;
 	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
+	private currentStageId!: string;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
+	private rangeOverlayGraphics!: Phaser.GameObjects.Graphics;
 	private pathGraphics?: Phaser.GameObjects.Graphics;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
@@ -136,6 +148,7 @@ export class GameScene extends Phaser.Scene {
 		totalWaves: number;
 		slotIndex: number;
 		delaySec: number;
+		cleared: boolean;
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
 
@@ -150,6 +163,17 @@ export class GameScene extends Phaser.Scene {
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
+	private worldGimmick: WorldGimmick | null = null;
+	private furnaceTintOverlays: Phaser.GameObjects.Rectangle[] = [];
+	private onFurnaceCycle!: (data: {
+		active: boolean;
+		tiles: Array<{ x: number; y: number }>;
+	}) => void;
+	private onArcaneBurst!: (data: {
+		area: { startX: number; startY: number; endX: number; endY: number };
+		stunMs: number;
+	}) => void;
+	private bossBehaviors = new Map<string, BossBehavior>(); // key = unit instanceId
 
 	constructor() {
 		super('Game');
@@ -204,23 +228,55 @@ export class GameScene extends Phaser.Scene {
 			getSpawnExitPairs(this.currentMap),
 		);
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
+		this.playerUnits.setTowerSystem(this.playerTowers);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
-		const mapWaves = getWavesForMap(mapId);
-		if (mapWaves.length === 0) {
-			throw new Error(`[GameScene] Map "${mapId}" has empty wave definitions`);
+		this.playerUnits.setUnitSpawnedCallback((instanceId, defId, isBoss) => {
+			if (!isBoss) return;
+			const def = UNITS.find((u) => u.id === defId);
+			if (!def?.bossBehaviorId) return;
+			const behavior = createBossBehavior(def.bossBehaviorId);
+			if (!behavior) return;
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit) return;
+			this.bossBehaviors.set(instanceId, behavior);
+			behavior.onSpawn(this.buildBossContext(unit.data));
+		});
+		const rawStageId = this.game.registry.get('selectedStageId') as
+			| string
+			| undefined;
+		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
+		this.currentStageId = stageId;
+		const stageDef = getStageById(stageId);
+		const stageWaves = getWavesForStage(stageDef.waveSetId);
+		if (stageWaves.length === 0) {
+			throw new Error(
+				`[GameScene] Stage "${stageId}" has empty wave definitions`,
+			);
 		}
-		this.currentSlotDef = mapWaves[0];
+		this.currentSlotDef = stageWaves[0];
 		const rawStar = this.game.registry.get('selectedStar');
 		const selectedStar: StarRating =
 			rawStar === 2 || rawStar === 3 ? rawStar : 1;
 		this.selectedStar = selectedStar;
 		const starMult = getStarDifficultyMult(selectedStar);
-		this.playerWaves = new WaveSystem(this.playerUnits, mapWaves, undefined, {
+		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves, undefined, {
 			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
 			armorMult: starMult.armor,
 			speedMult: starMult.speed,
 			ccResist: starMult.ccResist,
 		});
+		this.worldGimmick = createWorldGimmick(stageDef.worldId as WorldId, {
+			worldId: stageDef.worldId as WorldId,
+			map: this.currentMap,
+			star: selectedStar,
+			eventBus: EventBus,
+			getSceneTimeMs: () => this.scaledGameTime,
+			getTowers: () => this.playerTowers.getAllTowers(),
+		});
+		this.worldGimmick?.init();
+		this.worldGimmick?.onBattleStart();
+		this.playerTowers.setWorldGimmick(this.worldGimmick);
+
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards =
 			deckIds && deckIds.length > 0
@@ -228,14 +284,6 @@ export class GameScene extends Phaser.Scene {
 				: DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
 		this.damageNumbers = new DamageNumberSystem(this);
-		const showDmgNumbers = this.game.registry.get('showDamageNumbers') as
-			| boolean
-			| undefined;
-		this.damageNumbers.setEnabled(showDmgNumbers !== false);
-		this.game.registry.events.on(
-			'changedata-showDamageNumbers',
-			this.onDmgNumbersChange,
-		);
 		this.events.on('shutdown', this.cleanup, this);
 
 		this.cacheDecorationData();
@@ -244,6 +292,9 @@ export class GameScene extends Phaser.Scene {
 		this.hoverGraphics = this.add.graphics();
 		this.selectionGraphics = this.add.graphics();
 		this.selectionGraphics.setDepth(15);
+		this.rangeOverlayGraphics = this.add.graphics();
+		this.rangeOverlayGraphics.setDepth(22);
+		this.rangeOverlayGraphics.setAlpha(0);
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
@@ -266,19 +317,24 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+			this.clearRangeOverlay();
+			EventBus.emit('tower-deselected');
 			this.renderPlaceableHighlights();
 		};
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
 			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			EventBus.emit('tower-deselected');
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
-			this.currentSlotDef = mapWaves[data.slotIndex - 1] ?? mapWaves[0];
+			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
+			this.worldGimmick?.onWaveStart(data.wave);
 		};
 
 		this.onBossWarning = () => {
@@ -290,9 +346,16 @@ export class GameScene extends Phaser.Scene {
 			this.showBossWarningOverlay();
 		};
 
-		this.onWaveCompleted = () => {
+		this.onWaveCompleted = (data: {
+			wave: number;
+			totalWaves: number;
+			cleared: boolean;
+		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
+			if (data.cleared) {
+				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			}
 		};
 
 		this.onSetSpeed = ({ multiplier }) => {
@@ -314,6 +377,7 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('player-tower-count', {
 					count: this.playerTowers.getTowers().length,
 				});
+				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 			}
 		};
@@ -327,6 +391,70 @@ export class GameScene extends Phaser.Scene {
 			this.scene.resume();
 		};
 
+		this.onFurnaceCycle = ({ active, tiles }) => {
+			if (!this.isSceneAlive()) return;
+
+			if (!active) {
+				// OFF transition: fadeOut 300ms then destroy
+				for (const overlay of this.furnaceTintOverlays) {
+					this.tweens.add({
+						targets: overlay,
+						alpha: 0,
+						duration: 300,
+						ease: 'Quad.easeIn',
+						onComplete: () => overlay.destroy(),
+					});
+				}
+				this.furnaceTintOverlays = [];
+				return;
+			}
+
+			// Clear any leftover overlays before creating new ones
+			for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+			this.furnaceTintOverlays = [];
+
+			for (const tile of tiles) {
+				const world = this.playerGrid.gridToWorld(tile.x, tile.y);
+				const size = this.playerGrid.orthoTile;
+				const rect = this.add.rectangle(
+					world.x,
+					world.y,
+					size,
+					size,
+					0xcc6600,
+					0.3,
+				);
+				rect.setDepth(0.5);
+				this.furnaceTintOverlays.push(rect);
+				this.tweens.add({
+					targets: rect,
+					alpha: { from: 0, to: 0.3 },
+					duration: 200,
+					ease: 'Quad.easeOut',
+				});
+			}
+		};
+
+		this.onArcaneBurst = ({ area, stunMs: _stunMs }) => {
+			if (!this.isSceneAlive()) return;
+			const topLeft = this.playerGrid.gridToWorld(area.startX, area.startY);
+			const bottomRight = this.playerGrid.gridToWorld(area.endX, area.endY);
+			const tileSize = this.playerGrid.orthoTile;
+			const cx = (topLeft.x + bottomRight.x) / 2;
+			const cy = (topLeft.y + bottomRight.y) / 2;
+			const w = bottomRight.x - topLeft.x + tileSize;
+			const h = bottomRight.y - topLeft.y + tileSize;
+			const flash = this.add.rectangle(cx, cy, w, h, 0x8040c0, 0.4);
+			flash.setDepth(0.9);
+			this.tweens.add({
+				targets: flash,
+				alpha: 0,
+				duration: 600,
+				ease: 'Quad.easeOut',
+				onComplete: () => flash.destroy(),
+			});
+		};
+
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('request-sell-tower', this.onSellTower);
@@ -336,6 +464,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
+		EventBus.on('furnace-cycle', this.onFurnaceCycle);
+		EventBus.on('arcane-burst', this.onArcaneBurst);
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -571,9 +701,42 @@ export class GameScene extends Phaser.Scene {
 					row: gridPos.y,
 					refund,
 				});
+				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
 				EventBus.emit('tower-deselected');
+				this.clearRangeOverlay();
 			}
+		});
+	}
+
+	private drawRangeOverlay(col: number, row: number, range: number): void {
+		this.rangeOverlayGraphics.clear();
+		this.tweens.killTweensOf(this.rangeOverlayGraphics);
+		const worldPos = this.playerGrid.gridToWorld(col, row);
+		const radius = range * this.playerGrid.tileSize;
+
+		this.rangeOverlayGraphics.fillStyle(PHASER_COLORS.gold, 0.08);
+		this.rangeOverlayGraphics.fillCircle(worldPos.x, worldPos.y, radius);
+		this.rangeOverlayGraphics.lineStyle(2, PHASER_COLORS.gold, 0.6);
+		this.rangeOverlayGraphics.strokeCircle(worldPos.x, worldPos.y, radius);
+
+		this.rangeOverlayGraphics.setAlpha(0);
+		this.tweens.add({
+			targets: this.rangeOverlayGraphics,
+			alpha: 1,
+			duration: 120,
+			ease: 'Quad.easeOut',
+		});
+	}
+
+	private clearRangeOverlay(): void {
+		this.tweens.killTweensOf(this.rangeOverlayGraphics);
+		this.tweens.add({
+			targets: this.rangeOverlayGraphics,
+			alpha: 0,
+			duration: 60,
+			ease: 'Quad.easeIn',
+			onComplete: () => this.rangeOverlayGraphics.clear(),
 		});
 	}
 
@@ -603,10 +766,15 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
+		this.rangeOverlayGraphics.clear();
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
+		EventBus.off('furnace-cycle', this.onFurnaceCycle);
+		EventBus.off('arcane-burst', this.onArcaneBurst);
+		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+		this.furnaceTintOverlays = [];
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
@@ -615,8 +783,10 @@ export class GameScene extends Phaser.Scene {
 				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
 				: false;
 
+		const mapId = this.currentMap.id;
 		EventBus.emit('game-over', {
 			...payload,
+			mapId,
 			selectedStar: this.selectedStar,
 			starCleared,
 			hpRemaining: Math.max(0, this.playerHp),
@@ -625,6 +795,7 @@ export class GameScene extends Phaser.Scene {
 					payload.result === 'victory'
 						? payload.finalSlot
 						: Math.max(0, payload.finalSlot - 1),
+				totalWaves: getTotalWavesForStage(this.currentStageId),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
 				goldEarned: this.goldEarned * this.rewardMultiplier,
@@ -683,6 +854,8 @@ export class GameScene extends Phaser.Scene {
 		this.energySystem.spend(energyCost);
 		this.selectedTowerId = null;
 		this.selectionGraphics.clear();
+		this.clearRangeOverlay();
+		EventBus.emit('tower-deselected');
 		EventBus.emit('tower-placed', {
 			col: gridX,
 			row: gridY,
@@ -711,6 +884,10 @@ export class GameScene extends Phaser.Scene {
 		time: number,
 		delta: number,
 		onKill: () => void,
+		onDamageResult?: (
+			unitId: string,
+			result: ReturnType<UnitSystem['applyDamage']>,
+		) => void,
 	): { id: string; isBoss: boolean }[] {
 		const unitPositions = unitSystem.getUnitPositions();
 		const damageEvents = towerSystem.update(time, delta, unitPositions);
@@ -724,22 +901,30 @@ export class GameScene extends Phaser.Scene {
 					evt.armorPierce,
 				);
 				if (pos && result) {
-					this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
+					// hit: show number. miss: show MISS. absorbed/invulnerable: silent.
+					if (result.outcome === 'hit') {
+						this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
+					} else if (result.outcome === 'miss') {
+						this.damageNumbers.showMiss(pos.x, pos.y);
+					}
 				}
+				onDamageResult?.(evt.unitId, result);
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
-					const energyReward = result.isBoss
-						? ENERGY_PER_BOSS_KILL
-						: ENERGY_PER_KILL;
-					this.energySystem.add(energyReward);
 					onKill();
 				}
 			}
 			if (evt.slow) {
-				unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+				const behavior = this.bossBehaviors.get(evt.unitId);
+				if (!behavior?.isCcImmune()) {
+					unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+				}
 			}
 			if (evt.stun) {
-				unitSystem.applyStun(evt.unitId, evt.stun.duration);
+				const behavior = this.bossBehaviors.get(evt.unitId);
+				if (!behavior?.isCcImmune()) {
+					unitSystem.applyStun(evt.unitId, evt.stun.duration);
+				}
 			}
 		}
 
@@ -752,8 +937,23 @@ export class GameScene extends Phaser.Scene {
 		const scaledDelta = delta * this.speedMultiplier;
 		this.scaledGameTime += scaledDelta;
 
+		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
-		this.energySystem.update(scaledDelta / 1000);
+		const phase = this.playerWaves.getPhase();
+		if (phase !== 'prep') {
+			this.energySystem.update(scaledDelta / 1000);
+		}
+
+		// Tick boss behaviors before combat so they can react with fresh sceneTime
+		for (const [instanceId, behavior] of this.bossBehaviors) {
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit || unit.pendingDestroy) {
+				behavior.destroy();
+				this.bossBehaviors.delete(instanceId);
+				continue;
+			}
+			behavior.onTick(this.buildBossContext(unit.data), scaledDelta);
+		}
 
 		const playerExits = this.processCombatField(
 			this.playerTowers,
@@ -762,6 +962,21 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
+			},
+			(unitId, result) => {
+				if (!result) return;
+				const behavior = this.bossBehaviors.get(unitId);
+				if (!behavior) return;
+				const unit = this.playerUnits.getUnit(unitId);
+				if (result.killed) {
+					behavior.destroy();
+					this.bossBehaviors.delete(unitId);
+					return;
+				}
+				if (unit) {
+					const hpRatio = unit.data.hp / unit.maxHp;
+					behavior.onDamageTaken(this.buildBossContext(unit.data), hpRatio);
+				}
 			},
 		);
 
@@ -775,8 +990,8 @@ export class GameScene extends Phaser.Scene {
 				remainingHp: this.playerHp,
 			});
 
-			// Boss leak = instant defeat
-			if (exit.isBoss) {
+			// Boss leak = instant defeat (only on actual boss waves)
+			if (exit.isBoss && this.currentSlotDef.kind === 'boss') {
 				EventBus.emit('base-hp-changed', {
 					hp: 0,
 					maxHp: INITIAL_PLAYER_HP,
@@ -832,6 +1047,28 @@ export class GameScene extends Phaser.Scene {
 		}
 	}
 
+	private buildBossContext(
+		boss: ActiveUnit,
+	): import('../systems/boss-ai/types').BossContext {
+		return {
+			boss,
+			sceneTimeMs: this.scaledGameTime,
+			spawnUnit: (unitId, pos, metadata) => {
+				this.playerUnits.spawnAdditionalUnit(unitId, pos, metadata);
+			},
+			disableTower: (towerId, untilMs) => {
+				if (towerId === '__random__') {
+					const towers = this.playerTowers.getAllTowers();
+					if (towers.length === 0) return;
+					const target = towers[Math.floor(Math.random() * towers.length)];
+					this.playerTowers.disableTower(target.data.instanceId, untilMs);
+				} else {
+					this.playerTowers.disableTower(towerId, untilMs);
+				}
+			},
+		};
+	}
+
 	private cleanup() {
 		if (this.isCleaningUp) return;
 		this.isCleaningUp = true;
@@ -845,23 +1082,30 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
-		this.game.registry.events.off(
-			'changedata-showDamageNumbers',
-			this.onDmgNumbersChange,
-		);
+		EventBus.off('furnace-cycle', this.onFurnaceCycle);
+		EventBus.off('arcane-burst', this.onArcaneBurst);
 		soundGenerator.reset();
+
+		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
+		this.furnaceTintOverlays = [];
 
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
+
+		this.worldGimmick?.destroy();
+		this.worldGimmick = null;
 
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();
 
 		this.selectionGraphics.clear();
+		this.rangeOverlayGraphics.clear();
 		this.hoverGraphics?.destroy();
 		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();
 		this.playerTowers.destroy();
+		for (const b of this.bossBehaviors.values()) b.destroy();
+		this.bossBehaviors.clear();
 		this.playerUnits.destroy();
 		this.playerWaves.destroy();
 		this.playerDeck.reset();

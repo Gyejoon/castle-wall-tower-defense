@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-07
+> **Last Updated:** 2026-04-11
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -59,6 +59,20 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 
 `speedMultiplier`(1× or 2×)는 `scaledDelta`에만 적용된다. DamageNumberSystem은 시각 효과이므로 실제 delta를 사용한다.
 
+### 유닛 이동 방향 표현
+
+| 유닛 타입 | 방향 표현 | 비고 |
+|-----------|----------|------|
+| 비행 보스 (`flying: true`) | `setRotation(moveAngle - π/2)` | 이동 방향을 바라봄 |
+| 지상 보스 | `flipX` only | 좌우 반전만, 회전 없음 |
+| 일반 유닛 | `flipX` | 이동 방향에 따라 좌우 반전 |
+
+> 코드: `packages/phaser-game/src/systems/UnitSystem.ts` — update() 내 스프라이트 방향 처리
+
+### 몬스터 충돌
+
+`sweepCollisions()`는 비활성화 상태 (즉시 반환). 스폰 차단 로직도 제거되어 몬스터가 서로를 통과하여 이동한다.
+
 ### 시스템 간 의존 관계
 
 ```
@@ -97,9 +111,11 @@ EnergySystem.reset()
 | `energy-changed` | 에너지 변동 | useGameEvents → gameStore.setEnergy |
 | `tower-placed` | 배치 시도 결과 | useGameEvents → 피드백 처리 |
 | `deck-loaded` | 씬 초기화 | useGameEvents → gameStore.setDeckCards |
+| `wave-prep-started` | `WaveSystem.start()` 진입 시 (prep 페이즈, 모든 전투) | useGameEvents → gameStore.setCountdown + wavePhase='prep' |
+| `wave-prep-tick` | prep 페이즈 update() tick (매 프레임) | useGameEvents → gameStore.setCountdown |
 | `wave-started` | 웨이브 시작 | useGameEvents → runStatus='running', HUD 갱신 |
 | `wave-completed` | 웨이브 클리어 | useGameEvents → 카운트다운 시작 |
-| `boss-warning` | pre_boss 웨이브 대기 진입 | useGameEvents → bossWarningVisible |
+| `boss-warning` | boss 웨이브 진입 시 | useGameEvents → bossWarningVisible |
 | `boss-hp-update` | 보스 피격 | useGameEvents → setBossHp |
 | `boss-phase-change` | 보스 2페이즈 돌입 | useGameEvents → 토스트 |
 | `boss-defeated` | 보스 사망 | useGameEvents → setBossHp 초기화 |
@@ -116,7 +132,6 @@ EnergySystem.reset()
 |--------|----------|----------|
 | `request-select-tower` | DeckDock | Game.ts onSelectTower |
 | `request-clear-tower-selection` | UI | Game.ts onClearTowerSelection |
-| `request-place-tower` | UI | Game.ts (pointerdown 대체 경로) |
 | `request-sell-tower` | UI | TowerSystem |
 | `request-start-game` | UI | 씬 전환 |
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
@@ -144,7 +159,7 @@ EnergySystem.reset()
 
 | 저장소 | 내용 |
 |--------|------|
-| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted, showDamageNumbers) |
+| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted) |
 | 시스템 내부 상태 | TowerSystem(배치된 타워), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase) |
 
 ### 동기화 규칙
@@ -152,7 +167,7 @@ EnergySystem.reset()
 - **React → Phaser 초기값**: `PhaserGame.tsx`에서 `game.registry.set()`으로 전달.
 - **React → Phaser 실시간**: EventBus `request-*` 이벤트.
 - **Phaser → React 실시간**: EventBus 서술형 이벤트 → `useGameEvents` 훅 → Zustand set.
-- **설정값 실시간 동기화 예외**: `showDamageNumbers`는 `useGameStore.subscribe()`로 변경 감지 후 `game.registry.set()` 호출.
+- **설정값 실시간 동기화 예외**: `screenShake`는 `useGameStore.subscribe()`로 변경 감지 후 `game.registry.set()` 호출.
 
 ---
 
@@ -169,6 +184,7 @@ EnergySystem.reset()
 | ~12 | Towers | 타워 스프라이트 |
 | 15 | Selection | selectionGraphics (배치 가능 하이라이트) |
 | ~14–20 | Units | 유닛 스프라이트 |
+| 22 | Range overlay | 타워 선택 시 사거리 링 (gold fill 0.08 + stroke 0.6, Phaser tween fade 120ms) |
 | 80 | DamageNumbers | 피해 숫자 텍스트 |
 | 90 | VFX | 보스 경고 오버레이 |
 | 150 | Tutorial | 튜토리얼 오버레이 |
@@ -206,28 +222,31 @@ EnergySystem.reset()
        start()
           │
           ▼
-       spawning ──► combat  ──► waiting ──► spawning (다음 웨이브)
-                    boss ──►                     │
-                                            (최종 웨이브 후)
-                                                 ▼
-                                               ended
+       prep ──► spawning ──► combat  ──► waiting ──► spawning (다음 웨이브)
+       (매 전투)             boss ──►                     │
+                                                  (최종 웨이브 후)
+                                                          ▼
+                                                        ended
 ```
 
 | Phase | 조건 |
 |-------|------|
+| `prep` | `start()` 호출 시 항상 진입. `INITIAL_PREP_MS`(5000ms) 타이머 동안 플레이어가 덱에서 타워를 배치할 수 있는 준비 시간. 타이머 종료 시 `advanceToNextWave()` 호출. prep 중에는 에너지가 자연 증가하지 않는다(초기 에너지 40으로 전략적 배치). 킬 보상은 제거됨 — 에너지 획득은 자연 재생(1/sec)과 웨이브 클리어 보상(+5)만 존재. |
 | `spawning` | `advanceToNextWave()` 호출 시 → 유닛 spawn |
-| `combat` | normal/pre_boss 웨이브 진행 중 |
-| `boss` | boss 웨이브 진행 중 |
-| `waiting` | 웨이브 클리어(유닛 0) → 다음 웨이브까지 딜레이 타이머 |
+| `combat` | normal 웨이브 진행 중. 30초 타이머(MAX_WAVE_DURATION_MS) 적용, 만료 시 잔존 몬스터 유지한 채 다음 웨이브로 강제 진행 |
+| `boss` | boss 웨이브 진행 중. 마지막 웨이브는 타이머 면제(무제한) |
+| `waiting` | 웨이브 클리어(유닛 0) 또는 타이머 만료 → 다음 웨이브까지 딜레이 타이머 (타이머 만료 시 딜레이 0) |
 | `ended` | 마지막 웨이브 클리어 완료 |
 
-보스 경고 메커니즘: `pre_boss` 웨이브가 `waiting`으로 전이될 때 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다.
+보스 경고 메커니즘: `boss` 웨이브 진입 시 `boss-warning` 이벤트를 emit. Game.ts는 이 시점에 보스 에셋 prefetch를 시작한다. `WaveSlotKind`는 `'normal' | 'boss'`만 존재하며 `pre_boss`는 완전 제거되었다.
+
+prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null을 반환해 타워 배치가 허용된다. `wave-prep-started`/`wave-prep-tick` 이벤트가 HUD 카운트다운을 구동한다. 모든 전투는 prep으로 시작하며 에너지 자연 증가가 정지된다(이슈 #93).
 
 ---
 
 ## §8 데이터 흐름 예시: 타워 배치
 
-End-to-end 시퀀스.
+End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 
 ```
 1. React: DeckDock에서 타워 카드 탭
@@ -235,6 +254,7 @@ End-to-end 시퀀스.
 3. Game.ts: onSelectTower() → selectedTowerId 설정, 배치 가능 하이라이트 렌더
 4. 사용자: 그리드 셀 탭
 5. Game.ts: pointerdown → handlePlaceTower(gridX, gridY, towerDefId)
+이후:
    a. DeckSystem.getCardByTowerId() → energyCost 확인
    b. EnergySystem.canAfford(energyCost) → 부족 시 'insufficient_energy' emit
    c. getPlacementGuardFailure({ phase }) → combat 중 배치 불가 등 guard 체크
@@ -249,3 +269,12 @@ End-to-end 시퀀스.
                   onPlayerTowerCount → gameStore.setPlayerTowerCount
 8. React: DeckDock 선택 해제, 에너지 HUD 리렌더
 ```
+
+---
+
+## 변경 이력
+
+| 날짜 | 항목 | 변경 내용 |
+|------|------|---------|
+| 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
+| 2026-04-11 | §2, §3, §7 | 유닛 이동 방향 표현 추가(비행 보스 setRotation, 지상 보스/일반 유닛 flipX). 몬스터 충돌 비활성화(sweepCollisions disabled). 웨이브 30초 타이머(마지막 웨이브 면제). drag-drop/drag-hover 이벤트 추가(드래그 앤 드롭 타워 배치). |

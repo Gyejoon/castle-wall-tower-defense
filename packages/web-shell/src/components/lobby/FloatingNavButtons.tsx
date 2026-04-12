@@ -42,13 +42,13 @@ export function FloatingNavButtons() {
 							height={20}
 							className="[image-rendering:pixelated]"
 						/>
-						<span className="font-pixel text-[9px] text-text-secondary leading-none">
+						<span className="font-pixel text-[10px] text-text-secondary leading-none">
 							{btn.label}
 						</span>
 						{btn.count > 0 && (
 							<span
 								aria-hidden="true"
-								className="claimable-badge absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] rounded-full bg-danger text-[8px] text-white font-pixel flex items-center justify-center border border-border leading-none"
+								className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] rounded-full bg-danger text-[8px] text-white font-pixel flex items-center justify-center border border-border leading-none"
 							>
 								{btn.count > 99 ? '99+' : btn.count}
 							</span>

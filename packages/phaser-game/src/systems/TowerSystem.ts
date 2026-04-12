@@ -19,20 +19,33 @@ import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { PathfindingSystem } from './PathfindingSystem';
+import type { WorldGimmick } from './world-gimmicks/types';
 
-interface TowerInstance {
+export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
+	grade: 'normal' | 'rare' | 'unique' | 'epic';
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
+	barrelSprite?: Phaser.GameObjects.Image;
+	idleTween?: Phaser.Tweens.Tween;
 	lastAttackTime: number;
 	lastAuraTime: number;
+	disabledUntilMs?: number;
 }
 
 export type TowerPlacementResult =
 	| { success: true; tower: PlacedTower }
 	| { success: false; reason: PlacementFailureReason };
+
+export function resolveTowerTextureKey(
+	defId: string,
+	grade: 'normal' | 'rare' | 'unique' | 'epic',
+): string {
+	if (grade === 'normal') return `tower-${defId}`;
+	return `tower-${defId}-${grade}`;
+}
 
 export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
@@ -46,6 +59,7 @@ export class TowerSystem {
 	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
 	private destroyed = false;
+	private worldGimmick: WorldGimmick | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -56,9 +70,18 @@ export class TowerSystem {
 		ttl: number;
 		maxTtl: number;
 		style: 'beam' | 'arc' | 'arrow';
+		towerType?: string;
 		arrowIndex?: number;
 		targetUnitId?: string;
 		impactPending?: boolean;
+		pendingDamage?: Array<{
+			unitId: string;
+			damage: number;
+			armorPierce?: boolean;
+			slow?: { factor: number; duration: number };
+			stun?: { duration: number };
+		}>;
+		impactVfxKey?: string;
 	}> = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
@@ -78,6 +101,14 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
+	}
+
+	setWorldGimmick(gimmick: WorldGimmick | null): void {
+		this.worldGimmick = gimmick;
+	}
+
+	getAllTowers(): TowerInstance[] {
+		return Array.from(this.towers.values());
 	}
 
 	private ensureArrowPool(): void {
@@ -108,6 +139,13 @@ export class TowerSystem {
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
 			return { success: false, reason: 'occupied' };
+		}
+
+		if (
+			this.worldGimmick &&
+			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
+		) {
+			return { success: false, reason: 'gimmick_blocked' };
 		}
 
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
@@ -144,19 +182,47 @@ export class TowerSystem {
 			level: towerLevel,
 		};
 
+		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
 		const base = this.scene.add.graphics();
-		const sprite = this.scene.add.image(
-			worldPos.x,
-			worldPos.y,
-			`tower-${towerDefId}`,
-		);
+		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
+		sprite.setDisplaySize(64, 80);
 		sprite.setY(worldPos.y - 20);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
 		this.renderTowerBase(base, worldPos, def);
 
+		const baseScaleX = sprite.scaleX;
+		const baseScaleY = sprite.scaleY;
+		const idleTween = this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
+			y: { from: sprite.y, to: sprite.y - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+			delay: (this.nextId * 137) % 1800,
+		});
+
+		// Nova cannon: add separate rotating barrel sprite
+		let barrelSprite: Phaser.GameObjects.Image | undefined;
+		if (
+			towerDefId === 'nova_cannon' &&
+			this.scene.textures.exists('tower-nova_cannon-barrel')
+		) {
+			barrelSprite = this.scene.add.image(
+				worldPos.x,
+				sprite.y,
+				'tower-nova_cannon-barrel',
+			);
+			barrelSprite.setDisplaySize(16, 8);
+			barrelSprite.setDepth(sprite.depth + 1);
+		}
+
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
+			grade: towerGrade,
 			effectiveDamage: getEffectiveStats(
 				def.stats.damage,
 				towerLevel,
@@ -164,6 +230,8 @@ export class TowerSystem {
 			),
 			base,
 			sprite,
+			barrelSprite,
+			idleTween,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
 		});
@@ -253,9 +321,55 @@ export class TowerSystem {
 	}> {
 		this.damageEventsBuffer.length = 0;
 
+		// Nova cannon barrel tracking — rotate toward nearest enemy
+		for (const tower of this.towers.values()) {
+			if (tower.def.type !== 'nova_cannon' || !tower.barrelSprite) continue;
+			const towerWorld = this.gridManager.gridToWorld(
+				tower.data.position.x,
+				tower.data.position.y,
+			);
+			let nearestDist = Infinity;
+			let nearestUnit: { x: number; y: number } | null = null;
+			for (const unit of unitPositions) {
+				if (unit.hp <= 0) continue;
+				const dx = unit.x - towerWorld.x;
+				const dy = unit.y - towerWorld.y;
+				const dist = dx * dx + dy * dy;
+				if (dist < nearestDist) {
+					nearestDist = dist;
+					nearestUnit = unit;
+				}
+			}
+			if (nearestUnit) {
+				tower.barrelSprite.rotation = Math.atan2(
+					nearestUnit.y - towerWorld.y,
+					nearestUnit.x - towerWorld.x,
+				);
+			}
+		}
+
+		// Update disabled tint for all towers
+		for (const tower of this.towers.values()) {
+			const isDisabled =
+				(tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) ||
+				(this.worldGimmick !== null && !this.worldGimmick.isTowerActive(tower));
+			if (isDisabled && tower.sprite.tintTopLeft !== 0x666666) {
+				tower.sprite.setTint(0x666666);
+			} else if (!isDisabled && tower.sprite.tintTopLeft === 0x666666) {
+				tower.sprite.clearTint();
+			}
+		}
+
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
 			if (def.stats.attackSpeed <= 0) continue;
+
+			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
+				continue; // tower is disabled by an enemy ranged attack
+			}
+
+			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
+				continue;
 
 			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
@@ -287,7 +401,13 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				const baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				if (this.worldGimmick) {
+					const bonus = this.worldGimmick.getDamageBonus(tower);
+					if (bonus > 0) {
+						baseDamage = Math.round(baseDamage * (1 + bonus));
+					}
+				}
 				const special = def.stats.special;
 
 				const slowEffect =
@@ -296,7 +416,16 @@ export class TowerSystem {
 						: undefined;
 				// 집중 공격형 (no special) → armor pierce
 				const armorPierce = !special;
-				this.damageEventsBuffer.push({
+
+				// Collect damage events — delayed for projectile towers, instant for beams
+				const pendingBatch: Array<{
+					unitId: string;
+					damage: number;
+					armorPierce?: boolean;
+					slow?: { factor: number; duration: number };
+					stun?: { duration: number };
+				}> = [];
+				pendingBatch.push({
 					unitId: closestUnit.instanceId,
 					damage: baseDamage,
 					armorPierce,
@@ -312,7 +441,7 @@ export class TowerSystem {
 						const gdx = data.position.x - unitGrid.x;
 						const gdy = data.position.y - unitGrid.y;
 						if (gdx * gdx + gdy * gdy <= rangeSq) {
-							this.damageEventsBuffer.push({
+							pendingBatch.push({
 								unitId: unit.instanceId,
 								damage: 0,
 								slow: slowEffect,
@@ -336,7 +465,7 @@ export class TowerSystem {
 							const gdx = data.position.x - unitGrid.x;
 							const gdy = data.position.y - unitGrid.y;
 							if (gdx * gdx + gdy * gdy <= rangeSq) {
-								this.damageEventsBuffer.push({
+								pendingBatch.push({
 									unitId: unit.instanceId,
 									damage: 0,
 									stun: { duration: stunDuration },
@@ -344,7 +473,7 @@ export class TowerSystem {
 							}
 						}
 					} else {
-						this.damageEventsBuffer.push({
+						pendingBatch.push({
 							unitId: closestUnit.instanceId,
 							damage: 0,
 							stun: { duration: stunDuration },
@@ -375,11 +504,18 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
-							this.damageEventsBuffer.push({
+							let splashDamage = Math.round(
+								tower.effectiveDamage * splashElementMult * 0.5,
+							);
+							if (this.worldGimmick) {
+								const bonus = this.worldGimmick.getDamageBonus(tower);
+								if (bonus > 0) {
+									splashDamage = Math.round(splashDamage * (1 + bonus));
+								}
+							}
+							pendingBatch.push({
 								unitId: unit.instanceId,
-								damage: Math.round(
-									tower.effectiveDamage * splashElementMult * 0.5,
-								),
+								damage: splashDamage,
 								slow: splashSlow,
 							});
 						}
@@ -387,11 +523,12 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
-				const style = this.hasSplash(special)
-					? ('arc' as const)
-					: def.type === 'archer' || def.type === 'twin_archer'
-						? ('arrow' as const)
-						: ('beam' as const);
+				const style =
+					this.hasSplash(special) || def.type === 'earth_golem'
+						? ('arc' as const)
+						: def.type === 'archer' || def.type === 'twin_archer'
+							? ('arrow' as const)
+							: ('beam' as const);
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {
 					this.ensureArrowPool();
@@ -401,22 +538,100 @@ export class TowerSystem {
 						this.arrowPool[idx].setVisible(true);
 					}
 				}
-				const maxTtl = style === 'arrow' ? 120 : 80;
-				this.attackLines.push({
-					x1: towerWorld.x,
-					y1: towerWorld.y,
-					x2: closestUnit.x,
-					y2: closestUnit.y,
-					color,
-					ttl: maxTtl,
-					maxTtl,
-					style,
-					arrowIndex,
-					targetUnitId: style === 'arrow' ? closestUnit.instanceId : undefined,
-					impactPending: style === 'arrow',
-				});
-				this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
-				if (style !== 'arrow') {
+				// Calculate TTL from projectile speed (if defined) or use defaults
+				const projSpeed = def.stats.projectileSpeed;
+				let maxTtl: number;
+				if (projSpeed && projSpeed > 0) {
+					// Distance in grid tiles → travel time in ms
+					const dist = Math.sqrt(closestDistSq);
+					maxTtl = Math.round((dist / projSpeed) * 1000);
+					maxTtl = Math.max(40, Math.min(maxTtl, 500)); // clamp 40-500ms
+				} else {
+					maxTtl = style === 'arrow' ? 120 : 80;
+				}
+
+				const hasProjectile = style === 'arrow' || style === 'arc';
+
+				// For projectile towers, defer damage until impact.
+				// For beams, apply immediately.
+				if (!hasProjectile) {
+					for (const evt of pendingBatch) {
+						this.damageEventsBuffer.push(evt);
+					}
+				}
+
+				const impactVfxKey = this.hasSplash(special)
+					? 'vfx-explosion-sm'
+					: 'projectile-hit-flash';
+
+				// Nova cannon: fire from barrel tip, not tower center
+				const fireOriginX =
+					def.type === 'nova_cannon' && tower.barrelSprite
+						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
+						: towerWorld.x;
+				const fireOriginY =
+					def.type === 'nova_cannon' && tower.barrelSprite
+						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
+						: towerWorld.y;
+
+				// Twin archer: fire 2 arrows, each with half damage
+				const shotCount = def.type === 'twin_archer' ? 2 : 1;
+				const shotBatch =
+					shotCount > 1
+						? pendingBatch.map((evt) => ({
+								...evt,
+								damage: Math.round(evt.damage / 2),
+							}))
+						: pendingBatch;
+
+				for (let shot = 0; shot < shotCount; shot++) {
+					let shotArrowIndex: number | undefined;
+					if (style === 'arrow' && shot > 0) {
+						const idx = this.arrowPool.findIndex(
+							(a, ai) => !a.visible && ai !== arrowIndex,
+						);
+						if (idx >= 0) {
+							shotArrowIndex = idx;
+							this.arrowPool[idx].setVisible(true);
+						}
+					} else {
+						shotArrowIndex = arrowIndex;
+					}
+					const offsetY = shotCount > 1 ? (shot === 0 ? -4 : 4) : 0;
+					// Stagger second arrow by 80ms so damage numbers appear separately
+					const shotTtl = shot > 0 ? maxTtl + 80 : maxTtl;
+					this.attackLines.push({
+						x1: fireOriginX,
+						y1: fireOriginY + offsetY,
+						x2: closestUnit.x,
+						y2: closestUnit.y + offsetY,
+						color,
+						ttl: shotTtl,
+						maxTtl: shotTtl,
+						style,
+						towerType: def.type,
+						arrowIndex: shotArrowIndex,
+						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
+						impactPending: hasProjectile,
+						pendingDamage: hasProjectile ? shotBatch : undefined,
+						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
+					});
+				}
+				if (def.type === 'nova_cannon') {
+					// Use the same hit-flash asset at barrel tip
+					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
+				} else {
+					this.spawnMuzzleVfx(
+						def.id,
+						tower.grade,
+						towerWorld,
+						data.position,
+						tower.sprite,
+					);
+				}
+
+				if (!hasProjectile) {
+					// Beam: instant impact VFX
 					this.spawnImpactVfx(
 						this.hasSplash(special)
 							? 'vfx-explosion-sm'
@@ -526,8 +741,12 @@ export class TowerSystem {
 			const line = this.attackLines[i];
 			line.ttl -= delta;
 
-			// Track target for arrows: update x2/y2 to unit's current position
-			if (line.style === 'arrow' && line.targetUnitId && unitMap) {
+			// Track target for projectiles: update x2/y2 to unit's current position
+			if (
+				(line.style === 'arrow' || line.style === 'arc') &&
+				line.targetUnitId &&
+				unitMap
+			) {
 				const target = unitMap.get(line.targetUnitId);
 				if (target && target.hp > 0) {
 					line.x2 = target.x;
@@ -539,9 +758,18 @@ export class TowerSystem {
 				if (line.arrowIndex != null && this.arrowPool[line.arrowIndex]) {
 					this.arrowPool[line.arrowIndex].setVisible(false);
 				}
-				// Spawn impact VFX + sound when arrow arrives
+				// Spawn impact VFX + flush pending damage when projectile arrives
 				if (line.impactPending) {
-					this.spawnImpactVfx('projectile-hit-flash', line.x2, line.y2);
+					this.spawnImpactVfx(
+						line.impactVfxKey ?? 'projectile-hit-flash',
+						line.x2,
+						line.y2,
+					);
+					if (line.pendingDamage) {
+						for (const evt of line.pendingDamage) {
+							this.damageEventsBuffer.push(evt);
+						}
+					}
 					soundGenerator.playArrowImpact();
 				}
 				continue;
@@ -592,10 +820,12 @@ export class TowerSystem {
 				const dy = line.y2 - line.y1;
 				const px = line.x1 + dx * t;
 				const py = line.y1 + dy * t - Math.sin(t * Math.PI) * 40; // parabolic arc height
-				// Boulder
-				this.attackGraphics.fillStyle(0x5a5a5a, alpha);
+				// Projectile appearance by tower type
+				const isIce =
+					line.towerType === 'disruptor' || line.towerType === 'stasis_field';
+				this.attackGraphics.fillStyle(isIce ? 0xa8def0 : 0x5a5a5a, alpha);
 				this.attackGraphics.fillCircle(px, py, 4);
-				this.attackGraphics.fillStyle(0x8c8c8c, alpha * 0.7);
+				this.attackGraphics.fillStyle(isIce ? 0xffffff : 0x8c8c8c, alpha * 0.7);
 				this.attackGraphics.fillCircle(px - 1, py - 1, 2);
 				// Trail dots
 				if (t > 0.1) {
@@ -632,11 +862,24 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
+		towerGrade: 'normal' | 'rare' | 'unique' | 'epic',
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,
 	): void {
-		const textureKey = `tower-${towerDefId}-fire`;
+		// Grade-aware fire spritesheet: rare/unique/epic have their own variants
+		// so corner gems / halos stay on the tower during the fire animation.
+		// Falls back to base if grade-specific sheet isn't loaded.
+		const baseKey = `tower-${towerDefId}-fire`;
+		const gradeKey =
+			towerGrade === 'normal'
+				? baseKey
+				: `tower-${towerDefId}-${towerGrade}-fire`;
+		const textureKey =
+			this.scene.textures.exists(gradeKey) &&
+			this.scene.anims.exists(getOptionalAnimationKey(gradeKey))
+				? gradeKey
+				: baseKey;
 		const animationKey = getOptionalAnimationKey(textureKey);
 		if (
 			!this.scene.textures.exists(textureKey) ||
@@ -653,6 +896,8 @@ export class TowerSystem {
 			towerWorld.y - 20,
 			textureKey,
 		);
+		// Fire spritesheets are always 64×80 regardless of base tower resolution;
+		// see the note in generate-towers.ts about drawFireFrame's coordinate system.
 		effect.setDisplaySize(64, 80);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
 		effect.play(animationKey);
@@ -705,6 +950,9 @@ export class TowerSystem {
 		if (!entry) return { success: false, refund: 0 };
 		const { key: targetKey, instance: targetInstance } = entry;
 
+		targetInstance.idleTween?.stop();
+		targetInstance.idleTween?.remove();
+		targetInstance.barrelSprite?.destroy();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
 		this.towers.delete(targetKey);
@@ -733,6 +981,12 @@ export class TowerSystem {
 		return Array.from(this.towers.values()).map((t) => t.data);
 	}
 
+	disableTower(towerId: string, untilMs: number): void {
+		const t = this.towers.get(towerId);
+		if (!t) return;
+		t.disabledUntilMs = Math.max(t.disabledUntilMs ?? 0, untilMs);
+	}
+
 	getTowerSprite(instanceId: string): Phaser.GameObjects.Image | null {
 		return this.towers.get(instanceId)?.sprite ?? null;
 	}
@@ -741,6 +995,9 @@ export class TowerSystem {
 		if (this.destroyed) return;
 		this.destroyed = true;
 		for (const tower of this.towers.values()) {
+			tower.idleTween?.stop();
+			tower.idleTween?.remove();
+			tower.barrelSprite?.destroy();
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}

@@ -152,6 +152,7 @@ export function CollectionTab() {
 
 			{selectedDef && (
 				<TowerBottomSheet
+					key={selectedDef.id}
 					def={selectedDef}
 					onClose={() => setSelectedDef(null)}
 				/>

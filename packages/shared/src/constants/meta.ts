@@ -11,12 +11,24 @@ export function battleXp(wavesCleared: number, victory: boolean): number {
 
 const TIER_COST_MULT = [0, 1, 1.5, 2, 3, 5];
 
-export function enhancementCost(level: number, tier: number): number {
-	return Math.floor((50 + level * 20) * TIER_COST_MULT[tier]);
+const GRADE_COST_MULT: Record<TowerGrade, number> = {
+	normal: 1.0,
+	rare: 2.0,
+	unique: 4.0,
+	epic: 8.0,
+};
+
+export function enhancementCost(
+	level: number,
+	tier: number,
+	grade: TowerGrade = 'normal',
+): number {
+	const base = 100 + level * 40 + level * level * 3;
+	return Math.floor(base * TIER_COST_MULT[tier] * GRADE_COST_MULT[grade]);
 }
 
 export function enhancementStatMultiplier(level: number): number {
-	return 1 + (level - 1) * 0.03;
+	return 1 + (level - 1) * 0.04;
 }
 
 export function stunCooldownMultiplier(level: number): number {
@@ -35,6 +47,17 @@ export function stunDurationMultiplier(level: number): number {
 }
 
 export const MAX_TOWER_LEVEL = 50;
+
+export const GRADE_MAX_LEVEL: Record<TowerGrade, number> = {
+	normal: 20,
+	rare: 30,
+	unique: 50,
+	epic: 50,
+};
+
+export function maxLevelForGrade(grade: TowerGrade): number {
+	return GRADE_MAX_LEVEL[grade];
+}
 
 export const PROMOTION_CONFIG = {
 	normal: {
@@ -73,9 +96,9 @@ export const PROMOTION_CONFIG = {
 
 export const GRADE_BONUS: Record<TowerGrade, number> = {
 	normal: 0,
-	rare: 0.1,
-	unique: 0.25,
-	epic: 0.45,
+	rare: 0.8,
+	unique: 3.5,
+	epic: 13.0,
 };
 
 export function getEffectiveStats(
@@ -87,6 +110,9 @@ export function getEffectiveStats(
 		baseDamage * enhancementStatMultiplier(level) * (1 + GRADE_BONUS[grade])
 	);
 }
+
+/** Wave 1 시작 전 플레이어 준비 시간(ms) — 튜토리얼 1회차 한정 */
+export const INITIAL_PREP_MS = 5000;
 
 const DEFAULT_STARTER_IDS = ['archer', 'plasma', 'emp', 'shield'];
 
@@ -137,7 +163,6 @@ export function createDefaultSave(): SaveData {
 			bgmVolume: 0.7,
 			sfxVolume: 0.8,
 			screenShake: true,
-			showDamageNumbers: true,
 			colorblindMode: 'off',
 		},
 		selectedDeck: [...DEFAULT_STARTER_IDS],

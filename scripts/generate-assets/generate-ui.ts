@@ -96,10 +96,10 @@ export async function generate(): Promise<ManifestEntry[]> {
 
     // 고대 드래곤
     ox = 128;
-    fillCircle(ctx, ox + 16, cy, 7, hexToRgba(PALETTE.titan, 0.7));
-    drawCircle(ctx, ox + 16, cy, 7, PALETTE.titan);
-    drawLine(ctx, ox + 8, cy - 3, ox + 5, cy - 7, PALETTE.titan);  // wing
-    drawLine(ctx, ox + 24, cy - 3, ox + 27, cy - 7, PALETTE.titan);  // wing
+    fillCircle(ctx, ox + 16, cy, 7, hexToRgba(PALETTE.dragon, 0.7));
+    drawCircle(ctx, ox + 16, cy, 7, PALETTE.dragon);
+    drawLine(ctx, ox + 8, cy - 3, ox + 5, cy - 7, PALETTE.dragon);  // wing
+    drawLine(ctx, ox + 24, cy - 3, ox + 27, cy - 7, PALETTE.dragon);  // wing
     setPixel(ctx, ox + 15, cy - 2, '#ffe040');
     setPixel(ctx, ox + 17, cy - 2, '#ffe040');
     addGlow(ctx, ox + 16, cy, 4, PALETTE.fireOrange, 0.2);
@@ -464,6 +464,69 @@ export async function generate(): Promise<ManifestEntry[]> {
     drawStar(ctx, 8, 8, 7, 3, 5, '#5a5040');
     saveCanvas(canvas, `${OUTPUT_DIR}/icon-star-inactive.png`);
     entries.push({ key: 'ui-icon-star-inactive', type: 'image', path: 'assets/ui/icon-star-inactive.png' });
+  }
+
+  // Close-X icon (16x16) — dark wood disc + bright chunky gold X
+  {
+    const { canvas, ctx } = makeCanvas(16, 16);
+
+    const discDark  = '#2a1a0a';  // dark wood fill (flat, no distraction)
+    const discEdge  = '#1a0e04';  // outer shadow ring
+    const rimGold   = '#a08030';  // subtle gold rim
+    const xBright   = '#ffe89a';  // X highlight pixels
+    const xMain     = PALETTE.gold; // #f0d060
+    const xShade    = '#c8a040';  // X bottom-right shade
+
+    // --- Dark disc background (flat fill for max X contrast) ---
+    const rows: [number, number, number][] = [
+      [2, 5, 10], [3, 3, 12], [4, 3, 12],
+      [5, 2, 13], [6, 2, 13], [7, 2, 13], [8, 2, 13],
+      [9, 2, 13], [10, 2, 13], [11, 3, 12], [12, 3, 12],
+      [13, 5, 10],
+    ];
+    for (const [y, x0, x1] of rows) {
+      for (let x = x0; x <= x1; x++) {
+        const isEdge = x === x0 || x === x1 || y === 2 || y === 13;
+        setPixel(ctx, x, y, isEdge ? discEdge : discDark);
+      }
+    }
+    // Gold rim (single pixel ring inside edge)
+    const rim: [number, number][] = [
+      [6,3],[7,3],[8,3],[9,3],
+      [4,4],[5,4],[10,4],[11,4],
+      [3,5],[12,5],[3,6],[12,6],[3,7],[12,7],[3,8],[12,8],
+      [3,9],[12,9],[3,10],[12,10],
+      [4,11],[5,11],[10,11],[11,11],
+      [6,12],[7,12],[8,12],[9,12],
+    ];
+    for (const [x, y] of rim) setPixel(ctx, x, y, rimGold);
+
+    // --- Bright 3px-wide X (unmistakably an X at any size) ---
+    const x: [number, number, string][] = [
+      // TL → BR diagonal (3px wide center section, 2px at tips)
+      [4,4,xMain],[5,4,xBright],
+      [4,5,xShade],[5,5,xMain],[6,5,xBright],
+      [5,6,xShade],[6,6,xMain],[7,6,xBright],
+      // Center mass (3×2 bright block)
+      [6,7,xShade],[7,7,xBright],[8,7,xMain],[9,7,xShade],
+      [6,8,xShade],[7,8,xMain],[8,8,xBright],[9,8,xShade],
+      // Continue BR
+      [8,9,xShade],[9,9,xMain],[10,9,xBright],
+      [9,10,xShade],[10,10,xMain],[11,10,xBright],
+      [10,11,xShade],[11,11,xMain],
+      // TR → BL diagonal
+      [10,4,xBright],[11,4,xMain],
+      [9,5,xBright],[10,5,xMain],[11,5,xShade],
+      [8,6,xBright],[9,6,xMain],[10,6,xShade],
+      // (center already drawn above)
+      [5,9,xBright],[6,9,xMain],[7,9,xShade],
+      [4,10,xBright],[5,10,xMain],[6,10,xShade],
+      [4,11,xMain],[5,11,xShade],
+    ];
+    for (const [px, py, c] of x) setPixel(ctx, px, py, c);
+
+    saveCanvas(canvas, `${OUTPUT_DIR}/icon-close-x.png`);
+    entries.push({ key: 'ui-icon-close-x', type: 'image', path: 'assets/ui/icon-close-x.png' });
   }
 
   // Ad button (120x40)

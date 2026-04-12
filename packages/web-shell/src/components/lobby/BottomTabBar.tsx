@@ -2,18 +2,14 @@ import { uiMobileArt } from '../../assets/uiMobileArt';
 import { type LobbyTab, useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
-const tabs: Array<{
+interface TabDef {
 	id: LobbyTab;
 	label: string;
 	activeIcon: string;
 	inactiveIcon: string;
-}> = [
-	{
-		id: 'home',
-		label: '마당',
-		activeIcon: uiMobileArt.homeTabIconActive,
-		inactiveIcon: uiMobileArt.homeTabIconInactive,
-	},
+}
+
+const tabs: [TabDef, TabDef, TabDef] = [
 	{
 		id: 'collection',
 		label: '전쟁탁자',
@@ -21,8 +17,14 @@ const tabs: Array<{
 		inactiveIcon: uiMobileArt.collectionTabIconInactive,
 	},
 	{
+		id: 'home',
+		label: '마당',
+		activeIcon: uiMobileArt.homeTabIconActive,
+		inactiveIcon: uiMobileArt.homeTabIconInactive,
+	},
+	{
 		id: 'settings',
-		label: '영주실',
+		label: '설정',
 		activeIcon: uiMobileArt.settingsTabIconActive,
 		inactiveIcon: uiMobileArt.settingsTabIconInactive,
 	},
@@ -36,13 +38,71 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 		<div
 			role="tablist"
 			aria-label="로비 탭"
-			className="flex justify-around items-center bg-[rgba(26,18,8,0.95)] border-t border-border"
+			className="relative flex items-end bg-panel border-t-2 border-border"
 			style={{
-				padding: '6px 0 calc(6px + env(safe-area-inset-bottom, 0px))',
+				paddingBottom: 'env(safe-area-inset-bottom, 0px)',
 			}}
 		>
 			{tabs.map((tab) => {
 				const isActive = lobbyTab === tab.id;
+				const isCenter = tab.id === 'home';
+
+				if (isCenter) {
+					return (
+						<button
+							type="button"
+							key={tab.id}
+							role="tab"
+							aria-selected={isActive}
+							aria-label={tab.label}
+							aria-controls={`tabpanel-${tab.id}`}
+							disabled={disabled}
+							onClick={() => !disabled && setLobbyTab(tab.id)}
+							className={cn(
+								'relative z-10 flex-1 flex flex-col items-center -mt-3 mx-1 pt-3 pb-2 border-2 touch-manipulation transition-all duration-200',
+								disabled
+									? 'cursor-not-allowed opacity-50'
+									: 'cursor-pointer active:scale-95',
+								isActive ? 'border-gold bg-panel' : 'border-border/50 bg-panel',
+							)}
+							style={
+								isActive
+									? {
+											boxShadow:
+												'0 -2px 12px rgba(240,208,96,0.15), inset 0 1px 0 rgba(240,208,96,0.1)',
+										}
+									: undefined
+							}
+						>
+							{isActive && (
+								<div
+									className="absolute -top-[2px] left-3 right-3 h-[2px]"
+									style={{
+										background:
+											'linear-gradient(90deg, transparent, var(--color-gold), transparent)',
+									}}
+								/>
+							)}
+							<img
+								src={isActive ? tab.activeIcon : tab.inactiveIcon}
+								alt=""
+								width={28}
+								height={28}
+								className="[image-rendering:pixelated]"
+								aria-hidden="true"
+							/>
+							<span
+								className={cn(
+									'font-pixel text-[11px] mt-1 transition-colors duration-150',
+									isActive ? 'text-gold' : 'text-text-secondary',
+								)}
+							>
+								{tab.label}
+							</span>
+						</button>
+					);
+				}
+
 				return (
 					<button
 						type="button"
@@ -54,23 +114,23 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						disabled={disabled}
 						onClick={() => !disabled && setLobbyTab(tab.id)}
 						className={cn(
-							'flex flex-col items-center gap-[3px] px-4 py-1.5 bg-transparent border-none min-w-[60px] touch-manipulation',
+							'flex-1 flex flex-col items-center gap-1 py-2.5 bg-transparent border-none touch-manipulation transition-all duration-150',
 							disabled
 								? 'cursor-not-allowed opacity-50'
-								: 'cursor-pointer opacity-100',
+								: 'cursor-pointer active:scale-95',
 						)}
 					>
 						<img
 							src={isActive ? tab.activeIcon : tab.inactiveIcon}
 							alt=""
-							width={24}
-							height={24}
+							width={22}
+							height={22}
 							className="[image-rendering:pixelated]"
 							aria-hidden="true"
 						/>
 						<span
 							className={cn(
-								'tab-label font-pixel text-[11px] transition-colors duration-150',
+								'font-pixel text-[11px] transition-colors duration-150',
 								isActive ? 'text-gold' : 'text-text-secondary',
 							)}
 						>

@@ -1,6 +1,6 @@
 # Operations
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-11  
 > **Source:** Obsidian `운영용 툴.md` + `ai/product/specs/일반모드 게임 설계 문서.md` §12
 
 ---
@@ -87,8 +87,25 @@
 
 ---
 
-## 6. 변경 이력
+## 6. 개발자 도구 (DevTools)
+
+> 코드 위치: `packages/web-shell/src/components/lobby/tabs/SettingsTab.tsx` — `DevToolsSection`
+> 표시 조건: `import.meta.env.DEV` 또는 `VITE_VERCEL_ENV === 'preview'`
+
+| 버튼 | 기능 | 세부 |
+|------|------|------|
+| MAX 전투력 세팅 | 전체 세이브 최대화 | Lv.10, 타워 18종 Lv.50, 전 맵 ★3 클리어, 99999G |
+| 최대 보석(다이아) | 다이아 99,999 세팅 | 프로필 diamond만 변경 |
+| 최대 레벨 | Lv.99 세팅 | 프로필 level만 변경 |
+| 전 타워 최대 업그레이드 | 전 타워 Lv.50 / Epic / 각성 5 | 컬렉션 교체 |
+| 전 맵 클리어 | 전 스테이지 ★3 클리어 상태 | highestWave + stageStars + stagesCleared 세팅 |
+| 세이브 초기화 | 신규 유저 상태로 리셋 | createDefaultSave() + 페이지 새로고침 |
+
+---
+
+## 7. 변경 이력
 
 | 날짜 | 항목 | 변경 내용 |
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | 운영용 툴 + GDD §12 기반 |
+| 2026-04-11 | §6 | DevTools 섹션 추가 (max diamond, max level, max tower upgrade, clear all maps, reset save) |

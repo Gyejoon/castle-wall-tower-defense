@@ -1,5 +1,8 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	INITIAL_PREP_MS,
+	MAX_WAVE_DURATION_MS,
+	UNITS,
 	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
@@ -14,7 +17,7 @@ import type { UnitSystem } from './UnitSystem';
  *   spawning → combat (units alive) → waiting (delay timer) → spawning (next wave)
  *   After final wave cleared → ended
  *
- * Boss warning: emitted when a pre_boss wave transitions to waiting.
+ * Boss warning: emitted when a boss wave starts.
  */
 export class WaveSystem {
 	private unitSystem: UnitSystem;
@@ -28,8 +31,10 @@ export class WaveSystem {
 	private currentWaveIndex = -1; // index into waves (0-based)
 	private phase: WavePhase = 'combat';
 	private waitTimerMs = 0;
+	private prepTimerMs = 0;
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
+	private waveStartMs = 0;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -60,11 +65,15 @@ export class WaveSystem {
 
 	start(): void {
 		this.currentWaveIndex = -1;
-		this.phase = 'combat';
 		this.waitTimerMs = 0;
 		this.hasSpawnedCurrentWave = false;
 		this.elapsedMs = 0;
-		this.advanceToNextWave();
+
+		// 모든 전투는 prep 페이즈로 시작한다.
+		// prep 중에는 타워를 자유롭게 배치할 수 있고, 에너지는 증가하지 않는다.
+		this.phase = 'prep';
+		this.prepTimerMs = INITIAL_PREP_MS;
+		EventBus.emit('wave-prep-started', { durationMs: INITIAL_PREP_MS });
 	}
 
 	/**
@@ -78,44 +87,61 @@ export class WaveSystem {
 		const clampedDelta = Math.min(delta, MAX_DELTA_MS);
 		this.elapsedMs += clampedDelta;
 
-		if (this.phase === 'combat' || this.phase === 'boss') {
-			// Wait for all units to be cleared (killed or leaked)
-			if (this.hasSpawnedCurrentWave && activeUnitCount === 0) {
-				const currentWave = this.getCurrentWaveDef();
-				if (!currentWave) {
-					this.phase = 'ended';
-					return;
-				}
+		if (this.phase === 'prep') {
+			this.prepTimerMs -= clampedDelta;
+			EventBus.emit('wave-prep-tick', {
+				remainingMs: Math.max(0, this.prepTimerMs),
+			});
+			if (this.prepTimerMs <= 0) {
+				// advanceToNextWave() sets phase based on wave.kind
+				this.advanceToNextWave();
+			}
+			return;
+		}
 
-				// Emit wave completed
+		if (this.phase === 'combat' || this.phase === 'boss') {
+			const currentWave = this.getCurrentWaveDef();
+			if (!currentWave) {
+				this.phase = 'ended';
+				return;
+			}
+
+			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS (skip on last wave)
+			const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+			const timerExpired =
+				!isLastWave &&
+				this.hasSpawnedCurrentWave &&
+				this.elapsedMs - this.waveStartMs > MAX_WAVE_DURATION_MS;
+
+			// Wave cleared naturally or timer expired
+			if (
+				(this.hasSpawnedCurrentWave && activeUnitCount === 0) ||
+				timerExpired
+			) {
+				const cleared = !timerExpired;
 				EventBus.emit('wave-completed', {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
 					slotIndex: currentWave.slotIndex,
-					delaySec: currentWave.delayAfterClearSec,
+					delaySec: timerExpired ? 0 : currentWave.delayAfterClearSec,
+					cleared,
 				});
 
 				// Check if this was the last wave
-				if (this.currentWaveIndex >= this.maxWaves - 1) {
-					this.phase = 'ended';
+				if (isLastWave) {
+					if (activeUnitCount === 0) {
+						this.phase = 'ended';
+					}
 					return;
 				}
 
-				// Emit boss warning when pre_boss wave is cleared
-				if (currentWave.kind === 'pre_boss') {
-					const nextWave = this.waves[this.currentWaveIndex + 1];
-					if (nextWave) {
-						EventBus.emit('boss-warning', {
-							slotIndex: currentWave.slotIndex,
-							bossSlotIndex: nextWave.slotIndex,
-							startAtSec: Math.round(this.elapsedMs / 1000),
-						});
-					}
+				// Timer expired → advance immediately; natural clear → wait
+				if (timerExpired) {
+					this.advanceToNextWave();
+				} else {
+					this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
+					this.phase = 'waiting';
 				}
-
-				// Transition to waiting
-				this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
-				this.phase = 'waiting';
 			}
 		} else if (this.phase === 'waiting') {
 			this.waitTimerMs -= clampedDelta;
@@ -140,6 +166,10 @@ export class WaveSystem {
 
 	getElapsedMs(): number {
 		return this.elapsedMs;
+	}
+
+	isLastWave(): boolean {
+		return this.currentWaveIndex >= this.maxWaves - 1;
 	}
 
 	destroy(): void {
@@ -171,14 +201,15 @@ export class WaveSystem {
 		}
 
 		this.hasSpawnedCurrentWave = false;
+		this.waveStartMs = this.elapsedMs;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
-		// Emit boss warning if no pre_boss wave already emitted it
-		const prevWave =
-			this.currentWaveIndex > 0
-				? this.waves[this.currentWaveIndex - 1]
-				: undefined;
-		if (wave.kind === 'boss' && prevWave?.kind !== 'pre_boss') {
+		// Emit boss warning when a boss wave starts
+		if (wave.kind === 'boss') {
+			const prevWave =
+				this.currentWaveIndex > 0
+					? this.waves[this.currentWaveIndex - 1]
+					: undefined;
 			EventBus.emit('boss-warning', {
 				slotIndex: prevWave?.slotIndex ?? wave.slotIndex - 1,
 				bossSlotIndex: wave.slotIndex,
@@ -190,10 +221,12 @@ export class WaveSystem {
 		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
 		const waveHpMult = waveScale?.hp ?? 1;
 		const waveSpeedMult = waveScale?.speed ?? 1;
+		const isLastWaveSlot = this.currentWaveIndex >= this.maxWaves - 1;
 		for (const group of wave.groups) {
-			const isBoss = group.unitId === 'titan';
+			const unitDef = UNITS.find((u) => u.id === group.unitId);
+			const isBoss = wave.kind === 'boss' || !!unitDef?.bossBehaviorId;
 			const hpMultiplier =
-				(isBoss && wave.slotIndex === 10 ? FINAL_BOSS_HP_MULTIPLIER : 1) *
+				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
 				this.difficultyHpMult;
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',

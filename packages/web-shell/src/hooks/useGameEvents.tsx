@@ -7,6 +7,7 @@ import {
 	type PlacementFailureReason,
 	STAR_REWARD_MULTIPLIERS,
 	type StarRating,
+	type WavePhase,
 } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
@@ -29,6 +30,9 @@ export function useGameEvents() {
 	const setBossWarningVisible = useGameStore((s) => s.setBossWarningVisible);
 	const setGameOverStats = useGameStore((s) => s.setGameOverStats);
 
+	const setCountdown = useGameStore((s) => s.setCountdown);
+	const setWavePhase = useGameStore((s) => s.setWavePhase);
+
 	const [waitCountdown, setWaitCountdown] = useState(0);
 	const [selectedTower, setSelectedTower] = useState<{
 		towerDefId: string;
@@ -49,11 +53,13 @@ export function useGameEvents() {
 			setEnergy(data.energy);
 		const onGameOver = (data: {
 			result: 'victory' | 'defeat';
+			mapId: string;
 			selectedStar: StarRating;
 			starCleared: boolean;
 			hpRemaining: number;
 			stats: {
 				wavesCleared: number;
+				totalWaves: number;
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
@@ -78,6 +84,7 @@ export function useGameEvents() {
 				...data.stats,
 				goldEarned,
 				xpEarned,
+				totalWaves: data.stats.totalWaves,
 				selectedStar: data.selectedStar,
 				starCleared: data.starCleared,
 			});
@@ -85,16 +92,36 @@ export function useGameEvents() {
 			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
-			const mapId = useGameStore.getState().selectedMapId;
+			const { selectedStageId: stageId } = useGameStore.getState();
+			const mapId = data.mapId;
 			const starKey =
-				data.selectedStar > 1 ? `${mapId}:${data.selectedStar}` : mapId;
+				data.selectedStar > 1 ? `${stageId}:${data.selectedStar}` : stageId;
 			meta.updateHighestWave(starKey, data.stats.wavesCleared);
 			if (data.result === 'victory') {
-				meta.recordStageClear(mapId);
+				meta.recordStageClear(stageId);
+
+				// Map clear achievement
+				const clearAchId = `clear_${mapId}`;
+				const prevClear = meta.progress.achievements.progress[clearAchId] ?? 0;
+				if (prevClear < 1) {
+					meta.updateAchievementProgress(clearAchId, 1);
+				}
 
 				// ★ Record star clear
 				if (data.starCleared) {
-					meta.recordStarClear(mapId, data.selectedStar);
+					meta.recordStarClear(stageId, data.selectedStar);
+
+					// Map star achievements
+					if (data.selectedStar >= 2) {
+						const star2Id = `star2_${mapId}`;
+						const prevStar2 = meta.progress.achievements.progress[star2Id] ?? 0;
+						if (prevStar2 < 1) meta.updateAchievementProgress(star2Id, 1);
+					}
+					if (data.selectedStar >= 3) {
+						const star3Id = `star3_${mapId}`;
+						const prevStar3 = meta.progress.achievements.progress[star3Id] ?? 0;
+						if (prevStar3 < 1) meta.updateAchievementProgress(star3Id, 1);
+					}
 				}
 
 				// Awakening stone rewards (only when star condition is met)
@@ -112,8 +139,8 @@ export function useGameEvents() {
 			wave: number;
 			totalWaves: number;
 			slotIndex: number;
-			phase: 'combat' | 'waiting' | 'boss' | 'ended';
-			kind: 'normal' | 'pre_boss' | 'boss';
+			phase: WavePhase;
+			kind: 'normal' | 'boss';
 			startAtSec: number;
 		}) => {
 			setRunStatus('running');
@@ -125,14 +152,14 @@ export function useGameEvents() {
 			patchCombatHud({
 				currentSlot: data.slotIndex,
 				phase: data.phase,
-				bossWarning: data.kind === 'pre_boss',
+				bossWarning: false,
 				timerLabel:
 					data.phase === 'boss'
 						? `Boss ${data.slotIndex}`
-						: data.kind === 'pre_boss'
-							? 'Boss Soon'
-							: `Wave ${data.wave}/${data.totalWaves}`,
+						: `Wave ${data.wave}/${data.totalWaves}`,
 			});
+			setWavePhase(data.phase);
+			setCountdown(0);
 			setPlacementFeedback(null);
 		};
 		const onTowerPlaced = (data: {
@@ -151,7 +178,22 @@ export function useGameEvents() {
 		};
 		const onPlayerTowerCount = (data: { count: number }) =>
 			setPlayerTowerCount(data.count);
-		const onResetRun = () => resetRun();
+		const onResetRun = () => {
+			if (waitIntervalRef.current) {
+				clearInterval(waitIntervalRef.current);
+				waitIntervalRef.current = null;
+			}
+			if (bossWarningTimerRef.current) {
+				clearTimeout(bossWarningTimerRef.current);
+				bossWarningTimerRef.current = null;
+			}
+			setWaitCountdown(0);
+			setCountdown(0);
+			setWavePhase('combat');
+			setBossWarningVisible(false);
+			setSelectedTower(null);
+			resetRun();
+		};
 		const onWaveCompleted = (data: {
 			wave: number;
 			totalWaves: number;
@@ -238,6 +280,16 @@ export function useGameEvents() {
 			setSelectedTower(null);
 		};
 
+		const onPrepStarted = (data: { durationMs: number }) => {
+			setCountdown(Math.ceil(data.durationMs / 1000));
+			setWavePhase('prep');
+		};
+		const onPrepTick = (data: { remainingMs: number }) => {
+			setCountdown(Math.ceil(data.remainingMs / 1000));
+		};
+
+		EventBus.on('wave-prep-started', onPrepStarted);
+		EventBus.on('wave-prep-tick', onPrepTick);
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
@@ -259,6 +311,8 @@ export function useGameEvents() {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
 			if (bossWarningTimerRef.current)
 				clearTimeout(bossWarningTimerRef.current);
+			EventBus.off('wave-prep-started', onPrepStarted);
+			EventBus.off('wave-prep-tick', onPrepTick);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
@@ -280,6 +334,7 @@ export function useGameEvents() {
 		patchCombatHud,
 		pushToast,
 		resetRun,
+		setCountdown,
 		setDeckCards,
 		setEnergy,
 		setLives,
@@ -287,6 +342,7 @@ export function useGameEvents() {
 		setPlayerTowerCount,
 		setSelectedCardIndex,
 		setRunStatus,
+		setWavePhase,
 		upsertBossHp,
 		removeBossHp,
 		clearAllBossHp,

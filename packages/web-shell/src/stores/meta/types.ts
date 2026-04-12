@@ -10,7 +10,7 @@ export interface MetaActions {
 	addGold: (amount: number) => void;
 	addXp: (amount: number) => void;
 	recordBattle: (result: 'victory' | 'defeat') => void;
-	updateHighestWave: (mapId: string, wave: number) => void;
+	updateHighestWave: (stageKey: string, wave: number) => void;
 	enhanceTower: (
 		defId: string,
 	) => 'success' | 'max_level' | 'no_gold' | 'not_found';
@@ -28,7 +28,7 @@ export interface MetaActions {
 	updateSettings: (patch: Partial<SaveData['settings']>) => void;
 	addDiamond: (amount: number) => void;
 	refreshMissions: () => void;
-	progressMission: (type: MissionType, amount: number) => void;
+	progressMission: (type: MissionType, amount: number, mapId?: string) => void;
 	claimMission: (
 		missionId: string,
 		period: 'daily' | 'weekly',
@@ -38,8 +38,8 @@ export interface MetaActions {
 		boxType: 'free' | 'ad' | 'diamond_single' | 'diamond_ten',
 		rng?: () => number,
 	) => GachaResult[] | 'no_diamond' | 'cooldown' | 'daily_limit';
-	recordStageClear: (mapId: string) => void;
-	recordStarClear: (mapId: string, star: StarRating) => void;
+	recordStageClear: (stageId: string) => void;
+	recordStarClear: (stageId: string, star: StarRating) => void;
 	addAwakeningStones: (amount: number) => void;
 	recordAttendance: () => void;
 	updateAchievementProgress: (id: string, value: number) => void;

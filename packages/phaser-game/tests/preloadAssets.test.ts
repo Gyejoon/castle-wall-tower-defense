@@ -217,6 +217,145 @@ describe('field asset preload alignment', () => {
 		);
 	});
 
+	it('creates walk, idle, and death animations for unit sheets that exist in the manifest', async () => {
+		vi.stubGlobal('document', {
+			createElement: () => ({
+				toDataURL: () => 'data:image/png',
+			}),
+		});
+		const create = vi.fn();
+		const generateFrameNumbers = vi.fn(
+			(_key: string, range: { start: number; end: number }) => range,
+		);
+		const start = vi.fn();
+		const { Preloader } = await import('../src/scenes/Preloader');
+		const scene = new Preloader() as InstanceType<typeof Preloader> & {
+			cache: {
+				json: { get: () => { assets: Array<Record<string, unknown>> } };
+			};
+			anims: {
+				create: typeof create;
+				generateFrameNumbers: typeof generateFrameNumbers;
+				exists: (key: string) => boolean;
+			};
+			scene: { start: typeof start };
+		};
+
+		scene.cache = {
+			json: {
+				get: () => ({
+					assets: [
+						{
+							key: 'unit-scout_drone',
+							type: 'spritesheet',
+							path: 'assets/units/scout_drone.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 8,
+							section: 'preload',
+						},
+						{
+							key: 'unit-battle_robot',
+							type: 'spritesheet',
+							path: 'assets/units/battle_robot.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 8,
+							section: 'preload',
+						},
+						{
+							key: 'unit-heavy_walker',
+							type: 'spritesheet',
+							path: 'assets/units/heavy_walker.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 8,
+							section: 'preload',
+						},
+						{
+							key: 'unit-stealth_drone',
+							type: 'spritesheet',
+							path: 'assets/units/stealth_drone.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 8,
+							section: 'preload',
+						},
+						{
+							key: 'unit-dragon',
+							type: 'spritesheet',
+							path: 'assets/units/dragon.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 8,
+							section: 'preload',
+						},
+						{
+							key: 'unit-scout_drone-idle',
+							type: 'spritesheet',
+							path: 'assets/units/scout_drone_idle.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 6,
+							section: 'preload',
+						},
+						{
+							key: 'unit-scout_drone-death',
+							type: 'spritesheet',
+							path: 'assets/units/scout_drone_death.png',
+							frameWidth: 40,
+							frameHeight: 48,
+							frameCount: 6,
+							section: 'preload',
+						},
+					],
+				}),
+			},
+		};
+		scene.anims = {
+			create,
+			generateFrameNumbers,
+			exists: vi.fn(() => false),
+		};
+		scene.scene = { start };
+
+		scene.create();
+
+		expect(create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				key: 'scout_drone-walk',
+				frameRate: 10,
+				repeat: -1,
+			}),
+		);
+		expect(create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				key: 'scout_drone-idle',
+				frameRate: 8,
+				repeat: -1,
+			}),
+		);
+		expect(create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				key: 'scout_drone-death',
+				frameRate: 12,
+				repeat: 0,
+			}),
+		);
+		expect(generateFrameNumbers).toHaveBeenCalledWith('unit-scout_drone-idle', {
+			start: 0,
+			end: 5,
+		});
+		expect(generateFrameNumbers).toHaveBeenCalledWith(
+			'unit-scout_drone-death',
+			{
+				start: 0,
+				end: 5,
+			},
+		);
+		expect(start).toHaveBeenCalledWith('Game');
+	});
+
 	it('can preload a non-core section on demand from the same manifest', () => {
 		const image = vi.fn();
 		const spritesheet = vi.fn();

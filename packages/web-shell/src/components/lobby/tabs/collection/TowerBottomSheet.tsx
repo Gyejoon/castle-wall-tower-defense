@@ -3,7 +3,7 @@ import {
 	enhancementCost,
 	GLOBAL_RANGE_THRESHOLD,
 	getEffectiveStats,
-	MAX_TOWER_LEVEL,
+	maxLevelForGrade,
 	PROMOTION_CONFIG,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
@@ -22,6 +22,7 @@ import {
 	TIER_DOT_KEYS,
 	translateSpecial,
 } from './constants';
+import { GradePromotionOverlay } from './GradePromotionOverlay';
 import { StatDisplay } from './StatDisplay';
 
 export function TowerBottomSheet({
@@ -43,11 +44,15 @@ export function TowerBottomSheet({
 	const [promotionResult, setPromotionResult] = useState<
 		'success' | 'fail' | null
 	>(null);
+	const [promotion, setPromotion] = useState<{
+		to: TowerGrade;
+	} | null>(null);
 	const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
 	useEffect(() => {
 		return () => {
 			for (const t of timersRef.current) clearTimeout(t);
+			timersRef.current.length = 0;
 		};
 	}, []);
 
@@ -61,7 +66,10 @@ export function TowerBottomSheet({
 	};
 
 	const handlePromote = () => {
-		if (!owned || promoting) return;
+		if (!owned || promoting || promotion) return;
+		// Clear stale timers from previous attempts
+		for (const t of timersRef.current) clearTimeout(t);
+		timersRef.current.length = 0;
 		setPromoting(true);
 		setPromotionResult(null);
 		const rollTimer = setTimeout(() => {
@@ -69,6 +77,9 @@ export function TowerBottomSheet({
 			setPromoting(false);
 			if (result === 'success') {
 				setPromotionResult('success');
+				setPromotion({
+					to: promoConfig.nextGrade as TowerGrade,
+				});
 				pushToast('승급 성공!', 'success');
 			} else if (result === 'fail') {
 				setPromotionResult('fail');
@@ -89,13 +100,14 @@ export function TowerBottomSheet({
 
 	const level = owned?.level ?? 1;
 	const grade = owned?.grade ?? 'normal';
+	const gradeMax = maxLevelForGrade(grade);
 	const effectiveDmg = getEffectiveStats(def.stats.damage, level, grade);
 	const nextLevelDmg =
-		level < MAX_TOWER_LEVEL
+		level < gradeMax
 			? getEffectiveStats(def.stats.damage, level + 1, grade)
 			: effectiveDmg;
-	const cost = owned ? enhancementCost(level, def.tier) : 0;
-	const canEnhance = owned && level < MAX_TOWER_LEVEL && profile.gold >= cost;
+	const cost = owned ? enhancementCost(level, def.tier, grade) : 0;
+	const canEnhance = owned && level < gradeMax && profile.gold >= cost;
 	const promoConfig = PROMOTION_CONFIG[grade];
 	const meetsLevelReq = promoConfig.nextGrade
 		? level >= promoConfig.requiredLevel
@@ -136,7 +148,7 @@ export function TowerBottomSheet({
 							className="font-pixel text-[11px]"
 							style={{ color: GRADE_BORDER[grade] }}
 						>
-							{grade.toUpperCase()} Lv.{level}
+							{grade.toUpperCase()} Lv.{level}/{gradeMax}
 						</span>
 					)}
 				</div>
@@ -232,16 +244,114 @@ export function TowerBottomSheet({
 						border: `1px solid ${colors.border}`,
 					}}
 				>
-					{level < MAX_TOWER_LEVEL ? (
+					{level < gradeMax ? (
 						<>
-							<div className="flex justify-between font-pixel text-[11px]">
-								<span className="text-text-secondary">
-									공격력: {effectiveDmg.toFixed(1)} →{' '}
-									<span className="text-success">
-										{nextLevelDmg.toFixed(1)}
-									</span>
-								</span>
-							</div>
+							{(() => {
+								const special = def.stats.special;
+								const configKey = special?.replace(/%/g, '') ?? '';
+								const cfg = CC_AURA_CONFIGS[configKey];
+								const isStun = !!special?.startsWith('stun');
+								const isActiveStun = isStun && def.stats.attackSpeed > 0;
+								const isPassiveStun = isStun && def.stats.attackSpeed === 0;
+
+								const curDur =
+									cfg && isStun
+										? cfg.durationMs * stunDurationMultiplier(level)
+										: undefined;
+								const nextDur =
+									cfg && isStun
+										? cfg.durationMs * stunDurationMultiplier(level + 1)
+										: undefined;
+								const curCd =
+									cfg && isPassiveStun
+										? cfg.cooldownMs * stunCooldownMultiplier(level)
+										: undefined;
+								const nextCd =
+									cfg && isPassiveStun
+										? cfg.cooldownMs * stunCooldownMultiplier(level + 1)
+										: undefined;
+
+								const fmt = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+								const showDamageRow = def.stats.damage > 0;
+								const showStunRow = isStun && !!cfg;
+
+								return (
+									<div className="flex flex-col gap-0.5 font-pixel text-[11px]">
+										{/* Row 1: damage (only if damage > 0) */}
+										{showDamageRow && (
+											<div className="flex justify-between">
+												<span className="text-text-secondary">
+													공격력: {effectiveDmg.toFixed(1)} →{' '}
+													<span className="text-success">
+														{nextLevelDmg.toFixed(1)}
+													</span>
+												</span>
+												<span className="text-text-secondary">
+													Lv.{level}/{gradeMax}
+												</span>
+											</div>
+										)}
+
+										{/* Row 2: stun duration (all stun towers) */}
+										{showStunRow &&
+											curDur !== undefined &&
+											nextDur !== undefined && (
+												<div className="flex justify-between">
+													<span className="text-text-secondary">
+														스턴 지속: {fmt(curDur)} →{' '}
+														<span className="text-success">{fmt(nextDur)}</span>
+													</span>
+													{!showDamageRow && (
+														<span className="text-text-secondary">
+															Lv.{level}/{gradeMax}
+														</span>
+													)}
+												</div>
+											)}
+
+										{/* Row 3: stun cooldown (passive stun only; active uses attackSpeed) */}
+										{showStunRow &&
+											isPassiveStun &&
+											curCd !== undefined &&
+											nextCd !== undefined && (
+												<div className="flex justify-between">
+													<span className="text-text-secondary">
+														스턴 쿨: {fmt(curCd)} →{' '}
+														<span className="text-success">{fmt(nextCd)}</span>
+													</span>
+												</div>
+											)}
+
+										{/* Info note: active stun (fortress) — cadence tied to attackSpeed, not scaled */}
+										{showStunRow && isActiveStun && (
+											<span className="text-[10px] text-text-secondary opacity-70">
+												* 발동 주기는 공속 기반(고정)
+											</span>
+										)}
+
+										{/* Info note: slow towers — slow factor/duration not yet scaled */}
+										{special?.includes('slow') && !isStun && showDamageRow && (
+											<span className="text-[10px] text-text-secondary opacity-70">
+												* 슬로우 효과는 레벨에 따라 변하지 않음
+											</span>
+										)}
+
+										{/* Fallback: pure-slow towers (damage=0 + slow, e.g. stasis_field) and any future special-only tower */}
+										{!showDamageRow && !showStunRow && (
+											<div className="flex justify-between">
+												<span className="text-text-secondary">
+													{special?.includes('slow')
+														? '슬로우 효과 강화'
+														: '특수 효과 강화'}
+												</span>
+												<span className="text-text-secondary">
+													Lv.{level}/{gradeMax}
+												</span>
+											</div>
+										)}
+									</div>
+								);
+							})()}
 							<PixelButton
 								variant="gold"
 								style={{ width: '100%', fontSize: '12px' }}
@@ -253,7 +363,9 @@ export function TowerBottomSheet({
 						</>
 					) : (
 						<span className="text-center font-pixel text-[11px] text-gold">
-							최대 레벨
+							{promoConfig.nextGrade
+								? `강화 한도 (Lv.${gradeMax}) — 승급 필요`
+								: `최대 레벨 (Lv.${gradeMax})`}
 						</span>
 					)}
 				</div>
@@ -334,6 +446,13 @@ export function TowerBottomSheet({
 				<span className="text-center font-pixel text-[11px] text-text-secondary">
 					소환의 제단에서 타워를 획득하세요!
 				</span>
+			)}
+			{promotion && (
+				<GradePromotionOverlay
+					toGrade={promotion.to}
+					towerId={def.id}
+					onDone={() => setPromotion(null)}
+				/>
 			)}
 		</div>
 	);

@@ -64,19 +64,19 @@ describe('GameScene', () => {
 
 	it('energySystem spends energy and updates balance', () => {
 		const scene = createScene();
-		// INITIAL_ENERGY is 10, accumulate energy (delta clamped to 5s)
+		// INITIAL_ENERGY is 40, accumulate energy (delta clamped to 5s)
 		scene.energySystem.update(5);
 		scene.energySystem.update(5);
-		scene.energySystem.update(5); // 10 + 15 = 25 energy total
+		scene.energySystem.update(5); // 40 + 15 = 55 energy total
 		expect(scene.energySystem.canAfford(10)).toBe(true);
 		expect(scene.energySystem.spend(10)).toBe(true);
-		expect(scene.energySystem.getEnergy()).toBe(15); // 25 - 10
+		expect(scene.energySystem.getEnergy()).toBe(45); // 55 - 10
 	});
 
 	it('energySystem rejects spend when insufficient', () => {
 		const scene = createScene();
 		expect(scene.energySystem.spend(100)).toBe(false);
-		expect(scene.energySystem.getEnergy()).toBe(10); // unchanged (INITIAL_ENERGY is 10)
+		expect(scene.energySystem.getEnergy()).toBe(40); // unchanged (INITIAL_ENERGY is 40)
 	});
 
 	it('cleanup unregisters EventBus listeners before destroying systems', () => {
@@ -91,10 +91,14 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
 		};
+		scene.castleWall = { destroy: vi.fn() };
+		scene.spawnHut = { destroy: vi.fn() };
+		scene.energySystem = { reset: vi.fn() };
 
 		scene.cleanup();
 
@@ -131,11 +135,42 @@ describe('GameScene', () => {
 		);
 	});
 
+	it('clears selected tower state after a successful placement', () => {
+		const scene = createScene();
+		scene.energySystem = {
+			canAfford: vi.fn(() => true),
+			spend: vi.fn(),
+		};
+		scene.playerDeck = {
+			getCardByTowerId: vi.fn(() => ({ energyCost: 3 })),
+		};
+		scene.playerWaves = { getPhase: vi.fn(() => 'combat') };
+		scene.playerTowers = {
+			placeTower: vi.fn(() => ({ success: true })),
+			getTowers: vi.fn(() => [{}, {}]),
+		};
+		scene.playerUnits = { setPaths: vi.fn() };
+		scene.currentMap = { paths: [[{ x: 0, y: 0 }]] };
+		scene.renderPath = vi.fn();
+		scene.selectionGraphics = { clear: vi.fn() };
+		scene.clearRangeOverlay = vi.fn();
+		scene.selectedTowerId = 'archer';
+
+		scene.handlePlaceTower(1, 2, 'archer');
+
+		expect(scene.selectedTowerId).toBeNull();
+		expect(scene.selectionGraphics.clear).toHaveBeenCalledOnce();
+		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
+		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
+	});
+
 	it('emits a PVE victory payload when the final slot ends with no remaining player units', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 20 };
+		scene.currentMap = { id: 'forest_gate' };
 		scene.damageNumbers = {
 			update: vi.fn(),
 			show: vi.fn(),
@@ -170,11 +205,13 @@ describe('GameScene', () => {
 			result: 'victory',
 			reason: 'all_waves_cleared',
 			finalSlot: 20,
+			mapId: 'forest_gate',
 			selectedStar: 1,
 			starCleared: true,
 			hpRemaining: 20,
 			stats: {
 				wavesCleared: 20,
+				totalWaves: 5,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
@@ -187,7 +224,9 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.currentSlotDef = { slotIndex: 5 };
+		scene.currentMap = { id: 'forest_gate' };
 		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
 		scene.spawnHut = { setActive: vi.fn(), destroy: vi.fn() };
@@ -225,11 +264,13 @@ describe('GameScene', () => {
 			result: 'defeat',
 			reason: 'base_hp_depleted',
 			finalSlot: 5,
+			mapId: 'forest_gate',
 			selectedStar: 1,
 			starCleared: false,
 			hpRemaining: 0,
 			stats: {
 				wavesCleared: 4, // finalSlot-1
+				totalWaves: 5,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
@@ -309,6 +350,7 @@ describe('GameScene', () => {
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
 		scene.selectionGraphics = { clear: vi.fn() };
+		scene.rangeOverlayGraphics = { clear: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

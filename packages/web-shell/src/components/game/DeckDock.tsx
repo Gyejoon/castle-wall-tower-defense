@@ -6,6 +6,10 @@ import { cn } from '../../utils/cn';
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
 const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
 
+function getTowerSrc(towerDefId: string): string {
+	return `assets/towers/${TOWER_TYPE_MAP.get(towerDefId) ?? towerDefId}.webp`;
+}
+
 export function DeckDock() {
 	const deckCards = useGameStore((s) => s.deckCards);
 	const selectedCardIndex = useGameStore((s) => s.selectedCardIndex);
@@ -41,15 +45,15 @@ export function DeckDock() {
 						data-testid={`deck-card-${i}`}
 						onClick={() => handleCardTap(i, card)}
 						className={cn(
-							'flex-1 min-w-0 h-[86px] bg-panel flex flex-col items-center justify-center gap-1 cursor-pointer p-0 border-2 transition-[border-color,box-shadow,opacity] duration-150',
+							'flex-1 min-w-0 h-[86px] bg-panel flex flex-col items-center justify-center gap-1 cursor-pointer p-0 border-2 transition-all duration-150 active:scale-95',
 							isSelected
-								? 'border-gold shadow-[0_0_8px_var(--color-gold)]'
+								? 'border-gold shadow-[0_0_8px_var(--color-gold)] scale-[1.03]'
 								: 'border-border shadow-[2px_2px_0px_var(--color-border)]',
 							!canAfford && 'opacity-40',
 						)}
 					>
 						<img
-							src={`assets/towers/${TOWER_TYPE_MAP.get(card.towerDefId) ?? card.towerDefId}.webp`}
+							src={getTowerSrc(card.towerDefId)}
 							alt={TOWER_NAME_MAP.get(card.towerDefId) ?? card.towerDefId}
 							width={32}
 							height={32}

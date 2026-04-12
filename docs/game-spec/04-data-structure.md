@@ -1,6 +1,6 @@
 # 데이터 Structure
 
-> **Last Updated:** 2026-04-07  
+> **Last Updated:** 2026-04-11  
 > **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md` §13  
 > 스키마가 변경될 때 이 문서를 먼저 업데이트한다.
 
@@ -53,7 +53,6 @@
     "bgm_volume": 0.7,
     "sfx_volume": 0.8,
     "screen_shake": true,
-    "damage_numbers": true,
     "colorblind_mode": "off"
   }
 }
@@ -75,6 +74,20 @@
 
 **마이그레이션:** v3→v4, 새 필드는 기본값(0, {}, [])으로 초기화
 
+### SaveData v5 추가 필드
+
+**MissionProgress 확장:**
+- `mapId?: string` — 맵 바인딩 미션용 (clear_map, defeat_boss_map)
+
+**MissionType 확장:**
+- `clear_map` — 특정 맵 클리어
+- `defeat_boss_map` — 특정 맵 보스 처치
+
+**AchievementCategory 확장:**
+- `map_progress` — 맵별 진행 업적 (9종: 3맵 × 3★)
+
+**마이그레이션:** v4→v5, stageStars 키를 mapId에서 stageId로 변환
+
 ---
 
 ## 2. 저장 시점
@@ -94,8 +107,8 @@
 > `<tower_id>` 유효값 (18종)
 
 ```
-laser, plasma, emp, shield,
-twin_laser, disruptor, nova_cannon, fortress,
+archer, plasma, emp, shield,
+twin_archer, disruptor, nova_cannon, fortress,
 stasis_field, flame_tower, wind_spire, earth_golem,
 holy_shrine, dragon_nest, arcane_spire, world_tree,
 celestial, divine_throne
@@ -144,7 +157,7 @@ type StarRating = 1 | 2 | 3;
 ### AchievementCategory
 
 ```typescript
-type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
+type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress' | 'map_progress';
 ```
 
 ---
@@ -168,14 +181,14 @@ type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
 
 ## 7. React ↔ Phaser 설정 동기화
 
-게임 설정(`showDamageNumbers` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
+게임 설정(`screenShake` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
 
 ```
-[React] gameStore.toggleDamageNumbers()
+[React] gameStore.toggleScreenShake()
     ↓ Zustand subscribe (PhaserGame.tsx)
-[Bridge] game.registry.set('showDamageNumbers', value)
+[Bridge] game.registry.set('screenShake', value)
     ↓ Phaser DataManager changedata 이벤트
-[Phaser] DamageNumberSystem.setEnabled(value)
+[Phaser] Game.ts screenShake 반영
 ```
 
 | 구간 | 구현 파일 | 메커니즘 |
@@ -201,3 +214,4 @@ type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress';
 |------|------|---------|
 | 2026-04-07 | 최초 작성 | GDD §13 기반 |
 | 2026-04-07 | §7 | React↔Phaser 설정 동기화 아키텍처 추가 |
+| 2026-04-11 | §1, §5 | SaveData v5: MissionProgress.mapId 필드, MissionType에 clear_map/defeat_boss_map 추가, AchievementCategory에 map_progress 추가 (9종 맵별 업적), SAVE_VERSION 4→5 |

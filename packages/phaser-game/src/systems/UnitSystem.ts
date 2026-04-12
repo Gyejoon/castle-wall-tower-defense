@@ -4,6 +4,7 @@ import {
 	ELEMENT_TINT_COLORS,
 	type ElementType,
 	PHASER_COLORS,
+	type PlacedTower,
 	type Position,
 	scaleUnitStats,
 	UNITS,
@@ -13,6 +14,7 @@ import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
+import type { TowerSystem } from './TowerSystem';
 
 export type UnitSpawnSource = 'base';
 
@@ -30,6 +32,8 @@ interface SpawnQueueEntry {
 	armorMult: number;
 	ccResist: number;
 }
+
+type UnitAnimationState = 'walk' | 'idle' | 'death';
 
 interface UnitInstance {
 	data: ActiveUnit;
@@ -55,6 +59,9 @@ interface UnitInstance {
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
 	shadow: Phaser.GameObjects.Ellipse | null;
+	lastRangedAttackMs?: number;
+	animationState: UnitAnimationState;
+	pendingDestroy: boolean;
 }
 
 interface QueueUnitsOptions {
@@ -74,6 +81,7 @@ export class UnitSystem {
 	private units: Map<string, UnitInstance> = new Map();
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
+	private towerSystem: TowerSystem | null = null;
 	private currentPath: Position[] = [];
 	private currentPathWorld: Position[] = [];
 	private lanes: Position[][] = [];
@@ -85,19 +93,32 @@ export class UnitSystem {
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
 	private readonly SPAWN_INTERVAL = 300;
-	private readonly MIN_SEPARATION = 0.8; // tiles
-	private readonly SPAWN_BLOCK_TIMEOUT = 2000; // ms
 	private laneUnits: Map<number, UnitInstance[]> = new Map();
-	private spawnBlockTimer = 0;
+	/** Called after any unit (wave-queue or additional) is physically spawned. */
+	private unitSpawnedCallback:
+		| ((instanceId: string, defId: string, isBoss: boolean) => void)
+		| null = null;
 
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
 	}
 
+	/** Inject TowerSystem for ranged_tower_attack behavior */
+	setTowerSystem(towerSystem: TowerSystem): void {
+		this.towerSystem = towerSystem;
+	}
+
 	/** Inject RNG for testability (CC immunity) */
 	setRng(rng: () => number): void {
 		this.rng = rng;
+	}
+
+	/** Register a callback to be notified whenever a unit is physically spawned. */
+	setUnitSpawnedCallback(
+		cb: (instanceId: string, defId: string, isBoss: boolean) => void,
+	): void {
+		this.unitSpawnedCallback = cb;
 	}
 
 	setStageLevel(level: number): void {
@@ -194,6 +215,9 @@ export class UnitSystem {
 			hp: finalHp,
 			pathIndex: 0,
 		};
+		if (entry.def.specialBehavior === 'damage_shield') {
+			unitData.shieldHp = entry.def.specialParams?.shieldHp ?? 0;
+		}
 
 		const bossTextureKey = `unit-${entry.def.id}-boss`;
 		const normalTextureKey = `unit-${entry.def.id}`;
@@ -226,7 +250,7 @@ export class UnitSystem {
 
 		// Flying boss: add ground shadow and offset sprite upward
 		let shadow: Phaser.GameObjects.Ellipse | null = null;
-		if (entry.isBoss) {
+		if (entry.isBoss && entry.def.flying) {
 			shadow = this.scene.add.ellipse(
 				startWorld.x,
 				startWorld.y,
@@ -262,10 +286,17 @@ export class UnitSystem {
 			maxHp: finalHp,
 			baseSpeed: scaled.speed * entry.waveSpeedMult,
 			baseArmor: scaled.armor * entry.armorMult,
-			ccImmunityChance: Math.min(1, scaled.ccImmunityChance + entry.ccResist),
+			ccImmunityChance: Math.min(
+				1,
+				scaled.ccImmunityChance +
+					entry.ccResist +
+					(entry.def.bossCcResist ?? 0),
+			),
 			waveSlot: entry.waveSlot,
 			shadow,
 			pathProgress: 0,
+			animationState: 'walk',
+			pendingDestroy: false,
 		};
 		this.units.set(instanceId, instance);
 
@@ -278,6 +309,8 @@ export class UnitSystem {
 			}
 			arr.push(instance);
 		}
+
+		this.unitSpawnedCallback?.(instanceId, entry.def.id, entry.isBoss);
 	}
 
 	private renderHpBar(
@@ -317,6 +350,17 @@ export class UnitSystem {
 		}
 	}
 
+	private setUnitAnimationState(
+		unit: UnitInstance,
+		state: UnitAnimationState,
+	): void {
+		if (unit.animationState === state || !unit.sprite.active) return;
+		const animationKey = `${unit.def.id}-${state}`;
+		if (!this.scene.anims.exists(animationKey)) return;
+		unit.animationState = state;
+		unit.sprite.play(animationKey);
+	}
+
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
@@ -337,6 +381,7 @@ export class UnitSystem {
 		}
 		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
 		unit.sprite.setTint(0xffff44);
+		this.setUnitAnimationState(unit, 'idle');
 	}
 
 	applyDamage(
@@ -344,6 +389,7 @@ export class UnitSystem {
 		rawDamage: number,
 		armorPierce = false,
 	): {
+		outcome: 'hit' | 'miss' | 'absorbed' | 'invulnerable';
 		killed: boolean;
 		bounty: number;
 		unitDefId: string;
@@ -353,22 +399,61 @@ export class UnitSystem {
 		actualDamage: number;
 	} | null {
 		const unit = this.units.get(unitId);
-		if (!unit) return null;
+		if (!unit || unit.pendingDestroy) return null;
+
+		const meta = {
+			unitDefId: unit.def.id,
+			countsTowardClear: unit.countsTowardClear,
+			source: unit.source,
+			isBoss: unit.isBoss,
+		} as const;
 
 		if (unit.invulnerableMs > 0) {
 			return {
+				outcome: 'invulnerable',
 				killed: false,
 				bounty: 0,
-				unitDefId: unit.def.id,
-				countsTowardClear: unit.countsTowardClear,
-				source: unit.source,
-				isBoss: unit.isBoss,
+				...meta,
 				actualDamage: 0,
 			};
 		}
 
 		const armor = armorPierce ? 0 : unit.baseArmor;
-		const damage = Math.max(1, rawDamage - armor);
+		// Floor before MISS check so sub-integer surpluses (e.g. rawDamage = armor + 0.5)
+		// are treated as MISS rather than silent 0-damage hits.
+		let damage = Math.floor(rawDamage - armor);
+		if (damage <= 0) {
+			// MISS: armor fully absorbed damage (including sub-integer surpluses) — no HP reduction
+			return {
+				outcome: 'miss',
+				killed: false,
+				bounty: 0,
+				...meta,
+				actualDamage: 0,
+			};
+		}
+
+		// Shield absorption: damage_shield enemies absorb damage until shield breaks
+		if ((unit.data.shieldHp ?? 0) > 0) {
+			const shieldHp = unit.data.shieldHp ?? 0;
+			if (shieldHp >= damage) {
+				unit.data.shieldHp = shieldHp - damage;
+				damage = 0;
+			} else {
+				damage -= shieldHp;
+				unit.data.shieldHp = 0;
+			}
+		}
+		if (damage <= 0) {
+			return {
+				outcome: 'absorbed',
+				killed: false,
+				bounty: 0,
+				...meta,
+				actualDamage: 0,
+			};
+		}
+
 		unit.data.hp -= damage;
 
 		// Boss phase transition check — only if still alive (hp > 0)
@@ -403,37 +488,38 @@ export class UnitSystem {
 					waveSlot: unit.waveSlot,
 				});
 			}
-			unit.sprite.destroy();
-			unit.shadow?.destroy();
-			unit.hpBar.destroy();
-			const deathFx = this.scene.add.sprite(
-				unit.worldX,
-				unit.worldY,
-				'unit-death',
-			);
-			deathFx.setDisplaySize(40, 48);
+			unit.pendingDestroy = true;
+			unit.data.hp = 0;
+			this.removeFromLaneUnits(unit);
 			const deathGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-			deathFx.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
-			deathFx.play('unit-death');
-			deathFx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
-				deathFx.destroy(),
-			);
+			unit.sprite.setDepth(this.gridManager.getDepth(deathGrid.x, deathGrid.y));
+			const deathAnimationKey = `${unit.def.id}-death`;
+			if (this.scene.anims.exists(deathAnimationKey)) {
+				this.setUnitAnimationState(unit, 'death');
+				unit.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+					unit.sprite.destroy();
+					unit.shadow?.destroy();
+					unit.hpBar.destroy();
+					this.units.delete(unitId);
+				});
+			} else {
+				unit.sprite.destroy();
+				unit.shadow?.destroy();
+				unit.hpBar.destroy();
+				this.units.delete(unitId);
+			}
 			this.spawnOptionalVfx(
-				unit.def.id === 'titan' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
+				unit.def.id === 'dragon' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
 				unit.worldX,
 				unit.worldY,
-				unit.def.id === 'titan' ? 64 : 32,
+				unit.def.id === 'dragon' ? 64 : 32,
 				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
-			this.units.delete(unitId);
-			this.removeFromLaneUnits(unit);
 			return {
+				outcome: 'hit',
 				killed: true,
 				bounty: unit.bounty,
-				unitDefId: unit.def.id,
-				countsTowardClear: unit.countsTowardClear,
-				source: unit.source,
-				isBoss: unit.isBoss,
+				...meta,
 				actualDamage: damage,
 			};
 		}
@@ -456,18 +542,19 @@ export class UnitSystem {
 			unit.data.hp,
 		);
 		return {
+			outcome: 'hit',
 			killed: false,
 			bounty: 0,
-			unitDefId: unit.def.id,
-			countsTowardClear: unit.countsTowardClear,
-			source: unit.source,
-			isBoss: unit.isBoss,
+			...meta,
 			actualDamage: damage,
 		};
 	}
 
 	hasActiveUnits(): boolean {
-		return this.units.size > 0;
+		for (const unit of this.units.values()) {
+			if (!unit.pendingDestroy) return true;
+		}
+		return false;
 	}
 
 	hasQueuedUnits(): boolean {
@@ -477,6 +564,7 @@ export class UnitSystem {
 	getActiveCount(): number {
 		let count = 0;
 		for (const unit of this.units.values()) {
+			if (unit.pendingDestroy) continue;
 			if (unit.countsTowardClear) count += 1;
 		}
 		for (const entry of this.spawnQueue) {
@@ -523,41 +611,19 @@ export class UnitSystem {
 			this.spawnTimer = 0;
 			const front = this.spawnQueue[0];
 
-			// Spawn blocking: check if a stunned/stuck unit blocks the spawn point
-			let spawnBlocked = false;
-			if (!front.def.flying) {
-				const laneIndex =
-					this.lanes.length > 1 ? this.nextLane % this.lanes.length : 0;
-				const arr = this.laneUnits.get(laneIndex);
-				if (arr) {
-					// Count units near spawn. Block only if 2+ units are piled up at spawn
-					let nearSpawnCount = 0;
-					for (let i = arr.length - 1; i >= 0; i--) {
-						if (arr[i].pathProgress < this.MIN_SEPARATION) {
-							nearSpawnCount++;
-						} else {
-							break; // sorted array, no more near spawn
-						}
-					}
-					if (nearSpawnCount >= 2) spawnBlocked = true;
-				}
-			}
-
-			if (spawnBlocked && this.spawnBlockTimer < this.SPAWN_BLOCK_TIMEOUT) {
-				this.spawnBlockTimer += this.SPAWN_INTERVAL;
-			} else {
-				this.spawnBlockTimer = 0;
-				this.spawnUnit(front);
-				front.remaining--;
-				if (front.remaining <= 0) {
-					this.spawnQueue.shift();
-				}
+			this.spawnUnit(front);
+			front.remaining--;
+			if (front.remaining <= 0) {
+				this.spawnQueue.shift();
 			}
 		}
 
 		const dt = delta / 1000;
 
 		for (const [id, unit] of this.units) {
+			if (unit.pendingDestroy) {
+				continue;
+			}
 			if (unit.invulnerableMs > 0) {
 				unit.invulnerableMs -= delta;
 			}
@@ -596,10 +662,44 @@ export class UnitSystem {
 					} else {
 						unit.sprite.setTint(0x88ccff);
 					}
+					this.setUnitAnimationState(unit, 'walk');
 				}
 				continue; // skip movement while stunned
 			}
 
+			// Enemies with ranged_tower_attack disable the nearest tower on cooldown
+			if (
+				unit.def.specialBehavior === 'ranged_tower_attack' &&
+				this.towerSystem
+			) {
+				const cooldown = unit.def.specialParams?.cooldownMs ?? 3000;
+				const range = unit.def.specialParams?.range ?? 2;
+				const dmg = unit.def.specialParams?.damage ?? 25;
+				const last = unit.lastRangedAttackMs ?? 0;
+				if (time - last >= cooldown) {
+					const unitX = unit.data.position.x;
+					const unitY = unit.data.position.y;
+					const towers = this.towerSystem.getTowers();
+					let bestTower: PlacedTower | undefined;
+					let bestDist = Infinity;
+					for (const t of towers) {
+						const dx = Math.abs(t.position.x - unitX);
+						const dy = Math.abs(t.position.y - unitY);
+						const cheb = Math.max(dx, dy); // Chebyshev distance on grid
+						if (cheb <= range && cheb < bestDist) {
+							bestDist = cheb;
+							bestTower = t;
+						}
+					}
+					if (bestTower) {
+						const stunMs = Math.min(dmg * 50, 2000);
+						this.towerSystem.disableTower(bestTower.instanceId, time + stunMs);
+						unit.lastRangedAttackMs = time;
+					}
+				}
+			}
+
+			this.setUnitAnimationState(unit, 'walk');
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
 			const phase2Mult =
@@ -646,7 +746,7 @@ export class UnitSystem {
 			}
 
 			// Boss flies above ground with bobbing; shadow stays on ground
-			if (unit.isBoss) {
+			if (unit.isBoss && unit.def.flying) {
 				const flyBob = Math.sin(time * 0.003) * 3;
 				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
 				if (unit.shadow) {
@@ -655,10 +755,17 @@ export class UnitSystem {
 			} else {
 				unit.sprite.setPosition(unit.worldX, unit.worldY);
 			}
-			// Rotate boss sprite to face movement direction (sprite default: head pointing down = PI/2)
+			// Flying boss: rotate to face movement direction
+			// Ground boss/units: flip sprite horizontally based on movement
 			if (unit.isBoss && dist > 0.01) {
-				const moveAngle = Math.atan2(dy, dx);
-				unit.sprite.setRotation(moveAngle - Math.PI / 2);
+				if (unit.def.flying) {
+					const moveAngle = Math.atan2(dy, dx);
+					unit.sprite.setRotation(moveAngle - Math.PI / 2);
+				} else {
+					unit.sprite.setFlipX(dx < 0);
+				}
+			} else if (!unit.isBoss && dist > 0.01) {
+				unit.sprite.setFlipX(dx < 0);
 			}
 			const currentGrid = this.gridManager.worldToGrid(
 				unit.worldX,
@@ -701,6 +808,7 @@ export class UnitSystem {
 	}> {
 		this.unitPositionsBuffer.length = 0;
 		for (const unit of this.units.values()) {
+			if (unit.pendingDestroy) continue;
 			this.unitPositionsBuffer.push({
 				instanceId: unit.data.instanceId,
 				x: unit.worldX,
@@ -722,6 +830,145 @@ export class UnitSystem {
 		return unit?.def.element ?? 'neutral';
 	}
 
+	/** Look up a live unit instance by its instanceId. Used by boss behavior pipeline. */
+	getUnit(instanceId: string): UnitInstance | undefined {
+		return this.units.get(instanceId);
+	}
+
+	/**
+	 * Spawn a unit immediately at a given grid position, bypassing the wave queue.
+	 * Used by boss behaviors (e.g. OrcWarlord summons minions).
+	 */
+	spawnAdditionalUnit(
+		unitDefId: string,
+		position: { x: number; y: number },
+		metadata?: Record<string, unknown>,
+	): void {
+		const def = UNITS.find((u) => u.id === unitDefId);
+		if (!def) return;
+		if (this.lanes.length === 0 && this.currentPath.length === 0) return;
+
+		// Pick the lane whose start is closest to the requested position
+		let laneIndex = 0;
+		if (this.lanes.length > 1) {
+			let bestDist = Infinity;
+			for (let i = 0; i < this.lanes.length; i++) {
+				const start = this.lanes[i][0];
+				if (!start) continue;
+				const dx = start.x - position.x;
+				const dy = start.y - position.y;
+				const d = dx * dx + dy * dy;
+				if (d < bestDist) {
+					bestDist = d;
+					laneIndex = i;
+				}
+			}
+		}
+
+		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
+		if (lanePath.length === 0) return;
+
+		const instanceId = `unit_${this.nextId++}`;
+		const clampedGrid = {
+			x: Math.max(0, Math.min(position.x, this.gridManager.width - 1)),
+			y: Math.max(0, Math.min(position.y, this.gridManager.height - 1)),
+		};
+		let initialPathIndex = 0;
+		let bestDist = Infinity;
+		for (let i = 0; i < lanePath.length; i++) {
+			const dx = lanePath[i].x - clampedGrid.x;
+			const dy = lanePath[i].y - clampedGrid.y;
+			const d = dx * dx + dy * dy;
+			if (d < bestDist) {
+				bestDist = d;
+				initialPathIndex = i;
+			}
+		}
+		initialPathIndex = Math.min(
+			initialPathIndex,
+			Math.max(0, lanePath.length - 2),
+		);
+		const startGrid = clampedGrid;
+		const startWorld = this.gridManager.gridToWorld(
+			clampedGrid.x,
+			clampedGrid.y,
+		);
+
+		EventBus.emit('unit-spawned', { unitType: def.type, count: 1 });
+
+		const scaled = scaleUnitStats(def.stats, this.stageLevel);
+		const finalHp = scaled.hp;
+
+		const unitData: ActiveUnit = {
+			instanceId,
+			defId: def.id,
+			position: { x: startGrid.x, y: startGrid.y },
+			hp: finalHp,
+			pathIndex: initialPathIndex,
+			shieldHp:
+				def.specialBehavior === 'damage_shield'
+					? (def.specialParams?.shieldHp ?? 0)
+					: undefined,
+			metadata,
+		};
+
+		const textureKey = `unit-${def.id}`;
+		const sprite = this.scene.add.sprite(
+			startWorld.x,
+			startWorld.y,
+			textureKey,
+		);
+		sprite.setDisplaySize(40, 48);
+		sprite.play(`${def.id}-walk`);
+		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
+		if (def.element !== 'neutral') {
+			sprite.setTint(ELEMENT_TINT_COLORS[def.element]);
+		}
+
+		const hpBar = this.scene.add.graphics();
+		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
+
+		const instance: UnitInstance = {
+			data: unitData,
+			def,
+			sprite,
+			hpBar,
+			worldX: startWorld.x,
+			worldY: startWorld.y,
+			slowFactor: 1.0,
+			slowRemaining: 0,
+			stunRemaining: 0,
+			bounty: Math.round(def.bounty * scaled.bountyMultiplier),
+			countsTowardClear: false, // summoned units don't count toward wave clear
+			source: 'base',
+			laneIndex,
+			isBoss: false,
+			bossPhase: 1,
+			invulnerableMs: 0,
+			maxHp: finalHp,
+			baseSpeed: scaled.speed,
+			baseArmor: scaled.armor,
+			ccImmunityChance: scaled.ccImmunityChance,
+			waveSlot: 0,
+			shadow: null,
+			pathProgress: initialPathIndex,
+			animationState: 'walk',
+			pendingDestroy: false,
+		};
+		this.units.set(instanceId, instance);
+
+		if (!def.flying) {
+			let arr = this.laneUnits.get(laneIndex);
+			if (!arr) {
+				arr = [];
+				this.laneUnits.set(laneIndex, arr);
+			}
+			arr.push(instance);
+		}
+
+		this.unitSpawnedCallback?.(instanceId, def.id, false);
+	}
+
 	private removeFromLaneUnits(unit: UnitInstance): void {
 		if (unit.def.flying) return;
 		const arr = this.laneUnits.get(unit.laneIndex);
@@ -730,66 +977,9 @@ export class UnitSystem {
 		if (idx !== -1) arr.splice(idx, 1);
 	}
 
-	private readonly COLLISION_LERP = 0.3; // smooth deceleration factor
-
 	private sweepCollisions(): void {
-		for (const arr of this.laneUnits.values()) {
-			if (arr.length < 2) continue;
-			// Sort descending by pathProgress (front first)
-			arr.sort((a, b) => b.pathProgress - a.pathProgress);
-			// Sweep front→back: ensure minimum separation with smooth lerp
-			for (let i = 1; i < arr.length; i++) {
-				const front = arr[i - 1];
-				const rear = arr[i];
-				const sep = front.pathProgress - rear.pathProgress;
-				if (sep < this.MIN_SEPARATION) {
-					const target = front.pathProgress - this.MIN_SEPARATION;
-					const clamped = Math.max(0, target);
-					// Lerp toward target for smooth deceleration instead of instant snap
-					const lerped =
-						rear.pathProgress +
-						(clamped - rear.pathProgress) * this.COLLISION_LERP;
-					this.setUnitPathProgress(rear, Math.max(0, lerped));
-				}
-			}
-		}
-	}
-
-	private setUnitPathProgress(unit: UnitInstance, progress: number): void {
-		const lane = this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
-		const laneGrid = this.lanes[unit.laneIndex] ?? this.currentPath;
-		if (lane.length < 2) return;
-
-		const idx = Math.min(Math.floor(progress), lane.length - 2);
-		const frac = Math.max(0, Math.min(1, progress - idx));
-
-		const startW = lane[idx];
-		const endW = lane[idx + 1];
-		unit.worldX = startW.x + (endW.x - startW.x) * frac;
-		unit.worldY = startW.y + (endW.y - startW.y) * frac;
-
-		unit.data.pathIndex = idx;
-		unit.pathProgress = progress;
-
-		const startG = laneGrid[idx];
-		const endG = laneGrid[idx + 1];
-		unit.data.position = {
-			x: Math.round(startG.x + (endG.x - startG.x) * frac),
-			y: Math.round(startG.y + (endG.y - startG.y) * frac),
-		};
-
-		unit.sprite.setPosition(unit.worldX, unit.worldY);
-		const currentGrid = this.gridManager.worldToGrid(unit.worldX, unit.worldY);
-		unit.sprite.setDepth(
-			this.gridManager.getDepth(currentGrid.x, currentGrid.y),
-		);
-		this.renderHpBar(
-			unit.hpBar,
-			unit.worldX,
-			unit.worldY,
-			unit.maxHp,
-			unit.data.hp,
-		);
+		// Collision disabled — monsters pass through each other
+		return;
 	}
 
 	destroy(): void {

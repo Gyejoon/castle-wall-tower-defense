@@ -58,9 +58,121 @@ type SaveMigration = (
 	context?: { tutorialCompleted?: boolean },
 ) => Record<string, unknown>;
 
+const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
+	forest_gate: [
+		'w1_s1',
+		'w1_s2',
+		'w1_s3',
+		'w1_s4',
+		'w1_s5',
+		'w1_s6',
+		'w1_s7',
+		'w1_s8',
+	],
+	lava_fortress: [
+		'w2_s1',
+		'w2_s2',
+		'w2_s3',
+		'w2_s4',
+		'w2_s5',
+		'w2_s6',
+		'w2_s7',
+		'w2_s8',
+	],
+	storm_citadel: [
+		'w3_s1',
+		'w3_s2',
+		'w3_s3',
+		'w3_s4',
+		'w3_s5',
+		'w3_s6',
+		'w3_s7',
+		'w3_s8',
+	],
+};
+
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	5: (data) => {
+		// v5 → v6: remove showDamageNumbers from settings (always on)
+		const settings = (data.settings ?? {}) as Record<string, unknown>;
+		const { showDamageNumbers: _, ...restSettings } = settings;
+		return {
+			...data,
+			version: 6,
+			settings: restSettings,
+		};
+	},
+	4: (data) => {
+		// v4 → v5: stageStars mapId→stageId migration + mission mapId support
+		const progress = (data.progress ?? {}) as Record<string, unknown>;
+		const oldStars = (progress.stageStars ?? {}) as Record<string, unknown>;
+		const oldHighestWave = (progress.highestWave ?? {}) as Record<
+			string,
+			unknown
+		>;
+		const oldStagesCleared = Array.isArray(progress.stagesCleared)
+			? progress.stagesCleared
+			: [];
+		const newStars: Record<string, unknown> = {};
+		const newHighestWave: Record<string, unknown> = {};
+		const newStagesCleared = new Set<string>();
+
+		// Process old-format (mapId) keys first so new-format (stageId) keys win on conflict
+		for (const [mapId, starRating] of Object.entries(oldStars)) {
+			const stages = MAP_TO_WORLD_STAGES[mapId];
+			if (stages) {
+				for (const stageId of stages) {
+					newStars[stageId] = starRating;
+				}
+			}
+		}
+		for (const [key, starRating] of Object.entries(oldStars)) {
+			if (!MAP_TO_WORLD_STAGES[key]) {
+				// new-format stageId or unknown key: preserve (overwrites spread values)
+				newStars[key] = starRating;
+			}
+		}
+
+		// Two-pass: first expand mapId keys, then let stageId keys overwrite
+		for (const [mapId, wave] of Object.entries(oldHighestWave)) {
+			const stages = MAP_TO_WORLD_STAGES[mapId];
+			if (stages) {
+				for (const stageId of stages) {
+					newHighestWave[stageId] = wave;
+				}
+			}
+		}
+		for (const [key, wave] of Object.entries(oldHighestWave)) {
+			if (!MAP_TO_WORLD_STAGES[key]) {
+				newHighestWave[key] = wave;
+			}
+		}
+
+		for (const entry of oldStagesCleared) {
+			if (typeof entry !== 'string') continue;
+			const stages = MAP_TO_WORLD_STAGES[entry];
+			if (stages) {
+				for (const stageId of stages) {
+					newStagesCleared.add(stageId);
+				}
+			} else {
+				newStagesCleared.add(entry);
+			}
+		}
+
+		return {
+			...data,
+			version: 5,
+			progress: {
+				...progress,
+				stageStars: newStars,
+				highestWave: newHighestWave,
+				stagesCleared: [...newStagesCleared],
+			},
+		};
+	},
 	3: (data) => {
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
 		const profile = (data.profile ?? {}) as Record<string, unknown>;
@@ -134,7 +246,6 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				bgmVolume: soundWasEnabled ? 0.7 : 0,
 				sfxVolume: soundWasEnabled ? 0.8 : 0,
 				screenShake: settings.screenShake ?? true,
-				showDamageNumbers: settings.showDamageNumbers ?? true,
 				colorblindMode: 'off',
 			},
 		};
@@ -160,8 +271,8 @@ function migrateSave(
 
 const _defaults = createDefaultSave();
 
-/** Ensure all v4 required fields exist — guards against incomplete saves. */
-export function sanitizeV4Save(save: SaveData): SaveData {
+/** Ensure all required fields exist — guards against incomplete saves. */
+export function sanitizeSave(save: SaveData): SaveData {
 	const dp = _defaults.progress;
 	const dpr = _defaults.profile;
 	const dt = _defaults.collection[0];
@@ -201,10 +312,10 @@ export function parseSave(context?: {
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (parsed.version === SAVE_VERSION)
-			return sanitizeV4Save(parsed as SaveData);
+			return sanitizeSave(parsed as SaveData);
 		// Attempt migration from older version
 		const migrated = migrateSave(parsed, context);
-		return migrated ? sanitizeV4Save(migrated) : null;
+		return migrated ? sanitizeSave(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

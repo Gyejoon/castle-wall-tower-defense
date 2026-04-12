@@ -2,7 +2,7 @@ import {
 	ALL_TOWERS,
 	calcCombatPower,
 	enhancementCost,
-	MAX_TOWER_LEVEL,
+	maxLevelForGrade,
 	PROMOTION_CONFIG,
 	type TowerGrade,
 } from '@gld/shared';
@@ -17,10 +17,10 @@ export const createCollectionSlice: SliceCreator<
 		const idx = s.collection.findIndex((t) => t.defId === defId);
 		if (idx === -1) return 'not_found';
 		const tower = s.collection[idx];
-		if (tower.level >= MAX_TOWER_LEVEL) return 'max_level';
+		if (tower.level >= maxLevelForGrade(tower.grade)) return 'max_level';
 		const towerDef = ALL_TOWERS.find((t) => t.id === defId);
 		if (!towerDef) return 'not_found';
-		const cost = enhancementCost(tower.level, towerDef.tier);
+		const cost = enhancementCost(tower.level, towerDef.tier, tower.grade);
 		if (s.profile.gold < cost) return 'no_gold';
 
 		const newCollection = [...s.collection];

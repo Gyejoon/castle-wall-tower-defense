@@ -426,13 +426,6 @@ export class SoundGenerator {
 				type: 'square',
 				volume: 0.08,
 			},
-			disruptor: {
-				frequency: 700,
-				endFrequency: 350,
-				duration: 100,
-				type: 'square',
-				volume: 0.1,
-			},
 			fortress: {
 				frequency: 500,
 				endFrequency: 600,
@@ -440,13 +433,53 @@ export class SoundGenerator {
 				type: 'triangle',
 				volume: 0.1,
 			},
+			disruptor: {
+				frequency: 800,
+				endFrequency: 400,
+				duration: 60,
+				type: 'sine',
+				volume: 0.1,
+			},
+			earth_golem: {
+				frequency: 100,
+				endFrequency: 50,
+				duration: 100,
+				type: 'triangle',
+				volume: 0.18,
+			},
 		};
 		const recipe = recipes[towerType];
 		if (recipe) {
 			this.play(recipe);
 
 			// Noise sub-layers for specific tower types
-			if (towerType === 'plasma' || towerType === 'nova_cannon') {
+			if (towerType === 'disruptor') {
+				// Snowball throw — crisp high white noise
+				this.playNoise({
+					noiseType: 'white',
+					duration: 30,
+					volume: 0.06,
+					filterType: 'highpass',
+					filterFreq: 2000,
+				});
+				// Snow impact — soft muffled thud
+				this.schedule(80, () => {
+					this.playNoise({
+						noiseType: 'white',
+						duration: 50,
+						volume: 0.08,
+						filterType: 'lowpass',
+						filterFreq: 400,
+					});
+					this.play({
+						frequency: 300,
+						endFrequency: 150,
+						duration: 40,
+						type: 'sine',
+						volume: 0.06,
+					});
+				});
+			} else if (towerType === 'plasma' || towerType === 'nova_cannon') {
 				// Launch thump — short brown noise burst
 				this.playNoise({
 					noiseType: 'brown',
@@ -474,6 +507,43 @@ export class SoundGenerator {
 						volume: 0.1,
 						filterType: 'lowpass',
 						filterFreq: 200,
+					});
+				});
+			} else if (towerType === 'earth_golem') {
+				// Stone throw grunt — low rumble
+				this.playNoise({
+					noiseType: 'brown',
+					duration: 50,
+					volume: 0.14,
+					filterType: 'lowpass',
+					filterFreq: 200,
+				});
+				// Stone whoosh in flight
+				this.schedule(40, () => {
+					this.playNoise({
+						noiseType: 'white',
+						duration: 50,
+						volume: 0.03,
+						filterType: 'bandpass',
+						filterFreq: 400,
+						filterQ: 1.5,
+					});
+				});
+				// Dull stone impact — heavy thud
+				this.schedule(90, () => {
+					this.playNoise({
+						noiseType: 'brown',
+						duration: 70,
+						volume: 0.16,
+						filterType: 'lowpass',
+						filterFreq: 150,
+					});
+					this.play({
+						frequency: 70,
+						endFrequency: 35,
+						duration: 60,
+						type: 'triangle',
+						volume: 0.12,
 					});
 				});
 			} else if (towerType === 'archer' || towerType === 'twin_archer') {

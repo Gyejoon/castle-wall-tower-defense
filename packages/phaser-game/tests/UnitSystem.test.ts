@@ -30,6 +30,7 @@ function createSprite() {
 		clearTint: vi.fn().mockReturnThis(),
 		setTexture: vi.fn().mockReturnThis(),
 		setRotation: vi.fn().mockReturnThis(),
+		setFlipX: vi.fn().mockReturnThis(),
 		play: vi.fn().mockReturnThis(),
 		once: vi.fn(),
 		destroy: vi.fn(),
@@ -58,13 +59,19 @@ function createScene() {
 			})),
 		},
 		textures: { exists: vi.fn(() => false) },
-		anims: { exists: vi.fn(() => false) },
+		anims: {
+			exists: vi.fn(
+				(key: string) => !['dragon-idle', 'dragon-death'].includes(key),
+			),
+		},
 	};
 }
 
 function createGridManager(tileSize = 32) {
 	return {
 		orthoTile: tileSize,
+		width: 10,
+		height: 10,
 		gridToWorld: vi.fn((x: number, y: number) => ({
 			x: x * tileSize,
 			y: y * tileSize,
@@ -346,6 +353,54 @@ describe('UnitSystem', () => {
 			expect(pos[0].hp).toBe(75); // 80 - 5
 		});
 
+		it('returns outcome=miss when armor fully absorbs damage', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=3, armor=5 → 3 - 5 = -2 → MISS, no HP reduction
+			const result = system.applyDamage(unitId, 3);
+			expect(result).not.toBeNull();
+			expect(result?.outcome).toBe('miss');
+			expect(result?.killed).toBe(false);
+			expect(result?.actualDamage).toBe(0);
+
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(80); // HP unchanged
+		});
+
+		it('floors fractional damage to integer (no decimals displayed)', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=10.7, armor=5 → 5.7 → floor to 5
+			const result = system.applyDamage(unitId, 10.7);
+			expect(result?.outcome).toBe('hit');
+			expect(result?.actualDamage).toBe(5);
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(75); // 80 - 5
+		});
+
+		it('sub-integer surplus (rawDamage = armor + 0.5) is treated as MISS, not silent 0', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=5.5, armor=5 → 0.5 → floor(0.5) = 0 → MISS (not silent absorb)
+			const result = system.applyDamage(unitId, 5.5);
+			expect(result?.outcome).toBe('miss');
+			expect(result?.actualDamage).toBe(0);
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(80); // HP unchanged
+		});
+
 		it('returns isBoss=false for regular unit', () => {
 			system.setPaths([LANE_A]);
 			system.queueUnits('scout_drone', 1);
@@ -359,13 +414,32 @@ describe('UnitSystem', () => {
 
 		it('returns isBoss=true for boss unit', () => {
 			system.setPaths([LANE_A]);
-			system.queueUnits('titan', 1, { isBoss: true });
+			system.queueUnits('dragon', 1, { isBoss: true });
 			system.update(0, 300);
 
 			const unitId = system.getUnitPositions()[0].instanceId;
 			const result = system.applyDamage(unitId, 1, true);
 			expect(result).not.toBeNull();
 			expect(result?.isBoss).toBe(true);
+		});
+
+		it('plays unit-specific death animation on the sprite before cleanup', () => {
+			system.setPaths([LANE_A]);
+			system.queueUnits('scout_drone', 1);
+			system.update(0, 300);
+
+			const sprite = scene.add.sprite.mock.results[0]?.value;
+			const unitId = system.getUnitPositions()[0].instanceId;
+			const result = system.applyDamage(unitId, 30);
+
+			expect(result?.killed).toBe(true);
+			expect(sprite.play).toHaveBeenCalledWith('scout_drone-death');
+			expect(sprite.once).toHaveBeenCalledWith(
+				'animationcomplete',
+				expect.any(Function),
+			);
+			expect(sprite.destroy).not.toHaveBeenCalled();
+			expect(system.getUnitPositions()).toHaveLength(0);
 		});
 	});
 
@@ -395,6 +469,29 @@ describe('UnitSystem', () => {
 			expect(system.hasQueuedUnits()).toBe(false);
 		});
 	});
+
+	describe('spawnAdditionalUnit', () => {
+		it('spawns near the requested position instead of lane start', () => {
+			system.setPaths([LANE_A]);
+			system.spawnAdditionalUnit('scout_drone', { x: 2, y: 0 });
+
+			const positions = system.getUnitPositions();
+			expect(positions).toHaveLength(1);
+			expect(positions[0]?.x).toBe(2 * 32);
+			expect(positions[0]?.y).toBe(0);
+		});
+
+		it('keeps moving forward from the requested lane position on the next update', () => {
+			system.setPaths([LANE_A]);
+			system.spawnAdditionalUnit('scout_drone', { x: 2, y: 0 });
+
+			system.update(0, 100);
+
+			const positions = system.getUnitPositions();
+			expect(positions).toHaveLength(1);
+			expect(positions[0]?.x).toBeGreaterThan(2 * 32);
+		});
+	});
 });
 
 describe('Boss phase system', () => {
@@ -414,8 +511,8 @@ describe('Boss phase system', () => {
 	});
 
 	it('transitions to phase 2 when HP drops to 50%', () => {
-		// titan: hp=500, armor=10, phase transition at 50% = 250 HP
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		// dragon: hp=500, armor=10, phase transition at 50% = 250 HP
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -438,7 +535,7 @@ describe('Boss phase system', () => {
 	});
 
 	it('blocks damage during invulnerability', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -452,14 +549,17 @@ describe('Boss phase system', () => {
 		const blockedResult = system.applyDamage(unitId, 100, true);
 		expect(blockedResult).not.toBeNull();
 		expect(blockedResult?.killed).toBe(false);
+		expect(blockedResult?.actualDamage).toBe(0);
+		// Invulnerability is silent, distinct from MISS (which is only for armor full absorb)
+		expect(blockedResult?.outcome).toBe('invulnerable');
 
 		// HP should be unchanged
 		expect(system.getUnitPositions()[0].hp).toBe(hpAfterTransition);
 	});
 
 	it('applies hpMultiplier for wave 10 boss', () => {
-		// titan base hp=500, hpMultiplier=2 → final HP = 1000
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 2 });
+		// dragon base hp=500, hpMultiplier=2 → final HP = 1000
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 2 });
 		system.update(0, 300); // spawn
 
 		const positions = system.getUnitPositions();
@@ -467,7 +567,7 @@ describe('Boss phase system', () => {
 	});
 
 	it('kills boss in phase 2 when HP reaches 0', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -482,12 +582,12 @@ describe('Boss phase system', () => {
 		const result = system.applyDamage(unitId, 300, true);
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
-		expect(result?.bounty).toBe(60); // titan bounty
+		expect(result?.bounty).toBe(60); // dragon bounty
 		expect(system.getUnitPositions()).toHaveLength(0);
 	});
 
 	it('kills boss on one-shot without triggering phase transition', () => {
-		system.queueUnits('titan', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
@@ -497,6 +597,46 @@ describe('Boss phase system', () => {
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
+	});
+});
+
+describe('Boss animation fallback', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('does not request missing dragon idle animation when boss is stunned', () => {
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const sprite = scene.add.sprite.mock.results[0]?.value;
+		const unitId = system.getUnitPositions()[0].instanceId;
+		system.applyStun(unitId, 1000);
+
+		expect(sprite.play).not.toHaveBeenCalledWith('dragon-idle');
+	});
+
+	it('does not request missing dragon death animation when boss dies', () => {
+		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+
+		const sprite = scene.add.sprite.mock.results[0]?.value;
+		const unitId = system.getUnitPositions()[0].instanceId;
+		const result = system.applyDamage(unitId, 600, true);
+
+		expect(result?.killed).toBe(true);
+		expect(sprite.play).not.toHaveBeenCalledWith('dragon-death');
 	});
 });
 
@@ -517,7 +657,7 @@ describe('CC immunity', () => {
 	});
 
 	it('resists slow when RNG rolls below ccImmunityChance', () => {
-		// Spawn titan at stage level 1 (ccImmunity=0 by default)
+		// Spawn dragon at stage level 1 (ccImmunity=0 by default)
 		// Override stageLevel to 15 (band 2, ccImmunity=0.1)
 		system.setStageLevel(15);
 		system.setRng(() => 0.05); // always below 0.1 → always resist
@@ -557,5 +697,171 @@ describe('CC immunity', () => {
 		// (0 > 0 is false, so the immunity check is skipped)
 		system.applySlow(unitId, 0.5, 2000);
 		// Slow should be applied (no resistance at level 1)
+	});
+});
+
+describe('damage_shield absorption', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('shield absorbs full damage when shieldHp > damage — HP unchanged, shieldHp reduced', () => {
+		// mana_shield: hp=250, armor=10, shieldHp=300
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300); // spawn
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// armorPierce to bypass armor; damage=100 < shieldHp=300
+		const result = system.applyDamage(unitId, 100, true);
+		expect(result?.killed).toBe(false);
+		expect(result?.actualDamage).toBe(0);
+		// Shield absorb is silent, distinct from MISS (which is only for armor full absorb)
+		expect(result?.outcome).toBe('absorbed');
+
+		const pos = system.getUnitPositions()[0];
+		expect(pos.hp).toBe(250); // HP untouched
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(200); // 300 - 100
+	});
+
+	it('shield partially absorbs — shieldHp becomes 0, remaining damage hits HP', () => {
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// damage=350 > shieldHp=300 → leftover=50 hits HP
+		const result = system.applyDamage(unitId, 350, true);
+		expect(result?.killed).toBe(false);
+
+		const pos = system.getUnitPositions()[0];
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+		expect(pos.hp).toBe(200); // 250 - 50
+	});
+
+	it('no shield (shieldHp undefined) — damage goes straight to HP', () => {
+		// scout_drone has no damage_shield behavior
+		system.queueUnits('scout_drone', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// scout_drone: hp=30, armor=0
+		system.applyDamage(unitId, 10);
+
+		const pos = system.getUnitPositions()[0];
+		expect(pos.hp).toBe(20);
+		expect(system.getUnit(unitId)?.data.shieldHp).toBeUndefined();
+	});
+
+	it('shield depleted (shieldHp = 0) — damage goes straight to HP', () => {
+		system.queueUnits('mana_shield', 1);
+		system.update(0, 300);
+
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Drain the shield first
+		system.applyDamage(unitId, 300, true);
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+
+		// Now further damage should hit HP
+		system.applyDamage(unitId, 50, true);
+
+		const pos = system.getUnitPositions()[0];
+		expect(system.getUnit(unitId)?.data.shieldHp).toBe(0);
+		expect(pos.hp).toBe(200); // 250 - 50
+	});
+});
+
+describe('ranged_tower_attack behavior', () => {
+	let scene: ReturnType<typeof createScene>;
+	let grid: ReturnType<typeof createGridManager>;
+	let system: UnitSystem;
+
+	function makeTowerSystem(
+		towers: Array<{ instanceId: string; position: { x: number; y: number } }>,
+	) {
+		return {
+			getTowers: vi.fn(() => towers),
+			disableTower: vi.fn(),
+		};
+	}
+
+	beforeEach(() => {
+		scene = createScene();
+		grid = createGridManager();
+		system = new UnitSystem(scene as never, grid as never);
+		system.setPaths([LANE_A]);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('calls disableTower on nearest tower within range after cooldown', () => {
+		// arcane_mage: specialBehavior=ranged_tower_attack, range=2, damage=25, cooldownMs=3000
+		// LANE_A starts at grid (0,0) → world (0,0)
+		const towers = [{ instanceId: 'tower-1', position: { x: 1, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300); // spawn at (0,0)
+
+		// Advance time past cooldown (3000ms) without spawning another unit
+		system.update(3100, 1); // time=3100ms, delta=1ms
+
+		expect(towerSystem.disableTower).toHaveBeenCalledWith(
+			'tower-1',
+			expect.any(Number),
+		);
+	});
+
+	it('does not call disableTower when no tower is in range', () => {
+		// Tower is at (10,0), far from unit at (0,0), range=2
+		const towers = [{ instanceId: 'tower-far', position: { x: 10, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+		system.update(3100, 1);
+
+		expect(towerSystem.disableTower).not.toHaveBeenCalled();
+	});
+
+	it('respects cooldown — does not attack again before cooldownMs elapses', () => {
+		const towers = [{ instanceId: 'tower-1', position: { x: 1, y: 0 } }];
+		const towerSystem = makeTowerSystem(towers);
+		system.setTowerSystem(towerSystem as never);
+
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+
+		// First attack fires at t=3100
+		system.update(3100, 1);
+		expect(towerSystem.disableTower).toHaveBeenCalledTimes(1);
+
+		// Second update at t=3200 — still within cooldown
+		system.update(3200, 1);
+		expect(towerSystem.disableTower).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not attack without towerSystem injected', () => {
+		// No setTowerSystem call — should not crash
+		system.queueUnits('arcane_mage', 1);
+		system.update(0, 300);
+		expect(() => system.update(3100, 1)).not.toThrow();
 	});
 });

@@ -686,6 +686,17 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
     return;
   }
 
+  if (tower.id === 'wind_spire') {
+    // Windmill hub pulse — no bow/arrow (shape maps to 'archer' by default)
+    const hubY = 20;
+    if (frame === 1) addGlow(ctx, cx, hubY, 5, tower.color, 0.3);
+    else if (frame === 2 || frame === 3) {
+      addGlow(ctx, cx, hubY, 8, tower.color, 0.5);
+      setPixel(ctx, cx, hubY, PALETTE.white);
+    } else if (frame === 4) addGlow(ctx, cx, hubY, 6, tower.color, 0.25);
+    return;
+  }
+
   if (tower.id === 'plasma') {
     // Catapult with arm swing — DON'T use HQ base (it includes static arm).
     // Instead we skip the pre-rendered base and draw body+arm per frame.
@@ -779,9 +790,12 @@ export async function generate(): Promise<ManifestEntry[]> {
       }
 
       // Grade variants: rare / unique / epic
+      // Nova cannon: use body-only draw so the runtime rotating barrel is the
+      // only barrel visible (drawFn = drawNovaCannonHQ bakes a fixed barrel).
+      const drawBody = tower.id === 'nova_cannon' ? drawNovaCannonBody : drawFn;
       for (const grade of ['rare', 'unique', 'epic'] as GradeVariant[]) {
         const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
-        drawFn(ctx, 0, 0);
+        drawBody(ctx, 0, 0);
         drawGradeDecoration(ctx, grade, gradeCtx);
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-${grade}.png`);
         entries.push({
@@ -791,27 +805,54 @@ export async function generate(): Promise<ManifestEntry[]> {
         });
       }
 
-      // Fire spritesheet at 64×80 with HQ tower scaled down as base.
-      // drawFireFrame's fire effects are calibrated for 64×80 coords,
-      // so we render the HQ tower into a temp 128×160 canvas, scale it
-      // down to 64×80 as the base, then overlay fire effects only.
-      {
+      // Fire spritesheets — base + grade variants at 64×80.
+      // drawFireFrame's fire effects are calibrated for 64×80 coords, so we
+      // render the HQ tower into a temp 128×160 canvas, scale it down to 64×80
+      // per frame, then (for rare/unique/epic) draw the grade decoration at
+      // native 64×80 coordinates so the gems stay crisp at game resolution.
+      const fireGrades: GradeVariant[] = ['normal', 'rare', 'unique', 'epic'];
+      // Fire-scale grade context (native 64×80 coordinates, proportional to HQ)
+      const fireGradeCtx = {
+        cx: 32,
+        topY: 18,
+        width: 22,
+        height: 48,
+        accentColor: tower.color,
+      };
+      for (const fireGrade of fireGrades) {
         const fireW = 64 * FIRE_FRAME_COUNT;
         const { canvas, ctx } = makeCanvas(fireW, 80);
-        // Pre-render HQ tower once, reuse for all frames
+        // Pre-render HQ tower once, reuse for all frames.
+        // Grade variants use body-only draw for nova_cannon so the runtime
+        // rotating barrel stays visible through the fire animation.
         const { canvas: hqTmp, ctx: hqCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
-        drawFn(hqCtx, 0, 0);
+        const hqDraw =
+          tower.id === 'nova_cannon' && fireGrade !== 'normal'
+            ? drawNovaCannonBody
+            : drawFn;
+        hqDraw(hqCtx, 0, 0);
         for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
           // Draw HQ tower scaled down to 64×80
           ctx.drawImage(hqTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, f * 64, 0, 64, 80);
-          // Overlay simplified fire effects for pilot towers
+          // Overlay simplified fire effects for pilot towers. Some towers
+          // (plasma, earth_golem) call clearRect on the frame to redraw body
+          // with arm pose — we apply grade decoration AFTER so it survives.
           drawPilotFireEffect(ctx, f * 64, tower, f);
+          // Apply grade decoration at fire scale (skip for normal)
+          if (fireGrade !== 'normal') {
+            const frameGradeCtx = {
+              ...fireGradeCtx,
+              cx: fireGradeCtx.cx + f * 64,
+            };
+            drawGradeDecoration(ctx, fireGrade, frameGradeCtx);
+          }
         }
-        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-fire.png`);
+        const suffix = fireGrade === 'normal' ? '' : `-${fireGrade}`;
+        saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}${suffix}-fire.png`);
         entries.push({
-          key: `tower-${tower.id}-fire`,
+          key: `tower-${tower.id}${suffix}-fire`,
           type: 'spritesheet',
-          path: `assets/towers/${tower.id}-fire.png`,
+          path: `assets/towers/${tower.id}${suffix}-fire.png`,
           frameWidth: 64,
           frameHeight: 80,
           frameCount: FIRE_FRAME_COUNT,

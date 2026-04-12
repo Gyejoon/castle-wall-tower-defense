@@ -1,6 +1,6 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-11  
+> **Last Updated:** 2026-04-12  
 > **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
 > 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
 
@@ -126,9 +126,10 @@
 | INITIAL_ENERGY | 40 | 게임 시작 시 초기 에너지 |
 | ENERGY_PER_SEC | 1 | 자연 재생 (prep 페이즈 중 정지) |
 | ENERGY_CAP | 100 | 최대 에너지 |
-| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (마지막 웨이브 제외) |
+| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (보스 웨이브 포함 전 웨이브 적용) |
 | 킬 보상 | 없음 | ENERGY_PER_KILL, ENERGY_PER_BOSS_KILL 제거됨 |
-| 마지막 보스 웨이브 | 에너지 리젠 + 웨이브 클리어 보상 비활성화 | — |
+
+> 에너지 리젠과 웨이브 클리어 보상은 **모든 웨이브(마지막 보스 웨이브 포함)** 에서 동일하게 작동한다. 이전에는 마지막 보스 웨이브에서 리젠+클리어 보상이 비활성화되었으나, 보스전 배치/업그레이드 유연성을 위해 제거됨.
 
 ### 웨이브 타이머
 
@@ -178,15 +179,31 @@
 > - **Passive 스턴 타워** (shield T1 / holy_shrine T4 / divine_throne T5, `attackSpeed=0`): cooldown + duration 양쪽 스케일 적용
 > - **Active 스턴 타워** (fortress T2, `attackSpeed=1.0`): duration 스케일만 적용. 발동 cadence는 `attackInterval = 1000/attackSpeed`로 결정되며 `CC_AURA_CONFIGS.cooldownMs`는 참조하지 않음. 별도 cooldown 스케일은 attackSpeed 재설계가 필요하여 후속 세션에서 처리
 
-> MAX_TOWER_LEVEL = 50. unique→epic 승급에 LV.50 필요.
+> 등급별 최대 레벨: normal=20, rare=30, unique=50, epic=50 (`GRADE_MAX_LEVEL`).
+
+### 타워 등급 시스템
+
+> 코드 위치: `packages/shared/src/constants/meta.ts` — `GRADE_MAX_LEVEL`, `GRADE_BONUS`, `GRADE_COST_MULT`, `PROMOTION_CONFIG`
+
+**등급별 최대 레벨 / 강화비 배수 / 스탯 보너스**
+
+| 등급 | 최대 레벨 | 강화비 배수 | GRADE_BONUS (데미지/체력) |
+|------|---------|---------|----------------------|
+| normal | 20 | ×1.0 | +0% |
+| rare | 30 | ×2.0 | +70% |
+| unique | 50 | ×4.0 | +250% |
+| epic | 50 | ×8.0 | +800% |
+
+> GRADE_BONUS 설계 원칙: 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 보장 (예: rare Lv.30 < unique Lv.1).
+> 강화 비용 공식: `(50 + level * 20) × TIER_COST_MULT[tier] × GRADE_COST_MULT[grade]`.
 
 ### 타워 승급 확률
 
 | 현재 → 목표 | 확률 | 필요 레벨 | 골드 비용 | 실패 시 |
 |----------|------|---------|--------|-------|
-| 일반 → 레어 | 20% | LV.20 | 500G | 골드 소실, 레벨 유지 |
-| 레어 → 유니크 | 10% | LV.30 | 2000G | 골드 소실, 레벨 유지 |
-| 유니크 → 에픽 | 5% | LV.50 | 8000G | 골드 소실, 레벨 유지 |
+| 일반 → 레어 | 80% | LV.20 | 500G | 골드 소실, 레벨 유지 |
+| 레어 → 유니크 | 50% | LV.30 | 2000G | 골드 소실, 레벨 유지 |
+| 유니크 → 에픽 | 25% | LV.50 | 8000G | 골드 소실, 레벨 유지 |
 
 ---
 
@@ -204,18 +221,21 @@
 
 ### 방어 무시 (Armor Pierce) 메커니즘
 
-> 코드 위치: `packages/phaser-game/src/systems/TowerSystem.ts:275`
+> 코드 위치: `packages/phaser-game/src/systems/TowerSystem.ts:418` (`const armorPierce = !special`)
 
 - `special`이 없는 공격형 타워 → **방어 무시** (armor를 0으로 취급)
 - `special`이 있는 타워 (splash, slow 등) → armor 감산 적용
-- 데미지 공식: `damage = Math.max(1, rawDamage - armor)`
+- 데미지 공식: `damage = rawDamage - armor` (결과 ≤ 0 → **MISS**, HP 감소 없음)
+- 모든 데미지는 정수로 표시된다 (`Math.floor` 적용).
+
+> **MISS 처리**: armor 감산 후 데미지가 0 이하가 되면 해당 공격은 MISS로 처리되어 HP 감소가 발생하지 않는다 (이전에는 `Math.max(1, ...)`로 최소 1 데미지 보장). 방어 무시 대상이 아닌 타워가 고armor 적을 공격할 때 dmg=0 상황이 발생할 수 있다.
 
 **방어 무시 대상 타워** (special 없는 공격형):
 
 | Tier | ID | 이름 |
 |------|-----|------|
-| T1 | laser | 궁수 탑 |
-| T2 | twin_laser | 쌍궁 탑 |
+| T1 | archer | 궁수 탑 |
+| T2 | twin_archer | 쌍궁 탑 |
 | T3 | flame_tower | 화염 탑 |
 | T3 | wind_spire | 바람의 첨탑 |
 | T3 | earth_golem | 대지 골렘 |
@@ -223,14 +243,14 @@
 
 dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클리어 특화, 의도된 디자인).
 
-### Lv.1 기준 DPS 비교 (laser vs plasma)
+### Lv.1 기준 DPS 비교 (archer vs plasma)
 
-| 적 | armor | laser DPS (방어 무시) | plasma DPS (armor 적용) |
+| 적 | armor | archer DPS (방어 무시) | plasma DPS (armor 적용) |
 |----|-------|---------------------|----------------------|
 | scout_drone | 0 | 15.0 | 20.0 |
 | battle_robot | 5 | 15.0 | 16.0 |
 | heavy_walker | 12 | 15.0 | 10.4 |
-| dragon | 25 | 15.0 | 0.8 (min1) |
+| dragon | 25 | 15.0 | 0 (MISS — armor ≥ rawDamage) |
 
 ### 보스 CC 저항 (Boss CC Resistance)
 
@@ -309,9 +329,9 @@ basePower:
 
 | 현재 → 목표 | 확률 | 필요 레벨 | 골드 비용 | 성공 시 | 실패 시 |
 |----------|------|---------|--------|--------|-------|
-| 일반 → 레어 | 20% | LV.20 | 500G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
-| 레어 → 유니크 | 10% | LV.30 | 2000G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
-| 유니크 → 에픽 | 5% | LV.50 | 8000G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
+| 일반 → 레어 | 80% | LV.20 | 500G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
+| 레어 → 유니크 | 50% | LV.30 | 2000G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
+| 유니크 → 에픽 | 25% | LV.50 | 8000G | Lv.1 리셋 | 골드 소실, 레벨 유지 |
 
 ---
 
@@ -342,6 +362,9 @@ basePower:
 | 2026-04-11 | titan→dragon rename | 일반 유닛 ID titan을 dragon으로 전면 변경 | 최종보스 전용 예약 → 일반 비행 유닛으로 재정의 |
 | 2026-04-11 | W2/W3 유닛 추가 | flame_imp, lava_golem (W2), arcane_mage, mana_shield (W3) | 월드별 고유 적 조합 |
 | 2026-04-11 | 월드별 보스 3종 추가 | orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | bossBehaviorId 기반 보스 AI |
+| 2026-04-12 | 보스 웨이브 에너지 시스템 통일 | 마지막 보스 웨이브에서 에너지 리젠 + ENERGY_PER_WAVE_CLEAR 비활성화 제거. 전 웨이브 동일 적용 | 보스전 중 타워 배치/업그레이드 유연성 확보, 예외 케이스 제거 (DRIFT-2) |
+| 2026-04-12 | armor 데미지 공식 MISS 전환 | `Math.max(1, rawDamage - armor)` → `rawDamage - armor` (0 이하 시 MISS). 최종 데미지 `Math.floor` 정수화 | 최소 1 데미지 보장 제거로 armor 전략성 강화, 소수점 데미지 표기 버그 수정 |
+| 2026-04-12 | 타워 승급 시스템 개선 (#52) | 등급별 최대 레벨 (normal=20/rare=30/unique=50/epic=50), GRADE_BONUS (0/+70%/+250%/+800%), GRADE_COST_MULT (1x/2x/4x/8x). 승급 확률 20/10/5% → 80/50/25% | 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 재밸런스, 승급 성공률 현실화 |
 
 ---
 
@@ -366,7 +389,8 @@ basePower:
 1. 기본 데미지 = `baseDamage × enhancementStatMultiplier(level) × (1 + GRADE_BONUS[grade])`
 2. 속성 배수 적용 = `× getElementMultiplier(tower.element, enemy.element)`
 3. splash 스플래시 감쇠 = `× 0.5` (splash 대상에만)
-4. armor 감산 = `Math.max(1, result - enemy.armor)` (단 §7 방어 무시 대상 타워 제외)
+4. armor 감산 = `result - enemy.armor` (단 §7 방어 무시 대상 타워 제외. 0 이하 시 MISS 처리, HP 감소 없음)
+5. 정수 변환 = `Math.floor(result)` — 최종 데미지는 정수로 적용/표시됨
 
 ### 타워 속성 분포
 | 속성 | 타워 ID |

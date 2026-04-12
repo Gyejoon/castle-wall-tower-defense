@@ -5,7 +5,7 @@ import { calcCombatPower, calcTowerPower } from '../src/utils/combatPower';
 // New formula: DPS-based (damage * attackSpeed) for damage towers,
 // utility-based for support towers (stun=15, stun_aoe=25, etc.)
 // enhancementStatMultiplier(level) = 1 + (level - 1) * 0.03
-// GRADE_BONUS: normal=0, rare=0.1, unique=0.25, epic=0.45
+// GRADE_BONUS: normal=0, rare=0.7, unique=2.5, epic=8.0
 // AWAKENING_MULTIPLIER: [1.0, 1.2, 1.5, 2.0]
 
 function makeTower(overrides: Partial<OwnedTower> = {}): OwnedTower {
@@ -25,8 +25,8 @@ describe('calcTowerPower', () => {
 		expect(calcTowerPower(makeTower())).toBe(15);
 	});
 
-	it('archer level 10, rare = round(15 * 1.27 * 1.1) = 21', () => {
-		expect(calcTowerPower(makeTower({ level: 10, grade: 'rare' }))).toBe(21);
+	it('archer level 10, rare = round(15 * 1.27 * 1.7) = 32', () => {
+		expect(calcTowerPower(makeTower({ level: 10, grade: 'rare' }))).toBe(32);
 	});
 
 	it('archer level 1, awakening 2 = round(15 * 1.5) = 23', () => {

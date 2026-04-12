@@ -24,6 +24,7 @@ import type { WorldGimmick } from './world-gimmicks/types';
 export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
+	grade: 'normal' | 'rare' | 'unique' | 'epic';
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
@@ -221,6 +222,7 @@ export class TowerSystem {
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
+			grade: towerGrade,
 			effectiveDamage: getEffectiveStats(
 				def.stats.damage,
 				towerLevel,
@@ -619,7 +621,13 @@ export class TowerSystem {
 					// Use the same hit-flash asset at barrel tip
 					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
 				} else {
-					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
+					this.spawnMuzzleVfx(
+						def.id,
+						tower.grade,
+						towerWorld,
+						data.position,
+						tower.sprite,
+					);
 				}
 
 				if (!hasProjectile) {
@@ -854,11 +862,24 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
+		towerGrade: 'normal' | 'rare' | 'unique' | 'epic',
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,
 	): void {
-		const textureKey = `tower-${towerDefId}-fire`;
+		// Grade-aware fire spritesheet: rare/unique/epic have their own variants
+		// so corner gems / halos stay on the tower during the fire animation.
+		// Falls back to base if grade-specific sheet isn't loaded.
+		const baseKey = `tower-${towerDefId}-fire`;
+		const gradeKey =
+			towerGrade === 'normal'
+				? baseKey
+				: `tower-${towerDefId}-${towerGrade}-fire`;
+		const textureKey =
+			this.scene.textures.exists(gradeKey) &&
+			this.scene.anims.exists(getOptionalAnimationKey(gradeKey))
+				? gradeKey
+				: baseKey;
 		const animationKey = getOptionalAnimationKey(textureKey);
 		if (
 			!this.scene.textures.exists(textureKey) ||

@@ -68,17 +68,17 @@ export const PALETTE = {
   white:      '#fffffe',
   gray:       '#94a1b2',
   // Tower colors
-  laser:      '#e2b714',
-  plasma:     '#2cb67d',
-  emp:        '#7f5af0',
-  shield:     '#00ccff',
+  archer:     '#c8a04a',
+  plasma:     '#8b4513',
+  emp:        '#5bc8e8',
+  shield:     '#f4d03f',
   stasis:     '#94a1b2',
   // Unit colors
   scoutDrone:    '#72f1b8',
   battleRobot:   '#5b8cff',
   heavyWalker:   '#ff8c42',
   stealthDrone:  '#b388ff',
-  titan:         '#ff4757',
+  dragon:        '#c04020',
 } as const;
 
 export const TILE_SIZE = 32;
@@ -171,9 +171,9 @@ Run: `bun run scripts/generate-assets/generate-all.ts`
 {
   "generated": "2026-03-28T...",
   "assets": [
-    { "key": "tower-laser", "type": "image", "path": "assets/towers/laser.png" },
-    { "key": "tower-laser-fire", "type": "spritesheet", "path": "assets/towers/laser-fire.png",
-      "frameWidth": 32, "frameHeight": 32, "frameCount": 4 }
+    { "key": "tower-archer", "type": "image", "path": "assets/towers/archer.png" },
+    { "key": "tower-archer-fire", "type": "spritesheet", "path": "assets/towers/archer-fire.png",
+      "frameWidth": 64, "frameHeight": 80, "frameCount": 8 }
   ]
 }
 ```

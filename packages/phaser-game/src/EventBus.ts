@@ -100,14 +100,6 @@ export interface GameEventMap {
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
 	'request-set-speed': { multiplier: 1 | 2 };
-	'request-place-tower-at': {
-		towerDefId: string;
-		clientX: number;
-		clientY: number;
-	};
-	'drag-hover': { clientX: number; clientY: number };
-	'drag-drop': { towerDefId: string; clientX: number; clientY: number };
-
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
 	// Stage select

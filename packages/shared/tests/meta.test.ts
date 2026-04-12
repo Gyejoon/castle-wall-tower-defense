@@ -5,6 +5,7 @@ import {
 	enhancementCost,
 	enhancementStatMultiplier,
 	getEffectiveStats,
+	maxLevelForGrade,
 	SAVE_VERSION,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
@@ -36,14 +37,23 @@ describe('battleXp', () => {
 });
 
 describe('enhancementCost', () => {
-	it('returns 70 for level 1, tier 1', () => {
-		expect(enhancementCost(1, 1)).toBe(70);
+	it('returns 70 for level 1, tier 1, normal', () => {
+		expect(enhancementCost(1, 1, 'normal')).toBe(70);
 	});
-	it('returns 140 for level 1, tier 3', () => {
-		expect(enhancementCost(1, 3)).toBe(140);
+	it('returns 140 for level 1, tier 3, normal', () => {
+		expect(enhancementCost(1, 3, 'normal')).toBe(140);
 	});
-	it('returns 1250 for level 10, tier 5', () => {
-		expect(enhancementCost(10, 5)).toBe(1250);
+	it('returns 1250 for level 10, tier 5, normal', () => {
+		expect(enhancementCost(10, 5, 'normal')).toBe(1250);
+	});
+	it('scales 2x for rare grade', () => {
+		expect(enhancementCost(1, 1, 'rare')).toBe(140);
+	});
+	it('scales 4x for unique grade', () => {
+		expect(enhancementCost(1, 1, 'unique')).toBe(280);
+	});
+	it('scales 8x for epic grade', () => {
+		expect(enhancementCost(1, 1, 'epic')).toBe(560);
 	});
 });
 
@@ -63,11 +73,43 @@ describe('getEffectiveStats', () => {
 	it('returns 10 for baseStat=10, level=1, grade=normal', () => {
 		expect(getEffectiveStats(10, 1, 'normal')).toBe(10);
 	});
-	it('returns ~11 for baseStat=10, level=1, grade=rare', () => {
-		expect(getEffectiveStats(10, 1, 'rare')).toBeCloseTo(11, 0);
+	it('returns 17 for baseStat=10, level=1, grade=rare (+70%)', () => {
+		expect(getEffectiveStats(10, 1, 'rare')).toBeCloseTo(17, 2);
 	});
-	it('returns ~18.415 for baseStat=10, level=10, grade=epic', () => {
-		expect(getEffectiveStats(10, 10, 'epic')).toBeCloseTo(18.415, 2);
+	it('returns ~114.3 for baseStat=10, level=10, grade=epic', () => {
+		expect(getEffectiveStats(10, 10, 'epic')).toBeCloseTo(114.3, 1);
+	});
+	it('higher grade Lv.1 > previous grade max level (promotion power gate)', () => {
+		// normal max Lv.20: 10 * 1.57 = 15.7
+		// rare Lv.1: 10 * 1.0 * 1.7 = 17.0 > 15.7 ✓
+		expect(getEffectiveStats(10, 1, 'rare')).toBeGreaterThan(
+			getEffectiveStats(10, 20, 'normal'),
+		);
+		// rare max Lv.30: 10 * 1.87 * 1.7 = 31.79
+		// unique Lv.1: 10 * 1.0 * 3.5 = 35.0 > 31.79 ✓
+		expect(getEffectiveStats(10, 1, 'unique')).toBeGreaterThan(
+			getEffectiveStats(10, 30, 'rare'),
+		);
+		// unique max Lv.50: 10 * 2.47 * 3.5 = 86.45
+		// epic Lv.1: 10 * 1.0 * 9.0 = 90.0 > 86.45 ✓
+		expect(getEffectiveStats(10, 1, 'epic')).toBeGreaterThan(
+			getEffectiveStats(10, 50, 'unique'),
+		);
+	});
+});
+
+describe('maxLevelForGrade', () => {
+	it('normal caps at 20', () => {
+		expect(maxLevelForGrade('normal')).toBe(20);
+	});
+	it('rare caps at 30', () => {
+		expect(maxLevelForGrade('rare')).toBe(30);
+	});
+	it('unique caps at 50', () => {
+		expect(maxLevelForGrade('unique')).toBe(50);
+	});
+	it('epic caps at 50', () => {
+		expect(maxLevelForGrade('epic')).toBe(50);
 	});
 });
 

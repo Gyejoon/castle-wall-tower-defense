@@ -23,8 +23,6 @@ const COLORBLIND_OPTIONS = [
 export function SettingsTab() {
 	const screenShake = useGameStore((s) => s.screenShake);
 	const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
-	const showDamageNumbers = useGameStore((s) => s.showDamageNumbers);
-	const toggleDamageNumbers = useGameStore((s) => s.toggleDamageNumbers);
 	const bgmVolume = useGameStore((s) => s.bgmVolume);
 	const sfxVolume = useGameStore((s) => s.sfxVolume);
 	const colorblindMode = useGameStore((s) => s.colorblindMode);
@@ -60,11 +58,6 @@ export function SettingsTab() {
 						label="화면 흔들림"
 						checked={screenShake}
 						onChange={toggleScreenShake}
-					/>
-					<ToggleRow
-						label="데미지 숫자"
-						checked={showDamageNumbers}
-						onChange={toggleDamageNumbers}
 					/>
 				</SettingsSection>
 

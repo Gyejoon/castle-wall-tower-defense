@@ -3,7 +3,7 @@ import {
 	enhancementCost,
 	GLOBAL_RANGE_THRESHOLD,
 	getEffectiveStats,
-	MAX_TOWER_LEVEL,
+	maxLevelForGrade,
 	PROMOTION_CONFIG,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
@@ -52,6 +52,7 @@ export function TowerBottomSheet({
 	useEffect(() => {
 		return () => {
 			for (const t of timersRef.current) clearTimeout(t);
+			timersRef.current.length = 0;
 		};
 	}, []);
 
@@ -99,13 +100,14 @@ export function TowerBottomSheet({
 
 	const level = owned?.level ?? 1;
 	const grade = owned?.grade ?? 'normal';
+	const gradeMax = maxLevelForGrade(grade);
 	const effectiveDmg = getEffectiveStats(def.stats.damage, level, grade);
 	const nextLevelDmg =
-		level < MAX_TOWER_LEVEL
+		level < gradeMax
 			? getEffectiveStats(def.stats.damage, level + 1, grade)
 			: effectiveDmg;
-	const cost = owned ? enhancementCost(level, def.tier) : 0;
-	const canEnhance = owned && level < MAX_TOWER_LEVEL && profile.gold >= cost;
+	const cost = owned ? enhancementCost(level, def.tier, grade) : 0;
+	const canEnhance = owned && level < gradeMax && profile.gold >= cost;
 	const promoConfig = PROMOTION_CONFIG[grade];
 	const meetsLevelReq = promoConfig.nextGrade
 		? level >= promoConfig.requiredLevel
@@ -146,7 +148,7 @@ export function TowerBottomSheet({
 							className="font-pixel text-[11px]"
 							style={{ color: GRADE_BORDER[grade] }}
 						>
-							{grade.toUpperCase()} Lv.{level}
+							{grade.toUpperCase()} Lv.{level}/{gradeMax}
 						</span>
 					)}
 				</div>
@@ -242,7 +244,7 @@ export function TowerBottomSheet({
 						border: `1px solid ${colors.border}`,
 					}}
 				>
-					{level < MAX_TOWER_LEVEL ? (
+					{level < gradeMax ? (
 						<>
 							<div className="flex justify-between font-pixel text-[11px]">
 								<span className="text-text-secondary">
@@ -250,6 +252,9 @@ export function TowerBottomSheet({
 									<span className="text-success">
 										{nextLevelDmg.toFixed(1)}
 									</span>
+								</span>
+								<span className="text-text-secondary">
+									Lv.{level}/{gradeMax}
 								</span>
 							</div>
 							<PixelButton
@@ -263,7 +268,9 @@ export function TowerBottomSheet({
 						</>
 					) : (
 						<span className="text-center font-pixel text-[11px] text-gold">
-							최대 레벨
+							{promoConfig.nextGrade
+								? `강화 한도 (Lv.${gradeMax}) — 승급 필요`
+								: `최대 레벨 (Lv.${gradeMax})`}
 						</span>
 					)}
 				</div>

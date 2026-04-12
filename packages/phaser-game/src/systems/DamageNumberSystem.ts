@@ -2,11 +2,11 @@ import { PHASER_COLORS } from '@gld/shared';
 import type Phaser from 'phaser';
 
 const POOL_SIZE = 24;
-const FLOAT_DURATION = 600; // ms
-const FLOAT_DISTANCE = 24; // px upward
-const FONT_SIZE = '8px';
+const FLOAT_DURATION = 800; // ms
+const FLOAT_DISTANCE = 28; // px upward
+const FONT_SIZE = '11px';
 const FONT_FAMILY = "'Galmuri11', 'Press Start 2P', cursive";
-const DEPTH = 80; // above units, below UI overlays
+const DEPTH = 100; // above units, above grid overlays, below modal UI
 
 function toHexStr(n: number): string {
 	return `#${n.toString(16).padStart(6, '0')}`;
@@ -66,11 +66,30 @@ export class DamageNumberSystem {
 
 		const hexColor = isCritical ? PHASER_COLORS.gold : PHASER_COLORS.text;
 		entry.text.setColor(toHexStr(hexColor));
-		entry.text.setText(String(damage));
+		entry.text.setText(String(Math.floor(damage)));
 		entry.text.setPosition(x, y - 16); // offset above unit center
 		entry.text.setVisible(true);
 		entry.text.setAlpha(1);
 		entry.text.setScale(isCritical ? 1.3 : 1);
+		entry.startX = x;
+		entry.startY = y - 16;
+		entry.elapsed = 0;
+		entry.active = true;
+	}
+
+	/** Render "MISS" text at (x, y). Used when armor fully absorbs damage. */
+	showMiss(x: number, y: number): void {
+		if (!this.enabled) return;
+
+		const entry = this.pool.find((e) => !e.active);
+		if (!entry) return;
+
+		entry.text.setColor(toHexStr(PHASER_COLORS.textSecondary));
+		entry.text.setText('MISS');
+		entry.text.setPosition(x, y - 16);
+		entry.text.setVisible(true);
+		entry.text.setAlpha(1);
+		entry.text.setScale(1);
 		entry.startX = x;
 		entry.startY = y - 16;
 		entry.elapsed = 0;

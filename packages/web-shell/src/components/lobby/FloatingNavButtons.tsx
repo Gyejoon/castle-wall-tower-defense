@@ -48,7 +48,7 @@ export function FloatingNavButtons() {
 						{btn.count > 0 && (
 							<span
 								aria-hidden="true"
-								className="claimable-badge absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] rounded-full bg-danger text-[8px] text-white font-pixel flex items-center justify-center border border-border leading-none"
+								className="absolute -top-1 -right-1 min-w-[16px] h-4 px-[3px] rounded-full bg-danger text-[8px] text-white font-pixel flex items-center justify-center border border-border leading-none"
 							>
 								{btn.count > 99 ? '99+' : btn.count}
 							</span>

@@ -107,10 +107,6 @@ export class GameScene extends Phaser.Scene {
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
-	private onDmgNumbersChange = (_parent: unknown, value: boolean) => {
-		if (!this.isSceneAlive()) return;
-		this.damageNumbers.setEnabled(value);
-	};
 	private playerHp = INITIAL_PLAYER_HP;
 	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
@@ -131,16 +127,6 @@ export class GameScene extends Phaser.Scene {
 	private onSellTower!: (data: { col: number; row: number }) => void;
 	private onPause!: () => void;
 	private onResume!: () => void;
-	private onPlaceTowerAt!: (data: {
-		towerDefId: string;
-		clientX: number;
-		clientY: number;
-	}) => void;
-	private onDragDrop!: (data: {
-		towerDefId: string;
-		clientX: number;
-		clientY: number;
-	}) => void;
 	private onWaveStartedLifecycle!: (data: {
 		wave: number;
 		totalWaves: number;
@@ -298,14 +284,6 @@ export class GameScene extends Phaser.Scene {
 				: DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
 		this.damageNumbers = new DamageNumberSystem(this);
-		const showDmgNumbers = this.game.registry.get('showDamageNumbers') as
-			| boolean
-			| undefined;
-		this.damageNumbers.setEnabled(showDmgNumbers !== false);
-		this.game.registry.events.on(
-			'changedata-showDamageNumbers',
-			this.onDmgNumbersChange,
-		);
 		this.events.on('shutdown', this.cleanup, this);
 
 		this.cacheDecorationData();
@@ -375,7 +353,7 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			if (data.cleared && data.wave < data.totalWaves) {
+			if (data.cleared) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
 		};
@@ -412,29 +390,6 @@ export class GameScene extends Phaser.Scene {
 			if (!this.isSceneAlive()) return;
 			this.scene.resume();
 		};
-
-		this.onPlaceTowerAt = (data) => {
-			if (!this.isSceneAlive()) return;
-			if (this.gameOver) {
-				EventBus.emit('tower-placed', {
-					col: -1,
-					row: -1,
-					towerId: data.towerDefId,
-					success: false,
-					reason: 'scene_unavailable',
-				});
-				return;
-			}
-			const canvas = this.game.canvas;
-			const rect = canvas.getBoundingClientRect();
-			const scaleX = canvas.width / rect.width;
-			const scaleY = canvas.height / rect.height;
-			const worldX = data.clientX * scaleX;
-			const worldY = data.clientY * scaleY;
-			const gridPos = this.playerGrid.worldToGrid(worldX, worldY);
-			this.handlePlaceTower(gridPos.x, gridPos.y, data.towerDefId);
-		};
-		this.onDragDrop = this.onPlaceTowerAt;
 
 		this.onFurnaceCycle = ({ active, tiles }) => {
 			if (!this.isSceneAlive()) return;
@@ -505,8 +460,6 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-sell-tower', this.onSellTower);
 		EventBus.on('request-pause', this.onPause);
 		EventBus.on('request-resume', this.onResume);
-		EventBus.on('request-place-tower-at', this.onPlaceTowerAt);
-		EventBus.on('drag-drop', this.onDragDrop);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
@@ -948,7 +901,12 @@ export class GameScene extends Phaser.Scene {
 					evt.armorPierce,
 				);
 				if (pos && result) {
-					this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
+					// hit: show number. miss: show MISS. absorbed/invulnerable: silent.
+					if (result.outcome === 'hit') {
+						this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
+					} else if (result.outcome === 'miss') {
+						this.damageNumbers.showMiss(pos.x, pos.y);
+					}
 				}
 				onDamageResult?.(evt.unitId, result);
 				if (result?.killed) {
@@ -981,10 +939,8 @@ export class GameScene extends Phaser.Scene {
 
 		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
-		// prep/마지막 보스 페이즈에는 에너지 자연 증가 없음
 		const phase = this.playerWaves.getPhase();
-		const isLastBoss = phase === 'boss' && this.playerWaves.isLastWave();
-		if (phase !== 'prep' && !isLastBoss) {
+		if (phase !== 'prep') {
 			this.energySystem.update(scaledDelta / 1000);
 		}
 
@@ -1122,18 +1078,12 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-sell-tower', this.onSellTower);
 		EventBus.off('request-pause', this.onPause);
 		EventBus.off('request-resume', this.onResume);
-		EventBus.off('request-place-tower-at', this.onPlaceTowerAt);
-		EventBus.off('drag-drop', this.onDragDrop);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		EventBus.off('furnace-cycle', this.onFurnaceCycle);
 		EventBus.off('arcane-burst', this.onArcaneBurst);
-		this.game.registry.events.off(
-			'changedata-showDamageNumbers',
-			this.onDmgNumbersChange,
-		);
 		soundGenerator.reset();
 
 		for (const overlay of this.furnaceTintOverlays) overlay.destroy();

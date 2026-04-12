@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Migration tests for metaStore v1→v5
+// Migration tests for metaStore v1→v6
 // Amendment M from 2026-04-06-phase4-engagement-systems.md
 
 import {
@@ -9,7 +9,7 @@ import {
 	SAVE_VERSION,
 } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseSave, sanitizeV5Save } from '../meta/persistence';
+import { parseSave, sanitizeSave } from '../meta/persistence';
 import { useMetaStore } from '../metaStore';
 
 // localStorage mock helper
@@ -33,7 +33,7 @@ function makeLocalStorageMock(initial: Record<string, string> = {}): Storage {
 	} as Storage;
 }
 
-describe('metaStore v1→v5 migration', () => {
+describe('metaStore v1→v6 migration', () => {
 	beforeEach(() => {
 		useMetaStore.setState(createDefaultSave());
 	});
@@ -94,7 +94,6 @@ describe('metaStore v1→v5 migration', () => {
 		});
 		expect(s.settings.bgmVolume).toBe(0.7);
 		expect(s.settings.sfxVolume).toBe(0.8);
-		expect(s.settings.showDamageNumbers).toBe(false);
 		expect(s.settings.colorblindMode).toBe('off');
 
 		vi.unstubAllGlobals();
@@ -321,11 +320,11 @@ describe('metaStore v1→v5 migration', () => {
 	});
 });
 
-describe('sanitizeV5Save — v5 필드 누락 방어', () => {
+describe('sanitizeSave — v5 필드 누락 방어', () => {
 	it('achievements 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).achievements;
-		const result = sanitizeV5Save(save);
+		const result = sanitizeSave(save);
 		expect(result.progress.achievements).toEqual({
 			claimed: [],
 			progress: {},
@@ -335,7 +334,7 @@ describe('sanitizeV5Save — v5 필드 누락 방어', () => {
 	it('stageStars 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.progress as unknown as Record<string, unknown>).stageStars;
-		const result = sanitizeV5Save(save);
+		const result = sanitizeSave(save);
 		expect(result.progress.stageStars).toEqual({});
 	});
 
@@ -344,7 +343,7 @@ describe('sanitizeV5Save — v5 필드 누락 방어', () => {
 		const tower = save.collection[0] as unknown as Record<string, unknown>;
 		delete tower.awakening;
 		delete tower.duplicateCount;
-		const result = sanitizeV5Save(save);
+		const result = sanitizeSave(save);
 		expect(result.collection[0].awakening).toBe(0);
 		expect(result.collection[0].duplicateCount).toBe(0);
 	});
@@ -352,14 +351,14 @@ describe('sanitizeV5Save — v5 필드 누락 방어', () => {
 	it('combatPower 누락 시 기본값 채움', () => {
 		const save = createDefaultSave();
 		delete (save.profile as unknown as Record<string, unknown>).combatPower;
-		const result = sanitizeV5Save(save);
+		const result = sanitizeSave(save);
 		expect(result.profile.combatPower).toBe(0);
 	});
 
 	it('collection이 배열이 아니면 기본 컬렉션으로 대체', () => {
 		const save = createDefaultSave();
 		(save as unknown as Record<string, unknown>).collection = 'corrupted';
-		const result = sanitizeV5Save(save);
+		const result = sanitizeSave(save);
 		expect(Array.isArray(result.collection)).toBe(true);
 		expect(result.collection.length).toBeGreaterThan(0);
 	});
@@ -404,7 +403,7 @@ function makeV4Save(
 }
 
 describe('save v4→v5 migration: stageStars mapId→stageId', () => {
-	it('migrates v4 → v5: version bump', () => {
+	it('migrates v4 → v6: version bump', () => {
 		const save = makeV4Save({});
 		vi.stubGlobal(
 			'localStorage',
@@ -412,7 +411,7 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result?.version).toBe(5);
+		expect(result?.version).toBe(SAVE_VERSION);
 		vi.unstubAllGlobals();
 	});
 
@@ -514,13 +513,17 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('idempotent on v5 input: passing v5 save returns same data without re-migration', () => {
+	it('migrates v5 → v6: removes showDamageNumbers', () => {
 		const v5Save = {
 			...createDefaultSave(),
 			version: 5,
 			progress: {
 				...createDefaultSave().progress,
 				stageStars: { w1_s1: 3, w2_s4: 1 },
+			},
+			settings: {
+				...createDefaultSave().settings,
+				showDamageNumbers: true,
 			},
 		};
 		vi.stubGlobal(
@@ -529,7 +532,31 @@ describe('save v4→v5 migration: stageStars mapId→stageId', () => {
 		);
 		const result = parseSave();
 		expect(result).not.toBeNull();
-		expect(result?.version).toBe(5);
+		expect(result?.version).toBe(SAVE_VERSION);
+		expect(result?.progress.stageStars).toEqual({ w1_s1: 3, w2_s4: 1 });
+		expect(
+			(result?.settings as unknown as Record<string, unknown>)
+				.showDamageNumbers,
+		).toBeUndefined();
+		vi.unstubAllGlobals();
+	});
+
+	it('idempotent on v6 input: passing v6 save returns same data without re-migration', () => {
+		const v6Save = {
+			...createDefaultSave(),
+			version: SAVE_VERSION,
+			progress: {
+				...createDefaultSave().progress,
+				stageStars: { w1_s1: 3, w2_s4: 1 },
+			},
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v6Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result?.version).toBe(SAVE_VERSION);
 		expect(result?.progress.stageStars).toEqual({ w1_s1: 3, w2_s4: 1 });
 		vi.unstubAllGlobals();
 	});

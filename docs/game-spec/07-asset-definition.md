@@ -97,8 +97,9 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 | 타입 | 시각 | 사운드 |
 |------|------|--------|
-| beam (laser, emp 등) | 직선 레이저 + 임팩트 플래시 | sawtooth/square 주파수 스윕 |
-| arc (plasma, nova_cannon 등) | 포물선 돌 발사체 + trail dots | 3단계: 퍽(brown noise)→휘이(white bandpass)→쿵(brown noise) |
+| arrow (archer, twin_archer) | 포물선 화살 + trail + 임팩트 플래시 | 휘이익 + 탁 |
+| beam (emp, wind_spire 등) | 직선 빔 + 임팩트 플래시 | sawtooth/square 주파수 스윕 |
+| arc (plasma, nova_cannon, earth_golem 등) | 포물선 돌 발사체 + trail dots | 3단계: 퍽(brown noise)→휘이(white bandpass)→쿵(brown noise) |
 
 투석기(splash 타워) 팔 스윙 애니메이션: 180° 회전, 8프레임 (로딩→텐셔닝→발사→최대→반동→복귀)
 
@@ -297,7 +298,7 @@ tilemap-{stage-id}   # 타일맵
 icon-{category}-{id} # 아이콘
 ```
 
-> 현재 코드는 `-` 구분자 기반 (`tower-laser`, `unit-scout-drone`). **기존 패턴 유지.**
+> 현재 코드는 `-` 구분자 기반 (`tower-archer`, `unit-scout_drone`). **기존 패턴 유지.**
 
 ---
 

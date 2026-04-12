@@ -38,11 +38,14 @@ export function GradePromotionOverlay({ toGrade, towerId, onDone }: Props) {
 		const t2 = setTimeout(() => setPhase('reveal'), 450);
 		const t3 = setTimeout(() => setPhase('exit'), 1000);
 		const t4 = setTimeout(() => onDoneRef.current(), 1300);
+		// Safety timeout: force-call onDone if the normal sequence somehow fails
+		const tSafety = setTimeout(() => onDoneRef.current(), 3000);
 		return () => {
 			clearTimeout(t1);
 			clearTimeout(t2);
 			clearTimeout(t3);
 			clearTimeout(t4);
+			clearTimeout(tSafety);
 		};
 	}, [prefersReducedMotion]);
 

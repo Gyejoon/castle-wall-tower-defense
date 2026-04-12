@@ -29,7 +29,7 @@ export function enhancementCost(
 }
 
 export function enhancementStatMultiplier(level: number): number {
-	return 1 + (level - 1) * 0.03;
+	return 1 + (level - 1) * 0.04;
 }
 
 export function stunCooldownMultiplier(level: number): number {
@@ -97,9 +97,9 @@ export const PROMOTION_CONFIG = {
 
 export const GRADE_BONUS: Record<TowerGrade, number> = {
 	normal: 0,
-	rare: 0.7,
-	unique: 2.5,
-	epic: 8.0,
+	rare: 0.8,
+	unique: 3.5,
+	epic: 13.0,
 };
 
 export function getEffectiveStats(

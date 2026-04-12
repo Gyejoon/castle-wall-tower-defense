@@ -61,11 +61,11 @@ describe('enhancementStatMultiplier', () => {
 	it('returns 1 at level 1', () => {
 		expect(enhancementStatMultiplier(1)).toBe(1);
 	});
-	it('returns ~1.27 at level 10', () => {
-		expect(enhancementStatMultiplier(10)).toBeCloseTo(1.27, 2);
+	it('returns ~1.36 at level 10', () => {
+		expect(enhancementStatMultiplier(10)).toBeCloseTo(1.36, 2);
 	});
-	it('returns ~1.87 at level 30', () => {
-		expect(enhancementStatMultiplier(30)).toBeCloseTo(1.87, 2);
+	it('returns ~2.16 at level 30', () => {
+		expect(enhancementStatMultiplier(30)).toBeCloseTo(2.16, 2);
 	});
 });
 
@@ -73,11 +73,11 @@ describe('getEffectiveStats', () => {
 	it('returns 10 for baseStat=10, level=1, grade=normal', () => {
 		expect(getEffectiveStats(10, 1, 'normal')).toBe(10);
 	});
-	it('returns 17 for baseStat=10, level=1, grade=rare (+70%)', () => {
-		expect(getEffectiveStats(10, 1, 'rare')).toBeCloseTo(17, 2);
+	it('returns 18 for baseStat=10, level=1, grade=rare (+80%)', () => {
+		expect(getEffectiveStats(10, 1, 'rare')).toBeCloseTo(18, 2);
 	});
-	it('returns ~114.3 for baseStat=10, level=10, grade=epic', () => {
-		expect(getEffectiveStats(10, 10, 'epic')).toBeCloseTo(114.3, 1);
+	it('returns ~190.4 for baseStat=10, level=10, grade=epic', () => {
+		expect(getEffectiveStats(10, 10, 'epic')).toBeCloseTo(190.4, 1);
 	});
 	it('higher grade Lv.1 > previous grade max level (promotion power gate)', () => {
 		// normal max Lv.20: 10 * 1.57 = 15.7

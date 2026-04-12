@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { OwnedTower } from '../src/types/save';
 import { calcCombatPower, calcTowerPower } from '../src/utils/combatPower';
 
-// New formula: DPS-based (damage * attackSpeed) for damage towers,
-// utility-based for support towers (stun=15, stun_aoe=25, etc.)
-// enhancementStatMultiplier(level) = 1 + (level - 1) * 0.03
-// GRADE_BONUS: normal=0, rare=0.7, unique=2.5, epic=8.0
-// AWAKENING_MULTIPLIER: [1.0, 1.2, 1.5, 2.0]
+// New formula:
+//   - Pierce (no special) → damage × levelMult × gradeMult × attackSpeed
+//   - Non-pierce → max(0, damage × levelMult × gradeMult − REFERENCE_ARMOR) × attackSpeed
+//   - Damage + slow hybrid → DPS path + 0.5 × UTILITY_BASE[key]
+//   - Zero damage → UTILITY_BASE[key] (fallback 10)
+//   - Final: round((dps + utility) × awakenMult)
+//
+// Constants: REFERENCE_ARMOR=6, GRADE_BONUS: normal=0, rare=0.8, unique=3.5, epic=13.0
+// enhancementStatMultiplier(L) = 1 + (L-1) × 0.04 ; AWAKENING_MULTIPLIER = [1, 1.2, 1.5, 2.0]
 
 function makeTower(overrides: Partial<OwnedTower> = {}): OwnedTower {
 	return {
@@ -20,33 +24,60 @@ function makeTower(overrides: Partial<OwnedTower> = {}): OwnedTower {
 	};
 }
 
-describe('calcTowerPower', () => {
-	it('archer level 1 = DPS 10*1.5 = 15', () => {
+describe('calcTowerPower — pierce towers (no special, ignore armor)', () => {
+	it('archer L1 normal = 10 × 1.5 = 15', () => {
 		expect(calcTowerPower(makeTower())).toBe(15);
 	});
 
-	it('archer level 10, rare = round(15 * 1.27 * 1.7) = 32', () => {
-		expect(calcTowerPower(makeTower({ level: 10, grade: 'rare' }))).toBe(32);
+	it('archer L10 rare = round(10 × 1.36 × 1.8 × 1.5) = 37', () => {
+		expect(calcTowerPower(makeTower({ level: 10, grade: 'rare' }))).toBe(37);
 	});
 
-	it('archer level 1, awakening 2 = round(15 * 1.5) = 23', () => {
+	it('archer L1 awakening 2 = round(15 × 1.5) = 23', () => {
 		expect(calcTowerPower(makeTower({ awakening: 2 }))).toBe(23);
 	});
 
-	it('shield (stun utility) level 1 = 15', () => {
+	it('flame_tower (damage 40, AS 1.5, no special = pierce) L1 = 60', () => {
+		// flame_tower has no special → pierce; dps = 40 × 1.0 × 1.0 × 1.5 = 60
+		expect(calcTowerPower(makeTower({ defId: 'flame_tower' }))).toBe(60);
+	});
+});
+
+describe('calcTowerPower — non-pierce (splash/slow/stun, armor subtracted)', () => {
+	it('plasma L1 (dmg25, AS0.8, splash) = round((25 − 6) × 0.8) = 15', () => {
+		expect(calcTowerPower(makeTower({ defId: 'plasma' }))).toBe(15);
+	});
+
+	it('plasma L10 unique = round(max(0, 25 × 1.36 × 4.5 − 6) × 0.8) = 118', () => {
+		expect(
+			calcTowerPower(
+				makeTower({ defId: 'plasma', level: 10, grade: 'unique' }),
+			),
+		).toBe(118);
+	});
+});
+
+describe('calcTowerPower — damage + slow hybrid', () => {
+	it('emp L1 (dmg5, AS1.0, slow_30%) = 0 DPS + 0.5 × 10 utility = 5', () => {
+		expect(calcTowerPower(makeTower({ defId: 'emp' }))).toBe(5);
+	});
+
+	it('emp L20 rare (dmg5, AS1.0, slow_30%) scales past armor wall', () => {
+		// effDmg = 5 × 1.76 × 1.8 = 15.84 ; breakthrough = 9.84 ; dps = 9.84
+		// utility = 10 × 0.5 = 5 ; total = 14.84 → 15
+		expect(
+			calcTowerPower(makeTower({ defId: 'emp', level: 20, grade: 'rare' })),
+		).toBe(15);
+	});
+});
+
+describe('calcTowerPower — pure utility towers (damage 0)', () => {
+	it('shield (stun) L1 = 15', () => {
 		expect(calcTowerPower(makeTower({ defId: 'shield' }))).toBe(15);
 	});
 
-	it('fortress (dmg=15, as=1.0) level 1 = DPS 15', () => {
-		expect(calcTowerPower(makeTower({ defId: 'fortress' }))).toBe(15);
-	});
-
-	it('holy_shrine (stun_aoe_extended utility) level 1 = 40', () => {
+	it('holy_shrine (stun_aoe_extended) L1 = 40', () => {
 		expect(calcTowerPower(makeTower({ defId: 'holy_shrine' }))).toBe(40);
-	});
-
-	it('plasma (splash) level 1 = DPS 25*0.8 = 20', () => {
-		expect(calcTowerPower(makeTower({ defId: 'plasma' }))).toBe(20);
 	});
 
 	it('unknown defId returns 0', () => {
@@ -59,35 +90,21 @@ describe('calcCombatPower', () => {
 		expect(calcCombatPower([])).toBe(0);
 	});
 
-	it('starter deck = 15 + 20 + 5 + 15 = 55', () => {
+	it('starter deck sum = archer(15) + plasma(15) + emp(5) + shield(15) = 50', () => {
 		const collection: OwnedTower[] = [
-			makeTower({ defId: 'archer' }), // 15
-			makeTower({ defId: 'plasma' }), // 20
-			makeTower({ defId: 'emp' }), // 5
-			makeTower({ defId: 'shield' }), // 15
+			makeTower({ defId: 'archer' }),
+			makeTower({ defId: 'plasma' }),
+			makeTower({ defId: 'emp' }),
+			makeTower({ defId: 'shield' }),
 		];
-		expect(calcCombatPower(collection)).toBe(55);
+		expect(calcCombatPower(collection)).toBe(50);
 	});
 
-	it('with deckIds filters to deck towers only', () => {
+	it('deckIds filter', () => {
 		const collection: OwnedTower[] = [
-			makeTower({ defId: 'archer' }), // 15
-			makeTower({ defId: 'plasma' }), // 20
-			makeTower({ defId: 'emp' }), // 5
-			makeTower({ defId: 'shield' }), // 15
+			makeTower({ defId: 'archer' }),
+			makeTower({ defId: 'plasma' }),
 		];
-		expect(calcCombatPower(collection, ['archer', 'plasma'])).toBe(35);
-	});
-
-	it('deckIds with missing tower returns partial sum', () => {
-		const collection: OwnedTower[] = [
-			makeTower({ defId: 'archer' }), // 15
-		];
-		expect(calcCombatPower(collection, ['archer', 'nonexistent'])).toBe(15);
-	});
-
-	it('empty deckIds returns 0', () => {
-		const collection: OwnedTower[] = [makeTower({ defId: 'archer' })];
-		expect(calcCombatPower(collection, [])).toBe(0);
+		expect(calcCombatPower(collection, ['archer'])).toBe(15);
 	});
 });

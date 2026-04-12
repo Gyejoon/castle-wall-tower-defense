@@ -229,7 +229,7 @@
 | lava_fortress | 1.3× | 2× |
 | storm_citadel | 1.6× | 3× |
 
-**HP 적용 순서:** base × difficultyHpMult × WAVE_SCALING × FINAL_BOSS(마지막 웨이브 보스에만 2×)
+**HP 적용 순서:** base × difficultyHpMult × WAVE_SCALING × FINAL_BOSS(마지막 웨이브 보스에만 1.5×)
 
 ---
 

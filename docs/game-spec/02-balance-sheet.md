@@ -286,7 +286,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | LV.11~20 | ×6 | ×4 | ×1.15 | ×3 | 10% |
 | LV.21~30 | ×30 | ×12 | ×1.35 | ×8 | 20% |
 
-> 2026-04-12: 이전 ×8/×5/×1.2, ×50/×20/×1.5 에서 완화. Pure PVE 생존 커브로 재조정. W3 파이널 보스 HP = `25000 × 30 × 3.5 × 1.5 = 3,937,500` (`difficultyHpMult` 제외 기준; storm_citadel ×1.6 = 6,300,000 in-game). 이전 8,750,000, −55%.
+> 2026-04-12: 이전 ×8/×5/×1.2, ×50/×20/×1.5 에서 완화. Pure PVE 생존 커브로 재조정. W3 파이널 보스 HP = `base 25000 × BAND_MULTIPLIERS[3].hp 30 × WAVE_SCALING[10].hp 3.5 × FINAL_BOSS_HP_MULTIPLIER 1.5 = 3,937,500` (`difficultyHpMult` 제외 기준; storm_citadel ×1.6 적용 시 in-game 6,300,000). 이전 8,750,000, −55%.
 > `FINAL_BOSS_HP_MULTIPLIER`: 2 → **1.5** (`packages/shared/src/constants/boss.ts`).
 
 ---
@@ -411,7 +411,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | 2026-04-11 | 월드별 보스 3종 추가 | orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | bossBehaviorId 기반 보스 AI |
 | 2026-04-12 | 보스 웨이브 에너지 시스템 통일 | 마지막 보스 웨이브에서 에너지 리젠 + ENERGY_PER_WAVE_CLEAR 비활성화 제거. 전 웨이브 동일 적용 | 보스전 중 타워 배치/업그레이드 유연성 확보, 예외 케이스 제거 (DRIFT-2) |
 | 2026-04-12 | armor 데미지 공식 MISS 전환 | `Math.max(1, rawDamage - armor)` → `rawDamage - armor` (0 이하 시 MISS). 최종 데미지 `Math.floor` 정수화 | 최소 1 데미지 보장 제거로 armor 전략성 강화, 소수점 데미지 표기 버그 수정 |
-| 2026-04-12 | 타워 승급 시스템 개선 (#52) | 등급별 최대 레벨 (normal=20/rare=30/unique=50/epic=50), GRADE_BONUS (0/+70%/+250%/+800%), GRADE_COST_MULT (1x/2x/4x/8x). 승급 확률 20/10/5% → 80/50/25% | 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 재밸런스, 승급 성공률 현실화 |
+| 2026-04-12 | 타워 승급 시스템 개선 (#52) | 등급별 최대 레벨 (normal=20/rare=30/unique=50/epic=50), GRADE_BONUS (0/+70%/+250%/+800% — 이후 #81 에서 재조정됨, 아래 행 참고), GRADE_COST_MULT (1x/2x/4x/8x). 승급 확률 20/10/5% → 80/50/25% | 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 재밸런스, 승급 성공률 현실화 |
 | 2026-04-12 | 밸런스 대수정 (#81, #111) | (1) 전투력: 피어싱 분기 + REFERENCE_ARMOR=6 도입, UTILITY_BASE 확장. (2) 강화: 비용 `(100+40L+3L²)`, 효율 4%/lv. (3) GRADE_BONUS: rare 0.7→0.8, unique 2.5→3.5, epic 8.0→13.0 (승급 게이트 유지). (4) 적 스케일 band2 ×8/×5/×1.2 → ×6/×4/×1.15, band3 ×50/×20/×1.5 → ×30/×12/×1.35. (5) FINAL_BOSS_HP_MULTIPLIER 2→1.5. (6) corrupted_archmage bossCcResist 1.0→0.7. | 전투력 표시-in game 괴리 해소, pure PVE 생존 커브 확보, 승급 체감 상향 |
 
 ---

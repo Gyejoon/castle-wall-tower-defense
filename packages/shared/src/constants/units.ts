@@ -121,6 +121,8 @@ export const UNITS: UnitDef[] = [
 		bounty: 800,
 		isPremium: false,
 		bossBehaviorId: 'corrupted_archmage',
-		bossCcResist: 1.0,
+		bossCcResist: 0.7, // nerfed from 1.0 (full immune)
+		// Effective CC application at W3 (CC_IMMUNITY[band3]=0.2 + this 0.7 = 0.9 resist): ~10% chance.
+		// To raise, lower this value or adjust difficulty ccResist.
 	},
 ];

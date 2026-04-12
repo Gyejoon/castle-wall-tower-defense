@@ -246,17 +246,112 @@ export function TowerBottomSheet({
 				>
 					{level < gradeMax ? (
 						<>
-							<div className="flex justify-between font-pixel text-[11px]">
-								<span className="text-text-secondary">
-									공격력: {effectiveDmg.toFixed(1)} →{' '}
-									<span className="text-success">
-										{nextLevelDmg.toFixed(1)}
-									</span>
-								</span>
-								<span className="text-text-secondary">
-									Lv.{level}/{gradeMax}
-								</span>
-							</div>
+							{(() => {
+								const special = def.stats.special;
+								const configKey = special?.replace(/%/g, '') ?? '';
+								const cfg = CC_AURA_CONFIGS[configKey];
+								const isStun = !!special?.startsWith('stun');
+								const isActiveStun = isStun && def.stats.attackSpeed > 0;
+								const isPassiveStun = isStun && def.stats.attackSpeed === 0;
+
+								const curDur =
+									cfg && isStun
+										? cfg.durationMs * stunDurationMultiplier(level)
+										: undefined;
+								const nextDur =
+									cfg && isStun
+										? cfg.durationMs * stunDurationMultiplier(level + 1)
+										: undefined;
+								const curCd =
+									cfg && isPassiveStun
+										? cfg.cooldownMs * stunCooldownMultiplier(level)
+										: undefined;
+								const nextCd =
+									cfg && isPassiveStun
+										? cfg.cooldownMs * stunCooldownMultiplier(level + 1)
+										: undefined;
+
+								const fmt = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+								const showDamageRow = def.stats.damage > 0;
+								const showStunRow = isStun && !!cfg;
+
+								return (
+									<div className="flex flex-col gap-0.5 font-pixel text-[11px]">
+										{/* Row 1: damage (only if damage > 0) */}
+										{showDamageRow && (
+											<div className="flex justify-between">
+												<span className="text-text-secondary">
+													공격력: {effectiveDmg.toFixed(1)} →{' '}
+													<span className="text-success">
+														{nextLevelDmg.toFixed(1)}
+													</span>
+												</span>
+												<span className="text-text-secondary">
+													Lv.{level}/{gradeMax}
+												</span>
+											</div>
+										)}
+
+										{/* Row 2: stun duration (all stun towers) */}
+										{showStunRow &&
+											curDur !== undefined &&
+											nextDur !== undefined && (
+												<div className="flex justify-between">
+													<span className="text-text-secondary">
+														스턴 지속: {fmt(curDur)} →{' '}
+														<span className="text-success">{fmt(nextDur)}</span>
+													</span>
+													{!showDamageRow && (
+														<span className="text-text-secondary">
+															Lv.{level}/{gradeMax}
+														</span>
+													)}
+												</div>
+											)}
+
+										{/* Row 3: stun cooldown (passive stun only; active uses attackSpeed) */}
+										{showStunRow &&
+											isPassiveStun &&
+											curCd !== undefined &&
+											nextCd !== undefined && (
+												<div className="flex justify-between">
+													<span className="text-text-secondary">
+														스턴 쿨: {fmt(curCd)} →{' '}
+														<span className="text-success">{fmt(nextCd)}</span>
+													</span>
+												</div>
+											)}
+
+										{/* Info note: active stun (fortress) — cadence tied to attackSpeed, not scaled */}
+										{showStunRow && isActiveStun && (
+											<span className="text-[10px] text-text-secondary opacity-70">
+												* 발동 주기는 공속 기반(고정)
+											</span>
+										)}
+
+										{/* Info note: slow towers — slow factor/duration not yet scaled */}
+										{special?.includes('slow') && !isStun && showDamageRow && (
+											<span className="text-[10px] text-text-secondary opacity-70">
+												* 슬로우 효과는 레벨에 따라 변하지 않음
+											</span>
+										)}
+
+										{/* Fallback: pure-slow towers (damage=0 + slow, e.g. stasis_field) and any future special-only tower */}
+										{!showDamageRow && !showStunRow && (
+											<div className="flex justify-between">
+												<span className="text-text-secondary">
+													{special?.includes('slow')
+														? '슬로우 효과 강화'
+														: '특수 효과 강화'}
+												</span>
+												<span className="text-text-secondary">
+													Lv.{level}/{gradeMax}
+												</span>
+											</div>
+										)}
+									</div>
+								);
+							})()}
 							<PixelButton
 								variant="gold"
 								style={{ width: '100%', fontSize: '12px' }}

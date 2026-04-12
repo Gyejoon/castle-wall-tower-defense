@@ -229,7 +229,7 @@
 | lava_fortress | 1.3× | 2× |
 | storm_citadel | 1.6× | 3× |
 
-**HP 적용 순서:** base × difficultyHpMult × WAVE_SCALING × FINAL_BOSS(마지막 웨이브 보스에만 2×)
+**HP 적용 순서:** base × difficultyHpMult × WAVE_SCALING × FINAL_BOSS(마지막 웨이브 보스에만 1.5×)
 
 ---
 
@@ -250,7 +250,7 @@
 |--------|------|
 | 웨이브 1~9 (normal) | 일반 웨이브 진행 |
 | 웨이브 10 진입 시 | boss-warning 이벤트 emit + "WARNING" 표시 |
-| 웨이브 10 보스 스폰 | 강화 보스 (FINAL_BOSS_HP_MULTIPLIER 2×) + 호위 동시 스폰 + 흔들림 |
+| 웨이브 10 보스 스폰 | 강화 보스 (FINAL_BOSS_HP_MULTIPLIER 1.5×) + 호위 동시 스폰 + 흔들림 |
 | 최종 클리어 | 슬로모션 + "STAGE CLEAR" + 보상 팝업 |
 
 ---

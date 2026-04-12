@@ -11,8 +11,8 @@ const BAND_MULTIPLIERS: Record<
 	{ hp: number; armor: number; speed: number; bounty: number }
 > = {
 	1: { hp: 1, armor: 1, speed: 1, bounty: 1 },
-	2: { hp: 8, armor: 5, speed: 1.2, bounty: 3 },
-	3: { hp: 50, armor: 20, speed: 1.5, bounty: 8 },
+	2: { hp: 6, armor: 4, speed: 1.15, bounty: 3 },
+	3: { hp: 30, armor: 12, speed: 1.35, bounty: 8 },
 };
 
 const CC_IMMUNITY: Record<number, number> = { 1: 0, 2: 0.1, 3: 0.2 };

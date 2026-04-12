@@ -16,5 +16,5 @@ export const BOSS_CONFIG: BossPhaseConfig = {
 	phase2Tint: 0xff4444,
 };
 
-/** Wave 10 boss HP multiplier (GDD: x2) */
-export const FINAL_BOSS_HP_MULTIPLIER = 2;
+/** Wave 10 boss HP multiplier (nerfed from ×2 → ×1.5 for survivability) */
+export const FINAL_BOSS_HP_MULTIPLIER = 1.5;

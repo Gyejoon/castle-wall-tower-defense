@@ -4,7 +4,7 @@ import type Phaser from 'phaser';
 const POOL_SIZE = 24;
 const FLOAT_DURATION = 800; // ms
 const FLOAT_DISTANCE = 28; // px upward
-const FONT_SIZE = '14px';
+const FONT_SIZE = '11px';
 const FONT_FAMILY = "'Galmuri11', 'Press Start 2P', cursive";
 const DEPTH = 100; // above units, above grid overlays, below modal UI
 

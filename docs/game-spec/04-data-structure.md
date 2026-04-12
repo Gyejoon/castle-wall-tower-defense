@@ -107,8 +107,8 @@
 > `<tower_id>` 유효값 (18종)
 
 ```
-laser, plasma, emp, shield,
-twin_laser, disruptor, nova_cannon, fortress,
+archer, plasma, emp, shield,
+twin_archer, disruptor, nova_cannon, fortress,
 stasis_field, flame_tower, wind_spire, earth_golem,
 holy_shrine, dragon_nest, arcane_spire, world_tree,
 celestial, divine_throne

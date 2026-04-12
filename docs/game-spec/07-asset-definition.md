@@ -198,7 +198,7 @@ sin 기반 8프레임 워크 사이클:
 | 유닛 | walk/idle/death 연출 |
 |------|----------------------|
 | 고블린 scavenger | 등짐과 잡동사니가 흔들리고, idle에서 하중 sway, death에서 잡동사니/금화가 흩어진다 |
-| orc veteran | 비대칭 갑옷과 대검 실루엣, idle 호흡, death에서 갑주 분리와 붕괴를 표현한다 |
+| orc veteran | 비대칭 갑옷과 배틀액스 실루엣, idle 호흡, death에서 갑주 분리와 붕괴를 표현한다 |
 | stone troll | 거대한 어깨와 곤봉, idle heavy breathing, death에서 rubble pile로 무너진다 |
 | shadow assassin | 하체 alpha gradient와 눈 glow, idle pulse, death에서 연기와 cape fragment로 소멸한다 |
 | 고대 드래곤 | 날개 ±5px 펄럭, 꼬리 스윙, 화염 입김 |

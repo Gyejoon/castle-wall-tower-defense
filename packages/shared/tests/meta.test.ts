@@ -55,6 +55,9 @@ describe('enhancementCost — quadratic curve (100 + 40L + 3L²) × tier × grad
 	it('scales 2x for rare', () => {
 		expect(enhancementCost(1, 1, 'rare')).toBe(286);
 	});
+	it('scales 4x for unique', () => {
+		expect(enhancementCost(1, 1, 'unique')).toBe(572); // 143 × 4
+	});
 	it('scales 8x for epic', () => {
 		expect(enhancementCost(1, 1, 'epic')).toBe(1144);
 	});

@@ -2,11 +2,11 @@ import { PHASER_COLORS } from '@gld/shared';
 import type Phaser from 'phaser';
 
 const POOL_SIZE = 24;
-const FLOAT_DURATION = 600; // ms
-const FLOAT_DISTANCE = 24; // px upward
-const FONT_SIZE = '8px';
+const FLOAT_DURATION = 800; // ms
+const FLOAT_DISTANCE = 28; // px upward
+const FONT_SIZE = '14px';
 const FONT_FAMILY = "'Galmuri11', 'Press Start 2P', cursive";
-const DEPTH = 80; // above units, below UI overlays
+const DEPTH = 100; // above units, above grid overlays, below modal UI
 
 function toHexStr(n: number): string {
 	return `#${n.toString(16).padStart(6, '0')}`;

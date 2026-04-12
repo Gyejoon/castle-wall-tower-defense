@@ -121,6 +121,6 @@ export const UNITS: UnitDef[] = [
 		bounty: 800,
 		isPremium: false,
 		bossBehaviorId: 'corrupted_archmage',
-		bossCcResist: 1.0,
+		bossCcResist: 0.7, // nerfed from 1.0 (full immune) — stun deck now has 30% application chance
 	},
 ];

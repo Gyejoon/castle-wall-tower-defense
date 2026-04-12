@@ -36,24 +36,27 @@ describe('battleXp', () => {
 	});
 });
 
-describe('enhancementCost', () => {
-	it('returns 70 for level 1, tier 1, normal', () => {
-		expect(enhancementCost(1, 1, 'normal')).toBe(70);
+describe('enhancementCost — quadratic curve (100 + 40L + 3L²) × tier × grade', () => {
+	it('L1 tier1 normal = floor((100 + 40 + 3) × 1 × 1) = 143', () => {
+		expect(enhancementCost(1, 1, 'normal')).toBe(143);
 	});
-	it('returns 140 for level 1, tier 3, normal', () => {
-		expect(enhancementCost(1, 3, 'normal')).toBe(140);
+	it('L1 tier3 normal = floor(143 × 2) = 286', () => {
+		expect(enhancementCost(1, 3, 'normal')).toBe(286);
 	});
-	it('returns 1250 for level 10, tier 5, normal', () => {
-		expect(enhancementCost(10, 5, 'normal')).toBe(1250);
+	it('L10 tier5 normal = floor((100 + 400 + 300) × 5 × 1) = 4000', () => {
+		expect(enhancementCost(10, 5, 'normal')).toBe(4000);
 	});
-	it('scales 2x for rare grade', () => {
-		expect(enhancementCost(1, 1, 'rare')).toBe(140);
+	it('L30 tier1 normal = floor(100 + 1200 + 2700) = 4000', () => {
+		expect(enhancementCost(30, 1, 'normal')).toBe(4000);
 	});
-	it('scales 4x for unique grade', () => {
-		expect(enhancementCost(1, 1, 'unique')).toBe(280);
+	it('L50 tier1 normal = floor(100 + 2000 + 7500) = 9600', () => {
+		expect(enhancementCost(50, 1, 'normal')).toBe(9600);
 	});
-	it('scales 8x for epic grade', () => {
-		expect(enhancementCost(1, 1, 'epic')).toBe(560);
+	it('scales 2x for rare', () => {
+		expect(enhancementCost(1, 1, 'rare')).toBe(286);
+	});
+	it('scales 8x for epic', () => {
+		expect(enhancementCost(1, 1, 'epic')).toBe(1144);
 	});
 });
 

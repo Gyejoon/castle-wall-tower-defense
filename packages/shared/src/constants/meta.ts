@@ -23,9 +23,8 @@ export function enhancementCost(
 	tier: number,
 	grade: TowerGrade = 'normal',
 ): number {
-	return Math.floor(
-		(50 + level * 20) * TIER_COST_MULT[tier] * GRADE_COST_MULT[grade],
-	);
+	const base = 100 + level * 40 + level * level * 3;
+	return Math.floor(base * TIER_COST_MULT[tier] * GRADE_COST_MULT[grade]);
 }
 
 export function enhancementStatMultiplier(level: number): number {

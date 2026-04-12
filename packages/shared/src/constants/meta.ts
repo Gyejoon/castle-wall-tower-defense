@@ -11,8 +11,21 @@ export function battleXp(wavesCleared: number, victory: boolean): number {
 
 const TIER_COST_MULT = [0, 1, 1.5, 2, 3, 5];
 
-export function enhancementCost(level: number, tier: number): number {
-	return Math.floor((50 + level * 20) * TIER_COST_MULT[tier]);
+const GRADE_COST_MULT: Record<TowerGrade, number> = {
+	normal: 1.0,
+	rare: 2.0,
+	unique: 4.0,
+	epic: 8.0,
+};
+
+export function enhancementCost(
+	level: number,
+	tier: number,
+	grade: TowerGrade = 'normal',
+): number {
+	return Math.floor(
+		(50 + level * 20) * TIER_COST_MULT[tier] * GRADE_COST_MULT[grade],
+	);
 }
 
 export function enhancementStatMultiplier(level: number): number {
@@ -35,6 +48,17 @@ export function stunDurationMultiplier(level: number): number {
 }
 
 export const MAX_TOWER_LEVEL = 50;
+
+export const GRADE_MAX_LEVEL: Record<TowerGrade, number> = {
+	normal: 20,
+	rare: 30,
+	unique: 50,
+	epic: 50,
+};
+
+export function maxLevelForGrade(grade: TowerGrade): number {
+	return GRADE_MAX_LEVEL[grade];
+}
 
 export const PROMOTION_CONFIG = {
 	normal: {
@@ -73,9 +97,9 @@ export const PROMOTION_CONFIG = {
 
 export const GRADE_BONUS: Record<TowerGrade, number> = {
 	normal: 0,
-	rare: 0.1,
-	unique: 0.25,
-	epic: 0.45,
+	rare: 0.7,
+	unique: 2.5,
+	epic: 8.0,
 };
 
 export function getEffectiveStats(

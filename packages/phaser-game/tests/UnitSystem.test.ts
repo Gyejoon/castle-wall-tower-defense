@@ -353,6 +353,54 @@ describe('UnitSystem', () => {
 			expect(pos[0].hp).toBe(75); // 80 - 5
 		});
 
+		it('returns outcome=miss when armor fully absorbs damage', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=3, armor=5 → 3 - 5 = -2 → MISS, no HP reduction
+			const result = system.applyDamage(unitId, 3);
+			expect(result).not.toBeNull();
+			expect(result?.outcome).toBe('miss');
+			expect(result?.killed).toBe(false);
+			expect(result?.actualDamage).toBe(0);
+
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(80); // HP unchanged
+		});
+
+		it('floors fractional damage to integer (no decimals displayed)', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=10.7, armor=5 → 5.7 → floor to 5
+			const result = system.applyDamage(unitId, 10.7);
+			expect(result?.outcome).toBe('hit');
+			expect(result?.actualDamage).toBe(5);
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(75); // 80 - 5
+		});
+
+		it('sub-integer surplus (rawDamage = armor + 0.5) is treated as MISS, not silent 0', () => {
+			system.setPaths([LANE_A]);
+			// battle_robot: hp=80, armor=5
+			system.queueUnits('battle_robot', 1);
+			system.update(0, 300);
+
+			const unitId = system.getUnitPositions()[0].instanceId;
+			// damage=5.5, armor=5 → 0.5 → floor(0.5) = 0 → MISS (not silent absorb)
+			const result = system.applyDamage(unitId, 5.5);
+			expect(result?.outcome).toBe('miss');
+			expect(result?.actualDamage).toBe(0);
+			const pos = system.getUnitPositions();
+			expect(pos[0].hp).toBe(80); // HP unchanged
+		});
+
 		it('returns isBoss=false for regular unit', () => {
 			system.setPaths([LANE_A]);
 			system.queueUnits('scout_drone', 1);
@@ -501,6 +549,9 @@ describe('Boss phase system', () => {
 		const blockedResult = system.applyDamage(unitId, 100, true);
 		expect(blockedResult).not.toBeNull();
 		expect(blockedResult?.killed).toBe(false);
+		expect(blockedResult?.actualDamage).toBe(0);
+		// Invulnerability is silent, distinct from MISS (which is only for armor full absorb)
+		expect(blockedResult?.outcome).toBe('invulnerable');
 
 		// HP should be unchanged
 		expect(system.getUnitPositions()[0].hp).toBe(hpAfterTransition);
@@ -676,6 +727,8 @@ describe('damage_shield absorption', () => {
 		const result = system.applyDamage(unitId, 100, true);
 		expect(result?.killed).toBe(false);
 		expect(result?.actualDamage).toBe(0);
+		// Shield absorb is silent, distinct from MISS (which is only for armor full absorb)
+		expect(result?.outcome).toBe('absorbed');
 
 		const pos = system.getUnitPositions()[0];
 		expect(pos.hp).toBe(250); // HP untouched

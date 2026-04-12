@@ -1,6 +1,6 @@
 import type { StarRating } from '../constants/starDifficulty';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
@@ -81,7 +81,6 @@ export interface SettingsData {
 	bgmVolume: number; // 0~1, default 0.7
 	sfxVolume: number; // 0~1, default 0.8
 	screenShake: boolean;
-	showDamageNumbers: boolean;
 	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';
 }
 

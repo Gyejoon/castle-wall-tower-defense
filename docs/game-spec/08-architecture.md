@@ -132,9 +132,6 @@ EnergySystem.reset()
 |--------|----------|----------|
 | `request-select-tower` | DeckDock | Game.ts onSelectTower |
 | `request-clear-tower-selection` | UI | Game.ts onClearTowerSelection |
-| `request-place-tower` | UI | Game.ts (pointerdown 대체 경로) |
-| `drag-drop` | DeckDock (HTML5 Drag API / 터치 롱프레스) | Game.ts — 드래그 앤 드롭 타워 배치 |
-| `drag-hover` | DeckDock (터치 이동 중) | Game.ts — 드래그 중 배치 가능 하이라이트 |
 | `request-sell-tower` | UI | TowerSystem |
 | `request-start-game` | UI | 씬 전환 |
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
@@ -162,7 +159,7 @@ EnergySystem.reset()
 
 | 저장소 | 내용 |
 |--------|------|
-| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted, showDamageNumbers) |
+| `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted) |
 | 시스템 내부 상태 | TowerSystem(배치된 타워), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase) |
 
 ### 동기화 규칙
@@ -170,7 +167,7 @@ EnergySystem.reset()
 - **React → Phaser 초기값**: `PhaserGame.tsx`에서 `game.registry.set()`으로 전달.
 - **React → Phaser 실시간**: EventBus `request-*` 이벤트.
 - **Phaser → React 실시간**: EventBus 서술형 이벤트 → `useGameEvents` 훅 → Zustand set.
-- **설정값 실시간 동기화 예외**: `showDamageNumbers`는 `useGameStore.subscribe()`로 변경 감지 후 `game.registry.set()` 호출.
+- **설정값 실시간 동기화 예외**: `screenShake`는 `useGameStore.subscribe()`로 변경 감지 후 `game.registry.set()` 호출.
 
 ---
 
@@ -249,22 +246,15 @@ prep 페이즈 중에는 `getPlacementGuardFailure({ phase: 'prep' })`가 null�
 
 ## §8 데이터 흐름 예시: 타워 배치
 
-End-to-end 시퀀스. 두 가지 경로 지원: 탭 선택 + 탭 배치, 또는 드래그 앤 드롭(HTML5 Drag API + 터치 롱프레스 300ms 폴백).
+End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 
 ```
-경로 A (탭):
 1. React: DeckDock에서 타워 카드 탭
 2. React → EventBus: emit('request-select-tower', { towerDefId })
 3. Game.ts: onSelectTower() → selectedTowerId 설정, 배치 가능 하이라이트 렌더
 4. 사용자: 그리드 셀 탭
 5. Game.ts: pointerdown → handlePlaceTower(gridX, gridY, towerDefId)
-
-경로 B (드래그 앤 드롭):
-1. React: DeckDock에서 타워 카드 드래그 시작 (HTML5 dragstart / 터치 롱프레스 300ms)
-2. 드래그 중: 타워 에셋 고스트가 커서/손가락을 따라감
-3. React → EventBus: emit('drag-drop', { towerDefId, clientX, clientY })
-4. Game.ts: 좌표를 그리드로 변환 → handlePlaceTower()
-이후 동일:
+이후:
    a. DeckSystem.getCardByTowerId() → energyCost 확인
    b. EnergySystem.canAfford(energyCost) → 부족 시 'insufficient_energy' emit
    c. getPlacementGuardFailure({ phase }) → combat 중 배치 불가 등 guard 체크

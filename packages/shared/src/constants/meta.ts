@@ -140,7 +140,6 @@ export function createDefaultSave(): SaveData {
 			bgmVolume: 0.7,
 			sfxVolume: 0.8,
 			screenShake: true,
-			showDamageNumbers: true,
 			colorblindMode: 'off',
 		},
 		selectedDeck: [...DEFAULT_STARTER_IDS],

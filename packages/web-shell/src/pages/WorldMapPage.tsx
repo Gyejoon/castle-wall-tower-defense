@@ -157,7 +157,8 @@ export function WorldMapPage() {
 	const playerLevel = useMetaStore((s) => s.profile.level) ?? 1;
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 
-	const activeWorld = (selectedWorldId as WorldId) || pickInitialWorld(stageStars);
+	const activeWorld =
+		(selectedWorldId as WorldId) || pickInitialWorld(stageStars);
 	const setActiveWorld = (worldId: WorldId) => setSelectedWorldId(worldId);
 	const [lockImgError, setLockImgError] = useState(false);
 

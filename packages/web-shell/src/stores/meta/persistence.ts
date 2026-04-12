@@ -94,6 +94,16 @@ const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	5: (data) => {
+		// v5 → v6: remove showDamageNumbers from settings (always on)
+		const settings = (data.settings ?? {}) as Record<string, unknown>;
+		const { showDamageNumbers: _, ...restSettings } = settings;
+		return {
+			...data,
+			version: 6,
+			settings: restSettings,
+		};
+	},
 	4: (data) => {
 		// v4 → v5: stageStars mapId→stageId migration + mission mapId support
 		const progress = (data.progress ?? {}) as Record<string, unknown>;
@@ -236,7 +246,6 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				bgmVolume: soundWasEnabled ? 0.7 : 0,
 				sfxVolume: soundWasEnabled ? 0.8 : 0,
 				screenShake: settings.screenShake ?? true,
-				showDamageNumbers: settings.showDamageNumbers ?? true,
 				colorblindMode: 'off',
 			},
 		};
@@ -262,8 +271,8 @@ function migrateSave(
 
 const _defaults = createDefaultSave();
 
-/** Ensure all v5 required fields exist — guards against incomplete saves. */
-export function sanitizeV5Save(save: SaveData): SaveData {
+/** Ensure all required fields exist — guards against incomplete saves. */
+export function sanitizeSave(save: SaveData): SaveData {
 	const dp = _defaults.progress;
 	const dpr = _defaults.profile;
 	const dt = _defaults.collection[0];
@@ -303,10 +312,10 @@ export function parseSave(context?: {
 		const parsed = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (parsed.version === SAVE_VERSION)
-			return sanitizeV5Save(parsed as SaveData);
+			return sanitizeSave(parsed as SaveData);
 		// Attempt migration from older version
 		const migrated = migrateSave(parsed, context);
-		return migrated ? sanitizeV5Save(migrated) : null;
+		return migrated ? sanitizeSave(migrated) : null;
 	} catch {
 		// corrupt JSON
 	}

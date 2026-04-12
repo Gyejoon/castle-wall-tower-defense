@@ -52,6 +52,7 @@ export function TowerBottomSheet({
 	useEffect(() => {
 		return () => {
 			for (const t of timersRef.current) clearTimeout(t);
+			timersRef.current.length = 0;
 		};
 	}, []);
 

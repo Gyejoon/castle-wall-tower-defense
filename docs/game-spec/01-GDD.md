@@ -1,6 +1,6 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-11  
+> **Last Updated:** 2026-04-12  
 > **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md`  
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 
@@ -21,7 +21,7 @@
 | Platform | Mobile Web (App In Toss) |
 | Player Count | Single |
 | Camera/View | Top-down / Portrait Single Field |
-| Input | Touch / Drag |
+| Input | Touch (탭 선택 → 탭 배치) |
 | Session Length | 5~7분 |
 | Core Fantasy | 성문을 지키는 지휘관 — 타워 배치 → 끝까지 생존 |
 | Core Fun | 배치 전략, 에너지 관리, 4타워 운영, 웨이브 대응, 성장 보상 |
@@ -61,8 +61,8 @@
 | 시스템 | 정의 | 핵심 파라미터 |
 |--------|------|-------------|
 | Combat | 타워 자동 공격 + 적 고정 경로 이동 실시간 방어 | damage, armor, attackSpeed, target priority |
-| Movement | 적은 spawn→exit 세로 레인 이동, 드래그로 배치 | speed, path rules, blocked path prevention |
-| Placement | 에너지 소비해 4타워 카드 중 1개 선택 → buildable tile 배치. 드래그 앤 드롭 (HTML5 Drag API + 터치 롱프레스 300ms 폴백). 드래그 중 타워 에셋 고스트가 커서/손가락을 따라감 | 초기 에너지 40, 1/sec 자동 축적, 웨이브 클리어 시 +5, 킬 보상 없음. 공격형 10 / CC형 20 |
+| Movement | 적은 spawn→exit 세로 레인 이동, 탭으로 배치 | speed, path rules, blocked path prevention |
+| Placement | 에너지 소비해 4타워 카드 중 1개 선택 → buildable tile 배치. 탭 선택 → 그리드 탭 배치 (덱 독의 카드를 탭해 선택 → buildable 타일을 탭해 배치) | 초기 에너지 40, 1/sec 자동 축적, 웨이브 클리어 시 +5, 킬 보상 없음. 공격형 10 / CC형 20 |
 | Tower Sell | 배치된 타워 탭 → 판매 패널 → 에너지 50% 환급 | `TowerSystem.calcRefund()` 단일 출처 |
 | Element | 화/수/번개/무 속성 상성으로 데미지 배율 적용 | element_type, matchup_multiplier (0.7x/1.0x/1.3x) |
 | Gacha/Box | 상자에서 히든 타워 획득 (무료/광고/다이아) | box_type, cost, rate_table, pity(50회) |
@@ -262,7 +262,6 @@
 - **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이, 나가기 버튼, 배속 토글
   - HP 변화 시 scale flash 애니메이션 (250ms ease-out, 초기 마운트 시 스킵)
   - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
-  - `showDamageNumbers` 설정 런타임 동기화: Zustand → `game.registry` → Phaser `changedata` 이벤트
 - **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
 - **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). 각 아이콘에 수령 가능 카운트 뱃지(`-top-1 -right-1`, `bg-danger`, `text-[8px] font-pixel`, `warningPulse 1.6s` 애니메이션, `aria-label`에 카운트 포함, `useClaimableCounts` 훅이 `metaStore`에서 `current >= target && !claimed` 집계). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
 - **WorldMapPage** (스테이지 선택): 세로 카드 리스트 레이아웃. 각 카드는 좌측 64×64 landmark 썸네일 + 중앙 맵 이름(subtitle 13px) + 해금조건/추천 레벨(label 10px) + 별 진행도(★1/★2/★3 10×10 아이콘) + 우측 진입 화살표(해금 시만). 해금/잠금 상태 시각 구분: 해금=맵별 theme borderColor + accent 텍스트, 잠금=border #4a3a20 + opacity 45% + grayscale + 🔒 오버레이. 카드 간 간격 8px, 카드 내부 패딩 12px, 썸네일-정보 간격 12px (8/16/32/64 그리드 리듬). 터치 타겟 카드 전체 ≥ 88×358px (44×44 기준 초과). 상단 고정 헤더("스테이지 선택" + 좌측 돌아가기 + 우측 Lv 뱃지). 월드맵 괴리감 해소 및 맵 목록 스캔 용이성 우선.
@@ -361,7 +360,7 @@ GamePage, StageSelectPage 모두 마운트 시 저장된 SFX 볼륨을 오디오
 | step | trigger | 플레이어 액션 | 완료 조건 |
 |------|---------|------------|---------|
 | 1 | 첫 게임 시작 | 타워 카드 탭 | 타워 선택 |
-| 2 | 타워 선택 직후 | 타일에 드래그 배치 | 첫 배치 완료 |
+| 2 | 타워 선택 직후 | 타일에 탭 배치 | 첫 배치 완료 |
 | 3 | 배치 완료 | 없음 (자동 진행) | 웨이브 1 시작 |
 | 4 | 웨이브 1 중 처치 | 추가 배치 | 두 번째 타워 배치 |
 | 5 | 웨이브 3 도달 | — | 자동 해제 |
@@ -376,14 +375,13 @@ GamePage, StageSelectPage 모두 마운트 시 저장된 SFX 볼륨을 오디오
 | sfx_volume | 0.8 | 0~1 | localStorage | Zustand → SoundGenerator (`setMasterVolume` 직접 호출) |
 | screen_shake | on | on/off | localStorage | Zustand → registry → Phaser (`screenShake !== false` 체크) |
 | colorblind_mode | off | off/protan/deutan/tritan | localStorage | Zustand → CSS filter |
-| damage_numbers | on | on/off | localStorage | Zustand → registry → Phaser changedata |
 
 ### 설정 동기화 아키텍처
 
 ```
 SettingsTab (React) → gameStore.toggle*() / set*()
     → Zustand subscribe (PhaserGame.tsx / StageSelectPage.tsx)
-        → game.registry.set('showDamageNumbers' | 'screenShake', value)
+        → game.registry.set('screenShake', value)
             → Phaser 씬에서 registry.get() 조회 후 기능 적용/스킵
 
 sfxVolume 특수 경로:
@@ -427,4 +425,5 @@ screenShake 동기화:
 | 2026-04-08 | §8, §9 | 월드맵 px 고정 레이아웃(430×640)+권장 스테이지 자동 스크롤, 클리어 배지 픽셀 아트 에셋, 2배속 가이드 UI, SFX→soundGenerator 연결, screenShake metaStore 영속화+registry 동기화, iOS async unlock(try-catch+리스너 선제거), 전역 스크롤바 숨김 |
 | 2026-04-09 | §8 UI/UX | FloatingNavButtons 수령 가능 뱃지(`useClaimableCounts` + warningPulse), LoadingScreen 2단 타이포(`>_` 터미널 프리픽스, context별 카피), GamePage 부팅 오버레이 통일, 페이지 전환 `fadeSlideIn 220ms`(`key={phase}`로 GamePage 안정성 보장), 폰트/이미지 preload(Galmuri11 woff2 link preload, Press Start 2P CSS @import→HTML link, UI 이미지 17개 boot 시점 사전 로드) |
 | 2026-04-09 | §8, §10 | WorldMapPage를 세로 카드 리스트로 재정의(이슈 #94). 5초 prep 페이즈를 모든 전투에 도입(이슈 #93, 에너지 증가 정지). 10연 가차 순차 등장 애니메이션(이슈 #83). 타워 사거리 오버레이(이슈 #103). 덱 편집 상단 고정 4슬롯 + 루비 보석 제거 아이콘(이슈 #85). |
-| 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 드래그 앤 드롭 타워 배치(HTML5 Drag + 터치 롱프레스 300ms). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
+| 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
+| 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |

@@ -7,7 +7,6 @@ import {
 	WORLD_ORDER,
 	WORLDS,
 } from '@gld/shared';
-import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { useMetaStore } from '../../../stores/metaStore';
 import { PixelButton } from '../../ui/PixelButton';

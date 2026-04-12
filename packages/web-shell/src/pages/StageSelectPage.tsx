@@ -73,21 +73,9 @@ export function StageSelectPage() {
 			'tutorialCompleted',
 			metaState.progress.tutorialCompleted ?? false,
 		);
-		game.registry.set(
-			'showDamageNumbers',
-			useGameStore.getState().showDamageNumbers,
-		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
 		gameRef.current = game;
-
-		let prevShowDmg = useGameStore.getState().showDamageNumbers;
-		const unsubDmgNumbers = useGameStore.subscribe((state) => {
-			if (state.showDamageNumbers !== prevShowDmg) {
-				prevShowDmg = state.showDamageNumbers;
-				gameRef.current?.registry.set('showDamageNumbers', prevShowDmg);
-			}
-		});
 
 		let prevShake = useGameStore.getState().screenShake;
 		const unsubShake = useGameStore.subscribe((state) => {
@@ -107,7 +95,6 @@ export function StageSelectPage() {
 
 		return () => {
 			if (!container.isConnected) {
-				unsubDmgNumbers();
 				unsubShake();
 				unsubStar();
 				gameRef.current?.destroy(true);

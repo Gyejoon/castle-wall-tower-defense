@@ -88,7 +88,6 @@ interface GameStoreState {
 	sfxVolume: number;
 	colorblindMode: 'off' | 'protan' | 'deutan' | 'tritan';
 	screenShake: boolean;
-	showDamageNumbers: boolean;
 	playerTowerCount: number;
 	combatHud: CombatHudState;
 	toast: UiToast | null;
@@ -128,7 +127,6 @@ interface GameStoreState {
 	setSfxVolume: (v: number) => void;
 	setColorblindMode: (mode: 'off' | 'protan' | 'deutan' | 'tritan') => void;
 	toggleScreenShake: () => void;
-	toggleDamageNumbers: () => void;
 	setSelectedDeck: (deck: string[]) => void;
 	upsertBossHp: (entry: BossHpEntry) => void;
 	removeBossHp: (unitId: string) => void;
@@ -186,7 +184,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
 	colorblindMode: useMetaStore.getState().settings?.colorblindMode ?? 'off',
 	screenShake: useMetaStore.getState().settings?.screenShake ?? true,
-	showDamageNumbers: true,
 	selectedDeck: useMetaStore.getState().selectedDeck ?? DEFAULT_DECK_IDS,
 	...createRunState(),
 
@@ -289,8 +286,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			useMetaStore.getState().updateSettings({ screenShake: next });
 			return { screenShake: next };
 		}),
-	toggleDamageNumbers: () =>
-		set((state) => ({ showDamageNumbers: !state.showDamageNumbers })),
 	setSelectedDeck: (deck) => {
 		useMetaStore.getState().setSelectedDeck(deck);
 		set({ selectedDeck: deck });

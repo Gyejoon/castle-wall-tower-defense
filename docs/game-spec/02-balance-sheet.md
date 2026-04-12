@@ -1,6 +1,6 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-11  
+> **Last Updated:** 2026-04-12  
 > **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
 > 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
 
@@ -126,9 +126,10 @@
 | INITIAL_ENERGY | 40 | 게임 시작 시 초기 에너지 |
 | ENERGY_PER_SEC | 1 | 자연 재생 (prep 페이즈 중 정지) |
 | ENERGY_CAP | 100 | 최대 에너지 |
-| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (마지막 웨이브 제외) |
+| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (보스 웨이브 포함 전 웨이브 적용) |
 | 킬 보상 | 없음 | ENERGY_PER_KILL, ENERGY_PER_BOSS_KILL 제거됨 |
-| 마지막 보스 웨이브 | 에너지 리젠 + 웨이브 클리어 보상 비활성화 | — |
+
+> 에너지 리젠과 웨이브 클리어 보상은 **모든 웨이브(마지막 보스 웨이브 포함)** 에서 동일하게 작동한다. 이전에는 마지막 보스 웨이브에서 리젠+클리어 보상이 비활성화되었으나, 보스전 배치/업그레이드 유연성을 위해 제거됨.
 
 ### 웨이브 타이머
 
@@ -208,7 +209,10 @@
 
 - `special`이 없는 공격형 타워 → **방어 무시** (armor를 0으로 취급)
 - `special`이 있는 타워 (splash, slow 등) → armor 감산 적용
-- 데미지 공식: `damage = Math.max(1, rawDamage - armor)`
+- 데미지 공식: `damage = rawDamage - armor` (결과 ≤ 0 → **MISS**, HP 감소 없음)
+- 모든 데미지는 정수로 표시된다 (`Math.floor` 적용).
+
+> **MISS 처리**: armor 감산 후 데미지가 0 이하가 되면 해당 공격은 MISS로 처리되어 HP 감소가 발생하지 않는다 (이전에는 `Math.max(1, ...)`로 최소 1 데미지 보장). 방어 무시 대상이 아닌 타워가 고armor 적을 공격할 때 dmg=0 상황이 발생할 수 있다.
 
 **방어 무시 대상 타워** (special 없는 공격형):
 
@@ -230,7 +234,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | scout_drone | 0 | 15.0 | 20.0 |
 | battle_robot | 5 | 15.0 | 16.0 |
 | heavy_walker | 12 | 15.0 | 10.4 |
-| dragon | 25 | 15.0 | 0.8 (min1) |
+| dragon | 25 | 15.0 | 0 (MISS — armor ≥ rawDamage) |
 
 ### 보스 CC 저항 (Boss CC Resistance)
 
@@ -342,6 +346,8 @@ basePower:
 | 2026-04-11 | titan→dragon rename | 일반 유닛 ID titan을 dragon으로 전면 변경 | 최종보스 전용 예약 → 일반 비행 유닛으로 재정의 |
 | 2026-04-11 | W2/W3 유닛 추가 | flame_imp, lava_golem (W2), arcane_mage, mana_shield (W3) | 월드별 고유 적 조합 |
 | 2026-04-11 | 월드별 보스 3종 추가 | orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | bossBehaviorId 기반 보스 AI |
+| 2026-04-12 | 보스 웨이브 에너지 시스템 통일 | 마지막 보스 웨이브에서 에너지 리젠 + ENERGY_PER_WAVE_CLEAR 비활성화 제거. 전 웨이브 동일 적용 | 보스전 중 타워 배치/업그레이드 유연성 확보, 예외 케이스 제거 (DRIFT-2) |
+| 2026-04-12 | armor 데미지 공식 MISS 전환 | `Math.max(1, rawDamage - armor)` → `rawDamage - armor` (0 이하 시 MISS). 최종 데미지 `Math.floor` 정수화 | 최소 1 데미지 보장 제거로 armor 전략성 강화, 소수점 데미지 표기 버그 수정 |
 
 ---
 
@@ -366,7 +372,8 @@ basePower:
 1. 기본 데미지 = `baseDamage × enhancementStatMultiplier(level) × (1 + GRADE_BONUS[grade])`
 2. 속성 배수 적용 = `× getElementMultiplier(tower.element, enemy.element)`
 3. splash 스플래시 감쇠 = `× 0.5` (splash 대상에만)
-4. armor 감산 = `Math.max(1, result - enemy.armor)` (단 §7 방어 무시 대상 타워 제외)
+4. armor 감산 = `result - enemy.armor` (단 §7 방어 무시 대상 타워 제외. 0 이하 시 MISS 처리, HP 감소 없음)
+5. 정수 변환 = `Math.floor(result)` — 최종 데미지는 정수로 적용/표시됨
 
 ### 타워 속성 분포
 | 속성 | 타워 ID |

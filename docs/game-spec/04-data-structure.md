@@ -53,7 +53,6 @@
     "bgm_volume": 0.7,
     "sfx_volume": 0.8,
     "screen_shake": true,
-    "damage_numbers": true,
     "colorblind_mode": "off"
   }
 }
@@ -182,14 +181,14 @@ type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress' | 'ma
 
 ## 7. React ↔ Phaser 설정 동기화
 
-게임 설정(`showDamageNumbers` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
+게임 설정(`screenShake` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
 
 ```
-[React] gameStore.toggleDamageNumbers()
+[React] gameStore.toggleScreenShake()
     ↓ Zustand subscribe (PhaserGame.tsx)
-[Bridge] game.registry.set('showDamageNumbers', value)
+[Bridge] game.registry.set('screenShake', value)
     ↓ Phaser DataManager changedata 이벤트
-[Phaser] DamageNumberSystem.setEnabled(value)
+[Phaser] Game.ts screenShake 반영
 ```
 
 | 구간 | 구현 파일 | 메커니즘 |

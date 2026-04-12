@@ -389,6 +389,7 @@ export class UnitSystem {
 		rawDamage: number,
 		armorPierce = false,
 	): {
+		outcome: 'hit' | 'miss' | 'absorbed' | 'invulnerable';
 		killed: boolean;
 		bounty: number;
 		unitDefId: string;
@@ -400,20 +401,37 @@ export class UnitSystem {
 		const unit = this.units.get(unitId);
 		if (!unit || unit.pendingDestroy) return null;
 
+		const meta = {
+			unitDefId: unit.def.id,
+			countsTowardClear: unit.countsTowardClear,
+			source: unit.source,
+			isBoss: unit.isBoss,
+		} as const;
+
 		if (unit.invulnerableMs > 0) {
 			return {
+				outcome: 'invulnerable',
 				killed: false,
 				bounty: 0,
-				unitDefId: unit.def.id,
-				countsTowardClear: unit.countsTowardClear,
-				source: unit.source,
-				isBoss: unit.isBoss,
+				...meta,
 				actualDamage: 0,
 			};
 		}
 
 		const armor = armorPierce ? 0 : unit.baseArmor;
-		let damage = Math.max(1, rawDamage - armor);
+		// Floor before MISS check so sub-integer surpluses (e.g. rawDamage = armor + 0.5)
+		// are treated as MISS rather than silent 0-damage hits.
+		let damage = Math.floor(rawDamage - armor);
+		if (damage <= 0) {
+			// MISS: armor fully absorbed damage (including sub-integer surpluses) — no HP reduction
+			return {
+				outcome: 'miss',
+				killed: false,
+				bounty: 0,
+				...meta,
+				actualDamage: 0,
+			};
+		}
 
 		// Shield absorption: damage_shield enemies absorb damage until shield breaks
 		if ((unit.data.shieldHp ?? 0) > 0) {
@@ -428,12 +446,10 @@ export class UnitSystem {
 		}
 		if (damage <= 0) {
 			return {
+				outcome: 'absorbed',
 				killed: false,
 				bounty: 0,
-				unitDefId: unit.def.id,
-				countsTowardClear: unit.countsTowardClear,
-				source: unit.source,
-				isBoss: unit.isBoss,
+				...meta,
 				actualDamage: 0,
 			};
 		}
@@ -500,12 +516,10 @@ export class UnitSystem {
 				this.gridManager.getDepth(deathGrid.x, deathGrid.y) + 1,
 			);
 			return {
+				outcome: 'hit',
 				killed: true,
 				bounty: unit.bounty,
-				unitDefId: unit.def.id,
-				countsTowardClear: unit.countsTowardClear,
-				source: unit.source,
-				isBoss: unit.isBoss,
+				...meta,
 				actualDamage: damage,
 			};
 		}
@@ -528,12 +542,10 @@ export class UnitSystem {
 			unit.data.hp,
 		);
 		return {
+			outcome: 'hit',
 			killed: false,
 			bounty: 0,
-			unitDefId: unit.def.id,
-			countsTowardClear: unit.countsTowardClear,
-			source: unit.source,
-			isBoss: unit.isBoss,
+			...meta,
 			actualDamage: damage,
 		};
 	}

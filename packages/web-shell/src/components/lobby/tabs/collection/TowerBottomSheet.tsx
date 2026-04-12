@@ -330,17 +330,19 @@ export function TowerBottomSheet({
 										)}
 
 										{/* Info note: slow towers — slow factor/duration not yet scaled */}
-										{special && !isStun && showDamageRow && (
+										{special?.includes('slow') && !isStun && showDamageRow && (
 											<span className="text-[10px] text-text-secondary opacity-70">
 												* 슬로우 효과는 레벨에 따라 변하지 않음
 											</span>
 										)}
 
-										{/* Fallback: no damage + no stun info */}
+										{/* Fallback: pure-slow towers (damage=0 + slow, e.g. stasis_field) and any future special-only tower */}
 										{!showDamageRow && !showStunRow && (
 											<div className="flex justify-between">
 												<span className="text-text-secondary">
-													특수 효과 강화
+													{special?.includes('slow')
+														? '슬로우 효과 강화'
+														: '특수 효과 강화'}
 												</span>
 												<span className="text-text-secondary">
 													Lv.{level}/{gradeMax}

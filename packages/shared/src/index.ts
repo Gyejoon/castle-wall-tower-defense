@@ -156,6 +156,8 @@ export {
 	isWorldUnlocked,
 } from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
+export type { Grade } from './types/grade';
+export { GRADES, isMaxGrade, nextGrade } from './types/grade';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { GimmickTileSet, MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';

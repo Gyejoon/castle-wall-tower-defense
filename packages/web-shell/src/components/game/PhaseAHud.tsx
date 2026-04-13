@@ -1,6 +1,8 @@
 import { EventBus } from '@gld/phaser-game';
+import { PHASE_A_SUMMON_COST } from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { cn } from '../../utils/cn';
 
 interface FirstPick {
 	col: number;
@@ -24,6 +26,8 @@ export function PhaseAHud() {
 	const [firstPick, setFirstPick] = useState<FirstPick | null>(null);
 	const firstPickRef = useRef<FirstPick | null>(null);
 	const pushToast = useGameStore((s) => s.pushToast);
+	const energy = useGameStore((s) => s.energy);
+	const canAfford = energy >= PHASE_A_SUMMON_COST;
 
 	useEffect(() => {
 		firstPickRef.current = firstPick;
@@ -78,22 +82,32 @@ export function PhaseAHud() {
 			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
 		};
 
+		const handleSummonFailed = (data: { reason: string }) => {
+			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
+		};
+
 		EventBus.on('tower-selected', handleTowerSelected);
 		EventBus.on('tower-deselected', handleTowerDeselected);
 		EventBus.on('towers-merged', handleMerged);
 		EventBus.on('merge-failed', handleMergeFailed);
+		EventBus.on('summon-failed', handleSummonFailed);
 
 		return () => {
 			EventBus.off('tower-selected', handleTowerSelected);
 			EventBus.off('tower-deselected', handleTowerDeselected);
 			EventBus.off('towers-merged', handleMerged);
 			EventBus.off('merge-failed', handleMergeFailed);
+			EventBus.off('summon-failed', handleSummonFailed);
 		};
 	}, [pushToast]);
 
 	const handleSummon = useCallback(() => {
+		if (!canAfford) {
+			pushToast('에너지 부족', 'warning');
+			return;
+		}
 		EventBus.emit('request-summon-tower');
-	}, []);
+	}, [canAfford, pushToast]);
 
 	const handleCancel = useCallback(() => {
 		firstPickRef.current = null;
@@ -137,7 +151,14 @@ export function PhaseAHud() {
 				type="button"
 				data-testid="phase-a-summon-button"
 				onClick={handleSummon}
-				className="h-[80px] w-[100px] bg-panel border-2 border-gold shadow-[0_0_8px_var(--color-gold)] flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+				disabled={!canAfford}
+				aria-disabled={!canAfford}
+				className={cn(
+					'h-[80px] w-[100px] bg-panel border-2 flex flex-col items-center justify-center gap-1 transition-transform',
+					canAfford
+						? 'border-gold shadow-[0_0_8px_var(--color-gold)] active:scale-95'
+						: 'border-border opacity-40 cursor-not-allowed',
+				)}
 			>
 				<img
 					src="assets/ui/icon-sword.webp"
@@ -146,7 +167,31 @@ export function PhaseAHud() {
 					height={28}
 					className="[image-rendering:pixelated]"
 				/>
-				<span className="font-pixel text-[12px] text-gold">소환</span>
+				<span
+					className={cn(
+						'font-pixel text-[12px]',
+						canAfford ? 'text-gold' : 'text-text-secondary',
+					)}
+				>
+					소환
+				</span>
+				<span className="inline-flex items-center gap-[2px]">
+					<img
+						src="assets/ui/icon-energy.webp"
+						alt=""
+						width={10}
+						height={10}
+						className="[image-rendering:pixelated]"
+					/>
+					<span
+						className={cn(
+							'font-pixel text-[11px]',
+							canAfford ? 'text-gold' : 'text-danger',
+						)}
+					>
+						{PHASE_A_SUMMON_COST}
+					</span>
+				</span>
 			</button>
 		</div>
 	);
@@ -162,6 +207,19 @@ function mergeFailLabel(reason: string): string {
 			return '최고 등급';
 		case 'invalid-tile':
 			return '잘못된 칸';
+		default:
+			return reason;
+	}
+}
+
+function summonFailLabel(reason: string): string {
+	switch (reason) {
+		case 'insufficient-energy':
+			return '에너지 부족';
+		case 'no-empty-tile':
+			return '빈 칸 없음';
+		case 'placement-failed':
+			return '배치 불가';
 		default:
 			return reason;
 	}

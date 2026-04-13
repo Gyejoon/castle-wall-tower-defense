@@ -103,6 +103,21 @@ function makeFakeGridManager(occupiedCells: Array<[number, number]> = []) {
 	};
 }
 
+function makeFakeEnergy(initial = 100) {
+	let energy = initial;
+	return {
+		canAfford: vi.fn((cost: number) => energy >= cost),
+		spend: vi.fn((cost: number) => {
+			if (energy < cost) return false;
+			energy -= cost;
+			return true;
+		}),
+		get current() {
+			return energy;
+		},
+	};
+}
+
 const buildable: Position[] = [
 	{ x: 0, y: 0 },
 	{ x: 1, y: 0 },
@@ -296,6 +311,50 @@ describe('PhaseAOrchestrator', () => {
 
 		expect(towerSystem.placeTower).not.toHaveBeenCalled();
 		expect(towerSystem.applyMerge).not.toHaveBeenCalled();
+	});
+
+	it('에너지 부족이면 summon-failed:insufficient-energy emit + placeTower 미호출', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const gridManager = makeFakeGridManager();
+		const energy = makeFakeEnergy(0);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			gridManager: gridManager as never,
+			buildablePoints: buildable,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+			summonCost: 8,
+		});
+
+		EventBus.emit('request-summon-tower');
+
+		expect(energy.canAfford).toHaveBeenCalledWith(8);
+		expect(energy.spend).not.toHaveBeenCalled();
+		expect(towerSystem.placeTower).not.toHaveBeenCalled();
+		const failed = getEmits().find(([event]) => event === 'summon-failed');
+		expect(failed?.[1]).toEqual({ reason: 'insufficient-energy' });
+	});
+
+	it('에너지 충분 + summon 성공 시 spend 호출 + tower-summoned emit', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const gridManager = makeFakeGridManager();
+		const energy = makeFakeEnergy(40);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			gridManager: gridManager as never,
+			buildablePoints: buildable,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+			summonCost: 8,
+		});
+
+		EventBus.emit('request-summon-tower');
+
+		expect(towerSystem.placeTower).toHaveBeenCalledTimes(1);
+		expect(energy.spend).toHaveBeenCalledWith(8);
+		expect(energy.current).toBe(32);
 	});
 
 	it('buildablePoints가 빈 배열이면 summon이 즉시 silent fail', () => {

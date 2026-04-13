@@ -153,7 +153,11 @@ export {
 	WORLDS,
 } from './constants/worlds';
 export type { SummonPool, SummonResult } from './data/summonPool';
-export { createSummonPool, drawRandomSummon } from './data/summonPool';
+export {
+	createSummonPool,
+	drawRandomSummon,
+	PHASE_A_SUMMON_COST,
+} from './data/summonPool';
 export {
 	getStageLockStatus,
 	isStageUnlocked,

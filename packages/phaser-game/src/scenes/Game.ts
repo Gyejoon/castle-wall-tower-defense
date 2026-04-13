@@ -314,6 +314,7 @@ export class GameScene extends Phaser.Scene {
 				gridManager: this.playerGrid,
 				buildablePoints: this.currentMap.buildablePoints,
 				initialPool: PHASE_A_INITIAL_POOL,
+				energySystem: this.energySystem,
 			});
 		}
 

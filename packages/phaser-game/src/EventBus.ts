@@ -152,6 +152,9 @@ export interface GameEventMap {
 			| 'max-grade'
 			| 'invalid-tile';
 	};
+	'summon-failed': {
+		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';
+	};
 }
 
 export class TypedEventBus {

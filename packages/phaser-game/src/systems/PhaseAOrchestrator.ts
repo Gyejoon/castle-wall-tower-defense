@@ -1,4 +1,4 @@
-import type { Position } from '@gld/shared';
+import { PHASE_A_SUMMON_COST, type Position } from '@gld/shared';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 import {
@@ -13,12 +13,21 @@ import {
 import { SummonPoolSystem } from './SummonPoolSystem';
 import type { TowerSystem } from './TowerSystem';
 
+/** Minimal energy-system surface the orchestrator needs. Structural so we
+ *  don't import EnergySystem and can swap in a fake in tests. */
+export interface PhaseAEnergyApi {
+	canAfford(cost: number): boolean;
+	spend(cost: number): boolean;
+}
+
 export interface PhaseAOrchestratorDeps {
 	towerSystem: TowerSystem;
 	gridManager: GridManager;
 	buildablePoints: readonly Position[];
 	initialPool: readonly string[];
 	rng?: () => number;
+	energySystem?: PhaseAEnergyApi;
+	summonCost?: number;
 }
 
 /**
@@ -39,6 +48,7 @@ export class PhaseAOrchestrator {
 	private readonly merger: MergeSystem;
 	private readonly summonContext: SummonPlacementContext;
 	private readonly mergeContext: MergeContext;
+	private readonly summonCost: number;
 	private destroyed = false;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
@@ -53,6 +63,7 @@ export class PhaseAOrchestrator {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
 		this.summoner = new RandomSummonSystem(this.summonPool, deps.rng);
 		this.merger = new MergeSystem();
+		this.summonCost = deps.summonCost ?? PHASE_A_SUMMON_COST;
 
 		const buildable = deps.buildablePoints.map((p) => ({
 			col: p.x,
@@ -88,8 +99,15 @@ export class PhaseAOrchestrator {
 	}
 
 	private handleSummonRequest(): void {
+		const energy = this.deps.energySystem;
+		if (energy && !energy.canAfford(this.summonCost)) {
+			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
+			return;
+		}
+
 		const result = this.summoner.requestSummon(this.summonContext);
 		if (result.kind === 'failed') {
+			EventBus.emit('summon-failed', { reason: result.reason });
 			return;
 		}
 
@@ -101,8 +119,13 @@ export class PhaseAOrchestrator {
 		);
 
 		if (!placement.success) {
+			EventBus.emit('summon-failed', { reason: 'placement-failed' });
 			return;
 		}
+
+		// Spend energy AFTER successful placement so a placement failure
+		// (e.g. blocked path validation) doesn't burn the player's resources.
+		energy?.spend(this.summonCost);
 
 		this.deps.towerSystem.playPhaseASummonVfx(result.col, result.row);
 

@@ -118,6 +118,35 @@ export interface GameEventMap {
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;
+
+	// === Random Summon + Merge System (Phase A) ===
+	'request-summon-tower': Record<string, never>;
+	'request-merge-towers': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'tower-summoned': {
+		col: number;
+		row: number;
+		towerId: string;
+		grade: 'normal' | 'rare' | 'unique' | 'epic';
+	};
+	'towers-merged': {
+		col: number;
+		row: number;
+		towerId: string;
+		fromGrade: 'normal' | 'rare' | 'unique' | 'epic';
+		toGrade: 'normal' | 'rare' | 'unique' | 'epic';
+	};
+	'merge-failed': {
+		reason:
+			| 'different-tower'
+			| 'different-grade'
+			| 'max-grade'
+			| 'invalid-tile';
+	};
 }
 
 export class TypedEventBus {

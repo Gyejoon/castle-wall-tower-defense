@@ -7,7 +7,8 @@ export type WorldId =
 	| 'w3_tower'
 	| 'w4_catacombs'
 	| 'w5_fallen'
-	| 'w6_throne';
+	| 'w6_throne'
+	| 'phase_a_lab';
 
 export type WorldUnlockRule =
 	| { kind: 'always' }

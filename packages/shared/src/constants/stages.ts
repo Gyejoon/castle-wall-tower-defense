@@ -253,8 +253,29 @@ const W3_STAGES: StageDef[] = [
 	},
 ];
 
+// Phase A pivot — single hidden lab stage that backs the random-summon
+// + merge core loop. Not included in STAGE_ORDER so it stays out of the
+// main worldmap's "next stage" navigation; reached only via the lobby
+// "Phase A Lab" entry point.
+const PHASE_A_STAGES: StageDef[] = [
+	{
+		id: 'phase_a_s1',
+		worldId: 'phase_a_lab',
+		stageNumber: 1,
+		name: 'Phase A — 긴 회랑',
+		mapId: 'phase_a_long',
+		waveSetId: 'phase_a_s1',
+		isBossStage: true,
+		bossUnitId: 'orc_warlord',
+		recommendedPower: 80,
+	},
+];
+
 export const STAGES: Record<string, StageDef> = Object.fromEntries(
-	[...W1_STAGES, ...W2_STAGES, ...W3_STAGES].map((s) => [s.id, s]),
+	[...W1_STAGES, ...W2_STAGES, ...W3_STAGES, ...PHASE_A_STAGES].map((s) => [
+		s.id,
+		s,
+	]),
 );
 
 export const STAGE_ORDER: string[] = [

@@ -56,6 +56,17 @@ export const WORLDS: Record<WorldId, WorldDef> = {
 		gimmickId: null,
 		stageCount: 0,
 	},
+	// Phase A lab — pivot 검증용 hidden world. WORLD_ORDER에 들어가지 않으므로
+	// 메인 worldmap에는 표시되지 않고 로비의 별도 진입점으로만 도달한다.
+	phase_a_lab: {
+		id: 'phase_a_lab',
+		name: 'Phase A Lab',
+		order: 99,
+		unlockRule: { kind: 'always' },
+		mapPool: ['phase_a_long'],
+		gimmickId: null,
+		stageCount: 1,
+	},
 };
 
 export const WORLD_ORDER: WorldId[] = [

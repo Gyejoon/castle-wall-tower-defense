@@ -141,7 +141,6 @@ export class PhaseAOrchestrator {
 
 		if (!ok) {
 			this.emitMergeFailed({
-				kind: 'failed',
 				fromCol: data.fromCol,
 				fromRow: data.fromRow,
 				toCol: data.toCol,

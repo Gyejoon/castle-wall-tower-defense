@@ -92,7 +92,7 @@ import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
-import type { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
+import { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
 import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
@@ -291,18 +291,24 @@ export class GameScene extends Phaser.Scene {
 		this.worldGimmick?.onBattleStart();
 		this.playerTowers.setWorldGimmick(this.worldGimmick);
 
+		const isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
-		const deckCards =
-			deckIds && deckIds.length > 0
+		const deckCards = isPhaseAMap
+			? []
+			: deckIds && deckIds.length > 0
 				? buildDeckCardsSafe(deckIds)
 				: DEFAULT_DECK;
+		// Phase A bypasses the 4-tower deck entirely. We still construct
+		// DeckSystem (with an empty deck) so the rest of the scene keeps the
+		// same field shape and cleanup contract; the React HUD detects the
+		// empty deck-loaded payload and renders the Phase A summon UI instead.
 		this.playerDeck = new DeckSystem(deckCards);
 
 		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
 		// SummonPool + RandomSummonSystem + MergeSystem to TowerSystem and
 		// listens for request-summon-tower / request-merge-towers from the
 		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
-		if (this.currentMap.id === PHASE_A_MAP_ID) {
+		if (isPhaseAMap) {
 			this.phaseAOrchestrator = new PhaseAOrchestrator({
 				towerSystem: this.playerTowers,
 				gridManager: this.playerGrid,

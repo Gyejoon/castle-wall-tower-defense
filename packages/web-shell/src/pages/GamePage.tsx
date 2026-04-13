@@ -3,6 +3,7 @@ import {
 	getNextStageId,
 	getStageById,
 	getTotalWavesForStage,
+	PHASE_A_MAP_ID,
 	WORLD_ORDER,
 } from '@gld/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -10,6 +11,7 @@ import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
+import { PhaseAHud } from '../components/game/PhaseAHud';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
@@ -41,6 +43,7 @@ export function GamePage() {
 	const selectedStageId = useGameStore((s) => s.selectedStageId);
 	const selectedStage = getStageById(selectedStageId);
 	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
+	const isPhaseAMode = selectedStage.mapId === PHASE_A_MAP_ID;
 	const starKey =
 		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
 	const speed2xUnlocked = (highestWave[starKey] ?? 0) >= totalStageWaves;
@@ -214,8 +217,10 @@ export function GamePage() {
 
 					<ToastNotification toast={toast} />
 
-					{/* Tower Sell Panel */}
-					{selectedTower &&
+					{/* Tower Sell Panel — hidden in Phase A mode (PhaseAHud uses
+					    tower-selected events for tap-tap merge instead) */}
+					{!isPhaseAMode &&
+						selectedTower &&
 						runStatus !== 'victory' &&
 						runStatus !== 'defeat' && (
 							<div
@@ -305,7 +310,9 @@ export function GamePage() {
 					)}
 				</div>
 
-				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}
+				{runStatus !== 'victory' &&
+					runStatus !== 'defeat' &&
+					(isPhaseAMode ? <PhaseAHud /> : <DeckDock />)}
 			</div>
 		</div>
 	);

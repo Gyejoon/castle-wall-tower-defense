@@ -296,6 +296,22 @@ describe('PhaseAOrchestrator', () => {
 		expect(towerSystem.applyMerge).not.toHaveBeenCalled();
 	});
 
+	it('buildablePoints가 빈 배열이면 summon이 즉시 silent fail', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const gridManager = makeFakeGridManager();
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			gridManager: gridManager as never,
+			buildablePoints: [],
+			initialPool: ['archer'],
+			rng: () => 0,
+		});
+
+		EventBus.emit('request-summon-tower');
+
+		expect(towerSystem.placeTower).not.toHaveBeenCalled();
+	});
+
 	it('destroy()를 두 번 불러도 안전', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const gridManager = makeFakeGridManager();

@@ -19,6 +19,7 @@ import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
+import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
 import type { WorldGimmick } from './world-gimmicks/types';
 
@@ -985,13 +986,11 @@ export class TowerSystem {
 
 	/**
 	 * Returns a merge-friendly locator for the tower at (col,row), or null if
-	 * the tile is empty. Shape matches MergeSystem.TowerLocator structurally so
-	 * the Phase A orchestrator can pass this directly into MergeContext.
+	 * the tile is empty. Return type is MergeSystem.TowerLocator so the Phase
+	 * A orchestrator can pass this directly into MergeContext and any rename
+	 * of TowerLocator propagates here without a structural drift.
 	 */
-	getTowerLocator(
-		col: number,
-		row: number,
-	): { col: number; row: number; towerId: string; grade: TowerGrade } | null {
+	getTowerLocator(col: number, row: number): TowerLocator | null {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return null;
 		return {

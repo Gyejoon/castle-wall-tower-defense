@@ -67,7 +67,12 @@ export class PhaseAOrchestrator {
 			getTowerAt: (col, row) => deps.towerSystem.getTowerLocator(col, row),
 		};
 
+		// Idempotent registration: off-then-on so a stray listener from a
+		// previous instance (HMR, scene re-mount that didn't fire shutdown)
+		// gets replaced rather than duplicated.
+		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.on('request-summon-tower', this.onSummonRequest);
+		EventBus.off('request-merge-towers', this.onMergeRequest);
 		EventBus.on('request-merge-towers', this.onMergeRequest);
 	}
 

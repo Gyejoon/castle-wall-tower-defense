@@ -63,11 +63,37 @@ describe('STAGE_WAVES.w1_s1 (default stage)', () => {
 });
 
 describe('STAGE_WAVES', () => {
-	it('contains 24 legacy stages + Phase A pivot entries', () => {
-		// 24 = 3 worlds × 8 stages (legacy 4타워 덱 system).
-		// Phase A pivot adds phase_a_s1 (random-summon + merge core loop).
-		expect(Object.keys(STAGE_WAVES).length).toBeGreaterThanOrEqual(25);
-		expect(STAGE_WAVES.phase_a_s1).toBeDefined();
+	it('contains exactly the 24 legacy stages + Phase A pivot entries', () => {
+		// Explicit allowlist instead of a length check so accidental new
+		// entries surface in CI rather than being absorbed into a >= bound.
+		const expected = [
+			'w1_s1',
+			'w1_s2',
+			'w1_s3',
+			'w1_s4',
+			'w1_s5',
+			'w1_s6',
+			'w1_s7',
+			'w1_s8',
+			'w2_s1',
+			'w2_s2',
+			'w2_s3',
+			'w2_s4',
+			'w2_s5',
+			'w2_s6',
+			'w2_s7',
+			'w2_s8',
+			'w3_s1',
+			'w3_s2',
+			'w3_s3',
+			'w3_s4',
+			'w3_s5',
+			'w3_s6',
+			'w3_s7',
+			'w3_s8',
+			'phase_a_s1',
+		];
+		expect(Object.keys(STAGE_WAVES).sort()).toEqual(expected.sort());
 	});
 
 	it('each stage entry has valid unit IDs and positive counts', () => {

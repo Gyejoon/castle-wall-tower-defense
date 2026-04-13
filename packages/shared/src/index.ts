@@ -67,6 +67,7 @@ export {
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
 	PHASE_A_LONG_MAP,
+	PHASE_A_MAP_ID,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
 export {

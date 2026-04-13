@@ -17,6 +17,7 @@ import {
 	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	PHASE_A_MAP_ID,
 	PHASER_COLORS,
 	type StarRating,
 	UNITS,
@@ -301,7 +302,7 @@ export class GameScene extends Phaser.Scene {
 		// SummonPool + RandomSummonSystem + MergeSystem to TowerSystem and
 		// listens for request-summon-tower / request-merge-towers from the
 		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
-		if (this.currentMap.id === 'phase_a_long') {
+		if (this.currentMap.id === PHASE_A_MAP_ID) {
 			this.phaseAOrchestrator = new PhaseAOrchestrator({
 				towerSystem: this.playerTowers,
 				gridManager: this.playerGrid,

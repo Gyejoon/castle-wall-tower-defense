@@ -675,8 +675,10 @@ const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
 });
 
+export const PHASE_A_MAP_ID = 'phase_a_long' as const;
+
 export const PHASE_A_LONG_MAP: MapLayout = {
-	id: 'phase_a_long',
+	id: PHASE_A_MAP_ID,
 	name: 'Phase A — 긴 회랑',
 	width: 8,
 	height: 24,

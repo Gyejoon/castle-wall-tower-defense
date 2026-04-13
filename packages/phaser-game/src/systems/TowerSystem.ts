@@ -130,6 +130,7 @@ export class TowerSystem {
 		gridX: number,
 		gridY: number,
 		towerDefId: string,
+		options?: { gradeOverride?: TowerGrade; levelOverride?: number },
 	): TowerPlacementResult {
 		const def = ALL_TOWERS.find((t) => t.id === towerDefId);
 		if (!def) return { success: false, reason: 'out_of_bounds' };
@@ -173,8 +174,8 @@ export class TowerSystem {
 		const worldPos = this.gridManager.gridToWorld(gridX, gridY);
 
 		const owned = this.collection.find((t) => t.defId === towerDefId);
-		const towerLevel = owned?.level ?? 1;
-		const towerGrade = owned?.grade ?? 'normal';
+		const towerLevel = options?.levelOverride ?? owned?.level ?? 1;
+		const towerGrade = options?.gradeOverride ?? owned?.grade ?? 'normal';
 
 		const towerData: PlacedTower = {
 			instanceId,
@@ -980,6 +981,67 @@ export class TowerSystem {
 
 	getTowers(): PlacedTower[] {
 		return Array.from(this.towers.values()).map((t) => t.data);
+	}
+
+	/**
+	 * Returns a merge-friendly locator for the tower at (col,row), or null if
+	 * the tile is empty. Shape matches MergeSystem.TowerLocator structurally so
+	 * the Phase A orchestrator can pass this directly into MergeContext.
+	 */
+	getTowerLocator(
+		col: number,
+		row: number,
+	): { col: number; row: number; towerId: string; grade: TowerGrade } | null {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return null;
+		return {
+			col,
+			row,
+			towerId: entry.instance.def.id,
+			grade: entry.instance.grade,
+		};
+	}
+
+	/**
+	 * Atomic Phase A merge: tear down the "removed" tower and upgrade the "kept"
+	 * tower's grade in place. Caller is responsible for validating the merge via
+	 * MergeSystem first; this method only executes the result. Returns false if
+	 * either tile is empty or the two coords are identical.
+	 */
+	applyMerge(
+		removedCol: number,
+		removedRow: number,
+		keptCol: number,
+		keptRow: number,
+		newGrade: TowerGrade,
+	): boolean {
+		if (removedCol === keptCol && removedRow === keptRow) return false;
+		const removed = this.findTowerEntry(removedCol, removedRow);
+		const kept = this.findTowerEntry(keptCol, keptRow);
+		if (!removed || !kept) return false;
+
+		removed.instance.idleTween?.stop();
+		removed.instance.idleTween?.remove();
+		removed.instance.barrelSprite?.destroy();
+		removed.instance.base.destroy();
+		removed.instance.sprite.destroy();
+		this.towers.delete(removed.key);
+		this.gridManager.removeTower(removedCol, removedRow);
+
+		kept.instance.grade = newGrade;
+		const newTextureKey = resolveTowerTextureKey(
+			kept.instance.def.id,
+			newGrade,
+		);
+		kept.instance.sprite.setTexture(newTextureKey);
+		kept.instance.effectiveDamage = getEffectiveStats(
+			kept.instance.def.stats.damage,
+			kept.instance.data.level,
+			newGrade,
+		);
+
+		this.pathfinding.invalidateCache();
+		return true;
 	}
 
 	disableTower(towerId: string, untilMs: number): void {

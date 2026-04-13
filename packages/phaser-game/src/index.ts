@@ -9,7 +9,20 @@ export { getPlacementGuardFailure } from './placementRules';
 // Re-export systems for testing
 export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';
+export {
+	type MergeContext,
+	type MergeResult,
+	MergeSystem,
+	type TowerLocator,
+} from './systems/MergeSystem';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
+export {
+	type BuildableTile,
+	RandomSummonSystem,
+	type SummonPlacementContext,
+	type SummonRequestResult,
+} from './systems/RandomSummonSystem';
+export { SummonPoolSystem } from './systems/SummonPoolSystem';
 export { WaveSystem } from './systems/WaveSystem';
 
 export function startGame(

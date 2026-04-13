@@ -31,4 +31,9 @@ describe('summonPool', () => {
 		const pool = createSummonPool([]);
 		expect(() => drawRandomSummon(pool, () => 0)).toThrow('empty pool');
 	});
+
+	it('rng가 정확히 1.0을 반환해도 clamp되어 마지막 idx를 반환', () => {
+		const pool = createSummonPool(['a', 'b', 'c']);
+		expect(drawRandomSummon(pool, () => 1).towerId).toBe('c');
+	});
 });

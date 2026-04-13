@@ -11,6 +11,12 @@ export interface MergeContext {
 	getTowerAt(col: number, row: number): TowerLocator | null;
 }
 
+export type MergeFailReason =
+	| 'different-tower'
+	| 'different-grade'
+	| 'max-grade'
+	| 'invalid-tile';
+
 export type MergeResult =
 	| {
 			kind: 'success';
@@ -24,11 +30,11 @@ export type MergeResult =
 	  }
 	| {
 			kind: 'failed';
-			reason:
-				| 'different-tower'
-				| 'different-grade'
-				| 'max-grade'
-				| 'invalid-tile';
+			fromCol: number;
+			fromRow: number;
+			toCol: number;
+			toRow: number;
+			reason: MergeFailReason;
 	  };
 
 export class MergeSystem {
@@ -39,23 +45,32 @@ export class MergeSystem {
 		toCol: number,
 		toRow: number,
 	): MergeResult {
+		const fail = (reason: MergeFailReason): MergeResult => ({
+			kind: 'failed',
+			fromCol,
+			fromRow,
+			toCol,
+			toRow,
+			reason,
+		});
+
 		if (fromCol === toCol && fromRow === toRow) {
-			return { kind: 'failed', reason: 'invalid-tile' };
+			return fail('invalid-tile');
 		}
 		const from = ctx.getTowerAt(fromCol, fromRow);
 		const to = ctx.getTowerAt(toCol, toRow);
 		if (!from || !to) {
-			return { kind: 'failed', reason: 'invalid-tile' };
+			return fail('invalid-tile');
 		}
 		if (from.towerId !== to.towerId) {
-			return { kind: 'failed', reason: 'different-tower' };
+			return fail('different-tower');
 		}
 		if (from.grade !== to.grade) {
-			return { kind: 'failed', reason: 'different-grade' };
+			return fail('different-grade');
 		}
 		const upgraded = nextGrade(from.grade);
 		if (!upgraded) {
-			return { kind: 'failed', reason: 'max-grade' };
+			return fail('max-grade');
 		}
 		return {
 			kind: 'success',

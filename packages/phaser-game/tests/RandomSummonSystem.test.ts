@@ -45,6 +45,15 @@ describe('RandomSummonSystem.requestSummon', () => {
 		expect(r).toEqual({ kind: 'failed', reason: 'no-empty-tile' });
 	});
 
+	it('buildable 리스트가 빈 배열이면 failed:no-empty-tile', () => {
+		const pool = new SummonPoolSystem(['archer']);
+		const sys = new RandomSummonSystem(pool);
+		expect(sys.requestSummon(ctx([], []))).toEqual({
+			kind: 'failed',
+			reason: 'no-empty-tile',
+		});
+	});
+
 	it('빈 칸 후보 중 rng 기반 선택 — rng=0.99이면 마지막 빈 칸', () => {
 		const pool = new SummonPoolSystem(['archer'], () => 0);
 		const sys = new RandomSummonSystem(pool, () => 0.99);

@@ -29,6 +29,11 @@ export class SummonPoolSystem {
 		this.pool = createSummonPool(towerIds);
 	}
 
+	/**
+	 * Restore the pool to the IDs passed at construction time, ignoring any
+	 * later replacePool() calls. Use this on run restart, not for "undo last
+	 * pool change". If you need a new baseline, construct a new system.
+	 */
 	reset(): void {
 		this.pool = createSummonPool(this.initial);
 	}

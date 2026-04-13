@@ -113,6 +113,11 @@ describe('Phase A core flow — summon → merge', () => {
 		board.add({ col: 0, row: 0, towerId: 'archer', grade: 'epic' });
 		board.add({ col: 1, row: 0, towerId: 'archer', grade: 'epic' });
 		const m = merger.tryMerge(board, 0, 0, 1, 0);
-		expect(m).toEqual({ kind: 'failed', reason: 'max-grade' });
+		expect(m.kind).toBe('failed');
+		if (m.kind === 'failed') {
+			expect(m.reason).toBe('max-grade');
+			expect(m.fromCol).toBe(0);
+			expect(m.toCol).toBe(1);
+		}
 	});
 });

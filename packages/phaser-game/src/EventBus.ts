@@ -2,6 +2,7 @@ import type {
 	DeckCardDef,
 	PlacementFailureReason,
 	StarRating,
+	TowerGrade,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -120,7 +121,7 @@ export interface GameEventMap {
 	'current-scene-ready': Phaser.Scene;
 
 	// === Random Summon + Merge System (Phase A) ===
-	'request-summon-tower': Record<string, never>;
+	'request-summon-tower': undefined;
 	'request-merge-towers': {
 		fromCol: number;
 		fromRow: number;
@@ -131,16 +132,20 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		towerId: string;
-		grade: 'normal' | 'rare' | 'unique' | 'epic';
+		grade: TowerGrade;
 	};
 	'towers-merged': {
 		col: number;
 		row: number;
 		towerId: string;
-		fromGrade: 'normal' | 'rare' | 'unique' | 'epic';
-		toGrade: 'normal' | 'rare' | 'unique' | 'epic';
+		fromGrade: TowerGrade;
+		toGrade: TowerGrade;
 	};
 	'merge-failed': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
 		reason:
 			| 'different-tower'
 			| 'different-grade'

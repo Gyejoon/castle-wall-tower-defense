@@ -5,6 +5,7 @@ import type {
 	PlacementFailureReason,
 	Position,
 	TowerDef,
+	TowerGrade,
 } from '@gld/shared';
 import {
 	ALL_TOWERS,
@@ -24,7 +25,7 @@ import type { WorldGimmick } from './world-gimmicks/types';
 export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
-	grade: 'normal' | 'rare' | 'unique' | 'epic';
+	grade: TowerGrade;
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
@@ -41,7 +42,7 @@ export type TowerPlacementResult =
 
 export function resolveTowerTextureKey(
 	defId: string,
-	grade: 'normal' | 'rare' | 'unique' | 'epic',
+	grade: TowerGrade,
 ): string {
 	if (grade === 'normal') return `tower-${defId}`;
 	return `tower-${defId}-${grade}`;
@@ -862,7 +863,7 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
-		towerGrade: 'normal' | 'rare' | 'unique' | 'epic',
+		towerGrade: TowerGrade,
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,

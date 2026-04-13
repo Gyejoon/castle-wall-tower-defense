@@ -1,5 +1,8 @@
-export const GRADES = ['normal', 'rare', 'unique', 'epic'] as const;
-export type Grade = (typeof GRADES)[number];
+import { TOWER_GRADES, type TowerGrade } from './save';
+
+export type Grade = TowerGrade;
+
+export const GRADES = TOWER_GRADES;
 
 export function nextGrade(grade: Grade): Grade | null {
 	const idx = GRADES.indexOf(grade);

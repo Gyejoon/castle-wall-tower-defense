@@ -1,3 +1,4 @@
+import type { TowerGrade } from '@gld/shared';
 import { describe, expect, it } from 'vitest';
 import { type MergeContext, MergeSystem } from '../src/systems/MergeSystem';
 
@@ -6,7 +7,7 @@ function ctx(
 		col: number;
 		row: number;
 		towerId: string;
-		grade: 'normal' | 'rare' | 'unique' | 'epic';
+		grade: TowerGrade;
 	}>,
 ): MergeContext {
 	return {
@@ -32,13 +33,17 @@ describe('MergeSystem.tryMerge', () => {
 		}
 	});
 
-	it('다른 타워 → failed:different-tower', () => {
+	it('다른 타워 → failed:different-tower (coords carried)', () => {
 		const c = ctx([
 			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
 			{ col: 1, row: 0, towerId: 'plasma', grade: 'normal' },
 		]);
 		expect(sys.tryMerge(c, 0, 0, 1, 0)).toEqual({
 			kind: 'failed',
+			fromCol: 0,
+			fromRow: 0,
+			toCol: 1,
+			toRow: 0,
 			reason: 'different-tower',
 		});
 	});
@@ -48,10 +53,13 @@ describe('MergeSystem.tryMerge', () => {
 			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
 			{ col: 1, row: 0, towerId: 'archer', grade: 'rare' },
 		]);
-		expect(sys.tryMerge(c, 0, 0, 1, 0)).toEqual({
-			kind: 'failed',
-			reason: 'different-grade',
-		});
+		const r = sys.tryMerge(c, 0, 0, 1, 0);
+		expect(r.kind).toBe('failed');
+		if (r.kind === 'failed') {
+			expect(r.reason).toBe('different-grade');
+			expect(r.fromCol).toBe(0);
+			expect(r.toCol).toBe(1);
+		}
 	});
 
 	it('epic 등급 합성 → failed:max-grade', () => {
@@ -59,25 +67,38 @@ describe('MergeSystem.tryMerge', () => {
 			{ col: 0, row: 0, towerId: 'archer', grade: 'epic' },
 			{ col: 1, row: 0, towerId: 'archer', grade: 'epic' },
 		]);
-		expect(sys.tryMerge(c, 0, 0, 1, 0)).toEqual({
-			kind: 'failed',
-			reason: 'max-grade',
-		});
+		const r = sys.tryMerge(c, 0, 0, 1, 0);
+		expect(r.kind).toBe('failed');
+		if (r.kind === 'failed') {
+			expect(r.reason).toBe('max-grade');
+		}
 	});
 
-	it('빈 칸 합성 → failed:invalid-tile', () => {
+	it('빈 칸 합성 → failed:invalid-tile (from valid, to empty)', () => {
 		const c = ctx([{ col: 0, row: 0, towerId: 'archer', grade: 'normal' }]);
-		expect(sys.tryMerge(c, 0, 0, 99, 99)).toEqual({
-			kind: 'failed',
-			reason: 'invalid-tile',
-		});
+		const r = sys.tryMerge(c, 0, 0, 99, 99);
+		expect(r.kind).toBe('failed');
+		if (r.kind === 'failed') {
+			expect(r.reason).toBe('invalid-tile');
+			expect(r.toCol).toBe(99);
+		}
+	});
+
+	it('빈 칸에서 출발 → failed:invalid-tile (from empty, to valid)', () => {
+		const c = ctx([{ col: 1, row: 0, towerId: 'archer', grade: 'normal' }]);
+		const r = sys.tryMerge(c, 99, 99, 1, 0);
+		expect(r.kind).toBe('failed');
+		if (r.kind === 'failed') {
+			expect(r.reason).toBe('invalid-tile');
+		}
 	});
 
 	it('같은 타일 self-merge → failed:invalid-tile (무료 승급 방지)', () => {
 		const c = ctx([{ col: 0, row: 0, towerId: 'archer', grade: 'normal' }]);
-		expect(sys.tryMerge(c, 0, 0, 0, 0)).toEqual({
-			kind: 'failed',
-			reason: 'invalid-tile',
-		});
+		const r = sys.tryMerge(c, 0, 0, 0, 0);
+		expect(r.kind).toBe('failed');
+		if (r.kind === 'failed') {
+			expect(r.reason).toBe('invalid-tile');
+		}
 	});
 });

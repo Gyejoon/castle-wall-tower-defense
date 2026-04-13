@@ -39,6 +39,9 @@ export class MergeSystem {
 		toCol: number,
 		toRow: number,
 	): MergeResult {
+		if (fromCol === toCol && fromRow === toRow) {
+			return { kind: 'failed', reason: 'invalid-tile' };
+		}
 		const from = ctx.getTowerAt(fromCol, fromRow);
 		const to = ctx.getTowerAt(toCol, toRow);
 		if (!from || !to) {

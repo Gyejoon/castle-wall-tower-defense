@@ -72,4 +72,12 @@ describe('MergeSystem.tryMerge', () => {
 			reason: 'invalid-tile',
 		});
 	});
+
+	it('같은 타일 self-merge → failed:invalid-tile (무료 승급 방지)', () => {
+		const c = ctx([{ col: 0, row: 0, towerId: 'archer', grade: 'normal' }]);
+		expect(sys.tryMerge(c, 0, 0, 0, 0)).toEqual({
+			kind: 'failed',
+			reason: 'invalid-tile',
+		});
+	});
 });

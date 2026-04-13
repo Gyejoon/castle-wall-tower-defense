@@ -17,6 +17,10 @@ export {
 } from './systems/MergeSystem';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
 export {
+	PhaseAOrchestrator,
+	type PhaseAOrchestratorDeps,
+} from './systems/PhaseAOrchestrator';
+export {
 	type BuildableTile,
 	RandomSummonSystem,
 	type SummonPlacementContext,

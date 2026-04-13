@@ -91,11 +91,23 @@ import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
+import type { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
 import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+
+// Phase A pivot starter pool: 5 towers covering single-target, AOE, CC,
+// splash, and DOT roles. All from existing assets so the random-summon +
+// merge loop reuses pixel medieval sprites without new art.
+const PHASE_A_INITIAL_POOL: readonly string[] = [
+	'archer',
+	'plasma',
+	'emp',
+	'nova_cannon',
+	'flame_tower',
+];
 
 export class GameScene extends Phaser.Scene {
 	private playerGrid!: GridManager;
@@ -104,6 +116,7 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
+	private phaseAOrchestrator?: PhaseAOrchestrator;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
@@ -283,6 +296,20 @@ export class GameScene extends Phaser.Scene {
 				? buildDeckCardsSafe(deckIds)
 				: DEFAULT_DECK;
 		this.playerDeck = new DeckSystem(deckCards);
+
+		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
+		// SummonPool + RandomSummonSystem + MergeSystem to TowerSystem and
+		// listens for request-summon-tower / request-merge-towers from the
+		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
+		if (this.currentMap.id === 'phase_a_long') {
+			this.phaseAOrchestrator = new PhaseAOrchestrator({
+				towerSystem: this.playerTowers,
+				gridManager: this.playerGrid,
+				buildablePoints: this.currentMap.buildablePoints,
+				initialPool: PHASE_A_INITIAL_POOL,
+			});
+		}
+
 		this.damageNumbers = new DamageNumberSystem(this);
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -1084,6 +1111,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		EventBus.off('furnace-cycle', this.onFurnaceCycle);
 		EventBus.off('arcane-burst', this.onArcaneBurst);
+		this.phaseAOrchestrator?.destroy();
+		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();
 
 		for (const overlay of this.furnaceTintOverlays) overlay.destroy();

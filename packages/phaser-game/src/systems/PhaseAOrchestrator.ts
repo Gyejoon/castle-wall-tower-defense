@@ -104,6 +104,8 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
+		this.deps.towerSystem.playPhaseASummonVfx(result.col, result.row);
+
 		EventBus.emit('tower-summoned', {
 			col: result.col,
 			row: result.row,
@@ -149,6 +151,8 @@ export class PhaseAOrchestrator {
 			});
 			return;
 		}
+
+		this.deps.towerSystem.playPhaseAMergeVfx(result.keptCol, result.keptRow);
 
 		EventBus.emit('towers-merged', {
 			col: result.keptCol,

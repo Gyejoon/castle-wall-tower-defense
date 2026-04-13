@@ -55,6 +55,10 @@ function createImage() {
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
 		setTexture: vi.fn().mockReturnThis(),
+		setTint: vi.fn().mockReturnThis(),
+		clearTint: vi.fn().mockReturnThis(),
+		scaleX: 1,
+		scaleY: 1,
 		destroy: vi.fn(),
 	};
 }
@@ -226,5 +230,40 @@ describe('TowerSystem Phase A merge support', () => {
 		expect(towerSystem.applyMerge(p.x, p.y, p.x, p.y, 'rare')).toBe(false);
 		// tower still there at original grade
 		expect(towerSystem.getTowerLocator(p.x, p.y)?.grade).toBe('normal');
+	});
+
+	it('playPhaseASummonVfx adds a scale-punch tween on the tower sprite', () => {
+		const { scene, towerSystem } = createTowerSystem();
+		const p = FOREST_GATE_MAP.buildablePoints[0];
+		towerSystem.placeTower(p.x, p.y, 'archer');
+		const tweenAddCallsBefore = scene.tweens.add.mock.calls.length;
+
+		towerSystem.playPhaseASummonVfx(p.x, p.y);
+
+		const tweenAddCallsAfter = scene.tweens.add.mock.calls.length;
+		expect(tweenAddCallsAfter).toBeGreaterThan(tweenAddCallsBefore);
+		const lastCall =
+			scene.tweens.add.mock.calls[scene.tweens.add.mock.calls.length - 1][0];
+		expect(lastCall.yoyo).toBe(true);
+		expect(lastCall.duration).toBeLessThanOrEqual(200);
+	});
+
+	it('playPhaseASummonVfx is a no-op on empty tile', () => {
+		const { scene, towerSystem } = createTowerSystem();
+		const before = scene.tweens.add.mock.calls.length;
+		expect(() => towerSystem.playPhaseASummonVfx(99, 99)).not.toThrow();
+		expect(scene.tweens.add.mock.calls.length).toBe(before);
+	});
+
+	it('playPhaseAMergeVfx adds scale punch + gold tint on the kept tower', () => {
+		const { scene, towerSystem } = createTowerSystem();
+		const p = FOREST_GATE_MAP.buildablePoints[0];
+		towerSystem.placeTower(p.x, p.y, 'archer');
+		const before = scene.tweens.add.mock.calls.length;
+
+		towerSystem.playPhaseAMergeVfx(p.x, p.y);
+
+		// Two tweens added: scale punch + tint cleanup counter
+		expect(scene.tweens.add.mock.calls.length).toBe(before + 2);
 	});
 });

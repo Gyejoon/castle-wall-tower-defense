@@ -1043,6 +1043,61 @@ export class TowerSystem {
 		return true;
 	}
 
+	/**
+	 * Phase A: pop-in scale punch on a freshly summoned tower. Additive over
+	 * the existing idle tween — same target, brief duration, no kill-restart.
+	 * Called by PhaseAOrchestrator after a successful summon.
+	 */
+	playPhaseASummonVfx(col: number, row: number): void {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: baseScaleX * 1.3,
+			scaleY: baseScaleY * 1.3,
+			duration: 110,
+			yoyo: true,
+			ease: 'Cubic.Out',
+		});
+	}
+
+	/**
+	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
+	 * a successful merge. Tint is cleared via a follow-up tween that targets
+	 * a counter and applies clearTint in onComplete, so cleanup is bound to
+	 * the scene's tween manager (no orphan setTimeout / setInterval).
+	 */
+	playPhaseAMergeVfx(col: number, row: number): void {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: baseScaleX * 1.5,
+			scaleY: baseScaleY * 1.5,
+			duration: 140,
+			yoyo: true,
+			ease: 'Cubic.Out',
+		});
+		if (typeof sprite.setTint === 'function') {
+			sprite.setTint(0xffd966);
+			this.scene.tweens.add({
+				targets: { _t: 0 },
+				_t: 1,
+				duration: 360,
+				ease: 'Cubic.Out',
+				onComplete: () => {
+					if (typeof sprite.clearTint === 'function') sprite.clearTint();
+				},
+			});
+		}
+	}
+
 	disableTower(towerId: string, untilMs: number): void {
 		const t = this.towers.get(towerId);
 		if (!t) return;

@@ -45,6 +45,8 @@ function makeFakeTowerSystem() {
 	const towers: FakeTower[] = [];
 	return {
 		towers,
+		playPhaseASummonVfx: vi.fn(),
+		playPhaseAMergeVfx: vi.fn(),
 		placeTower: vi.fn(
 			(
 				col: number,

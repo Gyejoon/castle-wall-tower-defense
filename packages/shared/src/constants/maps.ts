@@ -598,6 +598,101 @@ export const W3_TOWER_B_MAP: MapLayout = {
 	},
 };
 
+// === Phase A Long Map (8×24, S-curve, random-summon + merge) ===
+// Four sweep S-curve from spawn (4,0) down to exit (3,23). Path stays in cols 1-6
+// so cols 0/7 act as a frame; buildable pockets fall on either side of each sweep.
+const PHASE_A_LONG_PATH: Position[] = [
+	{ x: 4, y: 0 },
+	{ x: 4, y: 1 },
+	{ x: 4, y: 2 },
+	{ x: 4, y: 3 },
+	{ x: 3, y: 3 },
+	{ x: 2, y: 3 },
+	{ x: 1, y: 3 },
+	{ x: 1, y: 4 },
+	{ x: 1, y: 5 },
+	{ x: 1, y: 6 },
+	{ x: 2, y: 6 },
+	{ x: 3, y: 6 },
+	{ x: 4, y: 6 },
+	{ x: 5, y: 6 },
+	{ x: 6, y: 6 },
+	{ x: 6, y: 7 },
+	{ x: 6, y: 8 },
+	{ x: 6, y: 9 },
+	{ x: 5, y: 9 },
+	{ x: 4, y: 9 },
+	{ x: 3, y: 9 },
+	{ x: 2, y: 9 },
+	{ x: 1, y: 9 },
+	{ x: 1, y: 10 },
+	{ x: 1, y: 11 },
+	{ x: 1, y: 12 },
+	{ x: 2, y: 12 },
+	{ x: 3, y: 12 },
+	{ x: 4, y: 12 },
+	{ x: 5, y: 12 },
+	{ x: 6, y: 12 },
+	{ x: 6, y: 13 },
+	{ x: 6, y: 14 },
+	{ x: 6, y: 15 },
+	{ x: 5, y: 15 },
+	{ x: 4, y: 15 },
+	{ x: 3, y: 15 },
+	{ x: 2, y: 15 },
+	{ x: 1, y: 15 },
+	{ x: 1, y: 16 },
+	{ x: 1, y: 17 },
+	{ x: 1, y: 18 },
+	{ x: 2, y: 18 },
+	{ x: 3, y: 18 },
+	{ x: 4, y: 18 },
+	{ x: 5, y: 18 },
+	{ x: 6, y: 18 },
+	{ x: 6, y: 19 },
+	{ x: 6, y: 20 },
+	{ x: 6, y: 21 },
+	{ x: 5, y: 21 },
+	{ x: 4, y: 21 },
+	{ x: 3, y: 21 },
+	{ x: 3, y: 22 },
+	{ x: 3, y: 23 },
+];
+
+const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
+	{ x: 4, y: 0 },
+	{ x: 3, y: 23 },
+	{ x: 0, y: 0 },
+	{ x: 7, y: 0 },
+	{ x: 0, y: 23 },
+	{ x: 7, y: 23 },
+];
+
+const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
+	width: 8,
+	height: 24,
+	path: PHASE_A_LONG_PATH,
+	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+});
+
+export const PHASE_A_LONG_MAP: MapLayout = {
+	id: 'phase_a_long',
+	name: 'Phase A — 긴 회랑',
+	width: 8,
+	height: 24,
+	tileSize: 32,
+	path: PHASE_A_LONG_PATH,
+	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
+	spawnPoint: { x: 4, y: 0 },
+	exitPoint: { x: 3, y: 23 },
+	tilemapKey: 'tilemap-phase-a-long',
+	tilesetKey: 'tileset',
+	rewardMultiplier: 1,
+	difficultyHpMult: 1,
+	recommendedPower: 55,
+};
+
 export const MAP_REGISTRY: Record<string, MapLayout> = {
 	// W1
 	w1_forest_a: FOREST_GATE_MAP,
@@ -608,6 +703,8 @@ export const MAP_REGISTRY: Record<string, MapLayout> = {
 	// W3
 	w3_tower_a: STORM_CITADEL_MAP,
 	w3_tower_b: W3_TOWER_B_MAP,
+	// Phase A pivot — random-summon + merge core loop
+	phase_a_long: PHASE_A_LONG_MAP,
 	// Legacy aliases
 	forest_gate: FOREST_GATE_MAP,
 	lava_fortress: LAVA_FORTRESS_MAP,

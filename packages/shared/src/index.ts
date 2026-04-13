@@ -66,6 +66,7 @@ export {
 	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
+	PHASE_A_LONG_MAP,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
 export {

@@ -63,8 +63,11 @@ describe('STAGE_WAVES.w1_s1 (default stage)', () => {
 });
 
 describe('STAGE_WAVES', () => {
-	it('contains exactly 24 stage entries (8 per world)', () => {
-		expect(Object.keys(STAGE_WAVES)).toHaveLength(24);
+	it('contains 24 legacy stages + Phase A pivot entries', () => {
+		// 24 = 3 worlds × 8 stages (legacy 4타워 덱 system).
+		// Phase A pivot adds phase_a_s1 (random-summon + merge core loop).
+		expect(Object.keys(STAGE_WAVES).length).toBeGreaterThanOrEqual(25);
+		expect(STAGE_WAVES.phase_a_s1).toBeDefined();
 	});
 
 	it('each stage entry has valid unit IDs and positive counts', () => {
@@ -124,5 +127,47 @@ describe('getWavesForStage', () => {
 
 	it('알 수 없는 stageId는 w1_s1으로 fallback한다', () => {
 		expect(getWavesForStage('nonexistent')).toBe(STAGE_WAVES.w1_s1);
+	});
+});
+
+describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot)', () => {
+	const phaseA = STAGE_WAVES.phase_a_s1;
+
+	it('7개 wave가 정의되어 있다 (5~8 범위)', () => {
+		expect(phaseA).toHaveLength(7);
+	});
+
+	it('마지막 wave는 boss kind, 단일 미니보스(orc_warlord)', () => {
+		const last = phaseA[phaseA.length - 1];
+		expect(last.kind).toBe('boss');
+		expect(last.groups).toEqual([{ unitId: 'orc_warlord', count: 1 }]);
+	});
+
+	it('처음 6개 wave는 normal kind', () => {
+		for (let i = 0; i < 6; i++) {
+			expect(phaseA[i].kind).toBe('normal');
+		}
+	});
+
+	it('slotIndex가 1..7 순차', () => {
+		phaseA.forEach((w, i) => {
+			expect(w.slotIndex).toBe(i + 1);
+		});
+	});
+
+	it('모든 unitId가 알려진 유닛', () => {
+		for (const w of phaseA) {
+			for (const g of w.groups) {
+				expect(validUnitIds.has(g.unitId)).toBe(true);
+			}
+		}
+	});
+
+	it('phase_a_long 맵 별칭이 WAVE_REGISTRY에 등록되어 있다', () => {
+		expect(WAVE_REGISTRY.phase_a_long).toBe(phaseA);
+	});
+
+	it('getWavesForStage("phase_a_s1")이 동일 배열 반환', () => {
+		expect(getWavesForStage('phase_a_s1')).toBe(phaseA);
 	});
 });

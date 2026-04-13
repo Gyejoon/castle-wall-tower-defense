@@ -1728,6 +1728,63 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			groups: [{ unitId: 'corrupted_archmage', count: 1 }],
 		},
 	],
+
+	// === Phase A pivot — random-summon + merge core loop ===
+	// 7 waves, last is mini-boss (orc_warlord). Designed for 5-10 minute session
+	// on the 8×24 long map.
+	phase_a_s1: [
+		{
+			slotIndex: 1,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups: [{ unitId: 'scout_drone', count: 4 }],
+		},
+		{
+			slotIndex: 2,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups: [{ unitId: 'scout_drone', count: 6 }],
+		},
+		{
+			slotIndex: 3,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups: [
+				{ unitId: 'scout_drone', count: 4 },
+				{ unitId: 'battle_robot', count: 2 },
+			],
+		},
+		{
+			slotIndex: 4,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups: [{ unitId: 'battle_robot', count: 5 }],
+		},
+		{
+			slotIndex: 5,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups: [
+				{ unitId: 'scout_drone', count: 6 },
+				{ unitId: 'battle_robot', count: 4 },
+			],
+		},
+		{
+			slotIndex: 6,
+			kind: 'normal',
+			delayAfterClearSec: 5,
+			groups: [
+				{ unitId: 'heavy_walker', count: 3 },
+				{ unitId: 'battle_robot', count: 4 },
+			],
+		},
+		{
+			slotIndex: 7,
+			kind: 'boss',
+			delayAfterClearSec: 5,
+			groups: [{ unitId: 'orc_warlord', count: 1 }],
+		},
+	],
 };
 
 // Legacy aliases + new map aliases
@@ -1751,6 +1808,8 @@ export const WAVE_REGISTRY: Record<string, WaveDef[]> = {
 	w2_forge_b: getRequiredStageWaves('w2_s5'),
 	w3_tower_a: getRequiredStageWaves('w3_s1'),
 	w3_tower_b: getRequiredStageWaves('w3_s5'),
+	// Phase A pivot
+	phase_a_long: getRequiredStageWaves('phase_a_s1'),
 };
 
 export function getWavesForMap(mapId: string): WaveDef[] {

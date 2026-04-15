@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-11
+> **Last Updated:** 2026-04-14 (v2 — Phase A 피벗 시스템 추가)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -35,12 +35,24 @@ GridManager
     └─► TowerSystem  (GridManager, PathfindingSystem, collection, spawnExitPairs)
     └─► UnitSystem   (GridManager)
         └─► WaveSystem   (UnitSystem, mapWaves, difficultyHpMult)
-DeckSystem    (deckCards)
+DeckSystem    (deckCards — phase_a_long에서는 빈 배열로 생성, 4타워 흐름 skip)
+PhaseAOrchestrator [v2, phase_a_long 전용]  (towerSystem, gridManager, buildablePoints, initialPool, energySystem)
+    └─► SummonPoolSystem  (initialPool, rng)
+    └─► RandomSummonSystem  (summonPool, rng)
+    └─► MergeSystem
 DamageNumberSystem  (scene)
 EnergySystem  (standalone)
-GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 [M2+]
+GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 [M2+, phase_a_lab 월드에는 등록된 factory 없음]
 TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
+
+**Phase A 분기 로직**: `currentMap.id === PHASE_A_MAP_ID` 일 때만 `PhaseAOrchestrator`를 생성하고 `this.phaseAOrchestrator` 필드에 저장. 레거시 맵에서는 `undefined`이며 cleanup에서 optional chaining으로 안전하게 skip된다.
+
+**PhaseAOrchestrator 책임 경계**
+- 생성자에서 3개 Phase A 시스템을 owning하고 EventBus 리스너를 **idempotent off→on** 으로 등록 (HMR / 씬 재마운트로 이전 인스턴스 리스너가 남아도 중복 없음)
+- `TowerSystem.getTowerLocator` / `TowerSystem.applyMerge` / `TowerSystem.placeTower({ gradeOverride, levelOverride })` 로만 TowerSystem에 접근 — 직접 mutation 없음
+- 에너지 gating은 `PhaseAEnergyApi` 구조적 인터페이스(`canAfford` + `spend`)로 받음. `EnergySystem`을 직접 import하지 않아 테스트 fake 주입 가능
+- `destroy()`는 idempotent — 두 번 호출해도 안전
 
 ### update() 루프 실행 순서
 
@@ -85,7 +97,11 @@ Game.ts ──────────────────────► Ev
 ### 클린업 역순 (`cleanup()`)
 
 ```
-EventBus 리스너 해제
+EventBus 리스너 해제 (request-select-tower, request-sell-tower, wave-started 등)
+PhaseAOrchestrator.destroy() [v2, phase_a_long 전용, optional chaining]
+    └─► EventBus.off('request-summon-tower', ...)
+    └─► EventBus.off('request-merge-towers', ...)
+soundGenerator.reset()
 TutorialSystem.destroy()
 DamageNumberSystem.destroy()
 TowerSystem.destroy()
@@ -95,6 +111,8 @@ DeckSystem.reset()
 EnergySystem.reset()
 옵셔널 에셋 언로드
 ```
+
+**순서 이유**: PhaseAOrchestrator는 EventBus 리스너만 가지고 있으므로 TowerSystem.destroy() 이전에 먼저 EventBus.off를 호출해 이후 request-* 이벤트가 destroy된 TowerSystem에 닿지 않도록 막는다.
 
 ---
 
@@ -130,15 +148,32 @@ EnergySystem.reset()
 
 | 이벤트 | 발화 주체 | 처리 위치 |
 |--------|----------|----------|
-| `request-select-tower` | DeckDock | Game.ts onSelectTower |
+| `request-select-tower` | DeckDock (legacy) | Game.ts onSelectTower |
 | `request-clear-tower-selection` | UI | Game.ts onClearTowerSelection |
-| `request-sell-tower` | UI | TowerSystem |
+| `request-sell-tower` | UI (legacy) | TowerSystem |
 | `request-start-game` | UI | 씬 전환 |
 | `request-reset-run` | 결과 화면 | useGameEvents → gameStore.resetRun |
 | `request-set-speed` | SpeedButton | Game.ts onSetSpeed |
 | `request-tutorial-advance` | 튜토리얼 UI | TutorialSystem |
 | `request-gimmick-info` | UI에서 기믹 상태 요청 | GimmickSystem |
 | `star-selected` | StageDetail에서 별 선택 | game.registry sync |
+| `request-summon-tower` [v2] | `PhaseAHud` 소환 버튼 | `PhaseAOrchestrator.handleSummonRequest` |
+| `request-merge-towers` [v2] | `PhaseAHud` 두 번째 타워 탭 | `PhaseAOrchestrator.handleMergeRequest` |
+
+### Phase A 신규 이벤트 (v2 — `phase_a_long` 전용)
+
+| 이벤트 | 방향 | 페이로드 | 발화 시점 |
+|--------|------|---------|----------|
+| `request-summon-tower` | React → Game | `undefined` | 소환 버튼 탭 + 에너지 충분 |
+| `request-merge-towers` | React → Game | `{ fromCol, fromRow, toCol, toRow }` | 두 번째 타워 탭 |
+| `tower-summoned` | Game → React | `{ col, row, towerId, grade: TowerGrade }` | 소환 성공 직후 (placeTower + playPhaseASummonVfx 뒤) |
+| `towers-merged` | Game → React | `{ col, row, towerId, fromGrade, toGrade }` | 합성 성공 직후 (applyMerge + playPhaseAMergeVfx 뒤) |
+| `merge-failed` | Game → React | `{ fromCol, fromRow, toCol, toRow, reason }` | MergeSystem validation 실패 또는 applyMerge post-validation 실패 |
+| `summon-failed` | Game → React | `{ reason: 'insufficient-energy' \| 'no-empty-tile' \| 'placement-failed' }` | canAfford 실패 / 빈 칸 없음 / placeTower 실패 |
+
+**merge-failed 이유 타입**: `'different-tower' | 'different-grade' | 'max-grade' | 'invalid-tile'`. PhaseAHud가 한국어 라벨로 변환해 토스트 표시.
+
+`request-summon-tower` 페이로드는 의도적으로 `undefined` — 다른 parameterless 이벤트(`request-pause`, `request-reset-run`)와 일치시키기 위해서며, TypedEventBus 오버로드가 zero-arg로 취급한다.
 
 ---
 
@@ -160,7 +195,9 @@ EnergySystem.reset()
 | 저장소 | 내용 |
 |--------|------|
 | `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted) |
-| 시스템 내부 상태 | TowerSystem(배치된 타워), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase) |
+| 시스템 내부 상태 | TowerSystem(배치된 타워 + 각 타워의 grade/effectiveDamage), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase), PhaseAOrchestrator(SummonPool + RandomSummon + Merge 내부 상태)[v2] |
+
+**Phase A는 신규 gameStore 슬라이스를 추가하지 않는다**: PhaseAHud는 로컬 `useState` + `useRef`로 `firstPick` 상태를 관리하고, 에너지는 기존 `gameStore.energy` 셀렉터를 그대로 사용한다. 합성 실패/성공 피드백은 기존 `pushToast` 경로로 흐른다. 이는 피벗 검증 기간 중 gameStore 변경을 최소화해 롤백을 쉽게 만들기 위한 의도적 선택이다.
 
 ### 동기화 규칙
 
@@ -278,3 +315,4 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 |------|------|---------|
 | 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
 | 2026-04-11 | §2, §3, §7 | 유닛 이동 방향 표현 추가(비행 보스 setRotation, 지상 보스/일반 유닛 flipX). 몬스터 충돌 비활성화(sweepCollisions disabled). 웨이브 30초 타이머(마지막 웨이브 면제). drag-drop/drag-hover 이벤트 추가(드래그 앤 드롭 타워 배치). |
+| 2026-04-14 | §2, §3, §4 | **v2 Phase A 피벗 시스템 추가**. `PhaseAOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === PHASE_A_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. Phase A는 신규 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + PhaseAHud 로컬 state 조합. DeckSystem은 phase_a_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `phaseAOrchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |

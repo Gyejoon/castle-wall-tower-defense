@@ -138,8 +138,10 @@ export type {
 	WaveSlotKind,
 } from './constants/waves';
 export {
+	generatePhaseAWaves,
 	getTotalWavesForMap,
 	getTotalWavesForStage,
+	getWaveScaling,
 	getWavesForMap,
 	getWavesForStage,
 	MAX_WAVE_DURATION_MS,

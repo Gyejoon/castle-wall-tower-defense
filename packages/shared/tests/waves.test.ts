@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UNITS } from '../src/constants/units';
 import {
+	getWaveScaling,
 	getWavesForMap,
 	getWavesForStage,
 	STAGE_WAVES,
@@ -156,29 +157,54 @@ describe('getWavesForStage', () => {
 	});
 });
 
-describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot)', () => {
+describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot — endless)', () => {
 	const phaseA = STAGE_WAVES.phase_a_s1;
 
-	it('7개 wave가 정의되어 있다 (5~8 범위)', () => {
-		expect(phaseA).toHaveLength(7);
+	it('50 wave 생성 (practically-infinite 세션)', () => {
+		expect(phaseA).toHaveLength(50);
 	});
 
-	it('마지막 wave는 boss kind, 단일 미니보스(orc_warlord)', () => {
-		const last = phaseA[phaseA.length - 1];
-		expect(last.kind).toBe('boss');
-		expect(last.groups).toEqual([{ unitId: 'orc_warlord', count: 1 }]);
-	});
-
-	it('처음 6개 wave는 normal kind', () => {
-		for (let i = 0; i < 6; i++) {
-			expect(phaseA[i].kind).toBe('normal');
-		}
-	});
-
-	it('slotIndex가 1..7 순차', () => {
+	it('slotIndex가 1..50 순차', () => {
 		phaseA.forEach((w, i) => {
 			expect(w.slotIndex).toBe(i + 1);
 		});
+	});
+
+	it('5의 배수 wave는 boss, 나머지는 normal', () => {
+		for (const w of phaseA) {
+			if (w.slotIndex % 5 === 0) {
+				expect(w.kind).toBe('boss');
+			} else {
+				expect(w.kind).toBe('normal');
+			}
+		}
+	});
+
+	it('보스가 orc_warlord / forge_master 순으로 교대', () => {
+		// wave 5 → orc, wave 10 → forge, wave 15 → orc, ...
+		const bossWaves = phaseA.filter((w) => w.kind === 'boss');
+		expect(bossWaves).toHaveLength(10);
+		bossWaves.forEach((w, i) => {
+			const expected = i % 2 === 0 ? 'orc_warlord' : 'forge_master';
+			expect(w.groups[0].unitId).toBe(expected);
+			expect(w.groups[0].count).toBe(1);
+		});
+	});
+
+	it('normal wave는 slot이 커질수록 유닛 카운트 증가', () => {
+		const w1 = phaseA[0]; // slot 1 (normal)
+		const w21 = phaseA[20]; // slot 21 (normal, 20은 보스라 비교 불가)
+		const totalCount = (w: { groups: { count: number }[] }) =>
+			w.groups.reduce((s, g) => s + g.count, 0);
+		expect(totalCount(w21)).toBeGreaterThan(totalCount(w1));
+	});
+
+	it('slot 14+ 에서 stealth_drone 이 등장하기 시작', () => {
+		const stealthWaves = phaseA.filter((w) =>
+			w.groups.some((g) => g.unitId === 'stealth_drone'),
+		);
+		expect(stealthWaves.length).toBeGreaterThan(0);
+		expect(stealthWaves[0].slotIndex).toBeGreaterThanOrEqual(14);
 	});
 
 	it('모든 unitId가 알려진 유닛', () => {
@@ -195,5 +221,33 @@ describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot)', () => {
 
 	it('getWavesForStage("phase_a_s1")이 동일 배열 반환', () => {
 		expect(getWavesForStage('phase_a_s1')).toBe(phaseA);
+	});
+});
+
+describe('getWaveScaling — endless wave formula', () => {
+	it('slot 1-10 은 WAVE_SCALING 테이블 그대로', () => {
+		for (let slot = 1; slot <= 10; slot++) {
+			const result = getWaveScaling(slot);
+			expect(result.hp).toBeGreaterThan(0);
+			expect(result.speed).toBeGreaterThan(0);
+		}
+	});
+
+	it('slot 10 은 정확히 테이블 마지막 값 (hp 3.5, speed 1.15)', () => {
+		expect(getWaveScaling(10)).toEqual({ hp: 3.5, speed: 1.15 });
+	});
+
+	it('slot 11+ 은 선형 escalation — hp +0.7/slot', () => {
+		expect(getWaveScaling(11).hp).toBeCloseTo(4.2, 5);
+		expect(getWaveScaling(20).hp).toBeCloseTo(10.5, 5);
+	});
+
+	it('speed 는 1.6 으로 캡', () => {
+		expect(getWaveScaling(100).speed).toBeLessThanOrEqual(1.6);
+	});
+
+	it('slot 0 이하는 방어적 기본값 hp=1 speed=1', () => {
+		expect(getWaveScaling(0)).toEqual({ hp: 1, speed: 1 });
+		expect(getWaveScaling(-5)).toEqual({ hp: 1, speed: 1 });
 	});
 });

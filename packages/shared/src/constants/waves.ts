@@ -28,6 +28,86 @@ export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 3.5, speed: 1.15 }, // Wave 10 — 최종보스
 ];
 
+/**
+ * Wave scaling for any slot (1..infinity). Uses WAVE_SCALING table for
+ * slots 1-10 and a linear escalation formula beyond, so Phase A's endless
+ * wave generator keeps ramping difficulty instead of silently plateauing
+ * when the table runs out.
+ *
+ * Formula beyond slot 10: hp grows +0.7 per slot (capped soft), speed
+ * grows +0.02 per slot capped at 1.6.
+ */
+export function getWaveScaling(slot: number): { hp: number; speed: number } {
+	if (slot <= 0) return { hp: 1, speed: 1 };
+	if (slot <= WAVE_SCALING.length) {
+		return WAVE_SCALING[slot - 1];
+	}
+	const over = slot - WAVE_SCALING.length;
+	const lastEntry = WAVE_SCALING[WAVE_SCALING.length - 1];
+	return {
+		hp: lastEntry.hp + over * 0.7,
+		speed: Math.min(lastEntry.speed + over * 0.02, 1.6),
+	};
+}
+
+/**
+ * Phase A endless wave generator. Boss every 5 waves (alternating
+ * orc_warlord and forge_master), unit count grows linearly with slot
+ * index, and the composition progressively introduces tougher units
+ * (battle_robot @ slot 4, heavy_walker @ slot 9, stealth_drone @ slot 14).
+ *
+ * Called once at module load with count=50, which combined with
+ * getWaveScaling's linear HP ramp means players naturally die somewhere
+ * in wave 15~35 with casual play and wave 30~45 with optimized merges.
+ * A 50-wave cap means "practically infinite" for a single session
+ * without introducing runtime wave mutation in WaveSystem.
+ */
+export function generatePhaseAWaves(count: number): WaveDef[] {
+	const waves: WaveDef[] = [];
+	for (let i = 1; i <= count; i++) {
+		const isBoss = i % 5 === 0;
+		if (isBoss) {
+			// Alternate bosses: 5/15/25/35/45 = orc_warlord, 10/20/30/40/50 = forge_master
+			const bossId =
+				Math.floor(i / 5) % 2 === 1 ? 'orc_warlord' : 'forge_master';
+			waves.push({
+				slotIndex: i,
+				kind: 'boss',
+				delayAfterClearSec: 5,
+				groups: [{ unitId: bossId, count: 1 }],
+			});
+			continue;
+		}
+		const base = 3 + Math.floor(i / 2);
+		const groups: WaveGroup[] = [{ unitId: 'scout_drone', count: base }];
+		if (i >= 4) {
+			groups.push({
+				unitId: 'battle_robot',
+				count: Math.max(2, Math.floor(base / 2)),
+			});
+		}
+		if (i >= 9) {
+			groups.push({
+				unitId: 'heavy_walker',
+				count: Math.max(1, Math.floor(i / 10)),
+			});
+		}
+		if (i >= 14) {
+			groups.push({
+				unitId: 'stealth_drone',
+				count: Math.max(1, Math.floor(i / 15)),
+			});
+		}
+		waves.push({
+			slotIndex: i,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups,
+		});
+	}
+	return waves;
+}
+
 // ── Stage-keyed waves (new) ──────────────────────────────────
 
 export const STAGE_WAVES: Record<string, WaveDef[]> = {
@@ -1730,61 +1810,14 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 	],
 
 	// === Phase A pivot — random-summon + merge core loop ===
-	// 7 waves, last is mini-boss (orc_warlord). Designed for 5-10 minute session
-	// on the 8×24 long map.
-	phase_a_s1: [
-		{
-			slotIndex: 1,
-			kind: 'normal',
-			delayAfterClearSec: 3,
-			groups: [{ unitId: 'scout_drone', count: 4 }],
-		},
-		{
-			slotIndex: 2,
-			kind: 'normal',
-			delayAfterClearSec: 3,
-			groups: [{ unitId: 'scout_drone', count: 6 }],
-		},
-		{
-			slotIndex: 3,
-			kind: 'normal',
-			delayAfterClearSec: 3,
-			groups: [
-				{ unitId: 'scout_drone', count: 4 },
-				{ unitId: 'battle_robot', count: 2 },
-			],
-		},
-		{
-			slotIndex: 4,
-			kind: 'normal',
-			delayAfterClearSec: 3,
-			groups: [{ unitId: 'battle_robot', count: 5 }],
-		},
-		{
-			slotIndex: 5,
-			kind: 'normal',
-			delayAfterClearSec: 3,
-			groups: [
-				{ unitId: 'scout_drone', count: 6 },
-				{ unitId: 'battle_robot', count: 4 },
-			],
-		},
-		{
-			slotIndex: 6,
-			kind: 'normal',
-			delayAfterClearSec: 5,
-			groups: [
-				{ unitId: 'heavy_walker', count: 3 },
-				{ unitId: 'battle_robot', count: 4 },
-			],
-		},
-		{
-			slotIndex: 7,
-			kind: 'boss',
-			delayAfterClearSec: 5,
-			groups: [{ unitId: 'orc_warlord', count: 1 }],
-		},
-	],
+	// Endless-style wave list (50 waves) generated at module load. Boss every 5
+	// waves (alternating orc_warlord / forge_master), unit count grows linearly,
+	// composition adds tougher units progressively. Combined with getWaveScaling
+	// beyond slot 10 this ramps past wave 15 fast enough that players naturally
+	// die before hitting slot 50 — "practically infinite" for a session without
+	// teaching WaveSystem to mutate waves at runtime. User feedback 2026-04-14:
+	// "한 판 더 하고 싶다는 생각이 안 드네, 웨이브가 무한이어야 할 거 같음".
+	phase_a_s1: generatePhaseAWaves(50),
 };
 
 // Legacy aliases + new map aliases

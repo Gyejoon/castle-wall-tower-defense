@@ -15,6 +15,7 @@ import { PhaseAHud } from '../components/game/PhaseAHud';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
+import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useGameStore } from '../stores/gameStore';
@@ -51,6 +52,12 @@ export function GamePage() {
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
+	const [upgradeChoices, setUpgradeChoices] = useState<Array<{
+		id: string;
+		name: string;
+		description: string;
+		icon: string;
+	}> | null>(null);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {
@@ -101,6 +108,29 @@ export function GamePage() {
 		const timeout = window.setTimeout(() => clearToast(), 1800);
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
+
+	useEffect(() => {
+		const handleUpgradeReady = (data: {
+			choices: Array<{
+				id: string;
+				name: string;
+				description: string;
+				icon: string;
+			}>;
+		}) => {
+			setUpgradeChoices(data.choices);
+		};
+		const handleUpgradeApplied = () => {
+			setUpgradeChoices(null);
+		};
+
+		EventBus.on('upgrade-choice-ready', handleUpgradeReady);
+		EventBus.on('upgrade-applied', handleUpgradeApplied);
+		return () => {
+			EventBus.off('upgrade-choice-ready', handleUpgradeReady);
+			EventBus.off('upgrade-applied', handleUpgradeApplied);
+		};
+	}, []);
 
 	const nextStageId = useMemo(
 		() => getNextStageId(selectedStageId),
@@ -210,6 +240,8 @@ export function GamePage() {
 					)}
 
 					<BossWarningOverlay visible={bossWarningVisible} />
+
+					{upgradeChoices && <UpgradePickOverlay choices={upgradeChoices} />}
 
 					{wavePhase === 'prep' && prepCountdown > 0 && (
 						<div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3] font-pixel text-3xl text-gold drop-shadow-[0_0_6px_rgba(0,0,0,0.8)] pointer-events-none">

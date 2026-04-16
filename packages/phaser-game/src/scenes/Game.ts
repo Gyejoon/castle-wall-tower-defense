@@ -145,6 +145,17 @@ export class GameScene extends Phaser.Scene {
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
 	private onSellTower!: (data: { col: number; row: number }) => void;
+	private onMoveTower!: (data: {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	}) => void;
+	private onEnterMoveMode!: (data: {
+		fromCol: number;
+		fromRow: number;
+	}) => void;
+	private movePending: { fromCol: number; fromRow: number } | null = null;
 	private onPause!: () => void;
 	private onResume!: () => void;
 	private onWaveStartedLifecycle!: (data: {
@@ -459,6 +470,30 @@ export class GameScene extends Phaser.Scene {
 			}
 		};
 
+		this.onEnterMoveMode = ({ fromCol, fromRow }) => {
+			if (!this.isSceneAlive()) return;
+			this.movePending = { fromCol, fromRow };
+			this.selectedTowerId = null;
+			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			this.renderPlaceableHighlights();
+		};
+
+		this.onMoveTower = ({ fromCol, fromRow, toCol, toRow }) => {
+			if (!this.isSceneAlive()) return;
+			const ok = this.playerTowers.moveTower(fromCol, fromRow, toCol, toRow);
+			if (ok) {
+				EventBus.emit('tower-moved', { fromCol, fromRow, toCol, toRow });
+				EventBus.emit('tower-deselected');
+				this.clearRangeOverlay();
+				this.selectionGraphics.clear();
+				this.playerUnits.setPaths(getMapPaths(this.currentMap));
+				this.renderPath(this.playerGrid);
+			} else {
+				EventBus.emit('move-failed', { reason: 'invalid-tile' });
+			}
+		};
+
 		this.onPause = () => {
 			if (!this.isSceneAlive()) return;
 			this.scene.pause();
@@ -535,6 +570,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('request-sell-tower', this.onSellTower);
+		EventBus.on('request-move-tower', this.onMoveTower);
+		EventBus.on('request-enter-move-mode', this.onEnterMoveMode);
 		EventBus.on('request-pause', this.onPause);
 		EventBus.on('request-resume', this.onResume);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
@@ -772,6 +809,33 @@ export class GameScene extends Phaser.Scene {
 			if (this.gameOver) return;
 			if (!this.playerGrid.isInBounds(gridPos.x, gridPos.y)) return;
 
+			if (this.movePending) {
+				const { fromCol, fromRow } = this.movePending;
+				this.movePending = null;
+				this.selectionGraphics.clear();
+				const ok = this.playerTowers.moveTower(
+					fromCol,
+					fromRow,
+					gridPos.x,
+					gridPos.y,
+				);
+				if (ok) {
+					EventBus.emit('tower-moved', {
+						fromCol,
+						fromRow,
+						toCol: gridPos.x,
+						toRow: gridPos.y,
+					});
+					EventBus.emit('tower-deselected');
+					this.clearRangeOverlay();
+					this.playerUnits.setPaths(getMapPaths(this.currentMap));
+					this.renderPath(this.playerGrid);
+				} else {
+					EventBus.emit('move-failed', { reason: 'invalid-tile' });
+				}
+				return;
+			}
+
 			if (this.selectedTowerId) {
 				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
 				return;
@@ -786,6 +850,7 @@ export class GameScene extends Phaser.Scene {
 					col: gridPos.x,
 					row: gridPos.y,
 					refund,
+					grade: tower.grade,
 				});
 				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
@@ -1195,6 +1260,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('request-sell-tower', this.onSellTower);
+		EventBus.off('request-move-tower', this.onMoveTower);
+		EventBus.off('request-enter-move-mode', this.onEnterMoveMode);
 		EventBus.off('request-pause', this.onPause);
 		EventBus.off('request-resume', this.onResume);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);

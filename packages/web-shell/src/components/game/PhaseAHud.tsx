@@ -1,5 +1,10 @@
 import { EventBus } from '@gld/phaser-game';
-import { ALL_TOWERS, PHASE_A_SUMMON_COST } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	getPhaseARefund,
+	PHASE_A_SUMMON_COST,
+	type TowerGrade,
+} from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
@@ -12,6 +17,7 @@ interface FirstPick {
 	row: number;
 	towerName: string;
 	refund: number;
+	grade: TowerGrade;
 }
 
 interface PendingSummon {
@@ -25,6 +31,10 @@ export function PhaseAHud() {
 	const [pendingSummon, setPendingSummon] = useState<PendingSummon | null>(
 		null,
 	);
+	const [movingTower, setMovingTower] = useState<{
+		col: number;
+		row: number;
+	} | null>(null);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
 	const [summonCost, setSummonCost] = useState(PHASE_A_SUMMON_COST);
@@ -41,14 +51,17 @@ export function PhaseAHud() {
 			col: number;
 			row: number;
 			refund: number;
+			grade: TowerGrade;
 		}) => {
+			setMovingTower(null);
 			const first = firstPickRef.current;
 			if (first === null) {
 				firstPickRef.current = {
 					col: data.col,
 					row: data.row,
 					towerName: data.towerName,
-					refund: data.refund,
+					refund: getPhaseARefund(data.grade),
+					grade: data.grade,
 				};
 				setFirstPick(firstPickRef.current);
 				return;
@@ -71,6 +84,19 @@ export function PhaseAHud() {
 		const handleTowerDeselected = () => {
 			firstPickRef.current = null;
 			setFirstPick(null);
+			setMovingTower(null);
+		};
+
+		const handleTowerMoved = () => {
+			setMovingTower(null);
+			firstPickRef.current = null;
+			setFirstPick(null);
+			pushToast('타워 이동 완료', 'success');
+		};
+
+		const handleMoveFailed = () => {
+			setMovingTower(null);
+			pushToast('이동 불가', 'warning');
 		};
 
 		const handleMerged = (data: { toGrade: string }) => {
@@ -115,6 +141,8 @@ export function PhaseAHud() {
 		EventBus.on('tower-summoned', handleTowerSummoned);
 		EventBus.on('summon-failed', handleSummonFailed);
 		EventBus.on('upgrade-applied', handleUpgradeApplied);
+		EventBus.on('tower-moved', handleTowerMoved);
+		EventBus.on('move-failed', handleMoveFailed);
 
 		return () => {
 			EventBus.off('tower-selected', handleTowerSelected);
@@ -125,6 +153,8 @@ export function PhaseAHud() {
 			EventBus.off('tower-summoned', handleTowerSummoned);
 			EventBus.off('summon-failed', handleSummonFailed);
 			EventBus.off('upgrade-applied', handleUpgradeApplied);
+			EventBus.off('tower-moved', handleTowerMoved);
+			EventBus.off('move-failed', handleMoveFailed);
 		};
 	}, [pushToast]);
 
@@ -192,10 +222,27 @@ export function PhaseAHud() {
 							취소
 						</button>
 					</>
+				) : movingTower !== null ? (
+					<>
+						<span className="font-pixel text-[11px] text-gold">
+							이동할 위치를 탭하세요
+						</span>
+						<button
+							type="button"
+							onClick={() => {
+								setMovingTower(null);
+								EventBus.emit('request-clear-tower-selection');
+							}}
+							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
+						>
+							취소
+						</button>
+					</>
 				) : firstPick !== null ? (
 					<>
 						<span className="font-pixel text-[11px] text-gold">
-							{firstPick.towerName} 선택됨 · 짝을 탭하세요
+							{firstPick.towerName} ({firstPick.grade.toUpperCase()}) · 짝을
+							탭하세요
 						</span>
 						<div className="flex items-center gap-3 mt-0.5">
 							<button
@@ -204,6 +251,24 @@ export function PhaseAHud() {
 								className="font-pixel text-[10px] text-text-secondary underline"
 							>
 								취소
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setMovingTower({
+										col: firstPick.col,
+										row: firstPick.row,
+									});
+									firstPickRef.current = null;
+									setFirstPick(null);
+									EventBus.emit('request-enter-move-mode', {
+										fromCol: firstPick.col,
+										fromRow: firstPick.row,
+									});
+								}}
+								className="font-pixel text-[10px] text-accent underline"
+							>
+								이동
 							</button>
 							<button
 								type="button"

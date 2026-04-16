@@ -982,13 +982,38 @@ export class TowerSystem {
 		return Math.floor(cost * 0.5);
 	}
 
+	moveTower(fromX: number, fromY: number, toX: number, toY: number): boolean {
+		if (!this.gridManager.canPlaceTower(toX, toY)) return false;
+		const entry = this.findTowerEntry(fromX, fromY);
+		if (!entry) return false;
+		const { instance } = entry;
+
+		this.gridManager.removeTower(fromX, fromY);
+		this.gridManager.placeTower(toX, toY);
+
+		instance.data.position = { x: toX, y: toY };
+		const worldPos = this.gridManager.gridToWorld(toX, toY);
+		instance.sprite.setPosition(worldPos.x, worldPos.y);
+		instance.base.setPosition(worldPos.x, worldPos.y);
+		if (instance.barrelSprite) {
+			instance.barrelSprite.setPosition(worldPos.x, worldPos.y);
+		}
+		this.renderTowerBase(instance.base, worldPos, instance.def);
+		this.pathfinding.invalidateCache();
+		return true;
+	}
+
 	getTowerAt(
 		gridX: number,
 		gridY: number,
-	): { data: PlacedTower; def: TowerDef } | null {
+	): { data: PlacedTower; def: TowerDef; grade: TowerGrade } | null {
 		const entry = this.findTowerEntry(gridX, gridY);
 		return entry
-			? { data: entry.instance.data, def: entry.instance.def }
+			? {
+					data: entry.instance.data,
+					def: entry.instance.def,
+					grade: entry.instance.grade,
+				}
 			: null;
 	}
 

@@ -21,6 +21,17 @@ export function createSummonPool(towerIds: readonly string[]): SummonPool {
 	return { towerIds: [...towerIds] };
 }
 
+const GRADE_REFUND: Record<Grade, number> = {
+	normal: PHASE_A_SUMMON_COST / 2,
+	rare: PHASE_A_SUMMON_COST,
+	unique: PHASE_A_SUMMON_COST * 2,
+	epic: PHASE_A_SUMMON_COST * 4,
+};
+
+export function getPhaseARefund(grade: Grade): number {
+	return GRADE_REFUND[grade];
+}
+
 export function drawRandomSummon(
 	pool: SummonPool,
 	rng: () => number = Math.random,

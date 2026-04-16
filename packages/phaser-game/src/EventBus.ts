@@ -84,6 +84,26 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		refund: number;
+		grade: TowerGrade;
+	};
+	'request-enter-move-mode': {
+		fromCol: number;
+		fromRow: number;
+	};
+	'request-move-tower': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'tower-moved': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'move-failed': {
+		reason: 'invalid-tile' | 'occupied';
 	};
 	'tower-deselected': undefined;
 	'tutorial-step': { step: number; message: string };

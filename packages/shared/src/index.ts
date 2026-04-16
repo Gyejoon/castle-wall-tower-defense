@@ -158,6 +158,7 @@ export type { SummonPool, SummonResult } from './data/summonPool';
 export {
 	createSummonPool,
 	drawRandomSummon,
+	getPhaseARefund,
 	PHASE_A_SUMMON_COST,
 } from './data/summonPool';
 export type { UpgradeCardDef, UpgradeId } from './data/upgradeCards';

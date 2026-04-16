@@ -85,11 +85,32 @@ Phase A의 메타 강화 / 별 등급 / 승급 / 150레벨 / 일일 미션 등 �
 | MergeSystem | 순수 합성 validation. `tryMerge(ctx, fromCol, fromRow, toCol, toRow)` → discriminated union | `MergeContext.getTowerAt`, `nextGrade()` |
 | PhaseAOrchestrator | SummonPool + MergeSystem owning + TowerSystem 어댑터 + EventBus 리스너 (idempotent off→on) + EnergySystem gating. 2-step 소환: draw → 유저 배치 | `PHASE_A_SUMMON_COST = 20`, `PhaseAEnergyApi` 구조적 surface |
 
+### Phase A 로그라이트 강화 시스템
+
+10 웨이브마다 보스 클리어 시 게임 일시정지 → 3장의 랜덤 강화 카드 중 1장 선택 → 재개.
+카드는 중복 선택 가능(무한 스택). 런 한정(판 끝나면 리셋).
+
+| ID | 이름 | 효과 | 스택 방식 |
+|---|---|---|---|
+| `dmg_up` | 공격력 강화 | 전체 타워 데미지 ×1.15 | 곱연산 |
+| `spd_up` | 공격속도 강화 | 전체 타워 공속 ×1.20 | 곱연산 |
+| `range_up` | 사거리 확장 | 전체 타워 범위 +0.5 tile | 합연산 |
+| `kill_energy` | 에너지 헌터 | 킬 에너지 보상 +1 추가 | 합연산 |
+| `energy_regen` | 에너지 재생 | 5초마다 에너지 +1 | 합연산 |
+| `summon_discount` | 소환 할인 | 소환 비용 -3 (최소 5) | 합연산 |
+
+- **UpgradePickOverlay**: React 전체화면 오버레이, 3장 카드 탭 선택
+- **PhaseAOrchestrator**: `activeUpgrades` Map으로 스택 관리, `getModifier()` → TowerSystem에 주입
+- **TowerSystem.modifierFn**: 데미지/공속/범위 modifier를 매 공격마다 적용
+- **최종 웨이브에서는 강화 선택 스킵** (승리 직전 오버레이 방지)
+
+
 **핵심 메커니즘 변경**
+- **소환 취소**: 소환 취소 시 같은 타워 유지 (리롤 방지). 재소환 시 동일 타워 재표시.
 - **Placement (v2)**: 직접 배치 → **랜덤 소환 + 자동 빈 칸 배치**. 유저는 어디에 놓을지 선택하지 않음, 어떤 타워가 나올지도 선택하지 않음. 유일한 결정은 언제 소환할지 + 무엇을 합성할지.
 - **Tower Upgrade (v2)**: 영구 메타 강화 → **인게임 합성 등급** (`normal → rare → unique → epic`). 같은 타워 같은 등급 2개 → 1개로 병합 + 1등급 ↑. max-grade(`epic`) 도달 시 더 이상 합성 불가. 합성 시 sprite texture 재설정 + `effectiveDamage` 재계산.
 - **Energy Economy (v2)**: 킬 보상 기반. 몬스터 처치당 +1 에너지 (5배수 wave에서는 ×2). 시간 리젠(1/sec) 비활성, 웨이브 클리어 보너스 비활성. **소환당 20 에너지**. 초기 40 → 2회 무료 소환. 이후 킬 효율로 에너지 축적 → 소환 가능. 30킬/wave × +1 = 30 에너지/wave → 소환 1.5회분.
-- **Tower Sell (v2)**: 비활성화. 합성으로 불필요한 타워를 소비한다는 가정.
+- **Tower Sell (v2)**: Phase A에서 활성화 — PhaseAHud의 합성 선택 화면에서 판매 버튼 제공. 에너지로 환불.
 
 ### 레거시 시스템 (v1 — W1~W3 24스테이지에서 그대로 작동)
 
@@ -223,8 +244,8 @@ W1~W3 레거시 스테이지에만 작동. Phase A 스테이지는 ★ 비활성
 
 | id | name | element | hp | speed | armor | bounty | bossBehaviorId | 특수 능력 |
 |----|------|---------|-----|-------|-------|--------|----------------|----------|
-| orc_warlord | 오크 전쟁 대장 | 무 | 4,000 | 0.8 | 20 | 300 | orc_warlord | HP 50% 이하 시 battle_robot 4마리 소환 |
-| forge_master | 단조장의 군주 | 화 | 12,000 | 0.7 | 35 | 500 | forge_master | 10초마다 랜덤 타워 5초 비활성화 |
+| orc_warlord | 오크 전쟁 대장 | 무 | 2,000 | 0.8 | 10 | 300 | orc_warlord | HP 50% 이하 시 battle_robot 4마리 소환 |
+| forge_master | 단조장의 군주 | 화 | 5,000 | 0.7 | 15 | 500 | forge_master | 10초마다 랜덤 타워 5초 비활성화 |
 | corrupted_archmage | 타락한 대마법사 | 번개 | 25,000 | 0.8 | 30 | 800 | corrupted_archmage | 스폰 시 클론 소환, CC 면역 |
 
 > dragon은 `flying: true`로 지상 물리 충돌에서 면제. 다른 유닛을 통과하여 이동.

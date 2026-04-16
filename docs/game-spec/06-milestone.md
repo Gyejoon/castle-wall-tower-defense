@@ -12,7 +12,7 @@
 
 ### Planning (현재 단계)
 
-**현재 위치: Phase A Core 완료 🔄 본인 폰 플레이 검증 대기**
+**현재 위치: Phase A Core + Upgrade System 완료 🔄 본인 폰 플레이 검증 대기**
 
 2026-04-13에 4타워 덱 시스템에서 **픽셀 중세 랜덤 타워 합성 디펜스**로 코어 루프 피벗 결정. Phase A Core/Map/Integration/UI/VFX/Energy gating 까지 PR #170에서 머지 완료. 5분 1세션 후 "한 판 더" Go/No-Go 플레이 검증이 남아 있으며, 그 결과에 따라 Phase B 이후 경로가 결정된다.
 
@@ -27,6 +27,7 @@
 | R1 | Phase A UI (`PhaseAHud` + `GamePage` 라우팅 + 로비 `[LAB]` 버튼) | ✅ | PR #170 |
 | R1 | Phase A VFX (scale 펀치 + 골드 tint flash) | ✅ | PR #170, "도파민의 80%" 기본기만 |
 | R1 | Phase A 에너지 게이팅 (`PHASE_A_SUMMON_COST=8` + `summon-failed` event) | ✅ | PR #170 |
+| R1 | 로그라이트 강화 선택 (10 웨이브마다 6종 카드 풀에서 3장 선택) | ✅ | Phase A Upgrade System |
 | R1 | 본인 폰 플레이 검증 ("한 판 더" Go/No-Go) | ⬜ | **핵심 게이트** |
 | R2 | 코어 굳히기 (타워 19종 전부 확장 + 액티브 스킬 1~2 + 맵 3~5) | ⬜ | R1 통과 시 |
 | R2 | 기믹 1~2개 + 대응 수단 (#154) | ⬜ | R1 통과 시 |

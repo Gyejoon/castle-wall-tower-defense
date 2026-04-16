@@ -53,12 +53,14 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 - `TowerSystem.getTowerLocator` / `TowerSystem.applyMerge` / `TowerSystem.placeTower({ gradeOverride, levelOverride })` 로만 TowerSystem에 접근 — 직접 mutation 없음
 - 에너지 gating은 `PhaseAEnergyApi` 구조적 인터페이스(`canAfford` + `spend`)로 받음. `EnergySystem`을 직접 import하지 않아 테스트 fake 주입 가능
 - `destroy()`는 idempotent — 두 번 호출해도 안전
+- `activeUpgrades` Map으로 로그라이트 강화 스택 관리, `getModifier()` → `TowerSystem.setModifierFn` 콜백으로 데미지/공속/범위 modifier 주입
 
 ### update() 루프 실행 순서
 
 ```
 1. WaveSystem.update(scaledDelta, activeUnitCount)
 2. EnergySystem.update(scaledDelta / 1000)
+2.5 PhaseAOrchestrator.tickEnergyRegen (Phase A: energy_regen upgrade tick)
 3. GimmickSystem.update(scaledDelta)  ← [M2+ 추가]
 4. processCombatField()
    ├─ TowerSystem.update() → damageEvents
@@ -170,6 +172,9 @@ EnergySystem.reset()
 | `towers-merged` | Game → React | `{ col, row, towerId, fromGrade, toGrade }` | 합성 성공 직후 (applyMerge + playPhaseAMergeVfx 뒤) |
 | `merge-failed` | Game → React | `{ fromCol, fromRow, toCol, toRow, reason }` | MergeSystem validation 실패 또는 applyMerge post-validation 실패 |
 | `summon-failed` | Game → React | `{ reason: 'insufficient-energy' \| 'no-empty-tile' \| 'placement-failed' }` | canAfford 실패 / 빈 칸 없음 / placeTower 실패 |
+| `upgrade-choice-ready` | Game→React | `{ choices: Array<{id,name,description,icon}> }` | 보스 클리어 후 3장 카드 제시 |
+| `request-apply-upgrade` | React→Game | `{ upgradeId: string }` | 유저가 카드 선택 |
+| `upgrade-applied` | Game→React | `{ upgradeId: string, totalStacks: number }` | 강화 적용 완료 |
 
 **merge-failed 이유 타입**: `'different-tower' | 'different-grade' | 'max-grade' | 'invalid-tile'`. PhaseAHud가 한국어 라벨로 변환해 토스트 표시.
 

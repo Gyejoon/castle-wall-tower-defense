@@ -123,12 +123,17 @@ export function GamePage() {
 		const handleUpgradeApplied = () => {
 			setUpgradeChoices(null);
 		};
+		const handleGameOver = () => {
+			setUpgradeChoices(null);
+		};
 
 		EventBus.on('upgrade-choice-ready', handleUpgradeReady);
 		EventBus.on('upgrade-applied', handleUpgradeApplied);
+		EventBus.on('game-over', handleGameOver);
 		return () => {
 			EventBus.off('upgrade-choice-ready', handleUpgradeReady);
 			EventBus.off('upgrade-applied', handleUpgradeApplied);
+			EventBus.off('game-over', handleGameOver);
 		};
 	}, []);
 
@@ -152,6 +157,12 @@ export function GamePage() {
 		store.setSelectedStar(1);
 		store.resetRun();
 	}, [nextStageId]);
+
+	const handleToggleSpeed = useCallback(() => {
+		const cur = useGameStore.getState().gameSpeed;
+		const next = cur === 1 ? 2 : cur === 2 ? 3 : 1;
+		setGameSpeed(next as 1 | 2 | 3);
+	}, [setGameSpeed]);
 
 	const handleExitRequest = useCallback(() => {
 		if (runStatus !== 'running') return;
@@ -210,10 +221,7 @@ export function GamePage() {
 					gameSpeed={gameSpeed}
 					speed2xUnlocked={speed2xUnlocked}
 					runStatus={runStatus}
-					onToggleSpeed={() => {
-						const next = gameSpeed === 1 ? 2 : gameSpeed === 2 ? 3 : 1;
-						setGameSpeed(next as 1 | 2 | 3);
-					}}
+					onToggleSpeed={handleToggleSpeed}
 					onExitRequest={handleExitRequest}
 				/>
 

@@ -1,4 +1,14 @@
-import { type Grade, PHASE_A_SUMMON_COST, UPGRADE_CARDS } from '@gld/shared';
+import {
+	type Grade,
+	PHASE_A_SUMMON_COST,
+	UPGRADE_CARDS,
+	type UpgradeCardDef,
+} from '@gld/shared';
+
+const UPGRADE_CARD_MAP: ReadonlyMap<string, UpgradeCardDef> = new Map(
+	UPGRADE_CARDS.map((c) => [c.id, c]),
+);
+
 import { EventBus } from '../EventBus';
 import {
 	type MergeContext,
@@ -125,7 +135,7 @@ export class PhaseAOrchestrator {
 	 */
 	getModifier(upgradeId: string): number {
 		const stacks = this.activeUpgrades.get(upgradeId) ?? 0;
-		const card = UPGRADE_CARDS.find((c) => c.id === upgradeId);
+		const card = UPGRADE_CARD_MAP.get(upgradeId);
 		const isAdditive = card ? card.stackType === 'add' : false;
 
 		if (stacks === 0 || !card) return isAdditive ? 0 : 1;

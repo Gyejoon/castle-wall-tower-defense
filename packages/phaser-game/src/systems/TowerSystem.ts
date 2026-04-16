@@ -518,7 +518,7 @@ export class TowerSystem {
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
 							let splashDamage = Math.round(
-								tower.effectiveDamage * splashElementMult * 0.5,
+								tower.effectiveDamage * splashElementMult * 0.5 * dmgMod,
 							);
 							if (this.worldGimmick) {
 								const bonus = this.worldGimmick.getDamageBonus(tower);
@@ -1063,6 +1063,7 @@ export class TowerSystem {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const sprite = entry.instance.sprite;
+		this.scene.tweens.killTweensOf(sprite);
 		const baseScaleX = sprite.scaleX || 1;
 		const baseScaleY = sprite.scaleY || 1;
 		this.scene.tweens.add({
@@ -1085,6 +1086,7 @@ export class TowerSystem {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const sprite = entry.instance.sprite;
+		this.scene.tweens.killTweensOf(sprite);
 		const baseScaleX = sprite.scaleX || 1;
 		const baseScaleY = sprite.scaleY || 1;
 		this.scene.tweens.add({

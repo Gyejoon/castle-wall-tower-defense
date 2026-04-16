@@ -78,6 +78,7 @@ function createScene() {
 		},
 		tweens: {
 			add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
+			killTweensOf: vi.fn(),
 		},
 	};
 }

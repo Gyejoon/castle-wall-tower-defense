@@ -598,72 +598,65 @@ export const W3_TOWER_B_MAP: MapLayout = {
 	},
 };
 
-// === Phase A Long Map (8×24, S-curve, random-summon + merge) ===
-// Four sweep S-curve from spawn (4,0) down to exit (3,23). Path stays in cols 1-6
-// so cols 0/7 act as a frame; buildable pockets fall on either side of each sweep.
-const PHASE_A_LONG_PATH: Position[] = [
-	{ x: 4, y: 0 },
-	{ x: 4, y: 1 },
-	{ x: 4, y: 2 },
-	{ x: 4, y: 3 },
-	{ x: 3, y: 3 },
-	{ x: 2, y: 3 },
-	{ x: 1, y: 3 },
-	{ x: 1, y: 4 },
-	{ x: 1, y: 5 },
-	{ x: 1, y: 6 },
-	{ x: 2, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 4, y: 6 },
-	{ x: 5, y: 6 },
-	{ x: 6, y: 6 },
-	{ x: 6, y: 7 },
-	{ x: 6, y: 8 },
-	{ x: 6, y: 9 },
-	{ x: 5, y: 9 },
-	{ x: 4, y: 9 },
-	{ x: 3, y: 9 },
-	{ x: 2, y: 9 },
-	{ x: 1, y: 9 },
-	{ x: 1, y: 10 },
-	{ x: 1, y: 11 },
-	{ x: 1, y: 12 },
-	{ x: 2, y: 12 },
-	{ x: 3, y: 12 },
-	{ x: 4, y: 12 },
-	{ x: 5, y: 12 },
-	{ x: 6, y: 12 },
-	{ x: 6, y: 13 },
-	{ x: 6, y: 14 },
-	{ x: 6, y: 15 },
-	{ x: 5, y: 15 },
-	{ x: 4, y: 15 },
-	{ x: 3, y: 15 },
-	{ x: 2, y: 15 },
-	{ x: 1, y: 15 },
-	{ x: 1, y: 16 },
-	{ x: 1, y: 17 },
-	{ x: 1, y: 18 },
-	{ x: 2, y: 18 },
-	{ x: 3, y: 18 },
-	{ x: 4, y: 18 },
-	{ x: 5, y: 18 },
-	{ x: 6, y: 18 },
-	{ x: 6, y: 19 },
-	{ x: 6, y: 20 },
-	{ x: 6, y: 21 },
-	{ x: 5, y: 21 },
-	{ x: 4, y: 21 },
-	{ x: 3, y: 21 },
-	{ x: 3, y: 22 },
-	{ x: 3, y: 23 },
-];
+// === Phase A Long Map (8×24, tight zigzag, random-summon + merge) ===
+//
+// Tight zigzag across the full width (cols 0-7). 8 horizontal sweeps on
+// rows 0/3/6/9/12/15/18/21, alternating right→left. 2-row buildable gaps
+// between sweeps (rows 1-2, 4-5, 7-8, etc.) so towers in the gap always
+// cover TWO adjacent sweep passes — no "top towers become useless" problem
+// that the old one-way S-curve had.
+//
+//   0 1 2 3 4 5 6 7
+//  0 →→→→→→→→        sweep 1 (right)  spawn=(0,0)
+//  1           [tower gap]
+//  2           [tower gap]     ↓ transition at col 7
+//  3 ←←←←←←←←        sweep 2 (left)
+//  4 [tower gap]
+//  5 [tower gap]     ↓ transition at col 0
+//  6 →→→→→→→→        sweep 3 (right)
+//  ...
+// 21 ←←←←←←←←        sweep 8 (left)   exit=(0,21)
+// 22-23: extra buildable space (not on path)
+//
+// Towers at any height cover enemies on both the leftward and rightward
+// passes above and below. A tower at (3,1) fires at sweep 1 AND sweep 2.
+//
+// Path: 8 × 8 (sweeps) + 7 × 2 (transitions) = 78 cells
+// Buildable: 192 - 78 - 6 blocked = ~108 cells
+
+const PHASE_A_SWEEP_ROWS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
+
+function generateZigzagPath(
+	width: number,
+	sweepRows: readonly number[],
+): Position[] {
+	const path: Position[] = [];
+	for (let i = 0; i < sweepRows.length; i++) {
+		const row = sweepRows[i];
+		const goRight = i % 2 === 0;
+		if (goRight) {
+			for (let x = 0; x < width; x++) path.push({ x, y: row });
+		} else {
+			for (let x = width - 1; x >= 0; x--) path.push({ x, y: row });
+		}
+		if (i < sweepRows.length - 1) {
+			const nextRow = sweepRows[i + 1];
+			const transCol = goRight ? width - 1 : 0;
+			for (let y = row + 1; y < nextRow; y++) {
+				path.push({ x: transCol, y });
+			}
+		}
+	}
+	return path;
+}
+
+const PHASE_A_LONG_PATH = generateZigzagPath(8, PHASE_A_SWEEP_ROWS);
 
 const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
-	{ x: 4, y: 0 },
-	{ x: 3, y: 23 },
 	{ x: 0, y: 0 },
+	{ x: 0, y: 21 },
 	{ x: 7, y: 0 },
+	{ x: 7, y: 21 },
 	{ x: 0, y: 23 },
 	{ x: 7, y: 23 },
 ];
@@ -679,15 +672,15 @@ export const PHASE_A_MAP_ID = 'phase_a_long' as const;
 
 export const PHASE_A_LONG_MAP: MapLayout = {
 	id: PHASE_A_MAP_ID,
-	name: 'Phase A — 긴 회랑',
+	name: 'Phase A — 지그재그 회랑',
 	width: 8,
 	height: 24,
 	tileSize: 32,
 	path: PHASE_A_LONG_PATH,
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
 	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
-	spawnPoint: { x: 4, y: 0 },
-	exitPoint: { x: 3, y: 23 },
+	spawnPoint: { x: 0, y: 0 },
+	exitPoint: { x: 0, y: 21 },
 	tilemapKey: 'tilemap-phase-a-long',
 	tilesetKey: 'tileset',
 	rewardMultiplier: 1,

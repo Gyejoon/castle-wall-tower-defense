@@ -339,8 +339,8 @@ describe('PHASE_A_LONG_MAP (random-summon + merge pivot)', () => {
 	});
 
 	it('spawnPoint와 exitPoint가 경로의 시작·끝과 일치한다', () => {
-		expect(PHASE_A_LONG_MAP.spawnPoint).toEqual({ x: 4, y: 0 });
-		expect(PHASE_A_LONG_MAP.exitPoint).toEqual({ x: 3, y: 23 });
+		expect(PHASE_A_LONG_MAP.spawnPoint).toEqual({ x: 0, y: 0 });
+		expect(PHASE_A_LONG_MAP.exitPoint).toEqual({ x: 0, y: 21 });
 		expect(PHASE_A_LONG_MAP.path[0]).toEqual(PHASE_A_LONG_MAP.spawnPoint);
 		expect(PHASE_A_LONG_MAP.path[PHASE_A_LONG_MAP.path.length - 1]).toEqual(
 			PHASE_A_LONG_MAP.exitPoint,
@@ -376,12 +376,12 @@ describe('PHASE_A_LONG_MAP (random-summon + merge pivot)', () => {
 
 	it('spawn/exit 코너가 blocked에 포함된다', () => {
 		expect(PHASE_A_LONG_MAP.blockedPlacementPoints).toContainEqual({
-			x: 4,
+			x: 0,
 			y: 0,
 		});
 		expect(PHASE_A_LONG_MAP.blockedPlacementPoints).toContainEqual({
-			x: 3,
-			y: 23,
+			x: 0,
+			y: 21,
 		});
 	});
 

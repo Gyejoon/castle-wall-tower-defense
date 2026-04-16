@@ -69,7 +69,7 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 7. WavePhase === 'ended' + 유닛 없음 → victory 체크
 ```
 
-`speedMultiplier`(1× or 2×)는 `scaledDelta`에만 적용된다. DamageNumberSystem은 시각 효과이므로 실제 delta를 사용한다.
+`speedMultiplier`(1×, 2×, or 3×)는 `scaledDelta`에만 적용된다. DamageNumberSystem은 시각 효과이므로 실제 delta를 사용한다.
 
 ### 유닛 이동 방향 표현
 

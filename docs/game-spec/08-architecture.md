@@ -161,6 +161,8 @@ EnergySystem.reset()
 | `star-selected` | StageDetail에서 별 선택 | game.registry sync |
 | `request-summon-tower` [v2] | `PhaseAHud` 소환 버튼 | `PhaseAOrchestrator.handleSummonRequest` |
 | `request-merge-towers` [v2] | `PhaseAHud` 두 번째 타워 탭 | `PhaseAOrchestrator.handleMergeRequest` |
+| `request-enter-move-mode` [v2] | `PhaseAHud` 이동 버튼 | `PhaseAOrchestrator.handleMoveMode` |
+| `request-move-tower` [v2] | `PhaseAHud` 빈 칸 탭 | `PhaseAOrchestrator.handleMoveTower` |
 
 ### Phase A 신규 이벤트 (v2 — `phase_a_long` 전용)
 
@@ -171,6 +173,10 @@ EnergySystem.reset()
 | `tower-summoned` | Game → React | `{ col, row, towerId, grade: TowerGrade }` | 소환 성공 직후 (placeTower + playPhaseASummonVfx 뒤) |
 | `towers-merged` | Game → React | `{ col, row, towerId, fromGrade, toGrade }` | 합성 성공 직후 (applyMerge + playPhaseAMergeVfx 뒤) |
 | `merge-failed` | Game → React | `{ fromCol, fromRow, toCol, toRow, reason }` | MergeSystem validation 실패 또는 applyMerge post-validation 실패 |
+| `request-enter-move-mode` | React→Game | `{ fromCol, fromRow }` | 이동 모드 진입 |
+| `request-move-tower` | React→Game | `{ fromCol, fromRow, toCol, toRow }` | 타워 이동 요청 |
+| `tower-moved` | Game→React | `{ fromCol, fromRow, toCol, toRow }` | 타워 이동 완료 |
+| `move-failed` | Game→React | `{ reason }` | 이동 실패 |
 | `summon-failed` | Game → React | `{ reason: 'insufficient-energy' \| 'no-empty-tile' \| 'placement-failed' }` | canAfford 실패 / 빈 칸 없음 / placeTower 실패 |
 | `upgrade-choice-ready` | Game→React | `{ choices: Array<{id,name,description,icon}> }` | 보스 클리어 후 3장 카드 제시 |
 | `request-apply-upgrade` | React→Game | `{ upgradeId: string }` | 유저가 카드 선택 |

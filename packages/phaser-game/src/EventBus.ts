@@ -160,6 +160,18 @@ export interface GameEventMap {
 		towerId: string;
 		grade: TowerGrade;
 	};
+
+	// === Roguelike Upgrade System (Phase A) ===
+	'upgrade-choice-ready': {
+		choices: Array<{
+			id: string;
+			name: string;
+			description: string;
+			icon: string;
+		}>;
+	};
+	'request-apply-upgrade': { upgradeId: string };
+	'upgrade-applied': { upgradeId: string; totalStacks: number };
 }
 
 export class TypedEventBus {

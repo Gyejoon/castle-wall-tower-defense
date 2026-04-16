@@ -128,12 +128,12 @@ export class PhaseAOrchestrator {
 		const card = UPGRADE_CARDS.find((c) => c.id === upgradeId);
 		const isAdditive = card ? card.stackType === 'add' : false;
 
-		if (stacks === 0) return isAdditive ? 0 : 1;
+		if (stacks === 0 || !card) return isAdditive ? 0 : 1;
 
-		if (card!.stackType === 'multiply') {
-			return (1 + card!.baseValue) ** stacks;
+		if (card.stackType === 'multiply') {
+			return (1 + card.baseValue) ** stacks;
 		}
-		return stacks * card!.baseValue;
+		return stacks * card.baseValue;
 	}
 
 	get effectiveSummonCost(): number {

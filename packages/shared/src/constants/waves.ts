@@ -51,7 +51,7 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
 }
 
 /**
- * Phase A endless wave generator. Boss every 5 waves (alternating
+ * Phase A endless wave generator. Boss every 10 waves (alternating
  * orc_warlord and forge_master), unit count grows linearly with slot
  * index, and the composition progressively introduces tougher units
  * (battle_robot @ slot 4, heavy_walker @ slot 9, stealth_drone @ slot 14).

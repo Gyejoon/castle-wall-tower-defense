@@ -43,7 +43,7 @@ export const UPGRADE_CARDS: readonly UpgradeCardDef[] = [
 	{
 		id: 'energy_regen',
 		name: '에너지 재생',
-		description: '초당 에너지 재생 +1',
+		description: '5초마다 에너지 +1',
 		icon: '🔋',
 		stackType: 'add',
 		baseValue: 1,

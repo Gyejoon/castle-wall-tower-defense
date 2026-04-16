@@ -255,10 +255,7 @@ export function GamePage() {
 
 					<ToastNotification toast={toast} />
 
-					{/* Tower Sell Panel — hidden in Phase A mode (PhaseAHud uses
-					    tower-selected events for tap-tap merge instead) */}
-					{!isPhaseAMode &&
-						selectedTower &&
+					{selectedTower &&
 						runStatus !== 'victory' &&
 						runStatus !== 'defeat' && (
 							<div

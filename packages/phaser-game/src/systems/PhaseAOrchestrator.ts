@@ -111,12 +111,6 @@ export class PhaseAOrchestrator {
 		return this.pendingSummon !== null;
 	}
 
-	/**
-	 * Cancel a pending summon draw. The drawn tower type is NOT "consumed"
-	 * from the pool — SummonPoolSystem.draw() is stateless (random pick with
-	 * replacement), so canceling and re-drawing just gives another random
-	 * pick from the same pool. No resource loss.
-	 */
 	cancelPendingSummon(): void {
 		this.pendingSummon = null;
 	}
@@ -213,20 +207,20 @@ export class PhaseAOrchestrator {
 	 * mode. Game.ts shows buildable highlights; player taps a tile to place.
 	 */
 	private handleSummonRequest(): void {
-		if (this.pendingSummon) return;
-
 		const energy = this.deps.energySystem;
 		if (energy && !energy.canAfford(this.effectiveSummonCost)) {
 			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
 			return;
 		}
 
-		const draw = this.summonPool.draw();
-		this.pendingSummon = { towerId: draw.towerId, grade: draw.grade };
+		if (!this.pendingSummon) {
+			const draw = this.summonPool.draw();
+			this.pendingSummon = { towerId: draw.towerId, grade: draw.grade };
+		}
 
 		EventBus.emit('phase-a-summon-ready', {
-			towerId: draw.towerId,
-			grade: draw.grade,
+			towerId: this.pendingSummon.towerId,
+			grade: this.pendingSummon.grade,
 		});
 	}
 

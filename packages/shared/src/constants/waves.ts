@@ -76,7 +76,7 @@ export function generatePhaseAWaves(count: number): WaveDef[] {
 				delayAfterClearSec: 5,
 				groups: [
 					{ unitId: bossId, count: 1 },
-					{ unitId: 'battle_robot', count: 8 },
+					{ unitId: 'battle_robot', count: 4 },
 				],
 			});
 			continue;

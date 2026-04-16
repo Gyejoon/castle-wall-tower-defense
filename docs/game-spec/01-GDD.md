@@ -27,7 +27,7 @@
 | Session Length | 5~10분 |
 | Core Fantasy | 보유 타워 풀에서 운명을 뽑아 합성으로 강해진 빌드를 만들어 wave를 막는 지휘관 |
 | Core Fun | 랜덤 소환 슬롯머신 도파민 + 합성/등급업 도파민 + 보드 위 빌드 결정 + wave 대응 + 픽셀 중세 톤 |
-| Win Condition | 마지막 wave + 보스 클리어 (Phase A `phase_a_s1`: 6 normal wave + orc_warlord 미니보스) |
+| Win Condition | 생존 (Phase A `phase_a_s1`: 50 wave 무한 에스컬레이션, 보스 10 wave마다 교대 출현. 실질적으로 wave 15~35에서 자연 패배) |
 | Lose Condition | 기지 HP 0 (적이 경로 끝 도달 시 -1) 또는 보스 leak 즉시 패배 |
 
 **레거시 4타워 덱 시스템** (W1~W3 24스테이지): 이전 v1 GDD 정의대로 동작하며, Phase A 피벗 검증 기간 동안 비파괴로 유지된다. 최종 폐기 또는 병존 여부는 Phase B 시점에 결정.
@@ -51,12 +51,12 @@
 **Phase A Core Loop (신규 — `phase_a_long` 맵 전용)**
 ```
 로비 홈 탭 → [LAB] Phase A 버튼 → phase_a_s1 스테이지 진입 → prep 5초
-  → [반복] 에너지 충전 (1/sec) → 소환 버튼 탭 (⚡8) → 보유 풀에서 랜덤 1성 타워 → 빈 buildable 자동 배치 → scale 펀치 VFX
+  → [반복] 에너지 = 킬 보상 (+1, 5배수 wave ×2) → 소환 버튼 탭 (⚡20) → 랜덤 1성 타워 드로우 → 유저가 빈 칸 탭해 배치 → scale 펀치 VFX
         → 같은 타워 + 같은 등급 두 칸 차례 탭 → request-merge-towers → MergeSystem validation
               → 성공 시 한 칸 사라지고 다른 칸 등급 ↑ + scale 펀치 + 골드 tint flash
               → 실패 시 한국어 토스트 (다른 타워 / 다른 등급 / 최고 등급 / 잘못된 칸)
         → wave 진입 → 자동 전투 → 웨이브 클리어 +5 에너지
-  → 마지막 wave + orc_warlord 미니보스 → 승리/패배 → 결과 화면 → 로비
+  → wave 무한 에스컬레이션 (HP·속도 선형 증가, 30마리/wave, 보스 10 wave마다) → 패배 시 결과 화면 → 로비
 ```
 
 **레거시 Core Loop (W1~W3 24스테이지, v1)**
@@ -83,12 +83,12 @@ Phase A의 메타 강화 / 별 등급 / 승급 / 150레벨 / 일일 미션 등 �
 | SummonPoolSystem | 보유 타워 풀 런타임 관리. `draw()`, `replacePool()`, `reset()` | `initialPool` (Phase A: `[archer, plasma, emp, nova_cannon, flame_tower]`), injectable `rng` |
 | RandomSummonSystem | 빈 buildable 타일 선택 + 풀에서 draw 컴포지션. `requestSummon(ctx)` | `SummonPlacementContext` (`listBuildableTiles`, `isOccupied`) |
 | MergeSystem | 순수 합성 validation. `tryMerge(ctx, fromCol, fromRow, toCol, toRow)` → discriminated union | `MergeContext.getTowerAt`, `nextGrade()` |
-| PhaseAOrchestrator | 위 3개 시스템 owning + TowerSystem/GridManager 어댑터 + EventBus 리스너 (idempotent off→on) + EnergySystem gating | `PHASE_A_SUMMON_COST = 8`, `PhaseAEnergyApi` 구조적 surface |
+| PhaseAOrchestrator | SummonPool + MergeSystem owning + TowerSystem 어댑터 + EventBus 리스너 (idempotent off→on) + EnergySystem gating. 2-step 소환: draw → 유저 배치 | `PHASE_A_SUMMON_COST = 20`, `PhaseAEnergyApi` 구조적 surface |
 
 **핵심 메커니즘 변경**
 - **Placement (v2)**: 직접 배치 → **랜덤 소환 + 자동 빈 칸 배치**. 유저는 어디에 놓을지 선택하지 않음, 어떤 타워가 나올지도 선택하지 않음. 유일한 결정은 언제 소환할지 + 무엇을 합성할지.
 - **Tower Upgrade (v2)**: 영구 메타 강화 → **인게임 합성 등급** (`normal → rare → unique → epic`). 같은 타워 같은 등급 2개 → 1개로 병합 + 1등급 ↑. max-grade(`epic`) 도달 시 더 이상 합성 불가. 합성 시 sprite texture 재설정 + `effectiveDamage` 재계산.
-- **Energy Economy (v2)**: 기존 배치 비용(공격형 10 / CC형 20) 대신 **소환당 8 에너지**. 초기 40 에너지 → 5회 무료 소환. 1/sec 회복 + 웨이브 클리어 +5.
+- **Energy Economy (v2)**: 킬 보상 기반. 몬스터 처치당 +1 에너지 (5배수 wave에서는 ×2). 시간 리젠(1/sec) 비활성, 웨이브 클리어 보너스 비활성. **소환당 20 에너지**. 초기 40 → 2회 무료 소환. 이후 킬 효율로 에너지 축적 → 소환 가능. 30킬/wave × +1 = 30 에너지/wave → 소환 1.5회분.
 - **Tower Sell (v2)**: 비활성화. 합성으로 불필요한 타워를 소비한다는 가정.
 
 ### 레거시 시스템 (v1 — W1~W3 24스테이지에서 그대로 작동)
@@ -119,7 +119,7 @@ Phase A의 메타 강화 / 별 등급 / 승급 / 150레벨 / 일일 미션 등 �
 | 등급 단계 | 4단계 (`normal → rare → unique → epic`) | 기존 `TowerGrade` 재활용, 텍스처도 기존 에셋 |
 | 맵 | 1종 (`phase_a_long`, 8×24 long portrait) | 4-sweep S-curve, 55 path cells, ~131 buildable |
 | 스테이지 | 1종 (`phase_a_s1`) | hidden world `phase_a_lab` (order 99, WORLD_ORDER 밖), 로비 `[LAB]` 버튼 진입 |
-| 웨이브 | 7 (6 normal + 1 boss) | 시작 유닛: scout_drone, battle_robot / 마지막 보스: orc_warlord |
+| 웨이브 | 50 (endless, 보스 10 wave마다) | 30마리/wave, 1초 간격 스폰. 보스: orc_warlord ↔ forge_master 교대 |
 | 적 유형 | 3종 재활용 (`scout_drone`, `battle_robot`, `heavy_walker`) + 보스 1종 | 신규 유닛 없음, 레거시 자산 100% 재활용 |
 
 **Phase B 확장 예정 (Phase A 플레이 검증 통과 후)**
@@ -483,4 +483,4 @@ screenShake 동기화:
 | 2026-04-09 | §8, §10 | WorldMapPage를 세로 카드 리스트로 재정의(이슈 #94). 5초 prep 페이즈를 모든 전투에 도입(이슈 #93, 에너지 증가 정지). 10연 가차 순차 등장 애니메이션(이슈 #83). 타워 사거리 오버레이(이슈 #103). 덱 편집 상단 고정 4슬롯 + 루비 보석 제거 아이콘(이슈 #85). |
 | 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
 | 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |
-| 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / RandomSummonSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 S-curve) + `phase_a_s1` 스테이지(7 wave + orc_warlord 미니보스) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 8, 초기 40으로 5회 무료 시작. 5종 풀(`archer/plasma/emp/nova_cannon/flame_tower`) 랜덤 소환 + 같은 등급 2개 합성으로 `normal→rare→unique→epic` 승급. PhaseAHud(React) 로비 `[LAB]` 버튼 진입. scale 펀치 + 골드 tint flash VFX. 레거시 W1~W3 24스테이지 4타워 덱 시스템 비파괴. 본 문서의 §1/§3/§4/§5/§10은 Phase A 방향을 반영하며 레거시 정의는 각 섹션 하단에 별도 유지. PR #170. |
+| 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 U-turn 왕복) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. PhaseAHud(React) + 3배속 + 웨이브 타이머 HUD. PR #170. |

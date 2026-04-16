@@ -310,7 +310,7 @@ export class GameScene extends Phaser.Scene {
 		this.playerDeck = new DeckSystem(deckCards);
 
 		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
-		// SummonPool + RandomSummonSystem + MergeSystem to TowerSystem and
+		// SummonPool + MergeSystem to TowerSystem via PhaseAOrchestrator and
 		// listens for request-summon-tower / request-merge-towers from the
 		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
 		if (isPhaseAMap) {

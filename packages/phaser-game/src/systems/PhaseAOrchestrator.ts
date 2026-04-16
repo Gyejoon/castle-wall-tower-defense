@@ -90,6 +90,12 @@ export class PhaseAOrchestrator {
 		return this.pendingSummon !== null;
 	}
 
+	/**
+	 * Cancel a pending summon draw. The drawn tower type is NOT "consumed"
+	 * from the pool — SummonPoolSystem.draw() is stateless (random pick with
+	 * replacement), so canceling and re-drawing just gives another random
+	 * pick from the same pool. No resource loss.
+	 */
 	cancelPendingSummon(): void {
 		this.pendingSummon = null;
 	}

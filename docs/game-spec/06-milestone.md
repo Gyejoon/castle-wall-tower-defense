@@ -22,7 +22,7 @@
 |-------|------|------|------|
 | R0 | 스펙 v2 작성 (01-GDD / 06-milestone / 08-arch) | ✅ | 2026-04-14, 본 문서 포함 |
 | R1 | Phase A Core (SummonPool / RandomSummon / Merge / Orchestrator) | ✅ | PR #170, 22 TDD tests |
-| R1 | Phase A Map (`phase_a_long` 8×24 + `phase_a_s1` 7 wave) | ✅ | PR #170, 17 vitest assertions |
+| R1 | Phase A Map (`phase_a_long` 8×24 U-turn + `phase_a_s1` 50 wave endless) | ✅ | PR #170, 17 vitest assertions |
 | R1 | Phase A Integration (TowerSystem 확장 + GameScene wiring) | ✅ | PR #170 |
 | R1 | Phase A UI (`PhaseAHud` + `GamePage` 라우팅 + 로비 `[LAB]` 버튼) | ✅ | PR #170 |
 | R1 | Phase A VFX (scale 펀치 + 골드 tint flash) | ✅ | PR #170, "도파민의 80%" 기본기만 |

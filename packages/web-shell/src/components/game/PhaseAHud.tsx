@@ -11,6 +11,7 @@ interface FirstPick {
 	col: number;
 	row: number;
 	towerName: string;
+	refund: number;
 }
 
 interface PendingSummon {
@@ -39,6 +40,7 @@ export function PhaseAHud() {
 			towerName: string;
 			col: number;
 			row: number;
+			refund: number;
 		}) => {
 			const first = firstPickRef.current;
 			if (first === null) {
@@ -46,6 +48,7 @@ export function PhaseAHud() {
 					col: data.col,
 					row: data.row,
 					towerName: data.towerName,
+					refund: data.refund,
 				};
 				setFirstPick(firstPickRef.current);
 				return;
@@ -194,13 +197,29 @@ export function PhaseAHud() {
 						<span className="font-pixel text-[11px] text-gold">
 							{firstPick.towerName} 선택됨 · 짝을 탭하세요
 						</span>
-						<button
-							type="button"
-							onClick={handleCancelMerge}
-							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
-						>
-							취소
-						</button>
+						<div className="flex items-center gap-3 mt-0.5">
+							<button
+								type="button"
+								onClick={handleCancelMerge}
+								className="font-pixel text-[10px] text-text-secondary underline"
+							>
+								취소
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									EventBus.emit('request-sell-tower', {
+										col: firstPick.col,
+										row: firstPick.row,
+									});
+									firstPickRef.current = null;
+									setFirstPick(null);
+								}}
+								className="font-pixel text-[10px] text-danger underline"
+							>
+								판매 +{firstPick.refund}
+							</button>
+						</div>
 					</>
 				) : (
 					<span className="font-pixel text-[11px] text-text">

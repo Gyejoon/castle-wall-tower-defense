@@ -255,7 +255,8 @@ export function GamePage() {
 
 					<ToastNotification toast={toast} />
 
-					{selectedTower &&
+					{!isPhaseAMode &&
+						selectedTower &&
 						runStatus !== 'victory' &&
 						runStatus !== 'defeat' && (
 							<div

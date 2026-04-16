@@ -62,6 +62,7 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private worldGimmick: WorldGimmick | null = null;
+	private modifierFn: ((upgradeId: string) => number) | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -107,6 +108,10 @@ export class TowerSystem {
 
 	setWorldGimmick(gimmick: WorldGimmick | null): void {
 		this.worldGimmick = gimmick;
+	}
+
+	setModifierFn(fn: ((upgradeId: string) => number) | null): void {
+		this.modifierFn = fn;
 	}
 
 	getAllTowers(): TowerInstance[] {
@@ -374,14 +379,16 @@ export class TowerSystem {
 			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
 				continue;
 
-			const attackInterval = 1000 / def.stats.attackSpeed;
+			const spdMod = this.modifierFn ? this.modifierFn('spd_up') : 1;
+			const attackInterval = 1000 / (def.stats.attackSpeed * spdMod);
 			if (time - tower.lastAttackTime < attackInterval) continue;
 
 			const towerWorld = this.gridManager.gridToWorld(
 				data.position.x,
 				data.position.y,
 			);
-			const rangeSq = def.stats.range ** 2;
+			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
+			const rangeSq = (def.stats.range + rangeBonus) ** 2;
 
 			let closestUnit: (typeof unitPositions)[0] | null = null;
 			let closestDistSq = Infinity;
@@ -404,7 +411,10 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+				let baseDamage = Math.round(
+					tower.effectiveDamage * elementMult * dmgMod,
+				);
 				if (this.worldGimmick) {
 					const bonus = this.worldGimmick.getDamageBonus(tower);
 					if (bonus > 0) {
@@ -675,7 +685,8 @@ export class TowerSystem {
 			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
-			const rangeSq = def.stats.range ** 2;
+			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
+			const rangeSq = (def.stats.range + rangeBonus) ** 2;
 
 			if (this.isStunSpecial(special)) {
 				if (config.aoe) {

@@ -66,7 +66,11 @@ export class PhaseAOrchestrator {
 		toCol: number;
 		toRow: number;
 	}): void => this.handleMergeRequest(data);
-	private readonly onClearSelection = (): void => this.cancelPendingSummon();
+	private readonly onClearSelection = (): void => {
+		// Do NOT clear pendingSummon here — preserving the drawn tower
+		// prevents reroll exploit (cancel → re-summon → different tower).
+		// The pending draw is consumed only by completePlacement().
+	};
 	private readonly onApplyUpgrade = (data: { upgradeId: string }): void =>
 		this.applyUpgrade(data.upgradeId);
 

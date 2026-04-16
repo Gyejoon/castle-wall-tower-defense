@@ -1,8 +1,11 @@
 import { EventBus } from '@gld/phaser-game';
-import { PHASE_A_SUMMON_COST } from '@gld/shared';
+import { ALL_TOWERS, PHASE_A_SUMMON_COST } from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
+
+const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
+const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
 
 interface FirstPick {
 	col: number;
@@ -10,21 +13,17 @@ interface FirstPick {
 	towerName: string;
 }
 
-/**
- * Phase A pivot HUD. Replaces the legacy DeckDock when the active map is
- * `phase_a_long`. Two responsibilities:
- *
- * 1. "소환" button → emits `request-summon-tower`. PhaseAOrchestrator picks
- *    a random empty buildable tile and a random tower from the pool.
- * 2. Tap-tap merge: first tower tap is stored locally, second tap on a
- *    different tower fires `request-merge-towers`. MergeSystem validates
- *    sameness/grade/max and emits success or `merge-failed`.
- *
- * No energy gating in Phase A — summons are free until balance pass.
- */
+interface PendingSummon {
+	towerId: string;
+	grade: string;
+}
+
 export function PhaseAHud() {
 	const [firstPick, setFirstPick] = useState<FirstPick | null>(null);
 	const firstPickRef = useRef<FirstPick | null>(null);
+	const [pendingSummon, setPendingSummon] = useState<PendingSummon | null>(
+		null,
+	);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
 	const canAfford = energy >= PHASE_A_SUMMON_COST;
@@ -82,7 +81,16 @@ export function PhaseAHud() {
 			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
 		};
 
+		const handleSummonReady = (data: { towerId: string; grade: string }) => {
+			setPendingSummon(data);
+		};
+
+		const handleTowerSummoned = () => {
+			setPendingSummon(null);
+		};
+
 		const handleSummonFailed = (data: { reason: string }) => {
+			setPendingSummon(null);
 			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
 		};
 
@@ -90,6 +98,8 @@ export function PhaseAHud() {
 		EventBus.on('tower-deselected', handleTowerDeselected);
 		EventBus.on('towers-merged', handleMerged);
 		EventBus.on('merge-failed', handleMergeFailed);
+		EventBus.on('phase-a-summon-ready', handleSummonReady);
+		EventBus.on('tower-summoned', handleTowerSummoned);
 		EventBus.on('summon-failed', handleSummonFailed);
 
 		return () => {
@@ -97,6 +107,8 @@ export function PhaseAHud() {
 			EventBus.off('tower-deselected', handleTowerDeselected);
 			EventBus.off('towers-merged', handleMerged);
 			EventBus.off('merge-failed', handleMergeFailed);
+			EventBus.off('phase-a-summon-ready', handleSummonReady);
+			EventBus.off('tower-summoned', handleTowerSummoned);
 			EventBus.off('summon-failed', handleSummonFailed);
 		};
 	}, [pushToast]);
@@ -109,11 +121,23 @@ export function PhaseAHud() {
 		EventBus.emit('request-summon-tower');
 	}, [canAfford, pushToast]);
 
-	const handleCancel = useCallback(() => {
+	const handleCancelSummon = useCallback(() => {
+		setPendingSummon(null);
+		EventBus.emit('request-clear-tower-selection');
+	}, []);
+
+	const handleCancelMerge = useCallback(() => {
 		firstPickRef.current = null;
 		setFirstPick(null);
 		EventBus.emit('request-clear-tower-selection');
 	}, []);
+
+	const towerThumb = pendingSummon
+		? `assets/towers/${TOWER_TYPE_MAP.get(pendingSummon.towerId) ?? pendingSummon.towerId}.webp`
+		: null;
+	const towerName = pendingSummon
+		? (TOWER_NAME_MAP.get(pendingSummon.towerId) ?? pendingSummon.towerId)
+		: null;
 
 	return (
 		<div
@@ -128,34 +152,60 @@ export function PhaseAHud() {
 				<span className="font-pixel text-[10px] text-text-secondary tracking-[0.04em]">
 					Phase A — 랜덤 소환 + 합성
 				</span>
-				{firstPick === null ? (
+
+				{pendingSummon !== null ? (
+					<>
+						<div className="flex items-center gap-2">
+							{towerThumb && (
+								<img
+									src={towerThumb}
+									alt=""
+									width={24}
+									height={24}
+									className="[image-rendering:pixelated]"
+								/>
+							)}
+							<span className="font-pixel text-[11px] text-gold">
+								{towerName} — 배치할 위치를 탭
+							</span>
+						</div>
+						<button
+							type="button"
+							onClick={handleCancelSummon}
+							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
+						>
+							취소
+						</button>
+					</>
+				) : firstPick !== null ? (
+					<>
+						<span className="font-pixel text-[11px] text-gold">
+							{firstPick.towerName} 선택됨 · 짝을 탭하세요
+						</span>
+						<button
+							type="button"
+							onClick={handleCancelMerge}
+							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
+						>
+							취소
+						</button>
+					</>
+				) : (
 					<span className="font-pixel text-[11px] text-text">
 						타워 두 개를 차례로 탭 → 합성
 					</span>
-				) : (
-					<span className="font-pixel text-[11px] text-gold">
-						{firstPick.towerName} 선택됨 · 짝을 탭하세요
-					</span>
-				)}
-				{firstPick !== null && (
-					<button
-						type="button"
-						onClick={handleCancel}
-						className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
-					>
-						취소
-					</button>
 				)}
 			</div>
+
 			<button
 				type="button"
 				data-testid="phase-a-summon-button"
 				onClick={handleSummon}
-				disabled={!canAfford}
-				aria-disabled={!canAfford}
+				disabled={!canAfford || pendingSummon !== null}
+				aria-disabled={!canAfford || pendingSummon !== null}
 				className={cn(
 					'h-[80px] w-[100px] bg-panel border-2 flex flex-col items-center justify-center gap-1 transition-transform',
-					canAfford
+					canAfford && !pendingSummon
 						? 'border-gold shadow-[0_0_8px_var(--color-gold)] active:scale-95'
 						: 'border-border opacity-40 cursor-not-allowed',
 				)}
@@ -170,7 +220,7 @@ export function PhaseAHud() {
 				<span
 					className={cn(
 						'font-pixel text-[12px]',
-						canAfford ? 'text-gold' : 'text-text-secondary',
+						canAfford && !pendingSummon ? 'text-gold' : 'text-text-secondary',
 					)}
 				>
 					소환

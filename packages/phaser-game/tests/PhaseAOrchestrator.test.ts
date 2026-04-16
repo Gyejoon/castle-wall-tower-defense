@@ -31,7 +31,6 @@ const { EventBus, getEmits, resetBus } = vi.hoisted(() => {
 
 vi.mock('../src/EventBus', () => ({ EventBus }));
 
-import type { Position } from '@gld/shared';
 import { PhaseAOrchestrator } from '../src/systems/PhaseAOrchestrator';
 
 interface FakeTower {
@@ -93,16 +92,6 @@ function makeFakeTowerSystem() {
 	};
 }
 
-function makeFakeGridManager(occupiedCells: Array<[number, number]> = []) {
-	const set = new Set(occupiedCells.map(([c, r]) => `${c},${r}`));
-	return {
-		getTile: vi.fn((col: number, row: number) =>
-			set.has(`${col},${row}`) ? { occupied: true } : { occupied: false },
-		),
-		_markOccupied: (col: number, row: number) => set.add(`${col},${row}`),
-	};
-}
-
 function makeFakeEnergy(initial = 100) {
 	let energy = initial;
 	return {
@@ -118,99 +107,77 @@ function makeFakeEnergy(initial = 100) {
 	};
 }
 
-const buildable: Position[] = [
-	{ x: 0, y: 0 },
-	{ x: 1, y: 0 },
-	{ x: 2, y: 0 },
-];
-
 beforeEach(() => {
 	resetBus();
 });
 
 describe('PhaseAOrchestrator', () => {
-	it('등록 시 request-summon-tower / request-merge-towers 리스너를 붙인다', () => {
+	it('request-summon-tower → draw from pool → emit phase-a-summon-ready (step 1)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
 		});
 
-		// 리스너가 붙었으니 emit이 실제로 동작
 		EventBus.emit('request-summon-tower');
-		expect(towerSystem.placeTower).toHaveBeenCalledTimes(1);
+
+		expect(orch.hasPendingSummon()).toBe(true);
+		expect(towerSystem.placeTower).not.toHaveBeenCalled();
+		const readyCall = getEmits().find(
+			([event]) => event === 'phase-a-summon-ready',
+		);
+		expect(readyCall?.[1]).toEqual({ towerId: 'archer', grade: 'normal' });
 
 		orch.destroy();
 	});
 
-	it('summon 성공 시 placeTower 호출 + tower-summoned emit', () => {
+	it('completePlacement → placeTower + tower-summoned (step 2)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
-		new PhaseAOrchestrator({
+		const energy = makeFakeEnergy(40);
+		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
+			energySystem: energy,
+			summonCost: 8,
 		});
 
 		EventBus.emit('request-summon-tower');
+		orch.completePlacement(2, 3);
 
-		expect(towerSystem.placeTower).toHaveBeenCalledWith(0, 0, 'archer', {
+		expect(towerSystem.placeTower).toHaveBeenCalledWith(2, 3, 'archer', {
 			gradeOverride: 'normal',
 			levelOverride: 1,
 		});
-		const summonedCall = getEmits().find(
-			([event]) => event === 'tower-summoned',
-		);
-		expect(summonedCall?.[1]).toEqual({
-			col: 0,
-			row: 0,
-			towerId: 'archer',
-			grade: 'normal',
-		});
+		expect(energy.spend).toHaveBeenCalledWith(8);
+		expect(orch.hasPendingSummon()).toBe(false);
+		const summoned = getEmits().find(([e]) => e === 'tower-summoned');
+		expect(summoned?.[1]).toMatchObject({ col: 2, row: 3, towerId: 'archer' });
 	});
 
-	it('빈 칸이 모두 차면 summon은 silent fail', () => {
+	it('cancelPendingSummon clears pending state', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager([
-			[0, 0],
-			[1, 0],
-			[2, 0],
-		]);
-		new PhaseAOrchestrator({
+		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
 		});
 
 		EventBus.emit('request-summon-tower');
-
-		expect(towerSystem.placeTower).not.toHaveBeenCalled();
-		const summonedCall = getEmits().find(
-			([event]) => event === 'tower-summoned',
-		);
-		expect(summonedCall).toBeUndefined();
+		expect(orch.hasPendingSummon()).toBe(true);
+		orch.cancelPendingSummon();
+		expect(orch.hasPendingSummon()).toBe(false);
 	});
 
 	it('merge 성공 시 applyMerge 호출 + towers-merged emit', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
-		// 두 개의 normal archer 미리 배치
 		towerSystem.towers.push(
 			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
 			{ col: 1, row: 0, towerId: 'archer', grade: 'normal' },
 		);
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 		});
 
@@ -234,15 +201,12 @@ describe('PhaseAOrchestrator', () => {
 
 	it('merge 실패 시 merge-failed emit (다른 타워)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		towerSystem.towers.push(
 			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
 			{ col: 1, row: 0, towerId: 'plasma', grade: 'normal' },
 		);
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 		});
 
@@ -266,15 +230,12 @@ describe('PhaseAOrchestrator', () => {
 
 	it('merge 실패 시 merge-failed emit (max-grade)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		towerSystem.towers.push(
 			{ col: 0, row: 0, towerId: 'archer', grade: 'epic' },
 			{ col: 1, row: 0, towerId: 'archer', grade: 'epic' },
 		);
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 		});
 
@@ -291,11 +252,8 @@ describe('PhaseAOrchestrator', () => {
 
 	it('destroy() 후 emit이 더 이상 핸들러를 부르지 않는다', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
 		});
@@ -315,12 +273,9 @@ describe('PhaseAOrchestrator', () => {
 
 	it('에너지 부족이면 summon-failed:insufficient-energy emit + placeTower 미호출', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		const energy = makeFakeEnergy(0);
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
 			energySystem: energy,
@@ -336,14 +291,11 @@ describe('PhaseAOrchestrator', () => {
 		expect(failed?.[1]).toEqual({ reason: 'insufficient-energy' });
 	});
 
-	it('에너지 충분 + summon 성공 시 spend 호출 + tower-summoned emit', () => {
+	it('에너지 충분 시 draw 성공 → completePlacement 후 spend + tower-summoned', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		const energy = makeFakeEnergy(40);
-		new PhaseAOrchestrator({
+		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 			rng: () => 0,
 			energySystem: energy,
@@ -351,35 +303,19 @@ describe('PhaseAOrchestrator', () => {
 		});
 
 		EventBus.emit('request-summon-tower');
+		expect(towerSystem.placeTower).not.toHaveBeenCalled();
+		expect(energy.spend).not.toHaveBeenCalled();
 
+		orch.completePlacement(1, 1);
 		expect(towerSystem.placeTower).toHaveBeenCalledTimes(1);
 		expect(energy.spend).toHaveBeenCalledWith(8);
 		expect(energy.current).toBe(32);
 	});
 
-	it('buildablePoints가 빈 배열이면 summon이 즉시 silent fail', () => {
-		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
-		new PhaseAOrchestrator({
-			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: [],
-			initialPool: ['archer'],
-			rng: () => 0,
-		});
-
-		EventBus.emit('request-summon-tower');
-
-		expect(towerSystem.placeTower).not.toHaveBeenCalled();
-	});
-
 	it('destroy()를 두 번 불러도 안전', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const gridManager = makeFakeGridManager();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
-			gridManager: gridManager as never,
-			buildablePoints: buildable,
 			initialPool: ['archer'],
 		});
 		orch.destroy();

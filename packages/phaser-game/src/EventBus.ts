@@ -155,6 +155,10 @@ export interface GameEventMap {
 	'summon-failed': {
 		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';
 	};
+	'phase-a-summon-ready': {
+		towerId: string;
+		grade: TowerGrade;
+	};
 }
 
 export class TypedEventBus {

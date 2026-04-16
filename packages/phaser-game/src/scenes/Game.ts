@@ -118,6 +118,7 @@ export class GameScene extends Phaser.Scene {
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
 	private phaseAOrchestrator?: PhaseAOrchestrator;
+	private onPhaseASummonReady?: (data: { towerId: string }) => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
@@ -311,11 +312,17 @@ export class GameScene extends Phaser.Scene {
 		if (isPhaseAMap) {
 			this.phaseAOrchestrator = new PhaseAOrchestrator({
 				towerSystem: this.playerTowers,
-				gridManager: this.playerGrid,
-				buildablePoints: this.currentMap.buildablePoints,
 				initialPool: PHASE_A_INITIAL_POOL,
 				energySystem: this.energySystem,
 			});
+			this.onPhaseASummonReady = (data) => {
+				if (!this.isSceneAlive()) return;
+				this.selectedTowerId = data.towerId;
+				this.clearRangeOverlay();
+				EventBus.emit('tower-deselected');
+				this.renderPlaceableHighlights();
+			};
+			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
 		}
 
 		this.damageNumbers = new DamageNumberSystem(this);
@@ -844,6 +851,15 @@ export class GameScene extends Phaser.Scene {
 		gridY: number,
 		towerDefId: string,
 	): void {
+		// Phase A: orchestrator handles energy + placement directly
+		if (this.phaseAOrchestrator?.hasPendingSummon()) {
+			this.phaseAOrchestrator.completePlacement(gridX, gridY);
+			this.selectedTowerId = null;
+			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			return;
+		}
+
 		const card = this.playerDeck.getCardByTowerId(towerDefId);
 		if (!card) return;
 
@@ -1119,6 +1135,9 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		EventBus.off('furnace-cycle', this.onFurnaceCycle);
 		EventBus.off('arcane-burst', this.onArcaneBurst);
+		if (this.onPhaseASummonReady) {
+			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
+		}
 		this.phaseAOrchestrator?.destroy();
 		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();

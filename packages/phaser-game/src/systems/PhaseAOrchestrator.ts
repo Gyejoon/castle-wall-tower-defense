@@ -1,15 +1,10 @@
-import { PHASE_A_SUMMON_COST, type Position } from '@gld/shared';
+import { type Grade, PHASE_A_SUMMON_COST } from '@gld/shared';
 import { EventBus } from '../EventBus';
-import type { GridManager } from './GridManager';
 import {
 	type MergeContext,
 	type MergeFailReason,
 	MergeSystem,
 } from './MergeSystem';
-import {
-	RandomSummonSystem,
-	type SummonPlacementContext,
-} from './RandomSummonSystem';
 import { SummonPoolSystem } from './SummonPoolSystem';
 import type { TowerSystem } from './TowerSystem';
 
@@ -22,8 +17,6 @@ export interface PhaseAEnergyApi {
 
 export interface PhaseAOrchestratorDeps {
 	towerSystem: TowerSystem;
-	gridManager: GridManager;
-	buildablePoints: readonly Position[];
 	initialPool: readonly string[];
 	rng?: () => number;
 	energySystem?: PhaseAEnergyApi;
@@ -31,24 +24,25 @@ export interface PhaseAOrchestratorDeps {
 }
 
 /**
- * Phase A pivot wiring. Owns the three new pure-data systems
- * (SummonPoolSystem, RandomSummonSystem, MergeSystem), bridges them to
- * the existing TowerSystem + GridManager via small adapters, and listens
- * on EventBus for `request-summon-tower` / `request-merge-towers`. On
- * success it calls into TowerSystem and emits the corresponding
- * `tower-summoned` / `towers-merged` events; on failure it emits
- * `merge-failed`.
+ * Phase A pivot wiring. Owns SummonPoolSystem + MergeSystem and bridges
+ * them to TowerSystem via EventBus.
+ *
+ * Summon is 2-step: (1) request-summon-tower → pool draw → emit
+ * phase-a-summon-ready; (2) Game.ts shows highlights, player taps tile
+ * → Game.ts calls completePlacement(col,row) → tower placed.
+ *
+ * Merge is 1-step: request-merge-towers → MergeSystem validate →
+ * TowerSystem.applyMerge → emit towers-merged or merge-failed.
  *
  * Construction auto-registers the listeners. Call destroy() before the
  * scene shuts down to avoid duplicate registrations on re-mount.
  */
 export class PhaseAOrchestrator {
 	private readonly summonPool: SummonPoolSystem;
-	private readonly summoner: RandomSummonSystem;
 	private readonly merger: MergeSystem;
-	private readonly summonContext: SummonPlacementContext;
 	private readonly mergeContext: MergeContext;
 	private readonly summonCost: number;
+	private pendingSummon: { towerId: string; grade: Grade } | null = null;
 	private destroyed = false;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
@@ -58,22 +52,13 @@ export class PhaseAOrchestrator {
 		toCol: number;
 		toRow: number;
 	}): void => this.handleMergeRequest(data);
+	private readonly onClearSelection = (): void => this.cancelPendingSummon();
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
-		this.summoner = new RandomSummonSystem(this.summonPool, deps.rng);
 		this.merger = new MergeSystem();
 		this.summonCost = deps.summonCost ?? PHASE_A_SUMMON_COST;
 
-		const buildable = deps.buildablePoints.map((p) => ({
-			col: p.x,
-			row: p.y,
-		}));
-		this.summonContext = {
-			listBuildableTiles: () => buildable,
-			isOccupied: (col, row) =>
-				deps.gridManager.getTile(col, row)?.occupied === true,
-		};
 		this.mergeContext = {
 			getTowerAt: (col, row) => deps.towerSystem.getTowerLocator(col, row),
 		};
@@ -85,6 +70,8 @@ export class PhaseAOrchestrator {
 		EventBus.on('request-summon-tower', this.onSummonRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
 		EventBus.on('request-merge-towers', this.onMergeRequest);
+		EventBus.off('request-clear-tower-selection', this.onClearSelection);
+		EventBus.on('request-clear-tower-selection', this.onClearSelection);
 	}
 
 	getSummonPool(): SummonPoolSystem {
@@ -96,26 +83,34 @@ export class PhaseAOrchestrator {
 		this.destroyed = true;
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
+		EventBus.off('request-clear-tower-selection', this.onClearSelection);
 	}
 
-	private handleSummonRequest(): void {
-		const energy = this.deps.energySystem;
-		if (energy && !energy.canAfford(this.summonCost)) {
-			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
-			return;
-		}
+	hasPendingSummon(): boolean {
+		return this.pendingSummon !== null;
+	}
 
-		const result = this.summoner.requestSummon(this.summonContext);
-		if (result.kind === 'failed') {
-			EventBus.emit('summon-failed', { reason: result.reason });
-			return;
-		}
+	cancelPendingSummon(): void {
+		this.pendingSummon = null;
+	}
+
+	/**
+	 * Step 2: player tapped a buildable tile while a summon is pending.
+	 * Place the drawn tower at the chosen position, spend energy, play VFX.
+	 */
+	completePlacement(col: number, row: number): void {
+		const pending = this.pendingSummon;
+		if (!pending) return;
+		this.pendingSummon = null;
 
 		const placement = this.deps.towerSystem.placeTower(
-			result.col,
-			result.row,
-			result.towerId,
-			{ gradeOverride: result.grade, levelOverride: 1 },
+			col,
+			row,
+			pending.towerId,
+			{
+				gradeOverride: pending.grade,
+				levelOverride: 1,
+			},
 		);
 
 		if (!placement.success) {
@@ -123,17 +118,36 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
-		// Spend energy AFTER successful placement so a placement failure
-		// (e.g. blocked path validation) doesn't burn the player's resources.
-		energy?.spend(this.summonCost);
-
-		this.deps.towerSystem.playPhaseASummonVfx(result.col, result.row);
+		this.deps.energySystem?.spend(this.summonCost);
+		this.deps.towerSystem.playPhaseASummonVfx(col, row);
 
 		EventBus.emit('tower-summoned', {
-			col: result.col,
-			row: result.row,
-			towerId: result.towerId,
-			grade: result.grade,
+			col,
+			row,
+			towerId: pending.towerId,
+			grade: pending.grade,
+		});
+	}
+
+	/**
+	 * Step 1: draw a random tower from the pool and enter "placement pending"
+	 * mode. Game.ts shows buildable highlights; player taps a tile to place.
+	 */
+	private handleSummonRequest(): void {
+		if (this.pendingSummon) return;
+
+		const energy = this.deps.energySystem;
+		if (energy && !energy.canAfford(this.summonCost)) {
+			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
+			return;
+		}
+
+		const draw = this.summonPool.draw();
+		this.pendingSummon = { towerId: draw.towerId, grade: draw.grade };
+
+		EventBus.emit('phase-a-summon-ready', {
+			towerId: draw.towerId,
+			grade: draw.grade,
 		});
 	}
 

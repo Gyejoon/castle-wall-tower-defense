@@ -128,6 +128,8 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
+	private isPhaseAMap = false;
+	private currentWaveSlot = 1;
 	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
 	private currentStageId!: string;
@@ -292,7 +294,8 @@ export class GameScene extends Phaser.Scene {
 		this.worldGimmick?.onBattleStart();
 		this.playerTowers.setWorldGimmick(this.worldGimmick);
 
-		const isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
+		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
+		const isPhaseAMap = this.isPhaseAMap;
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
 		const deckCards = isPhaseAMap
 			? []
@@ -323,6 +326,8 @@ export class GameScene extends Phaser.Scene {
 				this.renderPlaceableHighlights();
 			};
 			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
+			// Phase A: 1 unit per second (1000ms) instead of default 300ms
+			this.playerUnits.setSpawnInterval(1000);
 		}
 
 		this.damageNumbers = new DamageNumberSystem(this);
@@ -374,6 +379,7 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
 			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
+			this.currentWaveSlot = data.slotIndex;
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 			this.worldGimmick?.onWaveStart(data.wave);
@@ -395,7 +401,8 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			if (data.cleared) {
+			// Phase A: no wave-clear energy bonus — energy comes from kills only
+			if (data.cleared && !this.isPhaseAMap) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
 		};
@@ -991,7 +998,8 @@ export class GameScene extends Phaser.Scene {
 		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
-		if (phase !== 'prep') {
+		// Phase A: energy from kills only, no time-based regen
+		if (phase !== 'prep' && !this.isPhaseAMap) {
 			this.energySystem.update(scaledDelta / 1000);
 		}
 
@@ -1013,6 +1021,11 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
+				// Phase A: energy from kills, not time. +1 per kill, x2 on every 5th wave
+				if (this.isPhaseAMap) {
+					const bonus = this.currentWaveSlot % 5 === 0 ? 2 : 1;
+					this.energySystem.add(bonus);
+				}
 			},
 			(unitId, result) => {
 				if (!result) return;

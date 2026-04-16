@@ -63,40 +63,50 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
  * without introducing runtime wave mutation in WaveSystem.
  */
 export function generatePhaseAWaves(count: number): WaveDef[] {
+	const UNITS_PER_WAVE = 30;
 	const waves: WaveDef[] = [];
 	for (let i = 1; i <= count; i++) {
-		const isBoss = i % 5 === 0;
+		const isBoss = i % 10 === 0;
 		if (isBoss) {
-			// Alternate bosses: 5/15/25/35/45 = orc_warlord, 10/20/30/40/50 = forge_master
 			const bossId =
-				Math.floor(i / 5) % 2 === 1 ? 'orc_warlord' : 'forge_master';
+				Math.floor(i / 10) % 2 === 1 ? 'orc_warlord' : 'forge_master';
 			waves.push({
 				slotIndex: i,
 				kind: 'boss',
 				delayAfterClearSec: 5,
-				groups: [{ unitId: bossId, count: 1 }],
+				groups: [
+					{ unitId: bossId, count: 1 },
+					{ unitId: 'battle_robot', count: 8 },
+				],
 			});
 			continue;
 		}
-		const base = 3 + Math.floor(i / 2);
-		const groups: WaveGroup[] = [{ unitId: 'scout_drone', count: base }];
-		if (i >= 4) {
+		// 30 units total per wave, composition shifts with slot index
+		const groups: WaveGroup[] = [];
+		if (i < 5) {
+			groups.push({ unitId: 'scout_drone', count: UNITS_PER_WAVE });
+		} else if (i < 10) {
+			const robots = Math.min(Math.floor(i * 1.5), UNITS_PER_WAVE - 5);
+			groups.push({ unitId: 'scout_drone', count: UNITS_PER_WAVE - robots });
+			groups.push({ unitId: 'battle_robot', count: robots });
+		} else if (i < 20) {
+			const heavy = Math.min(Math.floor(i / 3), 10);
+			const robots = Math.floor((UNITS_PER_WAVE - heavy) / 2);
 			groups.push({
-				unitId: 'battle_robot',
-				count: Math.max(2, Math.floor(base / 2)),
+				unitId: 'scout_drone',
+				count: UNITS_PER_WAVE - robots - heavy,
 			});
-		}
-		if (i >= 9) {
-			groups.push({
-				unitId: 'heavy_walker',
-				count: Math.max(1, Math.floor(i / 10)),
-			});
-		}
-		if (i >= 14) {
-			groups.push({
-				unitId: 'stealth_drone',
-				count: Math.max(1, Math.floor(i / 15)),
-			});
+			groups.push({ unitId: 'battle_robot', count: robots });
+			groups.push({ unitId: 'heavy_walker', count: heavy });
+		} else {
+			const heavy = Math.min(Math.floor(i / 3), 12);
+			const stealth = Math.min(Math.floor(i / 5), 8);
+			const robots = Math.floor((UNITS_PER_WAVE - heavy - stealth) / 2);
+			const scouts = UNITS_PER_WAVE - robots - heavy - stealth;
+			groups.push({ unitId: 'scout_drone', count: scouts });
+			groups.push({ unitId: 'battle_robot', count: robots });
+			groups.push({ unitId: 'heavy_walker', count: heavy });
+			groups.push({ unitId: 'stealth_drone', count: stealth });
 		}
 		waves.push({
 			slotIndex: i,

@@ -160,7 +160,7 @@ describe('getWavesForStage', () => {
 describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot — endless)', () => {
 	const phaseA = STAGE_WAVES.phase_a_s1;
 
-	it('50 wave 생성 (practically-infinite 세션)', () => {
+	it('50 wave 생성', () => {
 		expect(phaseA).toHaveLength(50);
 	});
 
@@ -170,9 +170,9 @@ describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot — endless)', () 
 		});
 	});
 
-	it('5의 배수 wave는 boss, 나머지는 normal', () => {
+	it('10의 배수 wave는 boss, 나머지는 normal', () => {
 		for (const w of phaseA) {
-			if (w.slotIndex % 5 === 0) {
+			if (w.slotIndex % 10 === 0) {
 				expect(w.kind).toBe('boss');
 			} else {
 				expect(w.kind).toBe('normal');
@@ -180,10 +180,9 @@ describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot — endless)', () 
 		}
 	});
 
-	it('보스가 orc_warlord / forge_master 순으로 교대', () => {
-		// wave 5 → orc, wave 10 → forge, wave 15 → orc, ...
+	it('보스가 orc_warlord / forge_master 순으로 교대 (10 wave 마다)', () => {
 		const bossWaves = phaseA.filter((w) => w.kind === 'boss');
-		expect(bossWaves).toHaveLength(10);
+		expect(bossWaves).toHaveLength(5);
 		bossWaves.forEach((w, i) => {
 			const expected = i % 2 === 0 ? 'orc_warlord' : 'forge_master';
 			expect(w.groups[0].unitId).toBe(expected);
@@ -191,12 +190,18 @@ describe('STAGE_WAVES.phase_a_s1 (random-summon + merge pivot — endless)', () 
 		});
 	});
 
-	it('normal wave는 slot이 커질수록 유닛 카운트 증가', () => {
-		const w1 = phaseA[0]; // slot 1 (normal)
-		const w21 = phaseA[20]; // slot 21 (normal, 20은 보스라 비교 불가)
-		const totalCount = (w: { groups: { count: number }[] }) =>
-			w.groups.reduce((s, g) => s + g.count, 0);
-		expect(totalCount(w21)).toBeGreaterThan(totalCount(w1));
+	it('normal wave는 30마리씩', () => {
+		const normalWaves = phaseA.filter((w) => w.kind === 'normal');
+		for (const w of normalWaves) {
+			const total = w.groups.reduce((s, g) => s + g.count, 0);
+			expect(total).toBe(30);
+		}
+	});
+
+	it('slot이 커질수록 유닛 구성이 다양해진다 (그룹 수 증가)', () => {
+		const w1 = phaseA[0]; // slot 1
+		const w21 = phaseA[20]; // slot 21
+		expect(w21.groups.length).toBeGreaterThan(w1.groups.length);
 	});
 
 	it('slot 14+ 에서 stealth_drone 이 등장하기 시작', () => {

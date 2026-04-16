@@ -6,7 +6,7 @@ import type { Grade } from '../types/grade';
  * stage — gives ~5 free summons at start, plus enough budget for ongoing
  * builds and merges through the run.
  */
-export const PHASE_A_SUMMON_COST = 8;
+export const PHASE_A_SUMMON_COST = 20;
 
 export interface SummonPool {
 	readonly towerIds: readonly string[];

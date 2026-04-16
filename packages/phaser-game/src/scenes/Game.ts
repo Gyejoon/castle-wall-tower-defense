@@ -19,6 +19,7 @@ import {
 	type MapLayout,
 	PHASE_A_MAP_ID,
 	PHASER_COLORS,
+	pickRandomUpgrades,
 	type StarRating,
 	UNITS,
 	type WaveDef,
@@ -119,6 +120,7 @@ export class GameScene extends Phaser.Scene {
 	private playerDeck!: DeckSystem;
 	private phaseAOrchestrator?: PhaseAOrchestrator;
 	private onPhaseASummonReady?: (data: { towerId: string }) => void;
+	private onUpgradeApplied?: () => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
@@ -398,6 +400,8 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveCompleted = (data: {
 			wave: number;
 			totalWaves: number;
+			slotIndex: number;
+			delaySec: number;
 			cleared: boolean;
 		}) => {
 			if (!this.isSceneAlive()) return;
@@ -405,6 +409,24 @@ export class GameScene extends Phaser.Scene {
 			// Phase A: no wave-clear energy bonus — energy comes from kills only
 			if (data.cleared && !this.isPhaseAMap) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			}
+			// Phase A: every 10 waves, offer 3 random upgrade cards
+			if (
+				data.cleared &&
+				this.isPhaseAMap &&
+				data.slotIndex % 10 === 0 &&
+				data.slotIndex > 0
+			) {
+				const choices = pickRandomUpgrades(3);
+				EventBus.emit('request-pause');
+				EventBus.emit('upgrade-choice-ready', {
+					choices: choices.map((c) => ({
+						id: c.id,
+						name: c.name,
+						description: c.description,
+						icon: c.icon,
+					})),
+				});
 			}
 		};
 
@@ -516,6 +538,15 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-set-speed', this.onSetSpeed);
 		EventBus.on('furnace-cycle', this.onFurnaceCycle);
 		EventBus.on('arcane-burst', this.onArcaneBurst);
+
+		// Phase A upgrade flow: resume game after player picks an upgrade
+		if (isPhaseAMap) {
+			this.onUpgradeApplied = () => {
+				if (!this.isSceneAlive()) return;
+				EventBus.emit('request-resume');
+			};
+			EventBus.on('upgrade-applied', this.onUpgradeApplied);
+		}
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -1003,6 +1034,10 @@ export class GameScene extends Phaser.Scene {
 		if (phase !== 'prep' && !this.isPhaseAMap) {
 			this.energySystem.update(scaledDelta / 1000);
 		}
+		// Phase A: energy_regen upgrade tick
+		if (this.isPhaseAMap && this.phaseAOrchestrator) {
+			this.phaseAOrchestrator.tickEnergyRegen(scaledDelta / 1000);
+		}
 
 		// Tick boss behaviors before combat so they can react with fresh sceneTime
 		for (const [instanceId, behavior] of this.bossBehaviors) {
@@ -1024,7 +1059,10 @@ export class GameScene extends Phaser.Scene {
 				soundGenerator.playUnitDeath();
 				// Phase A: energy from kills, not time. +1 per kill, x2 on every 5th wave
 				if (this.isPhaseAMap) {
-					const bonus = this.currentWaveSlot % 5 === 0 ? 2 : 1;
+					const killEnergyBonus =
+						this.phaseAOrchestrator?.getUpgradeStacks('kill_energy') ?? 0;
+					const bonus =
+						(this.currentWaveSlot % 5 === 0 ? 2 : 1) + killEnergyBonus;
 					this.energySystem.add(bonus);
 				}
 			},
@@ -1160,6 +1198,9 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		EventBus.off('furnace-cycle', this.onFurnaceCycle);
 		EventBus.off('arcane-burst', this.onArcaneBurst);
+		if (this.onUpgradeApplied) {
+			EventBus.off('upgrade-applied', this.onUpgradeApplied);
+		}
 		if (this.onPhaseASummonReady) {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
 		}

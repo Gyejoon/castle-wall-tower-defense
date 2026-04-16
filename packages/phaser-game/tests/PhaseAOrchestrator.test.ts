@@ -101,6 +101,9 @@ function makeFakeEnergy(initial = 100) {
 			energy -= cost;
 			return true;
 		}),
+		add: vi.fn((amount: number) => {
+			energy += amount;
+		}),
 		get current() {
 			return energy;
 		},
@@ -320,5 +323,160 @@ describe('PhaseAOrchestrator', () => {
 		});
 		orch.destroy();
 		expect(() => orch.destroy()).not.toThrow();
+	});
+
+	it('applyUpgrade → activeUpgrades 스택 증가 + upgrade-applied emit', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		orch.applyUpgrade('dmg_up');
+		expect(orch.getUpgradeStacks('dmg_up')).toBe(1);
+
+		orch.applyUpgrade('dmg_up');
+		expect(orch.getUpgradeStacks('dmg_up')).toBe(2);
+
+		const appliedCalls = getEmits().filter(
+			([event]) => event === 'upgrade-applied',
+		);
+		expect(appliedCalls).toHaveLength(2);
+		expect(appliedCalls[0][1]).toEqual({ upgradeId: 'dmg_up', totalStacks: 1 });
+		expect(appliedCalls[1][1]).toEqual({ upgradeId: 'dmg_up', totalStacks: 2 });
+
+		orch.destroy();
+	});
+
+	it('getModifier — dmg_up multiply 타입: 1회=1.15, 2회=1.3225', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		// 0 stacks → identity multiplier
+		expect(orch.getModifier('dmg_up')).toBe(1);
+
+		orch.applyUpgrade('dmg_up');
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.15);
+
+		orch.applyUpgrade('dmg_up');
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.3225);
+
+		orch.destroy();
+	});
+
+	it('getModifier — range_up add 타입: 1회=0.5, 2회=1.0', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		// 0 stacks → 0 (additive)
+		expect(orch.getModifier('range_up')).toBe(0);
+
+		orch.applyUpgrade('range_up');
+		expect(orch.getModifier('range_up')).toBeCloseTo(0.5);
+
+		orch.applyUpgrade('range_up');
+		expect(orch.getModifier('range_up')).toBeCloseTo(1.0);
+
+		orch.destroy();
+	});
+
+	it('effectiveSummonCost — summon_discount 적용 (최소 5)', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			summonCost: 8,
+		});
+
+		// No discount → base cost
+		expect(orch.effectiveSummonCost).toBe(8);
+
+		// 1 stack of summon_discount (baseValue=3) → 8-3=5
+		orch.applyUpgrade('summon_discount');
+		expect(orch.effectiveSummonCost).toBe(5);
+
+		// 2 stacks → 8-6=2 → clamped to 5
+		orch.applyUpgrade('summon_discount');
+		expect(orch.effectiveSummonCost).toBe(5);
+
+		orch.destroy();
+	});
+
+	it('tickEnergyRegen — 5초마다 에너지 추가', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(10);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			energySystem: energy,
+		});
+
+		// No stacks → tick does nothing
+		orch.tickEnergyRegen(5);
+		expect(energy.add).not.toHaveBeenCalled();
+
+		// Apply 2 stacks of energy_regen
+		orch.applyUpgrade('energy_regen');
+		orch.applyUpgrade('energy_regen');
+
+		// 3 seconds → not yet
+		orch.tickEnergyRegen(3);
+		expect(energy.add).not.toHaveBeenCalled();
+
+		// 2 more seconds (total 5) → trigger
+		orch.tickEnergyRegen(2);
+		expect(energy.add).toHaveBeenCalledWith(2);
+		expect(energy.current).toBe(12);
+
+		orch.destroy();
+	});
+
+	it('request-apply-upgrade EventBus 리스너 동작', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		EventBus.emit('request-apply-upgrade', { upgradeId: 'spd_up' });
+		expect(orch.getUpgradeStacks('spd_up')).toBe(1);
+
+		const appliedCall = getEmits().find(
+			([event]) => event === 'upgrade-applied',
+		);
+		expect(appliedCall?.[1]).toEqual({ upgradeId: 'spd_up', totalStacks: 1 });
+
+		orch.destroy();
+	});
+
+	it('effectiveSummonCost가 소환 비용에 실제 적용됨', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(40);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+			summonCost: 8,
+		});
+
+		// Apply summon_discount (baseValue=3) → effectiveCost = 5
+		orch.applyUpgrade('summon_discount');
+		expect(orch.effectiveSummonCost).toBe(5);
+
+		// Summon + place → should spend 5, not 8
+		EventBus.emit('request-summon-tower');
+		orch.completePlacement(0, 0);
+
+		expect(energy.spend).toHaveBeenCalledWith(5);
+		expect(energy.current).toBe(35);
+
+		orch.destroy();
 	});
 });

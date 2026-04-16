@@ -1,4 +1,4 @@
-import { type Grade, PHASE_A_SUMMON_COST } from '@gld/shared';
+import { type Grade, PHASE_A_SUMMON_COST, UPGRADE_CARDS } from '@gld/shared';
 import { EventBus } from '../EventBus';
 import {
 	type MergeContext,
@@ -13,6 +13,7 @@ import type { TowerSystem } from './TowerSystem';
 export interface PhaseAEnergyApi {
 	canAfford(cost: number): boolean;
 	spend(cost: number): boolean;
+	add(amount: number): void;
 }
 
 export interface PhaseAOrchestratorDeps {
@@ -44,6 +45,8 @@ export class PhaseAOrchestrator {
 	private readonly summonCost: number;
 	private pendingSummon: { towerId: string; grade: Grade } | null = null;
 	private destroyed = false;
+	private activeUpgrades: Map<string, number> = new Map();
+	private energyRegenTimer = 0;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
 	private readonly onMergeRequest = (data: {
@@ -53,6 +56,8 @@ export class PhaseAOrchestrator {
 		toRow: number;
 	}): void => this.handleMergeRequest(data);
 	private readonly onClearSelection = (): void => this.cancelPendingSummon();
+	private readonly onApplyUpgrade = (data: { upgradeId: string }): void =>
+		this.applyUpgrade(data.upgradeId);
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
@@ -72,6 +77,8 @@ export class PhaseAOrchestrator {
 		EventBus.on('request-merge-towers', this.onMergeRequest);
 		EventBus.off('request-clear-tower-selection', this.onClearSelection);
 		EventBus.on('request-clear-tower-selection', this.onClearSelection);
+		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
+		EventBus.on('request-apply-upgrade', this.onApplyUpgrade);
 	}
 
 	getSummonPool(): SummonPoolSystem {
@@ -84,6 +91,7 @@ export class PhaseAOrchestrator {
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
 		EventBus.off('request-clear-tower-selection', this.onClearSelection);
+		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
 	}
 
 	hasPendingSummon(): boolean {
@@ -98,6 +106,58 @@ export class PhaseAOrchestrator {
 	 */
 	cancelPendingSummon(): void {
 		this.pendingSummon = null;
+	}
+
+	applyUpgrade(upgradeId: string): void {
+		const prev = this.activeUpgrades.get(upgradeId) ?? 0;
+		this.activeUpgrades.set(upgradeId, prev + 1);
+		EventBus.emit('upgrade-applied', { upgradeId, totalStacks: prev + 1 });
+	}
+
+	getUpgradeStacks(upgradeId: string): number {
+		return this.activeUpgrades.get(upgradeId) ?? 0;
+	}
+
+	/**
+	 * Returns the modifier for a given upgrade type.
+	 * For 'multiply' type (dmg_up, spd_up): (1 + baseValue)^stacks
+	 * For 'add' type (range_up): stacks * baseValue
+	 */
+	getModifier(upgradeId: string): number {
+		const stacks = this.activeUpgrades.get(upgradeId) ?? 0;
+		const card = UPGRADE_CARDS.find((c) => c.id === upgradeId);
+		const isAdditive = card ? card.stackType === 'add' : false;
+
+		if (stacks === 0) return isAdditive ? 0 : 1;
+
+		if (card!.stackType === 'multiply') {
+			return (1 + card!.baseValue) ** stacks;
+		}
+		return stacks * card!.baseValue;
+	}
+
+	get effectiveSummonCost(): number {
+		const discount = this.getModifier('summon_discount');
+		return Math.max(5, this.summonCost - discount);
+	}
+
+	/**
+	 * Called from Game.ts update loop. Handles energy_regen timer.
+	 * Adds energy every 5 seconds based on energy_regen stacks.
+	 */
+	tickEnergyRegen(deltaSec: number): void {
+		const stacks = this.getUpgradeStacks('energy_regen');
+		if (stacks === 0) return;
+		this.energyRegenTimer += deltaSec;
+		if (this.energyRegenTimer >= 5) {
+			this.energyRegenTimer -= 5;
+			this.deps.energySystem?.add(stacks);
+		}
+	}
+
+	resetUpgrades(): void {
+		this.activeUpgrades.clear();
+		this.energyRegenTimer = 0;
 	}
 
 	/**
@@ -124,7 +184,7 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
-		this.deps.energySystem?.spend(this.summonCost);
+		this.deps.energySystem?.spend(this.effectiveSummonCost);
 		this.deps.towerSystem.playPhaseASummonVfx(col, row);
 
 		EventBus.emit('tower-summoned', {
@@ -143,7 +203,7 @@ export class PhaseAOrchestrator {
 		if (this.pendingSummon) return;
 
 		const energy = this.deps.energySystem;
-		if (energy && !energy.canAfford(this.summonCost)) {
+		if (energy && !energy.canAfford(this.effectiveSummonCost)) {
 			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
 			return;
 		}

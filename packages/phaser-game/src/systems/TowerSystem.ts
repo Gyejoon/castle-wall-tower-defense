@@ -989,7 +989,7 @@ export class TowerSystem {
 		const { instance } = entry;
 
 		this.gridManager.removeTower(fromX, fromY);
-		this.gridManager.placeTower(toX, toY);
+		this.gridManager.placeTower(toX, toY, instance.def.id);
 
 		instance.data.position = { x: toX, y: toY };
 		const worldPos = this.gridManager.gridToWorld(toX, toY);

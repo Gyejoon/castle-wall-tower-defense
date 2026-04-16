@@ -418,7 +418,8 @@ export class GameScene extends Phaser.Scene {
 				data.cleared &&
 				this.isPhaseAMap &&
 				data.slotIndex % 10 === 0 &&
-				data.slotIndex > 0
+				data.slotIndex > 0 &&
+				data.slotIndex < data.totalWaves
 			) {
 				const choices = pickRandomUpgrades(3);
 				EventBus.emit('request-pause');

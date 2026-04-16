@@ -31,9 +31,9 @@ export function UpgradePickOverlay({ choices }: UpgradePickOverlayProps) {
 			</p>
 
 			<div className="flex flex-col gap-3 w-full max-w-[320px] px-4">
-				{choices.map((choice) => (
+				{choices.map((choice, idx) => (
 					<button
-						key={choice.id}
+						key={`${choice.id}:${idx}`}
 						type="button"
 						onClick={() => handlePick(choice.id)}
 						className="flex items-center gap-3 bg-panel border border-border px-4 py-3 transition-all active:scale-95 hover:border-gold focus:border-gold outline-none"

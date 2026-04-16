@@ -159,7 +159,7 @@ export function PhaseAHud() {
 			data-testid="phase-a-hud"
 			className="h-[110px] shrink-0 border-t border-border px-3 pt-2 flex items-center justify-between gap-3"
 			style={{
-				background: 'rgba(26, 18, 8, 0.95)',
+				background: 'var(--color-bg-95)',
 				paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
 			}}
 		>

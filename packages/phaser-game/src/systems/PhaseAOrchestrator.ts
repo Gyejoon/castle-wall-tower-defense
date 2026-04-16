@@ -176,6 +176,12 @@ export class PhaseAOrchestrator {
 		if (!pending) return;
 		this.pendingSummon = null;
 
+		const cost = this.effectiveSummonCost;
+		if (this.deps.energySystem && !this.deps.energySystem.spend(cost)) {
+			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
+			return;
+		}
+
 		const placement = this.deps.towerSystem.placeTower(
 			col,
 			row,
@@ -187,11 +193,10 @@ export class PhaseAOrchestrator {
 		);
 
 		if (!placement.success) {
+			this.deps.energySystem?.add(cost);
 			EventBus.emit('summon-failed', { reason: 'placement-failed' });
 			return;
 		}
-
-		this.deps.energySystem?.spend(this.effectiveSummonCost);
 		this.deps.towerSystem.playPhaseASummonVfx(col, row);
 
 		EventBus.emit('tower-summoned', {

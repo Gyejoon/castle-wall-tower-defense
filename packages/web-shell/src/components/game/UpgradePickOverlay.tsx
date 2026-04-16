@@ -20,7 +20,7 @@ export function UpgradePickOverlay({ choices }: UpgradePickOverlayProps) {
 		<div
 			className="absolute inset-0 z-[8] flex flex-col items-center justify-center"
 			style={{
-				background: 'rgba(0, 0, 0, 0.7)',
+				background: 'var(--color-overlay-70)',
 				animation: 'fadeIn 0.2s ease-out',
 				touchAction: 'manipulation',
 			}}

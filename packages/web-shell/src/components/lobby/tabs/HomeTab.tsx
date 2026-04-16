@@ -80,7 +80,7 @@ export function HomeTab() {
 			role="tabpanel"
 			aria-label="마당"
 			className="relative flex-1 overflow-hidden flex flex-col"
-			style={{ background: '#1a1208' }}
+			style={{ background: 'var(--color-bg)' }}
 		>
 			{/* Background: stage thumbnail as full bleed */}
 			{thumb && (

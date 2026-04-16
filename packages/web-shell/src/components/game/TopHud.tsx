@@ -58,7 +58,7 @@ export function TopHud({
 		<div
 			data-testid="top-hud"
 			className="flex shrink-0 flex-col border-b border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.92)' }}
+			style={{ background: 'var(--color-panel-92)' }}
 		>
 			{/* 첫 번째 행: 항상 고정 */}
 			<div

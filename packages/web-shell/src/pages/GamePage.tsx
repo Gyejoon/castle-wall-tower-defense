@@ -261,13 +261,13 @@ export function GamePage() {
 						runStatus !== 'defeat' && (
 							<div
 								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
-								style={{ background: 'rgba(42, 32, 16, 0.95)' }}
+								style={{ background: 'var(--color-panel-95)' }}
 							>
 								<span className="text-text">{selectedTower.towerName}</span>
 								<button
 									type="button"
 									className="border border-danger px-2 py-1 text-danger"
-									style={{ background: 'rgba(192,48,32,0.2)' }}
+									style={{ background: 'var(--color-danger-20)' }}
 									onClick={handleSellTower}
 								>
 									판매{' '}
@@ -290,7 +290,7 @@ export function GamePage() {
 						<div
 							className="absolute inset-0 z-[10] flex items-center justify-center"
 							style={{
-								background: 'rgba(0,0,0,0.6)',
+								background: 'var(--color-overlay-60)',
 								animation: 'fadeIn 0.2s ease-out',
 							}}
 						>
@@ -308,7 +308,7 @@ export function GamePage() {
 									<button
 										type="button"
 										className="border border-danger px-4 py-2 font-pixel text-[11px] text-danger"
-										style={{ background: 'rgba(192,48,32,0.2)' }}
+										style={{ background: 'var(--color-danger-20)' }}
 										onClick={handleExitConfirm}
 									>
 										나가기
@@ -316,7 +316,7 @@ export function GamePage() {
 									<button
 										type="button"
 										className="border border-accent px-4 py-2 font-pixel text-[11px] text-accent"
-										style={{ background: 'rgba(200,160,74,0.2)' }}
+										style={{ background: 'var(--color-accent-20)' }}
 										onClick={handleExitCancel}
 									>
 										계속하기

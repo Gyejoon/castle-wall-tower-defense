@@ -329,6 +329,9 @@ export class GameScene extends Phaser.Scene {
 				this.renderPlaceableHighlights();
 			};
 			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
+			this.playerTowers.setModifierFn((id) =>
+				this.phaseAOrchestrator!.getModifier(id),
+			);
 			// Phase A: 1 unit per second (1000ms) instead of default 300ms
 			this.playerUnits.setSpawnInterval(1000);
 		}

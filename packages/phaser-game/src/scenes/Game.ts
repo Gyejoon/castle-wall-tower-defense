@@ -1108,8 +1108,8 @@ export class GameScene extends Phaser.Scene {
 				remainingHp: this.playerHp,
 			});
 
-			// Boss leak = instant defeat (only on actual boss waves)
-			if (exit.isBoss && this.currentSlotDef.kind === 'boss') {
+			// Boss leak = instant defeat (isBoss is only true for bossBehaviorId units)
+			if (exit.isBoss) {
 				EventBus.emit('base-hp-changed', {
 					hp: 0,
 					maxHp: INITIAL_PLAYER_HP,

@@ -20,12 +20,12 @@ export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 1.0, speed: 1.0 }, // Wave 2  — 여전히 쉬움
 	{ hp: 1.1, speed: 1.0 }, // Wave 3  — 미세 증가
 	{ hp: 1.2, speed: 1.0 }, // Wave 4  — 약간 도전
-	{ hp: 1.5, speed: 1.05 }, // Wave 5  — 보스, 본격 상승
-	{ hp: 1.8, speed: 1.05 }, // Wave 6
-	{ hp: 2.2, speed: 1.1 }, // Wave 7
-	{ hp: 2.6, speed: 1.1 }, // Wave 8
-	{ hp: 3.0, speed: 1.15 }, // Wave 9  — 최종 러시
-	{ hp: 3.5, speed: 1.15 }, // Wave 10 — 최종보스
+	{ hp: 1.3, speed: 1.0 }, // Wave 5  — 본격 상승
+	{ hp: 1.4, speed: 1.05 }, // Wave 6
+	{ hp: 1.6, speed: 1.05 }, // Wave 7
+	{ hp: 1.8, speed: 1.1 }, // Wave 8
+	{ hp: 2.0, speed: 1.1 }, // Wave 9  — 최종 러시
+	{ hp: 2.2, speed: 1.1 }, // Wave 10 — 첫 보스
 ];
 
 /**
@@ -45,7 +45,7 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
 	const over = slot - WAVE_SCALING.length;
 	const lastEntry = WAVE_SCALING[WAVE_SCALING.length - 1];
 	return {
-		hp: lastEntry.hp + over * 0.7,
+		hp: lastEntry.hp + over * 0.35,
 		speed: Math.min(lastEntry.speed + over * 0.02, 1.6),
 	};
 }

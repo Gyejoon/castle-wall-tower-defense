@@ -238,13 +238,13 @@ describe('getWaveScaling — endless wave formula', () => {
 		}
 	});
 
-	it('slot 10 은 정확히 테이블 마지막 값 (hp 3.5, speed 1.15)', () => {
-		expect(getWaveScaling(10)).toEqual({ hp: 3.5, speed: 1.15 });
+	it('slot 10 은 정확히 테이블 마지막 값 (hp 2.2, speed 1.1)', () => {
+		expect(getWaveScaling(10)).toEqual({ hp: 2.2, speed: 1.1 });
 	});
 
-	it('slot 11+ 은 선형 escalation — hp +0.7/slot', () => {
-		expect(getWaveScaling(11).hp).toBeCloseTo(4.2, 5);
-		expect(getWaveScaling(20).hp).toBeCloseTo(10.5, 5);
+	it('slot 11+ 은 선형 escalation — hp +0.35/slot', () => {
+		expect(getWaveScaling(11).hp).toBeCloseTo(2.55, 5);
+		expect(getWaveScaling(20).hp).toBeCloseTo(5.7, 5);
 	});
 
 	it('speed 는 1.6 으로 캡', () => {

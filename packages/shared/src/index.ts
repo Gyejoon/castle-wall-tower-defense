@@ -160,6 +160,8 @@ export {
 	drawRandomSummon,
 	PHASE_A_SUMMON_COST,
 } from './data/summonPool';
+export type { UpgradeCardDef } from './data/upgradeCards';
+export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
 export {
 	getStageLockStatus,
 	isStageUnlocked,

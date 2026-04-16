@@ -999,6 +999,23 @@ export class TowerSystem {
 			instance.barrelSprite.setPosition(worldPos.x, worldPos.y);
 		}
 		this.renderTowerBase(instance.base, worldPos, instance.def);
+
+		// Recreate idle tween at new position (old tween remembers old y)
+		instance.idleTween?.stop();
+		instance.idleTween?.remove();
+		const baseScaleX = instance.sprite.scaleX;
+		const baseScaleY = instance.sprite.scaleY;
+		instance.idleTween = this.scene.tweens.add({
+			targets: instance.sprite,
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
+			y: { from: worldPos.y, to: worldPos.y - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+		});
+
 		this.pathfinding.invalidateCache();
 		return true;
 	}

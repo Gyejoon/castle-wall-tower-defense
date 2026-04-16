@@ -1,5 +1,13 @@
+export type UpgradeId =
+	| 'dmg_up'
+	| 'spd_up'
+	| 'range_up'
+	| 'kill_energy'
+	| 'energy_regen'
+	| 'summon_discount';
+
 export interface UpgradeCardDef {
-	readonly id: string;
+	readonly id: UpgradeId;
 	readonly name: string;
 	readonly description: string;
 	readonly icon: string;

@@ -26,7 +26,8 @@ export function PhaseAHud() {
 	);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
-	const canAfford = energy >= PHASE_A_SUMMON_COST;
+	const [summonCost, setSummonCost] = useState(PHASE_A_SUMMON_COST);
+	const canAfford = energy >= summonCost;
 
 	useEffect(() => {
 		firstPickRef.current = firstPick;
@@ -94,6 +95,15 @@ export function PhaseAHud() {
 			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
 		};
 
+		const handleUpgradeApplied = (data: {
+			upgradeId: string;
+			totalStacks: number;
+		}) => {
+			if (data.upgradeId === 'summon_discount') {
+				setSummonCost(Math.max(5, PHASE_A_SUMMON_COST - data.totalStacks * 3));
+			}
+		};
+
 		EventBus.on('tower-selected', handleTowerSelected);
 		EventBus.on('tower-deselected', handleTowerDeselected);
 		EventBus.on('towers-merged', handleMerged);
@@ -101,6 +111,7 @@ export function PhaseAHud() {
 		EventBus.on('phase-a-summon-ready', handleSummonReady);
 		EventBus.on('tower-summoned', handleTowerSummoned);
 		EventBus.on('summon-failed', handleSummonFailed);
+		EventBus.on('upgrade-applied', handleUpgradeApplied);
 
 		return () => {
 			EventBus.off('tower-selected', handleTowerSelected);
@@ -110,6 +121,7 @@ export function PhaseAHud() {
 			EventBus.off('phase-a-summon-ready', handleSummonReady);
 			EventBus.off('tower-summoned', handleTowerSummoned);
 			EventBus.off('summon-failed', handleSummonFailed);
+			EventBus.off('upgrade-applied', handleUpgradeApplied);
 		};
 	}, [pushToast]);
 
@@ -239,7 +251,7 @@ export function PhaseAHud() {
 							canAfford ? 'text-gold' : 'text-danger',
 						)}
 					>
-						{PHASE_A_SUMMON_COST}
+						{summonCost}
 					</span>
 				</span>
 			</button>

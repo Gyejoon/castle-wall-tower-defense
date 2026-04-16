@@ -6,6 +6,7 @@ import type {
 	Position,
 	TowerDef,
 	TowerGrade,
+	UpgradeId,
 } from '@gld/shared';
 import {
 	ALL_TOWERS,
@@ -62,7 +63,7 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private worldGimmick: WorldGimmick | null = null;
-	private modifierFn: ((upgradeId: string) => number) | null = null;
+	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -110,7 +111,7 @@ export class TowerSystem {
 		this.worldGimmick = gimmick;
 	}
 
-	setModifierFn(fn: ((upgradeId: string) => number) | null): void {
+	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
 		this.modifierFn = fn;
 	}
 

@@ -142,13 +142,7 @@ export function GamePage() {
 		[selectedStageId],
 	);
 
-	const currentStageDef = useMemo(() => {
-		try {
-			return getStageById(selectedStageId);
-		} catch {
-			return null;
-		}
-	}, [selectedStageId]);
+	const currentStageDef = selectedStage;
 
 	const handleNextStage = useCallback(() => {
 		if (!nextStageId) return;

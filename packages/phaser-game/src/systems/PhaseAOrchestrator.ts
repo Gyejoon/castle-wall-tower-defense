@@ -3,6 +3,7 @@ import {
 	PHASE_A_SUMMON_COST,
 	UPGRADE_CARDS,
 	type UpgradeCardDef,
+	type UpgradeId,
 } from '@gld/shared';
 
 const UPGRADE_CARD_MAP: ReadonlyMap<string, UpgradeCardDef> = new Map(
@@ -78,9 +79,11 @@ export class PhaseAOrchestrator {
 			getTowerAt: (col, row) => deps.towerSystem.getTowerLocator(col, row),
 		};
 
-		// Idempotent registration: off-then-on so a stray listener from a
-		// previous instance (HMR, scene re-mount that didn't fire shutdown)
-		// gets replaced rather than duplicated.
+		// off() removes THIS instance's ref (no-op on first create).
+		// Previous instance's listeners are separate arrow refs; they are
+		// cleaned up via destroy() bound to the scene 'shutdown' event.
+		// If shutdown was skipped (HMR edge case), stale handlers are
+		// guarded by isSceneAlive() in Game.ts.
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.on('request-summon-tower', this.onSummonRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
@@ -133,7 +136,7 @@ export class PhaseAOrchestrator {
 	 * For 'multiply' type (dmg_up, spd_up): (1 + baseValue)^stacks
 	 * For 'add' type (range_up): stacks * baseValue
 	 */
-	getModifier(upgradeId: string): number {
+	getModifier(upgradeId: UpgradeId): number {
 		const stacks = this.activeUpgrades.get(upgradeId) ?? 0;
 		const card = UPGRADE_CARD_MAP.get(upgradeId);
 		const isAdditive = card ? card.stackType === 'add' : false;

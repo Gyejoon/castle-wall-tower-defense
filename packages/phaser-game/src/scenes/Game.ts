@@ -130,6 +130,7 @@ export class GameScene extends Phaser.Scene {
 	private goldEarned = 0;
 	private isPhaseAMap = false;
 	private currentWaveSlot = 1;
+	private lastTimerTickSec = -1;
 	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
 	private currentStageId!: string;
@@ -158,7 +159,7 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
-	private speedMultiplier: 1 | 2 = 1;
+	private speedMultiplier: 1 | 2 | 3 = 1;
 	private scaledGameTime = 0;
 	private onWaveCompleted!: (data: {
 		wave: number;
@@ -167,7 +168,7 @@ export class GameScene extends Phaser.Scene {
 		delaySec: number;
 		cleared: boolean;
 	}) => void;
-	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
+	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -1043,6 +1044,17 @@ export class GameScene extends Phaser.Scene {
 				}
 			},
 		);
+
+		// Wave timer tick — throttled to 1 emit/sec to avoid event spam
+		const remainingSec = this.playerWaves.getWaveRemainingSec();
+		if (remainingSec >= 0 && remainingSec !== this.lastTimerTickSec) {
+			this.lastTimerTickSec = remainingSec;
+			EventBus.emit('wave-timer-tick', {
+				remainingSec,
+				wave: this.currentWaveSlot,
+				totalWaves: this.playerWaves.getMaxWaves(),
+			});
+		}
 
 		this.damageNumbers.update(_time, delta);
 

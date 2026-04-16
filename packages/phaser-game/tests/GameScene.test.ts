@@ -181,6 +181,8 @@ describe('GameScene', () => {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'ended'),
 			getElapsedMs: vi.fn(() => 0),
+			getWaveRemainingSec: vi.fn(() => -1),
+			getMaxWaves: vi.fn(() => 10),
 		};
 		scene.playerTowers = {
 			update: vi.fn(() => []),
@@ -240,6 +242,8 @@ describe('GameScene', () => {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'running'),
 			getElapsedMs: vi.fn(() => 0),
+			getWaveRemainingSec: vi.fn(() => -1),
+			getMaxWaves: vi.fn(() => 10),
 		};
 		scene.playerTowers = {
 			update: vi.fn(() => []),
@@ -294,6 +298,8 @@ describe('GameScene', () => {
 			update: vi.fn(),
 			getPhase: vi.fn(() => 'running'),
 			getElapsedMs: vi.fn(() => 0),
+			getWaveRemainingSec: vi.fn(() => -1),
+			getMaxWaves: vi.fn(() => 10),
 		};
 		scene.playerTowers = {
 			update: vi.fn(() => [

@@ -100,7 +100,8 @@ export interface GameEventMap {
 	'request-pause': undefined;
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
-	'request-set-speed': { multiplier: 1 | 2 };
+	'request-set-speed': { multiplier: 1 | 2 | 3 };
+	'wave-timer-tick': { remainingSec: number; wave: number; totalWaves: number };
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
 	// Stage select

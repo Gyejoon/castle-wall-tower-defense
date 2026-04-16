@@ -46,7 +46,8 @@ export function GamePage() {
 	const isPhaseAMode = selectedStage.mapId === PHASE_A_MAP_ID;
 	const starKey =
 		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
-	const speed2xUnlocked = (highestWave[starKey] ?? 0) >= totalStageWaves;
+	const speed2xUnlocked =
+		isPhaseAMode || (highestWave[starKey] ?? 0) >= totalStageWaves;
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
@@ -179,7 +180,10 @@ export function GamePage() {
 					gameSpeed={gameSpeed}
 					speed2xUnlocked={speed2xUnlocked}
 					runStatus={runStatus}
-					onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
+					onToggleSpeed={() => {
+						const next = gameSpeed === 1 ? 2 : gameSpeed === 2 ? 3 : 1;
+						setGameSpeed(next as 1 | 2 | 3);
+					}}
 					onExitRequest={handleExitRequest}
 				/>
 

@@ -133,13 +133,11 @@ export function TopHud({
 							className="font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
 							style={{
 								background:
-									gameSpeed === 2
-										? 'rgba(200,112,32,0.3)'
-										: 'rgba(26,18,8,0.7)',
+									gameSpeed >= 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)',
 							}}
 							onClick={onToggleSpeed}
 						>
-							{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+							{gameSpeed === 3 ? '3x ▶▶▶' : gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
 						</button>
 					)}
 					{runStatus === 'running' && onExitRequest && (

@@ -151,6 +151,18 @@ export class WaveSystem {
 		}
 	}
 
+	getMaxWaves(): number {
+		return this.maxWaves;
+	}
+
+	getWaveRemainingSec(): number {
+		if (this.phase !== 'combat' && this.phase !== 'boss') return -1;
+		const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+		if (isLastWave) return -1;
+		const elapsed = this.elapsedMs - this.waveStartMs;
+		return Math.max(0, Math.ceil((MAX_WAVE_DURATION_MS - elapsed) / 1000));
+	}
+
 	getPhase(): WavePhase {
 		return this.phase;
 	}

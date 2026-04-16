@@ -316,6 +316,7 @@ export class GameScene extends Phaser.Scene {
 		// listens for request-summon-tower / request-merge-towers from the
 		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
 		if (isPhaseAMap) {
+			this.energySystem.disableCap();
 			this.phaseAOrchestrator = new PhaseAOrchestrator({
 				towerSystem: this.playerTowers,
 				initialPool: PHASE_A_INITIAL_POOL,

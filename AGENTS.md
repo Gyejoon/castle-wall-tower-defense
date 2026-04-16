@@ -44,7 +44,9 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
 
-**구현 완료:** 8×18 세로 그리드, 타워 18종(5티어) 배치·판매(50% 에너지 환급), 적 9종(W1: scout_drone/battle_robot/heavy_walker/stealth_drone/dragon(비행) · W2: flame_imp/lava_golem · W3: arcane_mage/mana_shield) + 보스 3종(orc_warlord/forge_master/corrupted_archmage), A* 경로탐색, 에너지 기반 덱 경제(시작 40, 웨이브 클리어 +5, 킬 보상 없음), 이벤트 기반 10웨이브 진행(WaveSlotKind: normal | boss), 3월드×8스테이지(24스테이지), 웨이브 스케일링(HP 1.0x~3.5x), 월드별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌 비활성화(유닛 서로 통과), 보스 리크(boss-kind 웨이브에서 경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 2배속 토글(첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적, 메타 성장(metaStore 영속화/타워 강화·등급별 승급 — normal=20/rare=30/unique=50/epic=50/GRADE_BONUS 0/+80%/+350%/+1300%), 가챠 시스템.
+**구현 완료 (레거시 맵):** 8×18 세로 그리드, 타워 18종(5티어) 배치·판매(50% 에너지 환급), 적 9종(W1: scout_drone/battle_robot/heavy_walker/stealth_drone/dragon(비행) · W2: flame_imp/lava_golem · W3: arcane_mage/mana_shield) + 보스 3종(orc_warlord/forge_master/corrupted_archmage), A* 경로탐색, 에너지 기반 덱 경제(시작 40, 웨이브 클리어 +5, 킬 보상 없음 — 레거시 맵 전용. Phase A는 킬 에너지 경제), 이벤트 기반 10웨이브 진행(WaveSlotKind: normal | boss), 3월드×8스테이지(24스테이지), 웨이브 스케일링(HP 1.0x~3.5x), 월드별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌 비활성화(유닛 서로 통과), 보스 리크(boss-kind 웨이브에서 경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 배속 토글(1x/2x/3x, 첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적, 메타 성장(metaStore 영속화/타워 강화·등급별 승급 — normal=20/rare=30/unique=50/epic=50/GRADE_BONUS 0/+80%/+350%/+1300%), 가챠 시스템.
+
+**구현 완료 (Phase A):** Phase A 랜덤 소환+합성 코어 루프(SummonPool/RandomSummon/Merge/PhaseAOrchestrator), phase_a_long 맵(8×24 U-turn), 50 wave endless, PhaseAHud, 로비 [LAB] 버튼, 킬 에너지 경제, 3배속, 로그라이트 강화 선택(10 웨이브마다 3장 중 1장).
 
 **아직 구현되지 않은 것:** 속성 시스템 전투 적용, 미션·튜토리얼. 로비의 프로필 데이터는 현재 목(mock) 데이터다.
 

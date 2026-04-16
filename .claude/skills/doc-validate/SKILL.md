@@ -118,7 +118,7 @@ game-spec 원본을 읽고, 소비자 파일의 참조가 정확한지 대조한
 | 소스 (game-spec) | 소비자 위치 | 검증 내용 |
 |---|---|---|
 | 01-GDD §4 (Core Systems) | plan-review CEO 검증 "시스템 범위" | 시스템 목록·수 — GDD의 개념 시스템과 일치하는가 |
-| 01-GDD §5 (Content Plan) | plan-review "콘텐츠 범위", README, AGENTS | 18타워×5티어, 5적, 3맵, 10웨이브 |
+| 01-GDD §5 (Content Plan) | plan-review "콘텐츠 범위", README, AGENTS | 18타워×5티어, 적 9종+보스 3종, 3월드×8스테이지=24스테이지, 10웨이브 |
 | 01-GDD §6 (Balance) | plan-review, README | WAVE_SCALING, difficultyHpMult |
 | 01-GDD §8 (UI/UX) | plan-review "UI 구조", "디자인 토큰" | UI 요소 목록, 색상 토큰, 터치 기준 |
 | 01-GDD §10 (Edge Point) | plan-review "게임 정체성" | 4항목 체크리스트 |

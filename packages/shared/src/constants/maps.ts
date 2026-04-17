@@ -598,6 +598,119 @@ export const W3_TOWER_B_MAP: MapLayout = {
 	},
 };
 
+// === Phase A Long Map (8×24, U-turn double-back, random-summon + merge) ===
+//
+// The path goes DOWN the left half (cols 0-3) zigzagging, crosses the
+// BOTTOM row, then comes BACK UP the right half (cols 4-7). Every row is
+// visited TWICE (once each direction) so towers at ANY height remain useful
+// for the entire run. A tower placed at col 3-4 covers both passes.
+//
+//   0 1 2 3 | 4 5 6 7
+//  0 →→→→ SPAWN  ←←←← EXIT    (row 0: down sweep 1 + up sweep 8)
+//  1       ↓    ↑               (gap: towers cover both row 0 + row 3)
+//  2       ↓    ↑
+//  3 ←←←←       →→→→           (row 3: down sweep 2 + up sweep 7)
+//  4 ↓              ↑
+//  5 ↓              ↑
+//  6 →→→→       ←←←←           (row 6: down sweep 3 + up sweep 6)
+//  ...              ...
+// 21 ←←←←       →→→→           (row 21: down sweep 8 + up sweep 1)
+// 22 ↓              ↑
+// 23 →→→→→→→→→→→→→→             (turnaround across full bottom)
+//
+// Path: 46 (down) + 7 (turnaround) + 46 (up) = 99 cells
+// Buildable: 192 - 99 - 6 blocked ≈ 87 cells
+// Tower range 2+ tiles → col 3/4 towers cover BOTH passes simultaneously
+
+const PHASE_A_SWEEP_ROWS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
+
+function generateHalfZigzag(
+	colStart: number,
+	colEnd: number,
+	sweepRows: readonly number[],
+	direction: 'down' | 'up',
+): Position[] {
+	const path: Position[] = [];
+	const rows = direction === 'down' ? [...sweepRows] : [...sweepRows].reverse();
+
+	for (let i = 0; i < rows.length; i++) {
+		const row = rows[i];
+		const goRight = i % 2 === 0;
+		if (goRight) {
+			for (let x = colStart; x <= colEnd; x++) path.push({ x, y: row });
+		} else {
+			for (let x = colEnd; x >= colStart; x--) path.push({ x, y: row });
+		}
+		if (i < rows.length - 1) {
+			const nextRow = rows[i + 1];
+			const transCol = goRight ? colEnd : colStart;
+			if (direction === 'down') {
+				for (let y = row + 1; y < nextRow; y++) path.push({ x: transCol, y });
+			} else {
+				for (let y = row - 1; y > nextRow; y--) path.push({ x: transCol, y });
+			}
+		}
+	}
+	return path;
+}
+
+// Down pass: cols 0-3, rows top→bottom
+const PHASE_A_DOWN = generateHalfZigzag(0, 3, PHASE_A_SWEEP_ROWS, 'down');
+// Turnaround: bottom row connecting left half → right half
+const PHASE_A_TURN: Position[] = [
+	{ x: 0, y: 22 },
+	{ x: 0, y: 23 },
+	{ x: 1, y: 23 },
+	{ x: 2, y: 23 },
+	{ x: 3, y: 23 },
+	{ x: 4, y: 23 },
+	{ x: 4, y: 22 },
+];
+// Up pass: cols 4-7, rows bottom→top
+const PHASE_A_UP = generateHalfZigzag(4, 7, PHASE_A_SWEEP_ROWS, 'up');
+
+const PHASE_A_LONG_PATH: Position[] = [
+	...PHASE_A_DOWN,
+	...PHASE_A_TURN,
+	...PHASE_A_UP,
+];
+
+const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
+	{ x: 0, y: 0 },
+	{ x: 4, y: 0 },
+	{ x: 0, y: 23 },
+	{ x: 4, y: 23 },
+	{ x: 7, y: 0 },
+	{ x: 7, y: 23 },
+];
+
+const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
+	width: 8,
+	height: 24,
+	path: PHASE_A_LONG_PATH,
+	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+});
+
+export const PHASE_A_MAP_ID = 'phase_a_long' as const;
+
+export const PHASE_A_LONG_MAP: MapLayout = {
+	id: PHASE_A_MAP_ID,
+	name: 'Phase A — 왕복 회랑',
+	width: 8,
+	height: 24,
+	tileSize: 32,
+	path: PHASE_A_LONG_PATH,
+	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
+	spawnPoint: { x: 0, y: 0 },
+	exitPoint: { x: 4, y: 0 },
+	tilemapKey: 'tilemap-phase-a-long',
+	tilesetKey: 'tileset',
+	rewardMultiplier: 1,
+	difficultyHpMult: 1,
+	recommendedPower: 55,
+};
+
 export const MAP_REGISTRY: Record<string, MapLayout> = {
 	// W1
 	w1_forest_a: FOREST_GATE_MAP,
@@ -608,6 +721,8 @@ export const MAP_REGISTRY: Record<string, MapLayout> = {
 	// W3
 	w3_tower_a: STORM_CITADEL_MAP,
 	w3_tower_b: W3_TOWER_B_MAP,
+	// Phase A pivot — random-summon + merge core loop
+	phase_a_long: PHASE_A_LONG_MAP,
 	// Legacy aliases
 	forest_gate: FOREST_GATE_MAP,
 	lava_fortress: LAVA_FORTRESS_MAP,

@@ -20,13 +20,103 @@ export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 1.0, speed: 1.0 }, // Wave 2  — 여전히 쉬움
 	{ hp: 1.1, speed: 1.0 }, // Wave 3  — 미세 증가
 	{ hp: 1.2, speed: 1.0 }, // Wave 4  — 약간 도전
-	{ hp: 1.5, speed: 1.05 }, // Wave 5  — 보스, 본격 상승
-	{ hp: 1.8, speed: 1.05 }, // Wave 6
-	{ hp: 2.2, speed: 1.1 }, // Wave 7
-	{ hp: 2.6, speed: 1.1 }, // Wave 8
-	{ hp: 3.0, speed: 1.15 }, // Wave 9  — 최종 러시
-	{ hp: 3.5, speed: 1.15 }, // Wave 10 — 최종보스
+	{ hp: 1.3, speed: 1.0 }, // Wave 5  — 본격 상승
+	{ hp: 1.4, speed: 1.05 }, // Wave 6
+	{ hp: 1.6, speed: 1.05 }, // Wave 7
+	{ hp: 1.8, speed: 1.1 }, // Wave 8
+	{ hp: 2.0, speed: 1.1 }, // Wave 9  — 최종 러시
+	{ hp: 2.2, speed: 1.1 }, // Wave 10 — 첫 보스
 ];
+
+/**
+ * Wave scaling for any slot (1..infinity). Uses WAVE_SCALING table for
+ * slots 1-10 and a linear escalation formula beyond, so Phase A's endless
+ * wave generator keeps ramping difficulty instead of silently plateauing
+ * when the table runs out.
+ *
+ * Formula beyond slot 10: hp grows +0.7 per slot (capped soft), speed
+ * grows +0.02 per slot capped at 1.6.
+ */
+export function getWaveScaling(slot: number): { hp: number; speed: number } {
+	if (slot <= 0) return { hp: 1, speed: 1 };
+	if (slot <= WAVE_SCALING.length) {
+		return WAVE_SCALING[slot - 1];
+	}
+	const over = slot - WAVE_SCALING.length;
+	const lastEntry = WAVE_SCALING[WAVE_SCALING.length - 1];
+	return {
+		hp: lastEntry.hp + over * 0.35,
+		speed: Math.min(lastEntry.speed + over * 0.02, 1.6),
+	};
+}
+
+/**
+ * Phase A endless wave generator. Boss every 10 waves (alternating
+ * orc_warlord and forge_master), unit count grows linearly with slot
+ * index, and the composition progressively introduces tougher units
+ * (battle_robot @ slot 4, heavy_walker @ slot 9, stealth_drone @ slot 14).
+ *
+ * Called once at module load with count=50, which combined with
+ * getWaveScaling's linear HP ramp means players naturally die somewhere
+ * in wave 15~35 with casual play and wave 30~45 with optimized merges.
+ * A 50-wave cap means "practically infinite" for a single session
+ * without introducing runtime wave mutation in WaveSystem.
+ */
+export function generatePhaseAWaves(count: number): WaveDef[] {
+	const UNITS_PER_WAVE = 30;
+	const waves: WaveDef[] = [];
+	for (let i = 1; i <= count; i++) {
+		const isBoss = i % 10 === 0;
+		if (isBoss) {
+			const bossId =
+				Math.floor(i / 10) % 2 === 1 ? 'orc_warlord' : 'forge_master';
+			waves.push({
+				slotIndex: i,
+				kind: 'boss',
+				delayAfterClearSec: 5,
+				groups: [
+					{ unitId: bossId, count: 1 },
+					{ unitId: 'battle_robot', count: 4 },
+				],
+			});
+			continue;
+		}
+		// 30 units total per wave, composition shifts with slot index
+		const groups: WaveGroup[] = [];
+		if (i < 5) {
+			groups.push({ unitId: 'scout_drone', count: UNITS_PER_WAVE });
+		} else if (i < 10) {
+			const robots = Math.min(Math.floor(i * 1.5), UNITS_PER_WAVE - 5);
+			groups.push({ unitId: 'scout_drone', count: UNITS_PER_WAVE - robots });
+			groups.push({ unitId: 'battle_robot', count: robots });
+		} else if (i < 20) {
+			const heavy = Math.min(Math.floor(i / 3), 10);
+			const robots = Math.floor((UNITS_PER_WAVE - heavy) / 2);
+			groups.push({
+				unitId: 'scout_drone',
+				count: UNITS_PER_WAVE - robots - heavy,
+			});
+			groups.push({ unitId: 'battle_robot', count: robots });
+			groups.push({ unitId: 'heavy_walker', count: heavy });
+		} else {
+			const heavy = Math.min(Math.floor(i / 3), 12);
+			const stealth = Math.min(Math.floor(i / 5), 8);
+			const robots = Math.floor((UNITS_PER_WAVE - heavy - stealth) / 2);
+			const scouts = UNITS_PER_WAVE - robots - heavy - stealth;
+			groups.push({ unitId: 'scout_drone', count: scouts });
+			groups.push({ unitId: 'battle_robot', count: robots });
+			groups.push({ unitId: 'heavy_walker', count: heavy });
+			groups.push({ unitId: 'stealth_drone', count: stealth });
+		}
+		waves.push({
+			slotIndex: i,
+			kind: 'normal',
+			delayAfterClearSec: 3,
+			groups,
+		});
+	}
+	return waves;
+}
 
 // ── Stage-keyed waves (new) ──────────────────────────────────
 
@@ -1728,6 +1818,16 @@ export const STAGE_WAVES: Record<string, WaveDef[]> = {
 			groups: [{ unitId: 'corrupted_archmage', count: 1 }],
 		},
 	],
+
+	// === Phase A pivot — random-summon + merge core loop ===
+	// Endless-style wave list (50 waves) generated at module load. Boss every 5
+	// waves (alternating orc_warlord / forge_master), unit count grows linearly,
+	// composition adds tougher units progressively. Combined with getWaveScaling
+	// beyond slot 10 this ramps past wave 15 fast enough that players naturally
+	// die before hitting slot 50 — "practically infinite" for a session without
+	// teaching WaveSystem to mutate waves at runtime. User feedback 2026-04-14:
+	// "한 판 더 하고 싶다는 생각이 안 드네, 웨이브가 무한이어야 할 거 같음".
+	phase_a_s1: generatePhaseAWaves(50),
 };
 
 // Legacy aliases + new map aliases
@@ -1751,6 +1851,8 @@ export const WAVE_REGISTRY: Record<string, WaveDef[]> = {
 	w2_forge_b: getRequiredStageWaves('w2_s5'),
 	w3_tower_a: getRequiredStageWaves('w3_s1'),
 	w3_tower_b: getRequiredStageWaves('w3_s5'),
+	// Phase A pivot
+	phase_a_long: getRequiredStageWaves('phase_a_s1'),
 };
 
 export function getWavesForMap(mapId: string): WaveDef[] {

@@ -1,9 +1,9 @@
 import {
 	FINAL_BOSS_HP_MULTIPLIER,
+	getWaveScaling,
 	INITIAL_PREP_MS,
 	MAX_WAVE_DURATION_MS,
 	UNITS,
-	WAVE_SCALING,
 	type WaveDef,
 	type WavePhase,
 } from '@gld/shared';
@@ -151,6 +151,18 @@ export class WaveSystem {
 		}
 	}
 
+	getMaxWaves(): number {
+		return this.maxWaves;
+	}
+
+	getWaveRemainingSec(): number {
+		if (this.phase !== 'combat' && this.phase !== 'boss') return -1;
+		const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+		if (isLastWave) return -1;
+		const elapsed = this.elapsedMs - this.waveStartMs;
+		return Math.max(0, Math.ceil((MAX_WAVE_DURATION_MS - elapsed) / 1000));
+	}
+
 	getPhase(): WavePhase {
 		return this.phase;
 	}
@@ -217,14 +229,16 @@ export class WaveSystem {
 			});
 		}
 
-		// Spawn units
-		const waveScale = WAVE_SCALING[wave.slotIndex - 1];
-		const waveHpMult = waveScale?.hp ?? 1;
-		const waveSpeedMult = waveScale?.speed ?? 1;
+		// Spawn units — use getWaveScaling so Phase A's endless waves keep
+		// ramping HP/speed past slot 10 instead of silently flat-lining on
+		// the 10-entry WAVE_SCALING table.
+		const waveScale = getWaveScaling(wave.slotIndex);
+		const waveHpMult = waveScale.hp;
+		const waveSpeedMult = waveScale.speed;
 		const isLastWaveSlot = this.currentWaveIndex >= this.maxWaves - 1;
 		for (const group of wave.groups) {
 			const unitDef = UNITS.find((u) => u.id === group.unitId);
-			const isBoss = wave.kind === 'boss' || !!unitDef?.bossBehaviorId;
+			const isBoss = !!unitDef?.bossBehaviorId;
 			const hpMultiplier =
 				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
 				this.difficultyHpMult;

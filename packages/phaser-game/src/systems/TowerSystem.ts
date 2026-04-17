@@ -5,6 +5,8 @@ import type {
 	PlacementFailureReason,
 	Position,
 	TowerDef,
+	TowerGrade,
+	UpgradeId,
 } from '@gld/shared';
 import {
 	ALL_TOWERS,
@@ -18,13 +20,14 @@ import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
+import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
 import type { WorldGimmick } from './world-gimmicks/types';
 
 export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
-	grade: 'normal' | 'rare' | 'unique' | 'epic';
+	grade: TowerGrade;
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
@@ -41,7 +44,7 @@ export type TowerPlacementResult =
 
 export function resolveTowerTextureKey(
 	defId: string,
-	grade: 'normal' | 'rare' | 'unique' | 'epic',
+	grade: TowerGrade,
 ): string {
 	if (grade === 'normal') return `tower-${defId}`;
 	return `tower-${defId}-${grade}`;
@@ -60,6 +63,7 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private worldGimmick: WorldGimmick | null = null;
+	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -107,6 +111,10 @@ export class TowerSystem {
 		this.worldGimmick = gimmick;
 	}
 
+	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
+		this.modifierFn = fn;
+	}
+
 	getAllTowers(): TowerInstance[] {
 		return Array.from(this.towers.values());
 	}
@@ -129,6 +137,7 @@ export class TowerSystem {
 		gridX: number,
 		gridY: number,
 		towerDefId: string,
+		options?: { gradeOverride?: TowerGrade; levelOverride?: number },
 	): TowerPlacementResult {
 		const def = ALL_TOWERS.find((t) => t.id === towerDefId);
 		if (!def) return { success: false, reason: 'out_of_bounds' };
@@ -172,8 +181,8 @@ export class TowerSystem {
 		const worldPos = this.gridManager.gridToWorld(gridX, gridY);
 
 		const owned = this.collection.find((t) => t.defId === towerDefId);
-		const towerLevel = owned?.level ?? 1;
-		const towerGrade = owned?.grade ?? 'normal';
+		const towerLevel = options?.levelOverride ?? owned?.level ?? 1;
+		const towerGrade = options?.gradeOverride ?? owned?.grade ?? 'normal';
 
 		const towerData: PlacedTower = {
 			instanceId,
@@ -371,14 +380,16 @@ export class TowerSystem {
 			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
 				continue;
 
-			const attackInterval = 1000 / def.stats.attackSpeed;
+			const spdMod = this.modifierFn ? this.modifierFn('spd_up') : 1;
+			const attackInterval = 1000 / (def.stats.attackSpeed * spdMod);
 			if (time - tower.lastAttackTime < attackInterval) continue;
 
 			const towerWorld = this.gridManager.gridToWorld(
 				data.position.x,
 				data.position.y,
 			);
-			const rangeSq = def.stats.range ** 2;
+			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
+			const rangeSq = (def.stats.range + rangeBonus) ** 2;
 
 			let closestUnit: (typeof unitPositions)[0] | null = null;
 			let closestDistSq = Infinity;
@@ -401,7 +412,10 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
-				let baseDamage = Math.round(tower.effectiveDamage * elementMult);
+				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+				let baseDamage = Math.round(
+					tower.effectiveDamage * elementMult * dmgMod,
+				);
 				if (this.worldGimmick) {
 					const bonus = this.worldGimmick.getDamageBonus(tower);
 					if (bonus > 0) {
@@ -505,7 +519,7 @@ export class TowerSystem {
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
 							let splashDamage = Math.round(
-								tower.effectiveDamage * splashElementMult * 0.5,
+								tower.effectiveDamage * splashElementMult * 0.5 * dmgMod,
 							);
 							if (this.worldGimmick) {
 								const bonus = this.worldGimmick.getDamageBonus(tower);
@@ -672,7 +686,8 @@ export class TowerSystem {
 			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
-			const rangeSq = def.stats.range ** 2;
+			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
+			const rangeSq = (def.stats.range + rangeBonus) ** 2;
 
 			if (this.isStunSpecial(special)) {
 				if (config.aoe) {
@@ -862,7 +877,7 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
-		towerGrade: 'normal' | 'rare' | 'unique' | 'epic',
+		towerGrade: TowerGrade,
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,
@@ -967,18 +982,176 @@ export class TowerSystem {
 		return Math.floor(cost * 0.5);
 	}
 
+	moveTower(fromX: number, fromY: number, toX: number, toY: number): boolean {
+		if (!this.gridManager.canPlaceTower(toX, toY)) return false;
+		const entry = this.findTowerEntry(fromX, fromY);
+		if (!entry) return false;
+		const { instance } = entry;
+
+		this.gridManager.removeTower(fromX, fromY);
+		this.gridManager.placeTower(toX, toY, instance.def.id);
+
+		instance.data.position = { x: toX, y: toY };
+		const worldPos = this.gridManager.gridToWorld(toX, toY);
+		instance.sprite.setPosition(worldPos.x, worldPos.y);
+		instance.base.setPosition(worldPos.x, worldPos.y);
+		if (instance.barrelSprite) {
+			instance.barrelSprite.setPosition(worldPos.x, worldPos.y);
+		}
+		this.renderTowerBase(instance.base, worldPos, instance.def);
+
+		// Recreate idle tween at new position (old tween remembers old y)
+		instance.idleTween?.stop();
+		instance.idleTween?.remove();
+		const baseScaleX = instance.sprite.scaleX;
+		const baseScaleY = instance.sprite.scaleY;
+		instance.idleTween = this.scene.tweens.add({
+			targets: instance.sprite,
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
+			y: { from: worldPos.y, to: worldPos.y - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+		});
+
+		this.pathfinding.invalidateCache();
+		return true;
+	}
+
 	getTowerAt(
 		gridX: number,
 		gridY: number,
-	): { data: PlacedTower; def: TowerDef } | null {
+	): { data: PlacedTower; def: TowerDef; grade: TowerGrade } | null {
 		const entry = this.findTowerEntry(gridX, gridY);
 		return entry
-			? { data: entry.instance.data, def: entry.instance.def }
+			? {
+					data: entry.instance.data,
+					def: entry.instance.def,
+					grade: entry.instance.grade,
+				}
 			: null;
 	}
 
 	getTowers(): PlacedTower[] {
 		return Array.from(this.towers.values()).map((t) => t.data);
+	}
+
+	/**
+	 * Returns a merge-friendly locator for the tower at (col,row), or null if
+	 * the tile is empty. Return type is MergeSystem.TowerLocator so the Phase
+	 * A orchestrator can pass this directly into MergeContext and any rename
+	 * of TowerLocator propagates here without a structural drift.
+	 */
+	getTowerLocator(col: number, row: number): TowerLocator | null {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return null;
+		return {
+			col,
+			row,
+			towerId: entry.instance.def.id,
+			grade: entry.instance.grade,
+		};
+	}
+
+	/**
+	 * Atomic Phase A merge: tear down the "removed" tower and upgrade the "kept"
+	 * tower's grade in place. Caller is responsible for validating the merge via
+	 * MergeSystem first; this method only executes the result. Returns false if
+	 * either tile is empty or the two coords are identical.
+	 */
+	applyMerge(
+		removedCol: number,
+		removedRow: number,
+		keptCol: number,
+		keptRow: number,
+		newGrade: TowerGrade,
+	): boolean {
+		if (removedCol === keptCol && removedRow === keptRow) return false;
+		const removed = this.findTowerEntry(removedCol, removedRow);
+		const kept = this.findTowerEntry(keptCol, keptRow);
+		if (!removed || !kept) return false;
+
+		removed.instance.idleTween?.stop();
+		removed.instance.idleTween?.remove();
+		removed.instance.barrelSprite?.destroy();
+		removed.instance.base.destroy();
+		removed.instance.sprite.destroy();
+		this.towers.delete(removed.key);
+		this.gridManager.removeTower(removedCol, removedRow);
+
+		kept.instance.grade = newGrade;
+		const newTextureKey = resolveTowerTextureKey(
+			kept.instance.def.id,
+			newGrade,
+		);
+		kept.instance.sprite.setTexture(newTextureKey);
+		kept.instance.effectiveDamage = getEffectiveStats(
+			kept.instance.def.stats.damage,
+			kept.instance.data.level,
+			newGrade,
+		);
+
+		this.pathfinding.invalidateCache();
+		return true;
+	}
+
+	/**
+	 * Phase A: pop-in scale punch on a freshly summoned tower. Additive over
+	 * the existing idle tween — same target, brief duration, no kill-restart.
+	 * Called by PhaseAOrchestrator after a successful summon.
+	 */
+	playPhaseASummonVfx(col: number, row: number): void {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+		this.scene.tweens.killTweensOf(sprite);
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: baseScaleX * 1.3,
+			scaleY: baseScaleY * 1.3,
+			duration: 110,
+			yoyo: true,
+			ease: 'Cubic.Out',
+		});
+	}
+
+	/**
+	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
+	 * a successful merge. Tint is cleared via a follow-up tween that targets
+	 * a counter and applies clearTint in onComplete, so cleanup is bound to
+	 * the scene's tween manager (no orphan setTimeout / setInterval).
+	 */
+	playPhaseAMergeVfx(col: number, row: number): void {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+		this.scene.tweens.killTweensOf(sprite);
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: baseScaleX * 1.5,
+			scaleY: baseScaleY * 1.5,
+			duration: 140,
+			yoyo: true,
+			ease: 'Cubic.Out',
+		});
+		if (typeof sprite.setTint === 'function') {
+			sprite.setTint(0xffd966);
+			this.scene.tweens.add({
+				targets: { _t: 0 },
+				_t: 1,
+				duration: 360,
+				ease: 'Cubic.Out',
+				onComplete: () => {
+					if (typeof sprite.clearTint === 'function') sprite.clearTint();
+				},
+			});
+		}
 	}
 
 	disableTower(towerId: string, untilMs: number): void {

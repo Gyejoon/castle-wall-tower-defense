@@ -303,9 +303,20 @@ export function useGameEvents() {
 		EventBus.on('boss-hp-update', onBossHpUpdate);
 		EventBus.on('boss-defeated', onBossDefeated);
 		EventBus.on('boss-phase-change', onBossPhaseChange);
+		const onWaveTimerTick = (data: {
+			remainingSec: number;
+			wave: number;
+			totalWaves: number;
+		}) => {
+			patchCombatHud({
+				timerLabel: `Wave ${data.wave}/${data.totalWaves} — ${data.remainingSec}s`,
+			});
+		};
+
 		EventBus.on('tower-selected', onTowerSelected);
 		EventBus.on('tower-deselected', onTowerDeselected);
 		EventBus.on('tower-sold', onTowerSold);
+		EventBus.on('wave-timer-tick', onWaveTimerTick);
 
 		return () => {
 			if (waitIntervalRef.current) clearInterval(waitIntervalRef.current);
@@ -329,6 +340,7 @@ export function useGameEvents() {
 			EventBus.off('tower-selected', onTowerSelected);
 			EventBus.off('tower-deselected', onTowerDeselected);
 			EventBus.off('tower-sold', onTowerSold);
+			EventBus.off('wave-timer-tick', onWaveTimerTick);
 		};
 	}, [
 		patchCombatHud,

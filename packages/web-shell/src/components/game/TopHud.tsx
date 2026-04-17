@@ -58,7 +58,7 @@ export function TopHud({
 		<div
 			data-testid="top-hud"
 			className="flex shrink-0 flex-col border-b border-border"
-			style={{ background: 'rgba(42, 32, 16, 0.92)' }}
+			style={{ background: 'var(--color-panel-92)' }}
 		>
 			{/* 첫 번째 행: 항상 고정 */}
 			<div
@@ -130,22 +130,20 @@ export function TopHud({
 					{runStatus === 'running' && speed2xUnlocked && (
 						<button
 							type="button"
-							className="font-pixel text-[11px] px-2 py-0.5 border border-border text-text-secondary"
+							className="min-h-[36px] font-pixel text-[11px] px-3 py-1.5 border border-border text-text-secondary"
 							style={{
 								background:
-									gameSpeed === 2
-										? 'rgba(200,112,32,0.3)'
-										: 'rgba(26,18,8,0.7)',
+									gameSpeed >= 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)',
 							}}
 							onClick={onToggleSpeed}
 						>
-							{gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+							{gameSpeed === 3 ? '3x ▶▶▶' : gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
 						</button>
 					)}
 					{runStatus === 'running' && onExitRequest && (
 						<button
 							type="button"
-							className="border border-border px-2 py-0.5 font-pixel text-[11px] text-text-secondary"
+							className="min-h-[36px] border border-border px-3 py-1.5 font-pixel text-[11px] text-text-secondary"
 							style={{ background: 'rgba(26,18,8,0.7)' }}
 							onClick={onExitRequest}
 						>

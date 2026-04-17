@@ -97,7 +97,7 @@ interface GameStoreState {
 	gameOverStats: GameOverStats | null;
 	tutorialStep: number | null;
 	tutorialMessage: string | null;
-	gameSpeed: 1 | 2;
+	gameSpeed: 1 | 2 | 3;
 	selectedStar: StarRating;
 	stageDetailFrom: 'lobby' | 'stageSelect';
 
@@ -135,7 +135,7 @@ interface GameStoreState {
 	setGameOverStats: (stats: GameOverStats | null) => void;
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
-	setGameSpeed: (speed: 1 | 2) => void;
+	setGameSpeed: (speed: 1 | 2 | 3) => void;
 	setSelectedStar: (star: StarRating) => void;
 	enterStageSelect: () => void;
 	enterStageDetail: (stageId: string) => void;
@@ -168,7 +168,7 @@ const createRunState = () => ({
 	gameOverStats: null,
 	tutorialStep: null,
 	tutorialMessage: null,
-	gameSpeed: 1 as 1 | 2,
+	gameSpeed: 1 as 1 | 2 | 3,
 });
 
 export const useGameStore = create<GameStoreState>()((set) => ({

@@ -1,7 +1,7 @@
 # MileStone
 
-> **Last Updated:** 2026-04-07  
-> **Source:** Obsidian `ai/product/planning/일반모드 게임 planning.md` + `raw/issues/MVP 1차 개선 진행상황.md`  
+> **Last Updated:** 2026-04-14 (v2 — Phase A 피벗 트랙 추가)
+> **Source:** Obsidian `ai/product/planning/일반모드 게임 planning.md` + Phase A Core Loop Pivot plan (PR #170)
 > 스프린트 완료 또는 계획 변경 시 이 문서를 업데이트한다.
 
 상태 태그: ⬜ 예정 / 🔄 진행 중 / ✅ 완료 / ❌ 보류
@@ -12,16 +12,44 @@
 
 ### Planning (현재 단계)
 
-현재 위치: **Phase 4 완료 → Phase 5 (수익화) 준비 단계**
+**현재 위치: Phase A Core + Upgrade System 완료 🔄 본인 폰 플레이 검증 대기**
 
-| Phase | 이름 | 상태 |
-|-------|------|------|
-| Phase 0 | 기반 교정 (에너지·속성·웨이브 재정의) | ✅ |
-| Phase 1 | 핵심 전투 완성 (덱·보스·결과 화면) | ✅ |
-| Phase 2 | 메타 성장 루프 (저장·강화·승급·컬렉션) | ✅ |
-| Phase 3 | 콘텐츠 확장 (멀티 스테이지) | ✅ |
-| Phase 4 | 참여 시스템 (튜토리얼·가챠·미션) | ✅ |
-| Phase 5 | 수익화 & 운영 | ⬜ |
+2026-04-13에 4타워 덱 시스템에서 **픽셀 중세 랜덤 타워 합성 디펜스**로 코어 루프 피벗 결정. Phase A Core/Map/Integration/UI/VFX/Energy gating 까지 PR #170에서 머지 완료. 5분 1세션 후 "한 판 더" Go/No-Go 플레이 검증이 남아 있으며, 그 결과에 따라 Phase B 이후 경로가 결정된다.
+
+#### Phase A 피벗 트랙 (v2 — 2026-04-14~)
+
+| Phase | 이름 | 상태 | 비고 |
+|-------|------|------|------|
+| R0 | 스펙 v2 작성 (01-GDD / 06-milestone / 08-arch) | ✅ | 2026-04-14, 본 문서 포함 |
+| R1 | Phase A Core (SummonPool / RandomSummon / Merge / Orchestrator) | ✅ | PR #170, 22 TDD tests |
+| R1 | Phase A Map (`phase_a_long` 8×24 U-turn + `phase_a_s1` 50 wave endless) | ✅ | PR #170, 17 vitest assertions |
+| R1 | Phase A Integration (TowerSystem 확장 + GameScene wiring) | ✅ | PR #170 |
+| R1 | Phase A UI (`PhaseAHud` + `GamePage` 라우팅 + 로비 `[LAB]` 버튼) | ✅ | PR #170 |
+| R1 | Phase A VFX (scale 펀치 + 골드 tint flash) | ✅ | PR #170, "도파민의 80%" 기본기만 |
+| R1 | Phase A 에너지 게이팅 (`PHASE_A_SUMMON_COST=8` + `summon-failed` event) | ✅ | PR #170 |
+| R1 | 로그라이트 강화 선택 (10 웨이브마다 6종 카드 풀에서 3장 선택) | ✅ | Phase A Upgrade System |
+| R1 | 본인 폰 플레이 검증 ("한 판 더" Go/No-Go) | ⬜ | **핵심 게이트** |
+| R2 | 코어 굳히기 (타워 19종 전부 확장 + 액티브 스킬 1~2 + 맵 3~5) | ⬜ | R1 통과 시 |
+| R2 | 기믹 1~2개 + 대응 수단 (#154) | ⬜ | R1 통과 시 |
+| R2 | Random Dice 풍 슬롯머신 애니메이션 + 첫 선택 하이라이트 VFX 2.0 | ⬜ | R1 통과 시 |
+| R2 | `tilemap-phase-a-long` 에셋 생성 (현재 forest 폴백) | ⬜ | R1 통과 시 |
+| R3 | 메타 진행 재설계 (합성이 흡수한 후 남은 분량만) | ⬜ | 소프트 론치 전 |
+| R3 | 사운드 (#120) + FTUE 튜토리얼 (#121) | ⬜ | 소프트 론치 전 |
+| R4 | 수익화 재진입 (Phase 5 내용 일부 재활용) | ⬜ | 소프트 론치 후 |
+| R4 | 비동기 PVP seam (leaderboard / ghost replay / 주간 랭킹) | ⬜ | 실시간 PVP는 폐기 확정 |
+
+**R1 No-Go 시 (본인 폰 5분 후 "한 판 더" 안 나옴)**: 또 한 번의 피벗이 아니라 **장르 자체 재검토**. 4번 피벗한 프로젝트라 "그 다음 피벗" 위험이 매우 크므로, 그 시점에는 Random TD 장르 자체가 본인 게임에 안 맞는다는 결정을 해야 한다.
+
+#### 레거시 트랙 (v1 — Phase A 피벗 이전, 비파괴 유지)
+
+| Phase | 이름 | 상태 | Phase A에서의 운명 |
+|-------|------|------|------|
+| Phase 0 | 기반 교정 (에너지·속성·웨이브 재정의) | ✅ | 에너지 경제 + 웨이브 타이머는 Phase A에도 공유 |
+| Phase 1 | 핵심 전투 완성 (덱·보스·결과 화면) | ✅ | 덱 시스템만 Phase A에서 skip, 보스·결과 화면은 공유 |
+| Phase 2 | 메타 성장 루프 (저장·강화·승급·컬렉션) | ✅ | Phase A는 메타 OFF, Phase C에서 재설계 예정 |
+| Phase 3 | 콘텐츠 확장 (멀티 스테이지) | ✅ | W1~W3 24 스테이지 레거시로 유지 |
+| Phase 4 | 참여 시스템 (튜토리얼·가챠·미션) | ✅ | Phase A는 튜토리얼 없이 시작, 가챠/미션은 Phase C 재설계 대상 |
+| Phase 5 | 수익화 & 운영 | ❌ (Phase A 피벗으로 보류) | R4에서 재진입 |
 
 ---
 

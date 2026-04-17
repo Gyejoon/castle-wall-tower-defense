@@ -2078,6 +2078,12 @@
       "section": "preload"
     },
     {
+      "key": "tilemap-phase-a-long",
+      "type": "tilemapTiledJSON",
+      "path": "assets/maps/phase-a-long.json",
+      "section": "preload"
+    },
+    {
       "key": "ui-rarity-frame-common",
       "type": "image",
       "path": "assets/ui/rarity-frame-common.png",

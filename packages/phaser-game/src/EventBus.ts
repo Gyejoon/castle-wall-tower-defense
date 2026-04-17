@@ -2,6 +2,7 @@ import type {
 	DeckCardDef,
 	PlacementFailureReason,
 	StarRating,
+	TowerGrade,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -83,6 +84,26 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		refund: number;
+		grade: TowerGrade;
+	};
+	'request-enter-move-mode': {
+		fromCol: number;
+		fromRow: number;
+	};
+	'request-move-tower': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'tower-moved': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'move-failed': {
+		reason: 'invalid-tile' | 'occupied';
 	};
 	'tower-deselected': undefined;
 	'tutorial-step': { step: number; message: string };
@@ -99,7 +120,8 @@ export interface GameEventMap {
 	'request-pause': undefined;
 	'request-resume': undefined;
 	'request-tutorial-advance': undefined;
-	'request-set-speed': { multiplier: 1 | 2 };
+	'request-set-speed': { multiplier: 1 | 2 | 3 };
+	'wave-timer-tick': { remainingSec: number; wave: number; totalWaves: number };
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
 	// Stage select
@@ -118,6 +140,58 @@ export interface GameEventMap {
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;
+
+	// === Random Summon + Merge System (Phase A) ===
+	'request-summon-tower': undefined;
+	'request-merge-towers': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	};
+	'tower-summoned': {
+		col: number;
+		row: number;
+		towerId: string;
+		grade: TowerGrade;
+	};
+	'towers-merged': {
+		col: number;
+		row: number;
+		towerId: string;
+		fromGrade: TowerGrade;
+		toGrade: TowerGrade;
+	};
+	'merge-failed': {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+		reason:
+			| 'different-tower'
+			| 'different-grade'
+			| 'max-grade'
+			| 'invalid-tile';
+	};
+	'summon-failed': {
+		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';
+	};
+	'phase-a-summon-ready': {
+		towerId: string;
+		grade: TowerGrade;
+	};
+
+	// === Roguelike Upgrade System (Phase A) ===
+	'upgrade-choice-ready': {
+		choices: Array<{
+			id: string;
+			name: string;
+			description: string;
+			icon: string;
+		}>;
+	};
+	'request-apply-upgrade': { upgradeId: string };
+	'upgrade-applied': { upgradeId: string; totalStacks: number };
 }
 
 export class TypedEventBus {

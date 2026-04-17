@@ -92,12 +92,16 @@ export class UnitSystem {
 	private rng: () => number = Math.random;
 	private spawnQueue: SpawnQueueEntry[] = [];
 	private spawnTimer = 0;
-	private readonly SPAWN_INTERVAL = 300;
+	private spawnIntervalMs = 300;
 	private laneUnits: Map<number, UnitInstance[]> = new Map();
 	/** Called after any unit (wave-queue or additional) is physically spawned. */
 	private unitSpawnedCallback:
 		| ((instanceId: string, defId: string, isBoss: boolean) => void)
 		| null = null;
+
+	setSpawnInterval(ms: number): void {
+		this.spawnIntervalMs = ms;
+	}
 
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
@@ -607,7 +611,7 @@ export class UnitSystem {
 		reachedExit.length = 0;
 
 		this.spawnTimer += delta;
-		if (this.spawnTimer >= this.SPAWN_INTERVAL && this.spawnQueue.length > 0) {
+		if (this.spawnTimer >= this.spawnIntervalMs && this.spawnQueue.length > 0) {
 			this.spawnTimer = 0;
 			const front = this.spawnQueue[0];
 

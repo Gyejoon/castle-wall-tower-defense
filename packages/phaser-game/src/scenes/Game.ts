@@ -17,7 +17,9 @@ import {
 	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	PHASE_A_MAP_ID,
 	PHASER_COLORS,
+	pickRandomUpgrades,
 	type StarRating,
 	UNITS,
 	type WaveDef,
@@ -91,11 +93,23 @@ import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
+import { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
 import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+
+// Phase A pivot starter pool: 5 towers covering single-target, AOE, CC,
+// splash, and DOT roles. All from existing assets so the random-summon +
+// merge loop reuses pixel medieval sprites without new art.
+const PHASE_A_INITIAL_POOL: readonly string[] = [
+	'archer',
+	'plasma',
+	'emp',
+	'nova_cannon',
+	'flame_tower',
+];
 
 export class GameScene extends Phaser.Scene {
 	private playerGrid!: GridManager;
@@ -104,6 +118,9 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
+	private phaseAOrchestrator?: PhaseAOrchestrator;
+	private onPhaseASummonReady?: (data: { towerId: string }) => void;
+	private onUpgradeApplied?: () => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
@@ -113,6 +130,9 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
+	private isPhaseAMap = false;
+	private currentWaveSlot = 1;
+	private lastTimerTickSec = -1;
 	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
 	private currentStageId!: string;
@@ -125,6 +145,17 @@ export class GameScene extends Phaser.Scene {
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
 	private onSellTower!: (data: { col: number; row: number }) => void;
+	private onMoveTower!: (data: {
+		fromCol: number;
+		fromRow: number;
+		toCol: number;
+		toRow: number;
+	}) => void;
+	private onEnterMoveMode!: (data: {
+		fromCol: number;
+		fromRow: number;
+	}) => void;
+	private movePending: { fromCol: number; fromRow: number } | null = null;
 	private onPause!: () => void;
 	private onResume!: () => void;
 	private onWaveStartedLifecycle!: (data: {
@@ -141,7 +172,7 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
-	private speedMultiplier: 1 | 2 = 1;
+	private speedMultiplier: 1 | 2 | 3 = 1;
 	private scaledGameTime = 0;
 	private onWaveCompleted!: (data: {
 		wave: number;
@@ -150,7 +181,7 @@ export class GameScene extends Phaser.Scene {
 		delaySec: number;
 		cleared: boolean;
 	}) => void;
-	private onSetSpeed!: (data: { multiplier: 1 | 2 }) => void;
+	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
 	private decorationTiles: Array<{
 		x: number;
@@ -277,12 +308,46 @@ export class GameScene extends Phaser.Scene {
 		this.worldGimmick?.onBattleStart();
 		this.playerTowers.setWorldGimmick(this.worldGimmick);
 
+		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
+		const isPhaseAMap = this.isPhaseAMap;
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
-		const deckCards =
-			deckIds && deckIds.length > 0
+		const deckCards = isPhaseAMap
+			? []
+			: deckIds && deckIds.length > 0
 				? buildDeckCardsSafe(deckIds)
 				: DEFAULT_DECK;
+		// Phase A bypasses the 4-tower deck entirely. We still construct
+		// DeckSystem (with an empty deck) so the rest of the scene keeps the
+		// same field shape and cleanup contract; the React HUD detects the
+		// empty deck-loaded payload and renders the Phase A summon UI instead.
 		this.playerDeck = new DeckSystem(deckCards);
+
+		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
+		// SummonPool + MergeSystem to TowerSystem via PhaseAOrchestrator and
+		// listens for request-summon-tower / request-merge-towers from the
+		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
+		if (isPhaseAMap) {
+			this.energySystem.disableCap();
+			this.phaseAOrchestrator = new PhaseAOrchestrator({
+				towerSystem: this.playerTowers,
+				initialPool: PHASE_A_INITIAL_POOL,
+				energySystem: this.energySystem,
+			});
+			this.onPhaseASummonReady = (data) => {
+				if (!this.isSceneAlive()) return;
+				this.selectedTowerId = data.towerId;
+				this.clearRangeOverlay();
+				EventBus.emit('tower-deselected');
+				this.renderPlaceableHighlights();
+			};
+			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
+			this.playerTowers.setModifierFn((id) =>
+				this.phaseAOrchestrator!.getModifier(id),
+			);
+			// Phase A: 1 unit per second (1000ms) instead of default 300ms
+			this.playerUnits.setSpawnInterval(1000);
+		}
+
 		this.damageNumbers = new DamageNumberSystem(this);
 		this.events.on('shutdown', this.cleanup, this);
 
@@ -332,6 +397,7 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
 			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
+			this.currentWaveSlot = data.slotIndex;
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 			this.worldGimmick?.onWaveStart(data.wave);
@@ -349,12 +415,34 @@ export class GameScene extends Phaser.Scene {
 		this.onWaveCompleted = (data: {
 			wave: number;
 			totalWaves: number;
+			slotIndex: number;
+			delaySec: number;
 			cleared: boolean;
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			if (data.cleared) {
+			// Phase A: no wave-clear energy bonus — energy comes from kills only
+			if (data.cleared && !this.isPhaseAMap) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			}
+			// Phase A: every 10 waves, offer 3 random upgrade cards
+			if (
+				data.cleared &&
+				this.isPhaseAMap &&
+				data.slotIndex % 10 === 0 &&
+				data.slotIndex > 0 &&
+				data.slotIndex < data.totalWaves
+			) {
+				const choices = pickRandomUpgrades(3);
+				EventBus.emit('request-pause');
+				EventBus.emit('upgrade-choice-ready', {
+					choices: choices.map((c) => ({
+						id: c.id,
+						name: c.name,
+						description: c.description,
+						icon: c.icon,
+					})),
+				});
 			}
 		};
 
@@ -379,6 +467,30 @@ export class GameScene extends Phaser.Scene {
 				});
 				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
+			}
+		};
+
+		this.onEnterMoveMode = ({ fromCol, fromRow }) => {
+			if (!this.isSceneAlive()) return;
+			this.movePending = { fromCol, fromRow };
+			this.selectedTowerId = null;
+			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			this.renderPlaceableHighlights();
+		};
+
+		this.onMoveTower = ({ fromCol, fromRow, toCol, toRow }) => {
+			if (!this.isSceneAlive()) return;
+			const ok = this.playerTowers.moveTower(fromCol, fromRow, toCol, toRow);
+			if (ok) {
+				EventBus.emit('tower-moved', { fromCol, fromRow, toCol, toRow });
+				EventBus.emit('tower-deselected');
+				this.clearRangeOverlay();
+				this.selectionGraphics.clear();
+				this.playerUnits.setPaths(getMapPaths(this.currentMap));
+				this.renderPath(this.playerGrid);
+			} else {
+				EventBus.emit('move-failed', { reason: 'invalid-tile' });
 			}
 		};
 
@@ -458,6 +570,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.on('request-sell-tower', this.onSellTower);
+		EventBus.on('request-move-tower', this.onMoveTower);
+		EventBus.on('request-enter-move-mode', this.onEnterMoveMode);
 		EventBus.on('request-pause', this.onPause);
 		EventBus.on('request-resume', this.onResume);
 		EventBus.on('wave-started', this.onWaveStartedLifecycle);
@@ -466,6 +580,15 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('request-set-speed', this.onSetSpeed);
 		EventBus.on('furnace-cycle', this.onFurnaceCycle);
 		EventBus.on('arcane-burst', this.onArcaneBurst);
+
+		// Phase A upgrade flow: resume game after player picks an upgrade
+		if (isPhaseAMap) {
+			this.onUpgradeApplied = () => {
+				if (!this.isSceneAlive()) return;
+				EventBus.emit('request-resume');
+			};
+			EventBus.on('upgrade-applied', this.onUpgradeApplied);
+		}
 
 		EventBus.emit('game-ready');
 		EventBus.emit('energy-changed', { energy: this.energySystem.getEnergy() });
@@ -686,6 +809,33 @@ export class GameScene extends Phaser.Scene {
 			if (this.gameOver) return;
 			if (!this.playerGrid.isInBounds(gridPos.x, gridPos.y)) return;
 
+			if (this.movePending) {
+				const { fromCol, fromRow } = this.movePending;
+				this.movePending = null;
+				this.selectionGraphics.clear();
+				const ok = this.playerTowers.moveTower(
+					fromCol,
+					fromRow,
+					gridPos.x,
+					gridPos.y,
+				);
+				if (ok) {
+					EventBus.emit('tower-moved', {
+						fromCol,
+						fromRow,
+						toCol: gridPos.x,
+						toRow: gridPos.y,
+					});
+					EventBus.emit('tower-deselected');
+					this.clearRangeOverlay();
+					this.playerUnits.setPaths(getMapPaths(this.currentMap));
+					this.renderPath(this.playerGrid);
+				} else {
+					EventBus.emit('move-failed', { reason: 'invalid-tile' });
+				}
+				return;
+			}
+
 			if (this.selectedTowerId) {
 				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
 				return;
@@ -700,6 +850,7 @@ export class GameScene extends Phaser.Scene {
 					col: gridPos.x,
 					row: gridPos.y,
 					refund,
+					grade: tower.grade,
 				});
 				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
@@ -809,6 +960,15 @@ export class GameScene extends Phaser.Scene {
 		gridY: number,
 		towerDefId: string,
 	): void {
+		// Phase A: orchestrator handles energy + placement directly
+		if (this.phaseAOrchestrator?.hasPendingSummon()) {
+			this.phaseAOrchestrator.completePlacement(gridX, gridY);
+			this.selectedTowerId = null;
+			this.selectionGraphics.clear();
+			this.clearRangeOverlay();
+			return;
+		}
+
 		const card = this.playerDeck.getCardByTowerId(towerDefId);
 		if (!card) return;
 
@@ -940,8 +1100,13 @@ export class GameScene extends Phaser.Scene {
 		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
-		if (phase !== 'prep') {
+		// Phase A: energy from kills only, no time-based regen
+		if (phase !== 'prep' && !this.isPhaseAMap) {
 			this.energySystem.update(scaledDelta / 1000);
+		}
+		// Phase A: energy_regen upgrade tick
+		if (this.isPhaseAMap && this.phaseAOrchestrator) {
+			this.phaseAOrchestrator.tickEnergyRegen(scaledDelta / 1000);
 		}
 
 		// Tick boss behaviors before combat so they can react with fresh sceneTime
@@ -962,6 +1127,14 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
+				// Phase A: energy from kills, not time. +1 per kill, x2 on every 5th wave
+				if (this.isPhaseAMap) {
+					const killEnergyBonus =
+						this.phaseAOrchestrator?.getUpgradeStacks('kill_energy') ?? 0;
+					const bonus =
+						(this.currentWaveSlot % 5 === 0 ? 2 : 1) + killEnergyBonus;
+					this.energySystem.add(bonus);
+				}
 			},
 			(unitId, result) => {
 				if (!result) return;
@@ -980,6 +1153,17 @@ export class GameScene extends Phaser.Scene {
 			},
 		);
 
+		// Wave timer tick — throttled to 1 emit/sec to avoid event spam
+		const remainingSec = this.playerWaves.getWaveRemainingSec();
+		if (remainingSec >= 0 && remainingSec !== this.lastTimerTickSec) {
+			this.lastTimerTickSec = remainingSec;
+			EventBus.emit('wave-timer-tick', {
+				remainingSec,
+				wave: this.currentWaveSlot,
+				totalWaves: this.playerWaves.getMaxWaves(),
+			});
+		}
+
 		this.damageNumbers.update(_time, delta);
 
 		for (const exit of playerExits) {
@@ -990,8 +1174,8 @@ export class GameScene extends Phaser.Scene {
 				remainingHp: this.playerHp,
 			});
 
-			// Boss leak = instant defeat (only on actual boss waves)
-			if (exit.isBoss && this.currentSlotDef.kind === 'boss') {
+			// Boss leak = instant defeat (isBoss is only true for bossBehaviorId units)
+			if (exit.isBoss) {
 				EventBus.emit('base-hp-changed', {
 					hp: 0,
 					maxHp: INITIAL_PLAYER_HP,
@@ -1076,6 +1260,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-select-tower', this.onSelectTower);
 		EventBus.off('request-clear-tower-selection', this.onClearTowerSelection);
 		EventBus.off('request-sell-tower', this.onSellTower);
+		EventBus.off('request-move-tower', this.onMoveTower);
+		EventBus.off('request-enter-move-mode', this.onEnterMoveMode);
 		EventBus.off('request-pause', this.onPause);
 		EventBus.off('request-resume', this.onResume);
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
@@ -1084,6 +1270,14 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		EventBus.off('furnace-cycle', this.onFurnaceCycle);
 		EventBus.off('arcane-burst', this.onArcaneBurst);
+		if (this.onUpgradeApplied) {
+			EventBus.off('upgrade-applied', this.onUpgradeApplied);
+		}
+		if (this.onPhaseASummonReady) {
+			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
+		}
+		this.phaseAOrchestrator?.destroy();
+		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();
 
 		for (const overlay of this.furnaceTintOverlays) overlay.destroy();

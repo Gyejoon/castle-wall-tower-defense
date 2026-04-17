@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
 	FOREST_GATE_MAP,
 	getAllPathCells,
+	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
 	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
+	PHASE_A_LONG_MAP,
 	STORM_CITADEL_MAP,
 } from '../src/constants/maps';
 import type { MapLayout } from '../src/types/map';
@@ -313,5 +315,84 @@ describe('isMapUnlocked', () => {
 		const mapWithZero: MapLayout = { ...FOREST_GATE_MAP, unlockLevel: 0 };
 		expect(isMapUnlocked(mapWithZero, 0)).toBe(true);
 		expect(isMapUnlocked(mapWithZero, 1)).toBe(true);
+	});
+});
+
+describe('PHASE_A_LONG_MAP (random-summon + merge pivot)', () => {
+	it('맵 크기는 8x24, tileSize 32', () => {
+		expect(PHASE_A_LONG_MAP.width).toBe(8);
+		expect(PHASE_A_LONG_MAP.height).toBe(24);
+		expect(PHASE_A_LONG_MAP.tileSize).toBe(32);
+	});
+
+	it('id는 phase_a_long', () => {
+		expect(PHASE_A_LONG_MAP.id).toBe('phase_a_long');
+	});
+
+	it('경로가 연속적이어야 한다 (각 단계가 다음 단계와 인접)', () => {
+		const { path } = PHASE_A_LONG_MAP;
+		for (let i = 0; i < path.length - 1; i++) {
+			const cur = path[i];
+			const next = path[i + 1];
+			expect(Math.abs(next.x - cur.x) + Math.abs(next.y - cur.y)).toBe(1);
+		}
+	});
+
+	it('spawnPoint와 exitPoint가 경로의 시작·끝과 일치한다', () => {
+		expect(PHASE_A_LONG_MAP.spawnPoint).toEqual({ x: 0, y: 0 });
+		expect(PHASE_A_LONG_MAP.exitPoint).toEqual({ x: 4, y: 0 });
+		expect(PHASE_A_LONG_MAP.path[0]).toEqual(PHASE_A_LONG_MAP.spawnPoint);
+		expect(PHASE_A_LONG_MAP.path[PHASE_A_LONG_MAP.path.length - 1]).toEqual(
+			PHASE_A_LONG_MAP.exitPoint,
+		);
+	});
+
+	it('경로가 S자로 충분히 꺾여야 한다', () => {
+		expect(countTurns(PHASE_A_LONG_MAP.path)).toBeGreaterThanOrEqual(14);
+	});
+
+	it('모든 path/blocked/buildable 좌표가 경계 내', () => {
+		const { width, height, path, blockedPlacementPoints, buildablePoints } =
+			PHASE_A_LONG_MAP;
+		for (const p of [...path, ...blockedPlacementPoints, ...buildablePoints]) {
+			expect(p.x).toBeGreaterThanOrEqual(0);
+			expect(p.x).toBeLessThan(width);
+			expect(p.y).toBeGreaterThanOrEqual(0);
+			expect(p.y).toBeLessThan(height);
+		}
+	});
+
+	it('buildable points가 경로 및 blocked와 겹치지 않는다', () => {
+		const pathSet = new Set(PHASE_A_LONG_MAP.path.map((p) => `${p.x},${p.y}`));
+		const blockedSet = new Set(
+			PHASE_A_LONG_MAP.blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+		);
+		for (const p of PHASE_A_LONG_MAP.buildablePoints) {
+			const key = `${p.x},${p.y}`;
+			expect(pathSet.has(key)).toBe(false);
+			expect(blockedSet.has(key)).toBe(false);
+		}
+	});
+
+	it('spawn/exit 코너가 blocked에 포함된다', () => {
+		expect(PHASE_A_LONG_MAP.blockedPlacementPoints).toContainEqual({
+			x: 0,
+			y: 0,
+		});
+		expect(PHASE_A_LONG_MAP.blockedPlacementPoints).toContainEqual({
+			x: 4,
+			y: 0,
+		});
+	});
+
+	it('MAP_REGISTRY와 getMapById에서 phase_a_long으로 조회 가능', () => {
+		expect(MAP_REGISTRY.phase_a_long).toBe(PHASE_A_LONG_MAP);
+		expect(getMapById('phase_a_long')).toBe(PHASE_A_LONG_MAP);
+	});
+
+	it('buildable 칸 수가 path 양옆 합성 공간으로 충분', () => {
+		// 8×24 = 192. path ≈ 55, blocked 6, buildable는 ~131. 합성 게임에 적합
+		// 한 하한만 보장하고 정확한 수치는 path 디자인 변경에 따라 흔들리도록 둔다.
+		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBeGreaterThan(40);
 	});
 });

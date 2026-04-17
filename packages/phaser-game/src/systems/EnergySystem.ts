@@ -11,16 +11,22 @@ import { EventBus } from '../EventBus';
 export class EnergySystem {
 	private energy: number;
 	private lastEmittedEnergy = -1;
+	private cap: number;
 
-	constructor(initial = INITIAL_ENERGY) {
+	constructor(initial = INITIAL_ENERGY, cap = ENERGY_CAP) {
 		this.energy = initial;
+		this.cap = cap;
+	}
+
+	disableCap(): void {
+		this.cap = Infinity;
 	}
 
 	update(deltaSec: number): void {
 		const clampedDelta = Math.min(deltaSec, 5);
 		this.energy = Math.min(
 			this.energy + ENERGY_PER_SEC * clampedDelta,
-			ENERGY_CAP,
+			this.cap,
 		);
 		this.emitIfChanged();
 	}
@@ -38,7 +44,7 @@ export class EnergySystem {
 
 	add(amount: number): void {
 		if (amount <= 0) return;
-		this.energy = Math.min(this.energy + amount, ENERGY_CAP);
+		this.energy = Math.min(this.energy + amount, this.cap);
 		this.emitIfChanged();
 	}
 

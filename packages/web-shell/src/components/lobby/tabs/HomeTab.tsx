@@ -64,6 +64,9 @@ function getNextStage(stageStars: Record<string, StarRating>): {
 export function HomeTab() {
 	const enterStageSelect = useGameStore((s) => s.enterStageSelect);
 	const enterStageDetail = useGameStore((s) => s.enterStageDetail);
+	const setSelectedStageId = useGameStore((s) => s.setSelectedStageId);
+	const setSelectedStar = useGameStore((s) => s.setSelectedStar);
+	const resetRun = useGameStore((s) => s.resetRun);
 	const stageStars = useMetaStore((s) => s.progress.stageStars);
 	const next = getNextStage(stageStars);
 	const worldName = next
@@ -77,7 +80,7 @@ export function HomeTab() {
 			role="tabpanel"
 			aria-label="마당"
 			className="relative flex-1 overflow-hidden flex flex-col"
-			style={{ background: '#1a1208' }}
+			style={{ background: 'var(--color-bg)' }}
 		>
 			{/* Background: stage thumbnail as full bleed */}
 			{thumb && (
@@ -191,6 +194,24 @@ export function HomeTab() {
 						월드
 					</PixelButton>
 				</div>
+
+				{/* Phase A pivot lab — direct entry, bypasses worldmap */}
+				<button
+					type="button"
+					onClick={() => {
+						setSelectedStageId('phase_a_s1');
+						setSelectedStar(1);
+						resetRun();
+					}}
+					className="mt-2 max-w-[300px] w-full border-2 border-accent bg-panel font-pixel text-[12px] text-accent py-3 px-4 active:scale-95 transition-transform"
+					style={{
+						boxShadow:
+							'0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+					}}
+				>
+					<span className="text-text-secondary mr-2">[LAB]</span>Phase A — 랜덤
+					소환 + 합성
+				</button>
 			</div>
 		</div>
 	);

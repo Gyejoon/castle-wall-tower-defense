@@ -3,6 +3,7 @@ import {
 	getNextStageId,
 	getStageById,
 	getTotalWavesForStage,
+	PHASE_A_MAP_ID,
 	WORLD_ORDER,
 } from '@gld/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -10,9 +11,11 @@ import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
+import { PhaseAHud } from '../components/game/PhaseAHud';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
+import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useGameStore } from '../stores/gameStore';
@@ -41,12 +44,20 @@ export function GamePage() {
 	const selectedStageId = useGameStore((s) => s.selectedStageId);
 	const selectedStage = getStageById(selectedStageId);
 	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
+	const isPhaseAMode = selectedStage.mapId === PHASE_A_MAP_ID;
 	const starKey =
 		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
-	const speed2xUnlocked = (highestWave[starKey] ?? 0) >= totalStageWaves;
+	const speed2xUnlocked =
+		isPhaseAMode || (highestWave[starKey] ?? 0) >= totalStageWaves;
 
 	const { waitCountdown, selectedTower } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
+	const [upgradeChoices, setUpgradeChoices] = useState<Array<{
+		id: string;
+		name: string;
+		description: string;
+		icon: string;
+	}> | null>(null);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {
@@ -98,18 +109,40 @@ export function GamePage() {
 		return () => window.clearTimeout(timeout);
 	}, [clearToast, toast]);
 
+	useEffect(() => {
+		const handleUpgradeReady = (data: {
+			choices: Array<{
+				id: string;
+				name: string;
+				description: string;
+				icon: string;
+			}>;
+		}) => {
+			setUpgradeChoices(data.choices);
+		};
+		const handleUpgradeApplied = () => {
+			setUpgradeChoices(null);
+		};
+		const handleGameOver = () => {
+			setUpgradeChoices(null);
+		};
+
+		EventBus.on('upgrade-choice-ready', handleUpgradeReady);
+		EventBus.on('upgrade-applied', handleUpgradeApplied);
+		EventBus.on('game-over', handleGameOver);
+		return () => {
+			EventBus.off('upgrade-choice-ready', handleUpgradeReady);
+			EventBus.off('upgrade-applied', handleUpgradeApplied);
+			EventBus.off('game-over', handleGameOver);
+		};
+	}, []);
+
 	const nextStageId = useMemo(
 		() => getNextStageId(selectedStageId),
 		[selectedStageId],
 	);
 
-	const currentStageDef = useMemo(() => {
-		try {
-			return getStageById(selectedStageId);
-		} catch {
-			return null;
-		}
-	}, [selectedStageId]);
+	const currentStageDef = selectedStage;
 
 	const handleNextStage = useCallback(() => {
 		if (!nextStageId) return;
@@ -118,6 +151,12 @@ export function GamePage() {
 		store.setSelectedStar(1);
 		store.resetRun();
 	}, [nextStageId]);
+
+	const handleToggleSpeed = useCallback(() => {
+		const cur = useGameStore.getState().gameSpeed;
+		const next = cur === 1 ? 2 : cur === 2 ? 3 : 1;
+		setGameSpeed(next as 1 | 2 | 3);
+	}, [setGameSpeed]);
 
 	const handleExitRequest = useCallback(() => {
 		if (runStatus !== 'running') return;
@@ -176,7 +215,7 @@ export function GamePage() {
 					gameSpeed={gameSpeed}
 					speed2xUnlocked={speed2xUnlocked}
 					runStatus={runStatus}
-					onToggleSpeed={() => setGameSpeed(gameSpeed === 1 ? 2 : 1)}
+					onToggleSpeed={handleToggleSpeed}
 					onExitRequest={handleExitRequest}
 				/>
 
@@ -204,6 +243,8 @@ export function GamePage() {
 
 					<BossWarningOverlay visible={bossWarningVisible} />
 
+					{upgradeChoices && <UpgradePickOverlay choices={upgradeChoices} />}
+
 					{wavePhase === 'prep' && prepCountdown > 0 && (
 						<div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3] font-pixel text-3xl text-gold drop-shadow-[0_0_6px_rgba(0,0,0,0.8)] pointer-events-none">
 							준비 {prepCountdown}
@@ -214,19 +255,19 @@ export function GamePage() {
 
 					<ToastNotification toast={toast} />
 
-					{/* Tower Sell Panel */}
-					{selectedTower &&
+					{!isPhaseAMode &&
+						selectedTower &&
 						runStatus !== 'victory' &&
 						runStatus !== 'defeat' && (
 							<div
 								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
-								style={{ background: 'rgba(42, 32, 16, 0.95)' }}
+								style={{ background: 'var(--color-panel-95)' }}
 							>
 								<span className="text-text">{selectedTower.towerName}</span>
 								<button
 									type="button"
 									className="border border-danger px-2 py-1 text-danger"
-									style={{ background: 'rgba(192,48,32,0.2)' }}
+									style={{ background: 'var(--color-danger-20)' }}
 									onClick={handleSellTower}
 								>
 									판매{' '}
@@ -249,7 +290,7 @@ export function GamePage() {
 						<div
 							className="absolute inset-0 z-[10] flex items-center justify-center"
 							style={{
-								background: 'rgba(0,0,0,0.6)',
+								background: 'var(--color-overlay-60)',
 								animation: 'fadeIn 0.2s ease-out',
 							}}
 						>
@@ -267,7 +308,7 @@ export function GamePage() {
 									<button
 										type="button"
 										className="border border-danger px-4 py-2 font-pixel text-[11px] text-danger"
-										style={{ background: 'rgba(192,48,32,0.2)' }}
+										style={{ background: 'var(--color-danger-20)' }}
 										onClick={handleExitConfirm}
 									>
 										나가기
@@ -275,7 +316,7 @@ export function GamePage() {
 									<button
 										type="button"
 										className="border border-accent px-4 py-2 font-pixel text-[11px] text-accent"
-										style={{ background: 'rgba(200,160,74,0.2)' }}
+										style={{ background: 'var(--color-accent-20)' }}
 										onClick={handleExitCancel}
 									>
 										계속하기
@@ -305,7 +346,9 @@ export function GamePage() {
 					)}
 				</div>
 
-				{runStatus !== 'victory' && runStatus !== 'defeat' && <DeckDock />}
+				{runStatus !== 'victory' &&
+					runStatus !== 'defeat' &&
+					(isPhaseAMode ? <PhaseAHud /> : <DeckDock />)}
 			</div>
 		</div>
 	);

@@ -66,6 +66,8 @@ export {
 	isMapUnlocked,
 	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
+	PHASE_A_LONG_MAP,
+	PHASE_A_MAP_ID,
 	STORM_CITADEL_MAP,
 } from './constants/maps';
 export {
@@ -136,8 +138,10 @@ export type {
 	WaveSlotKind,
 } from './constants/waves';
 export {
+	generatePhaseAWaves,
 	getTotalWavesForMap,
 	getTotalWavesForStage,
+	getWaveScaling,
 	getWavesForMap,
 	getWavesForStage,
 	MAX_WAVE_DURATION_MS,
@@ -150,12 +154,23 @@ export {
 	WORLD_ORDER,
 	WORLDS,
 } from './constants/worlds';
+export type { SummonPool, SummonResult } from './data/summonPool';
+export {
+	createSummonPool,
+	drawRandomSummon,
+	getPhaseARefund,
+	PHASE_A_SUMMON_COST,
+} from './data/summonPool';
+export type { UpgradeCardDef, UpgradeId } from './data/upgradeCards';
+export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
 export {
 	getStageLockStatus,
 	isStageUnlocked,
 	isWorldUnlocked,
 } from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
+export type { Grade } from './types/grade';
+export { GRADES, isMaxGrade, nextGrade } from './types/grade';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { GimmickTileSet, MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';

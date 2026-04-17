@@ -44,8 +44,8 @@ html, body, #root {
 }
 
 body {
-  background-color: #16161a;
-  color: #fffffe;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: 'Galmuri11', 'Press Start 2P', cursive;
   font-size: 17px;
   -webkit-font-smoothing: antialiased;

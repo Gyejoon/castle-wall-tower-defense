@@ -63,12 +63,12 @@ export function TopHud({
 			{/* 첫 번째 행: 항상 고정 */}
 			<div
 				data-testid="top-hud-row"
-				className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap px-3 py-2.5"
+				className="flex flex-nowrap items-center gap-1 overflow-hidden whitespace-nowrap px-2 py-2.5"
 			>
 				<div
 					key={`hp-${hpFlash}`}
 					className={cn(
-						'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+						'shrink-0 overflow-hidden text-ellipsis border border-border px-[6px] py-[5px] font-pixel text-[12px] text-danger shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
 						hpFlash > 0 && 'hud-flash',
 					)}
 					style={{ background: 'rgba(192,48,32,0.16)' }}
@@ -76,7 +76,7 @@ export function TopHud({
 					HP {lives}
 				</div>
 				<div
-					className="flex min-w-[70px] shrink-0 items-center gap-1 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+					className="flex min-w-[60px] shrink items-center gap-1 overflow-hidden text-ellipsis border border-border px-[6px] py-[5px] font-pixel text-[12px] text-gold shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
 					style={{ background: 'rgba(240,208,96,0.16)' }}
 				>
 					<span className="inline-flex items-center gap-[2px]">
@@ -110,7 +110,7 @@ export function TopHud({
 					<div
 						data-testid="hud-timer"
 						className={cn(
-							'shrink-0 overflow-hidden text-ellipsis border border-border px-[7px] py-[5px] font-pixel text-sm shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
+							'shrink overflow-hidden text-ellipsis border border-border px-[6px] py-[5px] font-pixel text-[12px] shadow-[2px_2px_0px_rgba(0,0,0,0.25)]',
 							isBossPhase ? 'text-gold' : 'text-text',
 						)}
 						style={{
@@ -126,24 +126,25 @@ export function TopHud({
 								: formatTimerLabel(combatHud.timerLabel)}
 					</div>
 				)}
-				<div className="ml-auto flex items-center gap-1">
+				<div className="ml-auto flex shrink-0 items-center gap-1">
 					{runStatus === 'running' && speed2xUnlocked && (
 						<button
 							type="button"
-							className="min-h-[36px] font-pixel text-[11px] px-3 py-1.5 border border-border text-text-secondary"
+							aria-label={`배속 ${gameSpeed}x`}
+							className="min-h-[36px] min-w-[40px] font-pixel text-[12px] px-2 py-1.5 border border-border text-text-secondary"
 							style={{
 								background:
 									gameSpeed >= 2 ? 'rgba(200,112,32,0.3)' : 'rgba(26,18,8,0.7)',
 							}}
 							onClick={onToggleSpeed}
 						>
-							{gameSpeed === 3 ? '3x ▶▶▶' : gameSpeed === 2 ? '2x ▶▶' : '1x ▶'}
+							{gameSpeed}×
 						</button>
 					)}
 					{runStatus === 'running' && onExitRequest && (
 						<button
 							type="button"
-							className="min-h-[36px] border border-border px-3 py-1.5 font-pixel text-[11px] text-text-secondary"
+							className="min-h-[36px] border border-border px-2 py-1.5 font-pixel text-[11px] text-text-secondary"
 							style={{ background: 'rgba(26,18,8,0.7)' }}
 							onClick={onExitRequest}
 						>

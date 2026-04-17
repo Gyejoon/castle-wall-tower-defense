@@ -327,7 +327,7 @@ describe('GamePage', () => {
 		});
 		const view = render(<GamePage />);
 
-		expect(view.queryByRole('button', { name: /1x ▶/i })).toBeNull();
+		expect(view.queryByRole('button', { name: /배속 1x/i })).toBeNull();
 	});
 
 	it('unlocks 2x speed from selectedStageId highest wave, not selectedMapId', () => {
@@ -342,7 +342,7 @@ describe('GamePage', () => {
 		});
 		const view = render(<GamePage />);
 
-		expect(view.getByRole('button', { name: /1x ▶/i })).toBeTruthy();
+		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();
 	});
 
 	it('resets prep countdown UI when combat starts', () => {

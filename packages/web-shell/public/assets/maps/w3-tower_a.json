@@ -341,39 +341,190 @@
       "type": "objectgroup",
       "objects": [
         {
-          "id": 10000,
+          "id": 300,
           "name": "decor_0",
           "type": "decoration",
-          "x": 160,
-          "y": 0,
-          "width": 32,
-          "height": 32,
+          "x": 96,
+          "y": 288,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
           "properties": [
             {
               "name": "kind",
               "type": "string",
-              "value": "bush"
+              "value": "rock_small"
             },
             {
               "name": "assetKey",
               "type": "string",
-              "value": "tiny-swords-bush-4"
+              "value": "tiny-swords-rock-3"
             },
             {
               "name": "variant",
               "type": "string",
-              "value": "Bushe4.png"
+              "value": "Rock3.png"
             }
           ]
         },
         {
-          "id": 10001,
+          "id": 301,
           "name": "decor_1",
           "type": "decoration",
-          "x": 224,
+          "x": 192,
+          "y": 320,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock3.png"
+            }
+          ]
+        },
+        {
+          "id": 302,
+          "name": "decor_2",
+          "type": "decoration",
+          "x": 0,
           "y": 512,
-          "width": 32,
-          "height": 32,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-4"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock4.png"
+            }
+          ]
+        },
+        {
+          "id": 303,
+          "name": "decor_3",
+          "type": "decoration",
+          "x": 128,
+          "y": 224,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_small"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-4"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock4.png"
+            }
+          ]
+        },
+        {
+          "id": 304,
+          "name": "decor_4",
+          "type": "decoration",
+          "x": 64,
+          "y": 416,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-2"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock2.png"
+            }
+          ]
+        },
+        {
+          "id": 305,
+          "name": "decor_5",
+          "type": "decoration",
+          "x": 0,
+          "y": 416,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "rock_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-rock-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Rock1.png"
+            }
+          ]
+        },
+        {
+          "id": 306,
+          "name": "decor_6",
+          "type": "decoration",
+          "x": 0,
+          "y": 256,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
           "properties": [
             {
               "name": "kind",
@@ -383,12 +534,186 @@
             {
               "name": "assetKey",
               "type": "string",
-              "value": "tiny-swords-bush-4"
+              "value": "tiny-swords-bush-3"
             },
             {
               "name": "variant",
               "type": "string",
-              "value": "Bushe4.png"
+              "value": "Bushe3.png"
+            }
+          ]
+        },
+        {
+          "id": 307,
+          "name": "decor_7",
+          "type": "decoration",
+          "x": 192,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-2"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe2.png"
+            }
+          ]
+        },
+        {
+          "id": 308,
+          "name": "decor_8",
+          "type": "decoration",
+          "x": 160,
+          "y": 224,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe3.png"
+            }
+          ]
+        },
+        {
+          "id": 309,
+          "name": "decor_9",
+          "type": "decoration",
+          "x": 64,
+          "y": 320,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe1.png"
+            }
+          ]
+        },
+        {
+          "id": 310,
+          "name": "decor_10",
+          "type": "decoration",
+          "x": 0,
+          "y": 384,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "bush"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-bush-3"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Bushe3.png"
+            }
+          ]
+        },
+        {
+          "id": 311,
+          "name": "decor_11",
+          "type": "decoration",
+          "x": 160,
+          "y": 96,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "tree_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-tree-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Tree1.png"
+            }
+          ]
+        },
+        {
+          "id": 312,
+          "name": "decor_12",
+          "type": "decoration",
+          "x": 224,
+          "y": 480,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "tree_large"
+            },
+            {
+              "name": "assetKey",
+              "type": "string",
+              "value": "tiny-swords-tree-1"
+            },
+            {
+              "name": "variant",
+              "type": "string",
+              "value": "Tree1.png"
             }
           ]
         }

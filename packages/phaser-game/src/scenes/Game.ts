@@ -122,7 +122,10 @@ export class GameScene extends Phaser.Scene {
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
 	private phaseAOrchestrator?: PhaseAOrchestrator;
-	private onPhaseASummonReady?: (data: { towerId: string }) => void;
+	private onPhaseASummonReady?: (data: {
+		towerId: string;
+		source: 'summon' | 'gacha';
+	}) => void;
 	private onUpgradeApplied?: () => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
@@ -183,6 +186,7 @@ export class GameScene extends Phaser.Scene {
 		slotIndex: number;
 		delaySec: number;
 		cleared: boolean;
+		phase: WavePhase;
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
@@ -423,6 +427,7 @@ export class GameScene extends Phaser.Scene {
 			slotIndex: number;
 			delaySec: number;
 			cleared: boolean;
+			phase: WavePhase;
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);

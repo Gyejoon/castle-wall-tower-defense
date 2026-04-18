@@ -109,8 +109,11 @@ export function PhaseAHud() {
 			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
 		};
 
-		const handleSummonReady = (data: { towerId: string }) => {
-			setPendingSummon(data);
+		const handleSummonReady = (data: {
+			towerId: string;
+			source: 'summon' | 'gacha';
+		}) => {
+			setPendingSummon({ towerId: data.towerId });
 		};
 
 		const handleTowerSummoned = () => {

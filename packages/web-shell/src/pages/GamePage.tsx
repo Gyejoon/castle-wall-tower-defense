@@ -115,10 +115,17 @@ export function GamePage() {
 				id: string;
 				name: string;
 				description: string;
-				icon: string;
+				icon?: string;
 			}>;
 		}) => {
-			setUpgradeChoices(data.choices);
+			setUpgradeChoices(
+				data.choices.map((c) => ({
+					id: c.id,
+					name: c.name,
+					description: c.description,
+					icon: c.icon ?? '',
+				})),
+			);
 		};
 		const handleUpgradeApplied = () => {
 			setUpgradeChoices(null);

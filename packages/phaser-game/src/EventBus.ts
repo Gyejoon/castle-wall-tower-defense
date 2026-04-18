@@ -2,7 +2,9 @@ import type {
 	DeckCardDef,
 	PlacementFailureReason,
 	StarRating,
+	TowerId,
 	UnitType,
+	UpgradeId,
 	WavePhase,
 	WaveSlotKind,
 } from '@gld/shared';
@@ -56,6 +58,9 @@ export interface GameEventMap {
 		slotIndex: number;
 		delaySec: number;
 		cleared: boolean;
+		/** Phase of the wave that just ended. Added in Phase 3/Task 4.0 [F7]
+		 *  so Phase 4 roguelike triggers can distinguish boss vs. combat. */
+		phase: WavePhase;
 	};
 	'boss-warning': {
 		slotIndex: number;
@@ -151,7 +156,15 @@ export interface GameEventMap {
 	'tower-summoned': {
 		col: number;
 		row: number;
-		towerId: string;
+		/** Tower definition id. Typed as TowerId so Phase 4/5 gacha emitters
+		 *  stay type-safe; legacy string call-sites are still assignable. */
+		towerId: TowerId;
+		/** Instance id of the placed tower (new in Task 4.0 [F7]). Currently
+		 *  emitted by PhaseAOrchestrator as empty string if the placement
+		 *  site did not return one; future placement APIs will populate. */
+		instanceId: string;
+		/** Family/tier model (Phase 1). `grade` is removed. */
+		tier: number;
 	};
 	'towers-merged': {
 		col: number;
@@ -175,20 +188,45 @@ export interface GameEventMap {
 		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';
 	};
 	'phase-a-summon-ready': {
-		towerId: string;
+		towerId: TowerId;
+		/** Origin of the drawn tower — normal summon pool or gacha roll.
+		 *  Added in Task 4.0 [F7] ahead of Phase 5 gacha wiring. */
+		source: 'summon' | 'gacha';
 	};
 
 	// === Roguelike Upgrade System (Phase A) ===
 	'upgrade-choice-ready': {
 		choices: Array<{
-			id: string;
+			id: UpgradeId;
 			name: string;
 			description: string;
-			icon: string;
+			icon?: string;
 		}>;
 	};
 	'request-apply-upgrade': { upgradeId: string };
 	'upgrade-applied': { upgradeId: string; totalStacks: number };
+
+	// === Pre-registered for Phase 4/5/8/10 [F7] ===
+	/** Roguelike reroll request — Phase 4 will emit this from the upgrade
+	 *  choice overlay when the user spends a reroll charge. */
+	'request-upgrade-reroll': undefined;
+	/** Ingame gacha summon request at a specific tier. Phase 5 GachaSystem
+	 *  owns the handler. */
+	'request-gacha-summon': { targetTier: 2 | 3 | 4 };
+	/** Emitted when a gacha summon fails because energy is below the tier
+	 *  cost. UI surfaces this as a toast/animation in Phase 5. */
+	'gacha-insufficient-energy': {
+		targetTier: number;
+		cost: number;
+		have: number;
+	};
+	/** Continue-run request after defeat; Phase 10 BM stub shows an ad and
+	 *  restores `livesRestored` HP on success. [F11] */
+	'request-continue-run': { livesRestored: number };
+	/** Emitted when a merge is staged from a tower action sheet — React
+	 *  switches into merge-target-picker mode until the next tower tap.
+	 *  [F10] owns the Phase 8 handler. */
+	'enter-merge-mode': { sourceId: string };
 }
 
 export class TypedEventBus {

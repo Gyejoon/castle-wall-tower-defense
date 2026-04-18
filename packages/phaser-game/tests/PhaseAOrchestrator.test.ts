@@ -82,6 +82,16 @@ function makeFakeTowerSystem() {
 					}
 				: null;
 		}),
+		getTowerAt: vi.fn((col: number, row: number) => {
+			const t = towers.find((x) => x.col === col && x.row === row);
+			return t
+				? {
+						data: { instanceId: t.instanceId, defId: t.towerId },
+						def: { id: t.towerId, tier: t.tier },
+						tier: t.tier,
+					}
+				: null;
+		}),
 		removeTowerAt: vi.fn((col: number, row: number) => {
 			const i = towers.findIndex((x) => x.col === col && x.row === row);
 			if (i < 0) return false;
@@ -129,7 +139,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		const readyCall = getEmits().find(
 			([event]) => event === 'phase-a-summon-ready',
 		);
-		expect(readyCall?.[1]).toEqual({ towerId: 'archer' });
+		expect(readyCall?.[1]).toEqual({ towerId: 'archer', source: 'summon' });
 
 		orch.destroy();
 	});

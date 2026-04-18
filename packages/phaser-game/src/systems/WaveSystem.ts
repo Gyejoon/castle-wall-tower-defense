@@ -132,6 +132,9 @@ export class WaveSystem {
 					slotIndex: currentWave.slotIndex,
 					delaySec: timerExpired ? 0 : currentWave.delayAfterClearSec,
 					cleared,
+					// Task 4.0 [F7]: surface the phase that just ended so Phase 4
+					// roguelike handlers can distinguish boss vs. combat clears.
+					phase: this.phase,
 				});
 
 				// Check if this was the last wave

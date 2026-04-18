@@ -1,5 +1,6 @@
 import {
 	PHASE_A_SUMMON_COST,
+	type TowerId,
 	UPGRADE_CARDS,
 	type UpgradeCardDef,
 	type UpgradeId,
@@ -164,10 +165,16 @@ export class PhaseAOrchestrator {
 		}
 		this.deps.towerSystem.playPhaseASummonVfx(col, row);
 
+		// Task 4.0 [F7]: emit the family/tier payload (grade is gone). The
+		// placed tower record is the source of truth for instanceId; tier
+		// comes via getTowerAt which reads the authoritative TowerInstance.
+		const placed = this.deps.towerSystem.getTowerAt(col, row);
 		EventBus.emit('tower-summoned', {
 			col,
 			row,
-			towerId: pending.towerId,
+			towerId: pending.towerId as TowerId,
+			instanceId: placed?.data.instanceId ?? '',
+			tier: placed?.tier ?? 1,
 		});
 	}
 
@@ -184,7 +191,8 @@ export class PhaseAOrchestrator {
 		}
 
 		EventBus.emit('phase-a-summon-ready', {
-			towerId: this.pendingSummon.towerId,
+			towerId: this.pendingSummon.towerId as TowerId,
+			source: 'summon',
 		});
 	}
 

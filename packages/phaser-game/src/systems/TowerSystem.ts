@@ -21,7 +21,6 @@ import { soundGenerator } from '../audio/SoundGenerator';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
-import type { WorldGimmick } from './world-gimmicks/types';
 
 export interface TowerInstance {
 	data: PlacedTower;
@@ -62,7 +61,6 @@ export class TowerSystem {
 	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
 	private destroyed = false;
-	private worldGimmick: WorldGimmick | null = null;
 	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
@@ -107,10 +105,6 @@ export class TowerSystem {
 		this.attackGraphics.setDepth(10);
 	}
 
-	setWorldGimmick(gimmick: WorldGimmick | null): void {
-		this.worldGimmick = gimmick;
-	}
-
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
 		this.modifierFn = fn;
 	}
@@ -148,13 +142,6 @@ export class TowerSystem {
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
 			return { success: false, reason: 'occupied' };
-		}
-
-		if (
-			this.worldGimmick &&
-			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
-		) {
-			return { success: false, reason: 'gimmick_blocked' };
 		}
 
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
@@ -356,8 +343,7 @@ export class TowerSystem {
 		// Update disabled tint for all towers
 		for (const tower of this.towers.values()) {
 			const isDisabled =
-				(tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) ||
-				(this.worldGimmick !== null && !this.worldGimmick.isTowerActive(tower));
+				tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs;
 			if (isDisabled && tower.sprite.tintTopLeft !== 0x666666) {
 				tower.sprite.setTint(0x666666);
 			} else if (!isDisabled && tower.sprite.tintTopLeft === 0x666666) {
@@ -372,9 +358,6 @@ export class TowerSystem {
 			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
 				continue; // tower is disabled by an enemy ranged attack
 			}
-
-			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
-				continue;
 
 			// Phase 4 redesign: spd_up / range_up cards were removed. Attack
 			// interval and range use the base def directly.
@@ -415,15 +398,9 @@ export class TowerSystem {
 				// multiplier term only.
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
 				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
-				let baseDamage = Math.round(
+				const baseDamage = Math.round(
 					tower.effectiveDamage * elementMult * dmgMod * (1 + critBonus),
 				);
-				if (this.worldGimmick) {
-					const bonus = this.worldGimmick.getDamageBonus(tower);
-					if (bonus > 0) {
-						baseDamage = Math.round(baseDamage * (1 + bonus));
-					}
-				}
 				const special = def.stats.special;
 
 				const slowEffect =
@@ -520,19 +497,13 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
-							let splashDamage = Math.round(
+							const splashDamage = Math.round(
 								tower.effectiveDamage *
 									splashElementMult *
 									0.5 *
 									dmgMod *
 									(1 + critBonus),
 							);
-							if (this.worldGimmick) {
-								const bonus = this.worldGimmick.getDamageBonus(tower);
-								if (bonus > 0) {
-									splashDamage = Math.round(splashDamage * (1 + bonus));
-								}
-							}
 							pendingBatch.push({
 								unitId: unit.instanceId,
 								damage: splashDamage,

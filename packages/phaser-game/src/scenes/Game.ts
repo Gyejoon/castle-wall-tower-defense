@@ -26,7 +26,6 @@ import {
 	UNITS,
 	type WaveDef,
 	type WavePhase,
-	type WorldId,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import {
@@ -86,10 +85,6 @@ import { CastleWallSystem } from '../systems/CastleWallSystem';
 import '../systems/boss-ai/orcWarlord';
 import '../systems/boss-ai/forgeMaster';
 import '../systems/boss-ai/corruptedArchmage';
-import { createWorldGimmick } from '../systems/world-gimmicks/registry';
-import type { WorldGimmick } from '../systems/world-gimmicks/types';
-import '../systems/world-gimmicks/W2FurnaceGimmick';
-import '../systems/world-gimmicks/W3ArcaneGimmick';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
@@ -200,16 +195,6 @@ export class GameScene extends Phaser.Scene {
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
-	private worldGimmick: WorldGimmick | null = null;
-	private furnaceTintOverlays: Phaser.GameObjects.Rectangle[] = [];
-	private onFurnaceCycle!: (data: {
-		active: boolean;
-		tiles: Array<{ x: number; y: number }>;
-	}) => void;
-	private onArcaneBurst!: (data: {
-		area: { startX: number; startY: number; endX: number; endY: number };
-		stunMs: number;
-	}) => void;
 	private bossBehaviors = new Map<string, BossBehavior>(); // key = unit instanceId
 
 	constructor() {
@@ -304,18 +289,9 @@ export class GameScene extends Phaser.Scene {
 			speedMult: starMult.speed,
 			ccResist: starMult.ccResist,
 		});
-		this.worldGimmick = createWorldGimmick(stageDef.worldId as WorldId, {
-			worldId: stageDef.worldId as WorldId,
-			map: this.currentMap,
-			star: selectedStar,
-			eventBus: EventBus,
-			getSceneTimeMs: () => this.scaledGameTime,
-			getTowers: () => this.playerTowers.getAllTowers(),
-		});
-		this.worldGimmick?.init();
-		this.worldGimmick?.onBattleStart();
-		this.playerTowers.setWorldGimmick(this.worldGimmick);
-
+		// Phase 6: world-gimmicks removed. Phase A is the sole mode and
+		// doesn't use per-world mechanics; Phase 7+ may re-introduce
+		// per-obstacle or per-slot mechanics at a different layer.
 		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
 		const isPhaseAMap = this.isPhaseAMap;
 		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
@@ -408,7 +384,6 @@ export class GameScene extends Phaser.Scene {
 			this.currentWaveSlot = data.slotIndex;
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
-			this.worldGimmick?.onWaveStart(data.wave);
 		};
 
 		this.onBossWarning = () => {
@@ -506,69 +481,7 @@ export class GameScene extends Phaser.Scene {
 			this.scene.resume();
 		};
 
-		this.onFurnaceCycle = ({ active, tiles }) => {
-			if (!this.isSceneAlive()) return;
-
-			if (!active) {
-				// OFF transition: fadeOut 300ms then destroy
-				for (const overlay of this.furnaceTintOverlays) {
-					this.tweens.add({
-						targets: overlay,
-						alpha: 0,
-						duration: 300,
-						ease: 'Quad.easeIn',
-						onComplete: () => overlay.destroy(),
-					});
-				}
-				this.furnaceTintOverlays = [];
-				return;
-			}
-
-			// Clear any leftover overlays before creating new ones
-			for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-			this.furnaceTintOverlays = [];
-
-			for (const tile of tiles) {
-				const world = this.playerGrid.gridToWorld(tile.x, tile.y);
-				const size = this.playerGrid.orthoTile;
-				const rect = this.add.rectangle(
-					world.x,
-					world.y,
-					size,
-					size,
-					0xcc6600,
-					0.3,
-				);
-				rect.setDepth(0.5);
-				this.furnaceTintOverlays.push(rect);
-				this.tweens.add({
-					targets: rect,
-					alpha: { from: 0, to: 0.3 },
-					duration: 200,
-					ease: 'Quad.easeOut',
-				});
-			}
-		};
-
-		this.onArcaneBurst = ({ area, stunMs: _stunMs }) => {
-			if (!this.isSceneAlive()) return;
-			const topLeft = this.playerGrid.gridToWorld(area.startX, area.startY);
-			const bottomRight = this.playerGrid.gridToWorld(area.endX, area.endY);
-			const tileSize = this.playerGrid.orthoTile;
-			const cx = (topLeft.x + bottomRight.x) / 2;
-			const cy = (topLeft.y + bottomRight.y) / 2;
-			const w = bottomRight.x - topLeft.x + tileSize;
-			const h = bottomRight.y - topLeft.y + tileSize;
-			const flash = this.add.rectangle(cx, cy, w, h, 0x8040c0, 0.4);
-			flash.setDepth(0.9);
-			this.tweens.add({
-				targets: flash,
-				alpha: 0,
-				duration: 600,
-				ease: 'Quad.easeOut',
-				onComplete: () => flash.destroy(),
-			});
-		};
+		// Phase 6: furnace/arcane gimmick VFX removed with world-gimmicks.
 
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
@@ -581,8 +494,6 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
-		EventBus.on('furnace-cycle', this.onFurnaceCycle);
-		EventBus.on('arcane-burst', this.onArcaneBurst);
 
 		// Phase A upgrade flow: resume game after player picks an upgrade
 		if (isPhaseAMap) {
@@ -925,10 +836,6 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
-		EventBus.off('furnace-cycle', this.onFurnaceCycle);
-		EventBus.off('arcane-burst', this.onArcaneBurst);
-		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-		this.furnaceTintOverlays = [];
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
@@ -1111,7 +1018,6 @@ export class GameScene extends Phaser.Scene {
 		const scaledDelta = delta * this.speedMultiplier;
 		this.scaledGameTime += scaledDelta;
 
-		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
 		// Phase A: energy from kills only, no time-based regen
@@ -1299,8 +1205,6 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
-		EventBus.off('furnace-cycle', this.onFurnaceCycle);
-		EventBus.off('arcane-burst', this.onArcaneBurst);
 		if (this.onUpgradeApplied) {
 			EventBus.off('upgrade-applied', this.onUpgradeApplied);
 		}
@@ -1311,14 +1215,8 @@ export class GameScene extends Phaser.Scene {
 		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();
 
-		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-		this.furnaceTintOverlays = [];
-
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
-
-		this.worldGimmick?.destroy();
-		this.worldGimmick = null;
 
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();

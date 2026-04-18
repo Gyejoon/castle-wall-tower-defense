@@ -135,12 +135,8 @@ export interface GameEventMap {
 	'request-start-game-from-stage': { mapId: string };
 	'request-deck-edit': undefined;
 
-	// Gimmick VFX
-	'furnace-cycle': { active: boolean; tiles: Array<{ x: number; y: number }> };
-	'arcane-burst': {
-		area: { startX: number; startY: number; endX: number; endY: number };
-		stunMs: number;
-	};
+	// Phase 6: furnace-cycle / arcane-burst events removed with
+	// world-gimmicks. Scenario-only; Phase A has no per-world effects.
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;

@@ -1,188 +1,75 @@
 import { EventBus } from '@gld/phaser-game';
-import {
-	ALL_TOWERS,
-	getPhaseARefund,
-	INGAME_GACHA,
-	PHASE_A_SUMMON_COST,
-} from '@gld/shared';
+import { INGAME_GACHA, PHASE_A_SUMMON_COST } from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
+import { PauseModal } from './PauseModal';
 
-const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
-
-/** Phase 5 — T2/T3/T4 gacha tiers surfaced as separate HUD buttons.
- *  Phase 8 redesigns the layout; this is the functional minimum. */
+/** Phase 8 redesign — basic summon + T2/T3/T4 gacha + menu in a fixed
+ *  bottom action bar, plus compact info badges above for quick glance. */
 const GACHA_TIERS = [2, 3, 4] as const;
 
-interface FirstPick {
-	col: number;
-	row: number;
-	towerName: string;
-	refund: number;
-	tier: number;
-}
-
-interface PendingSummon {
-	towerId: string;
-}
-
-/**
- * Phase 1: grade display was removed from the HUD — Phase 8 will redo this
- * panel against the family/tier model (tier badge, merge preview, etc.).
- */
 export function PhaseAHud() {
-	const [firstPick, setFirstPick] = useState<FirstPick | null>(null);
-	const firstPickRef = useRef<FirstPick | null>(null);
-	const [pendingSummon, setPendingSummon] = useState<PendingSummon | null>(
-		null,
-	);
-	const [movingTower, setMovingTower] = useState<{
-		col: number;
-		row: number;
-	} | null>(null);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
-	// Phase 4 redesign: summon cost is a constant now. `summon_discount` card
-	// was removed; any future cost-modifier (e.g. gacha-triggered discount)
-	// can restore setter state when it ships.
+	const wave = useGameStore((s) => s.wave);
+	const lives = useGameStore((s) => s.lives);
 	const summonCost = PHASE_A_SUMMON_COST;
 	const canAfford = energy >= summonCost;
 
-	useEffect(() => {
-		firstPickRef.current = firstPick;
-	}, [firstPick]);
+	const [paused, setPaused] = useState(false);
+	// [F21] gacha "insufficient energy" flash — per-tier timer refs so
+	//       overlapping flashes don't clobber each other.
+	const [flashingTier, setFlashingTier] = useState<number | null>(null);
+	const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
-		const handleTowerSelected = (data: {
-			towerDefId: string;
-			towerName: string;
-			col: number;
-			row: number;
-			refund: number;
-			tier: number;
-		}) => {
-			setMovingTower(null);
-			const first = firstPickRef.current;
-			if (first === null) {
-				firstPickRef.current = {
-					col: data.col,
-					row: data.row,
-					towerName: data.towerName,
-					refund: getPhaseARefund(),
-					tier: data.tier,
-				};
-				setFirstPick(firstPickRef.current);
-				return;
-			}
-			if (first.col === data.col && first.row === data.row) {
-				firstPickRef.current = null;
-				setFirstPick(null);
-				return;
-			}
-			EventBus.emit('request-merge-towers', {
-				fromCol: first.col,
-				fromRow: first.row,
-				toCol: data.col,
-				toRow: data.row,
-			});
-			firstPickRef.current = null;
-			setFirstPick(null);
-		};
-
-		const handleTowerDeselected = () => {
-			firstPickRef.current = null;
-			setFirstPick(null);
-			setMovingTower(null);
-		};
-
-		const handleTowerMoved = () => {
-			setMovingTower(null);
-			firstPickRef.current = null;
-			setFirstPick(null);
-			pushToast('타워 이동 완료', 'success');
-		};
-
-		const handleMoveFailed = () => {
-			setMovingTower(null);
-			pushToast('이동 불가', 'warning');
-		};
-
-		const handleMerged = (data: { toTowerId: string; toTier: number }) => {
-			firstPickRef.current = null;
-			setFirstPick(null);
-			const name = TOWER_NAME_MAP.get(data.toTowerId) ?? data.toTowerId;
-			pushToast(`합성 성공 → ${name} (T${data.toTier})`, 'success');
-		};
-
-		const handleMergeFailed = (data: { reason: string }) => {
-			firstPickRef.current = null;
-			setFirstPick(null);
-			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
-		};
-
-		const handleSummonReady = (data: {
-			towerId: string;
-			source: 'summon' | 'gacha';
-		}) => {
-			setPendingSummon({ towerId: data.towerId });
-		};
-
-		const handleTowerSummoned = () => {
-			setPendingSummon(null);
-		};
-
-		const handleSummonFailed = (data: { reason: string }) => {
-			setPendingSummon(null);
-			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
-		};
-
-		// Phase 4 redesign: the old `summon_discount` card is gone, so the HUD
-		// no longer needs to react to `upgrade-applied` for cost changes. The
-		// handler is kept as a no-op so the subscribe/unsubscribe pair matches
-		// and future cards (e.g. Phase 5 gacha tier) can slot in cleanly.
-		const handleUpgradeApplied = (_data: {
-			upgradeId: string;
-			totalStacks: number;
-		}) => {
-			// no-op
-		};
-
 		const handleGachaInsufficient = (data: {
 			targetTier: number;
 			cost: number;
 			have: number;
 		}) => {
+			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+			setFlashingTier(data.targetTier);
+			flashTimerRef.current = setTimeout(() => {
+				setFlashingTier(null);
+				flashTimerRef.current = null;
+			}, 500);
 			pushToast(
 				`가챠 T${data.targetTier} 에너지 부족 (${data.have}/${data.cost})`,
 				'warning',
 			);
 		};
 
-		EventBus.on('tower-selected', handleTowerSelected);
-		EventBus.on('tower-deselected', handleTowerDeselected);
-		EventBus.on('towers-merged', handleMerged);
-		EventBus.on('merge-failed', handleMergeFailed);
-		EventBus.on('phase-a-summon-ready', handleSummonReady);
-		EventBus.on('tower-summoned', handleTowerSummoned);
-		EventBus.on('summon-failed', handleSummonFailed);
+		const handleSummonFailed = (data: { reason: string }) => {
+			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
+		};
+
+		const handleMergeFailed = (data: { reason: string }) => {
+			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
+		};
+
+		const handleMoveFailed = () => {
+			pushToast('이동 불가', 'warning');
+		};
+
+		const handleTowerMoved = () => {
+			pushToast('타워 이동 완료', 'success');
+		};
+
 		EventBus.on('gacha-insufficient-energy', handleGachaInsufficient);
-		EventBus.on('upgrade-applied', handleUpgradeApplied);
-		EventBus.on('tower-moved', handleTowerMoved);
+		EventBus.on('summon-failed', handleSummonFailed);
+		EventBus.on('merge-failed', handleMergeFailed);
 		EventBus.on('move-failed', handleMoveFailed);
+		EventBus.on('tower-moved', handleTowerMoved);
 
 		return () => {
-			EventBus.off('tower-selected', handleTowerSelected);
-			EventBus.off('tower-deselected', handleTowerDeselected);
-			EventBus.off('towers-merged', handleMerged);
-			EventBus.off('merge-failed', handleMergeFailed);
-			EventBus.off('phase-a-summon-ready', handleSummonReady);
-			EventBus.off('tower-summoned', handleTowerSummoned);
-			EventBus.off('summon-failed', handleSummonFailed);
 			EventBus.off('gacha-insufficient-energy', handleGachaInsufficient);
-			EventBus.off('upgrade-applied', handleUpgradeApplied);
-			EventBus.off('tower-moved', handleTowerMoved);
+			EventBus.off('summon-failed', handleSummonFailed);
+			EventBus.off('merge-failed', handleMergeFailed);
 			EventBus.off('move-failed', handleMoveFailed);
+			EventBus.off('tower-moved', handleTowerMoved);
+			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
 		};
 	}, [pushToast]);
 
@@ -194,230 +81,199 @@ export function PhaseAHud() {
 		EventBus.emit('request-summon-tower');
 	}, [canAfford, pushToast]);
 
-	const handleCancelSummon = useCallback(() => {
-		setPendingSummon(null);
-		EventBus.emit('request-clear-tower-selection');
+	const handleMenuOpen = useCallback(() => {
+		setPaused(true);
+		EventBus.emit('request-pause');
 	}, []);
 
-	const handleCancelMerge = useCallback(() => {
-		firstPickRef.current = null;
-		setFirstPick(null);
-		EventBus.emit('request-clear-tower-selection');
+	const handleMenuClose = useCallback(() => {
+		setPaused(false);
 	}, []);
-
-	const towerThumb = pendingSummon
-		? `assets/towers/${pendingSummon.towerId}.webp`
-		: null;
-	const towerName = pendingSummon
-		? (TOWER_NAME_MAP.get(pendingSummon.towerId) ?? pendingSummon.towerId)
-		: null;
 
 	return (
-		<div
-			data-testid="phase-a-hud"
-			className="h-[110px] shrink-0 border-t border-border px-3 pt-2 flex items-center justify-between gap-3"
+		<>
+			<div
+				data-testid="phase-a-hud"
+				className="relative h-[110px] shrink-0"
+				style={{ background: 'var(--color-bg-95)' }}
+			>
+				{/* Info badges — quick-glance ⚡ energy / W wave / 🛡 lives */}
+				<div
+					data-testid="phase-a-info-badges"
+					className="absolute top-[8px] left-[8px] right-[8px] z-[1] flex items-center gap-2 pointer-events-none"
+				>
+					<InfoBadge testId="phase-a-badge-energy" icon="⚡" value={energy} />
+					<InfoBadge testId="phase-a-badge-wave" icon="W" value={wave} />
+					<InfoBadge testId="phase-a-badge-lives" icon="🛡" value={lives} />
+				</div>
+
+				{/* Bottom fixed action bar: summon (primary) + T2/T3/T4 + menu */}
+				<div
+					data-testid="phase-a-action-bar"
+					className="absolute bottom-0 left-0 right-0 flex gap-1 px-2 border-t"
+					style={{
+						background: 'var(--color-bg-95)',
+						borderColor: 'var(--color-border)',
+						paddingTop: '36px',
+						paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
+					}}
+				>
+					<SummonButton
+						disabled={!canAfford}
+						cost={summonCost}
+						onClick={handleSummon}
+					/>
+					{GACHA_TIERS.map((tier) => {
+						const config = INGAME_GACHA[`tier${tier}` as const];
+						const disabled = energy < config.cost;
+						return (
+							<GachaButton
+								key={tier}
+								tier={tier}
+								cost={config.cost}
+								rate={Math.round(config.successRate * 100)}
+								disabled={disabled}
+								flashing={flashingTier === tier}
+								onClick={() =>
+									EventBus.emit('request-gacha-summon', { targetTier: tier })
+								}
+							/>
+						);
+					})}
+					<MenuButton onClick={handleMenuOpen} />
+				</div>
+			</div>
+			<PauseModal open={paused} onResume={handleMenuClose} />
+		</>
+	);
+}
+
+interface InfoBadgeProps {
+	testId: string;
+	icon: string;
+	value: number;
+}
+
+function InfoBadge({ testId, icon, value }: InfoBadgeProps) {
+	return (
+		<span
+			data-testid={testId}
+			className="font-pixel text-[10px] px-1.5 py-[1px] rounded-sm border"
 			style={{
-				background: 'var(--color-bg-95)',
-				paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
+				background: 'var(--color-panel-85)',
+				borderColor: 'var(--color-border)',
+				color: 'var(--color-text)',
 			}}
 		>
-			<div className="flex flex-col gap-1 min-w-0 flex-1">
-				<span className="font-pixel text-[10px] text-text-secondary tracking-[0.04em]">
-					Phase A — 랜덤 소환 + 합성
-				</span>
+			<span className="mr-1">{icon}</span>
+			{value}
+		</span>
+	);
+}
 
-				{pendingSummon !== null ? (
-					<>
-						<div className="flex items-center gap-2">
-							{towerThumb && (
-								<img
-									src={towerThumb}
-									alt=""
-									width={24}
-									height={24}
-									className="[image-rendering:pixelated]"
-								/>
-							)}
-							<span className="font-pixel text-[11px] text-gold">
-								{towerName} — 배치할 위치를 탭
-							</span>
-						</div>
-						<button
-							type="button"
-							onClick={handleCancelSummon}
-							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
-						>
-							취소
-						</button>
-					</>
-				) : movingTower !== null ? (
-					<>
-						<span className="font-pixel text-[11px] text-gold">
-							이동할 위치를 탭하세요
-						</span>
-						<button
-							type="button"
-							onClick={() => {
-								setMovingTower(null);
-								EventBus.emit('request-clear-tower-selection');
-							}}
-							className="self-start font-pixel text-[10px] text-text-secondary underline mt-0.5"
-						>
-							취소
-						</button>
-					</>
-				) : firstPick !== null ? (
-					<>
-						<div className="flex items-center gap-2">
-							<span
-								data-testid="phase-a-tier-badge"
-								className="font-pixel text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/40 px-1.5 py-[1px] rounded-sm"
-							>
-								T{firstPick.tier}
-							</span>
-							<span className="font-pixel text-[11px] text-gold">
-								{firstPick.towerName} · 짝을 탭하세요
-							</span>
-						</div>
-						<div className="flex items-center gap-3 mt-0.5">
-							<button
-								type="button"
-								onClick={handleCancelMerge}
-								className="font-pixel text-[10px] text-text-secondary underline"
-							>
-								취소
-							</button>
-							<button
-								type="button"
-								onClick={() => {
-									setMovingTower({
-										col: firstPick.col,
-										row: firstPick.row,
-									});
-									firstPickRef.current = null;
-									setFirstPick(null);
-									EventBus.emit('request-enter-move-mode', {
-										fromCol: firstPick.col,
-										fromRow: firstPick.row,
-									});
-								}}
-								className="font-pixel text-[10px] text-accent underline"
-							>
-								이동
-							</button>
-							<button
-								type="button"
-								onClick={() => {
-									EventBus.emit('request-sell-tower', {
-										col: firstPick.col,
-										row: firstPick.row,
-									});
-									firstPickRef.current = null;
-									setFirstPick(null);
-								}}
-								className="font-pixel text-[10px] text-danger underline"
-							>
-								판매 +{firstPick.refund}
-							</button>
-						</div>
-					</>
-				) : (
-					<span className="font-pixel text-[11px] text-text">
-						타워 두 개를 차례로 탭 → 합성
-					</span>
-				)}
-			</div>
+interface SummonButtonProps {
+	disabled: boolean;
+	cost: number;
+	onClick: () => void;
+}
 
-			<div
-				data-testid="phase-a-gacha-row"
-				className="flex flex-col gap-1 shrink-0"
-			>
-				{GACHA_TIERS.map((tier) => {
-					const config = INGAME_GACHA[`tier${tier}` as const];
-					const gachaDisabled = energy < config.cost;
-					return (
-						<button
-							key={tier}
-							type="button"
-							data-testid={`phase-a-gacha-t${tier}`}
-							onClick={() =>
-								EventBus.emit('request-gacha-summon', { targetTier: tier })
-							}
-							disabled={gachaDisabled}
-							aria-disabled={gachaDisabled}
-							className={cn(
-								'h-[24px] px-2 bg-panel border flex items-center justify-between gap-2 font-pixel text-[10px] transition-transform',
-								gachaDisabled
-									? 'border-border opacity-40 cursor-not-allowed text-text-secondary'
-									: 'border-amber-400/60 text-amber-200 active:scale-95',
-							)}
-						>
-							<span>T{tier}</span>
-							<span className="inline-flex items-center gap-[2px]">
-								<img
-									src="assets/ui/icon-energy.webp"
-									alt=""
-									width={8}
-									height={8}
-									className="[image-rendering:pixelated]"
-								/>
-								{config.cost}
-							</span>
-							<span className="text-[9px] opacity-80">
-								{Math.round(config.successRate * 100)}%
-							</span>
-						</button>
-					);
-				})}
-			</div>
+function SummonButton({ disabled, cost, onClick }: SummonButtonProps) {
+	return (
+		<button
+			type="button"
+			data-testid="phase-a-summon-button"
+			onClick={onClick}
+			disabled={disabled}
+			aria-disabled={disabled}
+			className={cn(
+				'flex-[2] h-[72px] border-2 flex flex-col items-center justify-center gap-0.5 font-pixel transition-transform',
+				disabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95',
+			)}
+			style={{
+				background: disabled ? 'var(--color-panel)' : 'var(--color-accent-20)',
+				borderColor: disabled ? 'var(--color-border)' : 'var(--color-gold)',
+				color: disabled ? 'var(--color-text-secondary)' : 'var(--color-gold)',
+			}}
+		>
+			<span className="text-[13px]">소환</span>
+			<span className="text-[10px]">⚡{cost}</span>
+		</button>
+	);
+}
 
-			<button
-				type="button"
-				data-testid="phase-a-summon-button"
-				onClick={handleSummon}
-				disabled={!canAfford || pendingSummon !== null}
-				aria-disabled={!canAfford || pendingSummon !== null}
-				className={cn(
-					'h-[80px] w-[100px] bg-panel border-2 flex flex-col items-center justify-center gap-1 transition-transform',
-					canAfford && !pendingSummon
-						? 'border-gold shadow-[0_0_8px_var(--color-gold)] active:scale-95'
-						: 'border-border opacity-40 cursor-not-allowed',
-				)}
-			>
-				<img
-					src="assets/ui/icon-sword.webp"
-					alt=""
-					width={28}
-					height={28}
-					className="[image-rendering:pixelated]"
-				/>
-				<span
-					className={cn(
-						'font-pixel text-[12px]',
-						canAfford && !pendingSummon ? 'text-gold' : 'text-text-secondary',
-					)}
-				>
-					소환
-				</span>
-				<span className="inline-flex items-center gap-[2px]">
-					<img
-						src="assets/ui/icon-energy.webp"
-						alt=""
-						width={10}
-						height={10}
-						className="[image-rendering:pixelated]"
-					/>
-					<span
-						className={cn(
-							'font-pixel text-[11px]',
-							canAfford ? 'text-gold' : 'text-danger',
-						)}
-					>
-						{summonCost}
-					</span>
-				</span>
-			</button>
-		</div>
+interface GachaButtonProps {
+	tier: number;
+	cost: number;
+	rate: number;
+	disabled: boolean;
+	flashing: boolean;
+	onClick: () => void;
+}
+
+function GachaButton({
+	tier,
+	cost,
+	rate,
+	disabled,
+	flashing,
+	onClick,
+}: GachaButtonProps) {
+	return (
+		<button
+			type="button"
+			data-testid={`phase-a-gacha-t${tier}`}
+			onClick={onClick}
+			disabled={disabled}
+			aria-disabled={disabled}
+			className={cn(
+				'flex-1 h-[72px] border-2 flex flex-col items-center justify-center gap-0.5 font-pixel transition-transform',
+				disabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95',
+			)}
+			style={{
+				background: flashing
+					? 'var(--color-danger-20)'
+					: disabled
+						? 'var(--color-panel)'
+						: 'var(--color-panel-95)',
+				borderColor: flashing
+					? 'var(--color-danger)'
+					: disabled
+						? 'var(--color-border)'
+						: 'var(--color-accent)',
+				color: flashing
+					? 'var(--color-danger)'
+					: disabled
+						? 'var(--color-text-secondary)'
+						: 'var(--color-accent)',
+			}}
+		>
+			<span className="text-[12px]">T{tier}</span>
+			<span className="text-[9px]">⚡{cost}</span>
+			<span className="text-[9px] opacity-80">{rate}%</span>
+		</button>
+	);
+}
+
+interface MenuButtonProps {
+	onClick: () => void;
+}
+
+function MenuButton({ onClick }: MenuButtonProps) {
+	return (
+		<button
+			type="button"
+			data-testid="phase-a-menu-button"
+			onClick={onClick}
+			aria-label="메뉴"
+			className="w-[60px] h-[72px] border-2 flex items-center justify-center font-pixel text-[16px] active:scale-95 transition-transform"
+			style={{
+				background: 'var(--color-panel)',
+				borderColor: 'var(--color-border)',
+				color: 'var(--color-text-secondary)',
+			}}
+		>
+			≡
+		</button>
 	);
 }
 

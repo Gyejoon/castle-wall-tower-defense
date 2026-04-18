@@ -139,4 +139,64 @@ describe('PhaseAHud gacha buttons', () => {
 		expect(t3.disabled).toBe(true);
 		expect(t4.disabled).toBe(true);
 	});
+
+	it('[Phase 8] renders info badges for energy, wave, lives', () => {
+		act(() => {
+			useGameStore.setState({ energy: 80, wave: 7, lives: 15 });
+		});
+
+		render(<PhaseAHud />);
+
+		expect(screen.getByTestId('phase-a-badge-energy').textContent).toContain(
+			'80',
+		);
+		expect(screen.getByTestId('phase-a-badge-wave').textContent).toContain('7');
+		expect(screen.getByTestId('phase-a-badge-lives').textContent).toContain(
+			'15',
+		);
+	});
+
+	it('[Phase 8] summon button emits request-summon-tower when affordable', () => {
+		act(() => {
+			useGameStore.setState({ energy: 100 });
+		});
+
+		render(<PhaseAHud />);
+
+		const btn = screen.getByTestId(
+			'phase-a-summon-button',
+		) as HTMLButtonElement;
+		expect(btn.disabled).toBe(false);
+		act(() => {
+			btn.click();
+		});
+
+		const { emitSpy } = getHarness();
+		const summonCalls = emitSpy.mock.calls.filter(
+			([evt]) => evt === 'request-summon-tower',
+		);
+		expect(summonCalls.length).toBe(1);
+	});
+
+	it('[Phase 8] menu button opens pause modal and emits request-pause', () => {
+		act(() => {
+			useGameStore.setState({ energy: 50 });
+		});
+
+		render(<PhaseAHud />);
+
+		const menuBtn = screen.getByTestId(
+			'phase-a-menu-button',
+		) as HTMLButtonElement;
+		act(() => {
+			menuBtn.click();
+		});
+
+		expect(screen.getByTestId('pause-modal')).toBeDefined();
+		const { emitSpy } = getHarness();
+		const pauseCalls = emitSpy.mock.calls.filter(
+			([evt]) => evt === 'request-pause',
+		);
+		expect(pauseCalls.length).toBe(1);
+	});
 });

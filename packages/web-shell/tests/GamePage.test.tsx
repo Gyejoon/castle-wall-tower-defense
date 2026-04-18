@@ -170,7 +170,9 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		expect(view.getByText('60')).toBeTruthy();
+		// Phase 8 [8.2]: energy 60 shows in both TopHud and the PhaseAHud
+		// info badge, so getAllByText disambiguates the match.
+		expect(view.getAllByText('60').length).toBeGreaterThan(0);
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
 		// Phase 6: scenario deck dock removed. Phase A HUD is always mounted.
 		expect(view.queryByTestId('deck-dock')).toBeNull();

@@ -212,6 +212,12 @@ export interface GameEventMap {
 	/** Continue-run request after defeat; Phase 10 BM stub shows an ad and
 	 *  restores `livesRestored` HP on success. [F11] */
 	'request-continue-run': { livesRestored: number };
+	/** Emitted by `PhaseAOrchestrator` after a successful continue — the
+	 *  orchestrator has validated the ad reward and decided to revive the
+	 *  run. Game.ts reverses its game-over state (lives, gameOver flag,
+	 *  lifecycle subscriptions) and the React layer drops the GameOverScreen
+	 *  in response. [F11] */
+	'game-resumed': { livesRestored: number };
 	/** Emitted when a merge is staged from a tower action sheet — React
 	 *  switches into merge-target-picker mode until the next tower tap.
 	 *  [F10] owns the Phase 8 handler. */

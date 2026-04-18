@@ -631,3 +631,79 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		orch.destroy();
 	});
 });
+
+describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]', () => {
+	it('request-continue-run (adService rewarded) → emits game-resumed with livesRestored', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: {
+				watchAd: vi.fn().mockResolvedValue('rewarded'),
+			},
+		});
+
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		const resumedEmits = getEmits().filter(([e]) => e === 'game-resumed');
+		expect(resumedEmits.length).toBe(1);
+		expect(resumedEmits[0][1]).toEqual({ livesRestored: 5 });
+		expect(orch.getContinueCount()).toBe(1);
+		orch.destroy();
+	});
+
+	it('request-continue-run (adService skipped) → no game-resumed, counter rewound for retry', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const watchAd = vi.fn().mockResolvedValue('skipped');
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: { watchAd },
+		});
+
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(0);
+		expect(orch.getContinueCount()).toBe(0);
+		expect(watchAd).toHaveBeenCalledTimes(1);
+
+		// Retry with a rewarded result should now succeed since the counter
+		// was rewound.
+		watchAd.mockResolvedValueOnce('rewarded');
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(1);
+		expect(orch.getContinueCount()).toBe(1);
+		orch.destroy();
+	});
+
+	it('request-continue-run beyond cap (PHASE_A_MAX_CONTINUES_PER_RUN) → rejected, no ad call', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const watchAd = vi.fn().mockResolvedValue('rewarded');
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: { watchAd },
+		});
+
+		// First continue consumes the only slot.
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+		expect(orch.getContinueCount()).toBe(1);
+		const firstWatchCallCount = watchAd.mock.calls.length;
+
+		// Second attempt should short-circuit before touching the ad service.
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+		expect(orch.getContinueCount()).toBe(1);
+		expect(watchAd.mock.calls.length).toBe(firstWatchCallCount);
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(1);
+		orch.destroy();
+	});
+});

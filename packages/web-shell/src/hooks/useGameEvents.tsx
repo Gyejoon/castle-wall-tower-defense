@@ -80,6 +80,17 @@ export function useGameEvents() {
 			meta.recordBattle(data.result);
 			meta.updateHighestWave(data.stats.wavesCleared);
 		};
+		// Phase 10 Task 10.3 [F11] — scene revival after a rewarded continue.
+		// Reverses the `onGameOver` state so the GameOverScreen unmounts and
+		// HUD returns to wave/building lifecycle.
+		const onGameResumed = (data: { livesRestored: number }) => {
+			setLives(data.livesRestored);
+			setGameOverStats(null);
+			// `running` is the post-prep wave phase; `onWaveStarted` will
+			// reconfirm once the next wave fires. Using `running` here is a
+			// beat earlier but avoids flashing `building` → `running`.
+			setRunStatus('running');
+		};
 		const onWaveStarted = (data: {
 			wave: number;
 			totalWaves: number;
@@ -232,6 +243,7 @@ export function useGameEvents() {
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
+		EventBus.on('game-resumed', onGameResumed);
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
 		EventBus.on('deck-loaded', onDeckLoaded);
@@ -266,6 +278,7 @@ export function useGameEvents() {
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
+			EventBus.off('game-resumed', onGameResumed);
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
 			EventBus.off('deck-loaded', onDeckLoaded);

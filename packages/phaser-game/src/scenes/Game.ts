@@ -104,6 +104,7 @@ export class GameScene extends Phaser.Scene {
 		source: 'summon' | 'gacha';
 	}) => void;
 	private onUpgradeApplied?: () => void;
+	private onGameResumed?: (data: { livesRestored: number }) => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
@@ -467,6 +468,39 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('request-resume');
 			};
 			EventBus.on('upgrade-applied', this.onUpgradeApplied);
+
+			// Phase 10 Task 10.3 [F11]: on a successful continue-run the
+			// orchestrator emits `game-resumed`. We reverse the partial
+			// shutdown performed by `emitGameOver` so wave ticks and HP
+			// updates flow again.
+			//
+			// TODO(phase-12): preserve placed towers across game-over so
+			// continue truly restores the pre-defeat board. Currently
+			// `playerTowers.destroy()` has already run, so the player
+			// rebuilds their board after continue.
+			this.onGameResumed = (data) => {
+				if (!this.isSceneAlive()) return;
+				this.gameOver = false;
+				this.playerHp = Math.max(1, data.livesRestored);
+				EventBus.emit('base-hp-changed', {
+					hp: this.playerHp,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(this.playerHp);
+				// Re-subscribe the wave lifecycle handlers that emitGameOver
+				// tore down so future wave-started / wave-completed events
+				// keep HUD state coherent.
+				EventBus.off('wave-started', this.onWaveStartedLifecycle);
+				EventBus.on('wave-started', this.onWaveStartedLifecycle);
+				EventBus.off('boss-warning', this.onBossWarning);
+				EventBus.on('boss-warning', this.onBossWarning);
+				EventBus.off('wave-completed', this.onWaveCompleted);
+				EventBus.on('wave-completed', this.onWaveCompleted);
+				EventBus.off('request-set-speed', this.onSetSpeed);
+				EventBus.on('request-set-speed', this.onSetSpeed);
+			};
+			EventBus.on('game-resumed', this.onGameResumed);
 		}
 
 		EventBus.emit('game-ready');
@@ -1193,6 +1227,9 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('request-set-speed', this.onSetSpeed);
 		if (this.onUpgradeApplied) {
 			EventBus.off('upgrade-applied', this.onUpgradeApplied);
+		}
+		if (this.onGameResumed) {
+			EventBus.off('game-resumed', this.onGameResumed);
 		}
 		if (this.onPhaseASummonReady) {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);

@@ -80,6 +80,14 @@ export interface PhaseAOrchestratorDeps {
 export const UPGRADE_MAX_STACKS = 10;
 
 /**
+ * Max `request-continue-run` grants per run (Phase 10 Task 10.3 [F11]).
+ * Starts at 1 — single rescue per defeat feels generous without trivialising
+ * the loss state. If live data shows players expect more revives, bump this
+ * via design-time config in Phase 12.
+ */
+export const PHASE_A_MAX_CONTINUES_PER_RUN = 1;
+
+/**
  * Phase A pivot wiring. Owns SummonPoolSystem + MergeSystem and bridges
  * them to TowerSystem via EventBus.
  *
@@ -98,6 +106,10 @@ export class PhaseAOrchestrator {
 	private activeUpgrades: Map<UpgradeId, number> = new Map();
 	private energyRegenTimer = 0;
 	private pendingChoices: UpgradeCard[] | null = null;
+	/** Phase 10 Task 10.3 [F11]: number of continues granted for this run.
+	 *  Capped at `PHASE_A_MAX_CONTINUES_PER_RUN`. Reset whenever the scene
+	 *  boots a new PhaseAOrchestrator (i.e. a fresh run). */
+	private continueCount = 0;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
 	private readonly onGachaRequest = (data: { targetTier: 2 | 3 | 4 }): void =>
@@ -117,6 +129,11 @@ export class PhaseAOrchestrator {
 	private readonly onRerollRequest = (): void => {
 		void this.handleRerollRequest();
 	};
+	private readonly onContinueRequest = (data: {
+		livesRestored: number;
+	}): void => {
+		void this.handleContinueRequest(data);
+	};
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
@@ -135,6 +152,8 @@ export class PhaseAOrchestrator {
 		EventBus.on('request-apply-upgrade', this.onApplyUpgrade);
 		EventBus.off('request-upgrade-reroll', this.onRerollRequest);
 		EventBus.on('request-upgrade-reroll', this.onRerollRequest);
+		EventBus.off('request-continue-run', this.onContinueRequest);
+		EventBus.on('request-continue-run', this.onContinueRequest);
 	}
 
 	getSummonPool(): SummonPoolSystem {
@@ -150,6 +169,7 @@ export class PhaseAOrchestrator {
 		EventBus.off('request-clear-tower-selection', this.onClearSelection);
 		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
 		EventBus.off('request-upgrade-reroll', this.onRerollRequest);
+		EventBus.off('request-continue-run', this.onContinueRequest);
 	}
 
 	hasPendingSummon(): boolean {
@@ -300,6 +320,52 @@ export class PhaseAOrchestrator {
 	 * it until Phase 10 lands. On success, emit a fresh `upgrade-choice-ready`
 	 * with a new distinct pick.
 	 */
+	/**
+	 * Phase 10 Task 10.3 [F11] — continue-run pipeline.
+	 *
+	 * GameOverScreen emits `request-continue-run` after a rewarded ad. The
+	 * orchestrator owns the revival decision (cap, re-check the ad reward so
+	 * tests can substitute a non-rewarding `adService`, then emit
+	 * `game-resumed`). Game.ts and the React layer subscribe to
+	 * `game-resumed` to reverse their game-over state. Because the GameOver
+	 * emit path runs `playerTowers.destroy()`, the currently shipped revival
+	 * is a "soft" continue — lives restored, wave ticks resume, but placed
+	 * towers are gone.
+	 *
+	 * TODO(phase-12): preserve placed towers across the game-over emit so
+	 * continue truly restores the pre-defeat board state. Requires splitting
+	 * `emitGameOver` into "freeze + announce" and "commit defeat" phases.
+	 */
+	private async handleContinueRequest(data: {
+		livesRestored: number;
+	}): Promise<void> {
+		if (this.continueCount >= PHASE_A_MAX_CONTINUES_PER_RUN) {
+			// Cap reached — no second revive from the same run.
+			return;
+		}
+		this.continueCount += 1;
+		const adService = this.deps.adService as PhaseAAdServiceApi | undefined;
+		let rewarded = true;
+		if (adService?.watchAd) {
+			const result = await adService.watchAd('continue');
+			rewarded = result === 'rewarded';
+		}
+		if (!rewarded) {
+			// Ad skipped or errored inside the orchestrator's own re-check.
+			// Rewind the counter so the player can retry from the same
+			// defeat screen.
+			this.continueCount -= 1;
+			return;
+		}
+		EventBus.emit('game-resumed', { livesRestored: data.livesRestored });
+	}
+
+	/** Test/diagnostic helper — surfaces how many continues this run has
+	 *  consumed. Used by Phase 10 tests to assert the cap. */
+	getContinueCount(): number {
+		return this.continueCount;
+	}
+
 	private async handleRerollRequest(): Promise<void> {
 		const adService = this.deps.adService as PhaseAAdServiceApi | undefined;
 		let rewarded = true;

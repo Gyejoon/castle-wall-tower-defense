@@ -338,6 +338,7 @@ export class GameScene extends Phaser.Scene {
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
 				this.selectedTowerId = data.towerId;
+				this.showBuildableZone();
 				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 				this.renderPlaceableHighlights();
@@ -384,6 +385,7 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+				this.showBuildableZone();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
 			this.renderPlaceableHighlights();
@@ -391,6 +393,7 @@ export class GameScene extends Phaser.Scene {
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
+				this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
@@ -476,6 +479,7 @@ export class GameScene extends Phaser.Scene {
 			if (!this.isSceneAlive()) return;
 			this.movePending = { fromCol, fromRow };
 			this.selectedTowerId = null;
+				this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			this.renderPlaceableHighlights();
@@ -616,6 +620,9 @@ export class GameScene extends Phaser.Scene {
 			return;
 		}
 
+		const mapPathSet = new Set(
+			getAllPathCells(this.currentMap).map((p) => `${p.x},${p.y}`),
+		);
 		this.decorationTiles = decorLayer.objects
 			.map((object) => {
 				const properties = new Map(
@@ -649,7 +656,8 @@ export class GameScene extends Phaser.Scene {
 					variant,
 				};
 			})
-			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+			.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+			.filter((entry) => !mapPathSet.has(`${entry.x},${entry.y}`));
 	}
 
 	private renderField(grid: GridManager, dark: boolean): void {
@@ -705,7 +713,7 @@ export class GameScene extends Phaser.Scene {
 
 				if (hasSouth || hasEast || hasWest) {
 					const cg = this.add.graphics();
-					cg.setDepth(10 + y + 0.5); // between current row and next row units
+					cg.setDepth(10 + y - 0.5); // below same-row monsters so they walk in front
 					const baseX = world.x - tile / 2;
 					const baseY = world.y - lift + tile / 2;
 
@@ -815,6 +823,41 @@ export class GameScene extends Phaser.Scene {
 			);
 			graphics.fillCircle(last.x, last.y, 1.5);
 		}
+	}
+
+	private buildableZoneGraphics!: Phaser.GameObjects.Graphics;
+
+	private showBuildableZone(): void {
+		if (!this.buildableZoneGraphics) {
+			this.buildableZoneGraphics = this.add.graphics();
+			this.buildableZoneGraphics.setDepth(3);
+		}
+		this.buildableZoneGraphics.clear();
+		if (!this.selectedTowerId) return;
+
+		const lift = this.playerGrid.orthoTile * PLATFORM_LIFT;
+		for (const point of this.currentMap.buildablePoints) {
+			if (!this.playerGrid.canPlaceTower(point.x, point.y)) continue;
+			const world = this.playerGrid.gridToWorld(point.x, point.y);
+			this.buildableZoneGraphics.fillStyle(0x44ff44, 0.15);
+			this.buildableZoneGraphics.fillRect(
+				world.x - this.playerGrid.orthoTile / 2,
+				world.y - lift - this.playerGrid.orthoTile / 2,
+				this.playerGrid.orthoTile,
+				this.playerGrid.orthoTile,
+			);
+			this.buildableZoneGraphics.lineStyle(1, 0x44ff44, 0.3);
+			this.buildableZoneGraphics.strokeRect(
+				world.x - this.playerGrid.orthoTile / 2,
+				world.y - lift - this.playerGrid.orthoTile / 2,
+				this.playerGrid.orthoTile,
+				this.playerGrid.orthoTile,
+			);
+		}
+	}
+
+	private hideBuildableZone(): void {
+		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
 	}
 
 	private setupInput(): void {
@@ -1001,6 +1044,7 @@ export class GameScene extends Phaser.Scene {
 		if (this.phaseAOrchestrator?.hasPendingSummon()) {
 			this.phaseAOrchestrator.completePlacement(gridX, gridY);
 			this.selectedTowerId = null;
+				this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			return;

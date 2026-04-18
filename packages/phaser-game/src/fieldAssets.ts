@@ -129,7 +129,7 @@ export const CLIFF_WALL_FRAMES = {
 } as const;
 
 /** Vertical offset (px ratio of tile) to lift platforms visually */
-export const PLATFORM_LIFT = 0.35;
+export const PLATFORM_LIFT = 0.4;
 
 export const TINY_SWORDS_DECORATION_ASSETS: TinySwordsDecorationAssetEntry[] = [
 	{

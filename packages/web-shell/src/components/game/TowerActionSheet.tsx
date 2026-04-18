@@ -42,11 +42,26 @@ export function TowerActionSheet({
 	onDeselect,
 }: TowerActionSheetProps) {
 	const [mode, setMode] = useState<SheetMode>('idle');
+	// Phase 11 Task 11.2 — momentary scale punch when a successful merge is
+	// announced while the sheet is on screen. Auto-clears after 200ms via the
+	// effect cleanup so subsequent merges retrigger the animation.
+	const [mergePunch, setMergePunch] = useState(false);
 
 	// [F21] React state reset — avoid stale mode when switching towers.
 	useEffect(() => {
 		setMode('idle');
 	}, [selectedTower?.instanceId]);
+
+	useEffect(() => {
+		const handler = () => {
+			setMergePunch(true);
+			window.setTimeout(() => setMergePunch(false), 200);
+		};
+		EventBus.on('towers-merged', handler);
+		return () => {
+			EventBus.off('towers-merged', handler);
+		};
+	}, []);
 
 	if (!selectedTower) return null;
 
@@ -72,7 +87,11 @@ export function TowerActionSheet({
 	return (
 		<div
 			data-testid="tower-action-sheet"
-			className="absolute left-1/2 -translate-x-1/2 bottom-[120px] z-[4] flex flex-col items-center gap-2 pointer-events-auto"
+			data-merge-punch={mergePunch ? '1' : '0'}
+			className={cn(
+				'absolute left-1/2 -translate-x-1/2 bottom-[120px] z-[4] flex flex-col items-center gap-2 pointer-events-auto transition-transform duration-200',
+				mergePunch ? 'scale-110' : 'scale-100',
+			)}
 		>
 			<div
 				className="flex items-center gap-2 px-3 py-1.5 rounded-sm border"

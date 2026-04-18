@@ -1230,6 +1230,78 @@ export class TowerSystem {
 		}
 	}
 
+	/**
+	 * Phase 11 Task 11.2 — tier5/tier6 merge reveal punch. Adds a camera flash,
+	 * a `Back.easeOut` scale-in tween on the new tower sprite, and a quick burst
+	 * of expanding ring graphics (used in lieu of a particle emitter until
+	 * `gacha-reveal-*` is wired as a particle texture in phase-12).
+	 *
+	 * Tracked separately from the smaller `playPhaseAMergeVfx` (which already
+	 * handles the per-merge gold-tint flash for every tier). Defensive about
+	 * scene API surface so unit tests with stub scenes don't have to mock the
+	 * camera manager.
+	 */
+	playMergeRevealVfx(col: number, row: number, toTier: number): void {
+		if (toTier < 5) return;
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+
+		// 1. Camera flash — short, white, no callback fns required.
+		const camera = this.scene.cameras?.main;
+		if (camera && typeof camera.flash === 'function') {
+			camera.flash(300, 255, 255, 255, false);
+		}
+
+		// 2. Scale punch on the new tower sprite (0.8 → 1.0 with Back.easeOut).
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: baseScaleX * 0.8, to: baseScaleX },
+			scaleY: { from: baseScaleY * 0.8, to: baseScaleY },
+			duration: 400,
+			ease: 'Back.easeOut',
+		});
+
+		// 3. Particle stand-in: expanding ring of graphics. Tier 6 uses two
+		// concentric rings (gold + white) for stronger emphasis.
+		const ringColor = toTier >= 6 ? 0xffe870 : 0xffd966;
+		const worldPos = this.gridManager.gridToWorld(col, row);
+		const ring = this.scene.add.graphics();
+		ring.lineStyle(3, ringColor, 0.85);
+		ring.strokeCircle(worldPos.x, worldPos.y, this.gridManager.orthoTile * 0.4);
+		ring.setDepth(this.gridManager.getDepth(col, row) + 2);
+		this.scene.tweens.add({
+			targets: ring,
+			scaleX: { from: 0.6, to: 2.4 },
+			scaleY: { from: 0.6, to: 2.4 },
+			alpha: { from: 0.85, to: 0 },
+			duration: 600,
+			ease: 'Cubic.Out',
+			onComplete: () => ring.destroy(),
+		});
+		if (toTier >= 6) {
+			const innerRing = this.scene.add.graphics();
+			innerRing.lineStyle(2, 0xffffff, 0.9);
+			innerRing.strokeCircle(
+				worldPos.x,
+				worldPos.y,
+				this.gridManager.orthoTile * 0.25,
+			);
+			innerRing.setDepth(this.gridManager.getDepth(col, row) + 3);
+			this.scene.tweens.add({
+				targets: innerRing,
+				scaleX: { from: 0.4, to: 3.0 },
+				scaleY: { from: 0.4, to: 3.0 },
+				alpha: { from: 1, to: 0 },
+				duration: 700,
+				ease: 'Cubic.Out',
+				onComplete: () => innerRing.destroy(),
+			});
+		}
+	}
+
 	disableTower(towerId: string, untilMs: number): void {
 		const t = this.towers.get(towerId);
 		if (!t) return;

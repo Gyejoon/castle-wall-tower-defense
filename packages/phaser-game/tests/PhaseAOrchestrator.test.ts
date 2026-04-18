@@ -56,6 +56,7 @@ function makeFakeTowerSystem() {
 		towers,
 		playPhaseASummonVfx: vi.fn(),
 		playPhaseAMergeVfx: vi.fn(),
+		playMergeRevealVfx: vi.fn(),
 		placeTower: vi.fn((col: number, row: number, defId: string) => {
 			const meta = TEST_FAMILY[defId] ?? { family: 'archer', tier: 1 };
 			const instanceId = `fake_${nextId++}`;

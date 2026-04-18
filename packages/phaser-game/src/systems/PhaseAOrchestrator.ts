@@ -598,6 +598,9 @@ export class PhaseAOrchestrator {
 		}
 
 		towerSystem.playPhaseAMergeVfx(targetCol, targetRow);
+		// Phase 11 Task 11.2: stronger reveal punch + particle stand-in for
+		// tier-5/tier-6 merges so hybrid/ultimate landings feel earned.
+		towerSystem.playMergeRevealVfx(targetCol, targetRow, result.toTier);
 
 		const newLocator = towerSystem.getTowerLocator(targetCol, targetRow);
 		EventBus.emit('towers-merged', {

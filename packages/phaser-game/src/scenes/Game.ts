@@ -231,6 +231,14 @@ export class GameScene extends Phaser.Scene {
 			collection,
 			getSpawnExitPairs(this.currentMap),
 		);
+		// Phase 9: inject meta progression's global atk% via the scene
+		// registry. `PhaserGame.tsx` sets 'meta:atkPct' from the web-shell
+		// metaProgressStore before the scene starts; default to 0 if absent
+		// (tests, legacy boots). phaser-game package MUST NOT import from
+		// web-shell — the registry/event bridge is the only allowed channel.
+		const metaAtkPct =
+			(this.game.registry.get('meta:atkPct') as number | undefined) ?? 0;
+		this.playerTowers.setGlobalModifiers({ atkPct: metaAtkPct });
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setTowerSystem(this.playerTowers);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels

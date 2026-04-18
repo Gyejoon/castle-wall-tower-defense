@@ -41,6 +41,17 @@ export type TowerPlacementResult =
 	| { success: false; reason: PlacementFailureReason };
 
 /**
+ * Phase 9: run-agnostic global modifiers applied on top of the per-run
+ * roguelike upgrade stack. `atkPct` is fed in from the web-shell
+ * `metaProgressStore` at Game.create() via the scene registry (see
+ * PhaseA meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
+ * now — future modifiers (rangePct, critChance, etc.) will extend this.
+ */
+export interface GlobalModifiers {
+	atkPct: number;
+}
+
+/**
  * Phase 1: grade is gone — texture is identified purely by tower id. We
  * keep the helper so call sites don't scatter template literals, but it's
  * a pass-through for now. Phase 11 may add tier-specific variants.
@@ -62,6 +73,7 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
+	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -107,6 +119,27 @@ export class TowerSystem {
 
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
 		this.modifierFn = fn;
+	}
+
+	/**
+	 * Phase 9: inject run-agnostic meta modifiers (from
+	 * `metaProgressStore`). Called once from Game.create() via the scene
+	 * registry; additional calls replace the value, which matters for
+	 * hot-reload and test scenarios.
+	 */
+	setGlobalModifiers(mods: Partial<GlobalModifiers>): void {
+		this.globalModifiers = { ...this.globalModifiers, ...mods };
+	}
+
+	/**
+	 * Apply the global atk% multiplier on top of an already-upgraded
+	 * damage value. Order: `base * elementMult * dmgUpStack * (1 + crit)`
+	 * → then `* (1 + globalAtkPct)` from meta progression. Kept as a
+	 * single helper so both main-hit and splash damage paths stay in
+	 * sync.
+	 */
+	private resolveFinalDamage(baseDamage: number): number {
+		return baseDamage * (1 + this.globalModifiers.atkPct);
 	}
 
 	getAllTowers(): TowerInstance[] {
@@ -399,7 +432,9 @@ export class TowerSystem {
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
 				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
 				const baseDamage = Math.round(
-					tower.effectiveDamage * elementMult * dmgMod * (1 + critBonus),
+					this.resolveFinalDamage(
+						tower.effectiveDamage * elementMult * dmgMod * (1 + critBonus),
+					),
 				);
 				const special = def.stats.special;
 
@@ -498,11 +533,13 @@ export class TowerSystem {
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
 							const splashDamage = Math.round(
-								tower.effectiveDamage *
-									splashElementMult *
-									0.5 *
-									dmgMod *
-									(1 + critBonus),
+								this.resolveFinalDamage(
+									tower.effectiveDamage *
+										splashElementMult *
+										0.5 *
+										dmgMod *
+										(1 + critBonus),
+								),
 							);
 							pendingBatch.push({
 								unitId: unit.instanceId,

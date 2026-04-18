@@ -2,6 +2,7 @@ import { EventBus, startGame } from '@gld/phaser-game';
 import type Phaser from 'phaser';
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaProgress } from '../stores/metaProgressStore';
 import { useMetaStore } from '../stores/metaStore';
 
 export function PhaserGame() {
@@ -31,6 +32,10 @@ export function PhaserGame() {
 			metaState.progress.tutorialCompleted ?? false,
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
+		// Phase 9: forward meta progression's global atk% so Game.create()
+		// can inject it into TowerSystem. phaser-game package can't import
+		// from web-shell; the registry is the contractually-allowed bridge.
+		game.registry.set('meta:atkPct', useMetaProgress.getState().globalAtkPct);
 		gameRef.current = game;
 
 		// Sync screenShake setting to Phaser registry in real-time

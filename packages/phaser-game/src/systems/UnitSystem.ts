@@ -3,9 +3,11 @@ import {
 	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
+	MIN_MOVE_SPEED,
 	PHASER_COLORS,
 	type PlacedTower,
 	type Position,
+	STUN_IMMUNITY_WINDOW_MS,
 	scaleUnitStats,
 	UNITS,
 	type UnitDef,
@@ -56,6 +58,20 @@ interface UnitInstance {
 	baseSpeed: number;
 	baseArmor: number;
 	ccImmunityChance: number;
+	/**
+	 * Phase 11 [F16] — deterministic CC duration multiplier (0.0 = full
+	 * effect, 1.0 = immune). Distinct from `ccImmunityChance` which is a
+	 * probabilistic resist roll: ccResistance always shortens the applied
+	 * effect duration. Bosses inherit `bossCcResist` here so a 0.5-resist
+	 * boss takes a 1000ms slow as 500ms instead of dodging it entirely.
+	 */
+	ccResistance: number;
+	/**
+	 * Phase 11 [F16] — scene-time (ms) until which any new stun is rejected.
+	 * Set when a stun ends (current time + STUN_IMMUNITY_WINDOW_MS) so a
+	 * second stun tower can't lock the unit indefinitely.
+	 */
+	stunImmunityUntil: number;
 	waveSlot: number;
 	pathProgress: number; // continuous 1D position along lane path
 	shadow: Phaser.GameObjects.Ellipse | null;
@@ -296,6 +312,11 @@ export class UnitSystem {
 					entry.ccResist +
 					(entry.def.bossCcResist ?? 0),
 			),
+			// Phase 11 [F16]: deterministic CC duration cut. Reuses the unit
+			// def's `bossCcResist` field — normal mobs default to 0 (no
+			// reduction) while bosses inherit 0.5–0.7 from `units.ts`.
+			ccResistance: Math.min(1, entry.def.bossCcResist ?? 0),
+			stunImmunityUntil: 0,
 			waveSlot: entry.waveSlot,
 			shadow,
 			pathProgress: 0,
@@ -371,9 +392,15 @@ export class UnitSystem {
 		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}
+		// Phase 11 [F16]: ccResistance is a deterministic duration cut applied
+		// on top of the probabilistic ccImmunityChance dodge. Bosses with
+		// resistance 0.5 take half-duration slows; speed is floored at
+		// MIN_MOVE_SPEED so a fully-stacked frost setup can't pin units at 0.
+		const effectiveDuration = durationMs * (1 - unit.ccResistance);
+		const flooredFactor = Math.max(MIN_MOVE_SPEED, factor);
 		// Keep the stronger slow (lower factor = slower)
-		unit.slowFactor = Math.min(unit.slowFactor, factor);
-		unit.slowRemaining = Math.max(unit.slowRemaining, durationMs);
+		unit.slowFactor = Math.min(unit.slowFactor, flooredFactor);
+		unit.slowRemaining = Math.max(unit.slowRemaining, effectiveDuration);
 		if (unit.stunRemaining <= 0) unit.sprite.setTint(0x88ccff);
 	}
 
@@ -383,7 +410,13 @@ export class UnitSystem {
 		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}
-		unit.stunRemaining = Math.max(unit.stunRemaining, durationMs);
+		// Phase 11 [F16]: refuse re-stuns that fall inside the post-stun
+		// immunity window. Window is set when a stun expires (see update()
+		// loop), so the first stun lands normally.
+		const now = this.scene.time?.now ?? 0;
+		if (now < unit.stunImmunityUntil) return;
+		const effectiveDuration = durationMs * (1 - unit.ccResistance);
+		unit.stunRemaining = Math.max(unit.stunRemaining, effectiveDuration);
 		unit.sprite.setTint(0xffff44);
 		this.setUnitAnimationState(unit, 'idle');
 	}
@@ -661,6 +694,9 @@ export class UnitSystem {
 				unit.stunRemaining -= delta;
 				if (unit.stunRemaining <= 0) {
 					unit.stunRemaining = 0;
+					// Phase 11 [F16]: post-stun immunity window so chained stun
+					// towers can't lock the unit. Slows are unaffected.
+					unit.stunImmunityUntil = time + STUN_IMMUNITY_WINDOW_MS;
 					if (unit.slowRemaining <= 0) {
 						this.restoreUnitTint(unit);
 					} else {
@@ -953,6 +989,8 @@ export class UnitSystem {
 			baseSpeed: scaled.speed,
 			baseArmor: scaled.armor,
 			ccImmunityChance: scaled.ccImmunityChance,
+			ccResistance: Math.min(1, def.bossCcResist ?? 0),
+			stunImmunityUntil: 0,
 			waveSlot: 0,
 			shadow: null,
 			pathProgress: initialPathIndex,

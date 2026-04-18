@@ -95,7 +95,11 @@ export {
 	TOWER_DEFS,
 } from './constants/towers';
 export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
-export { UNITS } from './constants/units';
+export {
+	MIN_MOVE_SPEED,
+	STUN_IMMUNITY_WINDOW_MS,
+	UNITS,
+} from './constants/units';
 export type {
 	WaveDef,
 	WaveGroup,

@@ -1,5 +1,22 @@
 import type { UnitDef } from '../types/unit';
 
+/**
+ * Phase 11 [F16] CC guardrails — minimum normalised speed multiplier any
+ * unit can be slowed to. Slow effects multiply `baseSpeed * (1 - strength)`,
+ * so without a floor a stacked frost setup could trivially freeze a wave at
+ * `0` speed and trivialise lane management. 0.15 keeps strong frost meaningful
+ * (a heavy_walker at base 0.8 t/s still moves at 0.12 t/s) without removing
+ * the threat that a slowed-but-moving boss still exists.
+ */
+export const MIN_MOVE_SPEED = 0.15;
+
+/**
+ * Phase 11 [F16] — post-stun immunity window (ms). After a stun ends the unit
+ * cannot be re-stunned for this duration; prevents stun-lock from chaining
+ * shield + holy_shrine + divine_throne towers. Slows are unaffected.
+ */
+export const STUN_IMMUNITY_WINDOW_MS = 2000;
+
 export const UNITS: UnitDef[] = [
 	{
 		id: 'scout_drone',

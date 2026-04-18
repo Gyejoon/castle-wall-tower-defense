@@ -32,6 +32,8 @@ export function PhaserGame() {
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
 		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
+		// Phase 6: scenario stages purged. Phase A is the sole mode; pin the
+		// registry value so GameScene's DEFAULT_STAGE_ID fallback lands here.
 		game.registry.set(
 			'selectedStageId',
 			useGameStore.getState().selectedStageId,
@@ -56,15 +58,6 @@ export function PhaserGame() {
 			}
 		});
 
-		// Sync selectedStageId to Phaser registry in real-time
-		let prevStageId = useGameStore.getState().selectedStageId;
-		const unsubStageId = useGameStore.subscribe((state) => {
-			if (state.selectedStageId !== prevStageId) {
-				prevStageId = state.selectedStageId;
-				gameRef.current?.registry.set('selectedStageId', prevStageId);
-			}
-		});
-
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -73,7 +66,6 @@ export function PhaserGame() {
 			if (!container.isConnected) {
 				unsubShake();
 				unsubStar();
-				unsubStageId();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

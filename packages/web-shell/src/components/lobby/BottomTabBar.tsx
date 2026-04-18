@@ -9,6 +9,7 @@ interface TabDef {
 	inactiveIcon: string;
 }
 
+// Phase 6: missions/achievements tabs removed with the scenario purge.
 const tabs: [TabDef, TabDef, TabDef] = [
 	{
 		id: 'collection',

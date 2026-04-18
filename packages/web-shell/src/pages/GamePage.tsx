@@ -1,15 +1,7 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
-import {
-	getNextStageId,
-	getStageById,
-	getTotalWavesForStage,
-	PHASE_A_MAP_ID,
-	WORLD_ORDER,
-} from '@gld/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
-import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
 import { PhaseAHud } from '../components/game/PhaseAHud';
 import { ToastNotification } from '../components/game/ToastNotification';
@@ -19,7 +11,6 @@ import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useGameStore } from '../stores/gameStore';
-import { useMetaStore } from '../stores/metaStore';
 
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
@@ -39,18 +30,10 @@ export function GamePage() {
 	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	const selectedStar = useGameStore((s) => s.selectedStar);
-	const highestWave = useMetaStore((s) => s.progress.highestWave);
-	const selectedStageId = useGameStore((s) => s.selectedStageId);
-	const selectedStage = getStageById(selectedStageId);
-	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
-	const isPhaseAMode = selectedStage.mapId === PHASE_A_MAP_ID;
-	const starKey =
-		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
-	const speed2xUnlocked =
-		isPhaseAMode || (highestWave[starKey] ?? 0) >= totalStageWaves;
+	// Phase 6: Phase A is the only mode, so 2x speed is always available.
+	const speed2xUnlocked = true;
 
-	const { waitCountdown, selectedTower } = useGameEvents();
+	const { waitCountdown } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
 	const [upgradeChoices, setUpgradeChoices] = useState<Array<{
 		id: string;
@@ -144,21 +127,6 @@ export function GamePage() {
 		};
 	}, []);
 
-	const nextStageId = useMemo(
-		() => getNextStageId(selectedStageId),
-		[selectedStageId],
-	);
-
-	const currentStageDef = selectedStage;
-
-	const handleNextStage = useCallback(() => {
-		if (!nextStageId) return;
-		const store = useGameStore.getState();
-		store.setSelectedStageId(nextStageId);
-		store.setSelectedStar(1);
-		store.resetRun();
-	}, [nextStageId]);
-
 	const handleToggleSpeed = useCallback(() => {
 		const cur = useGameStore.getState().gameSpeed;
 		const next = cur === 1 ? 2 : cur === 2 ? 3 : 1;
@@ -180,14 +148,6 @@ export function GamePage() {
 		setShowExitModal(false);
 		EventBus.emit('request-resume');
 	}, []);
-
-	const handleSellTower = useCallback(() => {
-		if (!selectedTower) return;
-		EventBus.emit('request-sell-tower', {
-			col: selectedTower.col,
-			row: selectedTower.row,
-		});
-	}, [selectedTower]);
 
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
@@ -261,36 +221,8 @@ export function GamePage() {
 					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
-
-					{!isPhaseAMode &&
-						selectedTower &&
-						runStatus !== 'victory' &&
-						runStatus !== 'defeat' && (
-							<div
-								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
-								style={{ background: 'var(--color-panel-95)' }}
-							>
-								<span className="text-text">{selectedTower.towerName}</span>
-								<button
-									type="button"
-									className="border border-danger px-2 py-1 text-danger"
-									style={{ background: 'var(--color-danger-20)' }}
-									onClick={handleSellTower}
-								>
-									판매{' '}
-									<span className="inline-flex items-center gap-[2px]">
-										<img
-											src="assets/ui/icon-energy.webp"
-											alt=""
-											width={10}
-											height={10}
-											className="[image-rendering:pixelated]"
-										/>
-										+{selectedTower.refund}
-									</span>
-								</button>
-							</div>
-						)}
+					{/* Sell-tower quick action lived here for the legacy deck mode;
+					    Phase 6 removes it — Phase A uses TowerActionSheet [F10]. */}
 
 					{/* Exit Confirm Modal */}
 					{showExitModal && runStatus === 'running' && (
@@ -337,25 +269,14 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
-							stageName={
-								currentStageDef
-									? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
-									: null
-							}
+							stageName={null}
 							onRestart={resetRun}
 							onLobby={enterLobby}
-							onNextStage={
-								runStatus === 'victory' && nextStageId
-									? handleNextStage
-									: undefined
-							}
 						/>
 					)}
 				</div>
 
-				{runStatus !== 'victory' &&
-					runStatus !== 'defeat' &&
-					(isPhaseAMode ? <PhaseAHud /> : <DeckDock />)}
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <PhaseAHud />}
 			</div>
 		</div>
 	);

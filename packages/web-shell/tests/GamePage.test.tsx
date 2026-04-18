@@ -153,7 +153,7 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('shows single-player HUD with HP, energy, timer and deck dock', () => {
+	it('shows Phase A HUD with HP, energy, and timer', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
@@ -172,7 +172,8 @@ describe('GamePage', () => {
 		expect(view.getByText('HP 20')).toBeTruthy();
 		expect(view.getByText('60')).toBeTruthy();
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		expect(view.getByTestId('deck-dock')).toBeTruthy();
+		// Phase 6: scenario deck dock removed. Phase A HUD is always mounted.
+		expect(view.queryByTestId('deck-dock')).toBeNull();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
 		expect(view.queryByText('AI')).toBeNull();
@@ -282,12 +283,8 @@ describe('GamePage', () => {
 		expect(view.getByText('에너지 부족')).toBeTruthy();
 	});
 
-	it('records victory progress by selectedStageId, not selectedMapId', () => {
+	it('records victory progress by selectedStageId (Phase A)', () => {
 		const { emitSpy } = getEventBusHarness();
-		useGameStore.setState({
-			selectedMapId: 'w1_forest_a',
-			selectedStageId: 'w1_s2',
-		});
 		render(<GamePage />);
 
 		act(() => {
@@ -307,39 +304,13 @@ describe('GamePage', () => {
 		});
 
 		const progress = useMetaStore.getState().progress;
-		expect(progress.stagesCleared).toContain('w1_s2');
-		expect(progress.stagesCleared).not.toContain('w1_forest_a');
-		expect(progress.stageStars.w1_s2).toBe(2);
-		expect(progress.stageStars.w1_forest_a).toBeUndefined();
-		expect(progress.highestWave['w1_s2:2']).toBe(10);
-		expect(progress.highestWave['w1_forest_a:2']).toBeUndefined();
+		// Phase 6: selectedStageId is pinned to phase_a_s1 for the sole mode.
+		expect(progress.stagesCleared).toContain('phase_a_s1');
+		expect(progress.stageStars.phase_a_s1).toBe(2);
 	});
 
-	it('keeps 2x speed locked when selected stage is not fully cleared', () => {
-		const save = createDefaultSave();
-		save.progress.highestWave = { w1_s3: 5 };
-		useMetaStore.setState(save);
-		useGameStore.setState({
-			runStatus: 'running',
-			selectedMapId: 'w1_forest_a',
-			selectedStageId: 'w1_s3',
-			selectedStar: 1,
-		});
-		const view = render(<GamePage />);
-
-		expect(view.queryByRole('button', { name: /배속 1x/i })).toBeNull();
-	});
-
-	it('unlocks 2x speed from selectedStageId highest wave, not selectedMapId', () => {
-		const save = createDefaultSave();
-		save.progress.highestWave = { w1_s3: 7 };
-		useMetaStore.setState(save);
-		useGameStore.setState({
-			runStatus: 'running',
-			selectedMapId: 'w1_forest_a',
-			selectedStageId: 'w1_s3',
-			selectedStar: 1,
-		});
+	it('Phase 6: 2x speed is always unlocked in Phase A', () => {
+		useGameStore.setState({ runStatus: 'running' });
 		const view = render(<GamePage />);
 
 		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();

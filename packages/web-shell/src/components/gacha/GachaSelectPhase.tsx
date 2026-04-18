@@ -15,7 +15,6 @@ export interface GachaSelectPhaseProps {
 	onSetIs10Pull: (value: boolean) => void;
 	onOpen: () => void;
 	onClose: () => void;
-	onGoToMissions: () => void;
 	isOpenDisabled: boolean;
 }
 
@@ -31,7 +30,6 @@ export function GachaSelectPhase({
 	onSetIs10Pull,
 	onOpen,
 	onClose,
-	onGoToMissions,
 	isOpenDisabled,
 }: GachaSelectPhaseProps) {
 	return (
@@ -40,15 +38,6 @@ export function GachaSelectPhase({
 			{errorMsg && (
 				<div className="text-center">
 					<p className="font-pixel text-xs text-error">{errorMsg}</p>
-					{errorMsg.includes('다이아') && (
-						<button
-							type="button"
-							onClick={onGoToMissions}
-							className="font-pixel text-[11px] text-gold underline mt-1"
-						>
-							임무에서 획득 →
-						</button>
-					)}
 				</div>
 			)}
 

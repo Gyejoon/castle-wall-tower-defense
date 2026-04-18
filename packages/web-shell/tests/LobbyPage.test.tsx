@@ -21,7 +21,7 @@ describe('LobbyPage', () => {
 		cleanup();
 	});
 
-	it('renders the home tab as a single-player start screen', () => {
+	it('renders the home tab as a Phase A start screen', () => {
 		const view = render(<LobbyPage />);
 
 		expect(view.getByText('Commander')).toBeTruthy();
@@ -31,7 +31,8 @@ describe('LobbyPage', () => {
 		// Center tab (마당/home) is index 1, should be selected by default
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
-		expect(view.getByText('시작')).toBeTruthy();
+		// Phase 6: '전투 시작' is the primary CTA; scenario "시작" is gone.
+		expect(view.getByText('전투 시작')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 	});
 
@@ -56,11 +57,11 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('enters stage detail on start button click', () => {
+	it('starts a Phase A run on 전투 시작 click', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('시작'));
+		fireEvent.click(view.getByText('전투 시작'));
 
-		expect(useGameStore.getState().runStatus).toBe('stageDetail');
+		expect(useGameStore.getState().runStatus).toBe('building');
 	});
 
 	it('shows collection tab with tower grid', () => {

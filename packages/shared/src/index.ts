@@ -141,7 +141,6 @@ export type {
 	WaveSlotKind,
 } from './constants/waves';
 export {
-	generatePhaseAWaves,
 	getTotalWavesForMap,
 	getTotalWavesForStage,
 	getWaveScaling,
@@ -157,6 +156,7 @@ export {
 	WORLD_ORDER,
 	WORLDS,
 } from './constants/worlds';
+export { generatePhaseAWaves } from './data/phaseAWaves';
 export type { SummonPool, SummonResult } from './data/summonPool';
 export {
 	createSummonPool,

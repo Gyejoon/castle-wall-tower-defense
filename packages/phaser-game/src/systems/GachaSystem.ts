@@ -43,8 +43,10 @@ export class GachaSystem {
 		const candidates = getTowersByFamily(family).filter((t) => t.tier === tier);
 		// Each (family, tier) pair resolves to exactly one base tower in the
 		// Phase 1 catalog of 16 towers. `candidates[0]` is always defined for
-		// the tiers this system supports.
-		return candidates[0].id;
+		// the tiers this system supports. `TowerDef.id` is declared as string
+		// for ergonomic call-sites, but the catalog only contains valid
+		// TowerId values — cast through.
+		return candidates[0].id as TowerId;
 	}
 
 	static getCost(targetTier: 2 | 3 | 4): number {

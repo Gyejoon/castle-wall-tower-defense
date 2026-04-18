@@ -1,10 +1,19 @@
 import { EventBus } from '@gld/phaser-game';
-import { ALL_TOWERS, getPhaseARefund, PHASE_A_SUMMON_COST } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	getPhaseARefund,
+	INGAME_GACHA,
+	PHASE_A_SUMMON_COST,
+} from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
+
+/** Phase 5 — T2/T3/T4 gacha tiers surfaced as separate HUD buttons.
+ *  Phase 8 redesigns the layout; this is the functional minimum. */
+const GACHA_TIERS = [2, 3, 4] as const;
 
 interface FirstPick {
 	col: number;
@@ -139,6 +148,17 @@ export function PhaseAHud() {
 			// no-op
 		};
 
+		const handleGachaInsufficient = (data: {
+			targetTier: number;
+			cost: number;
+			have: number;
+		}) => {
+			pushToast(
+				`가챠 T${data.targetTier} 에너지 부족 (${data.have}/${data.cost})`,
+				'warning',
+			);
+		};
+
 		EventBus.on('tower-selected', handleTowerSelected);
 		EventBus.on('tower-deselected', handleTowerDeselected);
 		EventBus.on('towers-merged', handleMerged);
@@ -146,6 +166,7 @@ export function PhaseAHud() {
 		EventBus.on('phase-a-summon-ready', handleSummonReady);
 		EventBus.on('tower-summoned', handleTowerSummoned);
 		EventBus.on('summon-failed', handleSummonFailed);
+		EventBus.on('gacha-insufficient-energy', handleGachaInsufficient);
 		EventBus.on('upgrade-applied', handleUpgradeApplied);
 		EventBus.on('tower-moved', handleTowerMoved);
 		EventBus.on('move-failed', handleMoveFailed);
@@ -158,6 +179,7 @@ export function PhaseAHud() {
 			EventBus.off('phase-a-summon-ready', handleSummonReady);
 			EventBus.off('tower-summoned', handleTowerSummoned);
 			EventBus.off('summon-failed', handleSummonFailed);
+			EventBus.off('gacha-insufficient-energy', handleGachaInsufficient);
 			EventBus.off('upgrade-applied', handleUpgradeApplied);
 			EventBus.off('tower-moved', handleTowerMoved);
 			EventBus.off('move-failed', handleMoveFailed);
@@ -304,6 +326,49 @@ export function PhaseAHud() {
 						타워 두 개를 차례로 탭 → 합성
 					</span>
 				)}
+			</div>
+
+			<div
+				data-testid="phase-a-gacha-row"
+				className="flex flex-col gap-1 shrink-0"
+			>
+				{GACHA_TIERS.map((tier) => {
+					const config = INGAME_GACHA[`tier${tier}` as const];
+					const gachaDisabled = energy < config.cost;
+					return (
+						<button
+							key={tier}
+							type="button"
+							data-testid={`phase-a-gacha-t${tier}`}
+							onClick={() =>
+								EventBus.emit('request-gacha-summon', { targetTier: tier })
+							}
+							disabled={gachaDisabled}
+							aria-disabled={gachaDisabled}
+							className={cn(
+								'h-[24px] px-2 bg-panel border flex items-center justify-between gap-2 font-pixel text-[10px] transition-transform',
+								gachaDisabled
+									? 'border-border opacity-40 cursor-not-allowed text-text-secondary'
+									: 'border-amber-400/60 text-amber-200 active:scale-95',
+							)}
+						>
+							<span>T{tier}</span>
+							<span className="inline-flex items-center gap-[2px]">
+								<img
+									src="assets/ui/icon-energy.webp"
+									alt=""
+									width={8}
+									height={8}
+									className="[image-rendering:pixelated]"
+								/>
+								{config.cost}
+							</span>
+							<span className="text-[9px] opacity-80">
+								{Math.round(config.successRate * 100)}%
+							</span>
+						</button>
+					);
+				})}
 			</div>
 
 			<button

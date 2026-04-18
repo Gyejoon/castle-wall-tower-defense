@@ -44,7 +44,7 @@ describe('DeckSystem', () => {
 		const ds = new DeckSystem();
 		const def = ds.getTowerDef('archer');
 		expect(def).not.toBeNull();
-		expect(def?.name).toBe('궁수 탑');
+		expect(def?.name).toBe('궁수탑');
 	});
 
 	it('getTowerDef returns null for unknown id', () => {

@@ -1,30 +1,27 @@
 import { EventBus } from '@gld/phaser-game';
-import {
-	ALL_TOWERS,
-	getPhaseARefund,
-	PHASE_A_SUMMON_COST,
-	type TowerGrade,
-} from '@gld/shared';
+import { ALL_TOWERS, getPhaseARefund, PHASE_A_SUMMON_COST } from '@gld/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
-const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
 
 interface FirstPick {
 	col: number;
 	row: number;
 	towerName: string;
 	refund: number;
-	grade: TowerGrade;
+	tier: number;
 }
 
 interface PendingSummon {
 	towerId: string;
-	grade: string;
 }
 
+/**
+ * Phase 1: grade display was removed from the HUD — Phase 8 will redo this
+ * panel against the family/tier model (tier badge, merge preview, etc.).
+ */
 export function PhaseAHud() {
 	const [firstPick, setFirstPick] = useState<FirstPick | null>(null);
 	const firstPickRef = useRef<FirstPick | null>(null);
@@ -51,7 +48,7 @@ export function PhaseAHud() {
 			col: number;
 			row: number;
 			refund: number;
-			grade: TowerGrade;
+			tier: number;
 		}) => {
 			setMovingTower(null);
 			const first = firstPickRef.current;
@@ -60,8 +57,8 @@ export function PhaseAHud() {
 					col: data.col,
 					row: data.row,
 					towerName: data.towerName,
-					refund: getPhaseARefund(data.grade),
-					grade: data.grade,
+					refund: getPhaseARefund(),
+					tier: data.tier,
 				};
 				setFirstPick(firstPickRef.current);
 				return;
@@ -99,10 +96,10 @@ export function PhaseAHud() {
 			pushToast('이동 불가', 'warning');
 		};
 
-		const handleMerged = (data: { toGrade: string }) => {
+		const handleMerged = (data: { toTier: number }) => {
 			firstPickRef.current = null;
 			setFirstPick(null);
-			pushToast(`합성 성공 → ${data.toGrade.toUpperCase()}`, 'success');
+			pushToast(`합성 성공 → T${data.toTier}`, 'success');
 		};
 
 		const handleMergeFailed = (data: { reason: string }) => {
@@ -111,7 +108,7 @@ export function PhaseAHud() {
 			pushToast(`합성 실패: ${mergeFailLabel(data.reason)}`, 'warning');
 		};
 
-		const handleSummonReady = (data: { towerId: string; grade: string }) => {
+		const handleSummonReady = (data: { towerId: string }) => {
 			setPendingSummon(data);
 		};
 
@@ -178,7 +175,7 @@ export function PhaseAHud() {
 	}, []);
 
 	const towerThumb = pendingSummon
-		? `assets/towers/${TOWER_TYPE_MAP.get(pendingSummon.towerId) ?? pendingSummon.towerId}.webp`
+		? `assets/towers/${pendingSummon.towerId}.webp`
 		: null;
 	const towerName = pendingSummon
 		? (TOWER_NAME_MAP.get(pendingSummon.towerId) ?? pendingSummon.towerId)
@@ -241,8 +238,7 @@ export function PhaseAHud() {
 				) : firstPick !== null ? (
 					<>
 						<span className="font-pixel text-[11px] text-gold">
-							{firstPick.towerName} ({firstPick.grade.toUpperCase()}) · 짝을
-							탭하세요
+							{firstPick.towerName} (T{firstPick.tier}) · 짝을 탭하세요
 						</span>
 						<div className="flex items-center gap-3 mt-0.5">
 							<button
@@ -345,12 +341,14 @@ export function PhaseAHud() {
 
 function mergeFailLabel(reason: string): string {
 	switch (reason) {
+		case 'not-implemented':
+			return '합성 시스템 준비 중';
 		case 'different-tower':
 			return '다른 타워';
-		case 'different-grade':
-			return '다른 등급';
-		case 'max-grade':
-			return '최고 등급';
+		case 'different-tier':
+			return '다른 티어';
+		case 'max-tier':
+			return '최고 티어';
 		case 'invalid-tile':
 			return '잘못된 칸';
 		default:

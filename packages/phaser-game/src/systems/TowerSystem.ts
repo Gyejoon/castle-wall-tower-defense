@@ -5,7 +5,6 @@ import type {
 	PlacementFailureReason,
 	Position,
 	TowerDef,
-	TowerGrade,
 	UpgradeId,
 } from '@gld/shared';
 import {
@@ -27,7 +26,7 @@ import type { WorldGimmick } from './world-gimmicks/types';
 export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
-	grade: TowerGrade;
+	tier: number;
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
@@ -42,12 +41,13 @@ export type TowerPlacementResult =
 	| { success: true; tower: PlacedTower }
 	| { success: false; reason: PlacementFailureReason };
 
-export function resolveTowerTextureKey(
-	defId: string,
-	grade: TowerGrade,
-): string {
-	if (grade === 'normal') return `tower-${defId}`;
-	return `tower-${defId}-${grade}`;
+/**
+ * Phase 1: grade is gone — texture is identified purely by tower id. We
+ * keep the helper so call sites don't scatter template literals, but it's
+ * a pass-through for now. Phase 11 may add tier-specific variants.
+ */
+export function resolveTowerTextureKey(defId: string): string {
+	return `tower-${defId}`;
 }
 
 export class TowerSystem {
@@ -137,7 +137,7 @@ export class TowerSystem {
 		gridX: number,
 		gridY: number,
 		towerDefId: string,
-		options?: { gradeOverride?: TowerGrade; levelOverride?: number },
+		options?: { levelOverride?: number },
 	): TowerPlacementResult {
 		const def = ALL_TOWERS.find((t) => t.id === towerDefId);
 		if (!def) return { success: false, reason: 'out_of_bounds' };
@@ -182,7 +182,7 @@ export class TowerSystem {
 
 		const owned = this.collection.find((t) => t.defId === towerDefId);
 		const towerLevel = options?.levelOverride ?? owned?.level ?? 1;
-		const towerGrade = options?.gradeOverride ?? owned?.grade ?? 'normal';
+		const towerTier = def.tier;
 
 		const towerData: PlacedTower = {
 			instanceId,
@@ -191,7 +191,7 @@ export class TowerSystem {
 			level: towerLevel,
 		};
 
-		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
+		const textureKey = resolveTowerTextureKey(towerDefId);
 		const base = this.scene.add.graphics();
 		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
 		sprite.setDisplaySize(64, 80);
@@ -231,12 +231,8 @@ export class TowerSystem {
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
-			grade: towerGrade,
-			effectiveDamage: getEffectiveStats(
-				def.stats.damage,
-				towerLevel,
-				towerGrade,
-			),
+			tier: towerTier,
+			effectiveDamage: getEffectiveStats(def.stats.damage, towerLevel),
 			base,
 			sprite,
 			barrelSprite,
@@ -332,7 +328,7 @@ export class TowerSystem {
 
 		// Nova cannon barrel tracking — rotate toward nearest enemy
 		for (const tower of this.towers.values()) {
-			if (tower.def.type !== 'nova_cannon' || !tower.barrelSprite) continue;
+			if (tower.def.id !== 'nova_cannon' || !tower.barrelSprite) continue;
 			const towerWorld = this.gridManager.gridToWorld(
 				tower.data.position.x,
 				tower.data.position.y,
@@ -538,9 +534,9 @@ export class TowerSystem {
 
 				const color = TowerSystem.parseHexColor(def.color);
 				const style =
-					this.hasSplash(special) || def.type === 'earth_golem'
+					this.hasSplash(special) || def.id === 'earth_golem'
 						? ('arc' as const)
-						: def.type === 'archer' || def.type === 'twin_archer'
+						: def.id === 'archer' || def.id === 'twin_archer'
 							? ('arrow' as const)
 							: ('beam' as const);
 				let arrowIndex: number | undefined;
@@ -580,16 +576,16 @@ export class TowerSystem {
 
 				// Nova cannon: fire from barrel tip, not tower center
 				const fireOriginX =
-					def.type === 'nova_cannon' && tower.barrelSprite
+					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
 						: towerWorld.x;
 				const fireOriginY =
-					def.type === 'nova_cannon' && tower.barrelSprite
+					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
 						: towerWorld.y;
 
 				// Twin archer: fire 2 arrows, each with half damage
-				const shotCount = def.type === 'twin_archer' ? 2 : 1;
+				const shotCount = def.id === 'twin_archer' ? 2 : 1;
 				const shotBatch =
 					shotCount > 1
 						? pendingBatch.map((evt) => ({
@@ -623,7 +619,7 @@ export class TowerSystem {
 						ttl: shotTtl,
 						maxTtl: shotTtl,
 						style,
-						towerType: def.type,
+						towerType: def.id,
 						arrowIndex: shotArrowIndex,
 						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
 						impactPending: hasProjectile,
@@ -631,17 +627,11 @@ export class TowerSystem {
 						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 					});
 				}
-				if (def.type === 'nova_cannon') {
+				if (def.id === 'nova_cannon') {
 					// Use the same hit-flash asset at barrel tip
 					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
 				} else {
-					this.spawnMuzzleVfx(
-						def.id,
-						tower.grade,
-						towerWorld,
-						data.position,
-						tower.sprite,
-					);
+					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				}
 
 				if (!hasProjectile) {
@@ -655,10 +645,10 @@ export class TowerSystem {
 					);
 				}
 
-				const lastSound = this.lastSoundTime.get(def.type) ?? 0;
+				const lastSound = this.lastSoundTime.get(def.id) ?? 0;
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
-					soundGenerator.playTowerAttack(def.type);
-					this.lastSoundTime.set(def.type, time);
+					soundGenerator.playTowerAttack(def.id);
+					this.lastSoundTime.set(def.id, time);
 				}
 			}
 		}
@@ -877,24 +867,14 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
-		towerGrade: TowerGrade,
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,
 	): void {
-		// Grade-aware fire spritesheet: rare/unique/epic have their own variants
-		// so corner gems / halos stay on the tower during the fire animation.
-		// Falls back to base if grade-specific sheet isn't loaded.
-		const baseKey = `tower-${towerDefId}-fire`;
-		const gradeKey =
-			towerGrade === 'normal'
-				? baseKey
-				: `tower-${towerDefId}-${towerGrade}-fire`;
-		const textureKey =
-			this.scene.textures.exists(gradeKey) &&
-			this.scene.anims.exists(getOptionalAnimationKey(gradeKey))
-				? gradeKey
-				: baseKey;
+		// Phase 1: grade-aware fire spritesheet was removed alongside the
+		// grade system. Fire VFX uses the base id — Phase 11 will revisit
+		// tier-specific variants.
+		const textureKey = `tower-${towerDefId}-fire`;
 		const animationKey = getOptionalAnimationKey(textureKey);
 		if (
 			!this.scene.textures.exists(textureKey) ||
@@ -1023,13 +1003,13 @@ export class TowerSystem {
 	getTowerAt(
 		gridX: number,
 		gridY: number,
-	): { data: PlacedTower; def: TowerDef; grade: TowerGrade } | null {
+	): { data: PlacedTower; def: TowerDef; tier: number } | null {
 		const entry = this.findTowerEntry(gridX, gridY);
 		return entry
 			? {
 					data: entry.instance.data,
 					def: entry.instance.def,
-					grade: entry.instance.grade,
+					tier: entry.instance.tier,
 				}
 			: null;
 	}
@@ -1051,50 +1031,24 @@ export class TowerSystem {
 			col,
 			row,
 			towerId: entry.instance.def.id,
-			grade: entry.instance.grade,
+			tier: entry.instance.tier,
 		};
 	}
 
 	/**
-	 * Atomic Phase A merge: tear down the "removed" tower and upgrade the "kept"
-	 * tower's grade in place. Caller is responsible for validating the merge via
-	 * MergeSystem first; this method only executes the result. Returns false if
-	 * either tile is empty or the two coords are identical.
+	 * Phase 1 stub: merge is being rewritten for the family/tier model in
+	 * Phase 2 — this method currently just no-ops and returns false so the
+	 * orchestrator's merge-failed path always fires. The real family/tier
+	 * transmutation lands with MergeSystem.tryMerge.
 	 */
 	applyMerge(
-		removedCol: number,
-		removedRow: number,
-		keptCol: number,
-		keptRow: number,
-		newGrade: TowerGrade,
+		_removedCol: number,
+		_removedRow: number,
+		_keptCol: number,
+		_keptRow: number,
+		_resultTowerId: string,
 	): boolean {
-		if (removedCol === keptCol && removedRow === keptRow) return false;
-		const removed = this.findTowerEntry(removedCol, removedRow);
-		const kept = this.findTowerEntry(keptCol, keptRow);
-		if (!removed || !kept) return false;
-
-		removed.instance.idleTween?.stop();
-		removed.instance.idleTween?.remove();
-		removed.instance.barrelSprite?.destroy();
-		removed.instance.base.destroy();
-		removed.instance.sprite.destroy();
-		this.towers.delete(removed.key);
-		this.gridManager.removeTower(removedCol, removedRow);
-
-		kept.instance.grade = newGrade;
-		const newTextureKey = resolveTowerTextureKey(
-			kept.instance.def.id,
-			newGrade,
-		);
-		kept.instance.sprite.setTexture(newTextureKey);
-		kept.instance.effectiveDamage = getEffectiveStats(
-			kept.instance.def.stats.damage,
-			kept.instance.data.level,
-			newGrade,
-		);
-
-		this.pathfinding.invalidateCache();
-		return true;
+		return false;
 	}
 
 	/**

@@ -17,7 +17,7 @@ function ctx(
 }
 
 describe('RandomSummonSystem.requestSummon', () => {
-	it('빈 칸이 있으면 success — 첫 빈 칸 + draw 결과', () => {
+	it('빈 칸이 있으면 success — 첫 빈 칸 + draw 결과 (towerId only)', () => {
 		const pool = new SummonPoolSystem(['archer'], () => 0);
 		const sys = new RandomSummonSystem(pool, () => 0);
 		const r = sys.requestSummon(
@@ -34,7 +34,8 @@ describe('RandomSummonSystem.requestSummon', () => {
 			expect(r.col).toBe(1);
 			expect(r.row).toBe(0);
 			expect(r.towerId).toBe('archer');
-			expect(r.grade).toBe('normal');
+			// grade field is gone in Phase 1
+			expect((r as Record<string, unknown>).grade).toBeUndefined();
 		}
 	});
 

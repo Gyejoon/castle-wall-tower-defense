@@ -368,7 +368,7 @@ export function StageDetailPage() {
 										className="flex-1 bg-panel border border-border p-1.5 flex flex-col items-center gap-1"
 									>
 										<img
-											src={`assets/towers/${tower.type}.webp`}
+											src={`assets/towers/${tower.id}.webp`}
 											alt={tower.name}
 											width={32}
 											height={32}

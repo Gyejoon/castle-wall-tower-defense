@@ -3,7 +3,7 @@
 import {
 	createDefaultSave,
 	generateWeeklyMissions,
-	maxLevelForGrade,
+	MAX_TOWER_LEVEL,
 	SAVE_VERSION,
 	toKSTDateStr,
 } from '@gld/shared';
@@ -111,138 +111,27 @@ describe('metaStore', () => {
 		expect(result).toBe('no_gold');
 	});
 
-	it('enhanceTower returns max_level at grade cap (normal = 20)', () => {
+	it('enhanceTower returns max_level at MAX_TOWER_LEVEL cap (Phase 1 — flat)', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: maxLevelForGrade('normal') } : t,
+				t.defId === 'archer' ? { ...t, level: MAX_TOWER_LEVEL } : t,
 			),
 		}));
 		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('max_level');
 	});
 
-	it('enhanceTower enforces rare grade cap (30)', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			profile: { ...s.profile, gold: 99999 },
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 30, grade: 'rare' as const } : t,
-			),
-		}));
-		expect(useMetaStore.getState().enhanceTower('archer')).toBe('max_level');
-	});
-
-	it('enhanceTower allows rare up to 30 but blocks 31', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			profile: { ...s.profile, gold: 99999 },
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 29, grade: 'rare' as const } : t,
-			),
-		}));
-		expect(useMetaStore.getState().enhanceTower('archer')).toBe('success');
-		// now at Lv.30, next attempt blocked
-		expect(useMetaStore.getState().enhanceTower('archer')).toBe('max_level');
-	});
-
-	it('promoteTower upgrades grade on success', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 20 } : t,
-			),
-		}));
-		const result = useMetaStore.getState().promoteTower('archer', () => 0);
-		expect(result).toBe('success');
-		const tower = useMetaStore
-			.getState()
-			.collection.find((t) => t.defId === 'archer');
-		expect(tower?.grade).toBe('rare');
-	});
-
-	it('promoteTower deducts gold even on failure', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 20 } : t,
-			),
-		}));
-		const beforeGold = useMetaStore.getState().profile.gold;
-		useMetaStore.getState().promoteTower('archer', () => 0.99);
-		expect(useMetaStore.getState().profile.gold).toBe(beforeGold - 500);
-		const tower = useMetaStore
-			.getState()
-			.collection.find((t) => t.defId === 'archer');
-		expect(tower?.grade).toBe('normal');
-	});
-
-	it('promoteTower returns max_grade for epic', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, grade: 'epic' as const } : t,
-			),
-		}));
-		const result = useMetaStore.getState().promoteTower('archer');
-		expect(result).toBe('max_grade');
-	});
-
-	it('promoteTower returns no_gold when insufficient', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			profile: { ...s.profile, gold: 0 },
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 20 } : t,
-			),
-		}));
-		const result = useMetaStore.getState().promoteTower('archer');
-		expect(result).toBe('no_gold');
-	});
-
-	it('promoteTower returns level_too_low when tower level below required', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			profile: { ...s.profile, gold: 10000 },
-		}));
-		const result = useMetaStore.getState().promoteTower('archer');
-		expect(result).toBe('level_too_low');
-	});
-
-	it('promoteTower boundary: Lv.19 fails, Lv.20 proceeds', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			profile: { ...s.profile, gold: 10000 },
-			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: 19 } : t,
-			),
-		}));
-		expect(useMetaStore.getState().promoteTower('archer')).toBe(
-			'level_too_low',
-		);
-
-		useMetaStore.setState((s) => ({
-			collection: s.collection.map((t) =>
-				t.defId === 'archer'
-					? { ...t, level: 20, grade: 'normal' as const }
-					: t,
-			),
-		}));
-		expect(useMetaStore.getState().promoteTower('archer', () => 0)).toBe(
-			'success',
-		);
-	});
-
 	it('setSelectedDeck updates deck', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore
 			.getState()
-			.setSelectedDeck(['emp', 'shield', 'archer', 'plasma']);
+			.setSelectedDeck(['emp', 'shield', 'archer', 'nova_cannon']);
 		expect(useMetaStore.getState().selectedDeck).toEqual([
 			'emp',
 			'shield',
 			'archer',
-			'plasma',
+			'nova_cannon',
 		]);
 	});
 

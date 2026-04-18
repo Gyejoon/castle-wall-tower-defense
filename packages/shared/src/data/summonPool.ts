@@ -1,45 +1,71 @@
-import type { Grade } from '../types/grade';
-
 /**
- * Energy cost to fire one summon in Phase A. Tuned for INITIAL_ENERGY=40 +
- * 1 energy/sec regen + ENERGY_PER_WAVE_CLEAR=5 across the 7-wave phase_a_s1
- * stage — gives ~5 free summons at start, plus enough budget for ongoing
- * builds and merges through the run.
+ * Energy cost to fire one summon in Phase A. Matches T1 tower cost
+ * in the new family/tier model so draw→place is a 1-to-1 swap.
  */
 export const PHASE_A_SUMMON_COST = 20;
 
+/**
+ * Phase A summon pool. Tier-1 towers only, one per base family (archer,
+ * siege, frost, stun). Uniform draw — replacement is the merge system.
+ */
+export interface SummonPoolEntry {
+	readonly towerId: string;
+	readonly weight: number;
+}
+
 export interface SummonPool {
+	readonly entries: readonly SummonPoolEntry[];
+	/** Convenience view for legacy consumers that only want the ids. */
 	readonly towerIds: readonly string[];
 }
 
 export interface SummonResult {
 	readonly towerId: string;
-	readonly grade: Grade;
 }
 
-export function createSummonPool(towerIds: readonly string[]): SummonPool {
-	return { towerIds: [...towerIds] };
+const DEFAULT_POOL: readonly SummonPoolEntry[] = [
+	{ towerId: 'archer', weight: 1 },
+	{ towerId: 'nova_cannon', weight: 1 },
+	{ towerId: 'emp', weight: 1 },
+	{ towerId: 'shield', weight: 1 },
+];
+
+/**
+ * Build a summon pool. Accepts either a plain list of tower IDs (uniform
+ * weight 1) or a list of {towerId, weight} entries so callers can
+ * rebalance later without changing the shape.
+ */
+export function createSummonPool(
+	entries: readonly (string | SummonPoolEntry)[] = DEFAULT_POOL,
+): SummonPool {
+	const normalized: SummonPoolEntry[] = entries.map((e) =>
+		typeof e === 'string' ? { towerId: e, weight: 1 } : { ...e },
+	);
+	return {
+		entries: normalized,
+		towerIds: normalized.map((e) => e.towerId),
+	};
 }
 
-const GRADE_REFUND: Record<Grade, number> = {
-	normal: PHASE_A_SUMMON_COST / 2,
-	rare: PHASE_A_SUMMON_COST,
-	unique: PHASE_A_SUMMON_COST * 2,
-	epic: PHASE_A_SUMMON_COST * 4,
-};
-
-export function getPhaseARefund(grade: Grade): number {
-	return GRADE_REFUND[grade];
+/** Refund when selling a freshly-summoned tower. Tier-based — Phase A pays
+ *  back half of whatever the caller wants to denote as base cost. */
+export function getPhaseARefund(): number {
+	return PHASE_A_SUMMON_COST / 2;
 }
 
 export function drawRandomSummon(
 	pool: SummonPool,
 	rng: () => number = Math.random,
 ): SummonResult {
-	if (pool.towerIds.length === 0) {
+	if (pool.entries.length === 0) {
 		throw new Error('drawRandomSummon: empty pool');
 	}
-	const idx = Math.floor(rng() * pool.towerIds.length);
-	const towerId = pool.towerIds[Math.min(idx, pool.towerIds.length - 1)];
-	return { towerId, grade: 'normal' };
+	const totalWeight = pool.entries.reduce((s, e) => s + e.weight, 0);
+	let roll = rng() * totalWeight;
+	for (const entry of pool.entries) {
+		roll -= entry.weight;
+		if (roll <= 0) return { towerId: entry.towerId };
+	}
+	// Fallback (rng returned exactly 1.0 or FP slop)
+	return { towerId: pool.entries[pool.entries.length - 1].towerId };
 }

@@ -85,7 +85,7 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 				newCollection.push({
 					defId: r.towerId,
 					level: 1,
-					grade: 'normal',
+					tier: 1,
 					acquiredAt: Date.now(),
 					awakening: 0,
 					duplicateCount: 0,

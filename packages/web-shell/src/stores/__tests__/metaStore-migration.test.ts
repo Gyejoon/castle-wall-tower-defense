@@ -74,7 +74,8 @@ describe('metaStore v1→v6 migration', () => {
 		const s = useMetaStore.getState();
 
 		expect(s.version).toBe(SAVE_VERSION);
-		expect(s.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
+		// v7 migration drops plasma
+		expect(s.selectedDeck).toEqual(['archer', 'emp', 'shield']);
 		expect(s.profile.nickname).toBe('Tester');
 		expect(s.profile.level).toBe(3);
 		expect(s.profile.diamond).toBe(0);
@@ -311,11 +312,208 @@ describe('metaStore v1→v6 migration', () => {
 
 		expect(result).not.toBeNull();
 		expect(result?.version).toBe(SAVE_VERSION);
-		expect(result?.selectedDeck).toEqual(['archer', 'plasma', 'emp', 'shield']);
-		expect(result?.collection[0].defId).toBe('archer');
-		expect(result?.collection[1].defId).toBe('twin_archer');
-		expect(result?.collection[2].defId).toBe('plasma'); // unchanged
+		// v7 migration drops plasma
+		expect(result?.selectedDeck).toEqual(['archer', 'emp', 'shield']);
+		const ids = result?.collection.map((t) => t.defId) ?? [];
+		expect(ids).toContain('archer');
+		expect(ids).toContain('twin_archer');
+		expect(ids).not.toContain('plasma');
 
+		vi.unstubAllGlobals();
+	});
+});
+
+// ── v6 → v7 migration (grade → tier, remove plasma/dragon_nest) ─────────────
+
+describe('save v6→v7 migration', () => {
+	it('converts legacy grade (normal/rare/unique/epic) to tier (1-4)', () => {
+		const v6Save = {
+			version: 6,
+			profile: createDefaultSave().profile,
+			progress: createDefaultSave().progress,
+			settings: createDefaultSave().settings,
+			selectedDeck: ['archer'],
+			collection: [
+				{
+					defId: 'archer',
+					level: 1,
+					grade: 'normal',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+				{
+					defId: 'twin_archer',
+					level: 1,
+					grade: 'rare',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+				{
+					defId: 'emp',
+					level: 1,
+					grade: 'unique',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+				{
+					defId: 'shield',
+					level: 1,
+					grade: 'epic',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+			],
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v6Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result?.version).toBe(SAVE_VERSION);
+		const tiers = Object.fromEntries(
+			result!.collection.map((t) => [t.defId, t.tier]),
+		);
+		expect(tiers.archer).toBe(1);
+		expect(tiers.twin_archer).toBe(2);
+		expect(tiers.emp).toBe(3);
+		expect(tiers.shield).toBe(4);
+		// grade field is gone
+		for (const t of result!.collection) {
+			expect((t as unknown as Record<string, unknown>).grade).toBeUndefined();
+		}
+		vi.unstubAllGlobals();
+	});
+
+	it('removes plasma and dragon_nest from collection', () => {
+		const v6Save = {
+			version: 6,
+			profile: createDefaultSave().profile,
+			progress: createDefaultSave().progress,
+			settings: createDefaultSave().settings,
+			selectedDeck: ['archer', 'plasma', 'dragon_nest'],
+			collection: [
+				{
+					defId: 'archer',
+					level: 1,
+					grade: 'normal',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+				{
+					defId: 'plasma',
+					level: 1,
+					grade: 'normal',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+				{
+					defId: 'dragon_nest',
+					level: 1,
+					grade: 'epic',
+					acquiredAt: 0,
+					awakening: 0,
+					duplicateCount: 0,
+				},
+			],
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v6Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		const ids = result!.collection.map((t) => t.defId);
+		expect(ids).toContain('archer');
+		expect(ids).not.toContain('plasma');
+		expect(ids).not.toContain('dragon_nest');
+		// selectedDeck also purged
+		expect(result!.selectedDeck).not.toContain('plasma');
+		expect(result!.selectedDeck).not.toContain('dragon_nest');
+		vi.unstubAllGlobals();
+	});
+
+	it('purges scenario-only keys (selectedWorldId, deckCards, etc.)', () => {
+		const v6Save: Record<string, unknown> = {
+			version: 6,
+			profile: createDefaultSave().profile,
+			progress: createDefaultSave().progress,
+			settings: createDefaultSave().settings,
+			selectedDeck: ['archer'],
+			collection: [],
+			selectedWorldId: 'w1',
+			selectedStageId: 'w1_s1',
+			deckCards: [],
+			selectedCardIndex: 0,
+			starProgress: {},
+			worldUnlocks: {},
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v6Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		const r = result as unknown as Record<string, unknown>;
+		expect(r.selectedWorldId).toBeUndefined();
+		expect(r.selectedStageId).toBeUndefined();
+		expect(r.deckCards).toBeUndefined();
+		expect(r.selectedCardIndex).toBeUndefined();
+		expect(r.starProgress).toBeUndefined();
+		expect(r.worldUnlocks).toBeUndefined();
+		vi.unstubAllGlobals();
+	});
+
+	it('preserves missions and achievements across v6→v7', () => {
+		const base = createDefaultSave();
+		const v6Save = {
+			...base,
+			version: 6,
+			progress: {
+				...base.progress,
+				dailyMissions: [
+					{
+						id: 'daily-1',
+						type: 'reach_wave',
+						target: 10,
+						current: 3,
+						reward: { type: 'gold', amount: 100 },
+						claimed: false,
+					},
+				],
+				weeklyMissions: [
+					{
+						id: 'weekly-1',
+						type: 'clear_stage',
+						target: 5,
+						current: 2,
+						reward: { type: 'diamond', amount: 50 },
+						claimed: false,
+					},
+				],
+				achievements: {
+					claimed: ['cp_100'],
+					progress: { cp_500: 250 },
+				},
+			},
+			collection: [],
+		};
+		vi.stubGlobal(
+			'localStorage',
+			makeLocalStorageMock({ [SAVE_STORAGE_KEY]: JSON.stringify(v6Save) }),
+		);
+		const result = parseSave();
+		expect(result).not.toBeNull();
+		expect(result!.progress.dailyMissions).toHaveLength(1);
+		expect(result!.progress.weeklyMissions).toHaveLength(1);
+		expect(result!.progress.achievements.claimed).toContain('cp_100');
+		expect(result!.progress.achievements.progress.cp_500).toBe(250);
 		vi.unstubAllGlobals();
 	});
 });

@@ -75,13 +75,9 @@ export {
 	createDefaultSave,
 	enhancementCost,
 	enhancementStatMultiplier,
-	GRADE_BONUS,
-	GRADE_MAX_LEVEL,
 	getEffectiveStats,
 	INITIAL_PREP_MS,
 	MAX_TOWER_LEVEL,
-	maxLevelForGrade,
-	PROMOTION_CONFIG,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
 	xpToNextLevel,
@@ -123,12 +119,12 @@ export {
 } from './constants/starDifficulty';
 export {
 	ALL_TOWERS,
-	BASE_TOWERS,
-	GOD_TOWERS,
+	getTowerById,
+	getTowersByFamily,
 	getTowersByTier,
-	HEROIC_TOWERS,
-	LEGENDARY_TOWERS,
-	RARE_TOWERS,
+	MERGE_CHAIN,
+	resolveMerge,
+	TOWER_DEFS,
 } from './constants/towers';
 export { PHASER_COLORS, UI_COLORS } from './constants/ui-colors';
 export { UNITS } from './constants/units';
@@ -169,8 +165,6 @@ export {
 	isWorldUnlocked,
 } from './systems/unlock-rules';
 export type { CombatHudState, WavePhase } from './types/game-state';
-export type { Grade } from './types/grade';
-export { GRADES, isMaxGrade, nextGrade } from './types/grade';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { GimmickTileSet, MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
@@ -182,9 +176,8 @@ export type {
 	ProgressData,
 	SaveData,
 	SettingsData,
-	TowerGrade,
 } from './types/save';
-export { SAVE_STORAGE_KEY, SAVE_VERSION, TOWER_GRADES } from './types/save';
+export { SAVE_STORAGE_KEY, SAVE_VERSION } from './types/save';
 export type {
 	StageDef,
 	StageLockStatus,
@@ -193,14 +186,12 @@ export type {
 	WorldUnlockRule,
 } from './types/stage';
 export type {
-	FusionTowerType,
 	PlacedTower,
 	TowerDef,
+	TowerFamily,
+	TowerId,
 	TowerStats,
-	TowerTier,
-	TowerType,
 } from './types/tower';
-export { TIER_NAMES } from './types/tower';
 export type {
 	ActiveUnit,
 	UnitDef,

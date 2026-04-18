@@ -148,8 +148,8 @@ describe('TowerSystem placement contract', () => {
 		const result = towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
 
 		expect(result.success).toBe(true);
-		// archer cost = 10, 50% = 5
-		expect(result.refund).toBe(5);
+		// archer cost = 20 (T1), 50% = 10
+		expect(result.refund).toBe(10);
 		expect(
 			gridManager.getTile(buildablePoint.x, buildablePoint.y)?.occupied,
 		).toBe(false);
@@ -163,22 +163,12 @@ describe('TowerSystem placement contract', () => {
 	});
 });
 
-describe('TowerSystem Phase A merge support', () => {
-	it('placeTower with gradeOverride uses the override instead of collection', () => {
-		const { towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
-		const result = towerSystem.placeTower(p.x, p.y, 'archer', {
-			gradeOverride: 'rare',
-		});
-		expect(result.success).toBe(true);
-		expect(towerSystem.getTowerLocator(p.x, p.y)?.grade).toBe('rare');
-	});
-
-	it('placeTower without options falls back to normal grade', () => {
+describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => {
+	it('placeTower uses the tower def tier', () => {
 		const { towerSystem } = createTowerSystem();
 		const p = FOREST_GATE_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
-		expect(towerSystem.getTowerLocator(p.x, p.y)?.grade).toBe('normal');
+		expect(towerSystem.getTowerLocator(p.x, p.y)?.tier).toBe(1);
 	});
 
 	it('getTowerLocator returns null for empty tile', () => {
@@ -186,7 +176,7 @@ describe('TowerSystem Phase A merge support', () => {
 		expect(towerSystem.getTowerLocator(99, 99)).toBeNull();
 	});
 
-	it('getTowerLocator returns col/row/towerId/grade for placed tower', () => {
+	it('getTowerLocator returns col/row/towerId/tier for placed tower', () => {
 		const { towerSystem } = createTowerSystem();
 		const p = FOREST_GATE_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
@@ -194,43 +184,19 @@ describe('TowerSystem Phase A merge support', () => {
 			col: p.x,
 			row: p.y,
 			towerId: 'archer',
-			grade: 'normal',
+			tier: 1,
 		});
 	});
 
-	it('applyMerge removes one tower and upgrades the other', () => {
-		const { towerSystem, gridManager } = createTowerSystem();
+	it('applyMerge is a stub in Phase 1 — always returns false', () => {
+		const { towerSystem } = createTowerSystem();
 		const p1 = FOREST_GATE_MAP.buildablePoints[0];
 		const p2 = FOREST_GATE_MAP.buildablePoints[1];
 		towerSystem.placeTower(p1.x, p1.y, 'archer');
 		towerSystem.placeTower(p2.x, p2.y, 'archer');
-
-		const ok = towerSystem.applyMerge(p1.x, p1.y, p2.x, p2.y, 'rare');
-
-		expect(ok).toBe(true);
-		expect(towerSystem.getTowerLocator(p1.x, p1.y)).toBeNull();
-		expect(gridManager.getTile(p1.x, p1.y)?.occupied).toBe(false);
-		expect(towerSystem.getTowerLocator(p2.x, p2.y)?.grade).toBe('rare');
-		expect(gridManager.getTile(p2.x, p2.y)?.occupied).toBe(true);
-	});
-
-	it('applyMerge fails when either tile is empty', () => {
-		const { towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
-		towerSystem.placeTower(p.x, p.y, 'archer');
-		// removed empty
-		expect(towerSystem.applyMerge(99, 99, p.x, p.y, 'rare')).toBe(false);
-		// kept empty
-		expect(towerSystem.applyMerge(p.x, p.y, 99, 99, 'rare')).toBe(false);
-	});
-
-	it('applyMerge rejects same-tile call as defensive guard', () => {
-		const { towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
-		towerSystem.placeTower(p.x, p.y, 'archer');
-		expect(towerSystem.applyMerge(p.x, p.y, p.x, p.y, 'rare')).toBe(false);
-		// tower still there at original grade
-		expect(towerSystem.getTowerLocator(p.x, p.y)?.grade).toBe('normal');
+		expect(towerSystem.applyMerge(p1.x, p1.y, p2.x, p2.y, 'wind_spire')).toBe(
+			false,
+		);
 	});
 
 	it('playPhaseASummonVfx adds a scale-punch tween on the tower sprite', () => {

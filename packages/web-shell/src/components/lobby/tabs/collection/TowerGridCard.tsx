@@ -1,8 +1,13 @@
 import type { OwnedTower, TowerDef } from '@gld/shared';
 import { colors } from '../../../../styles/tokens';
 import { cn } from '../../../../utils/cn';
-import { GRADE_BORDER, TIER_DOT_KEYS } from './constants';
 
+/**
+ * Phase 1: grade borders were dropped alongside the grade system. Collection
+ * cards now show a simple tier badge (T1..T6) in place of the old grade halo.
+ * Phase 9 will rebuild richer visual treatment (tier-specific colors, merge
+ * preview, etc.) once the meta loop design is locked.
+ */
 export function TowerGridCard({
 	def,
 	owned,
@@ -14,8 +19,7 @@ export function TowerGridCard({
 	locked?: boolean;
 	onClick: () => void;
 }) {
-	const gradeBorder = owned ? GRADE_BORDER[owned.grade] : colors.border;
-
+	const tier = owned?.tier ?? def.tier;
 	return (
 		<button
 			type="button"
@@ -25,27 +29,16 @@ export function TowerGridCard({
 				locked ? 'bg-bg-76 opacity-50' : 'bg-panel-85',
 			)}
 			style={{
-				border: `1px solid ${locked ? colors.border : gradeBorder}`,
-				boxShadow:
-					owned?.grade === 'epic'
-						? `0 0 8px ${GRADE_BORDER.epic}44`
-						: undefined,
+				border: `1px solid ${colors.border}`,
 			}}
 		>
 			<div className="flex gap-[3px]">
-				{TIER_DOT_KEYS.slice(0, def.tier).map((dotKey) => (
-					<img
-						key={`${def.id}-tier-${dotKey}`}
-						src="assets/ui/icon-star-active.png"
-						alt=""
-						width={8}
-						height={8}
-						className="[image-rendering:pixelated]"
-					/>
-				))}
+				<span className="font-pixel text-[9px] text-text-secondary">
+					T{tier}
+				</span>
 			</div>
 			<img
-				src={`assets/towers/${def.type}.webp`}
+				src={`assets/towers/${def.id}.webp`}
 				alt={def.name}
 				width={40}
 				height={40}
@@ -63,10 +56,7 @@ export function TowerGridCard({
 				{def.name}
 			</span>
 			{owned && (
-				<span
-					className="font-pixel text-[9px]"
-					style={{ color: GRADE_BORDER[owned.grade] }}
-				>
+				<span className="font-pixel text-[9px] text-text-secondary">
 					Lv.{owned.level}
 				</span>
 			)}

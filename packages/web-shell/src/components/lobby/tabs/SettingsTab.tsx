@@ -219,7 +219,7 @@ function DevToolsSection() {
 		save.collection = ALL_TOWERS.map<OwnedTower>((t) => ({
 			defId: t.id,
 			level: 50,
-			grade: 'normal',
+			tier: t.tier,
 			acquiredAt: now,
 			awakening: 0,
 			duplicateCount: 0,
@@ -245,7 +245,7 @@ function DevToolsSection() {
 			'celestial',
 			'divine_throne',
 			'world_tree',
-			'dragon_nest',
+			'arcane_spire',
 		];
 
 		useMetaStore.setState({
@@ -296,9 +296,9 @@ function DevToolsSection() {
 		const maxCollection = ALL_TOWERS.map<OwnedTower>((t) => ({
 			defId: t.id,
 			level: 50,
-			grade: 'epic' as const,
+			tier: t.tier,
 			acquiredAt: now,
-			awakening: 5 as 0 | 1 | 2 | 3,
+			awakening: 3 as 0 | 1 | 2 | 3,
 			duplicateCount: 0,
 		}));
 		const save = {

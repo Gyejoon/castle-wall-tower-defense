@@ -113,7 +113,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												/>
 											</button>
 											<img
-												src={`assets/towers/${tower.type}.webp`}
+												src={`assets/towers/${tower.id}.webp`}
 												alt={tower.name}
 												width={28}
 												height={28}
@@ -174,7 +174,7 @@ export function DeckEditSheet({ open, onClose }: DeckEditSheetProps) {
 												</span>
 											)}
 											<img
-												src={`assets/towers/${tower.type}.webp`}
+												src={`assets/towers/${tower.id}.webp`}
 												alt={tower.name}
 												width={28}
 												height={28}

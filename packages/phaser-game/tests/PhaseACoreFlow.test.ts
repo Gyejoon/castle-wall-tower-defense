@@ -1,6 +1,4 @@
-import type { Grade } from '@gld/shared';
 import { describe, expect, it } from 'vitest';
-import { type MergeContext, MergeSystem } from '../src/systems/MergeSystem';
 import {
 	RandomSummonSystem,
 	type SummonPlacementContext,
@@ -11,10 +9,9 @@ interface BoardTower {
 	col: number;
 	row: number;
 	towerId: string;
-	grade: Grade;
 }
 
-class FakeBoard implements MergeContext, SummonPlacementContext {
+class FakeBoard implements SummonPlacementContext {
 	private towers: BoardTower[] = [];
 
 	constructor(private readonly buildable: Array<[number, number]>) {}
@@ -27,21 +24,8 @@ class FakeBoard implements MergeContext, SummonPlacementContext {
 		return this.towers.some((t) => t.col === col && t.row === row);
 	}
 
-	getTowerAt(col: number, row: number) {
-		return this.towers.find((t) => t.col === col && t.row === row) ?? null;
-	}
-
 	add(t: BoardTower) {
 		this.towers.push(t);
-	}
-
-	remove(col: number, row: number) {
-		this.towers = this.towers.filter((t) => !(t.col === col && t.row === row));
-	}
-
-	upgrade(col: number, row: number, grade: Grade) {
-		const t = this.towers.find((x) => x.col === col && x.row === row);
-		if (t) t.grade = grade;
 	}
 
 	count() {
@@ -49,11 +33,10 @@ class FakeBoard implements MergeContext, SummonPlacementContext {
 	}
 }
 
-describe('Phase A core flow — summon → merge', () => {
-	it('archer 풀에서 두 번 소환 후 합성하면 rare 등급 1개 남음', () => {
+describe('Phase A core flow — summon (Phase 1, merge stubbed)', () => {
+	it('archer 풀에서 두 번 소환하면 보드에 2개가 쌓인다', () => {
 		const pool = new SummonPoolSystem(['archer'], () => 0);
 		const summoner = new RandomSummonSystem(pool, () => 0);
-		const merger = new MergeSystem();
 		const board = new FakeBoard([
 			[0, 0],
 			[1, 0],
@@ -63,61 +46,25 @@ describe('Phase A core flow — summon → merge', () => {
 		const r1 = summoner.requestSummon(board);
 		expect(r1.kind).toBe('success');
 		if (r1.kind === 'success') {
-			board.add({
-				col: r1.col,
-				row: r1.row,
-				towerId: r1.towerId,
-				grade: r1.grade,
-			});
+			board.add({ col: r1.col, row: r1.row, towerId: r1.towerId });
 		}
 
 		const r2 = summoner.requestSummon(board);
 		expect(r2.kind).toBe('success');
 		if (r2.kind === 'success') {
-			board.add({
-				col: r2.col,
-				row: r2.row,
-				towerId: r2.towerId,
-				grade: r2.grade,
-			});
+			board.add({ col: r2.col, row: r2.row, towerId: r2.towerId });
 		}
 		expect(board.count()).toBe(2);
-
-		const m = merger.tryMerge(board, 0, 0, 1, 0);
-		expect(m.kind).toBe('success');
-		if (m.kind === 'success') {
-			board.remove(m.removedCol, m.removedRow);
-			board.upgrade(m.keptCol, m.keptRow, m.toGrade);
-		}
-		expect(board.count()).toBe(1);
-		expect(board.getTowerAt(1, 0)?.grade).toBe('rare');
 	});
 
 	it('빈 칸이 모두 차면 다음 소환은 실패', () => {
 		const pool = new SummonPoolSystem(['archer'], () => 0);
 		const summoner = new RandomSummonSystem(pool, () => 0);
 		const board = new FakeBoard([[0, 0]]);
-		board.add({ col: 0, row: 0, towerId: 'archer', grade: 'normal' });
+		board.add({ col: 0, row: 0, towerId: 'archer' });
 		expect(summoner.requestSummon(board)).toEqual({
 			kind: 'failed',
 			reason: 'no-empty-tile',
 		});
-	});
-
-	it('epic 등급 두 개는 합성 불가 — max-grade', () => {
-		const merger = new MergeSystem();
-		const board = new FakeBoard([
-			[0, 0],
-			[1, 0],
-		]);
-		board.add({ col: 0, row: 0, towerId: 'archer', grade: 'epic' });
-		board.add({ col: 1, row: 0, towerId: 'archer', grade: 'epic' });
-		const m = merger.tryMerge(board, 0, 0, 1, 0);
-		expect(m.kind).toBe('failed');
-		if (m.kind === 'failed') {
-			expect(m.reason).toBe('max-grade');
-			expect(m.fromCol).toBe(0);
-			expect(m.toCol).toBe(1);
-		}
 	});
 });

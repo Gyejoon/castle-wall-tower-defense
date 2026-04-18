@@ -1,20 +1,12 @@
 import type { StarRating } from '../constants/starDifficulty';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
-
-export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
-export const TOWER_GRADES: readonly TowerGrade[] = [
-	'normal',
-	'rare',
-	'unique',
-	'epic',
-] as const;
 
 export interface OwnedTower {
 	defId: string;
-	level: number; // 1~30
-	grade: TowerGrade;
+	level: number; // 1~MAX_TOWER_LEVEL
+	tier: number; // 1-6; Phase-A family/tier model (replaces legacy grade)
 	acquiredAt: number;
 	awakening: 0 | 1 | 2 | 3;
 	duplicateCount: number;

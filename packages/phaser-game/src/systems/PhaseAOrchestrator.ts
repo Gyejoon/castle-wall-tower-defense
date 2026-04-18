@@ -1,5 +1,4 @@
 import {
-	type Grade,
 	PHASE_A_SUMMON_COST,
 	UPGRADE_CARDS,
 	type UpgradeCardDef,
@@ -39,22 +38,15 @@ export interface PhaseAOrchestratorDeps {
  * Phase A pivot wiring. Owns SummonPoolSystem + MergeSystem and bridges
  * them to TowerSystem via EventBus.
  *
- * Summon is 2-step: (1) request-summon-tower → pool draw → emit
- * phase-a-summon-ready; (2) Game.ts shows highlights, player taps tile
- * → Game.ts calls completePlacement(col,row) → tower placed.
- *
- * Merge is 1-step: request-merge-towers → MergeSystem validate →
- * TowerSystem.applyMerge → emit towers-merged or merge-failed.
- *
- * Construction auto-registers the listeners. Call destroy() before the
- * scene shuts down to avoid duplicate registrations on re-mount.
+ * Phase 1: grade is gone — summon yields a towerId only; merge is stubbed
+ * and will be rebuilt in Phase 2.
  */
 export class PhaseAOrchestrator {
 	private readonly summonPool: SummonPoolSystem;
 	private readonly merger: MergeSystem;
 	private readonly mergeContext: MergeContext;
 	private readonly summonCost: number;
-	private pendingSummon: { towerId: string; grade: Grade } | null = null;
+	private pendingSummon: { towerId: string } | null = null;
 	private destroyed = false;
 	private activeUpgrades: Map<string, number> = new Map();
 	private energyRegenTimer = 0;
@@ -69,7 +61,6 @@ export class PhaseAOrchestrator {
 	private readonly onClearSelection = (): void => {
 		// Do NOT clear pendingSummon here — preserving the drawn tower
 		// prevents reroll exploit (cancel → re-summon → different tower).
-		// The pending draw is consumed only by completePlacement().
 	};
 	private readonly onApplyUpgrade = (data: { upgradeId: string }): void =>
 		this.applyUpgrade(data.upgradeId);
@@ -83,11 +74,6 @@ export class PhaseAOrchestrator {
 			getTowerAt: (col, row) => deps.towerSystem.getTowerLocator(col, row),
 		};
 
-		// off() removes THIS instance's ref (no-op on first create).
-		// Previous instance's listeners are separate arrow refs; they are
-		// cleaned up via destroy() bound to the scene 'shutdown' event.
-		// If shutdown was skipped (HMR edge case), stale handlers are
-		// guarded by isSceneAlive() in Game.ts.
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.on('request-summon-tower', this.onSummonRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
@@ -129,11 +115,6 @@ export class PhaseAOrchestrator {
 		return this.activeUpgrades.get(upgradeId) ?? 0;
 	}
 
-	/**
-	 * Returns the modifier for a given upgrade type.
-	 * For 'multiply' type (dmg_up, spd_up): (1 + baseValue)^stacks
-	 * For 'add' type (range_up): stacks * baseValue
-	 */
 	getModifier(upgradeId: UpgradeId): number {
 		const stacks = this.activeUpgrades.get(upgradeId) ?? 0;
 		const card = UPGRADE_CARD_MAP.get(upgradeId);
@@ -152,10 +133,6 @@ export class PhaseAOrchestrator {
 		return Math.max(5, this.summonCost - discount);
 	}
 
-	/**
-	 * Called from Game.ts update loop. Handles energy_regen timer.
-	 * Adds energy every 5 seconds based on energy_regen stacks.
-	 */
 	tickEnergyRegen(deltaSec: number): void {
 		const stacks = this.getUpgradeStacks('energy_regen');
 		if (stacks === 0) return;
@@ -171,10 +148,6 @@ export class PhaseAOrchestrator {
 		this.energyRegenTimer = 0;
 	}
 
-	/**
-	 * Step 2: player tapped a buildable tile while a summon is pending.
-	 * Place the drawn tower at the chosen position, spend energy, play VFX.
-	 */
 	completePlacement(col: number, row: number): void {
 		const pending = this.pendingSummon;
 		if (!pending) return;
@@ -191,7 +164,6 @@ export class PhaseAOrchestrator {
 			row,
 			pending.towerId,
 			{
-				gradeOverride: pending.grade,
 				levelOverride: 1,
 			},
 		);
@@ -207,14 +179,9 @@ export class PhaseAOrchestrator {
 			col,
 			row,
 			towerId: pending.towerId,
-			grade: pending.grade,
 		});
 	}
 
-	/**
-	 * Step 1: draw a random tower from the pool and enter "placement pending"
-	 * mode. Game.ts shows buildable highlights; player taps a tile to place.
-	 */
 	private handleSummonRequest(): void {
 		const energy = this.deps.energySystem;
 		if (energy && !energy.canAfford(this.effectiveSummonCost)) {
@@ -224,12 +191,11 @@ export class PhaseAOrchestrator {
 
 		if (!this.pendingSummon) {
 			const draw = this.summonPool.draw();
-			this.pendingSummon = { towerId: draw.towerId, grade: draw.grade };
+			this.pendingSummon = { towerId: draw.towerId };
 		}
 
 		EventBus.emit('phase-a-summon-ready', {
 			towerId: this.pendingSummon.towerId,
-			grade: this.pendingSummon.grade,
 		});
 	}
 
@@ -239,6 +205,8 @@ export class PhaseAOrchestrator {
 		toCol: number;
 		toRow: number;
 	}): void {
+		// Phase 1: MergeSystem is a stub — always fail-through. Phase 2
+		// rebuilds the full family/tier merge resolver.
 		const result = this.merger.tryMerge(
 			this.mergeContext,
 			data.fromCol,
@@ -246,40 +214,9 @@ export class PhaseAOrchestrator {
 			data.toCol,
 			data.toRow,
 		);
-
 		if (result.kind === 'failed') {
 			this.emitMergeFailed(result);
-			return;
 		}
-
-		const ok = this.deps.towerSystem.applyMerge(
-			result.removedCol,
-			result.removedRow,
-			result.keptCol,
-			result.keptRow,
-			result.toGrade,
-		);
-
-		if (!ok) {
-			this.emitMergeFailed({
-				fromCol: data.fromCol,
-				fromRow: data.fromRow,
-				toCol: data.toCol,
-				toRow: data.toRow,
-				reason: 'invalid-tile',
-			});
-			return;
-		}
-
-		this.deps.towerSystem.playPhaseAMergeVfx(result.keptCol, result.keptRow);
-
-		EventBus.emit('towers-merged', {
-			col: result.keptCol,
-			row: result.keptRow,
-			towerId: result.towerId,
-			fromGrade: result.fromGrade,
-			toGrade: result.toGrade,
-		});
 	}
 
 	private emitMergeFailed(failure: {

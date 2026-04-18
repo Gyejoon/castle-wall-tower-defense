@@ -1,4 +1,14 @@
-import { type GachaResult, TIER_NAMES } from '@gld/shared';
+import type { GachaResult } from '@gld/shared';
+
+const TIER_LABELS: Record<number, string> = {
+	1: '일반',
+	2: '희귀',
+	3: '영웅',
+	4: '전설',
+	5: '신화',
+	6: '궁극',
+};
+
 import { useEffect, useState } from 'react';
 import { colors, TIER_COLORS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
@@ -65,7 +75,7 @@ export function GachaRevealPhase({
 						{results[0].towerName}
 					</p>
 					<p className="font-pixel text-[11px] text-text-secondary">
-						{TIER_NAMES[results[0].tier] ?? '일반'}
+						{TIER_LABELS[results[0].tier] ?? '일반'}
 					</p>
 					{results[0].isPityReward && (
 						<span className="font-pixel text-[10px] text-gold">

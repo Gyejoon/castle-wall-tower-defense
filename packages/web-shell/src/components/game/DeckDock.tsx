@@ -4,10 +4,9 @@ import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
 const TOWER_NAME_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.name]));
-const TOWER_TYPE_MAP = new Map(ALL_TOWERS.map((t) => [t.id, t.type]));
 
 function getTowerSrc(towerDefId: string): string {
-	return `assets/towers/${TOWER_TYPE_MAP.get(towerDefId) ?? towerDefId}.webp`;
+	return `assets/towers/${towerDefId}.webp`;
 }
 
 export function DeckDock() {

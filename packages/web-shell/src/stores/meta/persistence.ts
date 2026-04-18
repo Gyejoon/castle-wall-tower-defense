@@ -4,6 +4,7 @@ import {
 	SAVE_VERSION,
 	type SaveData,
 } from '@gld/shared';
+import { migrateV6toV7 } from './migrations/v7';
 
 // ── Save writing ──────────────────────────────────────────────
 
@@ -94,6 +95,7 @@ const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	6: (data) => migrateV6toV7(data),
 	5: (data) => {
 		// v5 → v6: remove showDamageNumbers from settings (always on)
 		const settings = (data.settings ?? {}) as Record<string, unknown>;
@@ -290,6 +292,7 @@ export function sanitizeSave(save: SaveData): SaveData {
 					.filter((t): t is NonNullable<typeof t> => t != null)
 					.map((t) => ({
 						...t,
+						tier: typeof t.tier === 'number' ? t.tier : dt.tier,
 						awakening: t.awakening ?? dt.awakening,
 						duplicateCount: t.duplicateCount ?? dt.duplicateCount,
 					}))

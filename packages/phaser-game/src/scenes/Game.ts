@@ -850,7 +850,7 @@ export class GameScene extends Phaser.Scene {
 					col: gridPos.x,
 					row: gridPos.y,
 					refund,
-					grade: tower.grade,
+					tier: tower.tier,
 				});
 				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {

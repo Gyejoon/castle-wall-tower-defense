@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ALL_TOWERS,
-	BASE_TOWERS,
 	type CombatHudState,
 	DEFAULT_GRID_CONFIG,
-	GOD_TOWERS,
 	GRID_HEIGHT,
 	GRID_WIDTH,
-	HEROIC_TOWERS,
-	LEGENDARY_TOWERS,
-	RARE_TOWERS,
+	TOWER_DEFS,
 	type WavePhase,
 } from '../src/index';
 
@@ -67,13 +63,9 @@ describe('Grid constants', () => {
 });
 
 describe('Tower definitions', () => {
-	it('preserves the 18-tower pool by tier', () => {
-		expect(BASE_TOWERS).toHaveLength(4);
-		expect(RARE_TOWERS).toHaveLength(4);
-		expect(HEROIC_TOWERS).toHaveLength(4);
-		expect(LEGENDARY_TOWERS).toHaveLength(4);
-		expect(GOD_TOWERS).toHaveLength(2);
-		expect(ALL_TOWERS).toHaveLength(18);
+	it('has 19 towers in the Phase A family/tier model', () => {
+		expect(TOWER_DEFS).toHaveLength(19);
+		expect(ALL_TOWERS).toHaveLength(19);
 	});
 
 	it('keeps all tower ids unique', () => {

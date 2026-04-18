@@ -96,12 +96,9 @@ export const useMetaStore = create<MetaState>()(
 					s.updateAchievementProgress('tower_lv10', maxLv);
 					s.updateAchievementProgress('tower_lv30', maxLv);
 					s.updateAchievementProgress('tower_lv50', maxLv);
-					if (s.collection.some((t) => t.grade === 'rare'))
-						s.updateAchievementProgress('tower_rare', 1);
-					if (s.collection.some((t) => t.grade === 'unique'))
-						s.updateAchievementProgress('tower_unique', 1);
-					if (s.collection.some((t) => t.grade === 'epic'))
-						s.updateAchievementProgress('tower_epic', 1);
+					// Phase 1: grade-based achievements (tower_rare / _unique / _epic)
+					// were dropped alongside the grade system. Tier-based replacements
+					// land with Phase 9's meta-loop rebuild.
 
 					const stageStars = s.progress.stageStars;
 					const star2Count = Object.values(stageStars).filter(

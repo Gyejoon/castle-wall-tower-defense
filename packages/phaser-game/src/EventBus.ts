@@ -2,7 +2,6 @@ import type {
 	DeckCardDef,
 	PlacementFailureReason,
 	StarRating,
-	TowerGrade,
 	UnitType,
 	WavePhase,
 	WaveSlotKind,
@@ -84,7 +83,7 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		refund: number;
-		grade: TowerGrade;
+		tier: number;
 	};
 	'request-enter-move-mode': {
 		fromCol: number;
@@ -153,14 +152,13 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		towerId: string;
-		grade: TowerGrade;
 	};
 	'towers-merged': {
 		col: number;
 		row: number;
 		towerId: string;
-		fromGrade: TowerGrade;
-		toGrade: TowerGrade;
+		fromTier: number;
+		toTier: number;
 	};
 	'merge-failed': {
 		fromCol: number;
@@ -168,9 +166,10 @@ export interface GameEventMap {
 		toCol: number;
 		toRow: number;
 		reason:
+			| 'not-implemented'
 			| 'different-tower'
-			| 'different-grade'
-			| 'max-grade'
+			| 'different-tier'
+			| 'max-tier'
 			| 'invalid-tile';
 	};
 	'summon-failed': {
@@ -178,7 +177,6 @@ export interface GameEventMap {
 	};
 	'phase-a-summon-ready': {
 		towerId: string;
-		grade: TowerGrade;
 	};
 
 	// === Roguelike Upgrade System (Phase A) ===

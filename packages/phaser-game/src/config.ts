@@ -3,7 +3,9 @@ import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { GameScene } from './scenes/Game';
 import { Preloader } from './scenes/Preloader';
-import { StageDetailScene } from './scenes/StageDetailScene';
+
+// Phase 6: StageDetailScene was removed along with the scenario-mode
+// purge. Phase A routes directly into GameScene from the lobby.
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
 	width: ORTHO_CANVAS_W,
@@ -17,5 +19,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 		mode: Phaser.Scale.FIT,
 		autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
 	},
-	scene: [Boot, Preloader, GameScene, StageDetailScene],
+	scene: [Boot, Preloader, GameScene],
 };

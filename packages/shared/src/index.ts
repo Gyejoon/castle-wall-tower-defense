@@ -170,11 +170,8 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
-export {
-	getStageLockStatus,
-	isStageUnlocked,
-	isWorldUnlocked,
-} from './systems/unlock-rules';
+// Phase 6: unlock-rules removed with scenario mode purge. Phase 9 meta
+// rebuild will introduce any new gating if needed.
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
 export type { GimmickTileSet, MapLayout } from './types/map';

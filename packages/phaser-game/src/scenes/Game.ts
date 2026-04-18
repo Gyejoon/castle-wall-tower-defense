@@ -12,6 +12,7 @@ import {
 	getSpawnExitPairs,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	MockAdService,
 	PHASE_A_MAP_ID,
 	PHASER_COLORS,
 	UNITS,
@@ -276,6 +277,9 @@ export class GameScene extends Phaser.Scene {
 				towerSystem: this.playerTowers,
 				initialPool: PHASE_A_INITIAL_POOL,
 				energySystem: this.energySystem,
+				// Phase 10 BM stub. Real provider swaps in behind the same
+				// `AdService` contract without touching this call site.
+				adService: MockAdService,
 			});
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;

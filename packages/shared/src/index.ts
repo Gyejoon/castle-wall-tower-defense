@@ -121,6 +121,8 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
+export type { AdPlacement, AdResult, AdService } from './services/AdService';
+export { MockAdService } from './services/AdService';
 // Phase 7 (v8): scenario-mode constants (stages/worlds/missions/achievements
 // /stageInfo/starDifficulty) removed alongside the SaveData v7→v8 shrink.
 // Phase 9 meta rebuild will introduce whatever replacement gating is needed.

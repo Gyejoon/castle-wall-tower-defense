@@ -1,4 +1,5 @@
 import {
+	type AdService,
 	PHASE_A_SUMMON_COST,
 	pickRandomUpgrades,
 	type TowerId,
@@ -44,11 +45,16 @@ export interface PhaseAEnergyApi {
 	add(amount: number): void;
 }
 
-/** Phase 10 BM stub surface. Kept minimal here so compilation stays stable
- *  without pulling in the full AdService contract — Phase 10 will wire the
- *  real service. Return `'rewarded'` on success, anything else = not rewarded. */
+/**
+ * Structural surface of the shared {@link AdService} plus the Phase 4
+ * reroll-era `'dismissed' | 'failed'` legacy result shape so existing tests
+ * keep passing while the canonical contract uses `'skipped' | 'error'`. All
+ * non-`'rewarded'` results are treated as "not rewarded" at call sites.
+ */
 export interface PhaseAAdServiceApi {
-	watchAd?(placement: string): Promise<'rewarded' | 'dismissed' | 'failed'>;
+	watchAd?(
+		placement: string,
+	): Promise<'rewarded' | 'skipped' | 'error' | 'dismissed' | 'failed'>;
 }
 
 export interface PhaseAOrchestratorDeps {
@@ -57,7 +63,13 @@ export interface PhaseAOrchestratorDeps {
 	rng?: () => number;
 	energySystem?: PhaseAEnergyApi;
 	summonCost?: number;
-	adService?: PhaseAAdServiceApi;
+	/**
+	 * Shared {@link AdService} implementation. Phase 10 injects `MockAdService`
+	 * from the scene boot path. Orchestrator call sites upcast the shared type
+	 * to {@link PhaseAAdServiceApi} so mocks in tests can keep returning the
+	 * legacy `'dismissed'` outcome.
+	 */
+	adService?: AdService | PhaseAAdServiceApi;
 }
 
 /**
@@ -289,7 +301,7 @@ export class PhaseAOrchestrator {
 	 * with a new distinct pick.
 	 */
 	private async handleRerollRequest(): Promise<void> {
-		const adService = this.deps.adService;
+		const adService = this.deps.adService as PhaseAAdServiceApi | undefined;
 		let rewarded = true;
 		if (adService?.watchAd) {
 			const result = await adService.watchAd('reroll');

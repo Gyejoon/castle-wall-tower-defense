@@ -96,10 +96,11 @@ export function PhaseAHud() {
 			pushToast('이동 불가', 'warning');
 		};
 
-		const handleMerged = (data: { toTier: number }) => {
+		const handleMerged = (data: { toTowerId: string; toTier: number }) => {
 			firstPickRef.current = null;
 			setFirstPick(null);
-			pushToast(`합성 성공 → T${data.toTier}`, 'success');
+			const name = TOWER_NAME_MAP.get(data.toTowerId) ?? data.toTowerId;
+			pushToast(`합성 성공 → ${name} (T${data.toTier})`, 'success');
 		};
 
 		const handleMergeFailed = (data: { reason: string }) => {
@@ -237,9 +238,17 @@ export function PhaseAHud() {
 					</>
 				) : firstPick !== null ? (
 					<>
-						<span className="font-pixel text-[11px] text-gold">
-							{firstPick.towerName} (T{firstPick.tier}) · 짝을 탭하세요
-						</span>
+						<div className="flex items-center gap-2">
+							<span
+								data-testid="phase-a-tier-badge"
+								className="font-pixel text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/40 px-1.5 py-[1px] rounded-sm"
+							>
+								T{firstPick.tier}
+							</span>
+							<span className="font-pixel text-[11px] text-gold">
+								{firstPick.towerName} · 짝을 탭하세요
+							</span>
+						</div>
 						<div className="flex items-center gap-3 mt-0.5">
 							<button
 								type="button"
@@ -341,12 +350,10 @@ export function PhaseAHud() {
 
 function mergeFailLabel(reason: string): string {
 	switch (reason) {
-		case 'not-implemented':
-			return '합성 시스템 준비 중';
-		case 'different-tower':
-			return '다른 타워';
-		case 'different-tier':
-			return '다른 티어';
+		case 'same-instance':
+			return '같은 타워';
+		case 'incompatible-pair':
+			return '합성 불가 조합';
 		case 'max-tier':
 			return '최고 티어';
 		case 'invalid-tile':

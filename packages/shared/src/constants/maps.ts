@@ -6,24 +6,25 @@ function buildBuildablePoints({
 	height,
 	path,
 	blockedPlacementPoints,
+	obstacles = [],
 }: {
 	width: number;
 	height: number;
 	path: Position[];
 	blockedPlacementPoints: Position[];
+	obstacles?: Position[];
 }): Position[] {
-	const pathSet = new Set(path.map((point) => `${point.x},${point.y}`));
-	const blockedSet = new Set(
-		blockedPlacementPoints.map((point) => `${point.x},${point.y}`),
-	);
+	const blockedSet = new Set<string>([
+		...path.map((p) => `${p.x},${p.y}`),
+		...blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+		...obstacles.map((p) => `${p.x},${p.y}`),
+	]);
 	const buildablePoints: Position[] = [];
 
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			const key = `${x},${y}`;
-			if (pathSet.has(key) || blockedSet.has(key)) {
-				continue;
-			}
+			if (blockedSet.has(key)) continue;
 			buildablePoints.push({ x, y });
 		}
 	}

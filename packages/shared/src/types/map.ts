@@ -21,4 +21,15 @@ export interface MapLayout {
 	rewardMultiplier: number;
 	/** HP multiplier applied to all spawned units. Default 1. */
 	difficultyHpMult: number;
+	/**
+	 * Fixed obstacle tiles. Towers cannot be placed here and units cannot
+	 * path through. Added in Phase 7.2 for the Phase A redesign — optional so
+	 * pre-Phase-A test fixtures keep compiling.
+	 */
+	obstacles?: Position[];
+	/**
+	 * Tiles that render the castle wall at the exit. Usually just
+	 * `[exitPoint]`; kept as an array so future maps can widen the gate.
+	 */
+	castleWallTiles?: Position[];
 }

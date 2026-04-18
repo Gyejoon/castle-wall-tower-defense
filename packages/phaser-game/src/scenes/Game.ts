@@ -45,28 +45,19 @@ interface MapTheme {
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
-	forest_gate: {
-		groundTint: 0xffffff, // no tint — natural green/brown
-		decorTint: 0xffffff,
-		pathColor: 0x9f8258,
+	// Phase 7.5: warm sandstone palette tuned for the 9×18 Phase A board.
+	// Path/grid lines run at very low alpha so towers and obstacles stay
+	// the visual focus instead of tile chrome.
+	phase_a_long: {
+		groundTint: 0xc8b89a,
+		decorTint: 0xc8b89a,
+		pathColor: 0x7a6040,
 		pathLineColor: 0xb8956a,
-	},
-	lava_fortress: {
-		groundTint: 0xd4a070, // warm orange/brown cast
-		decorTint: 0xc89060,
-		pathColor: 0xb05030,
-		pathLineColor: 0xc06040,
-	},
-	storm_citadel: {
-		groundTint: 0x8898c0, // cool blue/purple cast
-		decorTint: 0x7888b0,
-		pathColor: 0x5060a0,
-		pathLineColor: 0x6070b0,
 	},
 };
 
 function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.forest_gate;
+	return MAP_THEMES[mapId] ?? MAP_THEMES.phase_a_long;
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
@@ -532,13 +523,15 @@ export class GameScene extends Phaser.Scene {
 		const pathColor = dark ? 0x5c6585 : theme.pathColor;
 
 		const allCells = getAllPathCells(this.currentMap);
+		// Phase 7.5: tone down path overlay alpha so towers + obstacles read
+		// first (was 0.52 / 0.40 in scenario builds).
 		for (const point of allCells) {
 			grid.fillTileRect(
 				graphics,
 				point.x,
 				point.y,
 				pathColor,
-				dark ? 0.4 : 0.52,
+				dark ? 0.4 : 0.35,
 			);
 		}
 	}
@@ -625,7 +618,9 @@ export class GameScene extends Phaser.Scene {
 		for (const path of paths) {
 			if (path.length < 2) continue;
 
-			graphics.lineStyle(4, lineColor, 0.08);
+			// Phase 7.5: very low-alpha path stroke so the underlying tilemap
+			// reads clean — was 0.08 / 0.40 in scenario builds.
+			graphics.lineStyle(4, lineColor, 0.04);
 			graphics.beginPath();
 			const first = grid.gridToWorld(path[0].x, path[0].y);
 			graphics.moveTo(first.x, first.y);
@@ -635,7 +630,7 @@ export class GameScene extends Phaser.Scene {
 			}
 			graphics.strokePath();
 
-			graphics.fillStyle(lineColor, 0.4);
+			graphics.fillStyle(lineColor, 0.25);
 			for (let i = 0; i < path.length - 1; i++) {
 				const a = grid.gridToWorld(path[i].x, path[i].y);
 				const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);

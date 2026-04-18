@@ -432,13 +432,15 @@ export class GameScene extends Phaser.Scene {
 			this.spawnHut.setActive(false);
 			// Phase 3 (sole-mode): wave-clear energy bonus removed entirely.
 			// Energy comes from passive regen + per-kill + boss-kill rewards.
-			// Phase A: every 10 waves, offer 3 random upgrade cards. Phase 4
-			// (4.2) will replace this with a boss-phase trigger.
+			// Phase 4 Task 4.2: roguelike pick now triggers on BOSS-phase clears
+			// only. WaveSystem tags each `wave-completed` with the phase that
+			// just ended (Task 4.0 [F7]); we bypass the pick if the wave was
+			// forced-cleared by the timer (`cleared === false`) or if it was
+			// the final wave (defeat/victory HUD owns the run-end flow).
 			if (
 				data.cleared &&
 				this.isPhaseAMap &&
-				data.slotIndex % 10 === 0 &&
-				data.slotIndex > 0 &&
+				data.phase === 'boss' &&
 				data.slotIndex < data.totalWaves &&
 				this.phaseAOrchestrator
 			) {

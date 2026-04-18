@@ -4,7 +4,8 @@ import { PixelButton } from '../../ui/PixelButton';
 /**
  * Phase 6: Scenario mode purged. The home tab is now a direct launcher
  * for Phase A (primary) plus a stub button for the future MetaForge
- * (Phase 9). Phase 8 [F24] will swap the classes for real design tokens.
+ * (Phase 9). Phase 8 Task 8.4 [F24] swaps the gradient primary CTA for a
+ * solid token-based button anchored to `--color-accent` / `--color-gold`.
  */
 export function HomeTab() {
 	const startPhaseA = useGameStore((s) => s.startPhaseA);
@@ -20,7 +21,10 @@ export function HomeTab() {
 		>
 			<div className="relative z-[1] flex flex-col items-center justify-center flex-1 px-5 gap-6">
 				<div className="flex flex-col items-center gap-2">
-					<h1 className="font-pixel text-[24px] text-gold drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] tracking-wider">
+					<h1
+						className="font-pixel text-[24px] text-gold tracking-wider"
+						style={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}
+					>
 						Grid Line Defense
 					</h1>
 					<span className="font-pixel text-[11px] text-accent tracking-wider uppercase">
@@ -28,14 +32,15 @@ export function HomeTab() {
 					</span>
 				</div>
 
-				<div className="w-full max-w-[300px] flex flex-col gap-3">
-					<PixelButton
-						variant="gold"
+				<div className="w-full max-w-xs flex flex-col gap-3">
+					<button
+						type="button"
 						onClick={startPhaseA}
+						className="w-full h-16 rounded-xl font-pixel text-xl active:scale-[0.98] transition-transform"
 						style={{
-							width: '100%',
-							padding: '18px 20px',
-							fontSize: '16px',
+							background: 'var(--color-accent)',
+							color: 'var(--color-bg)',
+							boxShadow: '0 4px 0 var(--color-border)',
 						}}
 					>
 						<span className="inline-flex items-center justify-center gap-2">
@@ -44,11 +49,11 @@ export function HomeTab() {
 								alt=""
 								width={18}
 								height={18}
-								className="[image-rendering:pixelated]"
+								style={{ imageRendering: 'pixelated' }}
 							/>
 							전투 시작
 						</span>
-					</PixelButton>
+					</button>
 					<PixelButton
 						variant="secondary"
 						onClick={enterMetaForge}

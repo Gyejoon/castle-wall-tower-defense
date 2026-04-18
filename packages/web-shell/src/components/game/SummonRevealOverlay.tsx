@@ -1,6 +1,7 @@
 import { EventBus } from '@gld/phaser-game';
 import { ALL_TOWERS, type TowerId } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
+import { TowerIcon } from '../common/TowerIcon';
 
 const TOWER_INFO = new Map(
 	ALL_TOWERS.map((t) => [t.id, { name: t.name, family: t.family }]),
@@ -62,7 +63,6 @@ export function SummonRevealOverlay() {
 	const name = info?.name ?? pending.towerId;
 	const family = info?.family ?? '';
 	const sourceLabel = pending.source === 'gacha' ? '✨ 가챠' : '🎲 소환';
-	const towerThumb = `assets/towers/${pending.towerId}.webp`;
 
 	return (
 		<div
@@ -88,18 +88,7 @@ export function SummonRevealOverlay() {
 				>
 					{sourceLabel}
 				</span>
-				<img
-					src={towerThumb}
-					alt=""
-					width={40}
-					height={40}
-					className="[image-rendering:pixelated]"
-					onError={(e) => {
-						// Phase 11 redesigns placeholders; for now hide the <img>
-						// if the sprite isn't on disk instead of showing broken alt.
-						(e.currentTarget as HTMLImageElement).style.display = 'none';
-					}}
-				/>
+				<TowerIcon towerId={pending.towerId} size={40} />
 				<span
 					data-testid="summon-reveal-name"
 					className="font-pixel text-[13px] text-gold"

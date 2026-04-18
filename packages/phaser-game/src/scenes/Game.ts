@@ -713,7 +713,7 @@ export class GameScene extends Phaser.Scene {
 
 				if (hasSouth || hasEast || hasWest) {
 					const cg = this.add.graphics();
-					cg.setDepth(10 + y - 0.5); // below same-row monsters so they walk in front
+					cg.setDepth(1.5); // terrain decoration — always behind all game objects
 					const baseX = world.x - tile / 2;
 					const baseY = world.y - lift + tile / 2;
 

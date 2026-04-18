@@ -1,3 +1,6 @@
+import { EventBus } from '@gld/phaser-game';
+import { MockAdService } from '@gld/shared';
+import { useRef, useState } from 'react';
 import { colors } from '../../styles/tokens';
 import { PixelButton } from '../ui/PixelButton';
 
@@ -15,12 +18,46 @@ interface GameOverScreenProps {
 	onLobby: () => void;
 }
 
+/**
+ * Phase 10 Task 10.2 — revival entry point for defeated runs.
+ *
+ * Shows three actions on defeat: "이어서 하기" (ad-rewarded continue),
+ * "다시 시작", and "로비로". Victory screens keep the existing two actions.
+ *
+ * Per Codex revision [F11] this screen **only emits** `request-continue-run`.
+ * The actual scene restore lives in `PhaseAOrchestrator.handleContinueRequest`,
+ * which pauses/resumes the scene, restores lives, and finally causes React
+ * to unmount this overlay. That separation keeps the revival pipeline testable
+ * without dragging Phaser into the React layer.
+ */
 export function GameOverScreen({
 	runStatus,
 	gameOverStats,
 	onRestart,
 	onLobby,
 }: GameOverScreenProps) {
+	// Debounce guard: one continue attempt per defeat presentation. Cleared
+	// when the ad path errors out so the player can retry. We track the
+	// in-flight flag on a ref so rapid synchronous double-taps don't race the
+	// React state update and trigger multiple ad watches.
+	const [continueRequested, setContinueRequested] = useState(false);
+	const inFlightRef = useRef(false);
+
+	const continueRun = async () => {
+		if (inFlightRef.current) return;
+		inFlightRef.current = true;
+		setContinueRequested(true);
+		const result = await MockAdService.watchAd('continue');
+		if (result === 'rewarded') {
+			EventBus.emit('request-continue-run', { livesRestored: 5 });
+		} else {
+			// Retry allowed on skipped/error — the orchestrator never saw the
+			// request so no cap counter to rewind.
+			inFlightRef.current = false;
+			setContinueRequested(false);
+		}
+	};
+
 	return (
 		<div
 			className="absolute inset-0 z-[10] flex items-center justify-center p-5"
@@ -146,6 +183,17 @@ export function GameOverScreen({
 				</div>
 
 				{/* 버튼 */}
+				{runStatus === 'defeat' && (
+					<PixelButton
+						variant="primary"
+						style={{ width: '100%' }}
+						onClick={continueRun}
+						disabled={continueRequested}
+						data-testid="game-over-continue"
+					>
+						{continueRequested ? '광고 재생 중…' : '🎬 광고 보고 이어서 하기'}
+					</PixelButton>
+				)}
 				<PixelButton
 					variant="gold"
 					style={{ width: '100%' }}

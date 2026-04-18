@@ -1077,16 +1077,27 @@ export class GameScene extends Phaser.Scene {
 					onKill();
 				}
 			}
+			// Phase 4 [F15]: `effect_amp` scales slow/stun durations (multiply).
+			// Applied at the Game scene boundary so UnitSystem stays decoupled
+			// from the roguelike stack tracker.
+			const effectAmp =
+				this.isPhaseAMap && this.phaseAOrchestrator
+					? this.phaseAOrchestrator.getEffectDurationMultiplier()
+					: 1;
 			if (evt.slow) {
 				const behavior = this.bossBehaviors.get(evt.unitId);
 				if (!behavior?.isCcImmune()) {
-					unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+					unitSystem.applySlow(
+						evt.unitId,
+						evt.slow.factor,
+						evt.slow.duration * effectAmp,
+					);
 				}
 			}
 			if (evt.stun) {
 				const behavior = this.bossBehaviors.get(evt.unitId);
 				if (!behavior?.isCcImmune()) {
-					unitSystem.applyStun(evt.unitId, evt.stun.duration);
+					unitSystem.applyStun(evt.unitId, evt.stun.duration * effectAmp);
 				}
 			}
 		}

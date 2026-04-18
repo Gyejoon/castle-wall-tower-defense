@@ -121,10 +121,11 @@ export interface GameEventMap {
 	'base-hp-changed': { hp: number; maxHp: number; laneIndex: number };
 
 	// Stage select
-	'stage-select-ready': undefined;
+	// Phase 8 [F22 dep] swept `stage-select-ready` and
+	// `request-start-game-from-stage` — both had zero emitters/listeners
+	// after the Phase 6 scenario purge.
 	'request-enter-lobby': undefined;
 	'request-enter-stage-select': undefined;
-	'request-start-game-from-stage': { mapId: string };
 	'request-deck-edit': undefined;
 
 	// Phase 6: furnace-cycle / arcane-burst events removed with

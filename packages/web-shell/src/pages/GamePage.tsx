@@ -49,6 +49,7 @@ export function GamePage() {
 	const [selectedTower, setSelectedTower] = useState<SelectedTower | null>(
 		null,
 	);
+	const [mergeSourceId, setMergeSourceId] = useState<string | null>(null);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {
@@ -139,6 +140,9 @@ export function GamePage() {
 	// floating TowerActionSheet. The Phaser scene emits tower-selected with
 	// grid coords + def metadata; we mirror that into React state. On
 	// tower-deselected / sold / moved / merged we clear the sheet.
+	//
+	// Phase 8 Task 8.5 [F10] — when mergeSourceId is non-null, the next
+	// tower-selected becomes the merge target instead of opening the sheet.
 	useEffect(() => {
 		const handleSelected = (data: {
 			towerDefId: string;
@@ -148,8 +152,27 @@ export function GamePage() {
 			refund: number;
 			tier: number;
 		}) => {
+			const targetId = `${data.col},${data.row}`;
+			// [F10] merge-target-picker branch: if we're waiting for a target,
+			// fire request-merge-towers and stay out of the action sheet.
+			if (mergeSourceId !== null && mergeSourceId !== targetId) {
+				const [fromColStr, fromRowStr] = mergeSourceId.split(',');
+				const fromCol = Number(fromColStr);
+				const fromRow = Number(fromRowStr);
+				if (Number.isFinite(fromCol) && Number.isFinite(fromRow)) {
+					EventBus.emit('request-merge-towers', {
+						fromCol,
+						fromRow,
+						toCol: data.col,
+						toRow: data.row,
+					});
+				}
+				setMergeSourceId(null);
+				setSelectedTower(null);
+				return;
+			}
 			setSelectedTower({
-				instanceId: `${data.col},${data.row}`,
+				instanceId: targetId,
 				col: data.col,
 				row: data.row,
 				towerId: data.towerDefId,
@@ -172,7 +195,36 @@ export function GamePage() {
 			EventBus.off('tower-moved', clear);
 			EventBus.off('towers-merged', clear);
 		};
+	}, [mergeSourceId]);
+
+	// Phase 8 Task 8.5 [F10] — merge-mode state machine.
+	//   enter-merge-mode → set sourceId (TowerActionSheet 합성 click)
+	//   merge-failed    → clear (invalid pair, out of range, etc.)
+	//   towers-merged   → clear (success)
+	useEffect(() => {
+		const enterHandler = (p: { sourceId: string }) =>
+			setMergeSourceId(p.sourceId);
+		const failedHandler = () => setMergeSourceId(null);
+		const mergedHandler = () => setMergeSourceId(null);
+		EventBus.on('enter-merge-mode', enterHandler);
+		EventBus.on('merge-failed', failedHandler);
+		EventBus.on('towers-merged', mergedHandler);
+		return () => {
+			EventBus.off('enter-merge-mode', enterHandler);
+			EventBus.off('merge-failed', failedHandler);
+			EventBus.off('towers-merged', mergedHandler);
+		};
 	}, []);
+
+	// [F10] ESC key cancels merge-target-picker mode.
+	useEffect(() => {
+		if (!mergeSourceId) return;
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setMergeSourceId(null);
+		};
+		window.addEventListener('keydown', handler);
+		return () => window.removeEventListener('keydown', handler);
+	}, [mergeSourceId]);
 
 	const handleToggleSpeed = useCallback(() => {
 		const cur = useGameStore.getState().gameSpeed;
@@ -199,6 +251,10 @@ export function GamePage() {
 	const handleActionSheetClose = useCallback(() => {
 		setSelectedTower(null);
 		EventBus.emit('request-clear-tower-selection');
+	}, []);
+
+	const handleMergeCancel = useCallback(() => {
+		setMergeSourceId(null);
 	}, []);
 
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
@@ -276,11 +332,35 @@ export function GamePage() {
 					{/* Phase 8 Task 8.3 — 2s summon/gacha result celebration. */}
 					<SummonRevealOverlay />
 					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
-					    sell/move/merge buttons in PhaseAHud. */}
+					    sell/move/merge buttons in PhaseAHud. Hidden while the merge
+					    target picker is active (Task 8.5 [F10]). */}
 					<TowerActionSheet
-						selectedTower={selectedTower}
+						selectedTower={mergeSourceId ? null : selectedTower}
 						onDeselect={handleActionSheetClose}
 					/>
+					{mergeSourceId !== null && (
+						<div
+							data-testid="merge-mode-banner"
+							className="absolute bottom-[120px] left-1/2 -translate-x-1/2 z-[4] flex items-center gap-3 px-4 py-2 border-2 rounded-sm"
+							style={{
+								background: 'var(--color-panel-95)',
+								borderColor: 'var(--color-gold)',
+							}}
+						>
+							<span className="font-pixel text-[11px] text-gold">
+								합성할 타워를 탭하세요
+							</span>
+							<button
+								type="button"
+								data-testid="merge-mode-cancel"
+								onClick={handleMergeCancel}
+								className="font-pixel text-[10px] underline"
+								style={{ color: 'var(--color-text-secondary)' }}
+							>
+								취소
+							</button>
+						</div>
+					)}
 
 					{/* Exit Confirm Modal */}
 					{showExitModal && runStatus === 'running' && (

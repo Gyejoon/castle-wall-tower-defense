@@ -4,6 +4,7 @@ import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
 import { GameOverScreen } from '../components/game/GameOverScreen';
 import { PhaseAHud } from '../components/game/PhaseAHud';
+import { SummonRevealOverlay } from '../components/game/SummonRevealOverlay';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
 import {
@@ -272,6 +273,8 @@ export function GamePage() {
 					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
+					{/* Phase 8 Task 8.3 — 2s summon/gacha result celebration. */}
+					<SummonRevealOverlay />
 					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
 					    sell/move/merge buttons in PhaseAHud. */}
 					<TowerActionSheet

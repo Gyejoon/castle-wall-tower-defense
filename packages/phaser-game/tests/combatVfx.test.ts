@@ -219,7 +219,8 @@ describe('optional combat vfx', () => {
 			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
 		]);
 
-		expect(addSprite).toHaveBeenCalledWith(100, 100, 'tower-archer-fire');
+		// y = towerWorld.y(120) - lift(48*0.35=16.8) - 20 = 83.2
+		expect(addSprite).toHaveBeenCalledWith(100, expect.closeTo(83.2, 1), 'tower-archer-fire');
 		const fireSprite = addSprite.mock.results[0]?.value;
 		// Fire spritesheet always uses 64×80 regardless of base tower resolution
 		// (drawFireFrame coordinate system is calibrated for 64×80).

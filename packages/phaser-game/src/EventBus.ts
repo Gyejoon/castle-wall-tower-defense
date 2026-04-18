@@ -157,6 +157,10 @@ export interface GameEventMap {
 		col: number;
 		row: number;
 		towerId: string;
+		fromA: string;
+		fromB: string;
+		toInstanceId: string;
+		toTowerId: string;
 		fromTier: number;
 		toTier: number;
 	};
@@ -165,12 +169,7 @@ export interface GameEventMap {
 		fromRow: number;
 		toCol: number;
 		toRow: number;
-		reason:
-			| 'not-implemented'
-			| 'different-tower'
-			| 'different-tier'
-			| 'max-tier'
-			| 'invalid-tile';
+		reason: 'same-instance' | 'incompatible-pair' | 'max-tier' | 'invalid-tile';
 	};
 	'summon-failed': {
 		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';

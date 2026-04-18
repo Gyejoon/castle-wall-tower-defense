@@ -10,11 +10,7 @@ const UPGRADE_CARD_MAP: ReadonlyMap<string, UpgradeCardDef> = new Map(
 );
 
 import { EventBus } from '../EventBus';
-import {
-	type MergeContext,
-	type MergeFailReason,
-	MergeSystem,
-} from './MergeSystem';
+import { MergeSystem } from './MergeSystem';
 import { SummonPoolSystem } from './SummonPoolSystem';
 import type { TowerSystem } from './TowerSystem';
 
@@ -43,8 +39,6 @@ export interface PhaseAOrchestratorDeps {
  */
 export class PhaseAOrchestrator {
 	private readonly summonPool: SummonPoolSystem;
-	private readonly merger: MergeSystem;
-	private readonly mergeContext: MergeContext;
 	private readonly summonCost: number;
 	private pendingSummon: { towerId: string } | null = null;
 	private destroyed = false;
@@ -67,12 +61,7 @@ export class PhaseAOrchestrator {
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
-		this.merger = new MergeSystem();
 		this.summonCost = deps.summonCost ?? PHASE_A_SUMMON_COST;
-
-		this.mergeContext = {
-			getTowerAt: (col, row) => deps.towerSystem.getTowerLocator(col, row),
-		};
 
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.on('request-summon-tower', this.onSummonRequest);
@@ -205,33 +194,70 @@ export class PhaseAOrchestrator {
 		toCol: number;
 		toRow: number;
 	}): void {
-		// Phase 1: MergeSystem is a stub — always fail-through. Phase 2
-		// rebuilds the full family/tier merge resolver.
-		const result = this.merger.tryMerge(
-			this.mergeContext,
-			data.fromCol,
-			data.fromRow,
-			data.toCol,
-			data.toRow,
-		);
-		if (result.kind === 'failed') {
-			this.emitMergeFailed(result);
+		const towerSystem = this.deps.towerSystem;
+		const a = towerSystem.getTowerLocator(data.fromCol, data.fromRow);
+		const b = towerSystem.getTowerLocator(data.toCol, data.toRow);
+		if (!a || !b) {
+			EventBus.emit('merge-failed', {
+				fromCol: data.fromCol,
+				fromRow: data.fromRow,
+				toCol: data.toCol,
+				toRow: data.toRow,
+				reason: 'invalid-tile',
+			});
+			return;
 		}
-	}
 
-	private emitMergeFailed(failure: {
-		fromCol: number;
-		fromRow: number;
-		toCol: number;
-		toRow: number;
-		reason: MergeFailReason;
-	}): void {
-		EventBus.emit('merge-failed', {
-			fromCol: failure.fromCol,
-			fromRow: failure.fromRow,
-			toCol: failure.toCol,
-			toRow: failure.toRow,
-			reason: failure.reason,
+		const result = MergeSystem.tryMerge(a, b);
+		if (result.kind === 'failure') {
+			EventBus.emit('merge-failed', {
+				fromCol: data.fromCol,
+				fromRow: data.fromRow,
+				toCol: data.toCol,
+				toRow: data.toRow,
+				reason: result.reason,
+			});
+			return;
+		}
+
+		// Merge spawns the new tower at the merge target (b = second tap).
+		const targetCol = data.toCol;
+		const targetRow = data.toRow;
+		towerSystem.removeTowerAt(data.fromCol, data.fromRow);
+		towerSystem.removeTowerAt(data.toCol, data.toRow);
+
+		const placement = towerSystem.placeTower(
+			targetCol,
+			targetRow,
+			result.toTowerId,
+			{ levelOverride: 1 },
+		);
+		if (!placement.success) {
+			// Shouldn't happen — the target tile was just occupied by `b`, so
+			// it's clearly buildable. Still guard against pathfinding races.
+			EventBus.emit('merge-failed', {
+				fromCol: data.fromCol,
+				fromRow: data.fromRow,
+				toCol: data.toCol,
+				toRow: data.toRow,
+				reason: 'invalid-tile',
+			});
+			return;
+		}
+
+		towerSystem.playPhaseAMergeVfx(targetCol, targetRow);
+
+		const newLocator = towerSystem.getTowerLocator(targetCol, targetRow);
+		EventBus.emit('towers-merged', {
+			col: targetCol,
+			row: targetRow,
+			towerId: result.toTowerId,
+			fromA: result.consumedA,
+			fromB: result.consumedB,
+			toInstanceId: newLocator?.instanceId ?? placement.tower.instanceId,
+			toTowerId: result.toTowerId,
+			fromTier: a.tier,
+			toTier: result.toTier,
 		});
 	}
 }

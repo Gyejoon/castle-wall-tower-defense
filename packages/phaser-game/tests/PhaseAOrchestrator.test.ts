@@ -37,24 +37,57 @@ interface FakeTower {
 	col: number;
 	row: number;
 	towerId: string;
+	family: string;
 	tier: number;
+	instanceId: string;
 }
+
+// Minimal family/tier table for test towers so merge logic resolves.
+const TEST_FAMILY: Record<string, { family: string; tier: number }> = {
+	archer: { family: 'archer', tier: 1 },
+	wind_spire: { family: 'archer', tier: 2 },
+	nova_cannon: { family: 'siege', tier: 1 },
+};
 
 function makeFakeTowerSystem() {
 	const towers: FakeTower[] = [];
+	let nextId = 0;
 	return {
 		towers,
 		playPhaseASummonVfx: vi.fn(),
 		playPhaseAMergeVfx: vi.fn(),
 		placeTower: vi.fn((col: number, row: number, defId: string) => {
-			towers.push({ col, row, towerId: defId, tier: 1 });
-			return { success: true, tower: {} };
+			const meta = TEST_FAMILY[defId] ?? { family: 'archer', tier: 1 };
+			const instanceId = `fake_${nextId++}`;
+			towers.push({
+				col,
+				row,
+				towerId: defId,
+				family: meta.family,
+				tier: meta.tier,
+				instanceId,
+			});
+			return { success: true, tower: { instanceId } };
 		}),
 		getTowerLocator: vi.fn((col: number, row: number) => {
 			const t = towers.find((x) => x.col === col && x.row === row);
-			return t ? { col, row, towerId: t.towerId, tier: t.tier } : null;
+			return t
+				? {
+						instanceId: t.instanceId,
+						towerId: t.towerId,
+						family: t.family,
+						tier: t.tier,
+						x: col,
+						y: row,
+					}
+				: null;
 		}),
-		applyMerge: vi.fn(() => false), // Phase 1 stub returns false
+		removeTowerAt: vi.fn((col: number, row: number) => {
+			const i = towers.findIndex((x) => x.col === col && x.row === row);
+			if (i < 0) return false;
+			towers.splice(i, 1);
+			return true;
+		}),
 	};
 }
 
@@ -140,12 +173,45 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		expect(orch.hasPendingSummon()).toBe(false);
 	});
 
-	it('merge request → merge-failed (not-implemented stub)', () => {
+	it('merge request → archer+archer (T1) 성공 시 towers-merged(wind_spire, T2) emit', () => {
 		const towerSystem = makeFakeTowerSystem();
-		towerSystem.towers.push(
-			{ col: 0, row: 0, towerId: 'archer', tier: 1 },
-			{ col: 1, row: 0, towerId: 'archer', tier: 1 },
+		towerSystem.placeTower(0, 0, 'archer');
+		towerSystem.placeTower(1, 0, 'archer');
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		EventBus.emit('request-merge-towers', {
+			fromCol: 0,
+			fromRow: 0,
+			toCol: 1,
+			toRow: 0,
+		});
+
+		expect(towerSystem.removeTowerAt).toHaveBeenCalledWith(0, 0);
+		expect(towerSystem.removeTowerAt).toHaveBeenCalledWith(1, 0);
+		expect(towerSystem.placeTower).toHaveBeenLastCalledWith(
+			1,
+			0,
+			'wind_spire',
+			{ levelOverride: 1 },
 		);
+		const mergedCall = getEmits().find(([event]) => event === 'towers-merged');
+		expect(mergedCall?.[1]).toMatchObject({
+			col: 1,
+			row: 0,
+			towerId: 'wind_spire',
+			toTowerId: 'wind_spire',
+			fromTier: 1,
+			toTier: 2,
+		});
+	});
+
+	it('merge request → 가족이 다르면 incompatible-pair 실패', () => {
+		const towerSystem = makeFakeTowerSystem();
+		towerSystem.placeTower(0, 0, 'archer');
+		towerSystem.placeTower(1, 0, 'nova_cannon');
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
@@ -159,7 +225,26 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		});
 
 		const failedCall = getEmits().find(([event]) => event === 'merge-failed');
-		expect(failedCall?.[1]).toMatchObject({ reason: 'not-implemented' });
+		expect(failedCall?.[1]).toMatchObject({ reason: 'incompatible-pair' });
+		expect(towerSystem.removeTowerAt).not.toHaveBeenCalled();
+	});
+
+	it('merge request → 빈 타일이면 invalid-tile 실패', () => {
+		const towerSystem = makeFakeTowerSystem();
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		EventBus.emit('request-merge-towers', {
+			fromCol: 0,
+			fromRow: 0,
+			toCol: 1,
+			toRow: 0,
+		});
+
+		const failedCall = getEmits().find(([event]) => event === 'merge-failed');
+		expect(failedCall?.[1]).toMatchObject({ reason: 'invalid-tile' });
 	});
 
 	it('destroy() 후 emit이 더 이상 핸들러를 부르지 않는다', () => {

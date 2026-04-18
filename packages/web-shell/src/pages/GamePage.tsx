@@ -6,6 +6,10 @@ import { GameOverScreen } from '../components/game/GameOverScreen';
 import { PhaseAHud } from '../components/game/PhaseAHud';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
+import {
+	type SelectedTower,
+	TowerActionSheet,
+} from '../components/game/TowerActionSheet';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
@@ -41,6 +45,9 @@ export function GamePage() {
 		description: string;
 		icon: string;
 	}> | null>(null);
+	const [selectedTower, setSelectedTower] = useState<SelectedTower | null>(
+		null,
+	);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {
@@ -127,6 +134,45 @@ export function GamePage() {
 		};
 	}, []);
 
+	// Phase 8 Task 8.1 — subscribe to tower selection events and render the
+	// floating TowerActionSheet. The Phaser scene emits tower-selected with
+	// grid coords + def metadata; we mirror that into React state. On
+	// tower-deselected / sold / moved / merged we clear the sheet.
+	useEffect(() => {
+		const handleSelected = (data: {
+			towerDefId: string;
+			towerName: string;
+			col: number;
+			row: number;
+			refund: number;
+			tier: number;
+		}) => {
+			setSelectedTower({
+				instanceId: `${data.col},${data.row}`,
+				col: data.col,
+				row: data.row,
+				towerId: data.towerDefId,
+				towerName: data.towerName,
+				tier: data.tier,
+				sellValue: data.refund,
+			});
+		};
+		const clear = () => setSelectedTower(null);
+
+		EventBus.on('tower-selected', handleSelected);
+		EventBus.on('tower-deselected', clear);
+		EventBus.on('tower-sold', clear);
+		EventBus.on('tower-moved', clear);
+		EventBus.on('towers-merged', clear);
+		return () => {
+			EventBus.off('tower-selected', handleSelected);
+			EventBus.off('tower-deselected', clear);
+			EventBus.off('tower-sold', clear);
+			EventBus.off('tower-moved', clear);
+			EventBus.off('towers-merged', clear);
+		};
+	}, []);
+
 	const handleToggleSpeed = useCallback(() => {
 		const cur = useGameStore.getState().gameSpeed;
 		const next = cur === 1 ? 2 : cur === 2 ? 3 : 1;
@@ -147,6 +193,11 @@ export function GamePage() {
 	const handleExitCancel = useCallback(() => {
 		setShowExitModal(false);
 		EventBus.emit('request-resume');
+	}, []);
+
+	const handleActionSheetClose = useCallback(() => {
+		setSelectedTower(null);
+		EventBus.emit('request-clear-tower-selection');
 	}, []);
 
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
@@ -221,8 +272,12 @@ export function GamePage() {
 					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
-					{/* Sell-tower quick action lived here for the legacy deck mode;
-					    Phase 6 removes it — Phase A uses TowerActionSheet [F10]. */}
+					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
+					    sell/move/merge buttons in PhaseAHud. */}
+					<TowerActionSheet
+						selectedTower={selectedTower}
+						onDeselect={handleActionSheetClose}
+					/>
 
 					{/* Exit Confirm Modal */}
 					{showExitModal && runStatus === 'running' && (

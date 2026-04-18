@@ -1241,6 +1241,24 @@
       "section": "vfx"
     },
     {
+      "key": "tower-hybrid_ab",
+      "type": "image",
+      "path": "assets/towers/arcane_spire.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd",
+      "type": "image",
+      "path": "assets/towers/world_tree.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-ultimate",
+      "type": "image",
+      "path": "assets/towers/divine_throne.png",
+      "section": "preload"
+    },
+    {
       "key": "unit-scout_drone",
       "type": "spritesheet",
       "path": "assets/units/scout_drone.png",

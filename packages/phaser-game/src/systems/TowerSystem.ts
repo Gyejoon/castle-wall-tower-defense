@@ -55,9 +55,60 @@ export interface GlobalModifiers {
  * Phase 1: grade is gone — texture is identified purely by tower id. We
  * keep the helper so call sites don't scatter template literals, but it's
  * a pass-through for now. Phase 11 may add tier-specific variants.
+ *
+ * Phase 11 [F23]: hybrid_ab / hybrid_cd / ultimate share placeholder
+ * sprites with their highest-tier ancestor. The asset manifest registers
+ * `tower-hybrid_ab` etc. with the placeholder paths so most lookups
+ * succeed via the texture cache; this map is the deterministic fallback
+ * used by call sites that need a guaranteed-existing texture key without
+ * touching the Phaser scene.
  */
+const PLACEHOLDER_TEXTURE_FALLBACK: Record<string, string> = {
+	hybrid_ab: 'tower-arcane_spire',
+	hybrid_cd: 'tower-world_tree',
+	ultimate: 'tower-divine_throne',
+};
+
+const warnedMissingTextures = new Set<string>();
+
 export function resolveTowerTextureKey(defId: string): string {
 	return `tower-${defId}`;
+}
+
+/**
+ * Resolve the runtime texture key for a tower id, falling back to a known-good
+ * placeholder when the manifest entry is missing or its texture failed to
+ * load. Logs a single console.warn per missing key so noisy boots stay quiet.
+ *
+ * Centralised here so both placement and merge-spawn paths share the same
+ * fallback instead of asserting.
+ */
+export function resolveTowerTextureKeySafe(
+	scene: Phaser.Scene,
+	defId: string,
+): string {
+	const primary = `tower-${defId}`;
+	if (scene.textures.exists(primary)) return primary;
+	const fallback = PLACEHOLDER_TEXTURE_FALLBACK[defId];
+	if (fallback && scene.textures.exists(fallback)) {
+		if (!warnedMissingTextures.has(primary)) {
+			warnedMissingTextures.add(primary);
+			console.warn(
+				`[TowerSystem] missing texture "${primary}", using placeholder "${fallback}"`,
+			);
+		}
+		return fallback;
+	}
+	if (scene.textures.exists('tower-archer')) {
+		if (!warnedMissingTextures.has(primary)) {
+			warnedMissingTextures.add(primary);
+			console.warn(
+				`[TowerSystem] missing texture "${primary}", falling back to tower-archer`,
+			);
+		}
+		return 'tower-archer';
+	}
+	return primary; // last resort — Phaser will draw the missing-texture frame
 }
 
 export class TowerSystem {
@@ -211,7 +262,7 @@ export class TowerSystem {
 			level: towerLevel,
 		};
 
-		const textureKey = resolveTowerTextureKey(towerDefId);
+		const textureKey = resolveTowerTextureKeySafe(this.scene, towerDefId);
 		const base = this.scene.add.graphics();
 		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
 		sprite.setDisplaySize(64, 80);
@@ -261,7 +312,53 @@ export class TowerSystem {
 			lastAuraTime: 0,
 		});
 
+		// Phase 11 [F23]: tier-5/6 placeholder differentiation. Until dedicated
+		// art ships, hybrid_ab/hybrid_cd/ultimate share T4 sprites; a tinted
+		// pulsing aura under the sprite makes them visually distinct without
+		// touching the placeholder texture itself. TODO(phase-12): replace with
+		// a proper particle emitter once `upgrade-success-fx` is wired up as a
+		// particle texture.
+		this.spawnPlaceholderAura(towerDefId, base, worldPos);
+
 		return { success: true, tower: towerData };
+	}
+
+	private spawnPlaceholderAura(
+		towerDefId: string,
+		base: Phaser.GameObjects.Graphics,
+		worldPos: Position,
+	): void {
+		const auraColor =
+			towerDefId === 'hybrid_ab'
+				? 0xffcc33 // gold
+				: towerDefId === 'hybrid_cd'
+					? 0x9966ff // purple
+					: towerDefId === 'ultimate'
+						? 0xffffff // rainbow → neutral white pulse for now
+						: null;
+		if (auraColor === null) return;
+
+		const ringRadius = this.gridManager.orthoTile * 0.55;
+		base.lineStyle(2, auraColor, 0.65);
+		base.strokeCircle(worldPos.x, worldPos.y + 4, ringRadius);
+		base.fillStyle(auraColor, 0.12);
+		base.fillCircle(worldPos.x, worldPos.y + 4, ringRadius);
+
+		// Tween a temporary overlay to convey "aura" pulse without spawning a
+		// long-lived particle emitter. Tween manager handles cleanup when the
+		// scene shuts down.
+		const overlay = this.scene.add.graphics();
+		overlay.lineStyle(3, auraColor, 0.55);
+		overlay.strokeCircle(worldPos.x, worldPos.y + 4, ringRadius);
+		overlay.setDepth(this.gridManager.getDepth(worldPos.x, worldPos.y) - 1);
+		this.scene.tweens.add({
+			targets: overlay,
+			alpha: { from: 0.85, to: 0.2 },
+			duration: 1200,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+		});
 	}
 
 	private static parseHexColor(hex: string): number {

@@ -82,6 +82,9 @@ export const TINY_SWORDS_GROUND_FRAMES = [0, 1] as const;
 /** Path tileset: 16-frame auto-tile using NSEW bitmask (N=1, E=2, S=4, W=8) */
 export const TINY_SWORDS_PATH_TILESET_KEY = 'tiny-swords-path-tileset';
 
+/** Seamless grass ground texture key (128x128 tileable image) */
+export const GRASS_SEAMLESS_KEY = 'grass-seamless';
+
 export const TINY_SWORDS_DECORATION_ASSETS: TinySwordsDecorationAssetEntry[] = [
 	{
 		key: 'tiny-swords-rock-1',

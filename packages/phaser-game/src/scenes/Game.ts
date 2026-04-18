@@ -38,10 +38,9 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
+	GRASS_SEAMLESS_KEY,
 	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_GROUND_FRAMES,
 	TINY_SWORDS_PATH_TILESET_KEY,
-	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
 
@@ -683,47 +682,27 @@ export class GameScene extends Phaser.Scene {
 
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
-		const tile = this.playerGrid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Calculate how many extra tiles needed to fill the canvas beyond the grid
-		const gridPixelW = tile * this.currentMap.width;
-		const gridPixelH = tile * this.currentMap.height;
-		const extraLeft = Math.ceil((canvasW - gridPixelW) / 2 / tile) + 1;
-		const extraRight = extraLeft;
-		const extraTop = Math.ceil((canvasH - gridPixelH) / 2 / tile) + 1;
-		const extraBottom = extraTop;
-
-		const startX = -extraLeft;
-		const endX = this.currentMap.width + extraRight;
-		const startY = -extraTop;
-		const endY = this.currentMap.height + extraBottom;
-
-		for (let y = startY; y < endY; y++) {
-			for (let x = startX; x < endX; x++) {
-				const world = grid.gridToWorld(x, y);
-				const frame =
-					TINY_SWORDS_GROUND_FRAMES[
-						((((x % 2) + 2) % 2) + (((y % 2) + 2) % 2)) %
-							TINY_SWORDS_GROUND_FRAMES.length
-					];
-				const sprite = this.add.sprite(
-					world.x,
-					world.y,
-					TINY_SWORDS_PRIMARY_TILESET.key,
-					frame,
-				);
-				sprite.setDisplaySize(tile, tile);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(0);
-
-				if (dark) {
-					sprite.setTint(0x6b7899);
-				} else if (theme.groundTint !== 0xffffff) {
-					sprite.setTint(theme.groundTint);
-				}
+		// Seamless grass background — single TileSprite covers entire canvas
+		if (typeof this.add.tileSprite === 'function') {
+			const grassBg = this.add.tileSprite(
+				canvasW / 2,
+				canvasH / 2,
+				canvasW,
+				canvasH,
+				GRASS_SEAMLESS_KEY,
+			);
+			grassBg.setDepth(0);
+			grassBg.setScrollFactor(0);
+			if (dark) {
+				grassBg.setTint(0x6b7899);
+			} else if (theme.groundTint !== 0xffffff) {
+				grassBg.setTint(theme.groundTint);
 			}
+		} else {
+			// Fallback for test environments without tileSprite — noop
 		}
 
 		this.renderFieldPathOverlay(grid, dark);

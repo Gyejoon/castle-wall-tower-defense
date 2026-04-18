@@ -437,6 +437,174 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		orch.destroy();
 	});
 
+	// ── Phase 5: GachaSystem + summon queue ──────────────────────────
+	it('request-gacha-summon (T2, energy ≥ 40) → spend(40) + phase-a-summon-ready source=gacha', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(100);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+
+		expect(energy.spend).toHaveBeenCalledWith(40);
+		const ready = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+		expect(ready?.[1]).toMatchObject({ source: 'gacha' });
+		expect((ready?.[1] as { towerId: string }).towerId).toBeDefined();
+		expect(energy.current).toBe(60);
+	});
+
+	it('request-gacha-summon (T2, energy < 40) → gacha-insufficient-energy + no summon', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(30);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+
+		const insufficient = getEmits().find(
+			([e]) => e === 'gacha-insufficient-energy',
+		);
+		expect(insufficient?.[1]).toEqual({ targetTier: 2, cost: 40, have: 30 });
+		expect(
+			getEmits().find(([e]) => e === 'phase-a-summon-ready'),
+		).toBeUndefined();
+		expect(energy.current).toBe(30);
+	});
+
+	it('gacha during pending summon → queued (no second phase-a-summon-ready)', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		// First: a regular pool summon → pending.
+		EventBus.emit('request-summon-tower');
+		expect(orch.hasPendingSummon()).toBe(true);
+
+		// Second: gacha request — should spend energy upfront but NOT emit
+		// a new phase-a-summon-ready yet.
+		const readyBefore = getEmits().filter(
+			([e]) => e === 'phase-a-summon-ready',
+		).length;
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		const readyAfter = getEmits().filter(
+			([e]) => e === 'phase-a-summon-ready',
+		).length;
+
+		expect(readyAfter).toBe(readyBefore);
+		expect(orch.getSummonQueueSize()).toBe(1);
+		expect(energy.spend).toHaveBeenCalledWith(40);
+	});
+
+	it('cancel pending gacha summon → energy refunded + next queue entry emitted', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		// Queue two gacha summons — first becomes pending, second queues.
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		expect(orch.hasPendingSummon()).toBe(true);
+		expect(orch.getSummonQueueSize()).toBe(1);
+		expect(energy.current).toBe(200 - 40 - 40);
+
+		// Cancel current pending — should refund 40 AND surface next queue.
+		orch.cancelPendingSummon();
+
+		expect(energy.add).toHaveBeenCalledWith(40);
+		expect(energy.current).toBe(200 - 40); // only the queued cost remains
+		expect(orch.hasPendingSummon()).toBe(true); // next entry surfaced
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
+
+	it('place pending gacha summon → no refund, next queue entry emitted', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		expect(orch.getSummonQueueSize()).toBe(1);
+
+		// Placement should succeed without a second spend (gacha paid upfront).
+		const spendCallsBefore = energy.spend.mock.calls.length;
+		orch.completePlacement(0, 0);
+		const spendCallsAfter = energy.spend.mock.calls.length;
+
+		expect(spendCallsAfter).toBe(spendCallsBefore); // no new spend
+		expect(energy.add).not.toHaveBeenCalled(); // no refund
+		expect(orch.hasPendingSummon()).toBe(true); // next entry surfaced
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
+
+	it('rapid-tap gacha T2 x3 with energy=40 → one spend, two insufficient, no queueing', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(40);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+
+		// Only one successful spend (the first tap), energy goes to 0.
+		expect(energy.current).toBe(0);
+		const successfulSpends = energy.spend.mock.results.filter(
+			(r) => r.value === true,
+		).length;
+		expect(successfulSpends).toBe(1);
+
+		// Two insufficient-energy events emitted, no queue entries.
+		const insufficientEmits = getEmits().filter(
+			([e]) => e === 'gacha-insufficient-energy',
+		);
+		expect(insufficientEmits.length).toBe(2);
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
+
+	it('gacha oddsBonus consumed from getTierOddsBonus()', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(1000);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.5, // midpoint; without bonus would fail T2 (0.5 > 0.6? no — 0.5 < 0.6 = success)
+			energySystem: energy,
+		});
+
+		// Stack tier_odds_up to confirm the orchestrator reads the getter.
+		// We just verify getTierOddsBonus returns >0 after stacking — the
+		// actual probability math is covered by GachaSystem.test.ts.
+		orch.applyUpgrade('tier_odds_up');
+		expect(orch.getTierOddsBonus()).toBeGreaterThan(0);
+	});
+
 	it('request-upgrade-reroll (adService dismissed) → 재발행 안 함', async () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({

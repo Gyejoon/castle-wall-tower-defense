@@ -12,9 +12,29 @@ const UPGRADE_CARD_MAP: ReadonlyMap<string, UpgradeCard> = new Map(
 );
 
 import { EventBus } from '../EventBus';
+import { GachaSystem } from './GachaSystem';
 import { MergeSystem } from './MergeSystem';
 import { SummonPoolSystem } from './SummonPoolSystem';
 import type { TowerSystem } from './TowerSystem';
+
+/**
+ * A staged summon waiting for the player to tap a placement tile. Queue
+ * entries carry `energyRefund` — the amount to restore if the summon is
+ * cancelled. Gacha summons spend energy at enqueue time (refund = cost);
+ * regular pool summons defer spend to placement (refund = 0).
+ */
+interface PendingSummonRequest {
+	requestId: string;
+	towerId: TowerId;
+	source: 'summon' | 'gacha';
+	energyRefund: number;
+}
+
+function makeRequestId(): string {
+	const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+	if (c?.randomUUID) return c.randomUUID();
+	return `sum_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 /** Minimal energy-system surface the orchestrator needs. Structural so we
  *  don't import EnergySystem and can swap in a fake in tests. */
@@ -60,13 +80,16 @@ export class PhaseAOrchestrator {
 	private readonly summonPool: SummonPoolSystem;
 	private readonly summonCost: number;
 	private readonly rng: () => number;
-	private pendingSummon: { towerId: string } | null = null;
+	private pendingSummon: PendingSummonRequest | null = null;
+	private summonQueue: PendingSummonRequest[] = [];
 	private destroyed = false;
 	private activeUpgrades: Map<UpgradeId, number> = new Map();
 	private energyRegenTimer = 0;
 	private pendingChoices: UpgradeCard[] | null = null;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
+	private readonly onGachaRequest = (data: { targetTier: 2 | 3 | 4 }): void =>
+		this.handleGachaRequest(data);
 	private readonly onMergeRequest = (data: {
 		fromCol: number;
 		fromRow: number;
@@ -90,6 +113,8 @@ export class PhaseAOrchestrator {
 
 		EventBus.off('request-summon-tower', this.onSummonRequest);
 		EventBus.on('request-summon-tower', this.onSummonRequest);
+		EventBus.off('request-gacha-summon', this.onGachaRequest);
+		EventBus.on('request-gacha-summon', this.onGachaRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
 		EventBus.on('request-merge-towers', this.onMergeRequest);
 		EventBus.off('request-clear-tower-selection', this.onClearSelection);
@@ -108,6 +133,7 @@ export class PhaseAOrchestrator {
 		if (this.destroyed) return;
 		this.destroyed = true;
 		EventBus.off('request-summon-tower', this.onSummonRequest);
+		EventBus.off('request-gacha-summon', this.onGachaRequest);
 		EventBus.off('request-merge-towers', this.onMergeRequest);
 		EventBus.off('request-clear-tower-selection', this.onClearSelection);
 		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
@@ -118,8 +144,14 @@ export class PhaseAOrchestrator {
 		return this.pendingSummon !== null;
 	}
 
+	/** Test/diagnostic helper — surfaces the queue length without exposing
+	 *  the internal array reference. */
+	getSummonQueueSize(): number {
+		return this.summonQueue.length;
+	}
+
 	cancelPendingSummon(): void {
-		this.pendingSummon = null;
+		this.settlePendingSummon('cancelled');
 	}
 
 	applyUpgrade(upgradeId: string): void {
@@ -274,11 +306,21 @@ export class PhaseAOrchestrator {
 	completePlacement(col: number, row: number): void {
 		const pending = this.pendingSummon;
 		if (!pending) return;
-		this.pendingSummon = null;
 
-		const cost = this.effectiveSummonCost;
-		if (this.deps.energySystem && !this.deps.energySystem.spend(cost)) {
+		// Gacha summons pay their cost at enqueue time (tracked as
+		// `energyRefund`). Pool summons defer spend until placement to keep
+		// legacy behaviour and let a cancelled tap not burn energy.
+		const paidUpfront = pending.energyRefund > 0;
+		const deferredCost = paidUpfront ? 0 : this.effectiveSummonCost;
+
+		if (
+			!paidUpfront &&
+			this.deps.energySystem &&
+			!this.deps.energySystem.spend(deferredCost)
+		) {
 			EventBus.emit('summon-failed', { reason: 'insufficient-energy' });
+			// The draw stays pending so the player can retry after topping up
+			// energy — matches pre-Phase-5 behaviour.
 			return;
 		}
 
@@ -292,7 +334,13 @@ export class PhaseAOrchestrator {
 		);
 
 		if (!placement.success) {
-			this.deps.energySystem?.add(cost);
+			// Refund whichever cost was charged: the deferred spend just above
+			// (pool) or the upfront refund recorded on the queue entry (gacha).
+			const refund = paidUpfront ? pending.energyRefund : deferredCost;
+			if (refund > 0) this.deps.energySystem?.add(refund);
+			// Drop the pending draw so a failed placement doesn't strand the
+			// queue. This mirrors the cancellation path (queue advances).
+			this.settlePendingSummon('cancelled-no-refund');
 			EventBus.emit('summon-failed', { reason: 'placement-failed' });
 			return;
 		}
@@ -309,6 +357,10 @@ export class PhaseAOrchestrator {
 			instanceId: placed?.data.instanceId ?? '',
 			tier: placed?.tier ?? 1,
 		});
+
+		// Task 5.6 [F8]: advance the summon queue. No refund — the tower was
+		// placed successfully.
+		this.settlePendingSummon('placed');
 	}
 
 	private handleSummonRequest(): void {
@@ -318,15 +370,96 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
-		if (!this.pendingSummon) {
-			const draw = this.summonPool.draw();
-			this.pendingSummon = { towerId: draw.towerId };
+		// Preserve Phase 3 behaviour: re-tapping summon while a pool draw is
+		// already pending re-emits the same tower (no reroll exploit, no
+		// double-queueing). Only the gacha path enqueues concurrently.
+		if (this.pendingSummon && this.pendingSummon.source === 'summon') {
+			EventBus.emit('phase-a-summon-ready', {
+				towerId: this.pendingSummon.towerId,
+				source: 'summon',
+			});
+			return;
 		}
 
-		EventBus.emit('phase-a-summon-ready', {
-			towerId: this.pendingSummon.towerId as TowerId,
+		const draw = this.summonPool.draw();
+		this.enqueueSummon({
+			towerId: draw.towerId as TowerId,
 			source: 'summon',
+			energyRefund: 0,
 		});
+	}
+
+	/**
+	 * Phase 5 handler for `request-gacha-summon`. Charges the tier cost
+	 * upfront (so energy is reserved across the queue), rolls a tower via
+	 * {@link GachaSystem} with the current `tier_odds_up` bonus, and stages
+	 * the draw for placement. Insufficient energy → {@link GameEventMap}
+	 * `gacha-insufficient-energy`, no queueing.
+	 */
+	private handleGachaRequest(data: { targetTier: 2 | 3 | 4 }): void {
+		const cost = GachaSystem.getCost(data.targetTier);
+		const energy = this.deps.energySystem;
+		if (energy && !energy.spend(cost)) {
+			EventBus.emit('gacha-insufficient-energy', {
+				targetTier: data.targetTier,
+				cost,
+				have: this.currentEnergy(),
+			});
+			return;
+		}
+		const oddsBonus = this.getTierOddsBonus();
+		const towerId = GachaSystem.rollTier(data.targetTier, this.rng, oddsBonus);
+		this.enqueueSummon({
+			towerId,
+			source: 'gacha',
+			energyRefund: cost,
+		});
+	}
+
+	private currentEnergy(): number {
+		const energy = this.deps.energySystem as
+			| (PhaseAEnergyApi & { current?: number })
+			| undefined;
+		return energy?.current ?? 0;
+	}
+
+	private enqueueSummon(req: Omit<PendingSummonRequest, 'requestId'>): void {
+		const full: PendingSummonRequest = { ...req, requestId: makeRequestId() };
+		if (this.pendingSummon) {
+			this.summonQueue.push(full);
+			return;
+		}
+		this.pendingSummon = full;
+		EventBus.emit('phase-a-summon-ready', {
+			towerId: full.towerId,
+			source: full.source,
+		});
+	}
+
+	/**
+	 * Resolve the current pending summon and advance the queue.
+	 *
+	 * - `placed` → no refund, next queue entry surfaces.
+	 * - `cancelled` → refund `energyRefund` (gacha paid upfront; pool was 0).
+	 * - `cancelled-no-refund` → placement failed after the caller already
+	 *   refunded the charged cost; advance without double-refunding.
+	 */
+	private settlePendingSummon(
+		outcome: 'placed' | 'cancelled' | 'cancelled-no-refund',
+	): void {
+		const cur = this.pendingSummon;
+		this.pendingSummon = null;
+		if (cur && outcome === 'cancelled' && cur.energyRefund > 0) {
+			this.deps.energySystem?.add(cur.energyRefund);
+		}
+		const next = this.summonQueue.shift();
+		if (next) {
+			this.pendingSummon = next;
+			EventBus.emit('phase-a-summon-ready', {
+				towerId: next.towerId,
+				source: next.source,
+			});
+		}
 	}
 
 	private handleMergeRequest(data: {

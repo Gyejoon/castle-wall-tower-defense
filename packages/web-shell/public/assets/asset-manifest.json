@@ -47,6 +47,15 @@
       "section": "preload"
     },
     {
+      "key": "tiny-swords-path-tileset",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_path.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 16,
+      "section": "preload"
+    },
+    {
       "key": "tiny-swords-rock-1",
       "type": "spritesheet",
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",

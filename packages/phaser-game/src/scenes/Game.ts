@@ -40,6 +40,7 @@ import { EventBus } from '../EventBus';
 import {
 	TINY_SWORDS_DECORATION_BY_KEY,
 	TINY_SWORDS_GROUND_FRAMES,
+	TINY_SWORDS_PATH_TILESET_KEY,
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
@@ -651,19 +652,32 @@ export class GameScene extends Phaser.Scene {
 	}
 
 	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
-		const graphics = this.add.graphics();
-		const theme = getMapTheme(this.currentMap.id);
-		const pathColor = dark ? 0x5c6585 : theme.pathColor;
-
+		const tile = grid.orthoTile;
 		const allCells = getAllPathCells(this.currentMap);
+		const cellSet = new Set(allCells.map((p) => `${p.x},${p.y}`));
+
 		for (const point of allCells) {
-			grid.fillTileRect(
-				graphics,
-				point.x,
-				point.y,
-				pathColor,
-				dark ? 0.4 : 0.52,
+			// NSEW bitmask: N=1, E=2, S=4, W=8
+			let bitmask = 0;
+			if (cellSet.has(`${point.x},${point.y - 1}`)) bitmask |= 1; // N
+			if (cellSet.has(`${point.x + 1},${point.y}`)) bitmask |= 2; // E
+			if (cellSet.has(`${point.x},${point.y + 1}`)) bitmask |= 4; // S
+			if (cellSet.has(`${point.x - 1},${point.y}`)) bitmask |= 8; // W
+
+			const world = grid.gridToWorld(point.x, point.y);
+			const sprite = this.add.sprite(
+				world.x,
+				world.y,
+				TINY_SWORDS_PATH_TILESET_KEY,
+				bitmask,
 			);
+			sprite.setDisplaySize(tile, tile);
+			sprite.setOrigin(0.5, 0.5);
+			sprite.setDepth(1);
+
+			if (dark) {
+				sprite.setTint(0x5c6585);
+			}
 		}
 	}
 

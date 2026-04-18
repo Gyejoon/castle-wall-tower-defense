@@ -308,6 +308,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
+		this.renderObstacles();
 
 		this.castleWall = new CastleWallSystem(
 			this,
@@ -653,6 +654,34 @@ export class GameScene extends Phaser.Scene {
 			);
 			graphics.fillCircle(last.x, last.y, 1.5);
 		}
+	}
+
+	/**
+	 * Render fixed map obstacles (trees / rocks / bushes) at their grid
+	 * positions. Obstacles are visual only — buildBuildablePoints already
+	 * excluded them from placement, and the unit pathPoints data does not
+	 * include them so units never try to walk through.
+	 *
+	 * Falls back silently when the optional `obstacles` field is missing.
+	 */
+	private renderObstacles(): void {
+		const obstacles = this.currentMap.obstacles;
+		if (!obstacles || obstacles.length === 0) return;
+		const ASSET_KEYS = [
+			'tiny-swords-tree-1',
+			'tiny-swords-rock-1',
+			'tiny-swords-bush-1',
+		] as const;
+		const tile = this.playerGrid.orthoTile;
+		obstacles.forEach((pos, i) => {
+			const key = ASSET_KEYS[i % ASSET_KEYS.length];
+			if (!this.textures.exists(key)) return;
+			const world = this.playerGrid.gridToWorld(pos.x, pos.y);
+			const sprite = this.add.sprite(world.x, world.y, key, 0);
+			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
+			sprite.setOrigin(0.5, 0.7);
+			sprite.setDepth(3 + pos.x + pos.y);
+		});
 	}
 
 	private setupInput(): void {

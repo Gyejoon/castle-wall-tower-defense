@@ -54,10 +54,15 @@ export class CastleWallSystem {
 			});
 		}
 
-		const paths = getMapPaths(this.map);
-		for (const lane of paths) {
-			if (lane.length === 0) continue;
-			const ep = lane[lane.length - 1];
+		// Prefer explicit castleWallTiles (Phase 7+); fall back to lane
+		// endpoints for legacy maps without the field.
+		const wallTiles =
+			this.map.castleWallTiles && this.map.castleWallTiles.length > 0
+				? this.map.castleWallTiles
+				: getMapPaths(this.map)
+						.filter((lane) => lane.length > 0)
+						.map((lane) => lane[lane.length - 1]);
+		for (const ep of wallTiles) {
 			const world = this.grid.gridToWorld(ep.x, ep.y);
 			const wallY = world.y + TILE_SIZE / 2; // align wall bottom to tile bottom edge
 			const baseDepth = ep.x + ep.y;

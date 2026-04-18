@@ -344,7 +344,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		orch.destroy();
 	});
 
-	it('getModifier — dmg_up multiply: 1회=1.15, 2회=1.3225', () => {
+	it('getModifier — dmg_up multiply: 1회=1.20, 2회=1.44', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
@@ -353,13 +353,13 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 		expect(orch.getModifier('dmg_up')).toBe(1);
 		orch.applyUpgrade('dmg_up');
-		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.15);
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.2);
 		orch.applyUpgrade('dmg_up');
-		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.3225);
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.44);
 		orch.destroy();
 	});
 
-	it('effectiveSummonCost — summon_discount 적용 (최소 5)', () => {
+	it('effectiveSummonCost — Phase 4에서는 상수(할인 카드 제거됨)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
@@ -368,10 +368,98 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		});
 
 		expect(orch.effectiveSummonCost).toBe(8);
-		orch.applyUpgrade('summon_discount');
-		expect(orch.effectiveSummonCost).toBe(5);
-		orch.applyUpgrade('summon_discount');
-		expect(orch.effectiveSummonCost).toBe(5);
+		orch.destroy();
+	});
+
+	it('applyUpgrade는 UPGRADE_MAX_STACKS(10)에서 포화', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		for (let i = 0; i < 15; i++) orch.applyUpgrade('tier_odds_up');
+		expect(orch.getUpgradeStacks('tier_odds_up')).toBe(10);
+		orch.destroy();
+	});
+
+	it('알 수 없는 upgradeId는 무시된다', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		orch.applyUpgrade('nonexistent_card');
+		expect(orch.getUpgradeStacks('nonexistent_card')).toBe(0);
+		orch.destroy();
+	});
+
+	it('requestUpgradePick → upgrade-choice-ready 이벤트 { choices } 발행', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+		});
+
+		orch.requestUpgradePick(3);
+
+		const ready = getEmits().find(([e]) => e === 'upgrade-choice-ready');
+		expect(ready).toBeDefined();
+		const payload = ready?.[1] as { choices: Array<{ id: string }> };
+		expect(payload.choices).toHaveLength(3);
+		const unique = new Set(payload.choices.map((c) => c.id));
+		expect(unique.size).toBe(3);
+		orch.destroy();
+	});
+
+	it('request-upgrade-reroll (no adService) → 새 upgrade-choice-ready 발행', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+		});
+
+		orch.requestUpgradePick(3);
+		const firstCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+
+		EventBus.emit('request-upgrade-reroll');
+		await new Promise((r) => setTimeout(r, 0));
+
+		const finalCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+		expect(finalCount).toBeGreaterThan(firstCount);
+		orch.destroy();
+	});
+
+	it('request-upgrade-reroll (adService dismissed) → 재발행 안 함', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: {
+				watchAd: vi.fn().mockResolvedValue('dismissed'),
+			},
+		});
+
+		orch.requestUpgradePick(3);
+		const firstCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+
+		EventBus.emit('request-upgrade-reroll');
+		await new Promise((r) => setTimeout(r, 0));
+
+		const finalCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+		expect(finalCount).toBe(firstCount);
 		orch.destroy();
 	});
 });

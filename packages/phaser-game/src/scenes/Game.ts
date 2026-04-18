@@ -22,7 +22,6 @@ import {
 	type MapLayout,
 	PHASE_A_MAP_ID,
 	PHASER_COLORS,
-	pickRandomUpgrades,
 	type StarRating,
 	UNITS,
 	type WaveDef,
@@ -433,24 +432,18 @@ export class GameScene extends Phaser.Scene {
 			this.spawnHut.setActive(false);
 			// Phase 3 (sole-mode): wave-clear energy bonus removed entirely.
 			// Energy comes from passive regen + per-kill + boss-kill rewards.
-			// Phase A: every 10 waves, offer 3 random upgrade cards
+			// Phase A: every 10 waves, offer 3 random upgrade cards. Phase 4
+			// (4.2) will replace this with a boss-phase trigger.
 			if (
 				data.cleared &&
 				this.isPhaseAMap &&
 				data.slotIndex % 10 === 0 &&
 				data.slotIndex > 0 &&
-				data.slotIndex < data.totalWaves
+				data.slotIndex < data.totalWaves &&
+				this.phaseAOrchestrator
 			) {
-				const choices = pickRandomUpgrades(3);
 				EventBus.emit('request-pause');
-				EventBus.emit('upgrade-choice-ready', {
-					choices: choices.map((c) => ({
-						id: c.id,
-						name: c.name,
-						description: c.description,
-						icon: c.icon,
-					})),
-				});
+				this.phaseAOrchestrator.requestUpgradePick(3);
 			}
 		};
 
@@ -1135,15 +1128,16 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
-				// Phase 3 (sole-mode): +1 per kill baseline, with the roguelike
-				// `kill_energy` upgrade stacking additively on top. Every 5th
-				// wave doubles the baseline as a soft pacing buff.
+				// Phase 4 [F15]: +1 per kill baseline, with the roguelike
+				// `energy_harvest` upgrade stacking additively on top (+1 per
+				// stack). Every 5th wave doubles the baseline as a soft pacing
+				// buff — stack bonus is additive on top of the doubled value.
 				if (this.isPhaseAMap) {
-					const killEnergyBonus =
-						this.phaseAOrchestrator?.getUpgradeStacks('kill_energy') ?? 0;
+					const harvestBonus =
+						this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
 					const baseline =
 						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
-					this.energySystem.add(baseline + killEnergyBonus);
+					this.energySystem.add(baseline + harvestBonus);
 				}
 			},
 			(unitId, result) => {

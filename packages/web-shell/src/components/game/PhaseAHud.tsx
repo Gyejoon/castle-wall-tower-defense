@@ -34,7 +34,10 @@ export function PhaseAHud() {
 	} | null>(null);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
-	const [summonCost, setSummonCost] = useState(PHASE_A_SUMMON_COST);
+	// Phase 4 redesign: summon cost is a constant now. `summon_discount` card
+	// was removed; any future cost-modifier (e.g. gacha-triggered discount)
+	// can restore setter state when it ships.
+	const summonCost = PHASE_A_SUMMON_COST;
 	const canAfford = energy >= summonCost;
 
 	useEffect(() => {
@@ -125,13 +128,15 @@ export function PhaseAHud() {
 			pushToast(`소환 실패: ${summonFailLabel(data.reason)}`, 'warning');
 		};
 
-		const handleUpgradeApplied = (data: {
+		// Phase 4 redesign: the old `summon_discount` card is gone, so the HUD
+		// no longer needs to react to `upgrade-applied` for cost changes. The
+		// handler is kept as a no-op so the subscribe/unsubscribe pair matches
+		// and future cards (e.g. Phase 5 gacha tier) can slot in cleanly.
+		const handleUpgradeApplied = (_data: {
 			upgradeId: string;
 			totalStacks: number;
 		}) => {
-			if (data.upgradeId === 'summon_discount') {
-				setSummonCost(Math.max(5, PHASE_A_SUMMON_COST - data.totalStacks * 3));
-			}
+			// no-op
 		};
 
 		EventBus.on('tower-selected', handleTowerSelected);

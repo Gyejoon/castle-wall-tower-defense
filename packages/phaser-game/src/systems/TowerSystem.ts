@@ -376,16 +376,16 @@ export class TowerSystem {
 			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
 				continue;
 
-			const spdMod = this.modifierFn ? this.modifierFn('spd_up') : 1;
-			const attackInterval = 1000 / (def.stats.attackSpeed * spdMod);
+			// Phase 4 redesign: spd_up / range_up cards were removed. Attack
+			// interval and range use the base def directly.
+			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
 
 			const towerWorld = this.gridManager.gridToWorld(
 				data.position.x,
 				data.position.y,
 			);
-			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
-			const rangeSq = (def.stats.range + rangeBonus) ** 2;
+			const rangeSq = def.stats.range ** 2;
 
 			let closestUnit: (typeof unitPositions)[0] | null = null;
 			let closestDistSq = Infinity;
@@ -408,9 +408,15 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
+				// Phase 4 [F15]: dmg_up (multiply) + crit_dmg (add). No crit
+				// system yet — crit_dmg contributes as a flat damage boost on
+				// every hit. TODO(phase-12): migrate to a proper
+				// crit-chance+mult system that uses `crit_dmg` as the crit
+				// multiplier term only.
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
 				let baseDamage = Math.round(
-					tower.effectiveDamage * elementMult * dmgMod,
+					tower.effectiveDamage * elementMult * dmgMod * (1 + critBonus),
 				);
 				if (this.worldGimmick) {
 					const bonus = this.worldGimmick.getDamageBonus(tower);
@@ -515,7 +521,11 @@ export class TowerSystem {
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
 							let splashDamage = Math.round(
-								tower.effectiveDamage * splashElementMult * 0.5 * dmgMod,
+								tower.effectiveDamage *
+									splashElementMult *
+									0.5 *
+									dmgMod *
+									(1 + critBonus),
 							);
 							if (this.worldGimmick) {
 								const bonus = this.worldGimmick.getDamageBonus(tower);
@@ -676,8 +686,8 @@ export class TowerSystem {
 			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
-			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
-			const rangeSq = (def.stats.range + rangeBonus) ** 2;
+			// Phase 4 redesign: range_up card was removed.
+			const rangeSq = def.stats.range ** 2;
 
 			if (this.isStunSpecial(special)) {
 				if (config.aoe) {

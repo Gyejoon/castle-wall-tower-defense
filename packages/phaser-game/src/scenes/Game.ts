@@ -38,9 +38,11 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
-	GRASS_SEAMLESS_KEY,
+	DIRT_SEAMLESS_KEY,
+	GRASS_PLATFORM_FRAMES,
+	PLATFORM_LIFT,
 	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_PATH_TILESET_KEY,
+	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
 
@@ -650,62 +652,104 @@ export class GameScene extends Phaser.Scene {
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
-	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
-		const tile = grid.orthoTile;
-		const allCells = getAllPathCells(this.currentMap);
-		const cellSet = new Set(allCells.map((p) => `${p.x},${p.y}`));
-
-		for (const point of allCells) {
-			// NSEW bitmask: N=1, E=2, S=4, W=8
-			let bitmask = 0;
-			if (cellSet.has(`${point.x},${point.y - 1}`)) bitmask |= 1; // N
-			if (cellSet.has(`${point.x + 1},${point.y}`)) bitmask |= 2; // E
-			if (cellSet.has(`${point.x},${point.y + 1}`)) bitmask |= 4; // S
-			if (cellSet.has(`${point.x - 1},${point.y}`)) bitmask |= 8; // W
-
-			const world = grid.gridToWorld(point.x, point.y);
-			const sprite = this.add.sprite(
-				world.x,
-				world.y,
-				TINY_SWORDS_PATH_TILESET_KEY,
-				bitmask,
-			);
-			sprite.setDisplaySize(tile, tile);
-			sprite.setOrigin(0.5, 0.5);
-			sprite.setDepth(1);
-
-			if (dark) {
-				sprite.setTint(0x5c6585);
-			}
-		}
-	}
-
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
+		const tile = grid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Seamless grass background — single TileSprite covers entire canvas
+		// Layer 0: Dirt/sand base (low ground — monster path level)
 		if (typeof this.add.tileSprite === 'function') {
-			const grassBg = this.add.tileSprite(
-				canvasW / 2,
-				canvasH / 2,
-				canvasW,
-				canvasH,
-				GRASS_SEAMLESS_KEY,
+			const dirtBg = this.add.tileSprite(
+				canvasW / 2, canvasH / 2, canvasW, canvasH, DIRT_SEAMLESS_KEY,
 			);
-			grassBg.setDepth(0);
-			grassBg.setScrollFactor(0);
-			if (dark) {
-				grassBg.setTint(0x6b7899);
-			} else if (theme.groundTint !== 0xffffff) {
-				grassBg.setTint(theme.groundTint);
-			}
-		} else {
-			// Fallback for test environments without tileSprite — noop
+			dirtBg.setDepth(0);
+			dirtBg.setScrollFactor(0);
+			if (dark) dirtBg.setTint(0x5c6585);
 		}
 
-		this.renderFieldPathOverlay(grid, dark);
+		// Build path lookup
+		const pathCells = getAllPathCells(this.currentMap);
+		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
+		const isLow = (x: number, y: number) =>
+			pathSet.has(`${x},${y}`) || x < 0 || x >= this.currentMap.width || y < 0 || y >= this.currentMap.height;
+
+		// Layer 1: Elevated grass platform tiles (tower placement level)
+		const lift = tile * PLATFORM_LIFT;
+		const extraTiles = 2;
+		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
+			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
+				if (isLow(x, y)) continue;
+
+				let bitmask = 0;
+				if (isLow(x, y - 1)) bitmask |= 1;
+				if (isLow(x + 1, y)) bitmask |= 2;
+				if (isLow(x, y + 1)) bitmask |= 4;
+				if (isLow(x - 1, y)) bitmask |= 8;
+
+				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
+				const world = grid.gridToWorld(x, y);
+
+				// Platform lifted up for height illusion
+				const spr = this.add.sprite(world.x, world.y - lift, TINY_SWORDS_PRIMARY_TILESET.key, frame);
+				spr.setDisplaySize(tile, tile);
+				spr.setOrigin(0.5, 0.5);
+				spr.setDepth(2);
+				if (dark) spr.setTint(0x6b7899);
+				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
+
+				// Cliff walls drawn as clean graphics (no stretched tileset frames)
+				const hasSouth = !!(bitmask & 4);
+				const hasEast = !!(bitmask & 2);
+				const hasWest = !!(bitmask & 8);
+
+				if (hasSouth || hasEast || hasWest) {
+					const cg = this.add.graphics();
+					cg.setDepth(10 + y + 0.5); // between current row and next row units
+					const baseX = world.x - tile / 2;
+					const baseY = world.y - lift + tile / 2;
+
+					if (hasSouth) {
+						// Cliff face: gradient from dark brown to darker
+						const cliffH = tile * 0.6;
+						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1); // dark green-brown
+						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1); // darker
+						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1); // darkest
+						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
+						// Highlight line at cliff top edge
+						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
+						cg.fillRect(baseX, baseY, tile, 2);
+					}
+
+					if (hasEast) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
+					}
+
+					if (hasWest) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
+					}
+				}
+			}
+		}
+
+		// Layer 1.5: Shadow on path cells adjacent to cliffs (south of platforms)
+		if (!dark) {
+			const shadowGraphics = this.add.graphics();
+			shadowGraphics.setDepth(0.5);
+			for (const p of pathCells) {
+				// If path cell has a platform to the north, it's in the cliff's shadow
+				if (!isLow(p.x, p.y - 1)) {
+					const w = grid.gridToWorld(p.x, p.y);
+					shadowGraphics.fillStyle(0x000000, 0.15);
+					shadowGraphics.fillRect(w.x - tile / 2, w.y - tile / 2, tile, tile * 0.4);
+				}
+			}
+		}
+
 		this.renderDecorations(grid, dark);
 	}
 

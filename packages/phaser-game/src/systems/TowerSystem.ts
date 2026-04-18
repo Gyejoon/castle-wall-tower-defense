@@ -8,6 +8,7 @@ import type {
 	TowerGrade,
 	UpgradeId,
 } from '@gld/shared';
+import { PLATFORM_LIFT } from '../fieldAssets';
 import {
 	ALL_TOWERS,
 	CC_AURA_CONFIGS,
@@ -193,11 +194,13 @@ export class TowerSystem {
 
 		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
 		const base = this.scene.add.graphics();
-		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
+		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		const sprite = this.scene.add.image(worldPos.x, worldPos.y - lift, textureKey);
 		sprite.setDisplaySize(64, 80);
-		sprite.setY(worldPos.y - 20);
-		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
-		this.renderTowerBase(base, worldPos, def);
+		sprite.setY(worldPos.y - lift - 20);
+		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
+		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
+		this.renderTowerBase(base, liftedPos, def);
 
 		const baseScaleX = sprite.scaleX;
 		const baseScaleY = sprite.scaleY;

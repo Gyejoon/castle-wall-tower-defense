@@ -326,12 +326,11 @@ describe('GameScene field runtime', () => {
 
 		const spriteKeys = addSprite.mock.calls.map((call) => call[2]);
 
-		// Ground is now a single seamless TileSprite (or noop in test env),
-		// so we verify path auto-tiles are placed instead.
-		const pathTileCount = spriteKeys.filter(
-			(k) => k === 'tiny-swords-path-tileset',
+		// Elevated grass platform tiles rendered using Tiny Swords tileset
+		const platformTileCount = spriteKeys.filter(
+			(k) => k === TINY_SWORDS_PRIMARY_TILESET.key,
 		).length;
-		expect(pathTileCount).toBeGreaterThan(0);
+		expect(platformTileCount).toBeGreaterThan(0);
 
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,

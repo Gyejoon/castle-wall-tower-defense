@@ -62,6 +62,12 @@
       "section": "preload"
     },
     {
+      "key": "dirt-seamless",
+      "type": "image",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_dirt_seamless.png",
+      "section": "preload"
+    },
+    {
       "key": "tiny-swords-rock-1",
       "type": "spritesheet",
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",

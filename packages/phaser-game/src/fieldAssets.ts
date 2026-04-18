@@ -85,6 +85,52 @@ export const TINY_SWORDS_PATH_TILESET_KEY = 'tiny-swords-path-tileset';
 /** Seamless grass ground texture key (128x128 tileable image) */
 export const GRASS_SEAMLESS_KEY = 'grass-seamless';
 
+/** Seamless dirt/sand texture for low ground (monster path level) */
+export const DIRT_SEAMLESS_KEY = 'dirt-seamless';
+
+/**
+ * Grass platform 9-slice frame mapping.
+ * Check NSEW neighbors: if neighbor is path → that edge is "exposed".
+ * Bitmask: N=1, E=2, S=4, W=8.
+ *
+ * Tileset 9-slice layout (round-edge, cols 0-2):
+ *   Frame 0=TL  1=T   2=TR
+ *   Frame 9=L   10=C  11=R
+ *   Frame 18=BL 19=B  20=BR
+ *   Frame 27-29: narrow bridge pieces
+ */
+export const GRASS_PLATFORM_FRAMES: Record<number, number> = {
+	0: 10,  // no edges exposed → center
+	1: 1,   // N exposed → top edge
+	2: 11,  // E exposed → right edge
+	3: 2,   // N+E → top-right corner
+	4: 19,  // S exposed → bottom edge
+	5: 28,  // N+S → narrow horizontal bridge
+	6: 20,  // S+E → bottom-right corner
+	7: 11,  // N+S+E → narrow right (fallback right edge)
+	8: 9,   // W exposed → left edge
+	9: 0,   // N+W → top-left corner
+	10: 10, // E+W → narrow vertical (center fallback)
+	11: 1,  // N+E+W → narrow top (fallback top edge)
+	12: 18, // S+W → bottom-left corner
+	13: 9,  // N+S+W → narrow left (fallback left edge)
+	14: 19, // S+E+W → narrow bottom (fallback bottom edge)
+	15: 10, // all sides exposed → isolated (center fallback)
+};
+
+/** Cliff wall frames — right section of tileset (cols 5-7, rows 3-5) */
+export const CLIFF_WALL_FRAMES = {
+	topLeft: 32,     // cliff top-left (grass→stone transition)
+	topCenter: 33,   // cliff top-center
+	topRight: 34,    // cliff top-right
+	midLeft: 41,     // cliff mid-left (stone face)
+	midCenter: 42,   // cliff mid-center
+	midRight: 43,    // cliff mid-right
+} as const;
+
+/** Vertical offset (px ratio of tile) to lift platforms visually */
+export const PLATFORM_LIFT = 0.35;
+
 export const TINY_SWORDS_DECORATION_ASSETS: TinySwordsDecorationAssetEntry[] = [
 	{
 		key: 'tiny-swords-rock-1',

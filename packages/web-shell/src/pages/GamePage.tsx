@@ -269,7 +269,6 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
-							stageName={null}
 							onRestart={resetRun}
 							onLobby={enterLobby}
 						/>

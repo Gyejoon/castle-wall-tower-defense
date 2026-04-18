@@ -1,7 +1,6 @@
 import { ALL_TOWERS, DEFAULT_DECK_IDS } from '@gld/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { uiMobileArt } from './assets/uiMobileArt';
-import { useMissionTracker } from './hooks/useMissionTracker';
 import { LobbyPage } from './pages/LobbyPage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
@@ -67,8 +66,6 @@ export function App() {
 				colorblindMode: meta.settings.colorblindMode,
 				screenShake: meta.settings.screenShake,
 			});
-			useMetaStore.getState().refreshMissions();
-			useMetaStore.getState().recordAttendance();
 		} catch (err) {
 			console.error('[GLD] Boot sequence failed:', err);
 		}
@@ -79,8 +76,6 @@ export function App() {
 		window.addEventListener('gld-save-error', onSaveError);
 		return () => window.removeEventListener('gld-save-error', onSaveError);
 	}, [pushToast]);
-
-	useMissionTracker();
 
 	const filter = COLORBLIND_FILTERS[colorblindMode];
 

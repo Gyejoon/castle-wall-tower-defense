@@ -1,4 +1,4 @@
-import { FOREST_GATE_MAP } from '@gld/shared';
+import { PHASE_A_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -85,10 +85,10 @@ function createScene() {
 
 function createTowerSystem() {
 	const scene = createScene();
-	const gridManager = new GridManager(FOREST_GATE_MAP);
+	const gridManager = new GridManager(PHASE_A_LONG_MAP);
 	const pathfinding = {
 		invalidateCache: vi.fn(),
-		findPath: vi.fn(() => FOREST_GATE_MAP.path),
+		findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
 	};
 	const towerSystem = new TowerSystem(
 		scene as never,
@@ -102,7 +102,7 @@ function createTowerSystem() {
 describe('TowerSystem placement contract', () => {
 	it('rejects placement on a path tile', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const pathPoint = FOREST_GATE_MAP.path[1];
+		const pathPoint = PHASE_A_LONG_MAP.path[1];
 
 		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'archer')).toEqual({
 			success: false,
@@ -126,7 +126,7 @@ describe('TowerSystem placement contract', () => {
 
 	it('allows placement on a valid buildable tile', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
 
 		const result = towerSystem.placeTower(
 			buildablePoint.x,
@@ -142,7 +142,7 @@ describe('TowerSystem placement contract', () => {
 
 	it('sellTower returns 50% refund and frees tile', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
 
 		towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer');
 		const result = towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
@@ -166,7 +166,7 @@ describe('TowerSystem placement contract', () => {
 describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => {
 	it('placeTower uses the tower def tier', () => {
 		const { towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
+		const p = PHASE_A_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		expect(towerSystem.getTowerLocator(p.x, p.y)?.tier).toBe(1);
 	});
@@ -178,7 +178,7 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('getTowerLocator returns instanceId/towerId/family/tier/x/y for placed tower', () => {
 		const { towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
+		const p = PHASE_A_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const locator = towerSystem.getTowerLocator(p.x, p.y);
 		expect(locator).toMatchObject({
@@ -193,7 +193,7 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('removeTowerAt clears a placed tower without refund', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
+		const p = PHASE_A_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		expect(towerSystem.removeTowerAt(p.x, p.y)).toBe(true);
 		expect(towerSystem.getTowerLocator(p.x, p.y)).toBeNull();
@@ -202,7 +202,7 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('playPhaseASummonVfx adds a scale-punch tween on the tower sprite', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
+		const p = PHASE_A_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const tweenAddCallsBefore = scene.tweens.add.mock.calls.length;
 
@@ -225,7 +225,7 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('playPhaseAMergeVfx adds scale punch + gold tint on the kept tower', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const p = FOREST_GATE_MAP.buildablePoints[0];
+		const p = PHASE_A_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const before = scene.tweens.add.mock.calls.length;
 

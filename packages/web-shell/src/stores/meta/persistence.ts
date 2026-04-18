@@ -5,6 +5,7 @@ import {
 	type SaveData,
 } from '@gld/shared';
 import { migrateV6toV7 } from './migrations/v7';
+import { migrateV7toV8 } from './migrations/v8';
 
 // ── Save writing ──────────────────────────────────────────────
 
@@ -59,42 +60,10 @@ type SaveMigration = (
 	context?: { tutorialCompleted?: boolean },
 ) => Record<string, unknown>;
 
-const MAP_TO_WORLD_STAGES: Record<string, string[]> = {
-	forest_gate: [
-		'w1_s1',
-		'w1_s2',
-		'w1_s3',
-		'w1_s4',
-		'w1_s5',
-		'w1_s6',
-		'w1_s7',
-		'w1_s8',
-	],
-	lava_fortress: [
-		'w2_s1',
-		'w2_s2',
-		'w2_s3',
-		'w2_s4',
-		'w2_s5',
-		'w2_s6',
-		'w2_s7',
-		'w2_s8',
-	],
-	storm_citadel: [
-		'w3_s1',
-		'w3_s2',
-		'w3_s3',
-		'w3_s4',
-		'w3_s5',
-		'w3_s6',
-		'w3_s7',
-		'w3_s8',
-	],
-};
-
 /** Add migrations here when SAVE_VERSION increments.
  *  Key = source version, value = function that returns the next version's shape. */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
+	7: (data) => migrateV7toV8(data),
 	6: (data) => migrateV6toV7(data),
 	5: (data) => {
 		// v5 → v6: remove showDamageNumbers from settings (always on)
@@ -106,119 +75,11 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 			settings: restSettings,
 		};
 	},
-	4: (data) => {
-		// v4 → v5: stageStars mapId→stageId migration + mission mapId support
-		const progress = (data.progress ?? {}) as Record<string, unknown>;
-		const oldStars = (progress.stageStars ?? {}) as Record<string, unknown>;
-		const oldHighestWave = (progress.highestWave ?? {}) as Record<
-			string,
-			unknown
-		>;
-		const oldStagesCleared = Array.isArray(progress.stagesCleared)
-			? progress.stagesCleared
-			: [];
-		const newStars: Record<string, unknown> = {};
-		const newHighestWave: Record<string, unknown> = {};
-		const newStagesCleared = new Set<string>();
-
-		// Process old-format (mapId) keys first so new-format (stageId) keys win on conflict
-		for (const [mapId, starRating] of Object.entries(oldStars)) {
-			const stages = MAP_TO_WORLD_STAGES[mapId];
-			if (stages) {
-				for (const stageId of stages) {
-					newStars[stageId] = starRating;
-				}
-			}
-		}
-		for (const [key, starRating] of Object.entries(oldStars)) {
-			if (!MAP_TO_WORLD_STAGES[key]) {
-				// new-format stageId or unknown key: preserve (overwrites spread values)
-				newStars[key] = starRating;
-			}
-		}
-
-		// Two-pass: first expand mapId keys, then let stageId keys overwrite
-		for (const [mapId, wave] of Object.entries(oldHighestWave)) {
-			const stages = MAP_TO_WORLD_STAGES[mapId];
-			if (stages) {
-				for (const stageId of stages) {
-					newHighestWave[stageId] = wave;
-				}
-			}
-		}
-		for (const [key, wave] of Object.entries(oldHighestWave)) {
-			if (!MAP_TO_WORLD_STAGES[key]) {
-				newHighestWave[key] = wave;
-			}
-		}
-
-		for (const entry of oldStagesCleared) {
-			if (typeof entry !== 'string') continue;
-			const stages = MAP_TO_WORLD_STAGES[entry];
-			if (stages) {
-				for (const stageId of stages) {
-					newStagesCleared.add(stageId);
-				}
-			} else {
-				newStagesCleared.add(entry);
-			}
-		}
-
-		return {
-			...data,
-			version: 5,
-			progress: {
-				...progress,
-				stageStars: newStars,
-				highestWave: newHighestWave,
-				stagesCleared: [...newStagesCleared],
-			},
-		};
-	},
-	3: (data) => {
-		const progress = (data.progress ?? {}) as Record<string, unknown>;
-		const profile = (data.profile ?? {}) as Record<string, unknown>;
-		const selectedDeck = (data.selectedDeck ?? []) as string[];
-		const collection = (
-			Array.isArray(data.collection) ? data.collection : []
-		) as Record<string, unknown>[];
-
-		const renameId = (id: string) =>
-			id === 'laser' ? 'archer' : id === 'twin_laser' ? 'twin_archer' : id;
-
-		return {
-			...data,
-			version: 4,
-			profile: {
-				...profile,
-				combatPower: 0,
-			},
-			selectedDeck: selectedDeck.map(renameId),
-			collection: collection.map((t) => ({
-				...t,
-				defId: typeof t.defId === 'string' ? renameId(t.defId) : t.defId,
-				awakening: (t.awakening as number) ?? 0,
-				duplicateCount: (t.duplicateCount as number) ?? 0,
-			})),
-			progress: {
-				...progress,
-				stageStars: {},
-				achievements: { claimed: [], progress: {} },
-				awakeningStones: 0,
-			},
-		};
-	},
-	2: (data) => {
-		const progress = (data.progress ?? {}) as Record<string, unknown>;
-		return {
-			...data,
-			version: 3,
-			progress: {
-				...progress,
-				lastAttendanceDate: null,
-			},
-		};
-	},
+	// v4 → v5: stage-star mapId→stageId migration — scenario fields are
+	// dropped entirely by v7→v8, so the pass-through just version-bumps.
+	4: (data) => ({ ...data, version: 5 }),
+	3: (data) => ({ ...data, version: 4 }),
+	2: (data) => ({ ...data, version: 3 }),
 	1: (data, context) => {
 		const settings = (data.settings ?? {}) as Record<string, unknown>;
 		const soundWasEnabled = settings.soundEnabled !== false;
@@ -238,11 +99,6 @@ const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
 				dailyFreeBoxClaimedAt: null,
 				dailyAdBoxCount: 0,
 				dailyResetAt: null,
-				dailyMissions: [],
-				weeklyMissions: [],
-				lastDailyMissionResetAt: null,
-				lastWeeklyMissionResetAt: null,
-				lastAttendanceDate: null,
 			},
 			settings: {
 				bgmVolume: soundWasEnabled ? 0.7 : 0,
@@ -298,10 +154,12 @@ export function sanitizeSave(save: SaveData): SaveData {
 					}))
 			: _defaults.collection,
 		progress: {
+			...dp,
 			...progress,
-			stageStars: progress.stageStars ?? dp.stageStars,
-			achievements: progress.achievements ?? dp.achievements,
-			awakeningStones: progress.awakeningStones ?? dp.awakeningStones,
+			highestWave:
+				typeof progress.highestWave === 'number'
+					? progress.highestWave
+					: dp.highestWave,
 		},
 	};
 }

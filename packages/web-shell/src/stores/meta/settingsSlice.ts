@@ -15,13 +15,6 @@ export const createSettingsSlice: SliceCreator<
 			selectedDeck: deck,
 			profile: { ...s.profile, combatPower: cp },
 		});
-		// Sync combat power achievements
-		get().updateAchievementProgress('cp_100', cp);
-		get().updateAchievementProgress('cp_500', cp);
-		get().updateAchievementProgress('cp_1000', cp);
-		get().updateAchievementProgress('cp_5000', cp);
-		get().updateAchievementProgress('cp_10000', cp);
-		get().updateAchievementProgress('cp_50000', cp);
 		debouncedSave(get());
 	},
 

@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-	createDefaultSave,
-	generateWeeklyMissions,
-	MAX_TOWER_LEVEL,
-	SAVE_VERSION,
-	toKSTDateStr,
-} from '@gld/shared';
+import { createDefaultSave, MAX_TOWER_LEVEL, SAVE_VERSION } from '@gld/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -21,15 +15,6 @@ describe('metaStore', () => {
 		expect(s.version).toBe(SAVE_VERSION);
 		expect(s.profile.gold).toBe(500);
 		expect(s.collection).toHaveLength(4);
-	});
-
-	it('loadSave restores from store round-trip', () => {
-		// Modify state, trigger save, then reload
-		useMetaStore.getState().loadSave();
-		useMetaStore.getState().addGold(100);
-		// Force immediate save by calling loadSave internal write path
-		// The store write happens via debounce; test the state directly
-		expect(useMetaStore.getState().profile.gold).toBe(600);
 	});
 
 	it('addGold increases profile.gold', () => {
@@ -47,7 +32,6 @@ describe('metaStore', () => {
 
 	it('addXp triggers level-up when exceeding threshold', () => {
 		useMetaStore.getState().loadSave();
-		// Level 1 needs 100 XP
 		useMetaStore.getState().addXp(100);
 		expect(useMetaStore.getState().profile.level).toBe(2);
 		expect(useMetaStore.getState().profile.xp).toBe(0);
@@ -87,11 +71,13 @@ describe('metaStore', () => {
 		expect(useMetaStore.getState().progress.totalBattles).toBe(2);
 	});
 
-	it('updateHighestWave tracks per-map highest', () => {
+	it('updateHighestWave keeps the maximum across calls', () => {
 		useMetaStore.getState().loadSave();
-		useMetaStore.getState().updateHighestWave('forest_gate', 5);
-		useMetaStore.getState().updateHighestWave('forest_gate', 3);
-		expect(useMetaStore.getState().progress.highestWave.forest_gate).toBe(5);
+		useMetaStore.getState().updateHighestWave(5);
+		useMetaStore.getState().updateHighestWave(3);
+		expect(useMetaStore.getState().progress.highestWave).toBe(5);
+		useMetaStore.getState().updateHighestWave(8);
+		expect(useMetaStore.getState().progress.highestWave).toBe(8);
 	});
 
 	it('enhanceTower deducts gold and increments level', () => {
@@ -111,7 +97,7 @@ describe('metaStore', () => {
 		expect(result).toBe('no_gold');
 	});
 
-	it('enhanceTower returns max_level at MAX_TOWER_LEVEL cap (Phase 1 — flat)', () => {
+	it('enhanceTower returns max_level at MAX_TOWER_LEVEL cap', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
@@ -140,64 +126,5 @@ describe('metaStore', () => {
 		useMetaStore.getState().updateSettings({ bgmVolume: 0 });
 		expect(useMetaStore.getState().settings.bgmVolume).toBe(0);
 		expect(useMetaStore.getState().settings.screenShake).toBe(true);
-	});
-
-	it('recordAttendance increments attendance mission and sets lastAttendanceDate', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			progress: { ...s.progress, weeklyMissions: generateWeeklyMissions() },
-		}));
-		const today = toKSTDateStr(new Date());
-		useMetaStore.getState().recordAttendance();
-		const s = useMetaStore.getState();
-		const att = s.progress.weeklyMissions.find((m) => m.type === 'attendance');
-		expect(att?.current).toBe(1);
-		expect(s.progress.lastAttendanceDate).toBe(today);
-	});
-
-	it('recordAttendance is idempotent on same day', () => {
-		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({
-			progress: { ...s.progress, weeklyMissions: generateWeeklyMissions() },
-		}));
-		useMetaStore.getState().recordAttendance();
-		useMetaStore.getState().recordAttendance();
-		const att = useMetaStore
-			.getState()
-			.progress.weeklyMissions.find((m) => m.type === 'attendance');
-		expect(att?.current).toBe(1);
-	});
-
-	it('refreshMissions clears lastAttendanceDate on weekly reset', () => {
-		useMetaStore.getState().loadSave();
-		const today = toKSTDateStr(new Date());
-		useMetaStore.setState((s) => ({
-			progress: {
-				...s.progress,
-				lastAttendanceDate: today,
-				weeklyMissions: generateWeeklyMissions(),
-				lastWeeklyMissionResetAt: new Date(
-					Date.now() - 8 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-			},
-		}));
-		useMetaStore.getState().refreshMissions();
-		expect(useMetaStore.getState().progress.lastAttendanceDate).toBeNull();
-	});
-
-	it('refreshMissions preserves lastAttendanceDate on structural-only stale (mid-week mission type mismatch)', () => {
-		useMetaStore.getState().loadSave();
-		const today = toKSTDateStr(new Date());
-		// 구조적 stale: weeklyMissions 빈 배열 (타입 누락), 하지만 주간 리셋 기간 아님
-		useMetaStore.setState((s) => ({
-			progress: {
-				...s.progress,
-				lastAttendanceDate: today,
-				weeklyMissions: [],
-				lastWeeklyMissionResetAt: new Date().toISOString(), // just reset
-			},
-		}));
-		useMetaStore.getState().refreshMissions();
-		expect(useMetaStore.getState().progress.lastAttendanceDate).toBe(today);
 	});
 });

@@ -1,28 +1,19 @@
 import {
 	type ActiveUnit,
 	type AssetManifest,
-	buildDeckCardsSafe,
-	checkStarClear,
-	DEFAULT_DECK,
-	DEFAULT_MAP_ID,
-	DEFAULT_STAGE_ID,
 	ENERGY_PER_BOSS_FAST_CLEAR,
 	ENERGY_PER_BOSS_KILL,
 	ENERGY_PER_KILL,
 	FAST_CLEAR_THRESHOLD_MS,
+	generatePhaseAWaves,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
-	getStageById,
-	getStarDifficultyMult,
-	getTotalWavesForStage,
-	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
 	PHASE_A_MAP_ID,
 	PHASER_COLORS,
-	type StarRating,
 	UNITS,
 	type WaveDef,
 	type WavePhase,
@@ -125,7 +116,6 @@ export class GameScene extends Phaser.Scene {
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private playerHp = INITIAL_PLAYER_HP;
-	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
@@ -133,9 +123,7 @@ export class GameScene extends Phaser.Scene {
 	private isPhaseAMap = false;
 	private currentWaveSlot = 1;
 	private lastTimerTickSec = -1;
-	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
-	private currentStageId!: string;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
@@ -225,12 +213,15 @@ export class GameScene extends Phaser.Scene {
 		this.speedMultiplier = 1;
 		this.time.timeScale = 1;
 		this.anims.globalTimeScale = 1;
+		// Phase 7: scenario maps purged. Phase A is the only mode; ignore any
+		// non-Phase-A registry mapId and pin to PHASE_A_MAP_ID.
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
-			DEFAULT_MAP_ID;
-		this.currentMap = getMapById(mapId);
-		this.rewardMultiplier = this.currentMap.rewardMultiplier;
+			PHASE_A_MAP_ID;
+		this.currentMap = getMapById(
+			mapId === PHASE_A_MAP_ID ? mapId : PHASE_A_MAP_ID,
+		);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
@@ -265,46 +256,16 @@ export class GameScene extends Phaser.Scene {
 			this.bossBehaviors.set(instanceId, behavior);
 			behavior.onSpawn(this.buildBossContext(unit.data));
 		});
-		const rawStageId = this.game.registry.get('selectedStageId') as
-			| string
-			| undefined;
-		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
-		this.currentStageId = stageId;
-		const stageDef = getStageById(stageId);
-		const stageWaves = getWavesForStage(stageDef.waveSetId);
-		if (stageWaves.length === 0) {
-			throw new Error(
-				`[GameScene] Stage "${stageId}" has empty wave definitions`,
-			);
-		}
+		const stageWaves = generatePhaseAWaves(50);
 		this.currentSlotDef = stageWaves[0];
-		const rawStar = this.game.registry.get('selectedStar');
-		const selectedStar: StarRating =
-			rawStar === 2 || rawStar === 3 ? rawStar : 1;
-		this.selectedStar = selectedStar;
-		const starMult = getStarDifficultyMult(selectedStar);
-		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves, undefined, {
-			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
-			armorMult: starMult.armor,
-			speedMult: starMult.speed,
-			ccResist: starMult.ccResist,
-		});
-		// Phase 6: world-gimmicks removed. Phase A is the sole mode and
-		// doesn't use per-world mechanics; Phase 7+ may re-introduce
-		// per-obstacle or per-slot mechanics at a different layer.
+		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves);
 		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
 		const isPhaseAMap = this.isPhaseAMap;
-		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
-		const deckCards = isPhaseAMap
-			? []
-			: deckIds && deckIds.length > 0
-				? buildDeckCardsSafe(deckIds)
-				: DEFAULT_DECK;
-		// Phase A bypasses the 4-tower deck entirely. We still construct
-		// DeckSystem (with an empty deck) so the rest of the scene keeps the
-		// same field shape and cleanup contract; the React HUD detects the
+		// Phase A bypasses the 4-tower deck entirely; we still construct
+		// DeckSystem with an empty deck so the rest of the scene keeps the
+		// same field shape and cleanup contract. The React HUD detects the
 		// empty deck-loaded payload and renders the Phase A summon UI instead.
-		this.playerDeck = new DeckSystem(deckCards);
+		this.playerDeck = new DeckSystem([]);
 
 		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
 		// SummonPool + MergeSystem to TowerSystem via PhaseAOrchestrator and
@@ -839,28 +800,17 @@ export class GameScene extends Phaser.Scene {
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
-		const starCleared =
-			payload.result === 'victory'
-				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
-				: false;
-
-		const mapId = this.currentMap.id;
 		EventBus.emit('game-over', {
-			...payload,
-			mapId,
-			selectedStar: this.selectedStar,
-			starCleared,
-			hpRemaining: Math.max(0, this.playerHp),
+			result: payload.result,
 			stats: {
 				wavesCleared:
 					payload.result === 'victory'
 						? payload.finalSlot
 						: Math.max(0, payload.finalSlot - 1),
-				totalWaves: getTotalWavesForStage(this.currentStageId),
+				totalWaves: this.playerWaves.getMaxWaves(),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned * this.rewardMultiplier,
-				rewardMultiplier: this.rewardMultiplier,
+				goldEarned: this.goldEarned,
 			},
 		});
 	}

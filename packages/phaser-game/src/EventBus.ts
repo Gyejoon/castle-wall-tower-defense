@@ -1,7 +1,6 @@
 import type {
 	DeckCardDef,
 	PlacementFailureReason,
-	StarRating,
 	TowerId,
 	UnitType,
 	UpgradeId,
@@ -26,19 +25,12 @@ export interface GameEventMap {
 	'player-damaged': { playerId: string; damage: number; remainingHp: number };
 	'game-over': {
 		result: 'victory' | 'defeat';
-		reason: 'all_waves_cleared' | 'base_hp_depleted';
-		finalSlot: number;
-		mapId: string;
-		selectedStar: StarRating;
-		starCleared: boolean;
-		hpRemaining: number;
 		stats: {
 			wavesCleared: number;
 			totalWaves: number;
 			towersPlaced: number;
 			timeSurvivedSec: number;
 			goldEarned: number;
-			rewardMultiplier: number;
 		};
 	};
 	'energy-changed': { energy: number };

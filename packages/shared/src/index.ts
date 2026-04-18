@@ -9,8 +9,6 @@ export {
 	withManifestSection,
 	withManifestSections,
 } from './assets/manifest';
-export type { AchievementDef } from './constants/achievements';
-export { ACHIEVEMENT_MAP, ACHIEVEMENTS } from './constants/achievements';
 export type { BossPhaseConfig } from './constants/boss';
 export { BOSS_CONFIG, FINAL_BOSS_HP_MULTIPLIER } from './constants/boss';
 export type { DeckCardDef } from './constants/deck';
@@ -64,18 +62,14 @@ export {
 } from './constants/grid';
 export {
 	DEFAULT_MAP_ID,
-	FOREST_GATE_MAP,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
-	getNextMapInWorld,
 	getSpawnExitPairs,
 	isMapUnlocked,
-	LAVA_FORTRESS_MAP,
 	MAP_REGISTRY,
 	PHASE_A_LONG_MAP,
 	PHASE_A_MAP_ID,
-	STORM_CITADEL_MAP,
 } from './constants/maps';
 export {
 	battleXp,
@@ -89,41 +83,8 @@ export {
 	stunDurationMultiplier,
 	xpToNextLevel,
 } from './constants/meta';
-export {
-	DAILY_MISSION_TYPES,
-	generateDailyMissions,
-	generateWeeklyMissions,
-	KST_OFFSET_MS,
-	MISSION_LABELS,
-	shouldResetDaily,
-	shouldResetWeekly,
-	toKSTDateStr,
-	WEEKLY_MISSION_TYPES,
-} from './constants/missions';
 export type { ScaledUnitStats } from './constants/scaling';
 export { getLevelBand, scaleUnitStats } from './constants/scaling';
-export {
-	getMaxGoldForMap,
-	getMaxXpForMap,
-	getTotalRewardMultiplier,
-} from './constants/stageInfo';
-export {
-	DEFAULT_STAGE_ID,
-	getNextStageId,
-	getStageById,
-	getStagesByWorld,
-	STAGE_ORDER,
-	STAGES,
-} from './constants/stages';
-export type { StarRating } from './constants/starDifficulty';
-export {
-	checkStarClear,
-	getStarDifficultyMult,
-	PERFECT_CLEAR_BONUS,
-	STAR_CLEAR_CONDITIONS,
-	STAR_DIFFICULTY,
-	STAR_REWARD_MULTIPLIERS,
-} from './constants/starDifficulty';
 export {
 	ALL_TOWERS,
 	getTowerById,
@@ -142,20 +103,10 @@ export type {
 } from './constants/waves';
 export {
 	getTotalWavesForMap,
-	getTotalWavesForStage,
 	getWaveScaling,
 	getWavesForMap,
-	getWavesForStage,
 	MAX_WAVE_DURATION_MS,
-	STAGE_WAVES,
-	TOTAL_WAVES,
-	WAVE_SCALING,
 } from './constants/waves';
-export {
-	getWorldById,
-	WORLD_ORDER,
-	WORLDS,
-} from './constants/worlds';
 export { generatePhaseAWaves } from './data/phaseAWaves';
 export type { SummonPool, SummonResult } from './data/summonPool';
 export {
@@ -170,15 +121,14 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
-// Phase 6: unlock-rules removed with scenario mode purge. Phase 9 meta
-// rebuild will introduce any new gating if needed.
+// Phase 7 (v8): scenario-mode constants (stages/worlds/missions/achievements
+// /stageInfo/starDifficulty) removed alongside the SaveData v7→v8 shrink.
+// Phase 9 meta rebuild will introduce whatever replacement gating is needed.
 export type { CombatHudState, WavePhase } from './types/game-state';
 export type { Grid, GridConfig, Position, Tile } from './types/grid';
-export type { GimmickTileSet, MapLayout } from './types/map';
+export type { MapLayout } from './types/map';
 export type { PlacementFailureReason } from './types/placement';
 export type {
-	MissionProgress,
-	MissionType,
 	OwnedTower,
 	ProfileData,
 	ProgressData,
@@ -186,13 +136,6 @@ export type {
 	SettingsData,
 } from './types/save';
 export { SAVE_STORAGE_KEY, SAVE_VERSION } from './types/save';
-export type {
-	StageDef,
-	StageLockStatus,
-	WorldDef,
-	WorldId,
-	WorldUnlockRule,
-} from './types/stage';
 export type {
 	PlacedTower,
 	TowerDef,

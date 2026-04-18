@@ -8,18 +8,10 @@ import {
 	INITIAL_PLAYER_HP,
 	PHASE_A_MAP_ID,
 	type PlacementFailureReason,
-	type StarRating,
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
 import { useMetaStore } from './metaStore';
-
-/**
- * Phase 6: scenario mode purged. Sole path is lobby → Phase A run.
- * selectedStageId is pinned to PHASE_A_STAGE_ID so the Phaser registry
- * keeps the same contract it had before (legacy worlds/stages gone).
- */
-const PHASE_A_STAGE_ID = 'phase_a_s1' as const;
 
 export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'settings';
@@ -53,8 +45,6 @@ export interface GameOverStats {
 	timeSurvivedSec: number;
 	goldEarned: number;
 	xpEarned: number;
-	selectedStar?: StarRating;
-	starCleared?: boolean;
 }
 
 interface GameStoreState {
@@ -64,9 +54,6 @@ interface GameStoreState {
 	energy: number;
 	lives: number;
 	selectedMapId: string;
-	/** Pinned to PHASE_A_STAGE_ID since Phase 6. Kept as a field because
-	 * GamePage/useGameEvents/Game.ts still read it via store/registry. */
-	selectedStageId: string;
 	selectedTowerId: string | null;
 	deckCards: readonly DeckCardDef[];
 	selectedCardIndex: number | null;
@@ -90,7 +77,6 @@ interface GameStoreState {
 	tutorialStep: number | null;
 	tutorialMessage: string | null;
 	gameSpeed: 1 | 2 | 3;
-	selectedStar: StarRating;
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
@@ -127,7 +113,6 @@ interface GameStoreState {
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
 	setGameSpeed: (speed: 1 | 2 | 3) => void;
-	setSelectedStar: (star: StarRating) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -163,9 +148,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
-	selectedStageId: PHASE_A_STAGE_ID,
 	selectedMapId: PHASE_A_MAP_ID,
-	selectedStar: 1 as StarRating,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -213,7 +196,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runStatus: 'building',
 			lobbyTab: 'home',
 			selectedMapId: PHASE_A_MAP_ID,
-			selectedStageId: PHASE_A_STAGE_ID,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -223,7 +205,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
 			lobbyTab: 'home',
-			selectedStar: 1 as StarRating,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -233,8 +214,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runId: state.runId + 1,
 			runStatus: 'building',
 			selectedMapId: PHASE_A_MAP_ID,
-			selectedStageId: PHASE_A_STAGE_ID,
-			selectedStar: 1 as StarRating,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -291,5 +270,4 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		set({ gameSpeed: speed });
 		EventBus.emit('request-set-speed', { multiplier: speed });
 	},
-	setSelectedStar: (star) => set({ selectedStar: star }),
 }));

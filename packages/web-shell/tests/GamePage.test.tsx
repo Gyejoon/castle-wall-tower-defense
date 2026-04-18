@@ -283,30 +283,27 @@ describe('GamePage', () => {
 		expect(view.getByText('에너지 부족')).toBeTruthy();
 	});
 
-	it('records victory progress by selectedStageId (Phase A)', () => {
+	it('records victory progress — highestWave and battle counters', () => {
 		const { emitSpy } = getEventBusHarness();
 		render(<GamePage />);
 
 		act(() => {
 			emitSpy('game-over', {
 				result: 'victory',
-				selectedStar: 2,
-				starCleared: true,
-				hpRemaining: 20,
 				stats: {
 					wavesCleared: 10,
+					totalWaves: 50,
 					towersPlaced: 5,
 					timeSurvivedSec: 180,
 					goldEarned: 200,
-					rewardMultiplier: 1,
 				},
 			});
 		});
 
-		const progress = useMetaStore.getState().progress;
-		// Phase 6: selectedStageId is pinned to phase_a_s1 for the sole mode.
-		expect(progress.stagesCleared).toContain('phase_a_s1');
-		expect(progress.stageStars.phase_a_s1).toBe(2);
+		const state = useMetaStore.getState();
+		expect(state.progress.highestWave).toBe(10);
+		expect(state.profile.wins).toBe(1);
+		expect(state.profile.totalGoldEarned).toBeGreaterThanOrEqual(200);
 	});
 
 	it('Phase 6: 2x speed is always unlocked in Phase A', () => {

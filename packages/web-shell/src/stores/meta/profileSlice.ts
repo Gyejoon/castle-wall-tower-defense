@@ -1,4 +1,4 @@
-import { type SaveData, toKSTDateStr, xpToNextLevel } from '@gld/shared';
+import { type SaveData, xpToNextLevel } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -14,17 +14,7 @@ function applyLevelUps(profile: SaveData['profile']): SaveData['profile'] {
 }
 
 export const createProfileSlice: SliceCreator<
-	Pick<
-		MetaActions,
-		| 'addGold'
-		| 'addXp'
-		| 'recordBattle'
-		| 'updateHighestWave'
-		| 'recordStageClear'
-		| 'recordStarClear'
-		| 'addAwakeningStones'
-		| 'recordAttendance'
-	>
+	Pick<MetaActions, 'addGold' | 'addXp' | 'recordBattle' | 'updateHighestWave'>
 > = (set, get) => ({
 	addGold: (amount) => {
 		set((s) => ({
@@ -41,13 +31,6 @@ export const createProfileSlice: SliceCreator<
 		set((s) => ({
 			profile: applyLevelUps({ ...s.profile, xp: s.profile.xp + amount }),
 		}));
-		// Level achievements
-		const level = get().profile.level;
-		get().updateAchievementProgress('lv_5', level);
-		get().updateAchievementProgress('lv_10', level);
-		get().updateAchievementProgress('lv_20', level);
-		get().updateAchievementProgress('lv_50', level);
-		get().updateAchievementProgress('lv_99', level);
 		debouncedSave(get());
 	},
 
@@ -72,93 +55,13 @@ export const createProfileSlice: SliceCreator<
 		debouncedSave(get());
 	},
 
-	updateHighestWave: (stageKey, wave) => {
+	updateHighestWave: (wave) => {
 		set((s) => ({
 			progress: {
 				...s.progress,
-				highestWave: {
-					...s.progress.highestWave,
-					[stageKey]: Math.max(s.progress.highestWave[stageKey] ?? 0, wave),
-				},
+				highestWave: Math.max(s.progress.highestWave ?? 0, wave),
 			},
 		}));
-		debouncedSave(get());
-	},
-
-	recordStageClear: (stageId) => {
-		set((s) => {
-			if (s.progress.stagesCleared.includes(stageId)) return s;
-			return {
-				progress: {
-					...s.progress,
-					stagesCleared: [...s.progress.stagesCleared, stageId],
-				},
-			};
-		});
-		const clearCount = get().progress.stagesCleared.length;
-		get().updateAchievementProgress('clear_1', clearCount);
-		get().updateAchievementProgress('clear_10', clearCount);
-		get().updateAchievementProgress('clear_50', clearCount);
-		debouncedSave(get());
-	},
-
-	recordStarClear: (stageId, star) => {
-		set((s) => {
-			const current = s.progress.stageStars[stageId] ?? 0;
-			if (star <= current) return s;
-			return {
-				progress: {
-					...s.progress,
-					stageStars: { ...s.progress.stageStars, [stageId]: star },
-				},
-			};
-		});
-		// Star achievements
-		if (star >= 2) {
-			const star2Count = Object.values(get().progress.stageStars).filter(
-				(s) => s >= 2,
-			).length;
-			get().updateAchievementProgress('star2_all', star2Count);
-		}
-		if (star >= 3) {
-			const star3Count = Object.values(get().progress.stageStars).filter(
-				(s) => s >= 3,
-			).length;
-			get().updateAchievementProgress('star3_all', star3Count);
-		}
-		debouncedSave(get());
-	},
-
-	addAwakeningStones: (amount) => {
-		set((s) => ({
-			progress: {
-				...s.progress,
-				awakeningStones: s.progress.awakeningStones + amount,
-			},
-		}));
-		debouncedSave(get());
-	},
-
-	recordAttendance: () => {
-		const todayKST = toKSTDateStr(new Date());
-		set((s) => {
-			const att = s.progress.weeklyMissions.find(
-				(m) => m.type === 'attendance',
-			);
-			if (!att || att.claimed || s.progress.lastAttendanceDate === todayKST)
-				return s;
-			return {
-				progress: {
-					...s.progress,
-					lastAttendanceDate: todayKST,
-					weeklyMissions: s.progress.weeklyMissions.map((m) =>
-						m.type === 'attendance' && !m.claimed
-							? { ...m, current: Math.min(m.current + 1, m.target) }
-							: m,
-					),
-				},
-			};
-		});
 		debouncedSave(get());
 	},
 });

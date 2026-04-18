@@ -1,6 +1,4 @@
-import type { StarRating } from '../constants/starDifficulty';
-
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
 
 export interface OwnedTower {
@@ -26,47 +24,15 @@ export interface ProfileData {
 	combatPower: number;
 }
 
-export type MissionType =
-	| 'reach_wave'
-	| 'place_towers'
-	| 'defeat_boss'
-	| 'clear_stage'
-	| 'use_element'
-	| 'attendance'
-	| 'clear_map'
-	| 'defeat_boss_map';
-
-export interface MissionProgress {
-	id: string;
-	type: MissionType;
-	target: number;
-	current: number;
-	reward: { type: 'diamond' | 'gold'; amount: number };
-	claimed: boolean;
-	mapId?: string;
-}
-
 export interface ProgressData {
-	highestWave: Record<string, number>;
-	stagesCleared: string[];
+	/** Highest wave reached in any Phase A run. Scalar since Phase 7 (v8). */
+	highestWave: number;
 	totalBattles: number;
 	tutorialCompleted: boolean;
 	gachaPityCount: number;
 	dailyFreeBoxClaimedAt: string | null;
 	dailyAdBoxCount: number;
 	dailyResetAt: string | null;
-	dailyMissions: MissionProgress[];
-	weeklyMissions: MissionProgress[];
-	lastDailyMissionResetAt: string | null;
-	lastWeeklyMissionResetAt: string | null;
-	lastAttendanceDate: string | null;
-	/** Key is stageId (e.g. "w1_s1"). Pre-v5 saves used mapId keys and are migrated. */
-	stageStars: Record<string, StarRating>;
-	achievements: {
-		claimed: string[];
-		progress: Record<string, number>;
-	};
-	awakeningStones: number;
 }
 
 export interface SettingsData {

@@ -31,13 +31,6 @@ export function PhaserGame() {
 			metaState.progress.tutorialCompleted ?? false,
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
-		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
-		// Phase 6: scenario stages purged. Phase A is the sole mode; pin the
-		// registry value so GameScene's DEFAULT_STAGE_ID fallback lands here.
-		game.registry.set(
-			'selectedStageId',
-			useGameStore.getState().selectedStageId,
-		);
 		gameRef.current = game;
 
 		// Sync screenShake setting to Phaser registry in real-time
@@ -49,15 +42,6 @@ export function PhaserGame() {
 			}
 		});
 
-		// Sync selectedStar to Phaser registry in real-time
-		let prevStar = useGameStore.getState().selectedStar;
-		const unsubStar = useGameStore.subscribe((state) => {
-			if (state.selectedStar !== prevStar) {
-				prevStar = state.selectedStar;
-				gameRef.current?.registry.set('selectedStar', prevStar);
-			}
-		});
-
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -65,7 +49,6 @@ export function PhaserGame() {
 			// or route change) the container is disconnected and we destroy.
 			if (!container.isConnected) {
 				unsubShake();
-				unsubStar();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

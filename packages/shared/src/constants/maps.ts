@@ -32,81 +32,157 @@ function buildBuildablePoints({
 	return buildablePoints;
 }
 
-// === Phase A Long Map (8×24, U-turn double-back, random-summon + merge) ===
+// === Phase A Long Map (9×18, U-turn double-back, random-summon + merge) ===
 //
-// The path goes DOWN the left half (cols 0-3) zigzagging, crosses the
-// BOTTOM row, then comes BACK UP the right half (cols 4-7). Every row is
-// visited TWICE (once each direction) so towers at ANY height remain useful
-// for the entire run.
+// 9 cols × 18 rows × 48px = 432×864 canvas (mobile viewport-friendly).
+// Spawn at top-left corner (0,0). Path zigzags DOWN the LEFT strip
+// (cols 0-3), crosses the BOTTOM row (all the way across), then zigzags
+// back UP the RIGHT strip (cols 5-8), finally turning left along row 0 to
+// reach the castle wall exit at (4,0). Every non-obstacle row is visited
+// twice (once each direction) so towers placed anywhere stay useful for
+// the full run.
 //
-// Commit 7.3 will replace this with a 9×18 grid with obstacles and a
-// castleWall exit. For commit 7.0 we keep the existing 8×24 shape so the
-// rest of Phase 7 is layered on top of a known-good build.
+// Obstacles sit on the center column (col 4 at rows 2/5/8/11/14) — they
+// block the middle so the eye reads the U-turn shape cleanly. Commit 7.4
+// renders them as tree/rock/bush sprites.
 
-const PHASE_A_SWEEP_ROWS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
-
-function generateHalfZigzag(
-	colStart: number,
-	colEnd: number,
-	sweepRows: readonly number[],
-	direction: 'down' | 'up',
-): Position[] {
+function generateLeftDescent(): Position[] {
 	const path: Position[] = [];
-	const rows = direction === 'down' ? [...sweepRows] : [...sweepRows].reverse();
-
-	for (let i = 0; i < rows.length; i++) {
-		const row = rows[i];
-		const goRight = i % 2 === 0;
-		if (goRight) {
-			for (let x = colStart; x <= colEnd; x++) path.push({ x, y: row });
-		} else {
-			for (let x = colEnd; x >= colStart; x--) path.push({ x, y: row });
-		}
-		if (i < rows.length - 1) {
-			const nextRow = rows[i + 1];
-			const transCol = goRight ? colEnd : colStart;
-			if (direction === 'down') {
-				for (let y = row + 1; y < nextRow; y++) path.push({ x: transCol, y });
-			} else {
-				for (let y = row - 1; y > nextRow; y--) path.push({ x: transCol, y });
-			}
-		}
-	}
+	// Helper to generate a horizontal sweep starting at given column.
+	// Row 0: (0,0) → (3,0)
+	for (let x = 0; x <= 3; x++) path.push({ x, y: 0 });
+	// col 3: (3,1), (3,2)
+	path.push({ x: 3, y: 1 });
+	path.push({ x: 3, y: 2 });
+	// Row 2 (continuing): (2,2) → (0,2)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 2 });
+	// col 0: (0,3), (0,4)
+	path.push({ x: 0, y: 3 });
+	path.push({ x: 0, y: 4 });
+	// Row 4: (1,4) → (3,4)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 4 });
+	// col 3: (3,5), (3,6)
+	path.push({ x: 3, y: 5 });
+	path.push({ x: 3, y: 6 });
+	// Row 6: (2,6) → (0,6)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 6 });
+	// col 0: (0,7), (0,8)
+	path.push({ x: 0, y: 7 });
+	path.push({ x: 0, y: 8 });
+	// Row 8: (1,8) → (3,8)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 8 });
+	// col 3: (3,9), (3,10)
+	path.push({ x: 3, y: 9 });
+	path.push({ x: 3, y: 10 });
+	// Row 10: (2,10) → (0,10)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 10 });
+	// col 0: (0,11), (0,12)
+	path.push({ x: 0, y: 11 });
+	path.push({ x: 0, y: 12 });
+	// Row 12: (1,12) → (3,12)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 12 });
+	// col 3: (3,13), (3,14)
+	path.push({ x: 3, y: 13 });
+	path.push({ x: 3, y: 14 });
+	// Row 14: (2,14) → (0,14)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 14 });
+	// col 0: (0,15), (0,16), (0,17)
+	path.push({ x: 0, y: 15 });
+	path.push({ x: 0, y: 16 });
 	return path;
 }
 
-const PHASE_A_DOWN = generateHalfZigzag(0, 3, PHASE_A_SWEEP_ROWS, 'down');
-const PHASE_A_TURN: Position[] = [
-	{ x: 0, y: 22 },
-	{ x: 0, y: 23 },
-	{ x: 1, y: 23 },
-	{ x: 2, y: 23 },
-	{ x: 3, y: 23 },
-	{ x: 4, y: 23 },
-	{ x: 4, y: 22 },
-];
-const PHASE_A_UP = generateHalfZigzag(4, 7, PHASE_A_SWEEP_ROWS, 'up');
+function generateBottomTraverse(): Position[] {
+	// Row 17: (0,17) → (8,17) — full width crossing
+	const path: Position[] = [];
+	path.push({ x: 0, y: 17 });
+	for (let x = 1; x <= 8; x++) path.push({ x, y: 17 });
+	return path;
+}
+
+function generateRightAscent(): Position[] {
+	const path: Position[] = [];
+	// (8,16), (8,15), (8,14)
+	path.push({ x: 8, y: 16 });
+	path.push({ x: 8, y: 15 });
+	path.push({ x: 8, y: 14 });
+	// Row 14: (7,14) → (5,14)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 14 });
+	// col 5: (5,13), (5,12)
+	path.push({ x: 5, y: 13 });
+	path.push({ x: 5, y: 12 });
+	// Row 12: (6,12) → (8,12)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 12 });
+	// col 8: (8,11), (8,10)
+	path.push({ x: 8, y: 11 });
+	path.push({ x: 8, y: 10 });
+	// Row 10: (7,10) → (5,10)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 10 });
+	// col 5: (5,9), (5,8)
+	path.push({ x: 5, y: 9 });
+	path.push({ x: 5, y: 8 });
+	// Row 8: (6,8) → (8,8)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 8 });
+	// col 8: (8,7), (8,6)
+	path.push({ x: 8, y: 7 });
+	path.push({ x: 8, y: 6 });
+	// Row 6: (7,6) → (5,6)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 6 });
+	// col 5: (5,5), (5,4)
+	path.push({ x: 5, y: 5 });
+	path.push({ x: 5, y: 4 });
+	// Row 4: (6,4) → (8,4)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 4 });
+	// col 8: (8,3), (8,2)
+	path.push({ x: 8, y: 3 });
+	path.push({ x: 8, y: 2 });
+	// Row 2: (7,2) → (5,2)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 2 });
+	// col 5: (5,1), (5,0)
+	path.push({ x: 5, y: 1 });
+	path.push({ x: 5, y: 0 });
+	// Row 0 traverse back to exit
+	path.push({ x: 4, y: 0 });
+	return path;
+}
+
+// Descent from (0,0) at row 0 down to row 16 on col 0.
+// Then bottom crossing: path continues from (0,16) → (0,17) → (8,17) → (8,16).
+// But descent ends at (0,16). We need to join to (0,17) first.
+const PHASE_A_LEFT = generateLeftDescent();
+const PHASE_A_BOTTOM = generateBottomTraverse();
+const PHASE_A_RIGHT = generateRightAscent();
 
 const PHASE_A_LONG_PATH: Position[] = [
-	...PHASE_A_DOWN,
-	...PHASE_A_TURN,
-	...PHASE_A_UP,
+	...PHASE_A_LEFT,
+	...PHASE_A_BOTTOM,
+	...PHASE_A_RIGHT,
 ];
 
+// Only the corners that are neither path nor obstacle are explicitly blocked
+// so no tower can sit on the spawn/exit tile itself.
 const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
-	{ x: 0, y: 0 },
-	{ x: 4, y: 0 },
-	{ x: 0, y: 23 },
-	{ x: 4, y: 23 },
-	{ x: 7, y: 0 },
-	{ x: 7, y: 23 },
+	{ x: 0, y: 0 }, // spawn
+	{ x: 4, y: 0 }, // exit
+	{ x: 8, y: 0 },
+];
+
+// Fixed obstacles. Col 4 punctuations block the middle lane visually and
+// give the 9×18 grid a clear "two strips + crossing" read.
+const PHASE_A_LONG_OBSTACLES: Position[] = [
+	{ x: 4, y: 2 },
+	{ x: 4, y: 5 },
+	{ x: 4, y: 8 },
+	{ x: 4, y: 11 },
+	{ x: 4, y: 14 },
 ];
 
 const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
-	width: 8,
-	height: 24,
+	width: 9,
+	height: 18,
 	path: PHASE_A_LONG_PATH,
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+	obstacles: PHASE_A_LONG_OBSTACLES,
 });
 
 export const PHASE_A_MAP_ID = 'phase_a_long' as const;
@@ -114,9 +190,9 @@ export const PHASE_A_MAP_ID = 'phase_a_long' as const;
 export const PHASE_A_LONG_MAP: MapLayout = {
 	id: PHASE_A_MAP_ID,
 	name: 'Phase A — 왕복 회랑',
-	width: 8,
-	height: 24,
-	tileSize: 32,
+	width: 9,
+	height: 18,
+	tileSize: 48,
 	path: PHASE_A_LONG_PATH,
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
 	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
@@ -127,6 +203,8 @@ export const PHASE_A_LONG_MAP: MapLayout = {
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,
 	recommendedPower: 55,
+	obstacles: PHASE_A_LONG_OBSTACLES,
+	castleWallTiles: [{ x: 4, y: 0 }],
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {

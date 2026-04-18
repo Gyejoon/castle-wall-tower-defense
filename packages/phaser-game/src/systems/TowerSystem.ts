@@ -1020,35 +1020,42 @@ export class TowerSystem {
 
 	/**
 	 * Returns a merge-friendly locator for the tower at (col,row), or null if
-	 * the tile is empty. Return type is MergeSystem.TowerLocator so the Phase
-	 * A orchestrator can pass this directly into MergeContext and any rename
-	 * of TowerLocator propagates here without a structural drift.
+	 * the tile is empty. Shape matches `MergeSystem.TowerLocator`
+	 * (family+tier+instanceId) so the Phase A orchestrator can feed the value
+	 * directly into `MergeSystem.tryMerge`. `x`/`y` carry the grid position
+	 * of the tower so the caller can re-spawn at the same tile after a merge.
 	 */
 	getTowerLocator(col: number, row: number): TowerLocator | null {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return null;
 		return {
-			col,
-			row,
-			towerId: entry.instance.def.id,
+			instanceId: entry.instance.data.instanceId,
+			towerId: entry.instance.def.id as TowerLocator['towerId'],
+			family: entry.instance.def.family,
 			tier: entry.instance.tier,
+			x: col,
+			y: row,
 		};
 	}
 
 	/**
-	 * Phase 1 stub: merge is being rewritten for the family/tier model in
-	 * Phase 2 — this method currently just no-ops and returns false so the
-	 * orchestrator's merge-failed path always fires. The real family/tier
-	 * transmutation lands with MergeSystem.tryMerge.
+	 * Remove a tower at (col,row) without refund — used by the merge flow so
+	 * consumed towers disappear before the result tower is spawned. Returns
+	 * true if a tower was removed.
 	 */
-	applyMerge(
-		_removedCol: number,
-		_removedRow: number,
-		_keptCol: number,
-		_keptRow: number,
-		_resultTowerId: string,
-	): boolean {
-		return false;
+	removeTowerAt(col: number, row: number): boolean {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return false;
+		const { key, instance } = entry;
+		instance.idleTween?.stop();
+		instance.idleTween?.remove();
+		instance.barrelSprite?.destroy();
+		instance.base.destroy();
+		instance.sprite.destroy();
+		this.towers.delete(key);
+		this.gridManager.removeTower(col, row);
+		this.pathfinding.invalidateCache();
+		return true;
 	}
 
 	/**

@@ -176,27 +176,28 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 		expect(towerSystem.getTowerLocator(99, 99)).toBeNull();
 	});
 
-	it('getTowerLocator returns col/row/towerId/tier for placed tower', () => {
+	it('getTowerLocator returns instanceId/towerId/family/tier/x/y for placed tower', () => {
 		const { towerSystem } = createTowerSystem();
 		const p = FOREST_GATE_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
-		expect(towerSystem.getTowerLocator(p.x, p.y)).toEqual({
-			col: p.x,
-			row: p.y,
+		const locator = towerSystem.getTowerLocator(p.x, p.y);
+		expect(locator).toMatchObject({
 			towerId: 'archer',
+			family: 'archer',
 			tier: 1,
+			x: p.x,
+			y: p.y,
 		});
+		expect(typeof locator?.instanceId).toBe('string');
 	});
 
-	it('applyMerge is a stub in Phase 1 — always returns false', () => {
-		const { towerSystem } = createTowerSystem();
-		const p1 = FOREST_GATE_MAP.buildablePoints[0];
-		const p2 = FOREST_GATE_MAP.buildablePoints[1];
-		towerSystem.placeTower(p1.x, p1.y, 'archer');
-		towerSystem.placeTower(p2.x, p2.y, 'archer');
-		expect(towerSystem.applyMerge(p1.x, p1.y, p2.x, p2.y, 'wind_spire')).toBe(
-			false,
-		);
+	it('removeTowerAt clears a placed tower without refund', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const p = FOREST_GATE_MAP.buildablePoints[0];
+		towerSystem.placeTower(p.x, p.y, 'archer');
+		expect(towerSystem.removeTowerAt(p.x, p.y)).toBe(true);
+		expect(towerSystem.getTowerLocator(p.x, p.y)).toBeNull();
+		expect(gridManager.getTile(p.x, p.y)?.occupied).toBe(false);
 	});
 
 	it('playPhaseASummonVfx adds a scale-punch tween on the tower sprite', () => {

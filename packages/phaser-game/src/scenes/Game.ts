@@ -6,7 +6,10 @@ import {
 	DEFAULT_DECK,
 	DEFAULT_MAP_ID,
 	DEFAULT_STAGE_ID,
-	ENERGY_PER_WAVE_CLEAR,
+	ENERGY_PER_BOSS_FAST_CLEAR,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
+	FAST_CLEAR_THRESHOLD_MS,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
@@ -263,6 +266,8 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		this.playerUnits.setUnitSpawnedCallback((instanceId, defId, isBoss) => {
 			if (!isBoss) return;
+			// Record boss spawn timestamp for fast-clear energy bonus ([F18]).
+			this.playerWaves?.markBossSpawned();
 			const def = UNITS.find((u) => u.id === defId);
 			if (!def?.bossBehaviorId) return;
 			const behavior = createBossBehavior(def.bossBehaviorId);
@@ -421,10 +426,8 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			// Phase A: no wave-clear energy bonus — energy comes from kills only
-			if (data.cleared && !this.isPhaseAMap) {
-				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
-			}
+			// Phase 3 (sole-mode): wave-clear energy bonus removed entirely.
+			// Energy comes from passive regen + per-kill + boss-kill rewards.
 			// Phase A: every 10 waves, offer 3 random upgrade cards
 			if (
 				data.cleared &&
@@ -1127,13 +1130,15 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
-				// Phase A: energy from kills, not time. +1 per kill, x2 on every 5th wave
+				// Phase 3 (sole-mode): +1 per kill baseline, with the roguelike
+				// `kill_energy` upgrade stacking additively on top. Every 5th
+				// wave doubles the baseline as a soft pacing buff.
 				if (this.isPhaseAMap) {
 					const killEnergyBonus =
 						this.phaseAOrchestrator?.getUpgradeStacks('kill_energy') ?? 0;
-					const bonus =
-						(this.currentWaveSlot % 5 === 0 ? 2 : 1) + killEnergyBonus;
-					this.energySystem.add(bonus);
+					const baseline =
+						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
+					this.energySystem.add(baseline + killEnergyBonus);
 				}
 			},
 			(unitId, result) => {
@@ -1142,6 +1147,20 @@ export class GameScene extends Phaser.Scene {
 				if (!behavior) return;
 				const unit = this.playerUnits.getUnit(unitId);
 				if (result.killed) {
+					// Phase 3 (sole-mode): boss-kill energy reward, plus a
+					// fast-clear bonus if the boss dies within
+					// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
+					// to wave start if bossSpawnMs was not recorded (e.g. if
+					// the boss died before the spawn callback fired).
+					if (this.isPhaseAMap) {
+						this.energySystem.add(ENERGY_PER_BOSS_KILL);
+						const elapsed =
+							this.playerWaves.getElapsedMs() -
+							(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
+						if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
+							this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
+						}
+					}
 					behavior.destroy();
 					this.bossBehaviors.delete(unitId);
 					return;

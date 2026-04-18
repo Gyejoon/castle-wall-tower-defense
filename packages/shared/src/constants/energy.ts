@@ -22,11 +22,3 @@ export const INGAME_GACHA = {
 export const ENERGY_PER_SEC = ENERGY_PER_SECOND;
 export const INITIAL_ENERGY = ENERGY_INITIAL;
 export const ENERGY_CAP = ENERGY_MAX;
-
-/**
- * @deprecated Wave-clear energy bonus was removed in Phase A (Phase 3).
- * Retained as a transitional zero-valued re-export so Task 3.1 can land
- * without breaking Game.ts; Task 3.2 deletes the last consumer and this
- * alias should be removed alongside it.
- */
-export const ENERGY_PER_WAVE_CLEAR = 0;

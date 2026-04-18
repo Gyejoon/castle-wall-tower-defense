@@ -35,6 +35,13 @@ export class WaveSystem {
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 	private waveStartMs = 0;
+	/**
+	 * Timestamp (in `elapsedMs` clock) when the active boss unit first spawns.
+	 * Used by the Phase A fast-clear energy bonus. Reset to `undefined` on
+	 * each new wave; set by `markBossSpawned()` (called from the unit-spawned
+	 * callback). See plan [F18].
+	 */
+	bossSpawnMs: number | undefined = undefined;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -180,6 +187,13 @@ export class WaveSystem {
 		return this.elapsedMs;
 	}
 
+	/** Record the moment the first boss unit actually spawned (see [F18]). */
+	markBossSpawned(): void {
+		if (this.bossSpawnMs === undefined) {
+			this.bossSpawnMs = this.elapsedMs;
+		}
+	}
+
 	isLastWave(): boolean {
 		return this.currentWaveIndex >= this.maxWaves - 1;
 	}
@@ -214,6 +228,7 @@ export class WaveSystem {
 
 		this.hasSpawnedCurrentWave = false;
 		this.waveStartMs = this.elapsedMs;
+		this.bossSpawnMs = undefined;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
 		// Emit boss warning when a boss wave starts

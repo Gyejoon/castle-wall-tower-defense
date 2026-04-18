@@ -13,7 +13,13 @@ import {
 import { create } from 'zustand';
 import { useMetaStore } from './metaStore';
 
-export type RunStatus = 'lobby' | 'building' | 'running' | 'victory' | 'defeat';
+export type RunStatus =
+	| 'lobby'
+	| 'metaForge'
+	| 'building'
+	| 'running'
+	| 'victory'
+	| 'defeat';
 export type LobbyTab = 'home' | 'collection' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
@@ -219,14 +225,14 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		EventBus.emit('request-set-speed', { multiplier: 1 });
 	},
 	enterMetaForge: () => {
-		// Phase 9 will navigate to a dedicated MetaForge page. For now
-		// surface a toast so the button still gives feedback.
-		set(() => ({
-			toast: {
-				id: Date.now(),
-				message: '메타 강화는 준비 중입니다',
-				tone: 'info' as ToastTone,
-			},
+		// Phase 9.3: navigate to the dedicated MetaForge page. Run state
+		// is reset so we don't carry a stale battle into a later
+		// `enterLobby()` → `startPhaseA()` sequence.
+		set((state) => ({
+			runId: state.runId + 1,
+			runStatus: 'metaForge',
+			lobbyTab: 'home',
+			...createRunState(),
 		}));
 	},
 	setBgmVolume: (v) => {

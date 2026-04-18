@@ -2,6 +2,7 @@ import { ALL_TOWERS, DEFAULT_DECK_IDS } from '@gld/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { uiMobileArt } from './assets/uiMobileArt';
 import { LobbyPage } from './pages/LobbyPage';
+import { MetaForgePage } from './pages/MetaForgePage';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
 import { preloadImages } from './utils/preloadAssets';
@@ -79,14 +80,22 @@ export function App() {
 
 	const filter = COLORBLIND_FILTERS[colorblindMode];
 
-	// 페이지 전환 fade 키 — lobby ↔ GamePage 두 가지 경로만 남음.
+	// 페이지 전환 fade 키 — lobby / metaForge / GamePage 세 경로.
 	// building/running/victory/defeat는 모두 GamePage이므로 같은 phase로 묶어
-	// Phaser scene이 매 전이마다 재초기화되지 않도록 한다.
-	const phase: 'lobby' | 'battle' = runStatus === 'lobby' ? 'lobby' : 'battle';
+	// Phaser scene이 매 전이마다 재초기화되지 않도록 한다. metaForge는 별도
+	// phase로 두어 lobby ↔ metaForge 전환도 부드럽게 fade 한다.
+	const phase: 'lobby' | 'metaForge' | 'battle' =
+		runStatus === 'lobby'
+			? 'lobby'
+			: runStatus === 'metaForge'
+				? 'metaForge'
+				: 'battle';
 
 	const content: React.ReactNode =
 		runStatus === 'lobby' ? (
 			<LobbyPage />
+		) : runStatus === 'metaForge' ? (
+			<MetaForgePage />
 		) : (
 			<Suspense fallback={<LoadingScreen />}>
 				<GamePage />

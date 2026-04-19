@@ -389,6 +389,10 @@ export class UnitSystem {
 	applySlow(unitId: string, factor: number, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		// Same pendingDestroy gate as `applyStun` — a dying unit should not
+		// pick up new tint/state changes that could preempt the death anim
+		// cleanup listener.
+		if (unit.pendingDestroy) return;
 		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}
@@ -407,6 +411,13 @@ export class UnitSystem {
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
+		// Bug guard: once a unit is flagged for destruction the death
+		// animation is already playing and its ANIMATION_COMPLETE listener
+		// owns sprite cleanup. Applying stun here would call
+		// `setUnitAnimationState(unit, 'idle')` which interrupts the death
+		// animation, so ANIMATION_COMPLETE never fires and the ghost sprite
+		// lingers on screen forever. Matches the same gate `applyDamage` has.
+		if (unit.pendingDestroy) return;
 		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
 			return; // CC resisted
 		}

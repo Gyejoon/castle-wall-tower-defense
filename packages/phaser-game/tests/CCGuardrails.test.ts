@@ -201,4 +201,24 @@ describe('Phase 11 [F16] CC guardrails', () => {
 		system.applyStun(id, 800);
 		expect(unit.stunRemaining).toBe(800);
 	});
+
+	it('stun/slow on a pendingDestroy unit는 무시되어 death anim cleanup을 보존한다', () => {
+		const { id, unit } = spawnAndGet(system, scene, 'scout_drone');
+		// Simulate the unit just died — applyDamage sets pendingDestroy, plays
+		// death anim, and attaches the ANIMATION_COMPLETE cleanup listener.
+		unit.pendingDestroy = true;
+		unit.data.hp = 0;
+		unit.animationState = 'death';
+		(unit.sprite.play as ReturnType<typeof vi.fn>).mockClear();
+
+		system.applyStun(id, 1000);
+		system.applySlow(id, 0.5, 1000);
+
+		// No further play() call → death anim is not interrupted.
+		expect(unit.sprite.play).not.toHaveBeenCalled();
+		// Stun/slow state untouched.
+		expect(unit.stunRemaining).toBe(0);
+		expect(unit.slowRemaining).toBe(0);
+		expect(unit.animationState).toBe('death');
+	});
 });

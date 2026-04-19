@@ -68,38 +68,28 @@ export function SummonRevealOverlay() {
 		<div
 			key={pending.key}
 			data-testid="summon-reveal-overlay"
-			className="absolute inset-0 z-[6] flex items-center justify-center pointer-events-none"
+			className="absolute top-[52px] right-[8px] z-[5] pointer-events-none flex items-center gap-2 border-2 px-2 py-1.5 rounded-sm max-w-[180px]"
 			style={{
-				animation: 'fadeIn 220ms ease-out',
-				background: 'var(--color-overlay-60)',
+				animation: 'slideInFromRight 150ms ease-out',
+				background: 'var(--color-panel-95)',
+				borderColor: 'var(--color-gold)',
+				boxShadow: '0 0 10px var(--color-accent-20)',
 			}}
 		>
-			<div
-				className="flex flex-col items-center gap-2 border-2 px-6 py-4 rounded-sm"
-				style={{
-					background: 'var(--color-panel-95)',
-					borderColor: 'var(--color-gold)',
-					boxShadow: '0 0 12px var(--color-accent-20)',
-				}}
-			>
-				<span
-					data-testid="summon-reveal-source"
-					className="font-pixel text-[10px] text-accent tracking-wider"
-				>
-					{sourceLabel}
-				</span>
-				<TowerIcon towerId={pending.towerId} size={40} />
+			<TowerIcon towerId={pending.towerId} size={24} />
+			<div className="flex flex-col min-w-0 flex-1">
 				<span
 					data-testid="summon-reveal-name"
-					className="font-pixel text-[13px] text-gold"
+					className="font-pixel text-[11px] text-gold truncate"
 				>
 					{name}
 				</span>
-				{family && (
-					<span className="font-pixel text-[9px] text-text-secondary">
-						{family}
-					</span>
-				)}
+				<span
+					data-testid="summon-reveal-source"
+					className="font-pixel text-[9px] text-accent tracking-wider"
+				>
+					{sourceLabel}
+				</span>
 			</div>
 		</div>
 	);

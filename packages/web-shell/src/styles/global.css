@@ -265,6 +265,32 @@ body {
   50% { opacity: 0.5; transform: scale(1.05); }
 }
 
+/* Cinematic keyart — lobby home tab */
+@keyframes keyartTorchFlicker {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.08); }
+}
+@keyframes keyartFlagFlutter {
+  0%   { transform: skewX(0deg); }
+  100% { transform: skewX(-6deg); }
+}
+.keyart-torch {
+  animation: keyartTorchFlicker 1.5s ease-in-out infinite alternate;
+}
+.keyart-flag {
+  animation: keyartFlagFlutter 2s ease-in-out infinite alternate;
+  transform-origin: left center;
+}
+
+/* Primary CTA pulse — "next up" card on home tab */
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 3px 0 #7a5a10, 0 0 0 0 rgba(240, 208, 96, 0.4); }
+  50%      { box-shadow: 0 3px 0 #7a5a10, 0 0 0 8px rgba(240, 208, 96, 0); }
+}
+.pulse-cta {
+  animation: ctaPulse 2s ease-out infinite;
+}
+
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
@@ -306,6 +332,7 @@ body {
   .matchmaking-swords::before, .matchmaking-swords::after,
   .matchmaking-dots::after,
   .hud-flash,
+  .keyart-torch, .keyart-flag, .pulse-cta,
   [class*="gachaPulse"],
   [class*="cardFlipIn"] {
     animation: none;

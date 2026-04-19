@@ -31,8 +31,14 @@ describe('LobbyPage', () => {
 		// Center tab (마당/home) is index 1, should be selected by default
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
-		// Phase 6: '전투 시작' is the primary CTA; scenario "시작" is gone.
-		expect(view.getByText('전투 시작')).toBeTruthy();
+		// Phase A redesign ("Option C · cinematic keyart"):
+		// hero title, PHASE A label, NEXT UP card copy, and 전투 시작 CTA.
+		expect(view.getByText('Grid Line Defense')).toBeTruthy();
+		expect(view.getByText('Phase A')).toBeTruthy();
+		expect(view.getByText('NEXT UP')).toBeTruthy();
+		expect(view.getByText('랜덤 합성 타워 디펜스')).toBeTruthy();
+		expect(view.getByRole('button', { name: '전투 시작' })).toBeTruthy();
+		expect(view.getByText('메타 강화 ›')).toBeTruthy();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 	});
 
@@ -59,9 +65,16 @@ describe('LobbyPage', () => {
 
 	it('starts a Phase A run on 전투 시작 click', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('전투 시작'));
+		fireEvent.click(view.getByRole('button', { name: '전투 시작' }));
 
 		expect(useGameStore.getState().runStatus).toBe('building');
+	});
+
+	it('enters MetaForge on 메타 강화 link click', () => {
+		const view = render(<LobbyPage />);
+		fireEvent.click(view.getByText('메타 강화 ›'));
+
+		expect(useGameStore.getState().runStatus).toBe('metaForge');
 	});
 
 	it('shows collection tab with tower grid', () => {

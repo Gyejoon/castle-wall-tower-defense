@@ -707,4 +707,121 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(1);
 		orch.destroy();
 	});
+
+	describe('cancel-preserves-draw anti-reroll', () => {
+		// Stateful rng that cycles through the provided values so successive
+		// draws would naturally land on different towers if no preservation
+		// logic intervened. Used to prove that cancel → re-summon re-emits
+		// the SAME towerId rather than advancing the rng.
+		function cyclingRng(values: number[]): () => number {
+			let i = 0;
+			return () => {
+				const v = values[i % values.length];
+				i += 1;
+				return v;
+			};
+		}
+
+		it('cancelling a pool summon preserves the drawn tower for next request', () => {
+			const towerSystem = makeFakeTowerSystem();
+			// Two-tower pool; rng 0 → index 0 (archer), rng 0.6 → index 1 (nova_cannon).
+			const rng = cyclingRng([0, 0.6]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer', 'nova_cannon'],
+				rng,
+			});
+
+			EventBus.emit('request-summon-tower');
+			const firstReady = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+			const firstTowerId = (firstReady?.[1] as { towerId: string }).towerId;
+
+			orch.cancelPendingSummon();
+			expect(orch.hasPendingSummon()).toBe(false);
+
+			// Second summon tap should re-emit the SAME tower id, not draw afresh.
+			EventBus.emit('request-summon-tower');
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const secondTowerId = (
+				readies[readies.length - 1][1] as {
+					towerId: string;
+				}
+			).towerId;
+			expect(secondTowerId).toBe(firstTowerId);
+			orch.destroy();
+		});
+
+		it('cancelled pool draw is consumed once — third summon draws fresh', () => {
+			const towerSystem = makeFakeTowerSystem();
+			const rng = cyclingRng([0, 0.6, 0.6, 0]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer', 'nova_cannon'],
+				rng,
+			});
+
+			EventBus.emit('request-summon-tower'); // tap 1 — draws archer
+			const cancelledTowerId = (
+				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+					string,
+					{ towerId: string },
+				]
+			)[1].towerId;
+			orch.cancelPendingSummon();
+
+			// Tap 2 — consumes the preserved pool draw (archer). No rng call.
+			EventBus.emit('request-summon-tower');
+			orch.completePlacement(1, 1);
+
+			// Tap 3 — cancelledPoolDraw was cleared when consumed on tap 2,
+			// so a fresh draw must advance the rng. With rng cycle
+			// [0, 0.6, ...], tap 3 consumes rng[1] = 0.6 → nova_cannon.
+			EventBus.emit('request-summon-tower');
+
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const thirdTowerId = (
+				readies[readies.length - 1][1] as { towerId: string }
+			).towerId;
+			expect(cancelledTowerId).toBe('archer');
+			expect(thirdTowerId).toBe('nova_cannon');
+			orch.destroy();
+		});
+
+		it('cancelling a gacha summon does NOT preserve draw (upfront cost paid)', () => {
+			const towerSystem = makeFakeTowerSystem();
+			const energy = makeFakeEnergy(200);
+			const rng = cyclingRng([0, 0.6]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer'],
+				rng,
+				energySystem: energy,
+			});
+
+			EventBus.emit('request-gacha-summon', { targetTier: 2 });
+			const firstGachaId = (
+				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+					string,
+					{ towerId: string },
+				]
+			)[1].towerId;
+
+			orch.cancelPendingSummon();
+
+			// A subsequent pool summon should NOT surface the cancelled gacha
+			// tower — it should draw from the summon pool normally.
+			EventBus.emit('request-summon-tower');
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const nextReady = readies[readies.length - 1][1] as {
+				towerId: string;
+				source: string;
+			};
+			expect(nextReady.source).toBe('summon');
+			expect(nextReady.towerId).toBe('archer');
+			// Sanity — the gacha's first result was preserved onto the queue
+			// only before cancel; it must NOT leak into the pool path.
+			expect(typeof firstGachaId).toBe('string');
+			orch.destroy();
+		});
+	});
 });

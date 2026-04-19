@@ -102,6 +102,15 @@ export class PhaseAOrchestrator {
 	private readonly rng: () => number;
 	private pendingSummon: PendingSummonRequest | null = null;
 	private summonQueue: PendingSummonRequest[] = [];
+	/**
+	 * Drawn pool tower that was cancelled before placement. Next
+	 * `request-summon-tower` consumes this instead of drawing a fresh one,
+	 * preventing a reroll exploit where the player cancels until they see a
+	 * tower they like. Only tracks pool draws (source === 'summon'); gacha
+	 * cancels refund upfront-paid energy and are free to re-roll since the
+	 * player already spent the cost.
+	 */
+	private cancelledPoolDraw: TowerId | null = null;
 	private destroyed = false;
 	private activeUpgrades: Map<UpgradeId, number> = new Map();
 	private energyRegenTimer = 0;
@@ -459,6 +468,21 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
+		// Anti-reroll: if the player cancelled a pool draw, the next summon
+		// tap must re-emit that same tower instead of drawing a fresh one.
+		// We consume the preserved draw here rather than in cancel so the
+		// energy check above still runs.
+		if (this.cancelledPoolDraw) {
+			const preserved = this.cancelledPoolDraw;
+			this.cancelledPoolDraw = null;
+			this.enqueueSummon({
+				towerId: preserved,
+				source: 'summon',
+				energyRefund: 0,
+			});
+			return;
+		}
+
 		const draw = this.summonPool.draw();
 		this.enqueueSummon({
 			towerId: draw.towerId as TowerId,
@@ -527,8 +551,15 @@ export class PhaseAOrchestrator {
 	): void {
 		const cur = this.pendingSummon;
 		this.pendingSummon = null;
-		if (cur && outcome === 'cancelled' && cur.energyRefund > 0) {
-			this.deps.energySystem?.add(cur.energyRefund);
+		if (cur && outcome === 'cancelled') {
+			// Gacha cancels refund the upfront-paid energy and DO NOT preserve
+			// the drawn tower — re-rolling after a refund is fine because the
+			// player has to spend again. Pool cancels preserve the drawn
+			// tower so the next summon tap can't reroll into a better draw.
+			if (cur.energyRefund > 0) this.deps.energySystem?.add(cur.energyRefund);
+			if (cur.source === 'summon') {
+				this.cancelledPoolDraw = cur.towerId;
+			}
 		}
 		const next = this.summonQueue.shift();
 		if (next) {

@@ -100,7 +100,10 @@ export function TowerActionSheet({
 	const enhanceDisabled = atMaxLevel || !canAffordEnhance;
 
 	const handleEnhance = () => {
-		if (atMaxLevel) return;
+		// Double-gate: disabled prop blocks native click, but this guards
+		// keyboard/programmatic dispatches (a11y + edge cases). Without it the
+		// emit would still fire and the orchestrator would have to reject.
+		if (enhanceDisabled) return;
 		EventBus.emit('request-enhance-tower', {
 			col: selectedTower.col,
 			row: selectedTower.row,

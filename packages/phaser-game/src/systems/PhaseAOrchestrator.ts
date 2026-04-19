@@ -625,7 +625,15 @@ export class PhaseAOrchestrator {
 			return;
 		}
 		const goldSystem = this.deps.goldSystem;
-		if (goldSystem && !goldSystem.spend(cost)) {
+		// Fail-closed: without a gold system wired we can't prove the player
+		// paid, so reject the request instead of granting a free enhance. Test
+		// harnesses that want to exercise enhance without gold plumbing must
+		// inject a stub goldSystem explicitly.
+		if (!goldSystem) {
+			EventBus.emit('enhance-failed', { reason: 'insufficient-gold' });
+			return;
+		}
+		if (!goldSystem.spend(cost)) {
 			EventBus.emit('enhance-failed', { reason: 'insufficient-gold' });
 			return;
 		}
@@ -635,7 +643,7 @@ export class PhaseAOrchestrator {
 			// the cap. Refund whatever we spent and surface the underlying
 			// reason. `tower-not-found` and `max-level` already map cleanly to
 			// the `enhance-failed` reason union.
-			if (goldSystem) goldSystem.add(cost);
+			goldSystem.add(cost);
 			EventBus.emit('enhance-failed', { reason: result.reason });
 			return;
 		}

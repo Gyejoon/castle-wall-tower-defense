@@ -1149,15 +1149,20 @@ export class TowerSystem {
 		instance.data.position = { x: toX, y: toY };
 		const worldPos = this.gridManager.gridToWorld(toX, toY);
 		const moveLift = this.gridManager.orthoTile * PLATFORM_LIFT;
-		const liftedY = worldPos.y - moveLift;
-		instance.sprite.setPosition(worldPos.x, liftedY);
-		instance.base.setPosition(worldPos.x, liftedY);
+		// Base/barrel sit at platform height; sprite has an extra 20px lift
+		// that matches placement (sprite.setY(worldPos.y - lift - 20)). Without
+		// this offset the sprite snaps down by 20px post-move while fire VFX
+		// still draws at the -20 baseline, producing a visual "bob" on attack.
+		const baseLiftedY = worldPos.y - moveLift;
+		const spriteLiftedY = baseLiftedY - 20;
+		instance.sprite.setPosition(worldPos.x, spriteLiftedY);
+		instance.base.setPosition(worldPos.x, baseLiftedY);
 		if (instance.barrelSprite) {
-			instance.barrelSprite.setPosition(worldPos.x, liftedY);
+			instance.barrelSprite.setPosition(worldPos.x, spriteLiftedY);
 		}
 		this.renderTowerBase(
 			instance.base,
-			{ x: worldPos.x, y: liftedY },
+			{ x: worldPos.x, y: baseLiftedY },
 			instance.def,
 		);
 
@@ -1168,12 +1173,12 @@ export class TowerSystem {
 		const baseScaleY = instance.sprite.scaleY;
 		instance.baseScaleX = baseScaleX;
 		instance.baseScaleY = baseScaleY;
-		instance.baseY = liftedY;
+		instance.baseY = spriteLiftedY;
 		instance.idleTween = this.createIdleTween(
 			instance.sprite,
 			baseScaleX,
 			baseScaleY,
-			liftedY,
+			spriteLiftedY,
 		);
 
 		this.pathfinding.invalidateCache();

@@ -120,12 +120,18 @@ export class WaveSystem {
 				this.hasSpawnedCurrentWave &&
 				this.elapsedMs - this.waveStartMs > MAX_WAVE_DURATION_MS;
 
-			// Wave cleared naturally or timer expired
-			if (
-				(this.hasSpawnedCurrentWave && activeUnitCount === 0) ||
-				timerExpired
-			) {
-				const cleared = !timerExpired;
+			// Wave cleared naturally or timer expired.
+			//
+			// Bug guard [post-ship]: if the player kills the last unit on the
+			// SAME tick the timer expires, the old logic produced
+			// `cleared = !timerExpired = false`, which blocks the Phase 4
+			// boss-clear roguelike pick. Prefer the natural-clear signal:
+			// activeUnitCount === 0 is authoritative, timer only matters if
+			// units are still alive.
+			const naturallyCleared =
+				this.hasSpawnedCurrentWave && activeUnitCount === 0;
+			if (naturallyCleared || timerExpired) {
+				const cleared = naturallyCleared;
 				EventBus.emit('wave-completed', {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
@@ -145,12 +151,15 @@ export class WaveSystem {
 					return;
 				}
 
-				// Timer expired → advance immediately; natural clear → wait
-				if (timerExpired) {
-					this.advanceToNextWave();
-				} else {
+				// Timer expired → advance immediately; natural clear → wait.
+				// A naturally-cleared wave always wins — it emits `cleared:true`
+				// and takes the delay path, even if the timer happened to expire
+				// on the same tick.
+				if (naturallyCleared) {
 					this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
 					this.phase = 'waiting';
+				} else {
+					this.advanceToNextWave();
 				}
 			}
 		} else if (this.phase === 'waiting') {

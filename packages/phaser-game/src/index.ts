@@ -8,6 +8,7 @@ export { EventBus } from './EventBus';
 export { getPlacementGuardFailure } from './placementRules';
 // Re-export systems for testing
 export { DeckSystem } from './systems/DeckSystem';
+export { GoldSystem } from './systems/GoldSystem';
 export { GridManager } from './systems/GridManager';
 export {
 	type MergeFailReason,

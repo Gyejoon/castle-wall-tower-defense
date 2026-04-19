@@ -151,6 +151,7 @@ export function GamePage() {
 			row: number;
 			refund: number;
 			tier: number;
+			level: number;
 		}) => {
 			const targetId = `${data.col},${data.row}`;
 			// [F10] merge-target-picker branch: if we're waiting for a target,
@@ -179,21 +180,38 @@ export function GamePage() {
 				towerName: data.towerName,
 				tier: data.tier,
 				sellValue: data.refund,
+				level: data.level,
 			});
 		};
 		const clear = () => setSelectedTower(null);
+
+		// Sync the action sheet's level after a successful enhance so the cost
+		// badge bumps without needing the player to re-select the tower.
+		const handleEnhanced = (data: {
+			col: number;
+			row: number;
+			newLevel: number;
+		}) => {
+			setSelectedTower((prev) =>
+				prev && prev.col === data.col && prev.row === data.row
+					? { ...prev, level: data.newLevel }
+					: prev,
+			);
+		};
 
 		EventBus.on('tower-selected', handleSelected);
 		EventBus.on('tower-deselected', clear);
 		EventBus.on('tower-sold', clear);
 		EventBus.on('tower-moved', clear);
 		EventBus.on('towers-merged', clear);
+		EventBus.on('tower-enhanced', handleEnhanced);
 		return () => {
 			EventBus.off('tower-selected', handleSelected);
 			EventBus.off('tower-deselected', clear);
 			EventBus.off('tower-sold', clear);
 			EventBus.off('tower-moved', clear);
 			EventBus.off('towers-merged', clear);
+			EventBus.off('tower-enhanced', handleEnhanced);
 		};
 	}, [mergeSourceId]);
 

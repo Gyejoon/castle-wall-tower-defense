@@ -71,6 +71,7 @@ import '../systems/boss-ai/corruptedArchmage';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
+import { GoldSystem } from '../systems/GoldSystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
 import { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
@@ -110,6 +111,7 @@ export class GameScene extends Phaser.Scene {
 	private damageNumbers!: DamageNumberSystem;
 	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
+	private goldSystem = new GoldSystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
@@ -278,6 +280,7 @@ export class GameScene extends Phaser.Scene {
 				towerSystem: this.playerTowers,
 				initialPool: PHASE_A_INITIAL_POOL,
 				energySystem: this.energySystem,
+				goldSystem: this.goldSystem,
 				// Phase 10 BM stub. Real provider swaps in behind the same
 				// `AdService` contract without touching this call site.
 				adService: MockAdService,
@@ -796,6 +799,7 @@ export class GameScene extends Phaser.Scene {
 					row: gridPos.y,
 					refund,
 					tier: tower.tier,
+					level: tower.data.level ?? 1,
 				});
 				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
@@ -1001,6 +1005,10 @@ export class GameScene extends Phaser.Scene {
 				onDamageResult?.(evt.unitId, result);
 				if (result?.killed) {
 					this.goldEarned += result.bounty;
+					// Same bounty value also feeds the run-scoped gold pool used
+					// by the in-battle enhance system (separate from the
+					// game-over `goldEarned` rollup the meta layer consumes).
+					this.goldSystem.add(result.bounty);
 					onKill();
 				}
 			}
@@ -1256,6 +1264,7 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.destroy();
 		this.playerDeck.reset();
 		this.energySystem.reset();
+		this.goldSystem.reset();
 
 		unloadAssetSections(
 			this,

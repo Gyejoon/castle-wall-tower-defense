@@ -104,11 +104,12 @@ describe('TowerActionSheet', () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it('renders four action buttons when a tower is selected', () => {
+	it('renders five action buttons when a tower is selected', () => {
 		render(<TowerActionSheet selectedTower={sample} onDeselect={() => {}} />);
 		expect(screen.getByTestId('tower-action-merge')).toBeDefined();
 		expect(screen.getByTestId('tower-action-move')).toBeDefined();
 		expect(screen.getByTestId('tower-action-sell')).toBeDefined();
+		expect(screen.getByTestId('tower-action-enhance')).toBeDefined();
 		expect(screen.getByTestId('tower-action-close')).toBeDefined();
 	});
 

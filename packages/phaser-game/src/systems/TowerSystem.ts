@@ -12,6 +12,8 @@ import {
 	CC_AURA_CONFIGS,
 	getEffectiveStats,
 	getElementMultiplier,
+	inBattleDamageMultiplier,
+	MAX_IN_BATTLE_LEVEL,
 	stunCooldownMultiplier,
 	stunDurationMultiplier,
 } from '@gld/shared';
@@ -1126,6 +1128,44 @@ export class TowerSystem {
 
 	static calcRefund(cost: number): number {
 		return Math.floor(cost * 0.5);
+	}
+
+	/**
+	 * In-battle gold-spend enhance. Bumps `data.level` by 1, recomputes
+	 * `effectiveDamage` using the same base + level scaling pipeline that
+	 * placement uses, and additionally applies the in-battle damage curve so
+	 * the per-run upgrade compounds on top of the persistent meta level.
+	 *
+	 * Returns the new level + post-scale damage so the orchestrator can echo
+	 * them back over `tower-enhanced`. Refuses past `MAX_IN_BATTLE_LEVEL` and
+	 * for unknown tiles — gold check lives in the orchestrator so this method
+	 * stays oblivious to the economy layer.
+	 */
+	enhanceTower(
+		gridX: number,
+		gridY: number,
+	):
+		| { success: true; newLevel: number; damage: number }
+		| { success: false; reason: 'tower-not-found' | 'max-level' } {
+		const entry = this.findTowerEntry(gridX, gridY);
+		if (!entry) return { success: false, reason: 'tower-not-found' };
+		const { instance } = entry;
+		const currentLevel = instance.data.level ?? 1;
+		if (currentLevel >= MAX_IN_BATTLE_LEVEL) {
+			return { success: false, reason: 'max-level' };
+		}
+		const newLevel = currentLevel + 1;
+		instance.data.level = newLevel;
+		// In-battle enhance is a flat multiplicative boost on the tower def's
+		// base damage. We deliberately bypass `getEffectiveStats` here so the
+		// meta-level enhancement curve (collection level) and the in-battle
+		// curve don't compound — Phase A always summons towers at level 1, so
+		// effectiveDamage at L1 equals base damage and L2+ equals
+		// base × inBattleDamageMultiplier(level).
+		const damage =
+			instance.def.stats.damage * inBattleDamageMultiplier(newLevel);
+		instance.effectiveDamage = damage;
+		return { success: true, newLevel, damage };
 	}
 
 	moveTower(fromX: number, fromY: number, toX: number, toY: number): boolean {

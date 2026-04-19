@@ -21,10 +21,13 @@ export const UPGRADEABLE_FAMILIES = [
 
 export type UpgradeableFamily = (typeof UPGRADEABLE_FAMILIES)[number];
 
-/** Per-level flat damage bonus. +30% / level, stacks additively. Tuned so
- *  a fully upgraded family (Lv.10) multiplies damage by ×4.0, enough to
- *  carry endgame boss DPS together with the relaxed phase-2 nerf. */
-export const FAMILY_UPGRADE_DAMAGE_PER_LEVEL = 0.3;
+/** Per-level flat damage bonus. +75% / level, stacks additively. Aggressive
+ *  curve so each tap feels impactful:
+ *    Lv.1  ×1.75   Lv.3  ×3.25   Lv.5  ×4.75
+ *    Lv.7  ×6.25   Lv.10 ×8.5
+ *  Trades granularity for punchiness — early upgrades now carry mid-wave
+ *  bosses on their own, which matches the "쎄게 올려라" tuning goal. */
+export const FAMILY_UPGRADE_DAMAGE_PER_LEVEL = 0.75;
 
 /** Base energy cost for the first family upgrade (level 0 → 1). */
 export const BASE_FAMILY_UPGRADE_COST = 30;

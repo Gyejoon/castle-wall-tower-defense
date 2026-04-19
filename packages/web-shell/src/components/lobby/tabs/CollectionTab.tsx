@@ -22,6 +22,7 @@ export function CollectionTab() {
 	const [showGacha, setShowGacha] = useState(false);
 	const [showDeckEdit, setShowDeckEdit] = useState(false);
 	const selectedDeck = useGameStore((s) => s.selectedDeck);
+	const enterMetaForge = useGameStore((s) => s.enterMetaForge);
 	const collection = useMetaStore((s) => s.collection);
 	const ownedIds = useMemo(
 		() => new Set(collection.map((t) => t.defId)),
@@ -45,6 +46,45 @@ export function CollectionTab() {
 			/>
 
 			<div className="relative z-[1] flex flex-1 flex-col gap-3 overflow-auto p-3">
+				{/* 메타 강화 엔트리 — 전쟁탁자 탭의 첫 액션 */}
+				<button
+					type="button"
+					onClick={enterMetaForge}
+					aria-label="메타 강화 페이지 열기"
+					className="relative flex items-center gap-3 px-3 py-3 text-left border-2 transition-[transform,box-shadow] duration-100 active:translate-y-[2px]"
+					style={{
+						background: 'var(--color-panel)',
+						borderColor: 'var(--color-accent)',
+						boxShadow:
+							'3px 3px 0px var(--color-accent), inset 0 1px 0 rgba(200,160,74,0.2)',
+					}}
+				>
+					<span
+						className="flex-shrink-0 w-10 h-10 flex items-center justify-center border-2"
+						style={{
+							background: 'rgba(200,160,74,0.12)',
+							borderColor: 'var(--color-accent)',
+							color: 'var(--color-gold)',
+							fontSize: 20,
+						}}
+						aria-hidden="true"
+					>
+						⚒
+					</span>
+					<div className="flex-1 min-w-0">
+						<div className="font-pixel text-sm text-accent">메타 강화</div>
+						<div className="font-pixel text-[10px] text-text-secondary mt-0.5">
+							글로벌 공격력 · 패밀리 퍽 영구 강화
+						</div>
+					</div>
+					<span
+						className="flex-shrink-0 font-pixel text-base text-accent"
+						aria-hidden="true"
+					>
+						›
+					</span>
+				</button>
+
 				{/* 출전 덱 */}
 				<div>
 					<div className="flex items-center justify-between mb-2">

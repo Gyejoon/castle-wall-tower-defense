@@ -33,12 +33,13 @@ describe('LobbyPage', () => {
 
 		// Phase A redesign ("Option C · cinematic keyart"):
 		// hero title, PHASE A label, NEXT UP card copy, and 전투 시작 CTA.
+		// 메타 강화 moved to the 전쟁탁자 tab header, so it's NOT on home.
 		expect(view.getByText('Grid Line Defense')).toBeTruthy();
 		expect(view.getByText('Phase A')).toBeTruthy();
 		expect(view.getByText('NEXT UP')).toBeTruthy();
 		expect(view.getByText('랜덤 합성 타워 디펜스')).toBeTruthy();
 		expect(view.getByRole('button', { name: '전투 시작' })).toBeTruthy();
-		expect(view.getByText('메타 강화 ›')).toBeTruthy();
+		expect(view.queryByText('메타 강화 ›')).toBeNull();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 	});
 
@@ -70,9 +71,16 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().runStatus).toBe('building');
 	});
 
-	it('enters MetaForge on 메타 강화 link click', () => {
+	it('enters MetaForge from the 전쟁탁자 tab header button', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('메타 강화 ›'));
+		const tabs = view.getAllByRole('tab');
+		const collectionTab = tabs[0]; // 전쟁탁자
+		if (!collectionTab) throw new Error('expected collection tab');
+		fireEvent.click(collectionTab);
+
+		fireEvent.click(
+			view.getByRole('button', { name: '메타 강화 페이지 열기' }),
+		);
 
 		expect(useGameStore.getState().runStatus).toBe('metaForge');
 	});

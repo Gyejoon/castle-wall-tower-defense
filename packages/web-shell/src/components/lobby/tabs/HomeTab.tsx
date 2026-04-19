@@ -12,7 +12,9 @@ import { useGameStore } from '../../../stores/gameStore';
  *     torches, fog) — purely decorative, aria-hidden
  *   - NEXT UP CTA card floating over the keyart with a pulsing 전투 시작
  *     button
- *   - a single "메타 강화 ›" link in the mini-row.
+ *
+ * 메타 강화 entry moved to the 전쟁탁자 (CollectionTab) header so this tab
+ * stays focused on a single CTA.
  *
  * Top chrome (avatar / level / resources) is rendered by ProfileBar
  * above this tab; BottomTabBar renders below. We only own the tab panel.
@@ -340,7 +342,6 @@ function Star({ filled }: { filled: boolean }) {
 
 export function HomeTab() {
 	const startPhaseA = useGameStore((s) => s.startPhaseA);
-	const enterMetaForge = useGameStore((s) => s.enterMetaForge);
 
 	return (
 		<div
@@ -438,22 +439,6 @@ export function HomeTab() {
 								<span className="inline-flex items-center gap-[6px]">
 									<span aria-hidden="true">⚔</span>
 									전투 시작
-								</span>
-							</button>
-						</div>
-
-						{/* Mini row */}
-						<div
-							className="mt-[12px] pt-[10px] flex items-center gap-[8px]"
-							style={{ borderTop: '1px solid var(--color-border)' }}
-						>
-							<button
-								type="button"
-								onClick={enterMetaForge}
-								className="flex items-center gap-[6px] bg-transparent border-0 p-0 cursor-pointer"
-							>
-								<span className="font-pixel text-[11px] text-accent">
-									메타 강화 ›
 								</span>
 							</button>
 						</div>

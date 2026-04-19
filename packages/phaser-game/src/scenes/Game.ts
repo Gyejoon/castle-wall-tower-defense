@@ -319,6 +319,7 @@ export class GameScene extends Phaser.Scene {
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
 		this.renderObstacles();
+		this.renderAmbientDecorations();
 
 		this.castleWall = new CastleWallSystem(
 			this,
@@ -817,6 +818,33 @@ export class GameScene extends Phaser.Scene {
 			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
 			sprite.setOrigin(0.5, 0.7);
 			sprite.setDepth(3 + pos.x + pos.y);
+		});
+	}
+
+	/**
+	 * Render ambient decoration sprites (trees/bushes/rocks) from
+	 * `map.decorations`. Purely visual — zero pathfinding / placement impact.
+	 * Decorations are usually placed just off the playfield (fractional grid
+	 * coordinates like -1.2 / 9.3) so they read as background scenery.
+	 */
+	private renderAmbientDecorations(): void {
+		const decorations = this.currentMap.decorations;
+		if (!decorations || decorations.length === 0) return;
+		const tile = this.playerGrid.orthoTile;
+		// Ambient props stay on the low ground (no PLATFORM_LIFT) so they
+		// match the dirt base layer visually.
+		decorations.forEach((deco) => {
+			const variant = deco.variant ?? 1;
+			const key = `tiny-swords-${deco.kind}-${variant}`;
+			if (!this.textures.exists(key)) return;
+			const world = this.playerGrid.gridToWorld(deco.x, deco.y);
+			const sprite = this.add.sprite(world.x, world.y, key, 0);
+			const scale = deco.kind === 'tree' ? 1.1 : 0.85;
+			sprite.setDisplaySize(tile * scale, tile * scale);
+			sprite.setOrigin(0.5, 0.72);
+			sprite.setAlpha(0.85);
+			// Decorations never overlap gameplay cells, so a flat depth is fine.
+			sprite.setDepth(2.5);
 		});
 	}
 

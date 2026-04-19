@@ -185,6 +185,36 @@ const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
 	obstacles: PHASE_A_LONG_OBSTACLES,
 });
 
+// Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional
+// allowed) so they read as background scenery and never compete with tower
+// placement tiles or block the U-turn path. Pure visual layer — no
+// pathfinding / buildable impact.
+const PHASE_A_LONG_DECORATIONS: MapLayout['decorations'] = [
+	// Left-edge tree line — clustered toward top + mid + bottom
+	{ x: -1.2, y: 0.5, kind: 'tree', variant: 1 },
+	{ x: -1.5, y: 3.5, kind: 'tree', variant: 2 },
+	{ x: -1.1, y: 7.2, kind: 'tree', variant: 3 },
+	{ x: -1.4, y: 11.1, kind: 'tree', variant: 4 },
+	// Right-edge tree line
+	{ x: 9.3, y: 2.3, kind: 'tree', variant: 2 },
+	{ x: 9.5, y: 6.8, kind: 'tree', variant: 3 },
+	{ x: 9.2, y: 10.9, kind: 'tree', variant: 1 },
+	{ x: 9.4, y: 15.2, kind: 'tree', variant: 4 },
+	// Corner bushes (just outside the four corners)
+	{ x: -0.7, y: -0.8, kind: 'bush', variant: 1 },
+	{ x: 9.1, y: -0.7, kind: 'bush', variant: 2 },
+	{ x: -0.6, y: 17.8, kind: 'bush', variant: 3 },
+	{ x: 9.0, y: 17.9, kind: 'bush', variant: 4 },
+	// Mid-edge bushes for rhythm
+	{ x: -0.8, y: 5.5, kind: 'bush', variant: 2 },
+	{ x: 9.1, y: 13.6, kind: 'bush', variant: 1 },
+	// Scattered small rocks along the edges
+	{ x: -1.0, y: 9.3, kind: 'rock', variant: 3 },
+	{ x: 9.2, y: 4.1, kind: 'rock', variant: 4 },
+	{ x: -0.9, y: 13.8, kind: 'rock', variant: 3 },
+	{ x: 9.1, y: 8.5, kind: 'rock', variant: 4 },
+];
+
 export const PHASE_A_MAP_ID = 'phase_a_long' as const;
 
 export const PHASE_A_LONG_MAP: MapLayout = {
@@ -205,6 +235,7 @@ export const PHASE_A_LONG_MAP: MapLayout = {
 	recommendedPower: 55,
 	obstacles: PHASE_A_LONG_OBSTACLES,
 	castleWallTiles: [{ x: 4, y: 0 }],
+	decorations: PHASE_A_LONG_DECORATIONS,
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {

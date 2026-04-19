@@ -32,4 +32,17 @@ export interface MapLayout {
 	 * `[exitPoint]`; kept as an array so future maps can widen the gate.
 	 */
 	castleWallTiles?: Position[];
+	/**
+	 * Ambient decoration sprites rendered on top of terrain for visual
+	 * richness. Purely cosmetic — they do NOT affect pathfinding, placement,
+	 * or obstacle logic. Coordinates are grid units and may be fractional or
+	 * outside the playfield (decorations placed just off-grid read as
+	 * "background scenery"). Added in Phase A map-decoration-boost.
+	 */
+	decorations?: Array<{
+		x: number;
+		y: number;
+		kind: 'tree' | 'bush' | 'rock';
+		variant?: 1 | 2 | 3 | 4;
+	}>;
 }

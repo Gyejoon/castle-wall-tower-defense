@@ -280,9 +280,9 @@ function MenuButton({ onClick }: MenuButtonProps) {
 function mergeFailLabel(reason: string): string {
 	switch (reason) {
 		case 'same-instance':
-			return '같은 타워';
+			return '같은 타워 선택됨';
 		case 'incompatible-pair':
-			return '합성 불가 조합';
+			return '다른 계열·단계 필요';
 		case 'max-tier':
 			return '최고 티어';
 		case 'invalid-tile':

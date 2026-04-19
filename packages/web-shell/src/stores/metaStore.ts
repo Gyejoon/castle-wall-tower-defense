@@ -1,4 +1,4 @@
-import { calcCombatPower, createDefaultSave } from '@gld/shared';
+import { createDefaultSave } from '@gld/shared';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { createCollectionSlice } from './meta/collectionSlice';
@@ -38,11 +38,6 @@ export const useMetaStore = create<MetaState>()(
 					try {
 						localStorage.removeItem('tutorial_completed');
 					} catch {}
-
-					save.profile.combatPower = calcCombatPower(
-						save.collection,
-						save.selectedDeck,
-					);
 
 					set({
 						version: save.version,

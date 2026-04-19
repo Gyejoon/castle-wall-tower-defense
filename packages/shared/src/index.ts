@@ -162,4 +162,3 @@ export type {
 	UnitStats,
 	UnitType,
 } from './types/unit';
-export { calcCombatPower, calcTowerPower } from './utils/combatPower';

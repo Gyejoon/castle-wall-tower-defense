@@ -70,7 +70,6 @@ export function createDefaultSave(): SaveData {
 			losses: 0,
 			winStreak: 0,
 			bestWinStreak: 0,
-			combatPower: 0,
 		},
 		collection: DEFAULT_STARTER_IDS.map<OwnedTower>((defId) => ({
 			defId,

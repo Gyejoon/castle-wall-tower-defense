@@ -21,7 +21,6 @@ export interface ProfileData {
 	losses: number;
 	winStreak: number;
 	bestWinStreak: number;
-	combatPower: number;
 }
 
 export interface ProgressData {

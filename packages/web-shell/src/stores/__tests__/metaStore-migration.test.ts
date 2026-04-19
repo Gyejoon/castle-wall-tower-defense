@@ -132,7 +132,6 @@ describe('parseSave end-to-end — v7 save upgrades to current', () => {
 				losses: 2,
 				winStreak: 2,
 				bestWinStreak: 3,
-				combatPower: 500,
 			},
 			collection: [
 				{

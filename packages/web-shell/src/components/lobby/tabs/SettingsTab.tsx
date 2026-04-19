@@ -212,7 +212,6 @@ function DevToolsSection() {
 			losses: 0,
 			winStreak: 30,
 			bestWinStreak: 30,
-			combatPower: 9999,
 		};
 		save.collection = ALL_TOWERS.map<OwnedTower>((t) => ({
 			defId: t.id,

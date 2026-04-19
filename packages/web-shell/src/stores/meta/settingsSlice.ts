@@ -1,4 +1,3 @@
-import { calcCombatPower } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -9,12 +8,7 @@ export const createSettingsSlice: SliceCreator<
 	>
 > = (set, get) => ({
 	setSelectedDeck: (deck) => {
-		const s = get();
-		const cp = calcCombatPower(s.collection, deck);
-		set({
-			selectedDeck: deck,
-			profile: { ...s.profile, combatPower: cp },
-		});
+		set({ selectedDeck: deck });
 		debouncedSave(get());
 	},
 

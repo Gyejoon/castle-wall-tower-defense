@@ -1,9 +1,4 @@
-import {
-	calcCombatPower,
-	enhancementCost,
-	getTowerById,
-	MAX_TOWER_LEVEL,
-} from '@gld/shared';
+import { enhancementCost, getTowerById, MAX_TOWER_LEVEL } from '@gld/shared';
 import { debouncedSave } from './persistence';
 import type { MetaActions, SliceCreator } from './types';
 
@@ -29,9 +24,8 @@ export const createCollectionSlice: SliceCreator<
 
 		const newCollection = [...s.collection];
 		newCollection[idx] = { ...tower, level: tower.level + 1 };
-		const cp = calcCombatPower(newCollection, s.selectedDeck);
 		set({
-			profile: { ...s.profile, gold: s.profile.gold - cost, combatPower: cp },
+			profile: { ...s.profile, gold: s.profile.gold - cost },
 			collection: newCollection,
 		});
 		debouncedSave(get());

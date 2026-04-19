@@ -141,7 +141,6 @@ export function sanitizeSave(save: SaveData): SaveData {
 		...save,
 		profile: {
 			...profile,
-			combatPower: profile.combatPower ?? dpr.combatPower,
 		},
 		collection: Array.isArray(save.collection)
 			? save.collection

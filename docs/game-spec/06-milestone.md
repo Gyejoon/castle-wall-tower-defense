@@ -1,10 +1,10 @@
 # MileStone
 
-> **Last Updated:** 2026-04-14 (v2 — Phase A 피벗 트랙 추가)
-> **Source:** Obsidian `ai/product/planning/일반모드 게임 planning.md` + Phase A Core Loop Pivot plan (PR #170)
+> **Last Updated:** 2026-04-20 (v3 — Phase A 단독 모드 승격, 시나리오 트랙 archived)
+> **Source:** Phase A sole-mode plan `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`
 > 스프린트 완료 또는 계획 변경 시 이 문서를 업데이트한다.
 
-상태 태그: ⬜ 예정 / 🔄 진행 중 / ✅ 완료 / ❌ 보류
+상태 태그: ⬜ 예정 / 🔄 진행 중 / ✅ 완료 / ❌ 보류 / 📦 archived (구현됐지만 Phase A 전환으로 비활성화)
 
 ---
 
@@ -12,71 +12,74 @@
 
 ### Planning (현재 단계)
 
-**현재 위치: Phase A Core + Upgrade System 완료 🔄 본인 폰 플레이 검증 대기**
+**현재 위치: Phase A 단독 모드 전면 승격 ✅ 구현 완료, 5분 플레이 Go/No-Go 검증 대기**
 
-2026-04-13에 4타워 덱 시스템에서 **픽셀 중세 랜덤 타워 합성 디펜스**로 코어 루프 피벗 결정. Phase A Core/Map/Integration/UI/VFX/Energy gating 까지 PR #170에서 머지 완료. 5분 1세션 후 "한 판 더" Go/No-Go 플레이 검증이 남아 있으며, 그 결과에 따라 Phase B 이후 경로가 결정된다.
+2026-04-17부터 Phase A를 **게임의 유일한 모드**로 승격. 시나리오 모드(W1~W3), 덱 편성, 월드맵, 임무/업적을 완전 제거하고 타워를 grade → family+tier 모델로 재설계. 인게임 가챠, 로그라이크 6 카드, 메타 루프 shell, BM 스텁(AdService + 이어서 하기), 9×18×48px 맵, HUD 전면 재설계, CC 가드레일까지 R1으로 포함.
 
-#### Phase A 피벗 트랙 (v2 — 2026-04-14~)
+#### Phase A 단독 모드 트랙 (v3 — 2026-04-17~)
 
 | Phase | 이름 | 상태 | 비고 |
 |-------|------|------|------|
-| R0 | 스펙 v2 작성 (01-GDD / 06-milestone / 08-arch) | ✅ | 2026-04-14, 본 문서 포함 |
-| R1 | Phase A Core (SummonPool / RandomSummon / Merge / Orchestrator) | ✅ | PR #170, 22 TDD tests |
-| R1 | Phase A Map (`phase_a_long` 8×24 U-turn + `phase_a_s1` 50 wave endless) | ✅ | PR #170, 17 vitest assertions |
-| R1 | Phase A Integration (TowerSystem 확장 + GameScene wiring) | ✅ | PR #170 |
-| R1 | Phase A UI (`PhaseAHud` + `GamePage` 라우팅 + 로비 `[LAB]` 버튼) | ✅ | PR #170 |
-| R1 | Phase A VFX (scale 펀치 + 골드 tint flash) | ✅ | PR #170, "도파민의 80%" 기본기만 |
-| R1 | Phase A 에너지 게이팅 (`PHASE_A_SUMMON_COST=8` + `summon-failed` event) | ✅ | PR #170 |
-| R1 | 로그라이트 강화 선택 (10 웨이브마다 6종 카드 풀에서 3장 선택) | ✅ | Phase A Upgrade System |
-| R1 | 본인 폰 플레이 검증 ("한 판 더" Go/No-Go) | ⬜ | **핵심 게이트** |
-| R2 | 코어 굳히기 (타워 19종 전부 확장 + 액티브 스킬 1~2 + 맵 3~5) | ⬜ | R1 통과 시 |
-| R2 | 기믹 1~2개 + 대응 수단 (#154) | ⬜ | R1 통과 시 |
-| R2 | Random Dice 풍 슬롯머신 애니메이션 + 첫 선택 하이라이트 VFX 2.0 | ⬜ | R1 통과 시 |
-| R2 | `tilemap-phase-a-long` 에셋 생성 (현재 forest 폴백) | ⬜ | R1 통과 시 |
-| R3 | 메타 진행 재설계 (합성이 흡수한 후 남은 분량만) | ⬜ | 소프트 론치 전 |
-| R3 | 사운드 (#120) + FTUE 튜토리얼 (#121) | ⬜ | 소프트 론치 전 |
-| R4 | 수익화 재진입 (Phase 5 내용 일부 재활용) | ⬜ | 소프트 론치 후 |
-| R4 | 비동기 PVP seam (leaderboard / ghost replay / 주간 랭킹) | ⬜ | 실시간 PVP는 폐기 확정 |
+| R0 | 스펙 v3 작성 (01-GDD / 02-balance / 06-milestone / 07-asset-definition) | ✅ | 2026-04-20 본 문서 포함 |
+| R1 | 시나리오 모드 제거 (월드/스테이지/덱/임무/업적/기믹) | ✅ | Phase 6 — WorldMapPage, StageSelectPage, DeckDock, MissionsTab 삭제 |
+| R1 | 타워 family/tier 모델 (19종) + grade purge + plasma/dragon_nest 제거 | ✅ | Phase 1 — MergeSystem 재작성, Save v6→v7 마이그레이션 |
+| R1 | MergeSystem v3 (same-family T1~T3, hybrid T4 pair, ultimate) | ✅ | Phase 2 |
+| R1 | 에너지 v3 (kill/boss/fast-clear, ENERGY_MAX=200) + GameEventMap 확장 | ✅ | Phase 3 + 4.0 |
+| R1 | 로그라이크 6 카드 + 보스 웨이브 트리거 + 광고 리롤 | ✅ | Phase 4 — dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up |
+| R1 | 인게임 가챠 (T2/T3/T4) + 소환 큐 + cancel-no-reroll | ✅ | Phase 5 |
+| R1 | 9×18×48px 맵 + 5 obstacles + dirt/grass platform 렌더링 + 톤다운 | ✅ | Phase 7 + PR #173 포팅 (Save v7→v8) |
+| R1 | HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal + @theme 토큰) | ✅ | Phase 8 + UX 개선 (corner toast, 타이틀 제거 등) |
+| R1 | **메타 루프 shell** — metaProgressStore (Zustand persist), TowerSystem.setGlobalModifiers, MetaForgePage | ✅ | Phase 9 — 사용자 결정으로 R1 포함 |
+| R1 | **BM 스텁** — AdService interface + MockAdService + "이어서 하기" 1회 한정 + continue-run 파이프라인 | ✅ | Phase 10 — 사용자 결정으로 R1 포함 |
+| R1 | hybrid/ultimate 플레이스홀더 에셋 + aura VFX + 합성 reveal punch | ✅ | Phase 11 |
+| R1 | CC 가드레일 (ccResistance, MIN_MOVE_SPEED=0.15, 2s stun immunity) | ✅ | Phase 11 |
+| R1 | Cinematic keyart 로비 (성 실루엣·달·횃불) + NEXT UP CTA 카드 | ✅ | PR 디자인 프로토타입 "Option C" 포팅 |
+| R1 | 인게임 타워 강화 (GoldSystem + 골드 소비 Lv+1, L10 cap) | ✅ | Post-ship fix — 사용자 피드백 #4 |
+| R1 | 공성 projectile VFX 회귀 fix + 타워 idle tween 복원 + 취소 꼼수 방지 | ✅ | Post-ship fix |
+| R1 | **모바일 5분 플레이 Go/No-Go 검증** | ⬜ | **핵심 게이트** |
+| R2 | 타워 인게임 업그레이드 UX 확장 (골드 경제 밸런싱) | ⬜ | R1 통과 시 |
+| R2 | 메타 퍽 선택 UX 구현 (퍽 카드 drop 조건 + 선택 UI) | ⬜ | R1 통과 시 |
+| R2 | 맵 2~3 종 추가 (각각 다른 obstacle 패턴 + path shape) | ⬜ | R1 통과 시 |
+| R2 | 사운드 + FTUE 튜토리얼 | ⬜ | 소프트 론치 전 |
+| R3 | 실제 광고 SDK 연동 (MockAdService → 실 프로바이더) | ⬜ | 소프트 론치 후 |
+| R3 | 다이아 경제 재진입 (시나리오 BM 요소 일부 재활용) | ⬜ | 소프트 론치 후 |
+| R3 | 비동기 PVP seam (leaderboard / ghost replay / 주간 랭킹) | ⬜ | 실시간 PVP는 폐기 확정 |
 
-**R1 No-Go 시 (본인 폰 5분 후 "한 판 더" 안 나옴)**: 또 한 번의 피벗이 아니라 **장르 자체 재검토**. 4번 피벗한 프로젝트라 "그 다음 피벗" 위험이 매우 크므로, 그 시점에는 Random TD 장르 자체가 본인 게임에 안 맞는다는 결정을 해야 한다.
+**R1 No-Go 시 (모바일 5분 후 "한 판 더" 안 나옴)**: 장르 자체 재검토. Random TD 장르가 본인 게임에 안 맞는다는 결정을 해야 할 시점.
 
-#### 레거시 트랙 (v1 — Phase A 피벗 이전, 비파괴 유지)
+#### 시나리오 트랙 📦 archived (Phase 6에서 제거됨)
 
-| Phase | 이름 | 상태 | Phase A에서의 운명 |
-|-------|------|------|------|
-| Phase 0 | 기반 교정 (에너지·속성·웨이브 재정의) | ✅ | 에너지 경제 + 웨이브 타이머는 Phase A에도 공유 |
-| Phase 1 | 핵심 전투 완성 (덱·보스·결과 화면) | ✅ | 덱 시스템만 Phase A에서 skip, 보스·결과 화면은 공유 |
-| Phase 2 | 메타 성장 루프 (저장·강화·승급·컬렉션) | ✅ | Phase A는 메타 OFF, Phase C에서 재설계 예정 |
-| Phase 3 | 콘텐츠 확장 (멀티 스테이지) | ✅ | W1~W3 24 스테이지 레거시로 유지 |
-| Phase 4 | 참여 시스템 (튜토리얼·가챠·미션) | ✅ | Phase A는 튜토리얼 없이 시작, 가챠/미션은 Phase C 재설계 대상 |
-| Phase 5 | 수익화 & 운영 | ❌ (Phase A 피벗으로 보류) | R4에서 재진입 |
+Phase A 단독 모드 승격에 따라 아래 시스템은 **전부 제거**됨. 참조용 기록만 남김.
+
+| Phase | 이름 | v3 운명 |
+|-------|------|---------|
+| Phase 0 | 기반 교정 (에너지·속성·웨이브) | 📦 에너지 경제만 Phase A v3로 이전, 속성 상성 일부 유지 |
+| Phase 1 | 핵심 전투 완성 (덱·보스·결과) | 📦 덱 제거, 보스·GameOverScreen은 Phase A v3로 재설계 |
+| Phase 2 | 메타 성장 루프 (저장·강화·승급·컬렉션) | 📦 grade 승급 제거, 컬렉션은 전쟁탁자로 축소. Phase 9 meta shell이 일부 대체 |
+| Phase 3 | 콘텐츠 확장 (W1~W3 24 스테이지) | 📦 전부 제거 — 스테이지/월드맵 삭제 |
+| Phase 4 | 참여 시스템 (튜토리얼·가챠·미션) | 📦 튜토리얼·미션 제거, 다이아 가챠는 Phase A 인게임 가챠와 별개로 보류 |
+| Phase 5 | 수익화 & 운영 | 📦 Phase A BM 스텁(Phase 10)이 일부 대체. 다이아/오퍼는 R3로 이연 |
 
 ---
 
-### 단기 (1~4주, 2026-04~05)
+### 단기 (1~4주, 2026-04~05) — v3 Phase A 컨텍스트
 
-#### MVP 개선 (P0/P1 버그 & 게임플레이)
+#### 5분 Go/No-Go Gate 이후 할 일 (R1 말단)
 
 | # | 항목 | 우선순위 | 상태 |
 |---|------|---------|------|
-| 0 | [BUG] wavesCleared 클리어 기준 수정 (`Game.ts:491`) | P0 | ⬜ |
-| 1 | 시작 에너지 0 → 10 (`energy.ts INITIAL_ENERGY`) | P1 | ⬜ |
-| 2 | 몬스터 처치 에너지 (일반 +2, 보스 +5) | P1 | ⬜ |
-| 3 | 보스 HP바 위치 수정 (캔버스 밖 이슈) | P1 | ⬜ |
-| 4 | 2배속 토글 버튼 (HUD + scaledDelta) | P2 | ⬜ |
-| 5 | 게임 종료 화면 개선 (배너 + 스탯그리드 + bounce 애니) | P2 | ⬜ |
-| 6 | 사냥터별 골드/XP 차등 (초록 1× / 빨강 2× / 파랑 3×) | P2 | ⬜ |
-| 7 | 맵 난이도 전체 5배 (`WaveSystem difficultyHpMult=5`) | P2 | ⬜ |
-| 8 | 스테이지 선택 UI (월드맵→상세→게임 시작 3단계 흐름) | P1 | ✅ |
-| 9 | 이모지→픽셀 아이콘 전면 교체 (energy/sword/arrow/edit) | P2 | ✅ |
+| 1 | 모바일 실기기 5분 Go/No-Go 플레이 (핵심 게이트) | P0 | ⬜ |
+| 2 | R1 수량 밸런싱 (ENERGY_MAX=200 + 킬 에너지 조합 실측) | P1 | ⬜ |
+| 3 | 인게임 강화 골드 경제 밸런스 (bounty vs cost 곡선) | P1 | ⬜ |
+| 4 | hybrid/ultimate 전용 아트 교체 (현재 T4 placeholder) | P2 | ⬜ |
+| 5 | SFX 연결 (소환·합성·가챠 성공/실패·강화·보스킬·게임오버) | P2 | ⬜ |
 
-#### Phase 5 준비
+#### 📦 Archived (시나리오 트랙에 있었으나 Phase 6에서 제거)
 
-| 항목 | 상태 |
-|------|------|
-| 다이아몬드 화폐 구현 (획득/소비 경로) | ⬜ |
-| 오퍼 카탈로그 (starter_gold_pack, revive_bundle) | ⬜ |
-| 광고 보상 연동 (전투 후 골드 2배) | ⬜ |
+- ~~시작 에너지 0 → 10~~ (v3: `ENERGY_INITIAL = 40`)
+- ~~스테이지 선택 UI (월드맵→상세→게임)~~ (Phase 6에서 삭제)
+- ~~사냥터별 골드/XP 차등~~ (Phase A 단일 맵이라 N/A)
+- ~~다이아몬드 경제 / 오퍼 카탈로그~~ (Phase 5는 R3로 이연)
 
 ---
 

@@ -1,8 +1,10 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-10  
-> **Source:** Obsidian `ai/product/specs/게임 에셋 제작 specs.md`  
+> **Last Updated:** 2026-04-20 (v3 — Phase A 단독 모드)
+> **Source:** Phase A sole-mode plan `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
+>
+> **v3 변경 요약**: plasma, dragon_nest 타워 **완전 제거** (family/tier 모델 불일치). hybrid_ab / hybrid_cd / ultimate 3종 신규 placeholder 상태 명시. PR #173 포팅으로 Tilemap_dirt_seamless / grass_seamless / path seamless 타일셋 도입. Cinematic keyart 로비 에셋 (성 실루엣 CSS-only, 에셋 없음).
 
 ---
 
@@ -84,7 +86,30 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ---
 
-## 3. 타워 에셋 (18종)
+## 3. 타워 에셋 (19종 — v3)
+
+### v3 타워 인벤토리
+
+**완성된 에셋 (16종, 기존 제작분 재활용)**
+- archer family: archer, wind_spire, flame_tower, arcane_spire
+- siege family: nova_cannon, fortress, earth_golem, celestial
+- frost family: emp, stasis_field, disruptor, world_tree
+- stun family: shield, twin_archer, holy_shrine, divine_throne
+
+**Placeholder (3종 — 전용 아트 미제작)**
+| id | tier | 임시 스프라이트 alias | VFX 차별화 |
+|----|------|---------------------|----------|
+| `hybrid_ab` | 5 | `arcane_spire.png` alias | 금색 aura 파티클 (`tint: 0xffcc33`) |
+| `hybrid_cd` | 5 | `world_tree.png` alias | 보라 aura 파티클 (`tint: 0x9966ff`) |
+| `ultimate` | 6 | `divine_throne.png` alias | 무지개-gold aura + 강한 파티클 버스트 |
+
+합성 reveal 시 추가 연출: camera flash (300ms, white) + scale punch (0.8→1.0, Back.easeOut) + 파티클 burst (tier 5: 30 particles, tier 6: 2개 ring + 더 큰 burst).
+
+**제거된 타워 (Phase 1 마이그레이션)**
+- ~~plasma~~ (family/tier 모델 불일치, siege T1 자리는 nova_cannon이 차지)
+- ~~dragon_nest~~ (FusionTowerType enum 제거)
+
+**Save migration v6→v7**: 기존 소유 `plasma` / `dragon_nest` 엔트리는 save에서 purge.
 
 ### 타워 파일 구성 (1개당)
 
@@ -93,13 +118,17 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | `tower-{id}.png` | 128×160 | 1 (static) | 배치 상태 (런타임 `setDisplaySize(64,80)`으로 표시) |
 | `tower-{id}-fire.png` | 512×80 | 8 (spritesheet) | 공격 애니메이션 (충전→발사→비행→잔상→복귀) |
 
+**Note**: v2의 grade variant (rare/unique/epic PNG) 전부 placeholder fallback으로 처리. v3는 tier가 별개 타워 id이므로 grade 스프라이트 세트 불필요.
+
 ### 발사체 스타일
 
 | 타입 | 시각 | 사운드 |
 |------|------|--------|
 | arrow (archer, twin_archer) | 포물선 화살 + trail + 임팩트 플래시 | 휘이익 + 탁 |
 | beam (emp, wind_spire 등) | 직선 빔 + 임팩트 플래시 | sawtooth/square 주파수 스윕 |
-| arc (plasma, nova_cannon, earth_golem 등) | 포물선 돌 발사체 + trail dots | 3단계: 퍽(brown noise)→휘이(white bandpass)→쿵(brown noise) |
+| arc (siege family: nova_cannon, fortress, earth_golem, celestial) | 포물선 돌 발사체 + trail dots | 3단계: 퍽(brown noise)→휘이(white bandpass)→쿵(brown noise) |
+
+**v3 회귀 수정**: Phase 1 재작성에서 siege special string이 `'splash'` → `'splash_<radius>'` 포맷으로 바뀌었으나 `hasSplash()` 헬퍼가 정확히 매칭하지 못해 siege 타워 전체가 beam 스타일로 폴백됐던 버그를 post-ship에서 수정 (`startsWith('splash_')`). 공성 타워는 반드시 arc 스타일로 돌을 발사한다.
 
 투석기(splash 타워) 팔 스윙 애니메이션: 180° 회전, 8프레임 (로딩→텐셔닝→발사→최대→반동→복귀)
 
@@ -327,3 +356,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-09 | §1 폰트/이미지 로딩 전략 | Galmuri11 woff2 `<link rel="preload">`, Press Start 2P는 HTML `<link rel="stylesheet">`(CSS `@import` 금지), `preloadImages()` 유틸로 UI 이미지 17개 boot 시점 사전 로드 |
 | 2026-04-10 | §1, §2, §5, §6 | 일반 몬스터 4종 에셋 강화: 3-tone+1px 아웃라인, walk 8f + idle 6f + death 6f, 유닛별 실루엣 훅, stealth_drone 추상형→캐릭터형, 공용 unit-death 폐기, §1 spritesheet 규격 idle/death 추가, 보스 §6 후속 이슈 주석 |
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
+| 2026-04-20 | §3, §11 (전반) | **v3 Phase A 단독 모드**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |

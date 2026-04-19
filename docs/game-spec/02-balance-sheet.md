@@ -1,8 +1,10 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-04-12  
-> **Source:** Obsidian `ai/product/specs/게임 밸런스 시트.md`  
-> 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`missions.ts`, `gacha.ts`)에 반영한다.
+> **Last Updated:** 2026-04-20 (v3 — Phase A 단독 모드)
+> **Source:** Phase A sole-mode plan `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`
+> 수치가 변경될 때마다 이 문서를 먼저 업데이트하고, 코드(`energy.ts`, `enhance.ts`, `upgradeCards.ts`, `units.ts` 등)에 반영한다.
+>
+> **v3 변경 요약**: §5 에너지 경제 v3 (kill/boss/fast-clear 보상 재활성, ENERGY_MAX=200). §6 타워 스탯 family/tier 모델로 교체. §7 CC 가드레일 (ccResistance, MIN_MOVE_SPEED=0.15, 2s stun immunity). §14 신설 — 인게임 가챠 (T2/T3/T4). §1~§4 다이아몬드/가챠박스/미션은 시나리오 모드 전용이라 Phase A sole-mode에서는 참조만 남고 비활성.
 
 ---
 
@@ -115,21 +117,48 @@
 
 ---
 
-## 5. 세션 경제
+## 5. 세션 경제 (v3)
 
-### 에너지 시스템
+### 에너지 시스템 v3
 
 > 코드 위치: `packages/shared/src/constants/energy.ts`
 
 | 항목 | 값 | 비고 |
 |------|-----|------|
-| INITIAL_ENERGY | 40 | 게임 시작 시 초기 에너지 |
-| ENERGY_PER_SEC | 1 | 자연 재생 (prep 페이즈 중 정지) |
-| ENERGY_CAP | 100 | 최대 에너지 |
-| ENERGY_PER_WAVE_CLEAR | 5 | 웨이브 클리어 시 보너스 (보스 웨이브 포함 전 웨이브 적용) |
-| 킬 보상 | 없음 | ENERGY_PER_KILL, ENERGY_PER_BOSS_KILL 제거됨 |
+| `ENERGY_INITIAL` | 40 | 게임 시작 시 |
+| `ENERGY_PER_SECOND` | 1 | 자연 재생 (prep/combat 동일) |
+| `ENERGY_MAX` | **200** | 가챠 T4 비용(160) 수용 목적으로 100→200 상향 |
+| `ENERGY_PER_KILL` | **1** | 유닛 처치당 (활성화) |
+| `ENERGY_PER_BOSS_KILL` | **20** | 보스 처치 시 |
+| `ENERGY_PER_BOSS_FAST_CLEAR` | **20** | 보스 스폰 후 30초 이내 처치 시 추가 보너스 |
+| `FAST_CLEAR_THRESHOLD_MS` | 30,000 | fast-clear 기준 |
+| ~~ENERGY_PER_WAVE_CLEAR~~ | 제거됨 | 웨이브 클리어 보너스 비활성 (v3) |
 
-> 에너지 리젠과 웨이브 클리어 보상은 **모든 웨이브(마지막 보스 웨이브 포함)** 에서 동일하게 작동한다. 이전에는 마지막 보스 웨이브에서 리젠+클리어 보상이 비활성화되었으나, 보스전 배치/업그레이드 유연성을 위해 제거됨.
+**v3 변경 이력**:
+- 2026-04-20: 킬/보스킬 에너지 재활성 (+1/kill, +20/보스킬 + 30초 fast-clear 시 +20). ENERGY_MAX 100→200. 웨이브 클리어 보너스 제거.
+
+### 에너지 소프트 캡 [F17]
+
+| 조건 | 재생율 |
+|------|--------|
+| `current < 100` | +1/sec |
+| `current >= 100` | +0.5/sec |
+
+런 후반 에너지 인플레이션 완화. 코드: `EnergySystem.getGeneration()`.
+
+### CC 가드레일 [F16]
+
+> 코드 위치: `packages/shared/src/constants/units.ts`, `packages/phaser-game/src/systems/UnitSystem.ts`
+
+| 항목 | 값 | 적용 |
+|------|-----|------|
+| `ccResistance` | 0 (일반) / 0.5~0.7 (보스) | 유닛 정의별 오버라이드 |
+| `applySlow(duration, strength)` | `effectiveDuration = duration × (1 - ccResistance)` | 슬로우 지속 시간 |
+| `MIN_MOVE_SPEED` | **0.15** | 슬로우 적용 후 최저 이동 속도 하한 (완전 정지 방지) |
+| `applyStun(duration)` | 동일 수식 | 스턴 지속 시간 |
+| `STUN_IMMUNITY_WINDOW_MS` | **2000** | 스턴 해제 후 2초간 재스턴 면역 |
+
+보스 유닛은 CC로 완전 봉쇄되지 않도록 보장. tier 5/6 타워의 강력한 CC가 로그라이크 `effect_amp` 스택 × 가드레일 조합에서도 게임을 깨뜨리지 않도록 설계.
 
 ### 웨이브 타이머
 
@@ -138,25 +167,20 @@
 | MAX_WAVE_DURATION_MS | 30,000 (30초) |
 | 타이머 만료 시 | 잔존 몬스터 유지 + 다음 웨이브 즉시 스폰 |
 | 마지막 웨이브 | 타이머 면제 (보스전 무제한) |
+| `wave-completed.phase === 'boss' && cleared` | 로그라이크 3카드 트리거 |
 
-> 코드 위치: `packages/shared/src/constants/waves.ts`, `packages/phaser-game/src/systems/WaveSystem.ts`
+> 코드 위치: `packages/phaser-game/src/systems/WaveSystem.ts`. Fast-clear 판정 기준은 **보스 첫 스폰 시점** (`bossSpawnMs`)부터 측정 [F18].
 
-### 1판 플레이 기댓값
+### Phase A 1판 기댓값
 
-| 항목 | 획득량 | 비고 |
-|------|-------|------|
-| 골드 (클리어) | ~1000G | 웨이브 보상 + 보스 보너스 |
-| 골드 (실패) | ~400~600G | 웨이브별 가변 |
-| 타워 배치 수 | 15~20회 | 초기 에너지 40 + 자연 재생 기준 |
-
-### 주간 플레이 패턴
-
-| 플레이어 타입 | 하루 판수 | 주간 💎 | 10연차 적립 |
-|------------|--------|--------|---------|
-| 라이트 | 1판 | ~150 💎 | 6주 |
-| 캐주얼 | 2판 | ~300 💎 | 3주 |
-| 미드코어 | 3판 | ~500 💎 | 1.8주 |
-| 코어 | 5판+ | ~600 💎 | 1.5주 |
+| 항목 | 값 | 비고 |
+|------|---|------|
+| 1 wave 킬 | ~30 | 30마리/wave × 1 에너지/kill = +30 |
+| 1 wave 순수 시간 | ~30s | 자연재생 +30 |
+| 1 wave 총 에너지 획득 | ~60 | 30(kill) + 30(time) |
+| 보스 wave 추가 | +20~40 | 보스킬 +20, 30초 내 +20 |
+| 소환 1회 | ⚡20 | 기본 T1 random |
+| 가챠 1회 | ⚡40/80/160 | T2/T3/T4 |
 
 ---
 
@@ -452,9 +476,48 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 
 ---
 
-## 14. 미결 이슈
+## 14. 인게임 가챠 (에너지 기반) — v3 신설
 
-- [ ] `missions.ts` — use_element 추가, 범위 조정 코드 반영
-- [ ] use_element 주간 속성 랜덤 지정 기능 (매주 화/수/번개 중 1개)
-- [ ] 다이아 출석 보상 구현 (Phase 5)
-- [ ] 광고 상자 실제 광고 연동 (Phase 5)
+> 코드 위치: `packages/shared/src/constants/energy.ts` → `INGAME_GACHA`
+>
+> 인게임 가챠는 BM 다이아 박스 가챠(§2)와 **별개 시스템**. 런 내 에너지로 T2/T3/T4 타워를 확률적으로 시도한다.
+
+### 확률표
+
+| targetTier | 비용 (⚡) | 성공률 (base) | 실패 시 폴백 |
+|-----------|---------|-------------|------------|
+| 2 | 40 | 60% | tier 1 (같은 family 보장) |
+| 3 | 80 | 20% | tier 1 |
+| 4 | 160 | 5% | tier 1 |
+
+### `tier_odds_up` 로그라이크 스택 적용
+
+보스 wave 클리어 보상 카드 `tier_odds_up` 선택 시:
+- 스택당 +5%p 성공률 증가
+- **최대 10 스택** (총 +50%p)
+- 최종 성공률 = `min(0.95, baseRate + stackCount × 0.05)` (99% 확정 방지)
+
+### 골드 경제 (v3 신설)
+
+> 코드 위치: `packages/shared/src/constants/enhance.ts`
+
+| 항목 | 값 | 비고 |
+|------|-----|------|
+| 골드 초기값 | 0 | 런 시작 시 |
+| 킬 bounty | 유닛별 | GoldSystem.add(bounty) in Game.ts kill 핸들러 |
+| `BASE_ENHANCE_COST` | 50 | level 1→2 강화 비용 |
+| 성장 계수 | ×1.5/level (5단위 round) | L1→2: 50, L2→3: 75, L3→4: 115, L4→5: 170, L5→6: 255, … |
+| `MAX_IN_BATTLE_LEVEL` | 10 | L10 cap, 버튼 "강화 MAX" |
+| damage scaling | `base × (1 + 0.15 × (level - 1))` | L10에서 ×2.35 |
+
+인게임 강화는 타워 **개별** 레벨 업 (런 한정). 메타 강화 (§10-meta)는 **글로벌** 영구 강화로 별개.
+
+---
+
+## 15. 미결 이슈
+
+- [ ] 메타 퍽 선택 UX 설계 (Phase 12 예정)
+- [ ] 다이아 출석 보상 (시나리오 BM — 현재 비활성)
+- [ ] 광고 상자 실제 SDK 연동 (현재 MockAdService)
+- [ ] Go/No-Go Gate: 모바일 5분 플레이 테스트 실측
+- [ ] 크리 시스템 proper 구현 (현재 `crit_dmg`는 flat 데미지 stub)

@@ -78,12 +78,18 @@ describe('MetaForgePage', () => {
 
 	it('renders the four base-family perk cards, each with 0 perks', () => {
 		const view = render(<MetaForgePage />);
-		expect(view.getByText('archer')).toBeTruthy();
-		expect(view.getByText('siege')).toBeTruthy();
-		expect(view.getByText('frost')).toBeTruthy();
-		expect(view.getByText('stun')).toBeTruthy();
-		const zeros = view.getAllByText('퍽 0개');
-		expect(zeros).toHaveLength(4);
+		// Korean family labels from the redesigned layout
+		expect(view.getByText('궁수')).toBeTruthy();
+		expect(view.getByText('공성')).toBeTruthy();
+		expect(view.getByText('서리')).toBeTruthy();
+		expect(view.getByText('성전')).toBeTruthy();
+		// Each family card shows the count split into {number} + "퍽" label.
+		// There are 4 family tiles, so we expect 4 "퍽" micro-labels.
+		const perkLabels = view.getAllByText('퍽');
+		expect(perkLabels).toHaveLength(4);
+		// Every tile shows "0" count by default
+		const zeros = view.getAllByText('0');
+		expect(zeros.length).toBeGreaterThanOrEqual(4);
 	});
 
 	it('reflects addGlobalAtk updates on re-render (+30% after 0.3)', () => {

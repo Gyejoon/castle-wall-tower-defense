@@ -1,9 +1,13 @@
 import {
 	type AdService,
+	familyDamageMultiplier,
+	familyUpgradeCost,
+	MAX_FAMILY_UPGRADE_LEVEL,
 	PHASE_A_SUMMON_COST,
 	pickRandomUpgrades,
 	type TowerId,
 	UPGRADE_CARDS,
+	type UpgradeableFamily,
 	type UpgradeCard,
 	type UpgradeId,
 } from '@gld/shared';
@@ -113,6 +117,7 @@ export class PhaseAOrchestrator {
 	private cancelledPoolDraw: TowerId | null = null;
 	private destroyed = false;
 	private activeUpgrades: Map<UpgradeId, number> = new Map();
+	private familyUpgradeLevels: Map<UpgradeableFamily, number> = new Map();
 	private energyRegenTimer = 0;
 	private pendingChoices: UpgradeCard[] | null = null;
 	/** Phase 10 Task 10.3 [F11]: number of continues granted for this run.
@@ -143,6 +148,9 @@ export class PhaseAOrchestrator {
 	}): void => {
 		void this.handleContinueRequest(data);
 	};
+	private readonly onFamilyUpgradeRequest = (data: {
+		family: UpgradeableFamily;
+	}): void => this.handleFamilyUpgradeRequest(data.family);
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
@@ -163,6 +171,8 @@ export class PhaseAOrchestrator {
 		EventBus.on('request-upgrade-reroll', this.onRerollRequest);
 		EventBus.off('request-continue-run', this.onContinueRequest);
 		EventBus.on('request-continue-run', this.onContinueRequest);
+		EventBus.off('request-family-upgrade', this.onFamilyUpgradeRequest);
+		EventBus.on('request-family-upgrade', this.onFamilyUpgradeRequest);
 	}
 
 	getSummonPool(): SummonPoolSystem {
@@ -179,6 +189,7 @@ export class PhaseAOrchestrator {
 		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
 		EventBus.off('request-upgrade-reroll', this.onRerollRequest);
 		EventBus.off('request-continue-run', this.onContinueRequest);
+		EventBus.off('request-family-upgrade', this.onFamilyUpgradeRequest);
 	}
 
 	hasPendingSummon(): boolean {
@@ -300,8 +311,76 @@ export class PhaseAOrchestrator {
 
 	resetUpgrades(): void {
 		this.activeUpgrades.clear();
+		this.familyUpgradeLevels.clear();
 		this.energyRegenTimer = 0;
 		this.pendingChoices = null;
+	}
+
+	/** Current family upgrade level (0 = untouched, capped at
+	 *  `MAX_FAMILY_UPGRADE_LEVEL`). */
+	getFamilyUpgradeLevel(family: UpgradeableFamily): number {
+		return this.familyUpgradeLevels.get(family) ?? 0;
+	}
+
+	/** Damage multiplier for a tower whose family is upgraded. Hybrid/ultimate
+	 *  towers pull from both feeder families multiplicatively so investment in
+	 *  either side still pays off on the fused tower. */
+	getFamilyDamageMultiplier(
+		family: 'archer' | 'siege' | 'frost' | 'stun' | 'hybrid' | 'ultimate',
+	): number {
+		switch (family) {
+			case 'archer':
+			case 'siege':
+			case 'frost':
+			case 'stun':
+				return familyDamageMultiplier(this.getFamilyUpgradeLevel(family));
+			case 'hybrid':
+				// hybrid_ab (archer+siege) and hybrid_cd (frost+stun) both exist.
+				// Without a per-instance feeder lookup, apply the best of all four
+				// so neither hybrid feels punished by an unmodeled split.
+				return Math.max(
+					familyDamageMultiplier(this.getFamilyUpgradeLevel('archer')),
+					familyDamageMultiplier(this.getFamilyUpgradeLevel('siege')),
+					familyDamageMultiplier(this.getFamilyUpgradeLevel('frost')),
+					familyDamageMultiplier(this.getFamilyUpgradeLevel('stun')),
+				);
+			case 'ultimate':
+				// ultimate composes all four bases; sum the boosts so the late-
+				// game payoff scales with total investment.
+				return familyDamageMultiplier(
+					this.getFamilyUpgradeLevel('archer') +
+						this.getFamilyUpgradeLevel('siege') +
+						this.getFamilyUpgradeLevel('frost') +
+						this.getFamilyUpgradeLevel('stun'),
+				);
+		}
+	}
+
+	private handleFamilyUpgradeRequest(family: UpgradeableFamily): void {
+		const current = this.getFamilyUpgradeLevel(family);
+		if (current >= MAX_FAMILY_UPGRADE_LEVEL) {
+			EventBus.emit('family-upgrade-failed', {
+				family,
+				reason: 'max-level',
+				cost: 0,
+				have: this.currentEnergy(),
+			});
+			return;
+		}
+		const cost = familyUpgradeCost(current);
+		const energy = this.deps.energySystem;
+		if (energy && !energy.spend(cost)) {
+			EventBus.emit('family-upgrade-failed', {
+				family,
+				reason: 'insufficient-energy',
+				cost,
+				have: this.currentEnergy(),
+			});
+			return;
+		}
+		const newLevel = current + 1;
+		this.familyUpgradeLevels.set(family, newLevel);
+		EventBus.emit('family-upgraded', { family, level: newLevel, cost });
 	}
 
 	/**

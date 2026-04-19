@@ -297,6 +297,9 @@ export class GameScene extends Phaser.Scene {
 			this.playerTowers.setModifierFn((id) =>
 				this.phaseAOrchestrator!.getModifier(id),
 			);
+			this.playerTowers.setFamilyDamageFn((family) =>
+				this.phaseAOrchestrator!.getFamilyDamageMultiplier(family),
+			);
 			// Phase A: 1 unit per second (1000ms) instead of default 300ms
 			this.playerUnits.setSpawnInterval(1000);
 		}

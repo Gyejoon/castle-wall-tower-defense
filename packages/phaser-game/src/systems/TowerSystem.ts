@@ -5,6 +5,7 @@ import type {
 	PlacementFailureReason,
 	Position,
 	TowerDef,
+	TowerFamily,
 	UpgradeId,
 } from '@gld/shared';
 import {
@@ -130,6 +131,7 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
+	private familyDamageFn: ((family: TowerFamily) => number) | null = null;
 	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
@@ -176,6 +178,14 @@ export class TowerSystem {
 
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
 		this.modifierFn = fn;
+	}
+
+	/** Inject the per-family damage multiplier lookup. Game.ts wires this to
+	 *  `PhaseAOrchestrator.getFamilyDamageMultiplier` so energy-purchased
+	 *  family upgrades compound on top of roguelike `dmg_up` and the meta
+	 *  `atkPct` buff. */
+	setFamilyDamageFn(fn: ((family: TowerFamily) => number) | null): void {
+		this.familyDamageFn = fn;
 	}
 
 	/**
@@ -586,9 +596,16 @@ export class TowerSystem {
 				// multiplier term only.
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
 				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+				const familyMod = this.familyDamageFn
+					? this.familyDamageFn(def.family)
+					: 1;
 				const baseDamage = Math.round(
 					this.resolveFinalDamage(
-						tower.effectiveDamage * elementMult * dmgMod * (1 + critBonus),
+						tower.effectiveDamage *
+							elementMult *
+							dmgMod *
+							familyMod *
+							(1 + critBonus),
 					),
 				);
 				const special = def.stats.special;

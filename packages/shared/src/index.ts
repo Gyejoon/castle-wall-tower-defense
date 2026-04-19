@@ -41,6 +41,15 @@ export {
 	INGAME_GACHA,
 	INITIAL_ENERGY,
 } from './constants/energy';
+export type { UpgradeableFamily } from './constants/familyUpgrade';
+export {
+	BASE_FAMILY_UPGRADE_COST,
+	FAMILY_UPGRADE_DAMAGE_PER_LEVEL,
+	familyDamageMultiplier,
+	familyUpgradeCost,
+	MAX_FAMILY_UPGRADE_LEVEL,
+	UPGRADEABLE_FAMILIES,
+} from './constants/familyUpgrade';
 export type { GachaResult } from './constants/gacha';
 export {
 	GACHA_COSTS,

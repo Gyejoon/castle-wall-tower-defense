@@ -3,6 +3,7 @@ import type {
 	PlacementFailureReason,
 	TowerId,
 	UnitType,
+	UpgradeableFamily,
 	UpgradeId,
 	WavePhase,
 	WaveSlotKind,
@@ -222,6 +223,25 @@ export interface GameEventMap {
 	 *  switches into merge-target-picker mode until the next tower tap.
 	 *  [F10] owns the Phase 8 handler. */
 	'enter-merge-mode': { sourceId: string };
+
+	// === Family upgrade (run-scoped, energy-paid) ===
+	/** React asks the orchestrator to spend energy and bump the family's
+	 *  damage-buff stack by one. */
+	'request-family-upgrade': { family: UpgradeableFamily };
+	/** Orchestrator confirmed the upgrade. `level` is the new (post-increment)
+	 *  level; `cost` is the energy that was just spent. */
+	'family-upgraded': {
+		family: UpgradeableFamily;
+		level: number;
+		cost: number;
+	};
+	/** Upgrade rejected. HUD surfaces the reason as a toast/flash. */
+	'family-upgrade-failed': {
+		family: UpgradeableFamily;
+		reason: 'insufficient-energy' | 'max-level';
+		cost: number;
+		have: number;
+	};
 }
 
 export class TypedEventBus {

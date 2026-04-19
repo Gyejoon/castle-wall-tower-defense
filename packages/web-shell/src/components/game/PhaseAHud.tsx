@@ -1,13 +1,29 @@
 import { EventBus } from '@gld/phaser-game';
-import { INGAME_GACHA, PHASE_A_SUMMON_COST } from '@gld/shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	familyUpgradeCost,
+	INGAME_GACHA,
+	MAX_FAMILY_UPGRADE_LEVEL,
+	PHASE_A_SUMMON_COST,
+	UPGRADEABLE_FAMILIES,
+	type UpgradeableFamily,
+} from '@gld/shared';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 import { PauseModal } from './PauseModal';
 
 /** Phase 8 redesign — basic summon + T2/T3/T4 gacha + menu in a fixed
- *  bottom action bar, plus compact info badges above for quick glance. */
+ *  bottom action bar, plus compact info badges above for quick glance.
+ *  Above the action bar sits a row of four family-upgrade pills
+ *  (궁수/공성/서리/성전) that spend energy to buff each family's damage. */
 const GACHA_TIERS = [2, 3, 4] as const;
+
+const FAMILY_LABEL: Record<UpgradeableFamily, string> = {
+	archer: '궁수',
+	siege: '공성',
+	frost: '서리',
+	stun: '성전',
+};
 
 export function PhaseAHud() {
 	const pushToast = useGameStore((s) => s.pushToast);
@@ -22,6 +38,17 @@ export function PhaseAHud() {
 	//       overlapping flashes don't clobber each other.
 	const [flashingTier, setFlashingTier] = useState<number | null>(null);
 	const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Run-scoped family upgrade levels. Mirrored from the orchestrator via
+	// `family-upgraded`; resets with the PhaserGame remount (new runId).
+	const [familyLevels, setFamilyLevels] = useState<
+		Record<UpgradeableFamily, number>
+	>(() => ({ archer: 0, siege: 0, frost: 0, stun: 0 }));
+	const [flashingFamily, setFlashingFamily] =
+		useState<UpgradeableFamily | null>(null);
+	const familyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 
 	useEffect(() => {
 		const handleGachaInsufficient = (data: {
@@ -57,11 +84,41 @@ export function PhaseAHud() {
 			pushToast('타워 이동 완료', 'success');
 		};
 
+		const handleFamilyUpgraded = (data: {
+			family: UpgradeableFamily;
+			level: number;
+		}) => {
+			setFamilyLevels((prev) => ({ ...prev, [data.family]: data.level }));
+		};
+
+		const handleFamilyUpgradeFailed = (data: {
+			family: UpgradeableFamily;
+			reason: 'insufficient-energy' | 'max-level';
+			cost: number;
+			have: number;
+		}) => {
+			if (data.reason === 'insufficient-energy') {
+				if (familyFlashTimerRef.current)
+					clearTimeout(familyFlashTimerRef.current);
+				setFlashingFamily(data.family);
+				familyFlashTimerRef.current = setTimeout(() => {
+					setFlashingFamily(null);
+					familyFlashTimerRef.current = null;
+				}, 500);
+				pushToast(
+					`${FAMILY_LABEL[data.family]} 강화 에너지 부족 (${data.have}/${data.cost})`,
+					'warning',
+				);
+			}
+		};
+
 		EventBus.on('gacha-insufficient-energy', handleGachaInsufficient);
 		EventBus.on('summon-failed', handleSummonFailed);
 		EventBus.on('merge-failed', handleMergeFailed);
 		EventBus.on('move-failed', handleMoveFailed);
 		EventBus.on('tower-moved', handleTowerMoved);
+		EventBus.on('family-upgraded', handleFamilyUpgraded);
+		EventBus.on('family-upgrade-failed', handleFamilyUpgradeFailed);
 
 		return () => {
 			EventBus.off('gacha-insufficient-energy', handleGachaInsufficient);
@@ -69,7 +126,11 @@ export function PhaseAHud() {
 			EventBus.off('merge-failed', handleMergeFailed);
 			EventBus.off('move-failed', handleMoveFailed);
 			EventBus.off('tower-moved', handleTowerMoved);
+			EventBus.off('family-upgraded', handleFamilyUpgraded);
+			EventBus.off('family-upgrade-failed', handleFamilyUpgradeFailed);
 			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+			if (familyFlashTimerRef.current)
+				clearTimeout(familyFlashTimerRef.current);
 		};
 	}, [pushToast]);
 
@@ -86,6 +147,18 @@ export function PhaseAHud() {
 		EventBus.emit('request-pause');
 	}, []);
 
+	const familyRows = useMemo(
+		() =>
+			UPGRADEABLE_FAMILIES.map((family) => {
+				const level = familyLevels[family];
+				const atMax = level >= MAX_FAMILY_UPGRADE_LEVEL;
+				const cost = atMax ? 0 : familyUpgradeCost(level);
+				const disabled = atMax || energy < cost;
+				return { family, level, atMax, cost, disabled };
+			}),
+		[energy, familyLevels],
+	);
+
 	const handleMenuClose = useCallback(() => {
 		setPaused(false);
 	}, []);
@@ -94,7 +167,7 @@ export function PhaseAHud() {
 		<>
 			<div
 				data-testid="phase-a-hud"
-				className="relative h-[110px] shrink-0"
+				className="relative h-[158px] shrink-0"
 				style={{ background: 'var(--color-bg-95)' }}
 			>
 				{/* Info badges — quick-glance ⚡ energy / W wave / 🛡 lives */}
@@ -107,6 +180,28 @@ export function PhaseAHud() {
 					<InfoBadge testId="phase-a-badge-lives" icon="🛡" value={lives} />
 				</div>
 
+				{/* Family upgrade row — energy-spend pills for archer/siege/frost/stun */}
+				<div
+					data-testid="phase-a-family-upgrade-row"
+					className="absolute top-[36px] left-0 right-0 flex gap-1 px-2"
+				>
+					{familyRows.map(({ family, level, atMax, cost, disabled }) => (
+						<FamilyUpgradeButton
+							key={family}
+							family={family}
+							label={FAMILY_LABEL[family]}
+							level={level}
+							atMax={atMax}
+							cost={cost}
+							disabled={disabled}
+							flashing={flashingFamily === family}
+							onClick={() =>
+								EventBus.emit('request-family-upgrade', { family })
+							}
+						/>
+					))}
+				</div>
+
 				{/* Bottom fixed action bar: summon (primary) + T2/T3/T4 + menu */}
 				<div
 					data-testid="phase-a-action-bar"
@@ -114,7 +209,7 @@ export function PhaseAHud() {
 					style={{
 						background: 'var(--color-bg-95)',
 						borderColor: 'var(--color-border)',
-						paddingTop: '36px',
+						paddingTop: '6px',
 						paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
 					}}
 				>
@@ -145,6 +240,67 @@ export function PhaseAHud() {
 			</div>
 			<PauseModal open={paused} onResume={handleMenuClose} />
 		</>
+	);
+}
+
+interface FamilyUpgradeButtonProps {
+	family: UpgradeableFamily;
+	label: string;
+	level: number;
+	atMax: boolean;
+	cost: number;
+	disabled: boolean;
+	flashing: boolean;
+	onClick: () => void;
+}
+
+function FamilyUpgradeButton({
+	family,
+	label,
+	level,
+	atMax,
+	cost,
+	disabled,
+	flashing,
+	onClick,
+}: FamilyUpgradeButtonProps) {
+	return (
+		<button
+			type="button"
+			data-testid={`phase-a-family-upgrade-${family}`}
+			onClick={onClick}
+			disabled={disabled}
+			aria-disabled={disabled}
+			aria-label={`${label} 강화 Lv.${level}`}
+			className={cn(
+				'flex-1 h-[40px] border-2 flex flex-col items-center justify-center gap-[1px] font-pixel transition-transform',
+				disabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95',
+			)}
+			style={{
+				background: flashing
+					? 'var(--color-danger-20)'
+					: disabled
+						? 'var(--color-panel)'
+						: 'var(--color-panel-95)',
+				borderColor: flashing
+					? 'var(--color-danger)'
+					: atMax
+						? 'var(--color-gold)'
+						: 'var(--color-accent)',
+				color: flashing
+					? 'var(--color-danger)'
+					: atMax
+						? 'var(--color-gold)'
+						: 'var(--color-accent)',
+			}}
+		>
+			<span className="text-[10px] leading-none">
+				{label} Lv.{level}
+			</span>
+			<span className="text-[9px] leading-none opacity-80">
+				{atMax ? 'MAX' : `⚡${cost}`}
+			</span>
+		</button>
 	);
 }
 

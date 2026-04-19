@@ -31,6 +31,11 @@ export interface TowerInstance {
 	sprite: Phaser.GameObjects.Image;
 	barrelSprite?: Phaser.GameObjects.Image;
 	idleTween?: Phaser.Tweens.Tween;
+	/** Stored so post-VFX idle tween restart can reset to the exact original
+	 *  scale/position. Populated at placement and in moveTower. */
+	baseScaleX: number;
+	baseScaleY: number;
+	baseY: number;
 	lastAttackTime: number;
 	lastAuraTime: number;
 	disabledUntilMs?: number;
@@ -272,17 +277,14 @@ export class TowerSystem {
 
 		const baseScaleX = sprite.scaleX;
 		const baseScaleY = sprite.scaleY;
-		const idleTween = this.scene.tweens.add({
-			targets: sprite,
-			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
-			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
-			y: { from: sprite.y, to: sprite.y - 1 },
-			duration: 1800,
-			yoyo: true,
-			repeat: -1,
-			ease: 'Sine.InOut',
-			delay: (this.nextId * 137) % 1800,
-		});
+		const baseY = sprite.y;
+		const idleTween = this.createIdleTween(
+			sprite,
+			baseScaleX,
+			baseScaleY,
+			baseY,
+			(this.nextId * 137) % 1800,
+		);
 
 		// Nova cannon: add separate rotating barrel sprite
 		let barrelSprite: Phaser.GameObjects.Image | undefined;
@@ -308,6 +310,9 @@ export class TowerSystem {
 			sprite,
 			barrelSprite,
 			idleTween,
+			baseScaleX,
+			baseScaleY,
+			baseY,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
 		});
@@ -321,6 +326,46 @@ export class TowerSystem {
 		this.spawnPlaceholderAura(towerDefId, base, worldPos);
 
 		return { success: true, tower: towerData };
+	}
+
+	/**
+	 * Build the continuous yoyo breathing tween for a tower sprite. Extracted
+	 * so placement, moveTower, and post-VFX restart paths share an identical
+	 * config and reset precisely to the sprite's baseline scale/y instead of
+	 * drifting after each punch animation.
+	 */
+	private createIdleTween(
+		sprite: Phaser.GameObjects.Image,
+		baseScaleX: number,
+		baseScaleY: number,
+		baseY: number,
+		delay = 0,
+	): Phaser.Tweens.Tween {
+		// Reset sprite to baseline before spinning up the new tween — keeps
+		// post-VFX restart visually seamless. Defensive calls so partial
+		// test fakes (no setScale/setY) keep working.
+		if (typeof sprite.setScale === 'function') {
+			sprite.setScale(baseScaleX, baseScaleY);
+		} else {
+			sprite.scaleX = baseScaleX;
+			sprite.scaleY = baseScaleY;
+		}
+		if (typeof sprite.setY === 'function') {
+			sprite.setY(baseY);
+		} else {
+			sprite.y = baseY;
+		}
+		return this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
+			y: { from: baseY, to: baseY - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+			delay,
+		});
 	}
 
 	private spawnPlaceholderAura(
@@ -1100,16 +1145,15 @@ export class TowerSystem {
 		instance.idleTween?.remove();
 		const baseScaleX = instance.sprite.scaleX;
 		const baseScaleY = instance.sprite.scaleY;
-		instance.idleTween = this.scene.tweens.add({
-			targets: instance.sprite,
-			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
-			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
-			y: { from: worldPos.y, to: worldPos.y - 1 },
-			duration: 1800,
-			yoyo: true,
-			repeat: -1,
-			ease: 'Sine.InOut',
-		});
+		instance.baseScaleX = baseScaleX;
+		instance.baseScaleY = baseScaleY;
+		instance.baseY = worldPos.y;
+		instance.idleTween = this.createIdleTween(
+			instance.sprite,
+			baseScaleX,
+			baseScaleY,
+			worldPos.y,
+		);
 
 		this.pathfinding.invalidateCache();
 		return true;
@@ -1174,17 +1218,19 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Phase A: pop-in scale punch on a freshly summoned tower. Additive over
-	 * the existing idle tween — same target, brief duration, no kill-restart.
-	 * Called by PhaseAOrchestrator after a successful summon.
+	 * Phase A: pop-in scale punch on a freshly summoned tower. Kills the
+	 * continuous idle tween for the punch, then restarts it on `onComplete`
+	 * so the tower keeps breathing afterwards (bug: previously the idle
+	 * tween never returned → towers went stiff after every summon).
 	 */
 	playPhaseASummonVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
-		const sprite = entry.instance.sprite;
+		const instance = entry.instance;
+		const sprite = instance.sprite;
 		this.scene.tweens.killTweensOf(sprite);
-		const baseScaleX = sprite.scaleX || 1;
-		const baseScaleY = sprite.scaleY || 1;
+		instance.idleTween = undefined;
+		const { baseScaleX, baseScaleY, baseY } = instance;
 		this.scene.tweens.add({
 			targets: sprite,
 			scaleX: baseScaleX * 1.3,
@@ -1192,6 +1238,15 @@ export class TowerSystem {
 			duration: 110,
 			yoyo: true,
 			ease: 'Cubic.Out',
+			onComplete: () => {
+				if (!sprite.active) return;
+				instance.idleTween = this.createIdleTween(
+					sprite,
+					baseScaleX,
+					baseScaleY,
+					baseY,
+				);
+			},
 		});
 	}
 
@@ -1199,15 +1254,17 @@ export class TowerSystem {
 	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
 	 * a successful merge. Tint is cleared via a follow-up tween that targets
 	 * a counter and applies clearTint in onComplete, so cleanup is bound to
-	 * the scene's tween manager (no orphan setTimeout / setInterval).
+	 * the scene's tween manager (no orphan setTimeout / setInterval). Restarts
+	 * the idle breathing tween after the punch so the tower doesn't go stiff.
 	 */
 	playPhaseAMergeVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
-		const sprite = entry.instance.sprite;
+		const instance = entry.instance;
+		const sprite = instance.sprite;
 		this.scene.tweens.killTweensOf(sprite);
-		const baseScaleX = sprite.scaleX || 1;
-		const baseScaleY = sprite.scaleY || 1;
+		instance.idleTween = undefined;
+		const { baseScaleX, baseScaleY, baseY } = instance;
 		this.scene.tweens.add({
 			targets: sprite,
 			scaleX: baseScaleX * 1.5,
@@ -1215,6 +1272,15 @@ export class TowerSystem {
 			duration: 140,
 			yoyo: true,
 			ease: 'Cubic.Out',
+			onComplete: () => {
+				if (!sprite.active) return;
+				instance.idleTween = this.createIdleTween(
+					sprite,
+					baseScaleX,
+					baseScaleY,
+					baseY,
+				);
+			},
 		});
 		if (typeof sprite.setTint === 'function') {
 			sprite.setTint(0xffd966);

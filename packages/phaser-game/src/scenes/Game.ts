@@ -81,15 +81,15 @@ import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
-// Phase A pivot starter pool: 5 towers covering single-target, AOE, CC,
-// splash, and DOT roles. All from existing assets so the random-summon +
-// merge loop reuses pixel medieval sprites without new art.
+// Phase A summon pool (Task 1.4 spec): tier-1 only, one per base family
+// (archer, siege, frost, stun). Higher tiers are reached through merge and
+// the in-game gacha (tier2/3/4 buttons). Mirrors DEFAULT_POOL in
+// @gld/shared/data/summonPool.ts — keep the two in sync.
 const PHASE_A_INITIAL_POOL: readonly string[] = [
-	'archer',
-	'plasma',
-	'emp',
-	'nova_cannon',
-	'flame_tower',
+	'archer', // archer T1
+	'nova_cannon', // siege T1
+	'emp', // frost T1
+	'shield', // stun T1
 ];
 
 export class GameScene extends Phaser.Scene {

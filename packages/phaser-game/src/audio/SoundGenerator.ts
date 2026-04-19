@@ -405,13 +405,6 @@ export class SoundGenerator {
 				type: 'triangle',
 				volume: 0.14,
 			},
-			plasma: {
-				frequency: 120,
-				endFrequency: 60,
-				duration: 80,
-				type: 'triangle',
-				volume: 0.18,
-			},
 			nova_cannon: {
 				frequency: 90,
 				endFrequency: 40,
@@ -479,7 +472,7 @@ export class SoundGenerator {
 						volume: 0.06,
 					});
 				});
-			} else if (towerType === 'plasma' || towerType === 'nova_cannon') {
+			} else if (towerType === 'nova_cannon') {
 				// Launch thump — short brown noise burst
 				this.playNoise({
 					noiseType: 'brown',

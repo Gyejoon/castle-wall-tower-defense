@@ -458,7 +458,13 @@ export class TowerSystem {
 	}
 
 	private hasSplash(special?: string): boolean {
-		return special === 'splash' || (special?.endsWith('_splash') ?? false);
+		// Phase 1 redesign uses `splash_<radius>` (e.g. `splash_1.5`) and
+		// hybrid keys can include `splash_<radius>_slow_..._stun_...`. Match
+		// the `splash` token anywhere in the special string so siege towers
+		// (nova_cannon/fortress/earth_golem/celestial) keep the rock-arc
+		// projectile VFX they had pre-Phase-1.
+		if (!special) return false;
+		return special === 'splash' || special.startsWith('splash_');
 	}
 
 	private isStunSpecial(special?: string): boolean {

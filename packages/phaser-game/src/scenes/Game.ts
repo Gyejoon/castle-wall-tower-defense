@@ -381,15 +381,10 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			// Phase A: flat +ENERGY_PER_WAVE_CLEAR on every cleared wave to pace
-			// summon/gacha cadence between waves. Skipped on timer-forced clears
-			// (cleared === false) so players can't farm energy by stalling, and
-			// on the final wave since the run is already ending.
-			if (
-				data.cleared &&
-				this.isPhaseAMap &&
-				data.slotIndex < data.totalWaves
-			) {
+			// Phase A: flat +ENERGY_PER_WAVE_CLEAR at the end of every wave
+			// (natural clear + timer-forced alike) to pace summon/gacha cadence.
+			// Final wave is skipped because the run is already ending.
+			if (this.isPhaseAMap && data.slotIndex < data.totalWaves) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
 			// Phase 4 Task 4.2: roguelike pick now triggers on BOSS-phase clears

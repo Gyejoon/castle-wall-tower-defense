@@ -20,6 +20,7 @@ import {
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
+import { PLATFORM_LIFT } from '../fieldAssets';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
@@ -271,11 +272,17 @@ export class TowerSystem {
 
 		const textureKey = resolveTowerTextureKeySafe(this.scene, towerDefId);
 		const base = this.scene.add.graphics();
-		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
+		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		const sprite = this.scene.add.image(
+			worldPos.x,
+			worldPos.y - lift,
+			textureKey,
+		);
 		sprite.setDisplaySize(64, 80);
-		sprite.setY(worldPos.y - 20);
-		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
-		this.renderTowerBase(base, worldPos, def);
+		sprite.setY(worldPos.y - lift - 20);
+		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
+		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
+		this.renderTowerBase(base, liftedPos, def);
 
 		const baseScaleX = sprite.scaleX;
 		const baseScaleY = sprite.scaleY;
@@ -325,7 +332,7 @@ export class TowerSystem {
 		// touching the placeholder texture itself. TODO(phase-12): replace with
 		// a proper particle emitter once `upgrade-success-fx` is wired up as a
 		// particle texture.
-		this.spawnPlaceholderAura(towerDefId, base, worldPos);
+		this.spawnPlaceholderAura(towerDefId, base, liftedPos);
 
 		return { success: true, tower: towerData };
 	}
@@ -743,6 +750,7 @@ export class TowerSystem {
 					: 'projectile-hit-flash';
 
 				// Nova cannon: fire from barrel tip, not tower center
+				const fireLift = this.gridManager.orthoTile * PLATFORM_LIFT;
 				const fireOriginX =
 					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
@@ -750,7 +758,7 @@ export class TowerSystem {
 				const fireOriginY =
 					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
-						: towerWorld.y;
+						: towerWorld.y - fireLift;
 
 				// Twin archer: fire 2 arrows, each with half damage
 				const shotCount = def.id === 'twin_archer' ? 2 : 1;
@@ -1054,15 +1062,16 @@ export class TowerSystem {
 		// Hide static tower during fire animation so animated frames are visible
 		towerSprite.setVisible(false);
 
+		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
 		const effect = this.scene.add.sprite(
 			towerWorld.x,
-			towerWorld.y - 20,
+			towerWorld.y - lift - 20,
 			textureKey,
 		);
 		// Fire spritesheets are always 64×80 regardless of base tower resolution;
 		// see the note in generate-towers.ts about drawFireFrame's coordinate system.
 		effect.setDisplaySize(64, 80);
-		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
+		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
 		effect.play(animationKey);
 		const restoreVisibility = () => {
 			if (towerSprite.active) towerSprite.setVisible(true);
@@ -1179,12 +1188,18 @@ export class TowerSystem {
 
 		instance.data.position = { x: toX, y: toY };
 		const worldPos = this.gridManager.gridToWorld(toX, toY);
-		instance.sprite.setPosition(worldPos.x, worldPos.y);
-		instance.base.setPosition(worldPos.x, worldPos.y);
+		const moveLift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		const liftedY = worldPos.y - moveLift;
+		instance.sprite.setPosition(worldPos.x, liftedY);
+		instance.base.setPosition(worldPos.x, liftedY);
 		if (instance.barrelSprite) {
-			instance.barrelSprite.setPosition(worldPos.x, worldPos.y);
+			instance.barrelSprite.setPosition(worldPos.x, liftedY);
 		}
-		this.renderTowerBase(instance.base, worldPos, instance.def);
+		this.renderTowerBase(
+			instance.base,
+			{ x: worldPos.x, y: liftedY },
+			instance.def,
+		);
 
 		// Recreate idle tween at new position (old tween remembers old y)
 		instance.idleTween?.stop();
@@ -1193,12 +1208,12 @@ export class TowerSystem {
 		const baseScaleY = instance.sprite.scaleY;
 		instance.baseScaleX = baseScaleX;
 		instance.baseScaleY = baseScaleY;
-		instance.baseY = worldPos.y;
+		instance.baseY = liftedY;
 		instance.idleTween = this.createIdleTween(
 			instance.sprite,
 			baseScaleX,
 			baseScaleY,
-			worldPos.y,
+			liftedY,
 		);
 
 		this.pathfinding.invalidateCache();

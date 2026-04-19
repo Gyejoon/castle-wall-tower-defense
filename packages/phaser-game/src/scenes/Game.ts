@@ -31,8 +31,10 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
+	DIRT_SEAMLESS_KEY,
+	GRASS_PLATFORM_FRAMES,
+	PLATFORM_LIFT,
 	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_GROUND_FRAMES,
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
@@ -288,6 +290,7 @@ export class GameScene extends Phaser.Scene {
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
 				this.selectedTowerId = data.towerId;
+				this.showBuildableZone();
 				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 				this.renderPlaceableHighlights();
@@ -335,6 +338,7 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+			this.showBuildableZone();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
 			this.renderPlaceableHighlights();
@@ -342,6 +346,7 @@ export class GameScene extends Phaser.Scene {
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
@@ -421,6 +426,7 @@ export class GameScene extends Phaser.Scene {
 			if (!this.isSceneAlive()) return;
 			this.movePending = { fromCol, fromRow };
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			this.renderPlaceableHighlights();
@@ -566,72 +572,156 @@ export class GameScene extends Phaser.Scene {
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
-	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
-		const graphics = this.add.graphics();
-		const theme = getMapTheme(this.currentMap.id);
-		const pathColor = dark ? 0x5c6585 : theme.pathColor;
-
-		const allCells = getAllPathCells(this.currentMap);
-		// Phase 7.5: tone down path overlay alpha so towers + obstacles read
-		// first (was 0.52 / 0.40 in scenario builds).
-		for (const point of allCells) {
-			grid.fillTileRect(
-				graphics,
-				point.x,
-				point.y,
-				pathColor,
-				dark ? 0.4 : 0.35,
-			);
-		}
-	}
-
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
-		const tile = this.playerGrid.orthoTile;
+		const tile = grid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Calculate how many extra tiles needed to fill the canvas beyond the grid
-		const gridPixelW = tile * this.currentMap.width;
-		const gridPixelH = tile * this.currentMap.height;
-		const extraLeft = Math.ceil((canvasW - gridPixelW) / 2 / tile) + 1;
-		const extraRight = extraLeft;
-		const extraTop = Math.ceil((canvasH - gridPixelH) / 2 / tile) + 1;
-		const extraBottom = extraTop;
+		// Layer 0: Dirt/sand base (low ground — monster path level)
+		if (typeof this.add.tileSprite === 'function') {
+			const dirtBg = this.add.tileSprite(
+				canvasW / 2,
+				canvasH / 2,
+				canvasW,
+				canvasH,
+				DIRT_SEAMLESS_KEY,
+			);
+			dirtBg.setDepth(0);
+			dirtBg.setScrollFactor(0);
+			if (dark) dirtBg.setTint(0x5c6585);
+		}
 
-		const startX = -extraLeft;
-		const endX = this.currentMap.width + extraRight;
-		const startY = -extraTop;
-		const endY = this.currentMap.height + extraBottom;
+		// Build path lookup — path cells are "low ground" (monster walkway).
+		const pathCells = getAllPathCells(this.currentMap);
+		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
+		const isLow = (x: number, y: number) =>
+			pathSet.has(`${x},${y}`) ||
+			x < 0 ||
+			x >= this.currentMap.width ||
+			y < 0 ||
+			y >= this.currentMap.height;
 
-		for (let y = startY; y < endY; y++) {
-			for (let x = startX; x < endX; x++) {
+		// Layer 2: Elevated grass platform tiles (tower placement level).
+		const lift = tile * PLATFORM_LIFT;
+		const extraTiles = 2;
+		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
+			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
+				if (isLow(x, y)) continue;
+
+				// NSEW bitmask: which neighbors are "low" (path / outside).
+				let bitmask = 0;
+				if (isLow(x, y - 1)) bitmask |= 1;
+				if (isLow(x + 1, y)) bitmask |= 2;
+				if (isLow(x, y + 1)) bitmask |= 4;
+				if (isLow(x - 1, y)) bitmask |= 8;
+
+				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
 				const world = grid.gridToWorld(x, y);
-				const frame =
-					TINY_SWORDS_GROUND_FRAMES[
-						((((x % 2) + 2) % 2) + (((y % 2) + 2) % 2)) %
-							TINY_SWORDS_GROUND_FRAMES.length
-					];
-				const sprite = this.add.sprite(
+
+				const spr = this.add.sprite(
 					world.x,
-					world.y,
+					world.y - lift,
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(tile, tile);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(0);
+				spr.setDisplaySize(tile, tile);
+				spr.setOrigin(0.5, 0.5);
+				spr.setDepth(2);
+				if (dark) spr.setTint(0x6b7899);
+				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
 
-				if (dark) {
-					sprite.setTint(0x6b7899);
-				} else if (theme.groundTint !== 0xffffff) {
-					sprite.setTint(theme.groundTint);
+				// Cliff walls drawn as graphics layers (no stretched tileset frames).
+				const hasSouth = !!(bitmask & 4);
+				const hasEast = !!(bitmask & 2);
+				const hasWest = !!(bitmask & 8);
+
+				if (hasSouth || hasEast || hasWest) {
+					const cg = this.add.graphics();
+					cg.setDepth(1.5);
+					const baseX = world.x - tile / 2;
+					const baseY = world.y - lift + tile / 2;
+
+					if (hasSouth) {
+						const cliffH = tile * 0.6;
+						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
+						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
+						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
+						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
+						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
+						cg.fillRect(baseX, baseY, tile, 2);
+					}
+
+					if (hasEast) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
+					}
+
+					if (hasWest) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
+					}
 				}
 			}
 		}
 
-		this.renderFieldPathOverlay(grid, dark);
+		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
+		if (!dark) {
+			const shadowGraphics = this.add.graphics();
+			shadowGraphics.setDepth(0.5);
+			for (const p of pathCells) {
+				if (!isLow(p.x, p.y - 1)) {
+					const w = grid.gridToWorld(p.x, p.y);
+					shadowGraphics.fillStyle(0x000000, 0.15);
+					shadowGraphics.fillRect(
+						w.x - tile / 2,
+						w.y - tile / 2,
+						tile,
+						tile * 0.4,
+					);
+				}
+			}
+		}
+
 		this.renderDecorations(grid, dark);
+	}
+
+	private buildableZoneGraphics?: Phaser.GameObjects.Graphics;
+
+	private showBuildableZone(): void {
+		if (!this.buildableZoneGraphics) {
+			this.buildableZoneGraphics = this.add.graphics();
+			this.buildableZoneGraphics.setDepth(3);
+		}
+		this.buildableZoneGraphics.clear();
+		if (!this.selectedTowerId) return;
+
+		const tile = this.playerGrid.orthoTile;
+		const lift = tile * PLATFORM_LIFT;
+		for (const point of this.currentMap.buildablePoints) {
+			if (!this.playerGrid.canPlaceTower(point.x, point.y)) continue;
+			const world = this.playerGrid.gridToWorld(point.x, point.y);
+			this.buildableZoneGraphics.fillStyle(0x44ff44, 0.15);
+			this.buildableZoneGraphics.fillRect(
+				world.x - tile / 2,
+				world.y - lift - tile / 2,
+				tile,
+				tile,
+			);
+			this.buildableZoneGraphics.lineStyle(1, 0x44ff44, 0.3);
+			this.buildableZoneGraphics.strokeRect(
+				world.x - tile / 2,
+				world.y - lift - tile / 2,
+				tile,
+				tile,
+			);
+		}
+	}
+
+	private hideBuildableZone(): void {
+		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
 	}
 
 	private renderDecorations(grid: GridManager, dark: boolean): void {
@@ -717,11 +807,13 @@ export class GameScene extends Phaser.Scene {
 			'tiny-swords-bush-1',
 		] as const;
 		const tile = this.playerGrid.orthoTile;
+		const lift = tile * PLATFORM_LIFT;
 		obstacles.forEach((pos, i) => {
 			const key = ASSET_KEYS[i % ASSET_KEYS.length];
 			if (!this.textures.exists(key)) return;
 			const world = this.playerGrid.gridToWorld(pos.x, pos.y);
-			const sprite = this.add.sprite(world.x, world.y, key, 0);
+			// Lift obstacles onto the elevated grass platform.
+			const sprite = this.add.sprite(world.x, world.y - lift, key, 0);
 			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
 			sprite.setOrigin(0.5, 0.7);
 			sprite.setDepth(3 + pos.x + pos.y);
@@ -898,6 +990,7 @@ export class GameScene extends Phaser.Scene {
 		if (this.phaseAOrchestrator?.hasPendingSummon()) {
 			this.phaseAOrchestrator.completePlacement(gridX, gridY);
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			return;

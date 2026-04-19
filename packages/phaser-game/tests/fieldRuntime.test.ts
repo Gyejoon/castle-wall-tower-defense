@@ -331,13 +331,12 @@ describe('GameScene field runtime', () => {
 
 		const spriteKeys = addSprite.mock.calls.map((call) => call[2]);
 
-		const floorCount = spriteKeys.filter(
+		// Elevated grass platform tiles rendered using Tiny Swords tileset
+		// (path cells are skipped — dirt tileSprite covers those).
+		const platformTileCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_PRIMARY_TILESET.key,
 		).length;
-		// Floor tiles now extend beyond the grid to fill the canvas
-		expect(floorCount).toBeGreaterThanOrEqual(
-			PHASE_A_LONG_MAP.width * PHASE_A_LONG_MAP.height,
-		);
+		expect(platformTileCount).toBeGreaterThan(0);
 
 		const decorationCount = spriteKeys.filter(
 			(k) => k === TINY_SWORDS_DECORATION_ASSETS[0].key,

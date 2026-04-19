@@ -1,5 +1,6 @@
 import {
 	CC_AURA_CONFIGS,
+	dupesRequiredForLevel,
 	enhancementCost,
 	GLOBAL_RANGE_THRESHOLD,
 	getEffectiveStats,
@@ -39,6 +40,8 @@ export function TowerBottomSheet({
 		const result = enhanceTower(def.id);
 		if (result === 'no_gold') {
 			pushToast('골드가 부족합니다', 'warning');
+		} else if (result === 'no_dupes') {
+			pushToast('동일 타워가 부족합니다', 'warning');
 		} else if (result === 'max_level') {
 			pushToast('이미 최대 레벨입니다', 'info');
 		}
@@ -52,7 +55,13 @@ export function TowerBottomSheet({
 			? getEffectiveStats(def.stats.damage, level + 1)
 			: effectiveDmg;
 	const cost = owned ? enhancementCost(level, tier) : 0;
-	const canEnhance = owned && level < MAX_TOWER_LEVEL && profile.gold >= cost;
+	const dupesNeeded = owned ? dupesRequiredForLevel(level) : 0;
+	const dupesHave = owned?.duplicateCount ?? 0;
+	const canEnhance =
+		!!owned &&
+		level < MAX_TOWER_LEVEL &&
+		profile.gold >= cost &&
+		dupesHave >= dupesNeeded;
 
 	return (
 		<div
@@ -162,7 +171,7 @@ export function TowerBottomSheet({
 					);
 				})()}
 
-			{/* Enhancement section (flat-level) */}
+			{/* Enhancement section — dupe + gold cost */}
 			{owned && (
 				<div
 					className="flex flex-col gap-2 bg-[rgba(42,32,16,0.6)] p-2"
@@ -184,6 +193,26 @@ export function TowerBottomSheet({
 										Lv.{level}/{MAX_TOWER_LEVEL}
 									</span>
 								</div>
+								<div className="flex justify-between">
+									<span
+										className={
+											dupesHave >= dupesNeeded
+												? 'text-text-secondary'
+												: 'text-danger'
+										}
+									>
+										동일 타워: {dupesHave}/{dupesNeeded}
+									</span>
+									<span
+										className={
+											profile.gold >= cost
+												? 'text-text-secondary'
+												: 'text-danger'
+										}
+									>
+										{cost}G
+									</span>
+								</div>
 							</div>
 							<PixelButton
 								variant="gold"
@@ -191,7 +220,7 @@ export function TowerBottomSheet({
 								onClick={handleEnhance}
 								disabled={!canEnhance}
 							>
-								강화 ({cost}G)
+								레벨업 Lv.{level + 1}
 							</PixelButton>
 						</>
 					) : (

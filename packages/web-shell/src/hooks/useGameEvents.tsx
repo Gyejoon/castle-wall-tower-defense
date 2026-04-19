@@ -13,7 +13,6 @@ export function useGameEvents() {
 	const setRunStatus = useGameStore((s) => s.setRunStatus);
 	const setLives = useGameStore((s) => s.setLives);
 	const setEnergy = useGameStore((s) => s.setEnergy);
-	const setGold = useGameStore((s) => s.setGold);
 	const setPlacementFeedback = useGameStore((s) => s.setPlacementFeedback);
 	const setDeckCards = useGameStore((s) => s.setDeckCards);
 	const setSelectedCardIndex = useGameStore((s) => s.setSelectedCardIndex);
@@ -48,16 +47,6 @@ export function useGameEvents() {
 			setLives(data.remainingHp);
 		const onEnergyChanged = (data: { energy: number }) =>
 			setEnergy(data.energy);
-		const onGoldChanged = (data: { gold: number }) => setGold(data.gold);
-		const onEnhanceFailed = (data: {
-			reason: 'insufficient-gold' | 'max-level' | 'tower-not-found';
-		}) => {
-			if (data.reason === 'insufficient-gold') {
-				pushToast('골드 부족', 'warning');
-			} else if (data.reason === 'max-level') {
-				pushToast('최고 레벨', 'info');
-			}
-		};
 		const onGameOver = (data: {
 			result: 'victory' | 'defeat';
 			stats: {
@@ -253,8 +242,6 @@ export function useGameEvents() {
 		EventBus.on('wave-prep-tick', onPrepTick);
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
-		EventBus.on('gold-changed', onGoldChanged);
-		EventBus.on('enhance-failed', onEnhanceFailed);
 		EventBus.on('game-over', onGameOver);
 		EventBus.on('game-resumed', onGameResumed);
 		EventBus.on('wave-started', onWaveStarted);
@@ -290,8 +277,6 @@ export function useGameEvents() {
 			EventBus.off('wave-prep-tick', onPrepTick);
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
-			EventBus.off('gold-changed', onGoldChanged);
-			EventBus.off('enhance-failed', onEnhanceFailed);
 			EventBus.off('game-over', onGameOver);
 			EventBus.off('game-resumed', onGameResumed);
 			EventBus.off('wave-started', onWaveStarted);
@@ -316,7 +301,6 @@ export function useGameEvents() {
 		setCountdown,
 		setDeckCards,
 		setEnergy,
-		setGold,
 		setLives,
 		setPlacementFeedback,
 		setPlayerTowerCount,

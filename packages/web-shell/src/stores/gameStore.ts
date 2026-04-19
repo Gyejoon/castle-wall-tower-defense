@@ -58,12 +58,6 @@ interface GameStoreState {
 	runStatus: RunStatus;
 	gameReady: boolean;
 	energy: number;
-	/**
-	 * Run-scoped gold pool. Accumulates from kill bounty during a run and is
-	 * spent on in-battle tower enhance. Distinct from `meta.gold` (lifetime
-	 * profile gold). Resets with the run lifecycle in `createRunState`.
-	 */
-	gold: number;
 	lives: number;
 	selectedMapId: string;
 	selectedTowerId: string | null;
@@ -93,7 +87,6 @@ interface GameStoreState {
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
 	setEnergy: (energy: number) => void;
-	setGold: (gold: number) => void;
 	setLives: (lives: number) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setDeckCards: (cards: readonly DeckCardDef[]) => void;
@@ -138,7 +131,6 @@ const createCombatHud = (): CombatHudState => ({
 const createRunState = () => ({
 	gameReady: false,
 	energy: INITIAL_ENERGY,
-	gold: 0,
 	lives: INITIAL_PLAYER_HP,
 	selectedTowerId: null,
 	deckCards: DEFAULT_DECK,
@@ -177,7 +169,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		),
 	setGameReady: (ready) => set({ gameReady: ready }),
 	setEnergy: (energy) => set({ energy }),
-	setGold: (gold) => set({ gold }),
 	setLives: (lives) => set({ lives }),
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setDeckCards: (cards) => set({ deckCards: cards }),

@@ -61,7 +61,6 @@ export function SummonRevealOverlay() {
 
 	const info = TOWER_INFO.get(pending.towerId as TowerId);
 	const name = info?.name ?? pending.towerId;
-	const family = info?.family ?? '';
 	const sourceLabel = pending.source === 'gacha' ? '✨ 가챠' : '🎲 소환';
 
 	return (

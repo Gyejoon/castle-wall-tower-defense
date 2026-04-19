@@ -44,7 +44,9 @@ if (typeof document === 'undefined') {
 vi.mock('@gld/phaser-game', () => {
 	const listeners = new Map<string, Set<EventHandler>>();
 	const emitSpy = vi.fn((event: string, payload?: unknown) => {
-		listeners.get(event)?.forEach((h) => h(payload));
+		listeners.get(event)?.forEach((h) => {
+			h(payload);
+		});
 	});
 	const offSpy = vi.fn((event: string, handler: EventHandler) => {
 		listeners.get(event)?.delete(handler);

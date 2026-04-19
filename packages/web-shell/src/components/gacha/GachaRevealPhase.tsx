@@ -84,7 +84,7 @@ export function GachaRevealPhase({
 					)}
 					{results[0].isDuplicate && (
 						<span className="font-pixel text-[11px] text-text-secondary">
-							보유 중 → +50G 전환
+							중복 → 레벨업 재료 +1
 						</span>
 					)}
 				</div>
@@ -119,7 +119,7 @@ export function GachaRevealPhase({
 										</span>
 										{r.isDuplicate && (
 											<span className="font-pixel text-[8px] text-text-secondary">
-												+50G
+												중복 +1
 											</span>
 										)}
 									</>

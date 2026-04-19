@@ -59,7 +59,9 @@ vi.mock('../src/game/PhaserGame', () => ({
 vi.mock('@gld/phaser-game', () => {
 	const listeners = new Map<string, Set<EventHandler>>();
 	const emitSpy = vi.fn((event: string, payload?: unknown) => {
-		listeners.get(event)?.forEach((handler) => handler(payload));
+		listeners.get(event)?.forEach((handler) => {
+			handler(payload);
+		});
 	});
 	const destroySpy = vi.fn();
 	const startGameSpy = vi.fn(() => ({ destroy: destroySpy }));

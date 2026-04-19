@@ -1,6 +1,5 @@
 import { GACHA_COSTS, PITY_THRESHOLD } from '@gld/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import type { RevealedResult } from './gacha/GachaRevealPhase';
 import { GachaRevealPhase } from './gacha/GachaRevealPhase';
@@ -21,9 +20,6 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 		() => collection.map((t) => t.defId),
 		[collection],
 	);
-	const setLobbyTab = useGameStore((s) => s.setLobbyTab);
-	const setRunStatus = useGameStore((s) => s.setRunStatus);
-
 	const gachaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {

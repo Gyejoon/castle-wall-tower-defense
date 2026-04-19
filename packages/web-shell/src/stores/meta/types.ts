@@ -8,7 +8,7 @@ export interface MetaActions {
 	updateHighestWave: (wave: number) => void;
 	enhanceTower: (
 		defId: string,
-	) => 'success' | 'max_level' | 'no_gold' | 'not_found';
+	) => 'success' | 'max_level' | 'no_gold' | 'no_dupes' | 'not_found';
 	setSelectedDeck: (deck: string[]) => void;
 	updateSettings: (patch: Partial<SaveData['settings']>) => void;
 	addDiamond: (amount: number) => void;

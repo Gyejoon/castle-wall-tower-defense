@@ -189,14 +189,14 @@ describe('parseSave end-to-end — v7 save upgrades to current', () => {
 
 	it('sanitizeSave fills missing fields from defaults', () => {
 		const defaults = createDefaultSave();
-		const stub: any = {
+		const stub: unknown = {
 			...defaults,
 			progress: {
 				totalBattles: 3,
 				tutorialCompleted: true,
-			} as any,
+			},
 		};
-		const sanitized = sanitizeSave(stub);
+		const sanitized = sanitizeSave(stub as Parameters<typeof sanitizeSave>[0]);
 		expect(sanitized.progress.highestWave).toBe(0);
 		expect(sanitized.progress.totalBattles).toBe(3);
 	});

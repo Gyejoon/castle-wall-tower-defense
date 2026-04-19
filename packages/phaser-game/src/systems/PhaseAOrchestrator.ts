@@ -1,6 +1,5 @@
 import {
 	type AdService,
-	inBattleEnhanceCost,
 	PHASE_A_SUMMON_COST,
 	pickRandomUpgrades,
 	type TowerId,
@@ -46,15 +45,6 @@ export interface PhaseAEnergyApi {
 	add(amount: number): void;
 }
 
-/** Minimal gold-system surface the orchestrator needs for in-battle enhance.
- *  Same shape as `PhaseAEnergyApi` so tests can supply either. */
-export interface PhaseAGoldApi {
-	canAfford(cost: number): boolean;
-	spend(cost: number): boolean;
-	add(amount: number): void;
-	getGold(): number;
-}
-
 /**
  * Structural surface of the shared {@link AdService} plus the Phase 4
  * reroll-era `'dismissed' | 'failed'` legacy result shape so existing tests
@@ -72,12 +62,6 @@ export interface PhaseAOrchestratorDeps {
 	initialPool: readonly string[];
 	rng?: () => number;
 	energySystem?: PhaseAEnergyApi;
-	/**
-	 * In-battle gold pool used by the tower-enhance handler. When omitted,
-	 * `request-enhance-tower` is treated as a no-op (returns silently) so the
-	 * orchestrator stays usable in tests that only care about summon/merge.
-	 */
-	goldSystem?: PhaseAGoldApi;
 	summonCost?: number;
 	/**
 	 * Shared {@link AdService} implementation. Phase 10 injects `MockAdService`
@@ -159,10 +143,6 @@ export class PhaseAOrchestrator {
 	}): void => {
 		void this.handleContinueRequest(data);
 	};
-	private readonly onEnhanceRequest = (data: {
-		col: number;
-		row: number;
-	}): void => this.handleEnhanceRequest(data);
 
 	constructor(private readonly deps: PhaseAOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
@@ -183,8 +163,6 @@ export class PhaseAOrchestrator {
 		EventBus.on('request-upgrade-reroll', this.onRerollRequest);
 		EventBus.off('request-continue-run', this.onContinueRequest);
 		EventBus.on('request-continue-run', this.onContinueRequest);
-		EventBus.off('request-enhance-tower', this.onEnhanceRequest);
-		EventBus.on('request-enhance-tower', this.onEnhanceRequest);
 	}
 
 	getSummonPool(): SummonPoolSystem {
@@ -201,7 +179,6 @@ export class PhaseAOrchestrator {
 		EventBus.off('request-apply-upgrade', this.onApplyUpgrade);
 		EventBus.off('request-upgrade-reroll', this.onRerollRequest);
 		EventBus.off('request-continue-run', this.onContinueRequest);
-		EventBus.off('request-enhance-tower', this.onEnhanceRequest);
 	}
 
 	hasPendingSummon(): boolean {
@@ -592,67 +569,6 @@ export class PhaseAOrchestrator {
 				source: next.source,
 			});
 		}
-	}
-
-	/**
-	 * In-battle gold-spend tower enhance.
-	 *
-	 * Pricing + cap live in `@gld/shared/constants/enhance` (single source of
-	 * truth — the HUD reads the same constants for the cost badge / disabled
-	 * state). Order of operations:
-	 *
-	 *  1. Locate the tower; emit `enhance-failed: tower-not-found` if missing.
-	 *  2. Compute cost from current level. If at cap, emit
-	 *     `enhance-failed: max-level` *without* touching gold.
-	 *  3. If a gold system is wired and the player can't afford the cost, emit
-	 *     `enhance-failed: insufficient-gold`. (No gold system → enhance is
-	 *     free in tests / standalone harnesses.)
-	 *  4. Spend → call `TowerSystem.enhanceTower` → emit `tower-enhanced` on
-	 *     success. If `enhanceTower` rejects (concurrent destroy / cap race),
-	 *     refund the spent gold to keep the player whole.
-	 */
-	private handleEnhanceRequest(data: { col: number; row: number }): void {
-		const towerSystem = this.deps.towerSystem;
-		const located = towerSystem.getTowerAt(data.col, data.row);
-		if (!located) {
-			EventBus.emit('enhance-failed', { reason: 'tower-not-found' });
-			return;
-		}
-		const currentLevel = located.data.level ?? 1;
-		const cost = inBattleEnhanceCost(currentLevel);
-		if (!Number.isFinite(cost)) {
-			EventBus.emit('enhance-failed', { reason: 'max-level' });
-			return;
-		}
-		const goldSystem = this.deps.goldSystem;
-		// Fail-closed: without a gold system wired we can't prove the player
-		// paid, so reject the request instead of granting a free enhance. Test
-		// harnesses that want to exercise enhance without gold plumbing must
-		// inject a stub goldSystem explicitly.
-		if (!goldSystem) {
-			EventBus.emit('enhance-failed', { reason: 'insufficient-gold' });
-			return;
-		}
-		if (!goldSystem.spend(cost)) {
-			EventBus.emit('enhance-failed', { reason: 'insufficient-gold' });
-			return;
-		}
-		const result = towerSystem.enhanceTower(data.col, data.row);
-		if (!result.success) {
-			// Race: tower destroyed between getTowerAt and enhanceTower, or hit
-			// the cap. Refund whatever we spent and surface the underlying
-			// reason. `tower-not-found` and `max-level` already map cleanly to
-			// the `enhance-failed` reason union.
-			goldSystem.add(cost);
-			EventBus.emit('enhance-failed', { reason: result.reason });
-			return;
-		}
-		EventBus.emit('tower-enhanced', {
-			col: data.col,
-			row: data.row,
-			newLevel: result.newLevel,
-			damage: result.damage,
-		});
 	}
 
 	private handleMergeRequest(data: {

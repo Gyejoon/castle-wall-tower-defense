@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 
-import { createDefaultSave, MAX_TOWER_LEVEL, SAVE_VERSION } from '@gld/shared';
+import {
+	createDefaultSave,
+	dupesRequiredForLevel,
+	MAX_TOWER_LEVEL,
+	SAVE_VERSION,
+} from '@gld/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useMetaStore } from '../metaStore';
 
@@ -80,19 +85,45 @@ describe('metaStore', () => {
 		expect(useMetaStore.getState().progress.highestWave).toBe(8);
 	});
 
-	it('enhanceTower deducts gold and increments level', () => {
+	it('enhanceTower consumes gold + dupes and increments level', () => {
 		useMetaStore.getState().loadSave();
+		// 1→2는 dupe 1개 필요
+		useMetaStore.setState((s) => ({
+			collection: s.collection.map((t) =>
+				t.defId === 'archer' ? { ...t, duplicateCount: 5 } : t,
+			),
+		}));
 		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('success');
 		const s = useMetaStore.getState();
 		const tower = s.collection.find((t) => t.defId === 'archer');
 		expect(tower?.level).toBe(2);
+		expect(tower?.duplicateCount).toBe(4);
 		expect(s.profile.gold).toBeLessThan(500);
 	});
 
-	it('enhanceTower returns no_gold when gold insufficient', () => {
+	it('enhanceTower dupe 요구량이 레벨별로 2배씩 증가', () => {
+		expect(dupesRequiredForLevel(1)).toBe(1);
+		expect(dupesRequiredForLevel(2)).toBe(2);
+		expect(dupesRequiredForLevel(3)).toBe(4);
+		expect(dupesRequiredForLevel(4)).toBe(8);
+	});
+
+	it('enhanceTower returns no_dupes when duplicates below required', () => {
 		useMetaStore.getState().loadSave();
-		useMetaStore.setState((s) => ({ profile: { ...s.profile, gold: 0 } }));
+		// archer는 기본 duplicateCount 0이므로 1→2 승급 불가
+		const result = useMetaStore.getState().enhanceTower('archer');
+		expect(result).toBe('no_dupes');
+	});
+
+	it('enhanceTower returns no_gold when dupes ok but gold insufficient', () => {
+		useMetaStore.getState().loadSave();
+		useMetaStore.setState((s) => ({
+			profile: { ...s.profile, gold: 0 },
+			collection: s.collection.map((t) =>
+				t.defId === 'archer' ? { ...t, duplicateCount: 5 } : t,
+			),
+		}));
 		const result = useMetaStore.getState().enhanceTower('archer');
 		expect(result).toBe('no_gold');
 	});
@@ -101,7 +132,9 @@ describe('metaStore', () => {
 		useMetaStore.getState().loadSave();
 		useMetaStore.setState((s) => ({
 			collection: s.collection.map((t) =>
-				t.defId === 'archer' ? { ...t, level: MAX_TOWER_LEVEL } : t,
+				t.defId === 'archer'
+					? { ...t, level: MAX_TOWER_LEVEL, duplicateCount: 1_000_000 }
+					: t,
 			),
 		}));
 		const result = useMetaStore.getState().enhanceTower('archer');

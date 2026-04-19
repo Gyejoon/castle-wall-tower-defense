@@ -1,7 +1,5 @@
 import { EventBus } from '@gld/phaser-game';
-import { inBattleEnhanceCost, MAX_IN_BATTLE_LEVEL } from '@gld/shared';
 import { useEffect, useState } from 'react';
-import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
 
 export interface SelectedTower {
@@ -15,9 +13,6 @@ export interface SelectedTower {
 	towerName: string;
 	tier: number;
 	sellValue: number;
-	/** In-battle level (defaults to 1 when omitted). Drives the enhance
-	 *  button's cost badge and disabled-at-cap state. */
-	level?: number;
 }
 
 interface TowerActionSheetProps {
@@ -47,16 +42,13 @@ export function TowerActionSheet({
 	onDeselect,
 }: TowerActionSheetProps) {
 	const [mode, setMode] = useState<SheetMode>('idle');
-	// Run-scoped gold pool (drives the enhance cost gate). Subscribing here
-	// keeps the button reactive to incoming kills without re-routing through
-	// GamePage.
-	const gold = useGameStore((s) => s.gold);
 	// Phase 11 Task 11.2 — momentary scale punch when a successful merge is
 	// announced while the sheet is on screen. Auto-clears after 200ms via the
 	// effect cleanup so subsequent merges retrigger the animation.
 	const [mergePunch, setMergePunch] = useState(false);
 
 	// [F21] React state reset — avoid stale mode when switching towers.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: instanceId is the trigger, not a read dep
 	useEffect(() => {
 		setMode('idle');
 	}, [selectedTower?.instanceId]);
@@ -88,23 +80,6 @@ export function TowerActionSheet({
 
 	const handleSell = () => {
 		EventBus.emit('request-sell-tower', {
-			col: selectedTower.col,
-			row: selectedTower.row,
-		});
-	};
-
-	const currentLevel = selectedTower.level ?? 1;
-	const atMaxLevel = currentLevel >= MAX_IN_BATTLE_LEVEL;
-	const enhanceCost = atMaxLevel ? 0 : inBattleEnhanceCost(currentLevel);
-	const canAffordEnhance = !atMaxLevel && gold >= enhanceCost;
-	const enhanceDisabled = atMaxLevel || !canAffordEnhance;
-
-	const handleEnhance = () => {
-		// Double-gate: disabled prop blocks native click, but this guards
-		// keyboard/programmatic dispatches (a11y + edge cases). Without it the
-		// emit would still fire and the orchestrator would have to reject.
-		if (enhanceDisabled) return;
-		EventBus.emit('request-enhance-tower', {
 			col: selectedTower.col,
 			row: selectedTower.row,
 		});
@@ -186,34 +161,6 @@ export function TowerActionSheet({
 					}}
 				>
 					판매 +{selectedTower.sellValue}
-				</button>
-				<button
-					type="button"
-					data-testid="tower-action-enhance"
-					data-disabled={enhanceDisabled ? '1' : '0'}
-					data-at-max={atMaxLevel ? '1' : '0'}
-					disabled={enhanceDisabled}
-					onClick={handleEnhance}
-					className={cn(
-						'flex flex-col items-center justify-center min-w-[64px] min-h-[52px] px-2 border-2 font-pixel text-[11px]',
-						enhanceDisabled ? 'opacity-50' : 'active:scale-95',
-					)}
-					style={{
-						background: 'var(--color-panel)',
-						borderColor: 'var(--color-success)',
-						color: 'var(--color-success)',
-					}}
-				>
-					{atMaxLevel ? (
-						<span>강화 MAX</span>
-					) : (
-						<>
-							<span>강화 Lv{currentLevel + 1}</span>
-							<span className="text-[9px] mt-[1px] text-gold">
-								💰{enhanceCost}
-							</span>
-						</>
-					)}
 				</button>
 				<button
 					type="button"

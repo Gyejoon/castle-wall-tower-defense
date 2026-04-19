@@ -40,12 +40,6 @@ export {
 	INGAME_GACHA,
 	INITIAL_ENERGY,
 } from './constants/energy';
-export {
-	BASE_ENHANCE_COST,
-	inBattleDamageMultiplier,
-	inBattleEnhanceCost,
-	MAX_IN_BATTLE_LEVEL,
-} from './constants/enhance';
 export type { GachaResult } from './constants/gacha';
 export {
 	GACHA_COSTS,
@@ -80,6 +74,7 @@ export {
 export {
 	battleXp,
 	createDefaultSave,
+	dupesRequiredForLevel,
 	enhancementCost,
 	enhancementStatMultiplier,
 	getEffectiveStats,

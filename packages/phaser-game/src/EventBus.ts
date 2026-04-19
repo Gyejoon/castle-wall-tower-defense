@@ -34,12 +34,6 @@ export interface GameEventMap {
 		};
 	};
 	'energy-changed': { energy: number };
-	/**
-	 * Run-scoped gold pool changed (kill bounty in, in-battle enhance out).
-	 * Mirrors `energy-changed` so the React HUD can poll it once and store
-	 * the value in `gameStore.gold`.
-	 */
-	'gold-changed': { gold: number };
 	'wave-prep-started': { durationMs: number };
 	'wave-prep-tick': { remainingMs: number };
 	'wave-started': {
@@ -87,9 +81,6 @@ export interface GameEventMap {
 		row: number;
 		refund: number;
 		tier: number;
-		/** Current in-battle level (1-based). Drives the enhance button cost
-		 *  badge and disabled-at-cap state in `TowerActionSheet`. */
-		level: number;
 	};
 	'request-enter-move-mode': {
 		fromCol: number;
@@ -231,29 +222,6 @@ export interface GameEventMap {
 	 *  switches into merge-target-picker mode until the next tower tap.
 	 *  [F10] owns the Phase 8 handler. */
 	'enter-merge-mode': { sourceId: string };
-
-	// === In-battle gold-spend tower enhance ===
-	/**
-	 * React asks the orchestrator to spend gold and bump the tower at
-	 * `(col, row)` by one in-battle level. Cost / cap / damage scaling live
-	 * in `@gld/shared` `constants/enhance`.
-	 */
-	'request-enhance-tower': { col: number; row: number };
-	/**
-	 * Tower successfully enhanced. Carries the new level and the post-scale
-	 * effective damage so the HUD can flash a value without re-reading the
-	 * tower instance.
-	 */
-	'tower-enhanced': {
-		col: number;
-		row: number;
-		newLevel: number;
-		damage: number;
-	};
-	/** Enhance request rejected. HUD surfaces the reason as a toast. */
-	'enhance-failed': {
-		reason: 'insufficient-gold' | 'max-level' | 'tower-not-found';
-	};
 }
 
 export class TypedEventBus {

@@ -9,7 +9,7 @@ export function battleXp(wavesCleared: number, victory: boolean): number {
 	return wavesCleared * 10 + (victory ? 50 : 0);
 }
 
-/** Tower enhancement cost scaling per tier (T1-T6). Phase-9 will revisit. */
+/** Tower enhancement cost scaling per tier (T1-T6). */
 const TIER_COST_MULT = [0, 1, 1.5, 2, 3, 5, 8];
 
 export function enhancementCost(level: number, tier: number): number {
@@ -20,6 +20,19 @@ export function enhancementCost(level: number, tier: number): number {
 
 export function enhancementStatMultiplier(level: number): number {
 	return 1 + (level - 1) * 0.04;
+}
+
+/**
+ * Dupes required to go from `level → level + 1`. Doubling chain:
+ * 1→2 = 1, 2→3 = 2, 3→4 = 4, ..., 49→50 = 2^48. Level-up consumes
+ * `duplicateCount` on the owned tower.
+ *
+ * Returns `Infinity` at or past the cap so callers can short-circuit with
+ * the same `>= MAX_TOWER_LEVEL` gate used for gold cost.
+ */
+export function dupesRequiredForLevel(level: number): number {
+	if (level >= MAX_TOWER_LEVEL) return Number.POSITIVE_INFINITY;
+	return 2 ** (level - 1);
 }
 
 export function stunCooldownMultiplier(level: number): number {

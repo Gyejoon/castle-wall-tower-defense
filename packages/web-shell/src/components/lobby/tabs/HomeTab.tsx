@@ -354,21 +354,8 @@ export function HomeTab() {
 			<Keyart />
 
 			<div className="relative z-[1] flex flex-col flex-1 min-h-0">
-				{/* Title */}
-				<div className="flex flex-col items-center mt-[14%] gap-2 px-4 text-center">
-					<h1
-						className="font-pixel text-[28px] text-gold tracking-wider leading-none"
-						style={{ textShadow: '0 3px 10px rgba(0,0,0,0.9)' }}
-					>
-						Grid Line Defense
-					</h1>
-					<span
-						className="font-pixel text-[11px] text-accent uppercase"
-						style={{ letterSpacing: 2 }}
-					>
-						Phase A
-					</span>
-				</div>
+				{/* Title removed — keyart carries the brand; CTA card introduces
+				    the run copy. Keeps the keep/moon/silhouette fully in view. */}
 
 				{/* Spacer pushes the CTA card to the bottom */}
 				<div className="flex-1" />

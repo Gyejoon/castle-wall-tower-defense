@@ -32,10 +32,9 @@ describe('LobbyPage', () => {
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
 		// Phase A redesign ("Option C · cinematic keyart"):
-		// hero title, PHASE A label, NEXT UP card copy, and 전투 시작 CTA.
-		// 메타 강화 moved to the 전쟁탁자 tab header, so it's NOT on home.
-		expect(view.getByText('Grid Line Defense')).toBeTruthy();
-		expect(view.getByText('Phase A')).toBeTruthy();
+		// keyart carries the brand — no hero title. CTA card has NEXT UP
+		// copy + 전투 시작 button. 메타 강화 lives in the 전쟁탁자 tab header.
+		expect(view.queryByText('Grid Line Defense')).toBeNull();
 		expect(view.getByText('NEXT UP')).toBeTruthy();
 		expect(view.getByText('랜덤 합성 타워 디펜스')).toBeTruthy();
 		expect(view.getByRole('button', { name: '전투 시작' })).toBeTruthy();

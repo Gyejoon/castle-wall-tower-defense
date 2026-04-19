@@ -2,6 +2,7 @@ import { EventBus } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
+	ENERGY_PER_WAVE_CLEAR,
 	type PlacementFailureReason,
 	type WavePhase,
 } from '@gld/shared';
@@ -154,8 +155,17 @@ export function useGameEvents() {
 			wave: number;
 			totalWaves: number;
 			delaySec: number;
+			cleared?: boolean;
 		}) => {
 			if (data.wave < data.totalWaves) {
+				// Mirror the Game scene's energy bonus as a toast so the +20
+				// bump is obviously the wave-clear reward rather than passive
+				// regen. Game.ts gates on `cleared === true` + non-final wave;
+				// keep the HUD toast in sync with that rule so timer-forced
+				// clears don't falsely promise a bonus.
+				if (data.cleared !== false) {
+					pushToast(`웨이브 클리어 ⚡+${ENERGY_PER_WAVE_CLEAR}`, 'success');
+				}
 				setWaitCountdown(data.delaySec);
 				patchCombatHud({
 					phase: 'waiting',

@@ -175,7 +175,13 @@ export interface GameEventMap {
 		reason: 'same-instance' | 'incompatible-pair' | 'max-tier' | 'invalid-tile';
 	};
 	'summon-failed': {
-		reason: 'insufficient-energy' | 'no-empty-tile' | 'placement-failed';
+		reason:
+			| 'insufficient-energy'
+			| 'no-empty-tile'
+			| 'placement-failed'
+			| 'occupied'
+			| 'blocked-path'
+			| 'out-of-bounds';
 	};
 	'phase-a-summon-ready': {
 		towerId: TowerId;

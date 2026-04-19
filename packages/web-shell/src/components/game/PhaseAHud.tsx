@@ -454,6 +454,12 @@ function summonFailLabel(reason: string): string {
 			return '에너지 부족';
 		case 'no-empty-tile':
 			return '빈 칸 없음';
+		case 'occupied':
+			return '이미 타워 있음';
+		case 'blocked-path':
+			return '적 경로를 막음';
+		case 'out-of-bounds':
+			return '판 밖';
 		case 'placement-failed':
 			return '배치 불가';
 		default:

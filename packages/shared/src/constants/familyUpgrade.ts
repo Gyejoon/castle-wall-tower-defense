@@ -21,10 +21,10 @@ export const UPGRADEABLE_FAMILIES = [
 
 export type UpgradeableFamily = (typeof UPGRADEABLE_FAMILIES)[number];
 
-/** Per-level flat damage bonus. +25% / level, stacks additively. Tuned so
- *  a fully upgraded family (Lv.10) multiplies damage by ×3.5, enough to
- *  carry endgame boss DPS without trivialising normal waves. */
-export const FAMILY_UPGRADE_DAMAGE_PER_LEVEL = 0.25;
+/** Per-level flat damage bonus. +30% / level, stacks additively. Tuned so
+ *  a fully upgraded family (Lv.10) multiplies damage by ×4.0, enough to
+ *  carry endgame boss DPS together with the relaxed phase-2 nerf. */
+export const FAMILY_UPGRADE_DAMAGE_PER_LEVEL = 0.3;
 
 /** Base energy cost for the first family upgrade (level 0 → 1). */
 export const BASE_FAMILY_UPGRADE_COST = 30;

@@ -507,7 +507,20 @@ export class PhaseAOrchestrator {
 			// Drop the pending draw so a failed placement doesn't strand the
 			// queue. This mirrors the cancellation path (queue advances).
 			this.settlePendingSummon('cancelled-no-refund');
-			EventBus.emit('summon-failed', { reason: 'placement-failed' });
+			// Surface the underlying TowerSystem reason so the HUD can show a
+			// specific label ("이미 타워 있음" / "적 경로 차단" / "판 밖") rather
+			// than the generic "배치 불가".
+			const reasonMap: Record<
+				string,
+				'occupied' | 'blocked-path' | 'out-of-bounds'
+			> = {
+				occupied: 'occupied',
+				blocked_path: 'blocked-path',
+				out_of_bounds: 'out-of-bounds',
+			};
+			EventBus.emit('summon-failed', {
+				reason: reasonMap[placement.reason] ?? 'placement-failed',
+			});
 			return;
 		}
 		this.deps.towerSystem.playPhaseASummonVfx(col, row);

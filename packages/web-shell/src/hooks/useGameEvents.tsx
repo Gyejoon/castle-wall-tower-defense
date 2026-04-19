@@ -2,7 +2,6 @@ import { EventBus } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
-	ENERGY_PER_WAVE_CLEAR,
 	type PlacementFailureReason,
 	type WavePhase,
 } from '@gld/shared';
@@ -157,10 +156,6 @@ export function useGameEvents() {
 			delaySec: number;
 		}) => {
 			if (data.wave < data.totalWaves) {
-				// Game scene grants +ENERGY_PER_WAVE_CLEAR on every wave end
-				// (natural clear + timer-forced alike). Mirror the toast so
-				// the +20 bump is obvious against the 1/sec regen baseline.
-				pushToast(`웨이브 종료 ⚡+${ENERGY_PER_WAVE_CLEAR}`, 'success');
 				setWaitCountdown(data.delaySec);
 				patchCombatHud({
 					phase: 'waiting',

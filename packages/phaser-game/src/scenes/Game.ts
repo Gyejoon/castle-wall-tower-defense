@@ -4,6 +4,7 @@ import {
 	ENERGY_PER_BOSS_FAST_CLEAR,
 	ENERGY_PER_BOSS_KILL,
 	ENERGY_PER_KILL,
+	ENERGY_PER_WAVE_CLEAR,
 	FAST_CLEAR_THRESHOLD_MS,
 	generatePhaseAWaves,
 	getAllPathCells,
@@ -377,8 +378,17 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			// Phase 3 (sole-mode): wave-clear energy bonus removed entirely.
-			// Energy comes from passive regen + per-kill + boss-kill rewards.
+			// Phase A: flat +ENERGY_PER_WAVE_CLEAR on every cleared wave to pace
+			// summon/gacha cadence between waves. Skipped on timer-forced clears
+			// (cleared === false) so players can't farm energy by stalling, and
+			// on the final wave since the run is already ending.
+			if (
+				data.cleared &&
+				this.isPhaseAMap &&
+				data.slotIndex < data.totalWaves
+			) {
+				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
+			}
 			// Phase 4 Task 4.2: roguelike pick now triggers on BOSS-phase clears
 			// only. WaveSystem tags each `wave-completed` with the phase that
 			// just ended (Task 4.0 [F7]); we bypass the pick if the wave was

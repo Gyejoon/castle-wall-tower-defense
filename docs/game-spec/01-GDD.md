@@ -1,10 +1,12 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-20 (v3 — Phase A 단독 모드 승격)
-> **Source:** Phase A sole-mode plan `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`
+> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 4 버그 픽스)
+> **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 >
-> **v3 노트 (2026-04-20)**: Phase A를 **게임의 유일한 모드**로 승격. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
+> **v3 노트 (2026-04-20)**: 2026-04-14 피벗으로 도입된 랜덤 소환 + 합성 루프를 **게임의 유일한 정식 모드**로 확정. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
+>
+> **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser `Scale.NONE` + React CSS transform 기반 고정 432×960 논리 해상도 wrapper (`useViewportScale` 훅) 도입해 기기별 타워/몬스터 비율 드리프트 차단. PR #175.
 
 ---
 
@@ -27,9 +29,9 @@
 | Session Length | 5~10분 |
 | Core Fantasy | 랜덤으로 뽑은 4 가문 타워를 합성해 tier 6 "세계의 끝"까지 키우는 지휘관 |
 | Core Fun | 랜덤 소환 도파민 + 합성/승급 도파민 + 보스 웨이브 로그라이크 강화 선택 + 픽셀 중세 톤 |
-| Win Condition | 생존 (Phase A: 50 wave 무한 에스컬레이션, 보스 10 wave마다 출현). 실질적 자연 패배 wave 15~35. |
+| Win Condition | 생존 (50 wave 무한 에스컬레이션, 보스 10 wave마다 출현). 실질적 자연 패배 wave 15~35. |
 | Lose Condition | 기지 HP 0 (적이 exitPoint 도달 시 -1) 또는 보스 leak 즉시 패배 |
-| Modes | **Phase A 단독**. 시나리오 모드(월드/스테이지/덱)는 제거됨. |
+| Modes | **단일 정식 모드**. 시나리오 / 월드 / 덱 개념 없음. |
 
 ---
 
@@ -47,9 +49,9 @@
 
 ## 3. Core Loop / Meta Loop (v3)
 
-**In-battle Loop (Phase A sole mode)**
+**In-battle Loop**
 ```
-마당 홈 탭 → "전투 시작" → phase_a_long 진입 → prep countdown
+마당 홈 탭 → "전투 시작" → 맵 `phase_a_long` 진입 → prep countdown
   → [반복] 에너지 수급: +1/sec 베이스 + 킬당 +1 + 보스 킬 +20 + 30초 내 fast-clear +20 (ENERGY_MAX=200)
         ├─ 기본 소환 ⚡20 → 랜덤 T1 (archer/nova_cannon/emp/shield 중 1) → 빈 칸 탭해 배치
         └─ 인게임 가챠 ⚡40/80/160 → T2(60%) / T3(20%) / T4(5%) 시도, 실패 시 T1 폴백
@@ -62,14 +64,14 @@
   → wave 무한 에스컬레이션 → 패배 시 "광고 보고 이어서 하기" (1회 한정, +5 HP) or 로비 복귀
 ```
 
-**Meta Loop (Phase 9 shell)**
+**Meta Loop (shell 수준, 영구 강화 퍽은 후속 단계)**
 ```
 플레이 → 런 종료 시 글로벌 공격력 % / 패밀리 퍽 / 영구 강화 누적 (localStorage persist)
        → 다음 런에서 TowerSystem.setGlobalModifiers({ atkPct }) 주입
        → 메타 강화 페이지는 전쟁탁자 탭에서 진입
 ```
 
-**BM Loop (Phase 10 stub)**
+**BM Loop (stub 수준)**
 ```
 광고 시청 → MockAdService('rewarded')
   - 로그라이크 리롤: 광고 1회 → 3카드 재추첨
@@ -110,10 +112,10 @@
 
 | 시스템 | 정의 | 핵심 파라미터 |
 |--------|------|-------------|
-| SummonPoolSystem | T1 4종 (archer/nova_cannon/emp/shield) 균등 draw | `PHASE_A_SUMMON_COST = 20`, injectable `rng` |
+| SummonPoolSystem | T1 4종 (archer/nova_cannon/emp/shield) 균등 draw | `PHASE_A_SUMMON_COST = 20` (legacy const name), injectable `rng` |
 | GachaSystem | T2/T3/T4 시도. 실패 시 T1 폴백. `tier_odds_up` 로그라이크 스택 반영 (cap 10) | `INGAME_GACHA.tier2/3/4` (cost, successRate) |
 | MergeSystem | family/tier 기반 validation. `resolveMerge` 호출 | `tryMerge(a, b) → {kind: 'success'\|'failure'}` |
-| PhaseAOrchestrator | 소환/가챠/합성/강화/로그라이크/광고 전체 파이프라인. `pendingSummon` 큐 + 취소 리롤 방지 (`cancelledPoolDraw` 보존) | `PHASE_A_MAX_CONTINUES_PER_RUN = 1` |
+| PhaseAOrchestrator | 소환/가챠/합성/강화/로그라이크/광고 전체 파이프라인. `pendingSummon` 큐 + **풀/가챠 양쪽 취소·배치실패 리롤 방지** (`cancelledPoolDraw` + `cancelledGachaDraw` 캐시) | `PHASE_A_MAX_CONTINUES_PER_RUN = 1` (legacy const name) |
 | EnergySystem | +1/sec 베이스 + 킬 에너지 + 보스 보너스. `ENERGY_MAX = 200` | CC 가드레일 2 참조 |
 | GoldSystem | run-scoped 골드 풀. 킬 bounty로 축적, 타워 인게임 강화 소비 | `inBattleEnhanceCost(level)` 150% 성장 |
 | UnitSystem | `ccResistance` (boss 0.5~0.7), 슬로우/스턴 duration × (1 - ccResistance), `MIN_MOVE_SPEED = 0.15`, 2초 stun immunity | |
@@ -140,7 +142,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 
 ### 메커니즘 주요 변경
 
-- **소환 취소 시 towerId 유지** (cancelledPoolDraw): 리롤 꼼수 방지. 재소환 시 동일 towerId 재발급. 가챠는 취소 시 refund만 (다음 tap에서 새 roll).
+- **소환 취소 / 배치 실패 시 towerId 유지**: 리롤 꼼수 방지. 풀 소환은 `cancelledPoolDraw`, 가챠는 `cancelledGachaDraw`(towerId + targetTier) 캐시 보존. 재요청 시 동일 tier면 캐시 재사용(가챠는 비용 재지불, 풀은 배치 시 지불), 다른 tier 가챠 버튼을 누르면 캐시 폐기 + 새 roll (유저의 명시적 탈출구). 배치 실패(차단/점유)도 동일 캐시 경로로 보존되어 재소환 리롤 불가.
 - **Placement**: 랜덤 소환 + 사용자가 빈 buildable 탭해 배치. 경로 차단 검증 (pathfinding).
 - **Tower Sell**: 타워 선택 → "판매" → sellValue 환불. tier별 sell value.
 - **Tower Move**: 타워 선택 → "이동" → 빈 buildable 탭해 재배치.
@@ -150,7 +152,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 
 ## 5. Content Plan (v3)
 
-### Phase A 콘텐츠 (sole mode)
+### 콘텐츠
 
 | 분류 | 수량 | 비고 |
 |------|------|------|
@@ -158,7 +160,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 | 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
 | **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
 | 맵 | 1종 (`phase_a_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
-| 스테이지 | Phase A 단독 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
+| 스테이지 | 단일 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
 | 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
 | 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |
 
@@ -166,17 +168,17 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 
 | 분류 | 상태 | 비고 |
 |------|------|------|
-| 메타 강화 페이지 | Phase 9 shell | 글로벌 공격력 % + 4 family 퍽 카운트 표시. 퍽 선택 UX, 영구 강화 구매 UX는 후속 단계 |
-| AdService | Phase 10 stub (MockAdService) | 항상 `rewarded` 반환 (500ms delay). 리롤, 이어서 하기 2개 placement |
+| 메타 강화 페이지 | shell 수준 | 글로벌 공격력 % + 4 family 퍽 카운트 표시. 퍽 선택 UX, 영구 강화 구매 UX는 후속 단계 |
+| AdService | stub 수준 (MockAdService) | 항상 `rewarded` 반환 (500ms delay). 리롤, 이어서 하기 2개 placement |
 | 이어서 하기 | 런당 1회 한정 | HP +5 복원, wave 타이머 재시작, 타워/업그레이드 상태 유지 |
 | 광고 리롤 | 로그라이크 3카드 화면 | 재추첨 |
 
-### 제거된 콘텐츠 (Phase 6~7)
+### 제거된 콘텐츠 (정식 모드 전환 시)
 
 - **시나리오 모드**: W1 Forest / W2 Forge / W3 Tower + 24 stages — 전부 제거
-- **덱 편성**: 4타워 덱 개념 제거. Phase A는 랜덤 소환 기반
+- **덱 편성**: 4타워 덱 개념 제거. 정식 모드는 랜덤 소환 기반
 - **월드 기믹**: GimmickSystem (용광로 폭발, 마력 폭주 등) 제거
-- **임무 / 업적**: 시나리오 전용. 퍽 기반 메타 루프로 대체 (Phase 9+)
+- **임무 / 업적**: 시나리오 전용. 퍽 기반 메타 루프로 대체 예정
 - **★ 별 등급**: 스테이지 개념 자체가 없으므로 제거
 - **제거된 타워**: plasma, dragon_nest (family/tier 모델에 맞지 않아 purge)
 
@@ -278,21 +280,33 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 
 비보스 스테이지(s1~s7)는 5~9웨이브 구성이며 보스 없이 normal 웨이브만 포함한다.
 
-### 웨이브별 스케일링 (WAVE_SCALING)
+### 웨이브별 스케일링 (WAVE_SCALING + `getWaveScaling`)
 
-웨이브 진행에 따라 몬스터 HP/속도에 배수 적용. 초반 완만, 후반 가파름.
+웨이브 진행에 따라 몬스터 HP/속도에 배수 적용. slots 1-10은 테이블, slots 11+는 **선형 공식** (이전 `×1.12` 지수에서 v3.1 픽스로 변경).
+
+#### Slots 1-10 (`WAVE_SCALING` 테이블)
 
 | Wave | HP 배수 | 속도 배수 |
 |------|---------|----------|
 | 1-2 | 1.0× | 1.0× |
-| 3 | 1.1× | 1.0× |
-| 4 | 1.2× | 1.0× |
-| 5 | 1.5× | 1.05× |
-| 6 | 1.8× | 1.05× |
-| 7 | 2.2× | 1.1× |
-| 8 | 2.6× | 1.1× |
-| 9 | 3.0× | 1.15× |
-| 10 | 3.5× | 1.15× |
+| 3 | 1.2× | 1.0× |
+| 4 | 1.4× | 1.0× |
+| 5 | 1.6× | 1.05× |
+| 6 | 1.9× | 1.05× |
+| 7 | 2.3× | 1.1× |
+| 8 | 2.7× | 1.1× |
+| 9 | 3.2× | 1.15× |
+| 10 | 3.8× | 1.15× |
+
+#### Slots 11+ (`getWaveScaling` 선형)
+
+```
+HP_SLOPE = 0.55
+hp    = WAVE_SCALING[10].hp + (slot - 10) × HP_SLOPE
+speed = min(WAVE_SCALING[10].speed + (slot - 10) × 0.03, 2.2)
+```
+
+예: W20 HP = 3.8 + 10 × 0.55 = **9.30**, W30 = **14.80**, W40 = **20.30**, W50 = **25.80**. 이전 `×1.12^over` 공식은 W50에서 354× 까지 폭증해 W20→W30 구간에서 계단식 점프 (×7.8→×15.5) 발생 → 선형으로 평탄화.
 
 ### 웨이브 제한 시간
 
@@ -340,7 +354,16 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 
 ## 8. UI / UX (v3)
 
-### Phase A HUD 구조
+### 논리 해상도 & 뷰포트 스케일 (v3.1 B4 픽스)
+
+Phaser canvas와 HUD 전체가 **고정 432×960 논리 해상도**로 렌더링되고, React CSS transform wrapper(`useViewportScale` 훅)가 뷰포트 크기에 맞춰 **균등 scale**을 적용한다. 이전 `Scale.FIT` + `h-dvh` 조합은 기기별 부모 CSS 크기에 따라 내부 단위를 재계산해 타워(64×80) / 몬스터(40×48/60×72) 상대 크기가 드리프트하는 문제가 있었다.
+
+- **Phaser**: `scale.mode = Phaser.Scale.NONE`, `autoCenter = NO_CENTER` — 내부 해상도 고정
+- **React wrapper**: `game-scale-wrapper`가 `width: 432px; height: 960px; transform: scale(min(ww/432, wh/960))` — 뷰포트에 비례 축소
+- **HUD + 게임 컨테이너 모두 wrapper 안에 포함** — 함께 스케일되므로 HUD:캔버스 비율 유지
+- **터치 이벤트**: CSS transform으로 hit area도 함께 스케일. Phaser input은 canvas DOMRect 기준이라 내부적으로 1:1 매핑 유지
+
+### HUD 구조
 
 - **TopHud (상단 정보 배지)**: HP 20, ⚡{energy} badge with ring, `웨이브 N/50 - {timer}s` 또는 `준비 N`
 - **하단 액션바** (safe-area-inset-bottom padding):
@@ -359,6 +382,13 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
   - "로비로"
 - **Merge-mode 배너**: TowerActionSheet 합성 버튼 → `enter-merge-mode` → "합성할 타워를 탭하세요" 상단 배너 + ESC/cancel. 두 번째 타워 탭 시 `request-merge-towers` emit.
 
+### 보스 HP HUD (v3.1 B2 픽스)
+
+`BossHpBar` 컴포넌트는 `boss-hp-update` 이벤트의 payload를 그대로 렌더한다. 내부적으로 HP가 float 누산이라 HUD에 소수점이 노출되던 문제를 두 지점에서 차단:
+
+- **Source (UnitSystem)**: `boss-hp-update` emit 시 `hp: Math.max(0, Math.floor(unit.data.hp))` — payload에 정수 보장
+- **Render (BossHpBar)**: `{Math.floor(entry.hp)}/{Math.floor(entry.maxHp)}` — 소스가 바뀌어도 안전
+
 ### 로비 구조
 
 - **TopHud ProfileBar**: 아바타 + Commander + Lv + 전투력, 우측에 골드/다이아 ResourceChip
@@ -368,10 +398,10 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 - **메타 강화 (MetaForgePage)**: 전쟁탁자에서 진입. 글로벌 공격력 % + 4 family 퍽 카운트
 - **설정 (SettingsTab)**: BGM/SFX 볼륨, 화면 흔들림, 색맹 모드
 
-### 제거된 UI (Phase 6)
+### 제거된 UI (정식 모드 전환 시)
 
 - ~~WorldMapPage / StageDetailPage / StageSelectPage~~
-- ~~DeckDock / DeckEditSheet~~ (Phase A는 랜덤 소환 기반)
+- ~~DeckDock / DeckEditSheet~~ (정식 모드는 랜덤 소환 기반)
 - ~~MissionsTab / AchievementPage~~
 - ~~Home 탭 플로팅 아이콘 (임무/업적 뱃지)~~
 
@@ -504,13 +534,13 @@ screenShake 동기화:
 
 ## 10. 게임 정체성 (Edge Point) (v3)
 
-> Grid Line Defense는 **랜덤 소환 슬롯머신 + 인게임 합성 도파민 + 픽셀 중세 자산**을 Phase A 단독 모드로 응축한다. 시나리오/월드/덱 없이 한 판 5~10분 루프에 집중. "어떤 타워가 뽑힐까 → family/tier 맞춰서 합성 → ultimate 도달하는 쾌감" 세 박자를 매 소환·가챠마다 돌린다.
+> Grid Line Defense는 **랜덤 소환 슬롯머신 + 인게임 합성 도파민 + 픽셀 중세 자산**을 단일 정식 모드로 응축한다. 시나리오/월드/덱 없이 한 판 5~10분 루프에 집중. "어떤 타워가 뽑힐까 → family/tier 맞춰서 합성 → ultimate 도달하는 쾌감" 세 박자를 매 소환·가챠마다 돌린다.
 
 ※ **랜덤 소환 + 가챠 2중 레이어**: 기본 소환은 T1 균등 랜덤, 인게임 가챠는 에너지로 T2/T3/T4 시도 (60/20/5% 성공률). 로그라이크 `tier_odds_up` 카드로 확률을 올려가는 진행감.
 
 ※ **합성 체인 5 단계**: T1→T4 family promotion → T4 cross-family → hybrid T5 → ultimate T6. 같은 family T4 2개는 합성 불가 (반드시 다른 family 필요) — 플레이어가 어떤 hybrid를 노릴지 결정하게 만드는 전략 축.
 
-※ **메타 최소화**: 영구 메타는 글로벌 공격력 + 패밀리 퍽만 (Phase 9 shell). 한 판 안에서 ultimate까지 도달하는 감각이 주된 진행감. P2W 의존도 자연 저하.
+※ **메타 최소화**: 영구 메타는 글로벌 공격력 + 패밀리 퍽만 (shell 수준). 한 판 안에서 ultimate까지 도달하는 감각이 주된 진행감. P2W 의존도 자연 저하.
 
 ※ **BM은 광고 리워드 2곳**: 로그라이크 리롤 + 이어서 하기. 양쪽 모두 "한 번 더 뽑고 싶다/한 번 더 돌고 싶다" 감정 지점에 정확히 붙음.
 
@@ -536,4 +566,5 @@ screenShake 동기화:
 | 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
 | 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |
 | 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 U-turn 왕복) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. PhaseAHud(React) + 3배속 + 웨이브 타이머 HUD. PR #170. |
-| 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 Phase A 단독 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |
+| 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 정식 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |
+| 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 PhaseAOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 고정 432×960 논리 해상도 wrapper — `useViewportScale` 훅이 `scale(min(ww/432, wh/960))` 적용해 기기별 canvas 내부 해상도 드리프트 차단. §8 "논리 해상도 & 뷰포트 스케일" 소섹션 신설. 용어 정리: "Phase A" → "정식 모드" 전반 치환 (map/event id 등 코드 상수는 유지). |

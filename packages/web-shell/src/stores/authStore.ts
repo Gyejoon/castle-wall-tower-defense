@@ -115,6 +115,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	},
 
 	async signIn(email, pw) {
+		if (!supabaseConfigured) {
+			return { ok: false, error: '서버 연결 설정이 누락되었습니다' };
+		}
 		const { error } = await supabase.auth.signInWithPassword({
 			email,
 			password: pw,
@@ -124,6 +127,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	},
 
 	async signUp(email, pw) {
+		if (!supabaseConfigured) {
+			return { ok: false, error: '서버 연결 설정이 누락되었습니다' };
+		}
 		const { data, error } = await supabase.auth.signUp({
 			email,
 			password: pw,
@@ -144,7 +150,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	},
 
 	async createProfile(nickname, avatarKey) {
-		if (!supabaseConfigured) return { ok: false, error: 'disabled' };
+		if (!supabaseConfigured) {
+			return {
+				ok: false,
+				error: '서버 연결 설정이 누락되었습니다',
+				code: 'unknown',
+			};
+		}
 		const { userId } = get();
 		if (!userId)
 			return { ok: false, error: '세션이 없습니다. 다시 로그인해주세요' };

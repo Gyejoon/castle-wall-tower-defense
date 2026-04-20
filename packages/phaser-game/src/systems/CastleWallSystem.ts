@@ -67,40 +67,44 @@ export class CastleWallSystem {
 			const wallY = world.y + TILE_SIZE / 2; // align wall bottom to tile bottom edge
 			const baseDepth = ep.x + ep.y;
 
-			// Wall sprite
+			// Wall sprite — 48×60 matches the new tower/tile scale so the
+			// wall fits its row without overflowing into neighbouring rows.
+			// Depth sits above the flat depth=2 grass platform layer (see
+			// Game.ts Layer 2 loop); 100+ stays clear of every grid-relative
+			// depth layer below.
 			const wall = this.scene.add.sprite(world.x, wallY, 'castle-wall-hp3');
-			wall.setDisplaySize(64, 80);
+			wall.setDisplaySize(48, 60);
 			wall.setOrigin(0.5, 1.0);
-			wall.setDepth(baseDepth + 1);
+			wall.setDepth(100 + baseDepth);
 
-			// Smoke sprite
+			// VFX offsets scaled down proportionally to the new wall size
+			// (48/64 = 0.75x) so smoke/fire still sit on the wall visually.
 			const smoke = this.scene.add.sprite(
-				world.x - 16,
-				wallY - 24,
+				world.x - 12,
+				wallY - 18,
 				'vfx-wall-smoke',
 			);
-			smoke.setDepth(baseDepth + 2);
+			smoke.setDepth(101 + baseDepth);
 			smoke.setVisible(false);
 			smoke.play('wall-smoke');
 			smoke.anims.pause();
 
-			// Fire sprites (two per wall)
 			const fire1 = this.scene.add.sprite(
-				world.x + 10,
-				wallY - 8,
+				world.x + 8,
+				wallY - 6,
 				'vfx-wall-fire',
 			);
-			fire1.setDepth(baseDepth + 2);
+			fire1.setDepth(101 + baseDepth);
 			fire1.setVisible(false);
 			fire1.play('wall-fire');
 			fire1.anims.pause();
 
 			const fire2 = this.scene.add.sprite(
-				world.x + 24,
-				wallY + 4,
+				world.x + 18,
+				wallY + 3,
 				'vfx-wall-fire',
 			);
-			fire2.setDepth(baseDepth + 2);
+			fire2.setDepth(101 + baseDepth);
 			fire2.setVisible(false);
 			fire2.play('wall-fire');
 			fire2.anims.pause();

@@ -31,7 +31,7 @@ export function BossHpBar({ entry }: BossHpBarProps) {
 					{UNIT_NAME_MAP.get(entry.defId) ?? entry.defId}
 				</span>
 				<span className="font-pixel text-[11px] text-text drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
-					{phaseLabel} — {entry.hp}/{entry.maxHp}
+					{phaseLabel} — {Math.floor(entry.hp)}/{Math.floor(entry.maxHp)}
 				</span>
 			</div>
 			<div

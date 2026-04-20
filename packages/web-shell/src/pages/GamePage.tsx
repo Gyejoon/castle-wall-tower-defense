@@ -261,7 +261,20 @@ export function GamePage() {
 
 	return (
 		<div className="flex h-full w-full justify-center bg-bg">
-			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+			<div
+				data-testid="game-portrait-shell"
+				className="relative flex w-full max-w-[520px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+				style={{
+					// Dynamic viewport: 100dvh on modern mobile browsers shrinks
+					// when URL bar shows. Fallback to 100% for legacy. Both HUDs
+					// size naturally; the canvas absorbs the remaining height
+					// via the flex-1 game area below. max-w bumped 430→520 after
+					// sprite downsize so the 432-internal map uses more
+					// horizontal space on larger phones (Galaxy S25/Fold outer).
+					height: '100dvh',
+					minHeight: '100%',
+				}}
+			>
 				{!gameReady && (
 					<div
 						className="absolute inset-0 z-[5] flex flex-col items-center justify-center"

@@ -315,6 +315,19 @@ describe('GamePage', () => {
 		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();
 	});
 
+	it('portrait shell uses 100dvh + max-w-[430px] (mobile portrait standard)', () => {
+		const view = render(<GamePage />);
+		const shell = view.getByTestId('game-portrait-shell') as HTMLDivElement;
+		// Height follows viewport (100dvh) so URL bar collapse doesn't cut HUDs.
+		expect(shell.style.height).toBe('100dvh');
+		// No CSS transform — HUDs render at natural DOM size on every device,
+		// which is required for safe-area-inset-top to reach the status bar
+		// correctly on devices like Galaxy S25.
+		expect(shell.style.transform).toBe('');
+		expect(shell.className).toContain('max-w-[520px]');
+		expect(shell.className).toContain('flex-col');
+	});
+
 	it('resets prep countdown UI when combat starts', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);

@@ -8,7 +8,7 @@
 
 ## 1. Save Data 스키마
 
-현재 저장 방식: `localStorage` (서버 동기화 미구현, Phase 5 예정)
+현재 저장 방식: `localStorage` (서버 동기화는 R3 트랙 후속 작업으로 이연, `06-milestone.md` 참조)
 
 ```json
 {
@@ -164,7 +164,7 @@ type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress' | 'ma
 
 ## 6. 텔레메트리 이벤트 맵
 
-> Phase 5에서 구현 예정. 코드 위치 TBD.
+> 텔레메트리 SDK 연동은 R3 트랙 후속 작업으로 이연. 코드 위치 TBD.
 
 | event_name | fire_when | parameters | primary_kpi |
 |------------|----------|-----------|------------|

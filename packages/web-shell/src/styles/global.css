@@ -43,6 +43,22 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* v3.1: Phaser runs with Scale.FIT so the internal bitmap stays 432×960 and
+   the canvas CSS is sized by Phaser to fit `#game-container` while preserving
+   the 9:20 aspect ratio (letterbox when the slot aspect differs). We only
+   ensure the container itself fills the flex-1 slot so Phaser can measure it
+   correctly; the canvas inside is controlled entirely by Phaser. */
+#game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#game-container canvas {
+  display: block;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);

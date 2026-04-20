@@ -19,6 +19,7 @@ vi.mock('../src/EventBus', () => ({
 	EventBus: { emit: vi.fn(), on: vi.fn(), off: vi.fn() },
 }));
 
+import { EventBus } from '../src/EventBus';
 import { UnitSystem } from '../src/systems/UnitSystem';
 
 function createSprite() {
@@ -595,6 +596,60 @@ describe('Boss phase system', () => {
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
+	});
+
+	it('emits boss-hp-update with integer hp (no decimals in HUD)', () => {
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Fractional damage exercises the floor guard — orc_warlord armor=10
+		// means a 17.3 raw hit resolves to a non-integer internal hp.
+		system.applyDamage(unitId, 17.3, false);
+
+		const emitCalls = (EventBus.emit as unknown as ReturnType<typeof vi.fn>)
+			.mock.calls;
+		const bossUpdates = emitCalls.filter(
+			(c: unknown[]) => c[0] === 'boss-hp-update',
+		);
+		expect(bossUpdates.length).toBeGreaterThan(0);
+		for (const [, payload] of bossUpdates) {
+			const hp = (payload as { hp: number }).hp;
+			expect(Number.isInteger(hp)).toBe(true);
+		}
+	});
+
+	it('clamps boss-hp-update hp to min 1 while the boss is still alive', () => {
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Knock the boss down to just below 1 HP without killing it:
+		// orc_warlord has phase transition at 50% HP = 1000. One armor-
+		// piercing hit of 1001 enters phase 2 (invulnerable + HP clamped).
+		// Wait out invulnerability, then shave HP to 0.4 with a precise hit.
+		system.applyDamage(unitId, 1001, true); // enter phase 2, hp clamped to 1
+		system.update(0, 600); // invulnerability expires
+		const afterTransitionHp = system.getUnitPositions()[0].hp;
+		const damageToBringNearZero = afterTransitionHp - 0.4;
+		(EventBus.emit as unknown as ReturnType<typeof vi.fn>).mock.calls.length =
+			0;
+		system.applyDamage(unitId, damageToBringNearZero, true);
+
+		// Boss must still be present (not killed).
+		expect(system.getUnitPositions()).toHaveLength(1);
+
+		const emitCalls = (EventBus.emit as unknown as ReturnType<typeof vi.fn>)
+			.mock.calls;
+		const bossUpdates = emitCalls.filter(
+			(c: unknown[]) => c[0] === 'boss-hp-update',
+		);
+		expect(bossUpdates.length).toBeGreaterThan(0);
+		const lastPayload = bossUpdates[bossUpdates.length - 1][1] as {
+			hp: number;
+		};
+		// Internal hp ≈ 0.4, but HUD must see 1, not 0 — the boss is alive.
+		expect(lastPayload.hp).toBeGreaterThanOrEqual(1);
 	});
 });
 

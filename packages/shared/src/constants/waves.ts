@@ -20,6 +20,15 @@ export interface WaveDef {
 	delayAfterClearSec: number;
 }
 
+/**
+ * Post-slot-10 HP growth per wave (linear). Replaces the previous ×1.12
+ * compounding curve whose W10→W20→W30 boss gaps (×7.8 then ×15.5) produced
+ * step-function difficulty cliffs. A flat slope keeps each boss slot 2×–3×
+ * harder than the previous one once hpMultiplier and base HP are folded in,
+ * without the pathological late-game explosion (W50 would hit ×354 of W10).
+ */
+export const HP_SLOPE = 0.55;
+
 export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 1.0, speed: 1.0 }, // Wave 1  — 성공 경험
 	{ hp: 1.0, speed: 1.0 }, // Wave 2  — 여전히 쉬움
@@ -35,13 +44,9 @@ export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 
 /**
  * Wave scaling for any slot (1..infinity). Uses WAVE_SCALING table for
- * slots 1-10 and an exponential escalation formula beyond so Phase A's
- * 50-wave endless mode keeps ramping hard instead of plateauing.
- *
- * After slot 10 HP compounds at ×1.12 per wave (wave 20 ≈ ×11.8, wave 30
- * ≈ ×36.7, wave 50 ≈ ×354 vs base), speed grows linearly +0.03/wave and
- * caps at ×2.2. The curve is intentionally aggressive — players gaining
- * family upgrades + merges need to feel late waves bite.
+ * slots 1-10 and a linear escalation formula beyond (hp += HP_SLOPE per
+ * wave, speed += 0.03 per wave capped at 2.2). Linear keeps boss-slot
+ * jumps roughly even instead of the ×1.12 curve's runaway late-game growth.
  */
 export function getWaveScaling(slot: number): { hp: number; speed: number } {
 	if (slot <= 0) return { hp: 1, speed: 1 };
@@ -51,7 +56,7 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
 	const over = slot - WAVE_SCALING.length;
 	const lastEntry = WAVE_SCALING[WAVE_SCALING.length - 1];
 	return {
-		hp: lastEntry.hp * 1.12 ** over,
+		hp: lastEntry.hp + over * HP_SLOPE,
 		speed: Math.min(lastEntry.speed + over * 0.03, 2.2),
 	};
 }

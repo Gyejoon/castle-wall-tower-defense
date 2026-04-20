@@ -618,6 +618,39 @@ describe('Boss phase system', () => {
 			expect(Number.isInteger(hp)).toBe(true);
 		}
 	});
+
+	it('clamps boss-hp-update hp to min 1 while the boss is still alive', () => {
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Knock the boss down to just below 1 HP without killing it:
+		// orc_warlord has phase transition at 50% HP = 1000. One armor-
+		// piercing hit of 1001 enters phase 2 (invulnerable + HP clamped).
+		// Wait out invulnerability, then shave HP to 0.4 with a precise hit.
+		system.applyDamage(unitId, 1001, true); // enter phase 2, hp clamped to 1
+		system.update(0, 600); // invulnerability expires
+		const afterTransitionHp = system.getUnitPositions()[0].hp;
+		const damageToBringNearZero = afterTransitionHp - 0.4;
+		(EventBus.emit as unknown as ReturnType<typeof vi.fn>).mock.calls.length =
+			0;
+		system.applyDamage(unitId, damageToBringNearZero, true);
+
+		// Boss must still be present (not killed).
+		expect(system.getUnitPositions()).toHaveLength(1);
+
+		const emitCalls = (EventBus.emit as unknown as ReturnType<typeof vi.fn>)
+			.mock.calls;
+		const bossUpdates = emitCalls.filter(
+			(c: unknown[]) => c[0] === 'boss-hp-update',
+		);
+		expect(bossUpdates.length).toBeGreaterThan(0);
+		const lastPayload = bossUpdates[bossUpdates.length - 1][1] as {
+			hp: number;
+		};
+		// Internal hp ≈ 0.4, but HUD must see 1, not 0 — the boss is alive.
+		expect(lastPayload.hp).toBeGreaterThanOrEqual(1);
+	});
 });
 
 describe('Boss animation fallback', () => {

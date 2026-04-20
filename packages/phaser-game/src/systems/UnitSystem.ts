@@ -588,10 +588,13 @@ export class UnitSystem {
 		}
 
 		if (unit.isBoss && unit.data.hp > 0) {
+			// Boss is alive in this branch — clamp floored HP to min 1 so
+			// `Math.floor(0.5) → 0` doesn't render an empty HP bar on a live
+			// boss (HUD then contradicts the "still alive" game state).
 			EventBus.emit('boss-hp-update', {
 				unitId: unit.data.instanceId,
 				defId: unit.def.id,
-				hp: Math.max(0, Math.floor(unit.data.hp)),
+				hp: Math.max(1, Math.floor(unit.data.hp)),
 				maxHp: unit.maxHp,
 				phase: unit.bossPhase,
 			});

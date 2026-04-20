@@ -265,7 +265,7 @@ export function GamePage() {
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
-		<div className="flex h-full w-full items-center justify-center overflow-hidden bg-bg">
+		<div className="flex h-full w-full items-start justify-center overflow-hidden bg-bg">
 			<div
 				data-testid="game-scale-wrapper"
 				className="relative flex flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"

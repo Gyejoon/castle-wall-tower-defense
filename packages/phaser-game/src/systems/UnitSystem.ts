@@ -249,7 +249,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(entry.isBoss ? 60 : 40, entry.isBoss ? 72 : 48);
+		sprite.setDisplaySize(entry.isBoss ? 48 : 32, entry.isBoss ? 56 : 40);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -990,7 +990,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(40, 48);
+		sprite.setDisplaySize(32, 40);
 		sprite.play(`${def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (def.element !== 'neutral') {

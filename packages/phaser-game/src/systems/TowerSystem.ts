@@ -291,7 +291,7 @@ export class TowerSystem {
 			worldPos.y - lift,
 			textureKey,
 		);
-		sprite.setDisplaySize(64, 80);
+		sprite.setDisplaySize(48, 60);
 		sprite.setY(worldPos.y - lift - 20);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
 		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
@@ -1088,9 +1088,11 @@ export class TowerSystem {
 			towerWorld.y - lift - 20,
 			textureKey,
 		);
-		// Fire spritesheets are always 64×80 regardless of base tower resolution;
-		// see the note in generate-towers.ts about drawFireFrame's coordinate system.
-		effect.setDisplaySize(64, 80);
+		// Fire spritesheets are authored in 64×80 source-frame coords (see
+		// drawFireFrame in generate-towers.ts), but we display at the current
+		// tower render size (48×60) so the animation sits exactly on top of
+		// the tower sprite instead of overflowing.
+		effect.setDisplaySize(48, 60);
 		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
 		effect.play(animationKey);
 		const restoreVisibility = () => {

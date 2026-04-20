@@ -58,7 +58,14 @@ export function TopHud({
 		<div
 			data-testid="top-hud"
 			className="flex shrink-0 flex-col border-b border-border"
-			style={{ background: 'var(--color-panel-92)' }}
+			style={{
+				background: 'var(--color-panel-92)',
+				// Mobile standard: reserve room for system status bar / notch so
+				// the first HUD row stays readable under punch-holes or the
+				// Samsung/Android top bar (env(safe-area-inset-top) is 0 on
+				// desktop / most Android, positive on iOS/edge-to-edge).
+				paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
+			}}
 		>
 			{/* 첫 번째 행: 항상 고정 */}
 			<div

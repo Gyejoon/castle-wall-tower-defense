@@ -15,14 +15,9 @@ import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
-import { useViewportScale } from '../hooks/useViewportScale';
 import { useGameStore } from '../stores/gameStore';
 
-const BASE_WIDTH = 432;
-const BASE_HEIGHT = 960;
-
 export function GamePage() {
-	const viewportScale = useViewportScale(BASE_WIDTH, BASE_HEIGHT);
 	const runId = useGameStore((s) => s.runId);
 	const runStatus = useGameStore((s) => s.runStatus);
 	const gameReady = useGameStore((s) => s.gameReady);
@@ -265,15 +260,17 @@ export function GamePage() {
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
-		<div className="flex h-full w-full items-start justify-center overflow-hidden bg-bg">
+		<div className="flex h-full w-full justify-center bg-bg">
 			<div
-				data-testid="game-scale-wrapper"
-				className="relative flex flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+				data-testid="game-portrait-shell"
+				className="relative flex w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
 				style={{
-					width: `${BASE_WIDTH}px`,
-					height: `${BASE_HEIGHT}px`,
-					transform: `scale(${viewportScale})`,
-					transformOrigin: 'top center',
+					// Dynamic viewport: 100dvh on modern mobile browsers shrinks
+					// when URL bar shows. Fallback to 100% for legacy. Both HUDs
+					// size naturally; the canvas absorbs the remaining height
+					// via the flex-1 game area below.
+					height: '100dvh',
+					minHeight: '100%',
 				}}
 			>
 				{!gameReady && (

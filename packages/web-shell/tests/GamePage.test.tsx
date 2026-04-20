@@ -315,28 +315,17 @@ describe('GamePage', () => {
 		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();
 	});
 
-	it('pins scale wrapper to 432×960 regardless of viewport (Phase A [B4])', () => {
-		// Force a non-trivial viewport so a broken implementation that used
-		// CSS sizes tied to the viewport would fail this assertion.
-		Object.defineProperty(window, 'innerWidth', {
-			configurable: true,
-			value: 375,
-			writable: true,
-		});
-		Object.defineProperty(window, 'innerHeight', {
-			configurable: true,
-			value: 667,
-			writable: true,
-		});
-
+	it('portrait shell uses 100dvh + max-w-[430px] (mobile portrait standard)', () => {
 		const view = render(<GamePage />);
-		const wrapper = view.getByTestId('game-scale-wrapper') as HTMLDivElement;
-		expect(wrapper.style.width).toBe('432px');
-		expect(wrapper.style.height).toBe('960px');
-		// Transform is a uniform scale, never a stretch — guard the shape of
-		// the transform string rather than exact scale value (which depends
-		// on viewport).
-		expect(wrapper.style.transform).toMatch(/^scale\([0-9.]+\)$/);
+		const shell = view.getByTestId('game-portrait-shell') as HTMLDivElement;
+		// Height follows viewport (100dvh) so URL bar collapse doesn't cut HUDs.
+		expect(shell.style.height).toBe('100dvh');
+		// No CSS transform — HUDs render at natural DOM size on every device,
+		// which is required for safe-area-inset-top to reach the status bar
+		// correctly on devices like Galaxy S25.
+		expect(shell.style.transform).toBe('');
+		expect(shell.className).toContain('max-w-[430px]');
+		expect(shell.className).toContain('flex-col');
 	});
 
 	it('resets prep countdown UI when combat starts', () => {

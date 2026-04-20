@@ -43,16 +43,19 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* v3.1: Phaser runs with Scale.NONE so the internal bitmap is always 432×960.
-   By default Phaser sets the canvas CSS size to those same pixel dims, which
-   overflows the flex-1 game area. Force both the wrapper and the canvas to
-   stretch to fill the slot — the browser then scales the 432×960 bitmap to
-   the slot size. Everything drawn inside Phaser (towers 64×80, monsters
-   40×48/60×72) stays internally consistent regardless of slot aspect. */
-#game-container,
+/* v3.1: Phaser runs with Scale.FIT so the internal bitmap stays 432×960 and
+   the canvas CSS is sized by Phaser to fit `#game-container` while preserving
+   the 9:20 aspect ratio (letterbox when the slot aspect differs). We only
+   ensure the container itself fills the flex-1 slot so Phaser can measure it
+   correctly; the canvas inside is controlled entirely by Phaser. */
+#game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 #game-container canvas {
-  width: 100% !important;
-  height: 100% !important;
   display: block;
 }
 

@@ -26,6 +26,7 @@ vi.mock('phaser', () => ({
 		Scale: {
 			FIT: 'FIT',
 			CENTER_HORIZONTALLY: 'CENTER_HORIZONTALLY',
+			CENTER_BOTH: 'CENTER_BOTH',
 			NONE: 'NONE',
 			NO_CENTER: 'NO_CENTER',
 		},
@@ -41,9 +42,9 @@ describe('gameConfig', () => {
 		expect(gameConfig.plugins?.global).toBeUndefined();
 	});
 
-	it('pins scale mode to NONE so React owns device-level scaling (Phase A [B4])', async () => {
+	it('uses Scale.FIT + CENTER_BOTH for uniform letterbox (v3.1 final)', async () => {
 		const { gameConfig } = await import('../src/config');
-		expect(gameConfig.scale?.mode).toBe('NONE');
-		expect(gameConfig.scale?.autoCenter).toBe('NO_CENTER');
+		expect(gameConfig.scale?.mode).toBe('FIT');
+		expect(gameConfig.scale?.autoCenter).toBe('CENTER_BOTH');
 	});
 });

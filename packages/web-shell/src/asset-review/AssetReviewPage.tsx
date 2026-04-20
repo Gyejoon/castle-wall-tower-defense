@@ -181,12 +181,7 @@ function AssetRow({
 			}`}
 		>
 			{entry.hasPolished ? (
-				<img
-					src={stagingFileUrl(entry.id, 'polished.png')}
-					alt={entry.id}
-					className="h-10 w-10 shrink-0 rounded border border-border bg-border object-contain"
-					style={{ imageRendering: 'pixelated' }}
-				/>
+				<AssetThumbnail entry={entry} />
 			) : (
 				<div className="h-10 w-10 shrink-0 rounded border border-border bg-border" />
 			)}
@@ -204,6 +199,51 @@ function AssetRow({
 				</div>
 			</div>
 		</button>
+	);
+}
+
+/**
+ * Thumbnail that crops to the first frame for sprite sheets. Without this,
+ * a 512×80 sheet of 8 frames would render as a tiny compressed horizontal
+ * strip in a 40×40 list cell. We use the sheet PNG as a background-image
+ * sized so the first frame maps into the 40×40 box.
+ */
+function AssetThumbnail({ entry }: { entry: StagingEntry }) {
+	const anim = entry.metadata?.polish.animation;
+	const url = stagingFileUrl(entry.id, 'polished.png');
+	if (!anim) {
+		return (
+			<img
+				src={url}
+				alt={entry.id}
+				className="h-10 w-10 shrink-0 rounded border border-border bg-border object-contain"
+				style={{ imageRendering: 'pixelated' }}
+			/>
+		);
+	}
+	// Scale the sheet so frame 0 fits inside a 40×40 box preserving aspect
+	// ratio. Scale by the LONGER of frame dims so the full frame is visible.
+	const BOX = 40;
+	const scale = BOX / Math.max(anim.frameW, anim.frameH);
+	const sheetW = anim.frameW * anim.frameCount * scale;
+	const sheetH = anim.frameH * scale;
+	const frameW = anim.frameW * scale;
+	// Horizontally center the first frame in the box.
+	const offsetX = (BOX - frameW) / 2;
+	const offsetY = (BOX - sheetH) / 2;
+	return (
+		<div
+			role="img"
+			aria-label={`${entry.id} (frame 0)`}
+			className="h-10 w-10 shrink-0 overflow-hidden rounded border border-border bg-border"
+			style={{
+				backgroundImage: `url(${url})`,
+				backgroundRepeat: 'no-repeat',
+				backgroundSize: `${sheetW}px ${sheetH}px`,
+				backgroundPosition: `${offsetX}px ${offsetY}px`,
+				imageRendering: 'pixelated',
+			}}
+		/>
 	);
 }
 

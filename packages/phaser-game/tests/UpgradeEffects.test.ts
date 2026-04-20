@@ -227,4 +227,72 @@ describe('Upgrade card effects', () => {
 			orch.destroy();
 		});
 	});
+
+	describe('family upgrade damage dispatch', () => {
+		it('base family uses its own level', () => {
+			const energy = makeFakeEnergy();
+			energy.add(1000);
+			const orch = makeOrchestrator(energy);
+			EventBus.emit('request-family-upgrade', { family: 'archer' });
+
+			// 0 → 1: multiplier = 1 + 0.75 = 1.75
+			expect(orch.getFamilyDamageMultiplier('archer')).toBeCloseTo(1.75);
+			// Siege untouched → ×1
+			expect(orch.getFamilyDamageMultiplier('siege')).toBe(1);
+
+			orch.destroy();
+		});
+
+		it('hybrid_ab sums archer + siege levels only (not frost/stun)', () => {
+			const energy = makeFakeEnergy();
+			energy.add(10_000);
+			const orch = makeOrchestrator(energy);
+			EventBus.emit('request-family-upgrade', { family: 'archer' });
+			EventBus.emit('request-family-upgrade', { family: 'archer' });
+			EventBus.emit('request-family-upgrade', { family: 'siege' });
+			EventBus.emit('request-family-upgrade', { family: 'frost' });
+			EventBus.emit('request-family-upgrade', { family: 'stun' });
+
+			// archer=2, siege=1 → hybrid_ab sum=3 → 1 + 0.75×3 = 3.25
+			expect(orch.getFamilyDamageMultiplier('hybrid', 'hybrid_ab')).toBeCloseTo(
+				3.25,
+			);
+			// hybrid_cd sees frost=1 + stun=1 = 2 → 1 + 0.75×2 = 2.5
+			expect(orch.getFamilyDamageMultiplier('hybrid', 'hybrid_cd')).toBeCloseTo(
+				2.5,
+			);
+
+			orch.destroy();
+		});
+
+		it('ultimate sums all 4 family levels', () => {
+			const energy = makeFakeEnergy();
+			energy.add(10_000);
+			const orch = makeOrchestrator(energy);
+			EventBus.emit('request-family-upgrade', { family: 'archer' });
+			EventBus.emit('request-family-upgrade', { family: 'siege' });
+			EventBus.emit('request-family-upgrade', { family: 'frost' });
+			EventBus.emit('request-family-upgrade', { family: 'stun' });
+
+			// sum=4 → 1 + 0.75×4 = 4
+			expect(orch.getFamilyDamageMultiplier('ultimate')).toBeCloseTo(4);
+
+			orch.destroy();
+		});
+
+		it('fail-closed when energySystem is missing', () => {
+			const orch = makeOrchestrator(); // no energy system
+			const failures: unknown[] = [];
+			EventBus.on('family-upgrade-failed', (p) => failures.push(p));
+
+			EventBus.emit('request-family-upgrade', { family: 'archer' });
+
+			expect(failures).toHaveLength(1);
+			expect(orch.getFamilyUpgradeLevel('archer')).toBe(0);
+			// Multiplier unchanged.
+			expect(orch.getFamilyDamageMultiplier('archer')).toBe(1);
+
+			orch.destroy();
+		});
+	});
 });

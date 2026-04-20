@@ -322,11 +322,22 @@ export class PhaseAOrchestrator {
 		return this.familyUpgradeLevels.get(family) ?? 0;
 	}
 
-	/** Damage multiplier for a tower whose family is upgraded. Hybrid/ultimate
-	 *  towers pull from both feeder families multiplicatively so investment in
-	 *  either side still pays off on the fused tower. */
+	/**
+	 * Damage multiplier for a tower whose family is upgraded.
+	 *
+	 * - base (archer/siege/frost/stun) → own-family multiplier
+	 * - hybrid_ab → `familyDamageMultiplier(archer_lv + siege_lv)`
+	 * - hybrid_cd → `familyDamageMultiplier(frost_lv + stun_lv)`
+	 * - ultimate  → `familyDamageMultiplier(all 4 levels summed)`
+	 *
+	 * Hybrid must know WHICH hybrid it is to credit only its feeder pair —
+	 * archer/siege investment should not leak into `hybrid_cd`. Caller passes
+	 * `towerId` so the dispatch can pick the right feeder pair; falling back
+	 * to the single-family path when the hybrid variant is unknown.
+	 */
 	getFamilyDamageMultiplier(
 		family: 'archer' | 'siege' | 'frost' | 'stun' | 'hybrid' | 'ultimate',
+		towerId?: string,
 	): number {
 		switch (family) {
 			case 'archer':
@@ -334,26 +345,34 @@ export class PhaseAOrchestrator {
 			case 'frost':
 			case 'stun':
 				return familyDamageMultiplier(this.getFamilyUpgradeLevel(family));
-			case 'hybrid':
-				// hybrid_ab (archer+siege) and hybrid_cd (frost+stun) both exist.
-				// Without a per-instance feeder lookup, apply the best of all four
-				// so neither hybrid feels punished by an unmodeled split.
-				return Math.max(
-					familyDamageMultiplier(this.getFamilyUpgradeLevel('archer')),
-					familyDamageMultiplier(this.getFamilyUpgradeLevel('siege')),
-					familyDamageMultiplier(this.getFamilyUpgradeLevel('frost')),
-					familyDamageMultiplier(this.getFamilyUpgradeLevel('stun')),
-				);
-			case 'ultimate':
-				// ultimate composes all four bases; sum the boosts so the late-
-				// game payoff scales with total investment.
-				return familyDamageMultiplier(
-					this.getFamilyUpgradeLevel('archer') +
-						this.getFamilyUpgradeLevel('siege') +
+			case 'hybrid': {
+				if (towerId === 'hybrid_ab') {
+					return familyDamageMultiplier(
+						this.getFamilyUpgradeLevel('archer') +
+							this.getFamilyUpgradeLevel('siege'),
+					);
+				}
+				if (towerId === 'hybrid_cd') {
+					return familyDamageMultiplier(
 						this.getFamilyUpgradeLevel('frost') +
-						this.getFamilyUpgradeLevel('stun'),
-				);
+							this.getFamilyUpgradeLevel('stun'),
+					);
+				}
+				// Unknown hybrid variant (shouldn't happen in Phase A): sum all 4.
+				return familyDamageMultiplier(this.getTotalFamilyLevel());
+			}
+			case 'ultimate':
+				return familyDamageMultiplier(this.getTotalFamilyLevel());
 		}
+	}
+
+	private getTotalFamilyLevel(): number {
+		return (
+			this.getFamilyUpgradeLevel('archer') +
+			this.getFamilyUpgradeLevel('siege') +
+			this.getFamilyUpgradeLevel('frost') +
+			this.getFamilyUpgradeLevel('stun')
+		);
 	}
 
 	private handleFamilyUpgradeRequest(family: UpgradeableFamily): void {
@@ -369,7 +388,20 @@ export class PhaseAOrchestrator {
 		}
 		const cost = familyUpgradeCost(current);
 		const energy = this.deps.energySystem;
-		if (energy && !energy.spend(cost)) {
+		// Fail-closed: a missing energySystem (bad wiring / test harness) must
+		// not grant free upgrades. The economy is the gate, not an optional
+		// dep — reject the request so the bug surfaces as an obvious failed
+		// emit rather than a silent progression exploit.
+		if (!energy) {
+			EventBus.emit('family-upgrade-failed', {
+				family,
+				reason: 'insufficient-energy',
+				cost,
+				have: 0,
+			});
+			return;
+		}
+		if (!energy.spend(cost)) {
 			EventBus.emit('family-upgrade-failed', {
 				family,
 				reason: 'insufficient-energy',

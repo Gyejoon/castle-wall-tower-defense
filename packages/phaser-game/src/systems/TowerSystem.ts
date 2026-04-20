@@ -131,7 +131,9 @@ export class TowerSystem {
 	private nextId = 0;
 	private destroyed = false;
 	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
-	private familyDamageFn: ((family: TowerFamily) => number) | null = null;
+	private familyDamageFn:
+		| ((family: TowerFamily, towerId: string) => number)
+		| null = null;
 	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
@@ -183,8 +185,11 @@ export class TowerSystem {
 	/** Inject the per-family damage multiplier lookup. Game.ts wires this to
 	 *  `PhaseAOrchestrator.getFamilyDamageMultiplier` so energy-purchased
 	 *  family upgrades compound on top of roguelike `dmg_up` and the meta
-	 *  `atkPct` buff. */
-	setFamilyDamageFn(fn: ((family: TowerFamily) => number) | null): void {
+	 *  `atkPct` buff. `towerId` lets the orchestrator distinguish hybrid_ab
+	 *  (archer+siege feeders) from hybrid_cd (frost+stun). */
+	setFamilyDamageFn(
+		fn: ((family: TowerFamily, towerId: string) => number) | null,
+	): void {
 		this.familyDamageFn = fn;
 	}
 
@@ -597,7 +602,7 @@ export class TowerSystem {
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
 				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
 				const familyMod = this.familyDamageFn
-					? this.familyDamageFn(def.family)
+					? this.familyDamageFn(def.family, def.id)
 					: 1;
 				const baseDamage = Math.round(
 					this.resolveFinalDamage(

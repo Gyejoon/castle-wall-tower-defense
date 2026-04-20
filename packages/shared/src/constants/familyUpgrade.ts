@@ -9,9 +9,10 @@ import type { TowerFamily } from '../types/tower';
  * current board.
  */
 
-/** Four base families the upgrade UI exposes. Hybrid / ultimate inherit from
- *  whichever base family pair fed them (hybrid → archer+siege: both buffs
- *  apply multiplicatively; see `getFamilyDamageMultiplier`). */
+/** Four base families the upgrade UI exposes. Hybrid/ultimate damage
+ *  inherits from their feeder pair: `hybrid_ab` sums archer+siege levels,
+ *  `hybrid_cd` sums frost+stun levels, and `ultimate` sums all four — see
+ *  `PhaseAOrchestrator.getFamilyDamageMultiplier` for the dispatch. */
 export const UPGRADEABLE_FAMILIES = [
 	'archer',
 	'siege',
@@ -46,16 +47,16 @@ export const MAX_FAMILY_UPGRADE_LEVEL = 20;
  * the level is at the cap.
  *
  * Schedule (level → cost):
- *   0→1  30     10→11 350
- *   1→2  40     11→12 435
- *   2→3  45     12→13 545
- *   3→4  60     13→14 680
- *   4→5  75     14→15 850
- *   5→6  90     15→16 1065
- *   6→7  115    16→17 1330
- *   7→8  145    17→18 1665
- *   8→9  180    18→19 2080
- *   9→10 225    19→20 2600
+ *   0→1  30     10→11 280
+ *   1→2  40     11→12 350
+ *   2→3  45     12→13 435
+ *   3→4  60     13→14 545
+ *   4→5  75     14→15 680
+ *   5→6  90     15→16 850
+ *   6→7  115    16→17 1065
+ *   7→8  145    17→18 1330
+ *   8→9  180    18→19 1665
+ *   9→10 225    19→20 2080
  */
 export function familyUpgradeCost(level: number): number {
 	if (level >= MAX_FAMILY_UPGRADE_LEVEL) return Number.POSITIVE_INFINITY;

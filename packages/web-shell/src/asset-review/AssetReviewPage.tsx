@@ -74,84 +74,96 @@ export function AssetReviewPage() {
 	);
 
 	return (
-		<div className="grid h-dvh grid-cols-[280px_1fr_360px] bg-bg text-text">
-			{/* Left: asset list */}
-			<aside className="flex flex-col border-r border-border bg-panel">
-				<header className="flex items-center justify-between border-b border-border px-4 py-3">
-					<h1 className="font-mono text-sm tracking-wide">Asset Review</h1>
-					<button
-						type="button"
-						className="rounded border border-border px-2 py-1 text-xs hover:bg-border disabled:opacity-40"
-						onClick={reload}
-						disabled={busy !== 'none'}
-					>
-						↻ {entries.length}
-					</button>
-				</header>
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					{entries.length === 0 && (
-						<p className="px-4 py-6 text-center text-xs text-text-secondary/70">
-							No staged assets.
-							<br />
-							Run <code>bun gld-pipe forge &lt;id&gt;</code>.
-						</p>
-					)}
-					{entries.map((entry) => (
-						<AssetRow
-							key={entry.id}
-							entry={entry}
-							active={entry.id === selectedId}
-							onSelect={() => setSelectedId(entry.id)}
-						/>
-					))}
-				</div>
-			</aside>
+		<>
+			<div className="hidden h-dvh flex-col items-center justify-center gap-2 bg-bg p-6 text-center text-text-secondary max-[900px]:flex">
+				<p className="font-mono text-sm text-text">Asset Review</p>
+				<p className="text-xs">
+					이 도구는 데스크톱 전용이다. 900px 이상 창 폭에서 열어라.
+				</p>
+			</div>
+			<div className="grid h-dvh grid-cols-[280px_1fr_360px] bg-bg text-text max-[900px]:hidden">
+				{/* Left: asset list */}
+				<aside className="flex flex-col border-r border-border bg-panel">
+					<header className="flex items-center justify-between border-b border-border px-4 py-3">
+						<h1 className="font-mono text-sm tracking-wide">Asset Review</h1>
+						<button
+							type="button"
+							className="rounded border border-border px-2 py-1 text-xs hover:bg-border disabled:opacity-40"
+							onClick={reload}
+							disabled={busy !== 'none'}
+						>
+							↻ {entries.length}
+						</button>
+					</header>
+					<div className="min-h-0 flex-1 overflow-y-auto">
+						{entries.length === 0 && (
+							<p className="px-4 py-6 text-center text-xs text-text-secondary/70">
+								No staged assets.
+								<br />
+								Run <code>bun gld-pipe forge &lt;id&gt;</code>.
+							</p>
+						)}
+						{entries.map((entry) => (
+							<AssetRow
+								key={entry.id}
+								entry={entry}
+								active={entry.id === selectedId}
+								onSelect={() => setSelectedId(entry.id)}
+							/>
+						))}
+					</div>
+				</aside>
 
-			{/* Middle: preview */}
-			<main className="flex min-w-0 flex-col bg-bg">
-				{selected ? (
-					<AssetPreview entry={selected} />
-				) : (
-					<div className="flex flex-1 items-center justify-center text-text-secondary/70">
-						Select an asset to review.
+				{/* Middle: preview */}
+				<main className="flex min-w-0 flex-col bg-bg">
+					{selected ? (
+						<AssetPreview entry={selected} />
+					) : (
+						<div className="flex flex-1 items-center justify-center text-text-secondary/70">
+							Select an asset to review.
+						</div>
+					)}
+				</main>
+
+				{/* Right: actions + metadata */}
+				<aside className="flex flex-col overflow-y-auto border-l border-border bg-panel">
+					{selected && (
+						<ActionsPanel
+							entry={selected}
+							busy={busy}
+							onAccept={() =>
+								runAction('accept', () => acceptAsset(selected.id))
+							}
+							onReject={() =>
+								runAction('reject', () => rejectAsset(selected.id))
+							}
+							onRegenerate={() =>
+								runAction('regenerate', () => regenerateAsset(selected.id))
+							}
+						/>
+					)}
+				</aside>
+
+				{/* Floating toast / error */}
+				{toast && (
+					<div className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-success px-4 py-2 text-sm text-bg shadow-lg">
+						{toast}
 					</div>
 				)}
-			</main>
-
-			{/* Right: actions + metadata */}
-			<aside className="flex flex-col overflow-y-auto border-l border-border bg-panel">
-				{selected && (
-					<ActionsPanel
-						entry={selected}
-						busy={busy}
-						onAccept={() => runAction('accept', () => acceptAsset(selected.id))}
-						onReject={() => runAction('reject', () => rejectAsset(selected.id))}
-						onRegenerate={() =>
-							runAction('regenerate', () => regenerateAsset(selected.id))
-						}
-					/>
+				{error && (
+					<div className="fixed bottom-4 left-1/2 max-w-xl -translate-x-1/2 rounded bg-danger px-4 py-2 text-xs text-text shadow-lg">
+						<button
+							type="button"
+							className="float-right ml-2"
+							onClick={() => setError(null)}
+						>
+							×
+						</button>
+						<pre className="whitespace-pre-wrap">{error}</pre>
+					</div>
 				)}
-			</aside>
-
-			{/* Floating toast / error */}
-			{toast && (
-				<div className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-success px-4 py-2 text-sm text-bg shadow-lg">
-					{toast}
-				</div>
-			)}
-			{error && (
-				<div className="fixed bottom-4 left-1/2 max-w-xl -translate-x-1/2 rounded bg-danger px-4 py-2 text-xs text-text shadow-lg">
-					<button
-						type="button"
-						className="float-right ml-2"
-						onClick={() => setError(null)}
-					>
-						×
-					</button>
-					<pre className="whitespace-pre-wrap">{error}</pre>
-				</div>
-			)}
-		</div>
+			</div>
+		</>
 	);
 }
 

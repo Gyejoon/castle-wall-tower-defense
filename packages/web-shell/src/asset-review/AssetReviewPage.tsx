@@ -207,16 +207,41 @@ function AssetRow({
 	);
 }
 
+const ZOOM_LEVELS = [2, 4, 6, 8] as const;
+type ZoomLevel = (typeof ZOOM_LEVELS)[number];
+
 function AssetPreview({ entry }: { entry: StagingEntry }) {
 	const meta = entry.metadata;
 	const isSheet = !!meta?.polish.animation;
+	const [zoom, setZoom] = useState<ZoomLevel>(4);
 	return (
 		<div className="flex flex-1 flex-col gap-4 overflow-auto p-6">
-			<header>
-				<h2 className="font-mono text-lg">{entry.id}</h2>
-				<p className="font-mono text-xs text-text-secondary">
-					{meta?.sourcePath}
-				</p>
+			<header className="flex items-center justify-between gap-4">
+				<div className="min-w-0 flex-1">
+					<h2 className="font-mono text-lg">{entry.id}</h2>
+					<p className="truncate font-mono text-xs text-text-secondary">
+						{meta?.sourcePath}
+					</p>
+				</div>
+				<fieldset
+					className="flex shrink-0 items-center gap-1 rounded border border-border bg-panel p-0.5"
+					aria-label="zoom level"
+				>
+					{ZOOM_LEVELS.map((z) => (
+						<button
+							key={z}
+							type="button"
+							onClick={() => setZoom(z)}
+							className={`rounded px-2 py-1 font-mono text-xs ${
+								z === zoom
+									? 'bg-accent text-bg'
+									: 'text-text-secondary hover:text-text'
+							}`}
+						>
+							{z}×
+						</button>
+					))}
+				</fieldset>
 			</header>
 
 			<div className="grid grid-cols-2 gap-4">
@@ -226,6 +251,7 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 						entry.hasOriginal ? stagingFileUrl(entry.id, 'original.png') : null
 					}
 					isSheet={isSheet}
+					zoom={zoom}
 					frameW={meta?.polish.animation?.frameW}
 					frameH={meta?.polish.animation?.frameH}
 					frameCount={meta?.polish.animation?.frameCount}
@@ -236,6 +262,7 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 						entry.hasPolished ? stagingFileUrl(entry.id, 'polished.png') : null
 					}
 					isSheet={isSheet}
+					zoom={zoom}
 					frameW={meta?.polish.animation?.frameW}
 					frameH={meta?.polish.animation?.frameH}
 					frameCount={meta?.polish.animation?.frameCount}
@@ -269,6 +296,7 @@ function PreviewPane({
 	title,
 	url,
 	isSheet,
+	zoom,
 	frameW,
 	frameH,
 	frameCount,
@@ -276,6 +304,7 @@ function PreviewPane({
 	title: string;
 	url: string | null;
 	isSheet: boolean;
+	zoom: ZoomLevel;
 	frameW?: number;
 	frameH?: number;
 	frameCount?: number;
@@ -290,7 +319,14 @@ function PreviewPane({
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="text-xs text-text-secondary">{title}</div>
-			<div className="flex min-h-[320px] items-center justify-center rounded border border-border bg-[repeating-conic-gradient(#1f2937_0%_25%,#111827_0%_50%)_50%/16px_16px]">
+			<div
+				className="flex min-h-[320px] items-center justify-center overflow-auto rounded border border-border"
+				style={{
+					backgroundImage:
+						'repeating-conic-gradient(var(--color-panel) 0% 25%, var(--color-bg) 0% 50%)',
+					backgroundSize: '16px 16px',
+				}}
+			>
 				{isSheet &&
 				frameW !== undefined &&
 				frameH !== undefined &&
@@ -300,13 +336,17 @@ function PreviewPane({
 						frameW={frameW}
 						frameH={frameH}
 						frameCount={frameCount}
+						zoom={zoom}
 					/>
 				) : (
 					<img
 						src={url}
 						alt={title}
-						className="max-h-[400px] max-w-full"
-						style={{ imageRendering: 'pixelated', transform: 'scale(2)' }}
+						style={{
+							imageRendering: 'pixelated',
+							transform: `scale(${zoom})`,
+							transformOrigin: 'center',
+						}}
 					/>
 				)}
 			</div>
@@ -319,11 +359,13 @@ function SheetAnimation({
 	frameW,
 	frameH,
 	frameCount,
+	zoom,
 }: {
 	url: string;
 	frameW: number;
 	frameH: number;
 	frameCount: number;
+	zoom: ZoomLevel;
 }) {
 	const [frame, setFrame] = useState(0);
 	useEffect(() => {
@@ -343,12 +385,12 @@ function SheetAnimation({
 			role="img"
 			aria-label="sheet animation preview"
 			style={{
-				width: frameW * 2,
-				height: frameH * 2,
+				width: frameW * zoom,
+				height: frameH * zoom,
 				backgroundImage: `url(${url})`,
 				backgroundRepeat: 'no-repeat',
-				backgroundPosition: `${-frame * frameW * 2}px 0`,
-				backgroundSize: `${frameW * frameCount * 2}px ${frameH * 2}px`,
+				backgroundPosition: `${-frame * frameW * zoom}px 0`,
+				backgroundSize: `${frameW * frameCount * zoom}px ${frameH * zoom}px`,
 				imageRendering: 'pixelated',
 			}}
 		/>

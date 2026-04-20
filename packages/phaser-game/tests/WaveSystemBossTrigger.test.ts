@@ -123,7 +123,7 @@ describe('WaveSystem — boss-wave clear trigger', () => {
 		});
 	});
 
-	it('boss wave timer expires with units alive → cleared:false, phase:"boss"', () => {
+	it('boss wave는 30초 타이머 면제 — units alive에서 timer가 지나도 wave-completed를 emit하지 않는다', () => {
 		const units = makeFakeUnitSystem();
 		const ws = new WaveSystem(units as never, [bossWave(1), normalWave(2)], 2);
 		ws.start();
@@ -131,14 +131,13 @@ describe('WaveSystem — boss-wave clear trigger', () => {
 		expect(ws.getPhase()).toBe('boss');
 
 		fillWaveClockJustBelowTimerExpiry(ws);
-		// Final tick: timer expires with 1 unit still alive → not a true clear.
+		// Final tick pushes elapsed past the 30s threshold but boss is alive.
+		// Regression guard: boss fights legitimately exceed 30s, and the old
+		// timer-force produced cleared=false which dropped the roguelike pick.
+		// New contract — boss waves only complete on naturallyCleared.
 		ws.update(3000, 1);
 
 		const completed = getEmits().find(([e]) => e === 'wave-completed');
-		expect(completed).toBeDefined();
-		expect(completed?.[1]).toMatchObject({
-			cleared: false,
-			phase: 'boss',
-		});
+		expect(completed).toBeUndefined();
 	});
 });

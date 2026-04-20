@@ -52,7 +52,10 @@ export const UPGRADE_CARDS: readonly UpgradeCard[] = [
 	{
 		id: 'crit_dmg',
 		name: '치명의 일격',
-		description: '치명타 데미지 +25%',
+		// 현재는 크리 확률 시스템이 없어 크리 전용이 아니라 모든 공격에
+		// 플랫 곱셈(+25%/스택)으로 들어간다. Phase 12 crit 도입 시 name/
+		// description이 "치명타 확률·배율"로 재정비될 예정.
+		description: '모든 공격 데미지 +25%',
 		icon: '💥',
 		stackType: 'add',
 		value: 0.25,

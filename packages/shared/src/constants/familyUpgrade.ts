@@ -35,8 +35,10 @@ export const BASE_FAMILY_UPGRADE_COST = 30;
 /** Geometric growth ratio applied per existing level. */
 const FAMILY_UPGRADE_COST_GROWTH = 1.25;
 
-/** Hard ceiling per family — matches the roguelike card cap for consistency. */
-export const MAX_FAMILY_UPGRADE_LEVEL = 10;
+/** Hard ceiling per family. Lv.20 is practically unreachable in a single
+ *  run (cost 30 × 1.25^19 ≈ 2080 energy for the last step) but leaves
+ *  headroom for deep-into-endless plays where energy compounds. */
+export const MAX_FAMILY_UPGRADE_LEVEL = 20;
 
 /**
  * Energy cost to take a family from `level → level + 1`. Rounded to the
@@ -44,16 +46,16 @@ export const MAX_FAMILY_UPGRADE_LEVEL = 10;
  * the level is at the cap.
  *
  * Schedule (level → cost):
- *   0→1  30
- *   1→2  40
- *   2→3  45
- *   3→4  60
- *   4→5  75
- *   5→6  90
- *   6→7  115
- *   7→8  145
- *   8→9  180
- *   9→10 225
+ *   0→1  30     10→11 350
+ *   1→2  40     11→12 435
+ *   2→3  45     12→13 545
+ *   3→4  60     13→14 680
+ *   4→5  75     14→15 850
+ *   5→6  90     15→16 1065
+ *   6→7  115    16→17 1330
+ *   7→8  145    17→18 1665
+ *   8→9  180    18→19 2080
+ *   9→10 225    19→20 2600
  */
 export function familyUpgradeCost(level: number): number {
 	if (level >= MAX_FAMILY_UPGRADE_LEVEL) return Number.POSITIVE_INFINITY;
@@ -62,7 +64,7 @@ export function familyUpgradeCost(level: number): number {
 }
 
 /** Damage multiplier applied to every attack from a tower whose family is
- *  upgraded to `level`. `1 + 0.15 × level` — L10 → ×2.5. */
+ *  upgraded to `level`. `1 + 0.75 × level` — Lv.10 → ×8.5, Lv.20 → ×16. */
 export function familyDamageMultiplier(level: number): number {
 	return 1 + FAMILY_UPGRADE_DAMAGE_PER_LEVEL * Math.max(level, 0);
 }

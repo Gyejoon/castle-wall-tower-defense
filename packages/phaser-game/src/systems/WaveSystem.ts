@@ -113,10 +113,15 @@ export class WaveSystem {
 				return;
 			}
 
-			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS (skip on last wave)
+			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS. Skipped
+			// on the final wave (run-end flow) and on any boss wave — boss
+			// fights can legitimately exceed 30s and a timer-forced clear
+			// strips the roguelike pick because `cleared` goes false.
 			const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+			const isBossWave = currentWave.kind === 'boss';
 			const timerExpired =
 				!isLastWave &&
+				!isBossWave &&
 				this.hasSpawnedCurrentWave &&
 				this.elapsedMs - this.waveStartMs > MAX_WAVE_DURATION_MS;
 

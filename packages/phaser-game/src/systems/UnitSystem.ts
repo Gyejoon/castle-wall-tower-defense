@@ -52,7 +52,7 @@ interface UnitInstance {
 	source: UnitSpawnSource;
 	laneIndex: number; // which lane this unit follows
 	isBoss: boolean;
-	bossPhase: 1 | 2;
+	bossPhase: 1 | 2 | 3;
 	invulnerableMs: number;
 	maxHp: number;
 	baseSpeed: number;
@@ -504,7 +504,9 @@ export class UnitSystem {
 
 		unit.data.hp -= damage;
 
-		// Boss phase transition check — only if still alive (hp > 0)
+		// Boss phase transition checks — only fire while still alive. Phase 2
+		// is the 50% HP rage spike; phase 3 is a 25% HP "last stretch" that
+		// stacks another speed bump so the back half isn't a plateau.
 		if (
 			unit.isBoss &&
 			unit.bossPhase === 1 &&
@@ -525,6 +527,19 @@ export class UnitSystem {
 			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
 			EventBus.emit('boss-phase-change', {
 				phase: 2,
+				unitId: unit.data.instanceId,
+			});
+		} else if (
+			unit.isBoss &&
+			unit.bossPhase === 2 &&
+			unit.data.hp > 0 &&
+			unit.data.hp <= unit.maxHp * BOSS_CONFIG.phase3TransitionRatio
+		) {
+			unit.bossPhase = 3;
+			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
+			unit.sprite?.setTint(BOSS_CONFIG.phase3Tint);
+			EventBus.emit('boss-phase-change', {
+				phase: 3,
 				unitId: unit.data.instanceId,
 			});
 		}
@@ -753,13 +768,16 @@ export class UnitSystem {
 			this.setUnitAnimationState(unit, 'walk');
 			const nextGrid = unitLane[pathIdx + 1];
 			const targetWorld = unitLaneWorld[pathIdx + 1];
-			const phase2Mult =
-				unit.isBoss && unit.bossPhase === 2
-					? BOSS_CONFIG.phase2SpeedMultiplier
-					: 1;
+			const phaseMult = !unit.isBoss
+				? 1
+				: unit.bossPhase === 3
+					? BOSS_CONFIG.phase3SpeedMultiplier
+					: unit.bossPhase === 2
+						? BOSS_CONFIG.phase2SpeedMultiplier
+						: 1;
 			const speed =
 				unit.baseSpeed *
-				phase2Mult *
+				phaseMult *
 				this.gridManager.orthoTile *
 				unit.slowFactor;
 

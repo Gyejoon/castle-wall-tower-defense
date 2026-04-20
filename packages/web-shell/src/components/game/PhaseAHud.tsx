@@ -437,8 +437,10 @@ function mergeFailLabel(reason: string): string {
 	switch (reason) {
 		case 'same-instance':
 			return '같은 타워 선택됨';
+		case 'same-family-t4':
+			return 'T4는 다른 계열끼리만 합성 (→ T5 hybrid)';
 		case 'incompatible-pair':
-			return '다른 계열·단계 필요';
+			return '같은 계열·단계 필요';
 		case 'max-tier':
 			return '최고 티어';
 		case 'invalid-tile':

@@ -60,13 +60,13 @@ export interface GameEventMap {
 		bossSlotIndex: number;
 		startAtSec: number;
 	};
-	'boss-phase-change': { phase: 1 | 2; unitId: string };
+	'boss-phase-change': { phase: 1 | 2 | 3; unitId: string };
 	'boss-hp-update': {
 		unitId: string;
 		defId: string;
 		hp: number;
 		maxHp: number;
-		phase: 1 | 2;
+		phase: 1 | 2 | 3;
 	};
 	'boss-defeated': { unitId: string; waveSlot: number };
 	'player-tower-count': { count: number };
@@ -172,7 +172,12 @@ export interface GameEventMap {
 		fromRow: number;
 		toCol: number;
 		toRow: number;
-		reason: 'same-instance' | 'incompatible-pair' | 'max-tier' | 'invalid-tile';
+		reason:
+			| 'same-instance'
+			| 'incompatible-pair'
+			| 'same-family-t4'
+			| 'max-tier'
+			| 'invalid-tile';
 	};
 	'summon-failed': {
 		reason:

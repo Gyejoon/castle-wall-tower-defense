@@ -111,10 +111,10 @@ describe('MergeSystem.tryMerge', () => {
 		}
 	});
 
-	it('tier-4 archer + archer → incompatible (no same-tier 4 merge)', () => {
+	it('tier-4 archer + archer → same-family-t4 (dedicated newbie hint reason)', () => {
 		const r = MergeSystem.tryMerge(arcane4('a'), arcane4('b'));
 		expect(r.kind).toBe('failure');
-		if (r.kind === 'failure') expect(r.reason).toBe('incompatible-pair');
+		if (r.kind === 'failure') expect(r.reason).toBe('same-family-t4');
 	});
 
 	it('ultimate + ultimate → max-tier', () => {

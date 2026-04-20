@@ -40,7 +40,7 @@ export interface BossHpEntry {
 	defId: string;
 	hp: number;
 	maxHp: number;
-	phase: 1 | 2;
+	phase: 1 | 2 | 3;
 }
 
 /** Phaser emits wavesCleared~goldEarned; xpEarned is computed in the React layer via battleXp(). */

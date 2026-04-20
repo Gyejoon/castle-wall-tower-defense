@@ -20,6 +20,7 @@ export interface TowerLocator {
 export type MergeFailReason =
 	| 'same-instance'
 	| 'incompatible-pair'
+	| 'same-family-t4'
 	| 'max-tier';
 
 export type MergeResult =
@@ -43,6 +44,12 @@ export class MergeSystem {
 		}
 		if (a.tier >= 6 || b.tier >= 6) {
 			return { kind: 'failure', reason: 'max-tier' };
+		}
+		// Common newbie trap: same family T4+T4 은 T5로 못 올라간다.
+		// cross-family T4 끼리만 hybrid로 합성 가능. 일반 "incompatible-pair"
+		// 메시지로 뭉뚱그리면 플레이어가 T5/T6 경로를 못 찾으므로 별도 reason.
+		if (a.tier === 4 && b.tier === 4 && a.family === b.family) {
+			return { kind: 'failure', reason: 'same-family-t4' };
 		}
 		const next = resolveMerge(
 			a.towerId,

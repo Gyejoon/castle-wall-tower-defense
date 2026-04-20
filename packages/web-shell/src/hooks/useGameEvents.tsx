@@ -190,7 +190,7 @@ export function useGameEvents() {
 			defId: string;
 			hp: number;
 			maxHp: number;
-			phase: 1 | 2;
+			phase: 1 | 2 | 3;
 		}) => {
 			upsertBossHp(data);
 		};
@@ -198,8 +198,9 @@ export function useGameEvents() {
 			removeBossHp(data.unitId);
 			pushToast('BOSS CLEAR!', 'success');
 		};
-		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
+		const onBossPhaseChange = (data: { phase: 1 | 2 | 3 }) => {
 			if (data.phase === 2) pushToast('보스 분노!', 'warning');
+			else if (data.phase === 3) pushToast('보스 광폭화!', 'error');
 		};
 		const onTowerSelected = (data: {
 			towerDefId: string;

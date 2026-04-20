@@ -106,17 +106,18 @@ describe('getWaveScaling — endless wave formula', () => {
 		}
 	});
 
-	it('slot 10 is exactly the last table entry (hp 2.2, speed 1.1)', () => {
-		expect(getWaveScaling(10)).toEqual({ hp: 2.2, speed: 1.1 });
+	it('slot 10 matches the last table entry (hp 3.8, speed 1.15)', () => {
+		expect(getWaveScaling(10)).toEqual({ hp: 3.8, speed: 1.15 });
 	});
 
-	it('slot 11+ scales linearly — hp +0.35 per slot', () => {
-		expect(getWaveScaling(11).hp).toBeCloseTo(2.55, 5);
-		expect(getWaveScaling(20).hp).toBeCloseTo(5.7, 5);
+	it('slot 11+ scales exponentially — hp ×1.12 per slot, speed +0.03', () => {
+		expect(getWaveScaling(11).hp).toBeCloseTo(3.8 * 1.12, 3);
+		expect(getWaveScaling(20).hp).toBeCloseTo(3.8 * 1.12 ** 10, 3);
+		expect(getWaveScaling(11).speed).toBeCloseTo(1.15 + 0.03, 5);
 	});
 
-	it('speed is capped at 1.6', () => {
-		expect(getWaveScaling(100).speed).toBeLessThanOrEqual(1.6);
+	it('speed is capped at 2.2', () => {
+		expect(getWaveScaling(100).speed).toBeLessThanOrEqual(2.2);
 	});
 
 	it('slot <= 0 falls back to hp=1 speed=1', () => {

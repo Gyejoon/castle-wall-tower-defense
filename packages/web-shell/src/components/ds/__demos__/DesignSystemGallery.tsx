@@ -63,6 +63,17 @@ export function DesignSystemGallery() {
 					<Card variant="framed">framed variant</Card>
 					<Card variant="keyart">keyart variant</Card>
 				</Row>
+				<Row label="framed × intent">
+					<Card variant="framed" intent="default">
+						default
+					</Card>
+					<Card variant="framed" intent="accent">
+						accent
+					</Card>
+					<Card variant="framed" intent="danger">
+						danger
+					</Card>
+				</Row>
 				<Row label="intent">
 					<Card variant="panel" intent="default">
 						default

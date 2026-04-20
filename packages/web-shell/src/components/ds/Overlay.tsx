@@ -4,6 +4,7 @@ import {
 	type HTMLAttributes,
 	type ReactNode,
 	useEffect,
+	useRef,
 } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -69,16 +70,22 @@ export function Overlay({
 	};
 
 	// Escape dismissal is window-scoped so it fires without needing tabIndex/focus.
+	// Store the callback in a ref so the window listener only re-registers when
+	// `dismissOnBackdrop` toggles — not every time the parent passes an inline arrow.
+	const onDismissRef = useRef(onDismiss);
 	useEffect(() => {
-		if (!dismissOnBackdrop || !onDismiss) return;
+		onDismissRef.current = onDismiss;
+	}, [onDismiss]);
+	useEffect(() => {
+		if (!dismissOnBackdrop) return;
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') onDismiss();
+			if (e.key === 'Escape') onDismissRef.current?.();
 		};
 		window.addEventListener('keydown', onKey);
 		return () => {
 			window.removeEventListener('keydown', onKey);
 		};
-	}, [dismissOnBackdrop, onDismiss]);
+	}, [dismissOnBackdrop]);
 
 	const handleBackdrop = (e: {
 		target: EventTarget;

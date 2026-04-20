@@ -1,4 +1,4 @@
-import { core, surface } from '@gld/shared';
+import { core, surface, tier } from '@gld/shared';
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -22,6 +22,14 @@ const intentGlow: Record<CardIntent, string> = {
 	default: 'transparent',
 	accent: 'rgba(200, 160, 74, 0.25)',
 	danger: 'rgba(192, 48, 32, 0.25)',
+};
+
+/** Framed variant gradient — outer metallic band tinted per intent so accent/danger
+ *  framed cards read differently from default gold. */
+const framedGradient: Record<CardIntent, string> = {
+	default: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
+	accent: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
+	danger: `linear-gradient(180deg, ${tier[6].bright} 0%, ${core.danger} 50%, ${tier[4].dark} 100%)`,
 };
 
 /**
@@ -68,7 +76,7 @@ export function Card({
 			<div
 				className={cn(base, 'p-[3px] rounded-md', className)}
 				style={{
-					background: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
+					background: framedGradient[intent],
 					boxShadow: highlight
 						? `0 0 16px ${intentGlow[intent]}, 0 4px 0 rgba(10, 8, 4, 0.6)`
 						: '0 4px 0 rgba(10, 8, 4, 0.6)',
@@ -89,14 +97,17 @@ export function Card({
 		);
 	}
 
-	// keyart
+	// keyart — translucent hero card; needs a stronger edge so it doesn't bleed into bg
+	const keyartBorder = intent === 'default' ? core.accent : border;
+	const keyartGlow =
+		intent === 'default' ? 'rgba(200, 160, 74, 0.28)' : intentGlow[intent];
 	return (
 		<div
 			className={cn(base, 'rounded-md p-lg overflow-hidden', className)}
 			style={{
-				background: `linear-gradient(160deg, ${surface.alpha.panel70} 0%, ${surface.alpha.bg76} 100%)`,
-				border: `1px solid ${border}`,
-				boxShadow: `0 6px 0 rgba(10, 8, 4, 0.6), 0 0 24px ${intentGlow[intent]}`,
+				background: `linear-gradient(160deg, ${surface.alpha.panel85} 0%, ${surface.alpha.bg80} 100%)`,
+				border: `2px solid ${keyartBorder}`,
+				boxShadow: `0 6px 0 rgba(10, 8, 4, 0.65), 0 0 24px ${keyartGlow}, 0 0 0 1px rgba(255, 255, 255, 0.04) inset`,
 				...style,
 			}}
 			{...props}

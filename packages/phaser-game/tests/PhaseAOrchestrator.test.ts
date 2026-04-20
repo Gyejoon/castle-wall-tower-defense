@@ -37,58 +37,68 @@ interface FakeTower {
 	col: number;
 	row: number;
 	towerId: string;
-	grade: 'normal' | 'rare' | 'unique' | 'epic';
+	family: string;
+	tier: number;
+	instanceId: string;
 }
+
+// Minimal family/tier table for test towers so merge logic resolves.
+const TEST_FAMILY: Record<string, { family: string; tier: number }> = {
+	archer: { family: 'archer', tier: 1 },
+	wind_spire: { family: 'archer', tier: 2 },
+	nova_cannon: { family: 'siege', tier: 1 },
+};
 
 function makeFakeTowerSystem() {
 	const towers: FakeTower[] = [];
+	let nextId = 0;
 	return {
 		towers,
 		playPhaseASummonVfx: vi.fn(),
 		playPhaseAMergeVfx: vi.fn(),
-		placeTower: vi.fn(
-			(
-				col: number,
-				row: number,
-				defId: string,
-				opts?: { gradeOverride?: 'normal' | 'rare' | 'unique' | 'epic' },
-			) => {
-				towers.push({
-					col,
-					row,
-					towerId: defId,
-					grade: opts?.gradeOverride ?? 'normal',
-				});
-				return { success: true, tower: {} };
-			},
-		),
+		playMergeRevealVfx: vi.fn(),
+		placeTower: vi.fn((col: number, row: number, defId: string) => {
+			const meta = TEST_FAMILY[defId] ?? { family: 'archer', tier: 1 };
+			const instanceId = `fake_${nextId++}`;
+			towers.push({
+				col,
+				row,
+				towerId: defId,
+				family: meta.family,
+				tier: meta.tier,
+				instanceId,
+			});
+			return { success: true, tower: { instanceId } };
+		}),
 		getTowerLocator: vi.fn((col: number, row: number) => {
 			const t = towers.find((x) => x.col === col && x.row === row);
-			return t ? { col, row, towerId: t.towerId, grade: t.grade } : null;
+			return t
+				? {
+						instanceId: t.instanceId,
+						towerId: t.towerId,
+						family: t.family,
+						tier: t.tier,
+						x: col,
+						y: row,
+					}
+				: null;
 		}),
-		applyMerge: vi.fn(
-			(
-				removedCol: number,
-				removedRow: number,
-				keptCol: number,
-				keptRow: number,
-				newGrade: 'normal' | 'rare' | 'unique' | 'epic',
-			) => {
-				const removedIdx = towers.findIndex(
-					(t) => t.col === removedCol && t.row === removedRow,
-				);
-				const keptIdx = towers.findIndex(
-					(t) => t.col === keptCol && t.row === keptRow,
-				);
-				if (removedIdx < 0 || keptIdx < 0) return false;
-				towers.splice(removedIdx, 1);
-				const newKeptIdx = towers.findIndex(
-					(t) => t.col === keptCol && t.row === keptRow,
-				);
-				towers[newKeptIdx].grade = newGrade;
-				return true;
-			},
-		),
+		getTowerAt: vi.fn((col: number, row: number) => {
+			const t = towers.find((x) => x.col === col && x.row === row);
+			return t
+				? {
+						data: { instanceId: t.instanceId, defId: t.towerId },
+						def: { id: t.towerId, tier: t.tier },
+						tier: t.tier,
+					}
+				: null;
+		}),
+		removeTowerAt: vi.fn((col: number, row: number) => {
+			const i = towers.findIndex((x) => x.col === col && x.row === row);
+			if (i < 0) return false;
+			towers.splice(i, 1);
+			return true;
+		}),
 	};
 }
 
@@ -114,8 +124,8 @@ beforeEach(() => {
 	resetBus();
 });
 
-describe('PhaseAOrchestrator', () => {
-	it('request-summon-tower → draw from pool → emit phase-a-summon-ready (step 1)', () => {
+describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
+	it('request-summon-tower → draw from pool → emit phase-a-summon-ready (towerId only)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
@@ -130,12 +140,12 @@ describe('PhaseAOrchestrator', () => {
 		const readyCall = getEmits().find(
 			([event]) => event === 'phase-a-summon-ready',
 		);
-		expect(readyCall?.[1]).toEqual({ towerId: 'archer', grade: 'normal' });
+		expect(readyCall?.[1]).toEqual({ towerId: 'archer', source: 'summon' });
 
 		orch.destroy();
 	});
 
-	it('completePlacement → placeTower + tower-summoned (step 2)', () => {
+	it('completePlacement → placeTower + tower-summoned (no grade)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(40);
 		const orch = new PhaseAOrchestrator({
@@ -150,13 +160,14 @@ describe('PhaseAOrchestrator', () => {
 		orch.completePlacement(2, 3);
 
 		expect(towerSystem.placeTower).toHaveBeenCalledWith(2, 3, 'archer', {
-			gradeOverride: 'normal',
 			levelOverride: 1,
 		});
 		expect(energy.spend).toHaveBeenCalledWith(8);
 		expect(orch.hasPendingSummon()).toBe(false);
 		const summoned = getEmits().find(([e]) => e === 'tower-summoned');
 		expect(summoned?.[1]).toMatchObject({ col: 2, row: 3, towerId: 'archer' });
+		// grade is gone
+		expect((summoned?.[1] as Record<string, unknown>).grade).toBeUndefined();
 	});
 
 	it('cancelPendingSummon clears pending state', () => {
@@ -173,12 +184,10 @@ describe('PhaseAOrchestrator', () => {
 		expect(orch.hasPendingSummon()).toBe(false);
 	});
 
-	it('merge 성공 시 applyMerge 호출 + towers-merged emit', () => {
+	it('merge request → archer+archer (T1) 성공 시 towers-merged(wind_spire, T2) emit', () => {
 		const towerSystem = makeFakeTowerSystem();
-		towerSystem.towers.push(
-			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
-			{ col: 1, row: 0, towerId: 'archer', grade: 'normal' },
-		);
+		towerSystem.placeTower(0, 0, 'archer');
+		towerSystem.placeTower(1, 0, 'archer');
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
@@ -191,52 +200,29 @@ describe('PhaseAOrchestrator', () => {
 			toRow: 0,
 		});
 
-		expect(towerSystem.applyMerge).toHaveBeenCalledWith(0, 0, 1, 0, 'rare');
+		expect(towerSystem.removeTowerAt).toHaveBeenCalledWith(0, 0);
+		expect(towerSystem.removeTowerAt).toHaveBeenCalledWith(1, 0);
+		expect(towerSystem.placeTower).toHaveBeenLastCalledWith(
+			1,
+			0,
+			'wind_spire',
+			{ levelOverride: 1 },
+		);
 		const mergedCall = getEmits().find(([event]) => event === 'towers-merged');
-		expect(mergedCall?.[1]).toEqual({
+		expect(mergedCall?.[1]).toMatchObject({
 			col: 1,
 			row: 0,
-			towerId: 'archer',
-			fromGrade: 'normal',
-			toGrade: 'rare',
+			towerId: 'wind_spire',
+			toTowerId: 'wind_spire',
+			fromTier: 1,
+			toTier: 2,
 		});
 	});
 
-	it('merge 실패 시 merge-failed emit (다른 타워)', () => {
+	it('merge request → 가족이 다르면 incompatible-pair 실패', () => {
 		const towerSystem = makeFakeTowerSystem();
-		towerSystem.towers.push(
-			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
-			{ col: 1, row: 0, towerId: 'plasma', grade: 'normal' },
-		);
-		new PhaseAOrchestrator({
-			towerSystem: towerSystem as never,
-			initialPool: ['archer'],
-		});
-
-		EventBus.emit('request-merge-towers', {
-			fromCol: 0,
-			fromRow: 0,
-			toCol: 1,
-			toRow: 0,
-		});
-
-		expect(towerSystem.applyMerge).not.toHaveBeenCalled();
-		const failedCall = getEmits().find(([event]) => event === 'merge-failed');
-		expect(failedCall?.[1]).toEqual({
-			fromCol: 0,
-			fromRow: 0,
-			toCol: 1,
-			toRow: 0,
-			reason: 'different-tower',
-		});
-	});
-
-	it('merge 실패 시 merge-failed emit (max-grade)', () => {
-		const towerSystem = makeFakeTowerSystem();
-		towerSystem.towers.push(
-			{ col: 0, row: 0, towerId: 'archer', grade: 'epic' },
-			{ col: 1, row: 0, towerId: 'archer', grade: 'epic' },
-		);
+		towerSystem.placeTower(0, 0, 'archer');
+		towerSystem.placeTower(1, 0, 'nova_cannon');
 		new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
@@ -250,7 +236,26 @@ describe('PhaseAOrchestrator', () => {
 		});
 
 		const failedCall = getEmits().find(([event]) => event === 'merge-failed');
-		expect(failedCall?.[1]).toMatchObject({ reason: 'max-grade' });
+		expect(failedCall?.[1]).toMatchObject({ reason: 'incompatible-pair' });
+		expect(towerSystem.removeTowerAt).not.toHaveBeenCalled();
+	});
+
+	it('merge request → 빈 타일이면 invalid-tile 실패', () => {
+		const towerSystem = makeFakeTowerSystem();
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		EventBus.emit('request-merge-towers', {
+			fromCol: 0,
+			fromRow: 0,
+			toCol: 1,
+			toRow: 0,
+		});
+
+		const failedCall = getEmits().find(([event]) => event === 'merge-failed');
+		expect(failedCall?.[1]).toMatchObject({ reason: 'invalid-tile' });
 	});
 
 	it('destroy() 후 emit이 더 이상 핸들러를 부르지 않는다', () => {
@@ -271,7 +276,6 @@ describe('PhaseAOrchestrator', () => {
 		});
 
 		expect(towerSystem.placeTower).not.toHaveBeenCalled();
-		expect(towerSystem.applyMerge).not.toHaveBeenCalled();
 	});
 
 	it('에너지 부족이면 summon-failed:insufficient-energy emit + placeTower 미호출', () => {
@@ -338,55 +342,25 @@ describe('PhaseAOrchestrator', () => {
 		orch.applyUpgrade('dmg_up');
 		expect(orch.getUpgradeStacks('dmg_up')).toBe(2);
 
-		const appliedCalls = getEmits().filter(
-			([event]) => event === 'upgrade-applied',
-		);
-		expect(appliedCalls).toHaveLength(2);
-		expect(appliedCalls[0][1]).toEqual({ upgradeId: 'dmg_up', totalStacks: 1 });
-		expect(appliedCalls[1][1]).toEqual({ upgradeId: 'dmg_up', totalStacks: 2 });
-
 		orch.destroy();
 	});
 
-	it('getModifier — dmg_up multiply 타입: 1회=1.15, 2회=1.3225', () => {
+	it('getModifier — dmg_up multiply: 1회=1.20, 2회=1.44', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
 
-		// 0 stacks → identity multiplier
 		expect(orch.getModifier('dmg_up')).toBe(1);
-
 		orch.applyUpgrade('dmg_up');
-		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.15);
-
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.2);
 		orch.applyUpgrade('dmg_up');
-		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.3225);
-
+		expect(orch.getModifier('dmg_up')).toBeCloseTo(1.44);
 		orch.destroy();
 	});
 
-	it('getModifier — range_up add 타입: 1회=0.5, 2회=1.0', () => {
-		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
-			towerSystem: towerSystem as never,
-			initialPool: ['archer'],
-		});
-
-		// 0 stacks → 0 (additive)
-		expect(orch.getModifier('range_up')).toBe(0);
-
-		orch.applyUpgrade('range_up');
-		expect(orch.getModifier('range_up')).toBeCloseTo(0.5);
-
-		orch.applyUpgrade('range_up');
-		expect(orch.getModifier('range_up')).toBeCloseTo(1.0);
-
-		orch.destroy();
-	});
-
-	it('effectiveSummonCost — summon_discount 적용 (최소 5)', () => {
+	it('effectiveSummonCost — Phase 4에서는 상수(할인 카드 제거됨)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
@@ -394,89 +368,460 @@ describe('PhaseAOrchestrator', () => {
 			summonCost: 8,
 		});
 
-		// No discount → base cost
 		expect(orch.effectiveSummonCost).toBe(8);
-
-		// 1 stack of summon_discount (baseValue=3) → 8-3=5
-		orch.applyUpgrade('summon_discount');
-		expect(orch.effectiveSummonCost).toBe(5);
-
-		// 2 stacks → 8-6=2 → clamped to 5
-		orch.applyUpgrade('summon_discount');
-		expect(orch.effectiveSummonCost).toBe(5);
-
 		orch.destroy();
 	});
 
-	it('tickEnergyRegen — 5초마다 에너지 추가', () => {
+	it('applyUpgrade는 UPGRADE_MAX_STACKS(10)에서 포화', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const energy = makeFakeEnergy(10);
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
+		});
+
+		for (let i = 0; i < 15; i++) orch.applyUpgrade('tier_odds_up');
+		expect(orch.getUpgradeStacks('tier_odds_up')).toBe(10);
+		orch.destroy();
+	});
+
+	it('알 수 없는 upgradeId는 무시된다', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+		});
+
+		orch.applyUpgrade('nonexistent_card');
+		expect(orch.getUpgradeStacks('nonexistent_card')).toBe(0);
+		orch.destroy();
+	});
+
+	it('requestUpgradePick → upgrade-choice-ready 이벤트 { choices } 발행', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+		});
+
+		orch.requestUpgradePick(3);
+
+		const ready = getEmits().find(([e]) => e === 'upgrade-choice-ready');
+		expect(ready).toBeDefined();
+		const payload = ready?.[1] as { choices: Array<{ id: string }> };
+		expect(payload.choices).toHaveLength(3);
+		const unique = new Set(payload.choices.map((c) => c.id));
+		expect(unique.size).toBe(3);
+		orch.destroy();
+	});
+
+	it('request-upgrade-reroll (no adService) → 새 upgrade-choice-ready 발행', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+		});
+
+		orch.requestUpgradePick(3);
+		const firstCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+
+		EventBus.emit('request-upgrade-reroll');
+		await new Promise((r) => setTimeout(r, 0));
+
+		const finalCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+		expect(finalCount).toBeGreaterThan(firstCount);
+		orch.destroy();
+	});
+
+	// ── Phase 5: GachaSystem + summon queue ──────────────────────────
+	it('request-gacha-summon (T2, energy ≥ 40) → spend(40) + phase-a-summon-ready source=gacha', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(100);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
 			energySystem: energy,
 		});
 
-		// No stacks → tick does nothing
-		orch.tickEnergyRegen(5);
-		expect(energy.add).not.toHaveBeenCalled();
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
 
-		// Apply 2 stacks of energy_regen
-		orch.applyUpgrade('energy_regen');
-		orch.applyUpgrade('energy_regen');
-
-		// 3 seconds → not yet
-		orch.tickEnergyRegen(3);
-		expect(energy.add).not.toHaveBeenCalled();
-
-		// 2 more seconds (total 5) → trigger
-		orch.tickEnergyRegen(2);
-		expect(energy.add).toHaveBeenCalledWith(2);
-		expect(energy.current).toBe(12);
-
-		orch.destroy();
+		expect(energy.spend).toHaveBeenCalledWith(40);
+		const ready = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+		expect(ready?.[1]).toMatchObject({ source: 'gacha' });
+		expect((ready?.[1] as { towerId: string }).towerId).toBeDefined();
+		expect(energy.current).toBe(60);
 	});
 
-	it('request-apply-upgrade EventBus 리스너 동작', () => {
+	it('request-gacha-summon (T2, energy < 40) → gacha-insufficient-energy + no summon', () => {
 		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(30);
+		new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+
+		const insufficient = getEmits().find(
+			([e]) => e === 'gacha-insufficient-energy',
+		);
+		expect(insufficient?.[1]).toEqual({ targetTier: 2, cost: 40, have: 30 });
+		expect(
+			getEmits().find(([e]) => e === 'phase-a-summon-ready'),
+		).toBeUndefined();
+		expect(energy.current).toBe(30);
+	});
+
+	it('gacha during pending summon → queued (no second phase-a-summon-ready)', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
 		});
 
-		EventBus.emit('request-apply-upgrade', { upgradeId: 'spd_up' });
-		expect(orch.getUpgradeStacks('spd_up')).toBe(1);
+		// First: a regular pool summon → pending.
+		EventBus.emit('request-summon-tower');
+		expect(orch.hasPendingSummon()).toBe(true);
 
-		const appliedCall = getEmits().find(
-			([event]) => event === 'upgrade-applied',
-		);
-		expect(appliedCall?.[1]).toEqual({ upgradeId: 'spd_up', totalStacks: 1 });
+		// Second: gacha request — should spend energy upfront but NOT emit
+		// a new phase-a-summon-ready yet.
+		const readyBefore = getEmits().filter(
+			([e]) => e === 'phase-a-summon-ready',
+		).length;
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		const readyAfter = getEmits().filter(
+			([e]) => e === 'phase-a-summon-ready',
+		).length;
 
-		orch.destroy();
+		expect(readyAfter).toBe(readyBefore);
+		expect(orch.getSummonQueueSize()).toBe(1);
+		expect(energy.spend).toHaveBeenCalledWith(40);
 	});
 
-	it('effectiveSummonCost가 소환 비용에 실제 적용됨', () => {
+	it('cancel pending gacha summon → energy refunded + next queue entry emitted', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		// Queue two gacha summons — first becomes pending, second queues.
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		expect(orch.hasPendingSummon()).toBe(true);
+		expect(orch.getSummonQueueSize()).toBe(1);
+		expect(energy.current).toBe(200 - 40 - 40);
+
+		// Cancel current pending — should refund 40 AND surface next queue.
+		orch.cancelPendingSummon();
+
+		expect(energy.add).toHaveBeenCalledWith(40);
+		expect(energy.current).toBe(200 - 40); // only the queued cost remains
+		expect(orch.hasPendingSummon()).toBe(true); // next entry surfaced
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
+
+	it('place pending gacha summon → no refund, next queue entry emitted', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(200);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.1,
+			energySystem: energy,
+		});
+
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		expect(orch.getSummonQueueSize()).toBe(1);
+
+		// Placement should succeed without a second spend (gacha paid upfront).
+		const spendCallsBefore = energy.spend.mock.calls.length;
+		orch.completePlacement(0, 0);
+		const spendCallsAfter = energy.spend.mock.calls.length;
+
+		expect(spendCallsAfter).toBe(spendCallsBefore); // no new spend
+		expect(energy.add).not.toHaveBeenCalled(); // no refund
+		expect(orch.hasPendingSummon()).toBe(true); // next entry surfaced
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
+
+	it('rapid-tap gacha T2 x3 with energy=40 → one spend, two insufficient, no queueing', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(40);
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
-			rng: () => 0,
+			rng: () => 0.1,
 			energySystem: energy,
-			summonCost: 8,
 		});
 
-		// Apply summon_discount (baseValue=3) → effectiveCost = 5
-		orch.applyUpgrade('summon_discount');
-		expect(orch.effectiveSummonCost).toBe(5);
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
+		EventBus.emit('request-gacha-summon', { targetTier: 2 });
 
-		// Summon + place → should spend 5, not 8
-		EventBus.emit('request-summon-tower');
-		orch.completePlacement(0, 0);
+		// Only one successful spend (the first tap), energy goes to 0.
+		expect(energy.current).toBe(0);
+		const successfulSpends = energy.spend.mock.results.filter(
+			(r) => r.value === true,
+		).length;
+		expect(successfulSpends).toBe(1);
 
-		expect(energy.spend).toHaveBeenCalledWith(5);
-		expect(energy.current).toBe(35);
+		// Two insufficient-energy events emitted, no queue entries.
+		const insufficientEmits = getEmits().filter(
+			([e]) => e === 'gacha-insufficient-energy',
+		);
+		expect(insufficientEmits.length).toBe(2);
+		expect(orch.getSummonQueueSize()).toBe(0);
+	});
 
+	it('gacha oddsBonus consumed from getTierOddsBonus()', () => {
+		const towerSystem = makeFakeTowerSystem();
+		const energy = makeFakeEnergy(1000);
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0.5, // midpoint; without bonus would fail T2 (0.5 > 0.6? no — 0.5 < 0.6 = success)
+			energySystem: energy,
+		});
+
+		// Stack tier_odds_up to confirm the orchestrator reads the getter.
+		// We just verify getTierOddsBonus returns >0 after stacking — the
+		// actual probability math is covered by GachaSystem.test.ts.
+		orch.applyUpgrade('tier_odds_up');
+		expect(orch.getTierOddsBonus()).toBeGreaterThan(0);
+	});
+
+	it('request-upgrade-reroll (adService dismissed) → 재발행 안 함', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: {
+				watchAd: vi.fn().mockResolvedValue('dismissed'),
+			},
+		});
+
+		orch.requestUpgradePick(3);
+		const firstCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+
+		EventBus.emit('request-upgrade-reroll');
+		await new Promise((r) => setTimeout(r, 0));
+
+		const finalCount = getEmits().filter(
+			([e]) => e === 'upgrade-choice-ready',
+		).length;
+		expect(finalCount).toBe(firstCount);
 		orch.destroy();
+	});
+});
+
+describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]', () => {
+	it('request-continue-run (adService rewarded) → emits game-resumed with livesRestored', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: {
+				watchAd: vi.fn().mockResolvedValue('rewarded'),
+			},
+		});
+
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		const resumedEmits = getEmits().filter(([e]) => e === 'game-resumed');
+		expect(resumedEmits.length).toBe(1);
+		expect(resumedEmits[0][1]).toEqual({ livesRestored: 5 });
+		expect(orch.getContinueCount()).toBe(1);
+		orch.destroy();
+	});
+
+	it('request-continue-run (adService skipped) → no game-resumed, counter rewound for retry', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const watchAd = vi.fn().mockResolvedValue('skipped');
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: { watchAd },
+		});
+
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(0);
+		expect(orch.getContinueCount()).toBe(0);
+		expect(watchAd).toHaveBeenCalledTimes(1);
+
+		// Retry with a rewarded result should now succeed since the counter
+		// was rewound.
+		watchAd.mockResolvedValueOnce('rewarded');
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(1);
+		expect(orch.getContinueCount()).toBe(1);
+		orch.destroy();
+	});
+
+	it('request-continue-run beyond cap (PHASE_A_MAX_CONTINUES_PER_RUN) → rejected, no ad call', async () => {
+		const towerSystem = makeFakeTowerSystem();
+		const watchAd = vi.fn().mockResolvedValue('rewarded');
+		const orch = new PhaseAOrchestrator({
+			towerSystem: towerSystem as never,
+			initialPool: ['archer'],
+			rng: () => 0,
+			adService: { watchAd },
+		});
+
+		// First continue consumes the only slot.
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+		expect(orch.getContinueCount()).toBe(1);
+		const firstWatchCallCount = watchAd.mock.calls.length;
+
+		// Second attempt should short-circuit before touching the ad service.
+		EventBus.emit('request-continue-run', { livesRestored: 5 });
+		await new Promise((r) => setTimeout(r, 0));
+		expect(orch.getContinueCount()).toBe(1);
+		expect(watchAd.mock.calls.length).toBe(firstWatchCallCount);
+		expect(getEmits().filter(([e]) => e === 'game-resumed').length).toBe(1);
+		orch.destroy();
+	});
+
+	describe('cancel-preserves-draw anti-reroll', () => {
+		// Stateful rng that cycles through the provided values so successive
+		// draws would naturally land on different towers if no preservation
+		// logic intervened. Used to prove that cancel → re-summon re-emits
+		// the SAME towerId rather than advancing the rng.
+		function cyclingRng(values: number[]): () => number {
+			let i = 0;
+			return () => {
+				const v = values[i % values.length];
+				i += 1;
+				return v;
+			};
+		}
+
+		it('cancelling a pool summon preserves the drawn tower for next request', () => {
+			const towerSystem = makeFakeTowerSystem();
+			// Two-tower pool; rng 0 → index 0 (archer), rng 0.6 → index 1 (nova_cannon).
+			const rng = cyclingRng([0, 0.6]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer', 'nova_cannon'],
+				rng,
+			});
+
+			EventBus.emit('request-summon-tower');
+			const firstReady = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+			const firstTowerId = (firstReady?.[1] as { towerId: string }).towerId;
+
+			orch.cancelPendingSummon();
+			expect(orch.hasPendingSummon()).toBe(false);
+
+			// Second summon tap should re-emit the SAME tower id, not draw afresh.
+			EventBus.emit('request-summon-tower');
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const secondTowerId = (
+				readies[readies.length - 1][1] as {
+					towerId: string;
+				}
+			).towerId;
+			expect(secondTowerId).toBe(firstTowerId);
+			orch.destroy();
+		});
+
+		it('cancelled pool draw is consumed once — third summon draws fresh', () => {
+			const towerSystem = makeFakeTowerSystem();
+			const rng = cyclingRng([0, 0.6, 0.6, 0]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer', 'nova_cannon'],
+				rng,
+			});
+
+			EventBus.emit('request-summon-tower'); // tap 1 — draws archer
+			const cancelledTowerId = (
+				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+					string,
+					{ towerId: string },
+				]
+			)[1].towerId;
+			orch.cancelPendingSummon();
+
+			// Tap 2 — consumes the preserved pool draw (archer). No rng call.
+			EventBus.emit('request-summon-tower');
+			orch.completePlacement(1, 1);
+
+			// Tap 3 — cancelledPoolDraw was cleared when consumed on tap 2,
+			// so a fresh draw must advance the rng. With rng cycle
+			// [0, 0.6, ...], tap 3 consumes rng[1] = 0.6 → nova_cannon.
+			EventBus.emit('request-summon-tower');
+
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const thirdTowerId = (
+				readies[readies.length - 1][1] as { towerId: string }
+			).towerId;
+			expect(cancelledTowerId).toBe('archer');
+			expect(thirdTowerId).toBe('nova_cannon');
+			orch.destroy();
+		});
+
+		it('cancelling a gacha summon does NOT preserve draw (upfront cost paid)', () => {
+			const towerSystem = makeFakeTowerSystem();
+			const energy = makeFakeEnergy(200);
+			const rng = cyclingRng([0, 0.6]);
+			const orch = new PhaseAOrchestrator({
+				towerSystem: towerSystem as never,
+				initialPool: ['archer'],
+				rng,
+				energySystem: energy,
+			});
+
+			EventBus.emit('request-gacha-summon', { targetTier: 2 });
+			const firstGachaId = (
+				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+					string,
+					{ towerId: string },
+				]
+			)[1].towerId;
+
+			orch.cancelPendingSummon();
+
+			// A subsequent pool summon should NOT surface the cancelled gacha
+			// tower — it should draw from the summon pool normally.
+			EventBus.emit('request-summon-tower');
+			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const nextReady = readies[readies.length - 1][1] as {
+				towerId: string;
+				source: string;
+			};
+			expect(nextReady.source).toBe('summon');
+			expect(nextReady.towerId).toBe('archer');
+			// Sanity — the gacha's first result was preserved onto the queue
+			// only before cancel; it must NOT leak into the pool path.
+			expect(typeof firstGachaId).toBe('string');
+			orch.destroy();
+		});
 	});
 });

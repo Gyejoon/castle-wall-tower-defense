@@ -1,86 +1,73 @@
-import { type Grade, nextGrade } from '@gld/shared';
+import type { TowerFamily, TowerId } from '@gld/shared';
+import { resolveMerge } from '@gld/shared';
 
+/**
+ * Phase 2: family/tier-aware merge locator. Carries everything the merge
+ * resolver needs (family/tier) plus instance identity so callers can remove
+ * consumed towers by id. `x`/`y` are the locator's world or grid coordinates
+ * — MergeSystem doesn't interpret them, they flow through so the caller can
+ * decide where to spawn the result tower.
+ */
 export interface TowerLocator {
-	readonly col: number;
-	readonly row: number;
-	readonly towerId: string;
-	readonly grade: Grade;
-}
-
-export interface MergeContext {
-	getTowerAt(col: number, row: number): TowerLocator | null;
+	instanceId: string;
+	towerId: TowerId;
+	family: TowerFamily;
+	tier: number;
+	x: number;
+	y: number;
 }
 
 export type MergeFailReason =
-	| 'different-tower'
-	| 'different-grade'
-	| 'max-grade'
-	| 'invalid-tile';
+	| 'same-instance'
+	| 'incompatible-pair'
+	| 'same-family-t4'
+	| 'max-tier';
 
 export type MergeResult =
 	| {
 			kind: 'success';
-			keptCol: number;
-			keptRow: number;
-			removedCol: number;
-			removedRow: number;
-			towerId: string;
-			fromGrade: Grade;
-			toGrade: Grade;
+			toTowerId: TowerId;
+			toTier: number;
+			consumedA: string;
+			consumedB: string;
 	  }
-	| {
-			kind: 'failed';
-			fromCol: number;
-			fromRow: number;
-			toCol: number;
-			toRow: number;
-			reason: MergeFailReason;
-	  };
+	| { kind: 'failure'; reason: MergeFailReason };
 
+/**
+ * Family/tier merge resolver. See `resolveMerge` in @gld/shared for the
+ * full chain table. This class is stateless — `tryMerge` is static.
+ */
 export class MergeSystem {
-	tryMerge(
-		ctx: MergeContext,
-		fromCol: number,
-		fromRow: number,
-		toCol: number,
-		toRow: number,
-	): MergeResult {
-		const fail = (reason: MergeFailReason): MergeResult => ({
-			kind: 'failed',
-			fromCol,
-			fromRow,
-			toCol,
-			toRow,
-			reason,
-		});
-
-		if (fromCol === toCol && fromRow === toRow) {
-			return fail('invalid-tile');
+	static tryMerge(a: TowerLocator, b: TowerLocator): MergeResult {
+		if (a.instanceId === b.instanceId) {
+			return { kind: 'failure', reason: 'same-instance' };
 		}
-		const from = ctx.getTowerAt(fromCol, fromRow);
-		const to = ctx.getTowerAt(toCol, toRow);
-		if (!from || !to) {
-			return fail('invalid-tile');
+		if (a.tier >= 6 || b.tier >= 6) {
+			return { kind: 'failure', reason: 'max-tier' };
 		}
-		if (from.towerId !== to.towerId) {
-			return fail('different-tower');
+		// Common newbie trap: same family T4+T4 은 T5로 못 올라간다.
+		// cross-family T4 끼리만 hybrid로 합성 가능. 일반 "incompatible-pair"
+		// 메시지로 뭉뚱그리면 플레이어가 T5/T6 경로를 못 찾으므로 별도 reason.
+		if (a.tier === 4 && b.tier === 4 && a.family === b.family) {
+			return { kind: 'failure', reason: 'same-family-t4' };
 		}
-		if (from.grade !== to.grade) {
-			return fail('different-grade');
-		}
-		const upgraded = nextGrade(from.grade);
-		if (!upgraded) {
-			return fail('max-grade');
-		}
+		const next = resolveMerge(
+			a.towerId,
+			a.tier,
+			a.family,
+			b.towerId,
+			b.tier,
+			b.family,
+		);
+		if (!next) return { kind: 'failure', reason: 'incompatible-pair' };
+		const nextTier =
+			a.tier === b.tier ? a.tier + 1 : Math.max(a.tier, b.tier) + 1;
 		return {
 			kind: 'success',
-			keptCol: toCol,
-			keptRow: toRow,
-			removedCol: fromCol,
-			removedRow: fromRow,
-			towerId: from.towerId,
-			fromGrade: from.grade,
-			toGrade: upgraded,
+			toTowerId: next,
+			toTier: nextTier,
+			consumedA: a.instanceId,
+			consumedB: b.instanceId,
 		};
 	}
 }

@@ -1,10 +1,8 @@
 import {
 	ALL_TOWERS,
 	createDefaultSave,
-	getTotalWavesForStage,
 	type OwnedTower,
 	SAVE_VERSION,
-	STAGE_ORDER,
 } from '@gld/shared';
 import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
@@ -72,7 +70,7 @@ export function SettingsTab() {
 
 				<SettingsSection title="정보">
 					<InfoRow label="버전" value="0.1.0-alpha" />
-					<InfoRow label="빌드" value="2026.03.31" />
+					<InfoRow label="빌드" value="2026.04.18" />
 				</SettingsSection>
 
 				{(import.meta.env.DEV ||
@@ -214,30 +212,18 @@ function DevToolsSection() {
 			losses: 0,
 			winStreak: 30,
 			bestWinStreak: 30,
-			combatPower: 9999,
 		};
 		save.collection = ALL_TOWERS.map<OwnedTower>((t) => ({
 			defId: t.id,
 			level: 50,
-			grade: 'normal',
+			tier: t.tier,
 			acquiredAt: now,
 			awakening: 0,
 			duplicateCount: 0,
 		}));
-		const highestWave: Record<string, number> = {};
-		const stageStars: Record<string, 1 | 2 | 3> = {};
-		for (const stageId of STAGE_ORDER) {
-			const total = getTotalWavesForStage(stageId);
-			highestWave[stageId] = total;
-			highestWave[`${stageId}:2`] = total;
-			highestWave[`${stageId}:3`] = total;
-			stageStars[stageId] = 3;
-		}
 		save.progress = {
 			...save.progress,
-			highestWave,
-			stagesCleared: [...STAGE_ORDER],
-			stageStars,
+			highestWave: 50,
 			totalBattles: 30,
 			tutorialCompleted: true,
 		};
@@ -245,7 +231,7 @@ function DevToolsSection() {
 			'celestial',
 			'divine_throne',
 			'world_tree',
-			'dragon_nest',
+			'arcane_spire',
 		];
 
 		useMetaStore.setState({
@@ -296,9 +282,9 @@ function DevToolsSection() {
 		const maxCollection = ALL_TOWERS.map<OwnedTower>((t) => ({
 			defId: t.id,
 			level: 50,
-			grade: 'epic' as const,
+			tier: t.tier,
 			acquiredAt: now,
-			awakening: 5 as 0 | 1 | 2 | 3,
+			awakening: 3 as 0 | 1 | 2 | 3,
 			duplicateCount: 0,
 		}));
 		const save = {
@@ -310,36 +296,6 @@ function DevToolsSection() {
 			selectedDeck: meta.selectedDeck,
 		};
 		useMetaStore.setState({ collection: maxCollection });
-		writeSave(save);
-		window.location.reload();
-	};
-
-	const applyAllCleared = () => {
-		const meta = useMetaStore.getState();
-		const highestWave: Record<string, number> = {};
-		const stageStars: Record<string, 1 | 2 | 3> = {};
-		for (const stageId of STAGE_ORDER) {
-			const total = getTotalWavesForStage(stageId);
-			highestWave[stageId] = total;
-			highestWave[`${stageId}:2`] = total;
-			highestWave[`${stageId}:3`] = total;
-			stageStars[stageId] = 3;
-		}
-		const save = {
-			version: SAVE_VERSION,
-			profile: meta.profile,
-			collection: meta.collection,
-			progress: {
-				...meta.progress,
-				highestWave,
-				stagesCleared: [...STAGE_ORDER],
-				stageStars,
-				tutorialCompleted: true,
-			},
-			settings: meta.settings,
-			selectedDeck: meta.selectedDeck,
-		};
-		useMetaStore.setState({ progress: save.progress });
 		writeSave(save);
 		window.location.reload();
 	};
@@ -367,7 +323,7 @@ function DevToolsSection() {
 			>
 				<span className="font-pixel text-xs text-gold">MAX 전투력 세팅</span>
 				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
-					Lv.10 / 타워 18종 / 전 맵 ★3 클리어 / 99999G
+					Lv.10 / 타워 전체 / 99999G
 				</span>
 			</button>
 			<button
@@ -399,17 +355,7 @@ function DevToolsSection() {
 					전 타워 최대 업그레이드
 				</span>
 				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
-					전 타워 Lv.50 / Epic / 각성 5
-				</span>
-			</button>
-			<button
-				type="button"
-				onClick={applyAllCleared}
-				className="w-full px-3 py-2.5 bg-bg-80 text-left cursor-pointer border-none touch-manipulation"
-			>
-				<span className="font-pixel text-xs text-gold">전 맵 클리어</span>
-				<span className="font-pixel text-[8px] text-text-secondary block mt-0.5">
-					전 스테이지 ★3 클리어 상태로 세팅
+					전 타워 Lv.50 / 각성 3
 				</span>
 			</button>
 			<button

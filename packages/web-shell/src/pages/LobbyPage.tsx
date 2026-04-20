@@ -2,10 +2,8 @@ import { BottomTabBar } from '../components/lobby/BottomTabBar';
 import { ProfileBar } from '../components/lobby/ProfileBar';
 import { CollectionTab } from '../components/lobby/tabs/CollectionTab';
 import { HomeTab } from '../components/lobby/tabs/HomeTab';
-import { MissionsTab } from '../components/lobby/tabs/MissionsTab';
 import { SettingsTab } from '../components/lobby/tabs/SettingsTab';
 import { useGameStore } from '../stores/gameStore';
-import { AchievementPage } from './AchievementPage';
 
 export function LobbyPage() {
 	const lobbyTab = useGameStore((s) => s.lobbyTab);
@@ -30,8 +28,6 @@ export function LobbyPage() {
 					>
 						{lobbyTab === 'home' && <HomeTab />}
 						{lobbyTab === 'collection' && <CollectionTab />}
-						{lobbyTab === 'missions' && <MissionsTab />}
-						{lobbyTab === 'achievements' && <AchievementPage />}
 						{lobbyTab === 'settings' && <SettingsTab />}
 					</div>
 				</div>

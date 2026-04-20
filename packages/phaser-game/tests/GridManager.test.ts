@@ -1,5 +1,5 @@
 import type { GridConfig } from '@gld/shared';
-import { BOARD_TOP_PADDING, FOREST_GATE_MAP, ORTHO_TILE } from '@gld/shared';
+import { BOARD_TOP_PADDING, ORTHO_TILE, PHASE_A_LONG_MAP } from '@gld/shared';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics
@@ -42,7 +42,7 @@ describe('GridManager', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		expect(gm.width).toBe(10);
 		expect(gm.height).toBe(10);
-		expect(gm.tileSize).toBe(53);
+		expect(gm.tileSize).toBe(48);
 		expect(gm.spawnPoint).toEqual({ x: 0, y: 5 });
 		expect(gm.exitPoint).toEqual({ x: 5, y: 5 });
 	});
@@ -90,23 +90,23 @@ describe('GridManager', () => {
 		expect(gm.placeTower(5, 5, 'tower-1')).toBe(false);
 	});
 
-	it('FOREST_GATE_MAP path 타일에는 타워를 배치할 수 없어야 한다', () => {
-		const gm = new GridManager(FOREST_GATE_MAP);
-		const pathPoint = FOREST_GATE_MAP.path[1];
+	it('PHASE_A_LONG_MAP path 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(PHASE_A_LONG_MAP);
+		const pathPoint = PHASE_A_LONG_MAP.path[1];
 		expect(gm.placeTower(pathPoint.x, pathPoint.y, 'tower-1')).toBe(false);
 	});
 
-	it('FOREST_GATE_MAP blocked-placement 타일에는 타워를 배치할 수 없어야 한다', () => {
-		const gm = new GridManager(FOREST_GATE_MAP);
+	it('PHASE_A_LONG_MAP blocked-placement 타일에는 타워를 배치할 수 없어야 한다', () => {
+		const gm = new GridManager(PHASE_A_LONG_MAP);
 		const blockedPoint = { x: 0, y: 0 };
 		expect(gm.placeTower(blockedPoint.x, blockedPoint.y, 'tower-1')).toBe(
 			false,
 		);
 	});
 
-	it('FOREST_GATE_MAP buildable 타일에는 타워를 배치할 수 있어야 한다', () => {
-		const gm = new GridManager(FOREST_GATE_MAP);
-		const buildablePoint = FOREST_GATE_MAP.buildablePoints[0];
+	it('PHASE_A_LONG_MAP buildable 타일에는 타워를 배치할 수 있어야 한다', () => {
+		const gm = new GridManager(PHASE_A_LONG_MAP);
+		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
 		expect(gm.placeTower(buildablePoint.x, buildablePoint.y, 'tower-1')).toBe(
 			true,
 		);

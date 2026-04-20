@@ -25,11 +25,16 @@ export interface DeckCardDef {
 	readonly maxUses?: number;
 }
 
-export const DEFAULT_DECK_IDS = ['archer', 'plasma', 'emp', 'shield'] as const;
+export const DEFAULT_DECK_IDS = [
+	'archer',
+	'nova_cannon',
+	'emp',
+	'shield',
+] as const;
 
 export const DEFAULT_DECK: readonly DeckCardDef[] = [
-	{ towerDefId: 'archer', energyCost: 10, role: 'attacker' },
-	{ towerDefId: 'plasma', energyCost: 10, role: 'splash' },
+	{ towerDefId: 'archer', energyCost: 20, role: 'attacker' },
+	{ towerDefId: 'nova_cannon', energyCost: 20, role: 'splash' },
 	{ towerDefId: 'emp', energyCost: 20, role: 'slow' },
 	{ towerDefId: 'shield', energyCost: 20, role: 'stun' },
 ] as const;

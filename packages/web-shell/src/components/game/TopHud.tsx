@@ -1,4 +1,4 @@
-import { ENERGY_CAP } from '@gld/shared';
+import { ENERGY_MAX } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -96,10 +96,10 @@ export function TopHud({
 						<div
 							className={cn(
 								'h-full transition-[width] duration-300 ease-out',
-								energy >= ENERGY_CAP ? 'bg-success' : 'bg-gold',
+								energy >= ENERGY_MAX ? 'bg-success' : 'bg-gold',
 							)}
 							style={{
-								width: `${Math.min(100, (energy / ENERGY_CAP) * 100)}%`,
+								width: `${Math.min(100, (energy / ENERGY_MAX) * 100)}%`,
 							}}
 						/>
 					</div>

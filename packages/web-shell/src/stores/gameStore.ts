@@ -3,16 +3,11 @@ import {
 	type CombatHudState,
 	DEFAULT_DECK,
 	DEFAULT_DECK_IDS,
-	DEFAULT_MAP_ID,
-	DEFAULT_STAGE_ID,
 	type DeckCardDef,
 	INITIAL_ENERGY,
 	INITIAL_PLAYER_HP,
-	isMapUnlocked,
-	MAP_REGISTRY,
+	PHASE_A_MAP_ID,
 	type PlacementFailureReason,
-	STAGES,
-	type StarRating,
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
@@ -20,18 +15,12 @@ import { useMetaStore } from './metaStore';
 
 export type RunStatus =
 	| 'lobby'
-	| 'stageSelect'
-	| 'stageDetail'
+	| 'metaForge'
 	| 'building'
 	| 'running'
 	| 'victory'
 	| 'defeat';
-export type LobbyTab =
-	| 'home'
-	| 'collection'
-	| 'missions'
-	| 'achievements'
-	| 'settings';
+export type LobbyTab = 'home' | 'collection' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {
@@ -51,7 +40,7 @@ export interface BossHpEntry {
 	defId: string;
 	hp: number;
 	maxHp: number;
-	phase: 1 | 2;
+	phase: 1 | 2 | 3;
 }
 
 /** Phaser emits wavesCleared~goldEarned; xpEarned is computed in the React layer via battleXp(). */
@@ -62,8 +51,6 @@ export interface GameOverStats {
 	timeSurvivedSec: number;
 	goldEarned: number;
 	xpEarned: number;
-	selectedStar?: StarRating;
-	starCleared?: boolean;
 }
 
 interface GameStoreState {
@@ -73,8 +60,6 @@ interface GameStoreState {
 	energy: number;
 	lives: number;
 	selectedMapId: string;
-	selectedStageId: string;
-	selectedWorldId: string;
 	selectedTowerId: string | null;
 	deckCards: readonly DeckCardDef[];
 	selectedCardIndex: number | null;
@@ -98,16 +83,11 @@ interface GameStoreState {
 	tutorialStep: number | null;
 	tutorialMessage: string | null;
 	gameSpeed: 1 | 2 | 3;
-	selectedStar: StarRating;
-	stageDetailFrom: 'lobby' | 'stageSelect';
 
 	setRunStatus: (status: RunStatus) => void;
 	setGameReady: (ready: boolean) => void;
 	setEnergy: (energy: number) => void;
 	setLives: (lives: number) => void;
-	setSelectedMapId: (mapId: string) => void;
-	setSelectedWorldId: (worldId: string) => void;
-	setSelectedStageId: (stageId: string) => void;
 	setSelectedTower: (towerId: string | null) => void;
 	setDeckCards: (cards: readonly DeckCardDef[]) => void;
 	setSelectedCardIndex: (index: number | null) => void;
@@ -123,6 +103,9 @@ interface GameStoreState {
 	clearToast: () => void;
 	resetRun: () => void;
 	enterLobby: () => void;
+	startPhaseA: () => void;
+	/** Phase 9 will wire this to a MetaForge page; today it's a stub toast. */
+	enterMetaForge: () => void;
 	setBgmVolume: (v: number) => void;
 	setSfxVolume: (v: number) => void;
 	setColorblindMode: (mode: 'off' | 'protan' | 'deutan' | 'tritan') => void;
@@ -136,9 +119,6 @@ interface GameStoreState {
 	setTutorialStep: (step: number | null) => void;
 	setTutorialMessage: (msg: string | null) => void;
 	setGameSpeed: (speed: 1 | 2 | 3) => void;
-	setSelectedStar: (star: StarRating) => void;
-	enterStageSelect: () => void;
-	enterStageDetail: (stageId: string) => void;
 }
 
 const createCombatHud = (): CombatHudState => ({
@@ -174,11 +154,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
-	selectedStageId: DEFAULT_STAGE_ID,
-	selectedMapId: STAGES[DEFAULT_STAGE_ID]?.mapId ?? DEFAULT_MAP_ID,
-	selectedWorldId: STAGES[DEFAULT_STAGE_ID]?.worldId ?? 'w1_forest',
-	selectedStar: 1 as StarRating,
-	stageDetailFrom: 'stageSelect' as const,
+	selectedMapId: PHASE_A_MAP_ID,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -194,16 +170,6 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setGameReady: (ready) => set({ gameReady: ready }),
 	setEnergy: (energy) => set({ energy }),
 	setLives: (lives) => set({ lives }),
-	setSelectedMapId: (mapId) => set({ selectedMapId: mapId }),
-	setSelectedWorldId: (worldId) => set({ selectedWorldId: worldId }),
-	setSelectedStageId: (stageId) => {
-		const stage = STAGES[stageId];
-		if (!stage) {
-			console.warn(`[gameStore] Unknown stage id: ${stageId}`);
-			return;
-		}
-		set({ selectedStageId: stageId, selectedMapId: stage.mapId });
-	},
 	setSelectedTower: (towerId) => set({ selectedTowerId: towerId }),
 	setDeckCards: (cards) => set({ deckCards: cards }),
 	setSelectedCardIndex: (index) => set({ selectedCardIndex: index }),
@@ -231,30 +197,13 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		})),
 	clearToast: () => set({ toast: null }),
 	resetRun: () => {
-		set((state) => {
-			// Guard: if selected map is locked, fall back to default
-			// Use Infinity when store is unhydrated so we never accidentally lock maps
-			const rawLevel = useMetaStore.getState().profile?.level;
-			const level = rawLevel !== undefined ? rawLevel : Infinity;
-			const map = MAP_REGISTRY[state.selectedMapId];
-			const safeMapId =
-				!map || !isMapUnlocked(map, level)
-					? DEFAULT_MAP_ID
-					: state.selectedMapId;
-			const currentStage = STAGES[state.selectedStageId];
-			const safeStageId =
-				currentStage && currentStage.mapId === safeMapId
-					? state.selectedStageId
-					: DEFAULT_STAGE_ID;
-			return {
-				runId: state.runId + 1,
-				runStatus: 'building',
-				lobbyTab: 'home',
-				selectedMapId: safeMapId,
-				selectedStageId: safeStageId,
-				...createRunState(),
-			};
-		});
+		set((state) => ({
+			runId: state.runId + 1,
+			runStatus: 'building',
+			lobbyTab: 'home',
+			selectedMapId: PHASE_A_MAP_ID,
+			...createRunState(),
+		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
 	},
 	enterLobby: () => {
@@ -262,10 +211,29 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runId: state.runId + 1,
 			runStatus: 'lobby',
 			lobbyTab: 'home',
-			selectedStar: 1 as StarRating,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
+	startPhaseA: () => {
+		set((state) => ({
+			runId: state.runId + 1,
+			runStatus: 'building',
+			selectedMapId: PHASE_A_MAP_ID,
+			...createRunState(),
+		}));
+		EventBus.emit('request-set-speed', { multiplier: 1 });
+	},
+	enterMetaForge: () => {
+		// Phase 9.3: navigate to the dedicated MetaForge page. Run state
+		// is reset so we don't carry a stale battle into a later
+		// `enterLobby()` → `startPhaseA()` sequence.
+		set((state) => ({
+			runId: state.runId + 1,
+			runStatus: 'metaForge',
+			lobbyTab: 'home',
+			...createRunState(),
+		}));
 	},
 	setBgmVolume: (v) => {
 		useMetaStore.getState().updateSettings({ bgmVolume: v });
@@ -307,21 +275,5 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setGameSpeed: (speed) => {
 		set({ gameSpeed: speed });
 		EventBus.emit('request-set-speed', { multiplier: speed });
-	},
-	setSelectedStar: (star) => set({ selectedStar: star }),
-	enterStageSelect: () => set({ runStatus: 'stageSelect', lobbyTab: 'home' }),
-	enterStageDetail: (stageId: string) => {
-		const stage = STAGES[stageId];
-		if (!stage) {
-			console.warn(`[gameStore] enterStageDetail unknown stage: ${stageId}`);
-			return;
-		}
-		set((state) => ({
-			runStatus: 'stageDetail',
-			selectedStageId: stageId,
-			selectedMapId: stage.mapId,
-			selectedWorldId: stage.worldId,
-			stageDetailFrom: state.runStatus === 'lobby' ? 'lobby' : 'stageSelect',
-		}));
 	},
 }));

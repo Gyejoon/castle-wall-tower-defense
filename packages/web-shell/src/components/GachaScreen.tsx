@@ -1,6 +1,5 @@
 import { GACHA_COSTS, PITY_THRESHOLD } from '@gld/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 import type { RevealedResult } from './gacha/GachaRevealPhase';
 import { GachaRevealPhase } from './gacha/GachaRevealPhase';
@@ -21,9 +20,6 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 		() => collection.map((t) => t.defId),
 		[collection],
 	);
-	const setLobbyTab = useGameStore((s) => s.setLobbyTab);
-	const setRunStatus = useGameStore((s) => s.setRunStatus);
-
 	const gachaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
@@ -83,11 +79,9 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 		setErrorMsg(null);
 	}, []);
 
-	const handleGoToMissions = useCallback(() => {
-		onClose();
-		setRunStatus('lobby');
-		setLobbyTab('missions');
-	}, [onClose, setLobbyTab, setRunStatus]);
+	// Phase 6: missions tab is gone. Gacha still surfaces the insufficient-
+	// diamond error; the "go to missions" hint falls back to silently
+	// dismissing the prompt until Phase 9 wires a new diamond source.
 
 	const allFlipped = results.length > 0 && flippedCards.size === results.length;
 
@@ -158,7 +152,6 @@ export function GachaScreen({ onClose }: { onClose: () => void }) {
 					onSetIs10Pull={setIs10Pull}
 					onOpen={handleOpen}
 					onClose={onClose}
-					onGoToMissions={handleGoToMissions}
 					isOpenDisabled={isOpenDisabled}
 				/>
 			)}

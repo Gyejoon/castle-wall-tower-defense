@@ -38,7 +38,11 @@ export interface UnitDef {
 	specialBehavior?: UnitSpecialBehavior;
 	specialParams?: Record<string, number>;
 	/** Boss behavior handler id — looked up in the boss-ai registry at spawn time. */
-	bossBehaviorId?: 'orc_warlord' | 'forge_master' | 'corrupted_archmage';
+	bossBehaviorId?:
+		| 'orc_warlord'
+		| 'forge_master'
+		| 'corrupted_archmage'
+		| 'dragon';
 	/** Boss CC resistance (0.0–1.0). Stacked with star-grade ccResist. */
 	bossCcResist?: number;
 }

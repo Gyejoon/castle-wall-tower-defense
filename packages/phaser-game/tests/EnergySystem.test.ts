@@ -47,10 +47,10 @@ describe('EnergySystem', () => {
 		expect(system.getEnergy()).toBe(1); // floor(1.7)
 	});
 
-	it('caps energy at ENERGY_CAP (100)', () => {
-		const system = new EnergySystem(99);
+	it('caps energy at ENERGY_MAX (200)', () => {
+		const system = new EnergySystem(199);
 		system.update(5);
-		expect(system.getEnergy()).toBe(100);
+		expect(system.getEnergy()).toBe(200);
 	});
 
 	it('clamps delta to 5 seconds (tab suspend protection)', () => {
@@ -107,10 +107,10 @@ describe('EnergySystem', () => {
 		expect(system.getEnergy()).toBe(5);
 	});
 
-	it('add() does not exceed ENERGY_CAP', () => {
-		const system = new EnergySystem(99);
+	it('add() does not exceed ENERGY_MAX', () => {
+		const system = new EnergySystem(199);
 		system.add(10);
-		expect(system.getEnergy()).toBe(100);
+		expect(system.getEnergy()).toBe(200);
 	});
 
 	it('add() ignores non-positive amounts', () => {

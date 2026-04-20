@@ -1,6 +1,32 @@
-import { STAGE_WAVES, TOTAL_WAVES } from '@gld/shared';
+import type { WaveDef } from '@gld/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundGenerator } from '../src/audio/SoundGenerator';
+
+// Phase 7: STAGE_WAVES/TOTAL_WAVES removed with the scenario purge.
+// Reconstruct a minimal 5-wave normal set + a 10-wave boss set in-test so
+// WaveSystem still gets meaningful inputs without depending on deleted
+// scenario constants.
+const NORMAL_5: WaveDef[] = Array.from({ length: 5 }, (_, i) => ({
+	slotIndex: i + 1,
+	kind: 'normal' as const,
+	delayAfterClearSec: 3,
+	groups: [{ unitId: 'scout_drone', count: 3 }],
+}));
+const BOSS_10: WaveDef[] = [
+	...Array.from({ length: 9 }, (_, i) => ({
+		slotIndex: i + 1,
+		kind: 'normal' as const,
+		delayAfterClearSec: 5,
+		groups: [{ unitId: 'scout_drone', count: 3 }],
+	})),
+	{
+		slotIndex: 10,
+		kind: 'boss' as const,
+		delayAfterClearSec: 5,
+		groups: [{ unitId: 'orc_warlord', count: 1 }],
+	},
+];
+const TOTAL_WAVES = NORMAL_5.length;
 
 vi.mock('phaser', () => ({
 	Events: {
@@ -106,15 +132,15 @@ describe('runtime safety fixes', () => {
 
 		const waveSystem = new WaveSystem(
 			unitSystem as never,
-			STAGE_WAVES.w1_s1,
-			STAGE_WAVES.w1_s1.length + 5,
+			NORMAL_5,
+			NORMAL_5.length + 5,
 		);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 
 		waveSystem.setMaxWaves(0);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(1);
 
-		waveSystem.setMaxWaves(STAGE_WAVES.w1_s1.length + 10);
+		waveSystem.setMaxWaves(NORMAL_5.length + 10);
 		expect((waveSystem as { maxWaves: number }).maxWaves).toBe(TOTAL_WAVES);
 	});
 
@@ -127,7 +153,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
+		const waveSystem = new WaveSystem(unitSystem as never, NORMAL_5);
 		waveSystem.start();
 
 		// Enters prep phase first
@@ -175,7 +201,7 @@ describe('runtime safety fixes', () => {
 
 		// Use w1_s8 which has boss at wave 10
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s8);
+		const waveSystem = new WaveSystem(unitSystem as never, BOSS_10);
 		waveSystem.start();
 
 		// Consume prep phase (5s)
@@ -206,7 +232,7 @@ describe('runtime safety fixes', () => {
 		};
 
 		const emitSpy = vi.spyOn(EventBus, 'emit');
-		const waveSystem = new WaveSystem(unitSystem as never, STAGE_WAVES.w1_s1);
+		const waveSystem = new WaveSystem(unitSystem as never, NORMAL_5);
 		waveSystem.start();
 
 		expect(waveSystem.getPhase()).toBe('prep');

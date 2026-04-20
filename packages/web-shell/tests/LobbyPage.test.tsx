@@ -21,7 +21,7 @@ describe('LobbyPage', () => {
 		cleanup();
 	});
 
-	it('renders the home tab as a single-player start screen', () => {
+	it('renders the home tab as a Phase A start screen', () => {
 		const view = render(<LobbyPage />);
 
 		expect(view.getByText('Commander')).toBeTruthy();
@@ -31,7 +31,14 @@ describe('LobbyPage', () => {
 		// Center tab (마당/home) is index 1, should be selected by default
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
-		expect(view.getByText('시작')).toBeTruthy();
+		// Phase A redesign ("Option C · cinematic keyart"):
+		// keyart carries the brand — no hero title. CTA card has NEXT UP
+		// copy + 전투 시작 button. 메타 강화 lives in the 전쟁탁자 tab header.
+		expect(view.queryByText('Grid Line Defense')).toBeNull();
+		expect(view.getByText('NEXT UP')).toBeTruthy();
+		expect(view.getByText('랜덤 합성 타워 디펜스')).toBeTruthy();
+		expect(view.getByRole('button', { name: '전투 시작' })).toBeTruthy();
+		expect(view.queryByText('메타 강화 ›')).toBeNull();
 		expect(view.queryByText('PVP 대전')).toBeNull();
 	});
 
@@ -56,11 +63,25 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('enters stage detail on start button click', () => {
+	it('starts a Phase A run on 전투 시작 click', () => {
 		const view = render(<LobbyPage />);
-		fireEvent.click(view.getByText('시작'));
+		fireEvent.click(view.getByRole('button', { name: '전투 시작' }));
 
-		expect(useGameStore.getState().runStatus).toBe('stageDetail');
+		expect(useGameStore.getState().runStatus).toBe('building');
+	});
+
+	it('enters MetaForge from the 전쟁탁자 tab header button', () => {
+		const view = render(<LobbyPage />);
+		const tabs = view.getAllByRole('tab');
+		const collectionTab = tabs[0]; // 전쟁탁자
+		if (!collectionTab) throw new Error('expected collection tab');
+		fireEvent.click(collectionTab);
+
+		fireEvent.click(
+			view.getByRole('button', { name: '메타 강화 페이지 열기' }),
+		);
+
+		expect(useGameStore.getState().runStatus).toBe('metaForge');
 	});
 
 	it('shows collection tab with tower grid', () => {
@@ -76,7 +97,7 @@ describe('LobbyPage', () => {
 		fireEvent.click(collectionTab);
 
 		expect(view.getByText('보유 타워')).toBeTruthy();
-		expect(view.getAllByText('궁수 탑').length).toBeGreaterThanOrEqual(1);
+		expect(view.getAllByText('궁수탑').length).toBeGreaterThanOrEqual(1);
 	});
 
 	it('shows settings tab with toggles', () => {

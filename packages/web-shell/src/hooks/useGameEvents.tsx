@@ -2,11 +2,7 @@ import { EventBus } from '@gld/phaser-game';
 import {
 	battleXp,
 	type DeckCardDef,
-	INITIAL_PLAYER_HP,
-	PERFECT_CLEAR_BONUS,
 	type PlacementFailureReason,
-	STAR_REWARD_MULTIPLIERS,
-	type StarRating,
 	type WavePhase,
 } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
@@ -53,17 +49,12 @@ export function useGameEvents() {
 			setEnergy(data.energy);
 		const onGameOver = (data: {
 			result: 'victory' | 'defeat';
-			mapId: string;
-			selectedStar: StarRating;
-			starCleared: boolean;
-			hpRemaining: number;
 			stats: {
 				wavesCleared: number;
 				totalWaves: number;
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
-				rewardMultiplier: number;
 			};
 		}) => {
 			setRunStatus(data.result);
@@ -73,67 +64,32 @@ export function useGameEvents() {
 				clearTimeout(bossWarningTimerRef.current);
 				bossWarningTimerRef.current = null;
 			}
-			const starReward = STAR_REWARD_MULTIPLIERS[data.selectedStar];
-			const goldEarned = Math.round(data.stats.goldEarned * starReward.gold);
+			const goldEarned = Math.round(data.stats.goldEarned);
 			const xpEarned = Math.round(
-				battleXp(data.stats.wavesCleared, data.result === 'victory') *
-					data.stats.rewardMultiplier *
-					starReward.xp,
+				battleXp(data.stats.wavesCleared, data.result === 'victory'),
 			);
 			setGameOverStats({
 				...data.stats,
 				goldEarned,
 				xpEarned,
 				totalWaves: data.stats.totalWaves,
-				selectedStar: data.selectedStar,
-				starCleared: data.starCleared,
 			});
 			const meta = useMetaStore.getState();
 			meta.addGold(goldEarned);
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
-			const { selectedStageId: stageId } = useGameStore.getState();
-			const mapId = data.mapId;
-			const starKey =
-				data.selectedStar > 1 ? `${stageId}:${data.selectedStar}` : stageId;
-			meta.updateHighestWave(starKey, data.stats.wavesCleared);
-			if (data.result === 'victory') {
-				meta.recordStageClear(stageId);
-
-				// Map clear achievement
-				const clearAchId = `clear_${mapId}`;
-				const prevClear = meta.progress.achievements.progress[clearAchId] ?? 0;
-				if (prevClear < 1) {
-					meta.updateAchievementProgress(clearAchId, 1);
-				}
-
-				// ★ Record star clear
-				if (data.starCleared) {
-					meta.recordStarClear(stageId, data.selectedStar);
-
-					// Map star achievements
-					if (data.selectedStar >= 2) {
-						const star2Id = `star2_${mapId}`;
-						const prevStar2 = meta.progress.achievements.progress[star2Id] ?? 0;
-						if (prevStar2 < 1) meta.updateAchievementProgress(star2Id, 1);
-					}
-					if (data.selectedStar >= 3) {
-						const star3Id = `star3_${mapId}`;
-						const prevStar3 = meta.progress.achievements.progress[star3Id] ?? 0;
-						if (prevStar3 < 1) meta.updateAchievementProgress(star3Id, 1);
-					}
-				}
-
-				// Awakening stone rewards (only when star condition is met)
-				if (starReward.awakeningStone > 0 && data.starCleared) {
-					meta.addAwakeningStones(starReward.awakeningStone);
-				}
-
-				// Perfect clear bonus (★3 with HP 100%)
-				if (data.selectedStar === 3 && data.hpRemaining === INITIAL_PLAYER_HP) {
-					meta.addAwakeningStones(PERFECT_CLEAR_BONUS.awakeningStone);
-				}
-			}
+			meta.updateHighestWave(data.stats.wavesCleared);
+		};
+		// Phase 10 Task 10.3 [F11] — scene revival after a rewarded continue.
+		// Reverses the `onGameOver` state so the GameOverScreen unmounts and
+		// HUD returns to wave/building lifecycle.
+		const onGameResumed = (data: { livesRestored: number }) => {
+			setLives(data.livesRestored);
+			setGameOverStats(null);
+			// `running` is the post-prep wave phase; `onWaveStarted` will
+			// reconfirm once the next wave fires. Using `running` here is a
+			// beat earlier but avoids flashing `building` → `running`.
+			setRunStatus('running');
 		};
 		const onWaveStarted = (data: {
 			wave: number;
@@ -234,22 +190,17 @@ export function useGameEvents() {
 			defId: string;
 			hp: number;
 			maxHp: number;
-			phase: 1 | 2;
+			phase: 1 | 2 | 3;
 		}) => {
 			upsertBossHp(data);
 		};
 		const onBossDefeated = (data: { unitId: string }) => {
 			removeBossHp(data.unitId);
 			pushToast('BOSS CLEAR!', 'success');
-			// Boss kill achievements
-			const meta = useMetaStore.getState();
-			const prevBoss10 = meta.progress.achievements.progress.boss_10 ?? 0;
-			const prevBoss100 = meta.progress.achievements.progress.boss_100 ?? 0;
-			meta.updateAchievementProgress('boss_10', prevBoss10 + 1);
-			meta.updateAchievementProgress('boss_100', prevBoss100 + 1);
 		};
-		const onBossPhaseChange = (data: { phase: 1 | 2 }) => {
+		const onBossPhaseChange = (data: { phase: 1 | 2 | 3 }) => {
 			if (data.phase === 2) pushToast('보스 분노!', 'warning');
+			else if (data.phase === 3) pushToast('보스 광폭화!', 'error');
 		};
 		const onTowerSelected = (data: {
 			towerDefId: string;
@@ -293,6 +244,7 @@ export function useGameEvents() {
 		EventBus.on('player-damaged', onDamaged);
 		EventBus.on('energy-changed', onEnergyChanged);
 		EventBus.on('game-over', onGameOver);
+		EventBus.on('game-resumed', onGameResumed);
 		EventBus.on('wave-started', onWaveStarted);
 		EventBus.on('tower-placed', onTowerPlaced);
 		EventBus.on('deck-loaded', onDeckLoaded);
@@ -327,6 +279,7 @@ export function useGameEvents() {
 			EventBus.off('player-damaged', onDamaged);
 			EventBus.off('energy-changed', onEnergyChanged);
 			EventBus.off('game-over', onGameOver);
+			EventBus.off('game-resumed', onGameResumed);
 			EventBus.off('wave-started', onWaveStarted);
 			EventBus.off('tower-placed', onTowerPlaced);
 			EventBus.off('deck-loaded', onDeckLoaded);

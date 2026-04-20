@@ -1,104 +1,140 @@
-import type { TowerGrade } from '@gld/shared';
 import { describe, expect, it } from 'vitest';
-import { type MergeContext, MergeSystem } from '../src/systems/MergeSystem';
+import { MergeSystem, type TowerLocator } from '../src/systems/MergeSystem';
 
-function ctx(
-	towers: Array<{
-		col: number;
-		row: number;
-		towerId: string;
-		grade: TowerGrade;
-	}>,
-): MergeContext {
-	return {
-		getTowerAt: (col, row) =>
-			towers.find((t) => t.col === col && t.row === row) ?? null,
-	};
-}
+const archer1 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'archer',
+	family: 'archer',
+	tier: 1,
+	x: 0,
+	y: 0,
+});
+const siege1 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'nova_cannon',
+	family: 'siege',
+	tier: 1,
+	x: 0,
+	y: 0,
+});
+const arcane4 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'arcane_spire',
+	family: 'archer',
+	tier: 4,
+	x: 0,
+	y: 0,
+});
+const celestial4 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'celestial',
+	family: 'siege',
+	tier: 4,
+	x: 0,
+	y: 0,
+});
+const worldtree4 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'world_tree',
+	family: 'frost',
+	tier: 4,
+	x: 0,
+	y: 0,
+});
+const throne4 = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'divine_throne',
+	family: 'stun',
+	tier: 4,
+	x: 0,
+	y: 0,
+});
+const hybridAb = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'hybrid_ab',
+	family: 'hybrid',
+	tier: 5,
+	x: 0,
+	y: 0,
+});
+const hybridCd = (id: string): TowerLocator => ({
+	instanceId: id,
+	towerId: 'hybrid_cd',
+	family: 'hybrid',
+	tier: 5,
+	x: 0,
+	y: 0,
+});
 
 describe('MergeSystem.tryMerge', () => {
-	const sys = new MergeSystem();
-
-	it('같은 타워 같은 등급 → success + 등급 ↑', () => {
-		const c = ctx([
-			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
-			{ col: 1, row: 0, towerId: 'archer', grade: 'normal' },
-		]);
-		const r = sys.tryMerge(c, 0, 0, 1, 0);
+	it('same-family same-tier 1 → tier 2 (archer+archer → wind_spire)', () => {
+		const r = MergeSystem.tryMerge(archer1('a'), archer1('b'));
 		expect(r.kind).toBe('success');
 		if (r.kind === 'success') {
-			expect(r.toGrade).toBe('rare');
-			expect(r.removedCol).toBe(0);
-			expect(r.removedRow).toBe(0);
+			expect(r.toTowerId).toBe('wind_spire');
+			expect(r.toTier).toBe(2);
+			expect(r.consumedA).toBe('a');
+			expect(r.consumedB).toBe('b');
 		}
 	});
 
-	it('다른 타워 → failed:different-tower (coords carried)', () => {
-		const c = ctx([
-			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
-			{ col: 1, row: 0, towerId: 'plasma', grade: 'normal' },
-		]);
-		expect(sys.tryMerge(c, 0, 0, 1, 0)).toEqual({
-			kind: 'failed',
-			fromCol: 0,
-			fromRow: 0,
-			toCol: 1,
-			toRow: 0,
-			reason: 'different-tower',
+	it('different family tier 1 → incompatible', () => {
+		const r = MergeSystem.tryMerge(archer1('a'), siege1('b'));
+		expect(r.kind).toBe('failure');
+		if (r.kind === 'failure') expect(r.reason).toBe('incompatible-pair');
+	});
+
+	it('hybrid_ab from arcane_spire + celestial', () => {
+		const r = MergeSystem.tryMerge(arcane4('a'), celestial4('b'));
+		expect(r.kind).toBe('success');
+		if (r.kind === 'success') {
+			expect(r.toTowerId).toBe('hybrid_ab');
+			expect(r.toTier).toBe(5);
+		}
+	});
+
+	it('hybrid_cd from world_tree + divine_throne', () => {
+		const r = MergeSystem.tryMerge(worldtree4('a'), throne4('b'));
+		expect(r.kind).toBe('success');
+		if (r.kind === 'success') {
+			expect(r.toTowerId).toBe('hybrid_cd');
+			expect(r.toTier).toBe(5);
+		}
+	});
+
+	it('ultimate from hybrid_ab + hybrid_cd', () => {
+		const r = MergeSystem.tryMerge(hybridAb('a'), hybridCd('b'));
+		expect(r.kind).toBe('success');
+		if (r.kind === 'success') {
+			expect(r.toTowerId).toBe('ultimate');
+			expect(r.toTier).toBe(6);
+		}
+	});
+
+	it('tier-4 archer + archer → same-family-t4 (dedicated newbie hint reason)', () => {
+		const r = MergeSystem.tryMerge(arcane4('a'), arcane4('b'));
+		expect(r.kind).toBe('failure');
+		if (r.kind === 'failure') expect(r.reason).toBe('same-family-t4');
+	});
+
+	it('ultimate + ultimate → max-tier', () => {
+		const u = (id: string): TowerLocator => ({
+			instanceId: id,
+			towerId: 'ultimate',
+			family: 'ultimate',
+			tier: 6,
+			x: 0,
+			y: 0,
 		});
+		const r = MergeSystem.tryMerge(u('a'), u('b'));
+		expect(r.kind).toBe('failure');
+		if (r.kind === 'failure') expect(r.reason).toBe('max-tier');
 	});
 
-	it('다른 등급 → failed:different-grade', () => {
-		const c = ctx([
-			{ col: 0, row: 0, towerId: 'archer', grade: 'normal' },
-			{ col: 1, row: 0, towerId: 'archer', grade: 'rare' },
-		]);
-		const r = sys.tryMerge(c, 0, 0, 1, 0);
-		expect(r.kind).toBe('failed');
-		if (r.kind === 'failed') {
-			expect(r.reason).toBe('different-grade');
-			expect(r.fromCol).toBe(0);
-			expect(r.toCol).toBe(1);
-		}
-	});
-
-	it('epic 등급 합성 → failed:max-grade', () => {
-		const c = ctx([
-			{ col: 0, row: 0, towerId: 'archer', grade: 'epic' },
-			{ col: 1, row: 0, towerId: 'archer', grade: 'epic' },
-		]);
-		const r = sys.tryMerge(c, 0, 0, 1, 0);
-		expect(r.kind).toBe('failed');
-		if (r.kind === 'failed') {
-			expect(r.reason).toBe('max-grade');
-		}
-	});
-
-	it('빈 칸 합성 → failed:invalid-tile (from valid, to empty)', () => {
-		const c = ctx([{ col: 0, row: 0, towerId: 'archer', grade: 'normal' }]);
-		const r = sys.tryMerge(c, 0, 0, 99, 99);
-		expect(r.kind).toBe('failed');
-		if (r.kind === 'failed') {
-			expect(r.reason).toBe('invalid-tile');
-			expect(r.toCol).toBe(99);
-		}
-	});
-
-	it('빈 칸에서 출발 → failed:invalid-tile (from empty, to valid)', () => {
-		const c = ctx([{ col: 1, row: 0, towerId: 'archer', grade: 'normal' }]);
-		const r = sys.tryMerge(c, 99, 99, 1, 0);
-		expect(r.kind).toBe('failed');
-		if (r.kind === 'failed') {
-			expect(r.reason).toBe('invalid-tile');
-		}
-	});
-
-	it('같은 타일 self-merge → failed:invalid-tile (무료 승급 방지)', () => {
-		const c = ctx([{ col: 0, row: 0, towerId: 'archer', grade: 'normal' }]);
-		const r = sys.tryMerge(c, 0, 0, 0, 0);
-		expect(r.kind).toBe('failed');
-		if (r.kind === 'failed') {
-			expect(r.reason).toBe('invalid-tile');
-		}
+	it('rejects self-merge', () => {
+		const a = archer1('same');
+		const r = MergeSystem.tryMerge(a, a);
+		expect(r.kind).toBe('failure');
+		if (r.kind === 'failure') expect(r.reason).toBe('same-instance');
 	});
 });

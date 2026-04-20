@@ -1,4 +1,3 @@
-import type { Grade } from '@gld/shared';
 import type { SummonPoolSystem } from './SummonPoolSystem';
 
 export interface BuildableTile {
@@ -17,7 +16,6 @@ export type SummonRequestResult =
 			col: number;
 			row: number;
 			towerId: string;
-			grade: Grade;
 	  }
 	| {
 			kind: 'failed';
@@ -48,7 +46,6 @@ export class RandomSummonSystem {
 			col: tile.col,
 			row: tile.row,
 			towerId: draw.towerId,
-			grade: draw.grade,
 		};
 	}
 }

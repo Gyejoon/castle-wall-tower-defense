@@ -1,4 +1,14 @@
-import { type GachaResult, TIER_NAMES } from '@gld/shared';
+import type { GachaResult } from '@gld/shared';
+
+const TIER_LABELS: Record<number, string> = {
+	1: '일반',
+	2: '희귀',
+	3: '영웅',
+	4: '전설',
+	5: '신화',
+	6: '궁극',
+};
+
 import { useEffect, useState } from 'react';
 import { colors, TIER_COLORS } from '../../styles/tokens';
 import { cn } from '../../utils/cn';
@@ -65,7 +75,7 @@ export function GachaRevealPhase({
 						{results[0].towerName}
 					</p>
 					<p className="font-pixel text-[11px] text-text-secondary">
-						{TIER_NAMES[results[0].tier] ?? '일반'}
+						{TIER_LABELS[results[0].tier] ?? '일반'}
 					</p>
 					{results[0].isPityReward && (
 						<span className="font-pixel text-[10px] text-gold">
@@ -74,7 +84,7 @@ export function GachaRevealPhase({
 					)}
 					{results[0].isDuplicate && (
 						<span className="font-pixel text-[11px] text-text-secondary">
-							보유 중 → +50G 전환
+							중복 → 레벨업 재료 +1
 						</span>
 					)}
 				</div>
@@ -109,7 +119,7 @@ export function GachaRevealPhase({
 										</span>
 										{r.isDuplicate && (
 											<span className="font-pixel text-[8px] text-text-secondary">
-												+50G
+												중복 +1
 											</span>
 										)}
 									</>

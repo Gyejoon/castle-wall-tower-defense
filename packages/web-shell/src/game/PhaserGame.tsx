@@ -2,6 +2,7 @@ import { EventBus, startGame } from '@gld/phaser-game';
 import type Phaser from 'phaser';
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '../stores/gameStore';
+import { useMetaProgress } from '../stores/metaProgressStore';
 import { useMetaStore } from '../stores/metaStore';
 
 export function PhaserGame() {
@@ -31,11 +32,10 @@ export function PhaserGame() {
 			metaState.progress.tutorialCompleted ?? false,
 		);
 		game.registry.set('screenShake', useGameStore.getState().screenShake);
-		game.registry.set('selectedStar', useGameStore.getState().selectedStar);
-		game.registry.set(
-			'selectedStageId',
-			useGameStore.getState().selectedStageId,
-		);
+		// Phase 9: forward meta progression's global atk% so Game.create()
+		// can inject it into TowerSystem. phaser-game package can't import
+		// from web-shell; the registry is the contractually-allowed bridge.
+		game.registry.set('meta:atkPct', useMetaProgress.getState().globalAtkPct);
 		gameRef.current = game;
 
 		// Sync screenShake setting to Phaser registry in real-time
@@ -47,24 +47,6 @@ export function PhaserGame() {
 			}
 		});
 
-		// Sync selectedStar to Phaser registry in real-time
-		let prevStar = useGameStore.getState().selectedStar;
-		const unsubStar = useGameStore.subscribe((state) => {
-			if (state.selectedStar !== prevStar) {
-				prevStar = state.selectedStar;
-				gameRef.current?.registry.set('selectedStar', prevStar);
-			}
-		});
-
-		// Sync selectedStageId to Phaser registry in real-time
-		let prevStageId = useGameStore.getState().selectedStageId;
-		const unsubStageId = useGameStore.subscribe((state) => {
-			if (state.selectedStageId !== prevStageId) {
-				prevStageId = state.selectedStageId;
-				gameRef.current?.registry.set('selectedStageId', prevStageId);
-			}
-		});
-
 		return () => {
 			EventBus.off('game-ready', onReady);
 			// In StrictMode the container stays in the DOM during phantom
@@ -72,8 +54,6 @@ export function PhaserGame() {
 			// or route change) the container is disconnected and we destroy.
 			if (!container.isConnected) {
 				unsubShake();
-				unsubStar();
-				unsubStageId();
 				gameRef.current?.destroy(true);
 				gameRef.current = null;
 				setGameReady(false);

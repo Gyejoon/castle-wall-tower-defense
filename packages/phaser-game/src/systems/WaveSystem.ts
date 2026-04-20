@@ -35,6 +35,13 @@ export class WaveSystem {
 	private hasSpawnedCurrentWave = false;
 	private elapsedMs = 0;
 	private waveStartMs = 0;
+	/**
+	 * Timestamp (in `elapsedMs` clock) when the active boss unit first spawns.
+	 * Used by the Phase A fast-clear energy bonus. Reset to `undefined` on
+	 * each new wave; set by `markBossSpawned()` (called from the unit-spawned
+	 * callback). See plan [F18].
+	 */
+	bossSpawnMs: number | undefined = undefined;
 
 	constructor(
 		unitSystem: UnitSystem,
@@ -106,25 +113,39 @@ export class WaveSystem {
 				return;
 			}
 
-			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS (skip on last wave)
+			// Timer expiry: force next wave after MAX_WAVE_DURATION_MS. Skipped
+			// on the final wave (run-end flow) and on any boss wave — boss
+			// fights can legitimately exceed 30s and a timer-forced clear
+			// strips the roguelike pick because `cleared` goes false.
 			const isLastWave = this.currentWaveIndex >= this.maxWaves - 1;
+			const isBossWave = currentWave.kind === 'boss';
 			const timerExpired =
 				!isLastWave &&
+				!isBossWave &&
 				this.hasSpawnedCurrentWave &&
 				this.elapsedMs - this.waveStartMs > MAX_WAVE_DURATION_MS;
 
-			// Wave cleared naturally or timer expired
-			if (
-				(this.hasSpawnedCurrentWave && activeUnitCount === 0) ||
-				timerExpired
-			) {
-				const cleared = !timerExpired;
+			// Wave cleared naturally or timer expired.
+			//
+			// Bug guard [post-ship]: if the player kills the last unit on the
+			// SAME tick the timer expires, the old logic produced
+			// `cleared = !timerExpired = false`, which blocks the Phase 4
+			// boss-clear roguelike pick. Prefer the natural-clear signal:
+			// activeUnitCount === 0 is authoritative, timer only matters if
+			// units are still alive.
+			const naturallyCleared =
+				this.hasSpawnedCurrentWave && activeUnitCount === 0;
+			if (naturallyCleared || timerExpired) {
+				const cleared = naturallyCleared;
 				EventBus.emit('wave-completed', {
 					wave: currentWave.slotIndex,
 					totalWaves: this.maxWaves,
 					slotIndex: currentWave.slotIndex,
 					delaySec: timerExpired ? 0 : currentWave.delayAfterClearSec,
 					cleared,
+					// Task 4.0 [F7]: surface the phase that just ended so Phase 4
+					// roguelike handlers can distinguish boss vs. combat clears.
+					phase: this.phase,
 				});
 
 				// Check if this was the last wave
@@ -135,12 +156,15 @@ export class WaveSystem {
 					return;
 				}
 
-				// Timer expired → advance immediately; natural clear → wait
-				if (timerExpired) {
-					this.advanceToNextWave();
-				} else {
+				// Timer expired → advance immediately; natural clear → wait.
+				// A naturally-cleared wave always wins — it emits `cleared:true`
+				// and takes the delay path, even if the timer happened to expire
+				// on the same tick.
+				if (naturallyCleared) {
 					this.waitTimerMs = currentWave.delayAfterClearSec * 1000;
 					this.phase = 'waiting';
+				} else {
+					this.advanceToNextWave();
 				}
 			}
 		} else if (this.phase === 'waiting') {
@@ -180,6 +204,13 @@ export class WaveSystem {
 		return this.elapsedMs;
 	}
 
+	/** Record the moment the first boss unit actually spawned (see [F18]). */
+	markBossSpawned(): void {
+		if (this.bossSpawnMs === undefined) {
+			this.bossSpawnMs = this.elapsedMs;
+		}
+	}
+
 	isLastWave(): boolean {
 		return this.currentWaveIndex >= this.maxWaves - 1;
 	}
@@ -214,6 +245,7 @@ export class WaveSystem {
 
 		this.hasSpawnedCurrentWave = false;
 		this.waveStartMs = this.elapsedMs;
+		this.bossSpawnMs = undefined;
 		this.phase = wave.kind === 'boss' ? 'boss' : 'combat';
 
 		// Emit boss warning when a boss wave starts
@@ -241,7 +273,8 @@ export class WaveSystem {
 			const isBoss = !!unitDef?.bossBehaviorId;
 			const hpMultiplier =
 				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
-				this.difficultyHpMult;
+				this.difficultyHpMult *
+				(group.hpMultiplier ?? 1);
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',
 				countsTowardClear: true,

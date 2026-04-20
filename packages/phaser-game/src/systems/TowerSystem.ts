@@ -5,7 +5,7 @@ import type {
 	PlacementFailureReason,
 	Position,
 	TowerDef,
-	TowerGrade,
+	TowerFamily,
 	UpgradeId,
 } from '@gld/shared';
 import {
@@ -19,20 +19,25 @@ import {
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
+import { PLATFORM_LIFT } from '../fieldAssets';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
-import type { WorldGimmick } from './world-gimmicks/types';
 
 export interface TowerInstance {
 	data: PlacedTower;
 	def: TowerDef;
-	grade: TowerGrade;
+	tier: number;
 	effectiveDamage: number;
 	base: Phaser.GameObjects.Graphics;
 	sprite: Phaser.GameObjects.Image;
 	barrelSprite?: Phaser.GameObjects.Image;
 	idleTween?: Phaser.Tweens.Tween;
+	/** Stored so post-VFX idle tween restart can reset to the exact original
+	 *  scale/position. Populated at placement and in moveTower. */
+	baseScaleX: number;
+	baseScaleY: number;
+	baseY: number;
 	lastAttackTime: number;
 	lastAuraTime: number;
 	disabledUntilMs?: number;
@@ -42,12 +47,75 @@ export type TowerPlacementResult =
 	| { success: true; tower: PlacedTower }
 	| { success: false; reason: PlacementFailureReason };
 
-export function resolveTowerTextureKey(
+/**
+ * Phase 9: run-agnostic global modifiers applied on top of the per-run
+ * roguelike upgrade stack. `atkPct` is fed in from the web-shell
+ * `metaProgressStore` at Game.create() via the scene registry (see
+ * PhaseA meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
+ * now — future modifiers (rangePct, critChance, etc.) will extend this.
+ */
+export interface GlobalModifiers {
+	atkPct: number;
+}
+
+/**
+ * Phase 1: grade is gone — texture is identified purely by tower id. We
+ * keep the helper so call sites don't scatter template literals, but it's
+ * a pass-through for now. Phase 11 may add tier-specific variants.
+ *
+ * Phase 11 [F23]: hybrid_ab / hybrid_cd / ultimate share placeholder
+ * sprites with their highest-tier ancestor. The asset manifest registers
+ * `tower-hybrid_ab` etc. with the placeholder paths so most lookups
+ * succeed via the texture cache; this map is the deterministic fallback
+ * used by call sites that need a guaranteed-existing texture key without
+ * touching the Phaser scene.
+ */
+const PLACEHOLDER_TEXTURE_FALLBACK: Record<string, string> = {
+	hybrid_ab: 'tower-arcane_spire',
+	hybrid_cd: 'tower-world_tree',
+	ultimate: 'tower-divine_throne',
+};
+
+const warnedMissingTextures = new Set<string>();
+
+export function resolveTowerTextureKey(defId: string): string {
+	return `tower-${defId}`;
+}
+
+/**
+ * Resolve the runtime texture key for a tower id, falling back to a known-good
+ * placeholder when the manifest entry is missing or its texture failed to
+ * load. Logs a single console.warn per missing key so noisy boots stay quiet.
+ *
+ * Centralised here so both placement and merge-spawn paths share the same
+ * fallback instead of asserting.
+ */
+export function resolveTowerTextureKeySafe(
+	scene: Phaser.Scene,
 	defId: string,
-	grade: TowerGrade,
 ): string {
-	if (grade === 'normal') return `tower-${defId}`;
-	return `tower-${defId}-${grade}`;
+	const primary = `tower-${defId}`;
+	if (scene.textures.exists(primary)) return primary;
+	const fallback = PLACEHOLDER_TEXTURE_FALLBACK[defId];
+	if (fallback && scene.textures.exists(fallback)) {
+		if (!warnedMissingTextures.has(primary)) {
+			warnedMissingTextures.add(primary);
+			console.warn(
+				`[TowerSystem] missing texture "${primary}", using placeholder "${fallback}"`,
+			);
+		}
+		return fallback;
+	}
+	if (scene.textures.exists('tower-archer')) {
+		if (!warnedMissingTextures.has(primary)) {
+			warnedMissingTextures.add(primary);
+			console.warn(
+				`[TowerSystem] missing texture "${primary}", falling back to tower-archer`,
+			);
+		}
+		return 'tower-archer';
+	}
+	return primary; // last resort — Phaser will draw the missing-texture frame
 }
 
 export class TowerSystem {
@@ -62,8 +130,11 @@ export class TowerSystem {
 	private spawnExitPairs: Array<{ spawn: Position; exit: Position }>;
 	private nextId = 0;
 	private destroyed = false;
-	private worldGimmick: WorldGimmick | null = null;
 	private modifierFn: ((upgradeId: UpgradeId) => number) | null = null;
+	private familyDamageFn:
+		| ((family: TowerFamily, towerId: string) => number)
+		| null = null;
+	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
 	private attackLines: Array<{
 		x1: number;
@@ -107,12 +178,40 @@ export class TowerSystem {
 		this.attackGraphics.setDepth(10);
 	}
 
-	setWorldGimmick(gimmick: WorldGimmick | null): void {
-		this.worldGimmick = gimmick;
-	}
-
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
 		this.modifierFn = fn;
+	}
+
+	/** Inject the per-family damage multiplier lookup. Game.ts wires this to
+	 *  `PhaseAOrchestrator.getFamilyDamageMultiplier` so energy-purchased
+	 *  family upgrades compound on top of roguelike `dmg_up` and the meta
+	 *  `atkPct` buff. `towerId` lets the orchestrator distinguish hybrid_ab
+	 *  (archer+siege feeders) from hybrid_cd (frost+stun). */
+	setFamilyDamageFn(
+		fn: ((family: TowerFamily, towerId: string) => number) | null,
+	): void {
+		this.familyDamageFn = fn;
+	}
+
+	/**
+	 * Phase 9: inject run-agnostic meta modifiers (from
+	 * `metaProgressStore`). Called once from Game.create() via the scene
+	 * registry; additional calls replace the value, which matters for
+	 * hot-reload and test scenarios.
+	 */
+	setGlobalModifiers(mods: Partial<GlobalModifiers>): void {
+		this.globalModifiers = { ...this.globalModifiers, ...mods };
+	}
+
+	/**
+	 * Apply the global atk% multiplier on top of an already-upgraded
+	 * damage value. Order: `base * elementMult * dmgUpStack * (1 + crit)`
+	 * → then `* (1 + globalAtkPct)` from meta progression. Kept as a
+	 * single helper so both main-hit and splash damage paths stay in
+	 * sync.
+	 */
+	private resolveFinalDamage(baseDamage: number): number {
+		return baseDamage * (1 + this.globalModifiers.atkPct);
 	}
 
 	getAllTowers(): TowerInstance[] {
@@ -137,7 +236,7 @@ export class TowerSystem {
 		gridX: number,
 		gridY: number,
 		towerDefId: string,
-		options?: { gradeOverride?: TowerGrade; levelOverride?: number },
+		options?: { levelOverride?: number },
 	): TowerPlacementResult {
 		const def = ALL_TOWERS.find((t) => t.id === towerDefId);
 		if (!def) return { success: false, reason: 'out_of_bounds' };
@@ -148,13 +247,6 @@ export class TowerSystem {
 
 		if (!this.gridManager.canPlaceTower(gridX, gridY)) {
 			return { success: false, reason: 'occupied' };
-		}
-
-		if (
-			this.worldGimmick &&
-			!this.worldGimmick.canPlaceTowerAt({ x: gridX, y: gridY })
-		) {
-			return { success: false, reason: 'gimmick_blocked' };
 		}
 
 		const placed = this.gridManager.placeTower(gridX, gridY, towerDefId);
@@ -182,7 +274,7 @@ export class TowerSystem {
 
 		const owned = this.collection.find((t) => t.defId === towerDefId);
 		const towerLevel = options?.levelOverride ?? owned?.level ?? 1;
-		const towerGrade = options?.gradeOverride ?? owned?.grade ?? 'normal';
+		const towerTier = def.tier;
 
 		const towerData: PlacedTower = {
 			instanceId,
@@ -191,27 +283,30 @@ export class TowerSystem {
 			level: towerLevel,
 		};
 
-		const textureKey = resolveTowerTextureKey(towerDefId, towerGrade);
+		const textureKey = resolveTowerTextureKeySafe(this.scene, towerDefId);
 		const base = this.scene.add.graphics();
-		const sprite = this.scene.add.image(worldPos.x, worldPos.y, textureKey);
+		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		const sprite = this.scene.add.image(
+			worldPos.x,
+			worldPos.y - lift,
+			textureKey,
+		);
 		sprite.setDisplaySize(64, 80);
-		sprite.setY(worldPos.y - 20);
-		sprite.setDepth(this.gridManager.getDepth(gridX, gridY));
-		this.renderTowerBase(base, worldPos, def);
+		sprite.setY(worldPos.y - lift - 20);
+		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
+		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
+		this.renderTowerBase(base, liftedPos, def);
 
 		const baseScaleX = sprite.scaleX;
 		const baseScaleY = sprite.scaleY;
-		const idleTween = this.scene.tweens.add({
-			targets: sprite,
-			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
-			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
-			y: { from: sprite.y, to: sprite.y - 1 },
-			duration: 1800,
-			yoyo: true,
-			repeat: -1,
-			ease: 'Sine.InOut',
-			delay: (this.nextId * 137) % 1800,
-		});
+		const baseY = sprite.y;
+		const idleTween = this.createIdleTween(
+			sprite,
+			baseScaleX,
+			baseScaleY,
+			baseY,
+			(this.nextId * 137) % 1800,
+		);
 
 		// Nova cannon: add separate rotating barrel sprite
 		let barrelSprite: Phaser.GameObjects.Image | undefined;
@@ -231,21 +326,106 @@ export class TowerSystem {
 		this.towers.set(instanceId, {
 			data: towerData,
 			def,
-			grade: towerGrade,
-			effectiveDamage: getEffectiveStats(
-				def.stats.damage,
-				towerLevel,
-				towerGrade,
-			),
+			tier: towerTier,
+			effectiveDamage: getEffectiveStats(def.stats.damage, towerLevel),
 			base,
 			sprite,
 			barrelSprite,
 			idleTween,
+			baseScaleX,
+			baseScaleY,
+			baseY,
 			lastAttackTime: 0,
 			lastAuraTime: 0,
 		});
 
+		// Phase 11 [F23]: tier-5/6 placeholder differentiation. Until dedicated
+		// art ships, hybrid_ab/hybrid_cd/ultimate share T4 sprites; a tinted
+		// pulsing aura under the sprite makes them visually distinct without
+		// touching the placeholder texture itself. TODO(phase-12): replace with
+		// a proper particle emitter once `upgrade-success-fx` is wired up as a
+		// particle texture.
+		this.spawnPlaceholderAura(towerDefId, base, liftedPos);
+
 		return { success: true, tower: towerData };
+	}
+
+	/**
+	 * Build the continuous yoyo breathing tween for a tower sprite. Extracted
+	 * so placement, moveTower, and post-VFX restart paths share an identical
+	 * config and reset precisely to the sprite's baseline scale/y instead of
+	 * drifting after each punch animation.
+	 */
+	private createIdleTween(
+		sprite: Phaser.GameObjects.Image,
+		baseScaleX: number,
+		baseScaleY: number,
+		baseY: number,
+		delay = 0,
+	): Phaser.Tweens.Tween {
+		// Reset sprite to baseline before spinning up the new tween — keeps
+		// post-VFX restart visually seamless. Defensive calls so partial
+		// test fakes (no setScale/setY) keep working.
+		if (typeof sprite.setScale === 'function') {
+			sprite.setScale(baseScaleX, baseScaleY);
+		} else {
+			sprite.scaleX = baseScaleX;
+			sprite.scaleY = baseScaleY;
+		}
+		if (typeof sprite.setY === 'function') {
+			sprite.setY(baseY);
+		} else {
+			sprite.y = baseY;
+		}
+		return this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
+			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
+			y: { from: baseY, to: baseY - 1 },
+			duration: 1800,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+			delay,
+		});
+	}
+
+	private spawnPlaceholderAura(
+		towerDefId: string,
+		base: Phaser.GameObjects.Graphics,
+		worldPos: Position,
+	): void {
+		const auraColor =
+			towerDefId === 'hybrid_ab'
+				? 0xffcc33 // gold
+				: towerDefId === 'hybrid_cd'
+					? 0x9966ff // purple
+					: towerDefId === 'ultimate'
+						? 0xffffff // rainbow → neutral white pulse for now
+						: null;
+		if (auraColor === null) return;
+
+		const ringRadius = this.gridManager.orthoTile * 0.55;
+		base.lineStyle(2, auraColor, 0.65);
+		base.strokeCircle(worldPos.x, worldPos.y + 4, ringRadius);
+		base.fillStyle(auraColor, 0.12);
+		base.fillCircle(worldPos.x, worldPos.y + 4, ringRadius);
+
+		// Tween a temporary overlay to convey "aura" pulse without spawning a
+		// long-lived particle emitter. Tween manager handles cleanup when the
+		// scene shuts down.
+		const overlay = this.scene.add.graphics();
+		overlay.lineStyle(3, auraColor, 0.55);
+		overlay.strokeCircle(worldPos.x, worldPos.y + 4, ringRadius);
+		overlay.setDepth(this.gridManager.getDepth(worldPos.x, worldPos.y) - 1);
+		this.scene.tweens.add({
+			targets: overlay,
+			alpha: { from: 0.85, to: 0.2 },
+			duration: 1200,
+			yoyo: true,
+			repeat: -1,
+			ease: 'Sine.InOut',
+		});
 	}
 
 	private static parseHexColor(hex: string): number {
@@ -300,7 +480,13 @@ export class TowerSystem {
 	}
 
 	private hasSplash(special?: string): boolean {
-		return special === 'splash' || (special?.endsWith('_splash') ?? false);
+		// Phase 1 redesign uses `splash_<radius>` (e.g. `splash_1.5`) and
+		// hybrid keys can include `splash_<radius>_slow_..._stun_...`. Match
+		// the `splash` token anywhere in the special string so siege towers
+		// (nova_cannon/fortress/earth_golem/celestial) keep the rock-arc
+		// projectile VFX they had pre-Phase-1.
+		if (!special) return false;
+		return special === 'splash' || special.startsWith('splash_');
 	}
 
 	private isStunSpecial(special?: string): boolean {
@@ -332,7 +518,7 @@ export class TowerSystem {
 
 		// Nova cannon barrel tracking — rotate toward nearest enemy
 		for (const tower of this.towers.values()) {
-			if (tower.def.type !== 'nova_cannon' || !tower.barrelSprite) continue;
+			if (tower.def.id !== 'nova_cannon' || !tower.barrelSprite) continue;
 			const towerWorld = this.gridManager.gridToWorld(
 				tower.data.position.x,
 				tower.data.position.y,
@@ -360,8 +546,7 @@ export class TowerSystem {
 		// Update disabled tint for all towers
 		for (const tower of this.towers.values()) {
 			const isDisabled =
-				(tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) ||
-				(this.worldGimmick !== null && !this.worldGimmick.isTowerActive(tower));
+				tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs;
 			if (isDisabled && tower.sprite.tintTopLeft !== 0x666666) {
 				tower.sprite.setTint(0x666666);
 			} else if (!isDisabled && tower.sprite.tintTopLeft === 0x666666) {
@@ -377,19 +562,16 @@ export class TowerSystem {
 				continue; // tower is disabled by an enemy ranged attack
 			}
 
-			if (this.worldGimmick && !this.worldGimmick.isTowerActive(tower))
-				continue;
-
-			const spdMod = this.modifierFn ? this.modifierFn('spd_up') : 1;
-			const attackInterval = 1000 / (def.stats.attackSpeed * spdMod);
+			// Phase 4 redesign: spd_up / range_up cards were removed. Attack
+			// interval and range use the base def directly.
+			const attackInterval = 1000 / def.stats.attackSpeed;
 			if (time - tower.lastAttackTime < attackInterval) continue;
 
 			const towerWorld = this.gridManager.gridToWorld(
 				data.position.x,
 				data.position.y,
 			);
-			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
-			const rangeSq = (def.stats.range + rangeBonus) ** 2;
+			const rangeSq = def.stats.range ** 2;
 
 			let closestUnit: (typeof unitPositions)[0] | null = null;
 			let closestDistSq = Infinity;
@@ -412,16 +594,25 @@ export class TowerSystem {
 					def.element,
 					closestUnit.element,
 				);
+				// Phase 4 [F15]: dmg_up (multiply) + crit_dmg (add). No crit
+				// system yet — crit_dmg contributes as a flat damage boost on
+				// every hit. TODO(phase-12): migrate to a proper
+				// crit-chance+mult system that uses `crit_dmg` as the crit
+				// multiplier term only.
 				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
-				let baseDamage = Math.round(
-					tower.effectiveDamage * elementMult * dmgMod,
+				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+				const familyMod = this.familyDamageFn
+					? this.familyDamageFn(def.family, def.id)
+					: 1;
+				const baseDamage = Math.round(
+					this.resolveFinalDamage(
+						tower.effectiveDamage *
+							elementMult *
+							dmgMod *
+							familyMod *
+							(1 + critBonus),
+					),
 				);
-				if (this.worldGimmick) {
-					const bonus = this.worldGimmick.getDamageBonus(tower);
-					if (bonus > 0) {
-						baseDamage = Math.round(baseDamage * (1 + bonus));
-					}
-				}
 				const special = def.stats.special;
 
 				const slowEffect =
@@ -518,15 +709,15 @@ export class TowerSystem {
 								const tdy = data.position.y - sUnitGrid.y;
 								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
 							}
-							let splashDamage = Math.round(
-								tower.effectiveDamage * splashElementMult * 0.5 * dmgMod,
+							const splashDamage = Math.round(
+								this.resolveFinalDamage(
+									tower.effectiveDamage *
+										splashElementMult *
+										0.5 *
+										dmgMod *
+										(1 + critBonus),
+								),
 							);
-							if (this.worldGimmick) {
-								const bonus = this.worldGimmick.getDamageBonus(tower);
-								if (bonus > 0) {
-									splashDamage = Math.round(splashDamage * (1 + bonus));
-								}
-							}
 							pendingBatch.push({
 								unitId: unit.instanceId,
 								damage: splashDamage,
@@ -538,9 +729,9 @@ export class TowerSystem {
 
 				const color = TowerSystem.parseHexColor(def.color);
 				const style =
-					this.hasSplash(special) || def.type === 'earth_golem'
+					this.hasSplash(special) || def.id === 'earth_golem'
 						? ('arc' as const)
-						: def.type === 'archer' || def.type === 'twin_archer'
+						: def.id === 'archer' || def.id === 'twin_archer'
 							? ('arrow' as const)
 							: ('beam' as const);
 				let arrowIndex: number | undefined;
@@ -579,17 +770,18 @@ export class TowerSystem {
 					: 'projectile-hit-flash';
 
 				// Nova cannon: fire from barrel tip, not tower center
+				const fireLift = this.gridManager.orthoTile * PLATFORM_LIFT;
 				const fireOriginX =
-					def.type === 'nova_cannon' && tower.barrelSprite
+					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
 						: towerWorld.x;
 				const fireOriginY =
-					def.type === 'nova_cannon' && tower.barrelSprite
+					def.id === 'nova_cannon' && tower.barrelSprite
 						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
-						: towerWorld.y;
+						: towerWorld.y - fireLift;
 
 				// Twin archer: fire 2 arrows, each with half damage
-				const shotCount = def.type === 'twin_archer' ? 2 : 1;
+				const shotCount = def.id === 'twin_archer' ? 2 : 1;
 				const shotBatch =
 					shotCount > 1
 						? pendingBatch.map((evt) => ({
@@ -623,7 +815,7 @@ export class TowerSystem {
 						ttl: shotTtl,
 						maxTtl: shotTtl,
 						style,
-						towerType: def.type,
+						towerType: def.id,
 						arrowIndex: shotArrowIndex,
 						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
 						impactPending: hasProjectile,
@@ -631,17 +823,11 @@ export class TowerSystem {
 						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
 					});
 				}
-				if (def.type === 'nova_cannon') {
+				if (def.id === 'nova_cannon') {
 					// Use the same hit-flash asset at barrel tip
 					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
 				} else {
-					this.spawnMuzzleVfx(
-						def.id,
-						tower.grade,
-						towerWorld,
-						data.position,
-						tower.sprite,
-					);
+					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
 				}
 
 				if (!hasProjectile) {
@@ -655,10 +841,10 @@ export class TowerSystem {
 					);
 				}
 
-				const lastSound = this.lastSoundTime.get(def.type) ?? 0;
+				const lastSound = this.lastSoundTime.get(def.id) ?? 0;
 				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
-					soundGenerator.playTowerAttack(def.type);
-					this.lastSoundTime.set(def.type, time);
+					soundGenerator.playTowerAttack(def.id);
+					this.lastSoundTime.set(def.id, time);
 				}
 			}
 		}
@@ -686,8 +872,8 @@ export class TowerSystem {
 			if (time - tower.lastAuraTime < effectiveCooldown) continue;
 			tower.lastAuraTime = time;
 
-			const rangeBonus = this.modifierFn ? this.modifierFn('range_up') : 0;
-			const rangeSq = (def.stats.range + rangeBonus) ** 2;
+			// Phase 4 redesign: range_up card was removed.
+			const rangeSq = def.stats.range ** 2;
 
 			if (this.isStunSpecial(special)) {
 				if (config.aoe) {
@@ -877,24 +1063,14 @@ export class TowerSystem {
 
 	private spawnMuzzleVfx(
 		towerDefId: string,
-		towerGrade: TowerGrade,
 		towerWorld: Position,
 		gridPos: Position,
 		towerSprite: Phaser.GameObjects.Image,
 	): void {
-		// Grade-aware fire spritesheet: rare/unique/epic have their own variants
-		// so corner gems / halos stay on the tower during the fire animation.
-		// Falls back to base if grade-specific sheet isn't loaded.
-		const baseKey = `tower-${towerDefId}-fire`;
-		const gradeKey =
-			towerGrade === 'normal'
-				? baseKey
-				: `tower-${towerDefId}-${towerGrade}-fire`;
-		const textureKey =
-			this.scene.textures.exists(gradeKey) &&
-			this.scene.anims.exists(getOptionalAnimationKey(gradeKey))
-				? gradeKey
-				: baseKey;
+		// Phase 1: grade-aware fire spritesheet was removed alongside the
+		// grade system. Fire VFX uses the base id — Phase 11 will revisit
+		// tier-specific variants.
+		const textureKey = `tower-${towerDefId}-fire`;
 		const animationKey = getOptionalAnimationKey(textureKey);
 		if (
 			!this.scene.textures.exists(textureKey) ||
@@ -906,15 +1082,16 @@ export class TowerSystem {
 		// Hide static tower during fire animation so animated frames are visible
 		towerSprite.setVisible(false);
 
+		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
 		const effect = this.scene.add.sprite(
 			towerWorld.x,
-			towerWorld.y - 20,
+			towerWorld.y - lift - 20,
 			textureKey,
 		);
 		// Fire spritesheets are always 64×80 regardless of base tower resolution;
 		// see the note in generate-towers.ts about drawFireFrame's coordinate system.
 		effect.setDisplaySize(64, 80);
-		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 1);
+		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
 		effect.play(animationKey);
 		const restoreVisibility = () => {
 			if (towerSprite.active) towerSprite.setVisible(true);
@@ -993,28 +1170,38 @@ export class TowerSystem {
 
 		instance.data.position = { x: toX, y: toY };
 		const worldPos = this.gridManager.gridToWorld(toX, toY);
-		instance.sprite.setPosition(worldPos.x, worldPos.y);
-		instance.base.setPosition(worldPos.x, worldPos.y);
+		const moveLift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		// Base/barrel sit at platform height; sprite has an extra 20px lift
+		// that matches placement (sprite.setY(worldPos.y - lift - 20)). Without
+		// this offset the sprite snaps down by 20px post-move while fire VFX
+		// still draws at the -20 baseline, producing a visual "bob" on attack.
+		const baseLiftedY = worldPos.y - moveLift;
+		const spriteLiftedY = baseLiftedY - 20;
+		instance.sprite.setPosition(worldPos.x, spriteLiftedY);
+		instance.base.setPosition(worldPos.x, baseLiftedY);
 		if (instance.barrelSprite) {
-			instance.barrelSprite.setPosition(worldPos.x, worldPos.y);
+			instance.barrelSprite.setPosition(worldPos.x, spriteLiftedY);
 		}
-		this.renderTowerBase(instance.base, worldPos, instance.def);
+		this.renderTowerBase(
+			instance.base,
+			{ x: worldPos.x, y: baseLiftedY },
+			instance.def,
+		);
 
 		// Recreate idle tween at new position (old tween remembers old y)
 		instance.idleTween?.stop();
 		instance.idleTween?.remove();
 		const baseScaleX = instance.sprite.scaleX;
 		const baseScaleY = instance.sprite.scaleY;
-		instance.idleTween = this.scene.tweens.add({
-			targets: instance.sprite,
-			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
-			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
-			y: { from: worldPos.y, to: worldPos.y - 1 },
-			duration: 1800,
-			yoyo: true,
-			repeat: -1,
-			ease: 'Sine.InOut',
-		});
+		instance.baseScaleX = baseScaleX;
+		instance.baseScaleY = baseScaleY;
+		instance.baseY = spriteLiftedY;
+		instance.idleTween = this.createIdleTween(
+			instance.sprite,
+			baseScaleX,
+			baseScaleY,
+			spriteLiftedY,
+		);
 
 		this.pathfinding.invalidateCache();
 		return true;
@@ -1023,13 +1210,13 @@ export class TowerSystem {
 	getTowerAt(
 		gridX: number,
 		gridY: number,
-	): { data: PlacedTower; def: TowerDef; grade: TowerGrade } | null {
+	): { data: PlacedTower; def: TowerDef; tier: number } | null {
 		const entry = this.findTowerEntry(gridX, gridY);
 		return entry
 			? {
 					data: entry.instance.data,
 					def: entry.instance.def,
-					grade: entry.instance.grade,
+					tier: entry.instance.tier,
 				}
 			: null;
 	}
@@ -1040,75 +1227,58 @@ export class TowerSystem {
 
 	/**
 	 * Returns a merge-friendly locator for the tower at (col,row), or null if
-	 * the tile is empty. Return type is MergeSystem.TowerLocator so the Phase
-	 * A orchestrator can pass this directly into MergeContext and any rename
-	 * of TowerLocator propagates here without a structural drift.
+	 * the tile is empty. Shape matches `MergeSystem.TowerLocator`
+	 * (family+tier+instanceId) so the Phase A orchestrator can feed the value
+	 * directly into `MergeSystem.tryMerge`. `x`/`y` carry the grid position
+	 * of the tower so the caller can re-spawn at the same tile after a merge.
 	 */
 	getTowerLocator(col: number, row: number): TowerLocator | null {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return null;
 		return {
-			col,
-			row,
-			towerId: entry.instance.def.id,
-			grade: entry.instance.grade,
+			instanceId: entry.instance.data.instanceId,
+			towerId: entry.instance.def.id as TowerLocator['towerId'],
+			family: entry.instance.def.family,
+			tier: entry.instance.tier,
+			x: col,
+			y: row,
 		};
 	}
 
 	/**
-	 * Atomic Phase A merge: tear down the "removed" tower and upgrade the "kept"
-	 * tower's grade in place. Caller is responsible for validating the merge via
-	 * MergeSystem first; this method only executes the result. Returns false if
-	 * either tile is empty or the two coords are identical.
+	 * Remove a tower at (col,row) without refund — used by the merge flow so
+	 * consumed towers disappear before the result tower is spawned. Returns
+	 * true if a tower was removed.
 	 */
-	applyMerge(
-		removedCol: number,
-		removedRow: number,
-		keptCol: number,
-		keptRow: number,
-		newGrade: TowerGrade,
-	): boolean {
-		if (removedCol === keptCol && removedRow === keptRow) return false;
-		const removed = this.findTowerEntry(removedCol, removedRow);
-		const kept = this.findTowerEntry(keptCol, keptRow);
-		if (!removed || !kept) return false;
-
-		removed.instance.idleTween?.stop();
-		removed.instance.idleTween?.remove();
-		removed.instance.barrelSprite?.destroy();
-		removed.instance.base.destroy();
-		removed.instance.sprite.destroy();
-		this.towers.delete(removed.key);
-		this.gridManager.removeTower(removedCol, removedRow);
-
-		kept.instance.grade = newGrade;
-		const newTextureKey = resolveTowerTextureKey(
-			kept.instance.def.id,
-			newGrade,
-		);
-		kept.instance.sprite.setTexture(newTextureKey);
-		kept.instance.effectiveDamage = getEffectiveStats(
-			kept.instance.def.stats.damage,
-			kept.instance.data.level,
-			newGrade,
-		);
-
+	removeTowerAt(col: number, row: number): boolean {
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return false;
+		const { key, instance } = entry;
+		instance.idleTween?.stop();
+		instance.idleTween?.remove();
+		instance.barrelSprite?.destroy();
+		instance.base.destroy();
+		instance.sprite.destroy();
+		this.towers.delete(key);
+		this.gridManager.removeTower(col, row);
 		this.pathfinding.invalidateCache();
 		return true;
 	}
 
 	/**
-	 * Phase A: pop-in scale punch on a freshly summoned tower. Additive over
-	 * the existing idle tween — same target, brief duration, no kill-restart.
-	 * Called by PhaseAOrchestrator after a successful summon.
+	 * Phase A: pop-in scale punch on a freshly summoned tower. Kills the
+	 * continuous idle tween for the punch, then restarts it on `onComplete`
+	 * so the tower keeps breathing afterwards (bug: previously the idle
+	 * tween never returned → towers went stiff after every summon).
 	 */
 	playPhaseASummonVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
-		const sprite = entry.instance.sprite;
+		const instance = entry.instance;
+		const sprite = instance.sprite;
 		this.scene.tweens.killTweensOf(sprite);
-		const baseScaleX = sprite.scaleX || 1;
-		const baseScaleY = sprite.scaleY || 1;
+		instance.idleTween = undefined;
+		const { baseScaleX, baseScaleY, baseY } = instance;
 		this.scene.tweens.add({
 			targets: sprite,
 			scaleX: baseScaleX * 1.3,
@@ -1116,6 +1286,15 @@ export class TowerSystem {
 			duration: 110,
 			yoyo: true,
 			ease: 'Cubic.Out',
+			onComplete: () => {
+				if (!sprite.active) return;
+				instance.idleTween = this.createIdleTween(
+					sprite,
+					baseScaleX,
+					baseScaleY,
+					baseY,
+				);
+			},
 		});
 	}
 
@@ -1123,15 +1302,17 @@ export class TowerSystem {
 	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
 	 * a successful merge. Tint is cleared via a follow-up tween that targets
 	 * a counter and applies clearTint in onComplete, so cleanup is bound to
-	 * the scene's tween manager (no orphan setTimeout / setInterval).
+	 * the scene's tween manager (no orphan setTimeout / setInterval). Restarts
+	 * the idle breathing tween after the punch so the tower doesn't go stiff.
 	 */
 	playPhaseAMergeVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
-		const sprite = entry.instance.sprite;
+		const instance = entry.instance;
+		const sprite = instance.sprite;
 		this.scene.tweens.killTweensOf(sprite);
-		const baseScaleX = sprite.scaleX || 1;
-		const baseScaleY = sprite.scaleY || 1;
+		instance.idleTween = undefined;
+		const { baseScaleX, baseScaleY, baseY } = instance;
 		this.scene.tweens.add({
 			targets: sprite,
 			scaleX: baseScaleX * 1.5,
@@ -1139,6 +1320,15 @@ export class TowerSystem {
 			duration: 140,
 			yoyo: true,
 			ease: 'Cubic.Out',
+			onComplete: () => {
+				if (!sprite.active) return;
+				instance.idleTween = this.createIdleTween(
+					sprite,
+					baseScaleX,
+					baseScaleY,
+					baseY,
+				);
+			},
 		});
 		if (typeof sprite.setTint === 'function') {
 			sprite.setTint(0xffd966);
@@ -1150,6 +1340,78 @@ export class TowerSystem {
 				onComplete: () => {
 					if (typeof sprite.clearTint === 'function') sprite.clearTint();
 				},
+			});
+		}
+	}
+
+	/**
+	 * Phase 11 Task 11.2 — tier5/tier6 merge reveal punch. Adds a camera flash,
+	 * a `Back.easeOut` scale-in tween on the new tower sprite, and a quick burst
+	 * of expanding ring graphics (used in lieu of a particle emitter until
+	 * `gacha-reveal-*` is wired as a particle texture in phase-12).
+	 *
+	 * Tracked separately from the smaller `playPhaseAMergeVfx` (which already
+	 * handles the per-merge gold-tint flash for every tier). Defensive about
+	 * scene API surface so unit tests with stub scenes don't have to mock the
+	 * camera manager.
+	 */
+	playMergeRevealVfx(col: number, row: number, toTier: number): void {
+		if (toTier < 5) return;
+		const entry = this.findTowerEntry(col, row);
+		if (!entry) return;
+		const sprite = entry.instance.sprite;
+
+		// 1. Camera flash — short, white, no callback fns required.
+		const camera = this.scene.cameras?.main;
+		if (camera && typeof camera.flash === 'function') {
+			camera.flash(300, 255, 255, 255, false);
+		}
+
+		// 2. Scale punch on the new tower sprite (0.8 → 1.0 with Back.easeOut).
+		const baseScaleX = sprite.scaleX || 1;
+		const baseScaleY = sprite.scaleY || 1;
+		this.scene.tweens.add({
+			targets: sprite,
+			scaleX: { from: baseScaleX * 0.8, to: baseScaleX },
+			scaleY: { from: baseScaleY * 0.8, to: baseScaleY },
+			duration: 400,
+			ease: 'Back.easeOut',
+		});
+
+		// 3. Particle stand-in: expanding ring of graphics. Tier 6 uses two
+		// concentric rings (gold + white) for stronger emphasis.
+		const ringColor = toTier >= 6 ? 0xffe870 : 0xffd966;
+		const worldPos = this.gridManager.gridToWorld(col, row);
+		const ring = this.scene.add.graphics();
+		ring.lineStyle(3, ringColor, 0.85);
+		ring.strokeCircle(worldPos.x, worldPos.y, this.gridManager.orthoTile * 0.4);
+		ring.setDepth(this.gridManager.getDepth(col, row) + 2);
+		this.scene.tweens.add({
+			targets: ring,
+			scaleX: { from: 0.6, to: 2.4 },
+			scaleY: { from: 0.6, to: 2.4 },
+			alpha: { from: 0.85, to: 0 },
+			duration: 600,
+			ease: 'Cubic.Out',
+			onComplete: () => ring.destroy(),
+		});
+		if (toTier >= 6) {
+			const innerRing = this.scene.add.graphics();
+			innerRing.lineStyle(2, 0xffffff, 0.9);
+			innerRing.strokeCircle(
+				worldPos.x,
+				worldPos.y,
+				this.gridManager.orthoTile * 0.25,
+			);
+			innerRing.setDepth(this.gridManager.getDepth(col, row) + 3);
+			this.scene.tweens.add({
+				targets: innerRing,
+				scaleX: { from: 0.4, to: 3.0 },
+				scaleY: { from: 0.4, to: 3.0 },
+				alpha: { from: 1, to: 0 },
+				duration: 700,
+				ease: 'Cubic.Out',
+				onComplete: () => innerRing.destroy(),
 			});
 		}
 	}

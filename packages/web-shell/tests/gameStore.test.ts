@@ -160,10 +160,10 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('enterStageSelect sets runStatus to stageSelect', () => {
+	it('startPhaseA puts the store in building state', () => {
 		expect(useGameStore.getState().runStatus).toBe('lobby');
-		useGameStore.getState().enterStageSelect();
-		expect(useGameStore.getState().runStatus).toBe('stageSelect');
+		useGameStore.getState().startPhaseA();
+		expect(useGameStore.getState().runStatus).toBe('building');
 		expect(useGameStore.getState().lobbyTab).toBe('home');
 	});
 

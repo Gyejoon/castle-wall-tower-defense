@@ -42,13 +42,22 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이스. 10웨이브 솔로 생존.
+Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 루프(Phase A). 시나리오 모드(월드/스테이지/미션/덱)는 제거됨.
 
-**구현 완료 (레거시 맵):** 8×18 세로 그리드, 타워 18종(5티어) 배치·판매(50% 에너지 환급), 적 9종(W1: scout_drone/battle_robot/heavy_walker/stealth_drone/dragon(비행) · W2: flame_imp/lava_golem · W3: arcane_mage/mana_shield) + 보스 3종(orc_warlord/forge_master/corrupted_archmage), A* 경로탐색, 에너지 기반 덱 경제(시작 40, 웨이브 클리어 +5, 킬 보상 없음 — 레거시 맵 전용. Phase A는 킬 에너지 경제), 이벤트 기반 10웨이브 진행(WaveSlotKind: normal | boss), 3월드×8스테이지(24스테이지), 웨이브 스케일링(HP 1.0x~3.5x), 월드별 난이도 배수(1.0x/1.3x/1.6x), 물리 충돌 비활성화(유닛 서로 통과), 보스 리크(boss-kind 웨이브에서 경로 끝 도달 시 즉시 패배), 월드맵·스테이지 선택, 덱 편집, 타워 판매 패널, 나가기 모달(일시정지), 보스 HP바, 결과 오버레이(스탯 그리드), 배속 토글(1x/2x/3x, 첫 클리어 후 해금), iOS AudioContext 자동 해금, 모바일 세로형 셸, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적, 메타 성장(metaStore 영속화/타워 강화·등급별 승급 — normal=20/rare=30/unique=50/epic=50/GRADE_BONUS 0/+80%/+350%/+1300%), 가챠 시스템.
+**구현 완료 (Phase A, 유일 모드):**
+- **맵:** 9×18 세로 그리드, 중앙 레인 프리미엄 존 + 장애물 9개(tiny-swords 나무/바위/덤불). 50 wave endless.
+- **타워:** 19종 = 4 family × 4 tier + tier-5 하이브리드 2 + tier-6 궁극기 1. Grade 개념 제거, tier + family로 통합. 합성 경로는 `MERGE_CHAIN` / `resolveMerge`(`shared/src/constants/towers.ts`)로 정의.
+- **인게임 가챠:** T2 (⚡40, 60%) / T3 (⚡80, 20%) / T4 (⚡160, 5%). 로그라이크 카드 `tier_odds_up`이 +50%p까지 스택.
+- **로그라이크:** 6종 카드(dmg_up, crit_dmg, energy_harvest, energy_regen, effect_amp, tier_odds_up). 보스 웨이브 클리어 시 3장 중 1장 선택. 광고 보상 리롤 지원.
+- **에너지 v3:** +1/sec, 킬 +1, 보스 처치 +20, fast-clear +20, CAP 200. 웨이브 클리어 보너스 없음.
+- **HUD:** 하단 액션바(Summon + 가챠 3종 + Menu), 상단 정보 배지, floating `TowerActionSheet`(merge/move/sell), `SummonRevealOverlay`, `UpgradePickOverlay`, `PauseModal`.
+- **CC 가드레일:** `ccResistance`(보스 0.5~0.7), `MIN_MOVE_SPEED=0.15` 하한, 2초 스턴 면역 윈도우.
+- **메타 루프 (Phase 9 shell):** `metaProgressStore`(Zustand + persist). `globalAtkPct`가 scene registry를 통해 TowerSystem에 주입.
+- **BM stub:** `AdService` 인터페이스 + `MockAdService`. 패배 시 "이어서 하기"(런당 최대 1회).
+- **저장소:** save v6→v7 (grade→tier, plasma/dragon_nest 제거), v7→v8 (시나리오 키 정리). 현재 v8.
+- 기타: 모바일 세로형 셸(430px), iOS AudioContext 자동 해금, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적, 3배속 토글.
 
-**구현 완료 (Phase A):** Phase A 랜덤 소환+합성 코어 루프(SummonPool/RandomSummon/Merge/PhaseAOrchestrator), phase_a_long 맵(8×24 U-turn), 50 wave endless, PhaseAHud, 로비 [LAB] 버튼, 킬 에너지 경제(상한 없음), 3배속, 로그라이트 강화 선택(10 웨이브마다 3장 중 1장), 등급별 판매 환불(Normal 10/Rare 20/Unique 40/Epic 80), 타워 이동(선택→이동→빈 칸 탭).
-
-**아직 구현되지 않은 것:** 속성 시스템 전투 적용, 미션·튜토리얼. 로비의 프로필 데이터는 현재 목(mock) 데이터다.
+**아직 구현되지 않은 것:** 메타 루프 본 구현(현재 shell 수준), 실광고 SDK 연결, 튜토리얼. 로비 프로필/컬렉션은 mock.
 
 ## Local Skills
 
@@ -67,7 +76,7 @@ Palace 개랜타디 — 모바일 우선 PVE 타워디펜스 버티컬 슬라이
 |---------|------|
 | `packages/shared/` (`@gld/shared`) | TypeScript 타입, 상수, 이벤트 계약. 다른 패키지가 의존. |
 | `packages/phaser-game/` (`@gld/phaser-game`) | Phaser 3 게임 엔진. 그리드, 타워, 유닛, AI, 렌더링. |
-| `packages/web-shell/` | React 18 SPA. Phaser 임베드, 로비(3탭), 설정, Zustand 상태 관리. |
+| `packages/web-shell/` | React 18 SPA. Phaser 임베드, 로비, HUD/Overlay 컴포넌트, Zustand 상태 관리. |
 | `scripts/generate-assets/` | @napi-rs/canvas 기반 절차적 픽셀 아트 생성 파이프라인. |
 
 ## 핵심 런타임 흐름
@@ -102,9 +111,9 @@ lobby → building → running → victory | defeat → lobby
 
 게임 종료 후 배치 시도는 `PlacementFailureReason`(`combat_phase | insufficient_energy | occupied | blocked_path | out_of_bounds`)과 함께 거부된다. 전투 중에는 항상 배치 가능.
 
-### 에너지 경제
+### 에너지 경제 (v3)
 
-에너지가 초당 1씩 자동 축적된다 (최대 100). 시작 에너지 40. 타워 배치 에너지: 공격형 10 / CC형 20. 웨이브 클리어 시 +5. 킬 보상 없음. 마지막 보스 웨이브에서는 리젠과 클리어 보상 비활성화.
+초당 +1 자동 축적, 킬당 +1, 보스 처치 +20, fast-clear 보너스 +20. CAP 200. 웨이브 클리어 고정 보너스는 없다. 소환/가챠에 에너지를 소비한다 (기본 소환 ⚡10, T2 가챠 ⚡40, T3 ⚡80, T4 ⚡160).
 
 ## 하이시그널 파일
 
@@ -118,26 +127,27 @@ lobby → building → running → victory | defeat → lobby
 | `packages/web-shell/src/stores/gameStore.ts` | Zustand 상태 — runStatus, gold, lives, wave 등 |
 | `packages/web-shell/src/game/PhaserGame.tsx` | React 측 Phaser 마운트 |
 | `packages/web-shell/src/App.tsx` | 상태 기반 라우팅 (lobby ↔ game) |
-| `packages/web-shell/src/pages/LobbyPage.tsx` | 3탭 로비 (home, collection, settings) |
-| `packages/web-shell/src/pages/WorldMapPage.tsx` | 월드맵 — 3맵 진행도·잠금 해제 |
-| `packages/web-shell/src/pages/StageDetailPage.tsx` | 스테이지 상세 — 난이도·보상·덱 편집 |
-| `packages/web-shell/src/pages/GamePage.tsx` | 게임 UI, HUD, 타워 판매 패널, 나가기 모달 |
-| `packages/web-shell/src/styles/tokens.ts` | 중세 색상 팔레트 토큰 |
+| `packages/web-shell/src/pages/LobbyPage.tsx` | 로비 — Phase A 단일 진입점, 메타 강화 |
+| `packages/web-shell/src/pages/GamePage.tsx` | 게임 UI, HUD(하단 액션바 + 상단 배지), TowerActionSheet, PauseModal |
+| `packages/web-shell/src/stores/metaProgressStore.ts` | 메타 루프 shell (Zustand + persist, globalAtkPct 등) |
+| `packages/shared/src/services/AdService.ts` | BM stub: `AdService` 인터페이스 + `MockAdService` |
+| `packages/web-shell/src/styles/tokens.ts` | 디자인 토큰. Tailwind v4 `@theme`로 매핑 (accent `#c8a04a`, panel `#2a2010`, border `#4a3a20` 등) |
 
 게임 시스템 파일 (`packages/phaser-game/src/systems/`):
 
 | 파일 | 역할 |
 |------|------|
-| `GridManager.ts` | 8×18 세로 그리드, 타일 점유, 좌표 변환 |
+| `GridManager.ts` | 9×18 세로 그리드, 중앙 프리미엄 존, 장애물, 좌표 변환 |
 | `PathfindingSystem.ts` | A* 경로탐색, 패스 캐싱 |
-| `TowerSystem.ts` | 타워 배치·판매, 범위 공격, Slow/Splash/Boost |
-| `DeckSystem.ts` | 4타워 덱 관리, 카드 선택·배치 |
-| `UnitSystem.ts` | 유닛 스폰, 경로 이동, HP/아머/슬로우 |
-| `WaveSystem.ts` | 10웨이브, 이벤트 기반 진행 (prep→spawning→combat→waiting→next), 보스 경고 |
-| `EnergySystem.ts` | 에너지 축적 (1/sec), 타워 배치 비용 관리 |
+| `TowerSystem.ts` | 타워 배치·판매, 범위 공격, family 특성. `globalAtkPct` 메타 버프 주입 |
+| `UnitSystem.ts` | 유닛 스폰, 경로 이동, HP/아머/CC(ccResistance, 스턴 면역 윈도우, MIN_MOVE_SPEED 하한) |
+| `WaveSystem.ts` | 50 wave endless, 이벤트 기반 진행, 보스 웨이브 처리 |
+| `EnergySystem.ts` | 에너지 v3: +1/sec, 킬 +1, 보스 +20, fast-clear +20, CAP 200 |
+| `RandomSummonSystem.ts` | SummonPool 기반 랜덤 소환 |
+| `MergeSystem.ts` | `MERGE_CHAIN`/`resolveMerge` 기반 합성 (family/tier) |
+| `GachaSystem.ts` | 인게임 가챠 (T2/T3/T4, `tier_odds_up` 스택) |
+| `PhaseAOrchestrator.ts` | Phase A 코어 루프 조율, 보스 웨이브 클리어 시 로그라이크 카드 선택 트리거 |
 | `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
-| `GimmickSystem.ts` | 월드별 고유 기믹 (용광로 폭발, 마력 폭주 등) |
-| `TutorialSystem.ts` | 첫 세션 튜토리얼 오버레이 |
 
 ## 커맨드
 

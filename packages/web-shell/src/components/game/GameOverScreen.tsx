@@ -1,3 +1,6 @@
+import { EventBus } from '@gld/phaser-game';
+import { MockAdService } from '@gld/shared';
+import { useRef, useState } from 'react';
 import { colors } from '../../styles/tokens';
 import { PixelButton } from '../ui/PixelButton';
 
@@ -10,23 +13,51 @@ interface GameOverScreenProps {
 		timeSurvivedSec: number;
 		goldEarned: number;
 		xpEarned: number;
-		selectedStar?: 1 | 2 | 3;
-		starCleared?: boolean;
 	} | null;
-	stageName?: string | null;
 	onRestart: () => void;
 	onLobby: () => void;
-	onNextStage?: () => void;
 }
 
+/**
+ * Phase 10 Task 10.2 — revival entry point for defeated runs.
+ *
+ * Shows three actions on defeat: "이어서 하기" (ad-rewarded continue),
+ * "다시 시작", and "로비로". Victory screens keep the existing two actions.
+ *
+ * Per Codex revision [F11] this screen **only emits** `request-continue-run`.
+ * The actual scene restore lives in `PhaseAOrchestrator.handleContinueRequest`,
+ * which pauses/resumes the scene, restores lives, and finally causes React
+ * to unmount this overlay. That separation keeps the revival pipeline testable
+ * without dragging Phaser into the React layer.
+ */
 export function GameOverScreen({
 	runStatus,
 	gameOverStats,
-	stageName,
 	onRestart,
 	onLobby,
-	onNextStage,
 }: GameOverScreenProps) {
+	// Debounce guard: one continue attempt per defeat presentation. Cleared
+	// when the ad path errors out so the player can retry. We track the
+	// in-flight flag on a ref so rapid synchronous double-taps don't race the
+	// React state update and trigger multiple ad watches.
+	const [continueRequested, setContinueRequested] = useState(false);
+	const inFlightRef = useRef(false);
+
+	const continueRun = async () => {
+		if (inFlightRef.current) return;
+		inFlightRef.current = true;
+		setContinueRequested(true);
+		const result = await MockAdService.watchAd('continue');
+		if (result === 'rewarded') {
+			EventBus.emit('request-continue-run', { livesRestored: 5 });
+		} else {
+			// Retry allowed on skipped/error — the orchestrator never saw the
+			// request so no cap counter to rewind.
+			inFlightRef.current = false;
+			setContinueRequested(false);
+		}
+	};
+
 	return (
 		<div
 			className="absolute inset-0 z-[10] flex items-center justify-center p-5"
@@ -59,65 +90,12 @@ export function GameOverScreen({
 					>
 						{runStatus === 'victory' ? '⚔ 방어 성공 ⚔' : '✕ 방어 실패 ✕'}
 					</span>
-					{stageName && (
-						<span className="font-pixel text-[10px] text-accent">
-							{stageName}
-						</span>
-					)}
 					<span className="font-pixel text-[11px] text-text-secondary">
 						{runStatus === 'defeat'
 							? `웨이브 ${gameOverStats?.wavesCleared ?? '?'}에서 돌파당했습니다`
-							: gameOverStats?.wavesCleared ===
-									(gameOverStats?.totalWaves ?? 10)
-								? '✨ 완벽한 방어! 왕국을 성공적으로 지켜냈습니다!'
-								: '왕국을 성공적으로 지켜냈습니다!'}
+							: '왕국을 성공적으로 지켜냈습니다!'}
 					</span>
 				</div>
-
-				{/* Star clear result */}
-				{gameOverStats?.selectedStar != null && runStatus === 'victory' && (
-					<div
-						className="flex items-center justify-center gap-2 py-2 -mx-5 animate-[fadeSlideIn_0.5s_ease-out_0.3s_both]"
-						style={{
-							background: gameOverStats.starCleared
-								? 'rgba(200,160,74,0.15)'
-								: 'rgba(80,20,20,0.3)',
-							borderBottom: `1px solid ${gameOverStats.starCleared ? colors.gold : 'rgba(200,60,60,0.3)'}`,
-						}}
-					>
-						<div className="flex gap-[2px]">
-							{Array.from({ length: gameOverStats.selectedStar }, (_, i) => (
-								<img
-									key={`star-${i}`}
-									src={
-										gameOverStats.starCleared
-											? 'assets/ui/icon-star-active.png'
-											: 'assets/ui/icon-star-inactive.png'
-									}
-									alt=""
-									width={14}
-									height={14}
-									className="[image-rendering:pixelated]"
-									style={{
-										animation: gameOverStats.starCleared
-											? `starPop 0.3s ease-out ${0.5 + i * 0.15}s both`
-											: undefined,
-									}}
-								/>
-							))}
-						</div>
-						<span
-							className="font-pixel text-[10px]"
-							style={{
-								color: gameOverStats.starCleared ? colors.gold : colors.danger,
-							}}
-						>
-							{gameOverStats.starCleared
-								? `★${gameOverStats.selectedStar} 클리어!`
-								: `★${gameOverStats.selectedStar} 조건 미달`}
-						</span>
-					</div>
-				)}
 
 				{/* 스탯 그리드 */}
 				<div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 text-left">
@@ -205,19 +183,19 @@ export function GameOverScreen({
 				</div>
 
 				{/* 버튼 */}
-				{onNextStage && runStatus === 'victory' && (
+				{runStatus === 'defeat' && (
 					<PixelButton
-						variant="gold"
+						variant="primary"
 						style={{ width: '100%' }}
-						onClick={onNextStage}
+						onClick={continueRun}
+						disabled={continueRequested}
+						data-testid="game-over-continue"
 					>
-						다음 스테이지
+						{continueRequested ? '광고 재생 중…' : '🎬 광고 보고 이어서 하기'}
 					</PixelButton>
 				)}
 				<PixelButton
-					variant={
-						onNextStage && runStatus === 'victory' ? 'secondary' : 'gold'
-					}
+					variant="gold"
 					style={{ width: '100%' }}
 					onClick={onRestart}
 				>
@@ -228,7 +206,7 @@ export function GameOverScreen({
 					style={{ width: '100%' }}
 					onClick={onLobby}
 				>
-					로비로 돌아가기
+					로비로
 				</PixelButton>
 			</div>
 		</div>

@@ -1,25 +1,21 @@
 import { EventBus, soundGenerator } from '@gld/phaser-game';
-import {
-	getNextStageId,
-	getStageById,
-	getTotalWavesForStage,
-	PHASE_A_MAP_ID,
-	WORLD_ORDER,
-} from '@gld/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
-import { DeckDock } from '../components/game/DeckDock';
 import { GameOverScreen } from '../components/game/GameOverScreen';
 import { PhaseAHud } from '../components/game/PhaseAHud';
+import { SummonRevealOverlay } from '../components/game/SummonRevealOverlay';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
+import {
+	type SelectedTower,
+	TowerActionSheet,
+} from '../components/game/TowerActionSheet';
 import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
 import { useGameStore } from '../stores/gameStore';
-import { useMetaStore } from '../stores/metaStore';
 
 export function GamePage() {
 	const runId = useGameStore((s) => s.runId);
@@ -39,18 +35,10 @@ export function GamePage() {
 	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	const selectedStar = useGameStore((s) => s.selectedStar);
-	const highestWave = useMetaStore((s) => s.progress.highestWave);
-	const selectedStageId = useGameStore((s) => s.selectedStageId);
-	const selectedStage = getStageById(selectedStageId);
-	const totalStageWaves = getTotalWavesForStage(selectedStage.waveSetId);
-	const isPhaseAMode = selectedStage.mapId === PHASE_A_MAP_ID;
-	const starKey =
-		selectedStar > 1 ? `${selectedStageId}:${selectedStar}` : selectedStageId;
-	const speed2xUnlocked =
-		isPhaseAMode || (highestWave[starKey] ?? 0) >= totalStageWaves;
+	// Phase 6: Phase A is the only mode, so 2x speed is always available.
+	const speed2xUnlocked = true;
 
-	const { waitCountdown, selectedTower } = useGameEvents();
+	const { waitCountdown } = useGameEvents();
 	const [showExitModal, setShowExitModal] = useState(false);
 	const [upgradeChoices, setUpgradeChoices] = useState<Array<{
 		id: string;
@@ -58,6 +46,10 @@ export function GamePage() {
 		description: string;
 		icon: string;
 	}> | null>(null);
+	const [selectedTower, setSelectedTower] = useState<SelectedTower | null>(
+		null,
+	);
+	const [mergeSourceId, setMergeSourceId] = useState<string | null>(null);
 
 	// Apply saved SFX volume to audio engine on mount
 	useEffect(() => {
@@ -115,10 +107,17 @@ export function GamePage() {
 				id: string;
 				name: string;
 				description: string;
-				icon: string;
+				icon?: string;
 			}>;
 		}) => {
-			setUpgradeChoices(data.choices);
+			setUpgradeChoices(
+				data.choices.map((c) => ({
+					id: c.id,
+					name: c.name,
+					description: c.description,
+					icon: c.icon ?? '',
+				})),
+			);
 		};
 		const handleUpgradeApplied = () => {
 			setUpgradeChoices(null);
@@ -137,20 +136,95 @@ export function GamePage() {
 		};
 	}, []);
 
-	const nextStageId = useMemo(
-		() => getNextStageId(selectedStageId),
-		[selectedStageId],
-	);
+	// Phase 8 Task 8.1 — subscribe to tower selection events and render the
+	// floating TowerActionSheet. The Phaser scene emits tower-selected with
+	// grid coords + def metadata; we mirror that into React state. On
+	// tower-deselected / sold / moved / merged we clear the sheet.
+	//
+	// Phase 8 Task 8.5 [F10] — when mergeSourceId is non-null, the next
+	// tower-selected becomes the merge target instead of opening the sheet.
+	useEffect(() => {
+		const handleSelected = (data: {
+			towerDefId: string;
+			towerName: string;
+			col: number;
+			row: number;
+			refund: number;
+			tier: number;
+		}) => {
+			const targetId = `${data.col},${data.row}`;
+			// [F10] merge-target-picker branch: if we're waiting for a target,
+			// fire request-merge-towers and stay out of the action sheet.
+			if (mergeSourceId !== null && mergeSourceId !== targetId) {
+				const [fromColStr, fromRowStr] = mergeSourceId.split(',');
+				const fromCol = Number(fromColStr);
+				const fromRow = Number(fromRowStr);
+				if (Number.isFinite(fromCol) && Number.isFinite(fromRow)) {
+					EventBus.emit('request-merge-towers', {
+						fromCol,
+						fromRow,
+						toCol: data.col,
+						toRow: data.row,
+					});
+				}
+				setMergeSourceId(null);
+				setSelectedTower(null);
+				return;
+			}
+			setSelectedTower({
+				instanceId: targetId,
+				col: data.col,
+				row: data.row,
+				towerId: data.towerDefId,
+				towerName: data.towerName,
+				tier: data.tier,
+				sellValue: data.refund,
+			});
+		};
+		const clear = () => setSelectedTower(null);
 
-	const currentStageDef = selectedStage;
+		EventBus.on('tower-selected', handleSelected);
+		EventBus.on('tower-deselected', clear);
+		EventBus.on('tower-sold', clear);
+		EventBus.on('tower-moved', clear);
+		EventBus.on('towers-merged', clear);
+		return () => {
+			EventBus.off('tower-selected', handleSelected);
+			EventBus.off('tower-deselected', clear);
+			EventBus.off('tower-sold', clear);
+			EventBus.off('tower-moved', clear);
+			EventBus.off('towers-merged', clear);
+		};
+	}, [mergeSourceId]);
 
-	const handleNextStage = useCallback(() => {
-		if (!nextStageId) return;
-		const store = useGameStore.getState();
-		store.setSelectedStageId(nextStageId);
-		store.setSelectedStar(1);
-		store.resetRun();
-	}, [nextStageId]);
+	// Phase 8 Task 8.5 [F10] — merge-mode state machine.
+	//   enter-merge-mode → set sourceId (TowerActionSheet 합성 click)
+	//   merge-failed    → clear (invalid pair, out of range, etc.)
+	//   towers-merged   → clear (success)
+	useEffect(() => {
+		const enterHandler = (p: { sourceId: string }) =>
+			setMergeSourceId(p.sourceId);
+		const failedHandler = () => setMergeSourceId(null);
+		const mergedHandler = () => setMergeSourceId(null);
+		EventBus.on('enter-merge-mode', enterHandler);
+		EventBus.on('merge-failed', failedHandler);
+		EventBus.on('towers-merged', mergedHandler);
+		return () => {
+			EventBus.off('enter-merge-mode', enterHandler);
+			EventBus.off('merge-failed', failedHandler);
+			EventBus.off('towers-merged', mergedHandler);
+		};
+	}, []);
+
+	// [F10] ESC key cancels merge-target-picker mode.
+	useEffect(() => {
+		if (!mergeSourceId) return;
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setMergeSourceId(null);
+		};
+		window.addEventListener('keydown', handler);
+		return () => window.removeEventListener('keydown', handler);
+	}, [mergeSourceId]);
 
 	const handleToggleSpeed = useCallback(() => {
 		const cur = useGameStore.getState().gameSpeed;
@@ -174,13 +248,14 @@ export function GamePage() {
 		EventBus.emit('request-resume');
 	}, []);
 
-	const handleSellTower = useCallback(() => {
-		if (!selectedTower) return;
-		EventBus.emit('request-sell-tower', {
-			col: selectedTower.col,
-			row: selectedTower.row,
-		});
-	}, [selectedTower]);
+	const handleActionSheetClose = useCallback(() => {
+		setSelectedTower(null);
+		EventBus.emit('request-clear-tower-selection');
+	}, []);
+
+	const handleMergeCancel = useCallback(() => {
+		setMergeSourceId(null);
+	}, []);
 
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
@@ -254,36 +329,38 @@ export function GamePage() {
 					{/* Loading overlay moved to container level */}
 
 					<ToastNotification toast={toast} />
-
-					{!isPhaseAMode &&
-						selectedTower &&
-						runStatus !== 'victory' &&
-						runStatus !== 'defeat' && (
-							<div
-								className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 border border-border px-3 py-2 font-pixel text-[11px]"
-								style={{ background: 'var(--color-panel-95)' }}
+					{/* Phase 8 Task 8.3 — 2s summon/gacha result celebration. */}
+					<SummonRevealOverlay />
+					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
+					    sell/move/merge buttons in PhaseAHud. Hidden while the merge
+					    target picker is active (Task 8.5 [F10]). */}
+					<TowerActionSheet
+						selectedTower={mergeSourceId ? null : selectedTower}
+						onDeselect={handleActionSheetClose}
+					/>
+					{mergeSourceId !== null && (
+						<div
+							data-testid="merge-mode-banner"
+							className="absolute bottom-[120px] left-1/2 -translate-x-1/2 z-[4] flex items-center gap-3 px-4 py-2 border-2 rounded-sm"
+							style={{
+								background: 'var(--color-panel-95)',
+								borderColor: 'var(--color-gold)',
+							}}
+						>
+							<span className="font-pixel text-[11px] text-gold">
+								합성할 타워를 탭하세요
+							</span>
+							<button
+								type="button"
+								data-testid="merge-mode-cancel"
+								onClick={handleMergeCancel}
+								className="font-pixel text-[10px] underline"
+								style={{ color: 'var(--color-text-secondary)' }}
 							>
-								<span className="text-text">{selectedTower.towerName}</span>
-								<button
-									type="button"
-									className="border border-danger px-2 py-1 text-danger"
-									style={{ background: 'var(--color-danger-20)' }}
-									onClick={handleSellTower}
-								>
-									판매{' '}
-									<span className="inline-flex items-center gap-[2px]">
-										<img
-											src="assets/ui/icon-energy.webp"
-											alt=""
-											width={10}
-											height={10}
-											className="[image-rendering:pixelated]"
-										/>
-										+{selectedTower.refund}
-									</span>
-								</button>
-							</div>
-						)}
+								취소
+							</button>
+						</div>
+					)}
 
 					{/* Exit Confirm Modal */}
 					{showExitModal && runStatus === 'running' && (
@@ -330,25 +407,13 @@ export function GamePage() {
 						<GameOverScreen
 							runStatus={runStatus}
 							gameOverStats={gameOverStats}
-							stageName={
-								currentStageDef
-									? `${WORLD_ORDER.indexOf(currentStageDef.worldId) + 1}-${currentStageDef.stageNumber} ${currentStageDef.name}`
-									: null
-							}
 							onRestart={resetRun}
 							onLobby={enterLobby}
-							onNextStage={
-								runStatus === 'victory' && nextStageId
-									? handleNextStage
-									: undefined
-							}
 						/>
 					)}
 				</div>
 
-				{runStatus !== 'victory' &&
-					runStatus !== 'defeat' &&
-					(isPhaseAMode ? <PhaseAHud /> : <DeckDock />)}
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <PhaseAHud />}
 			</div>
 		</div>
 	);

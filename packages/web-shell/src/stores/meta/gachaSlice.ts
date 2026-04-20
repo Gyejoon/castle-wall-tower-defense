@@ -70,13 +70,12 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 			newPityCount = roll.newPityCount;
 		}
 
-		// 컬렉션 업데이트 (Amendment D: 중복 → 골드 50)
-		let goldGained = 0;
+		// 컬렉션 업데이트. 중복 타워는 `duplicateCount`로 누적되어 메타
+		// 레벨업의 재료가 된다 (`collectionSlice.enhanceTower`).
 		const newCollection = [...s.collection];
 		for (const r of results) {
 			const existingIdx = newCollection.findIndex((t) => t.defId === r.towerId);
 			if (existingIdx >= 0) {
-				goldGained += 50;
 				newCollection[existingIdx] = {
 					...newCollection[existingIdx],
 					duplicateCount: newCollection[existingIdx].duplicateCount + 1,
@@ -85,7 +84,7 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 				newCollection.push({
 					defId: r.towerId,
 					level: 1,
-					grade: 'normal',
+					tier: 1,
 					acquiredAt: Date.now(),
 					awakening: 0,
 					duplicateCount: 0,
@@ -93,7 +92,7 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 			}
 		}
 
-		// 다이아몬드/골드 차감 및 progress 업데이트
+		// 다이아몬드 차감 및 progress 업데이트
 		// set() 내부에서 최신 state 기준으로 차감 (TOCTOU 방어)
 		set((s) => {
 			const cost =
@@ -107,8 +106,6 @@ export const createGachaSlice: SliceCreator<Pick<MetaActions, 'openGacha'>> = (
 			const newProfile = {
 				...s.profile,
 				diamond: s.profile.diamond - cost,
-				gold: s.profile.gold + goldGained,
-				totalGoldEarned: s.profile.totalGoldEarned + goldGained,
 			};
 
 			const nowIso = now.toISOString();

@@ -10,7 +10,7 @@ export { getPlacementGuardFailure } from './placementRules';
 export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';
 export {
-	type MergeContext,
+	type MergeFailReason,
 	type MergeResult,
 	MergeSystem,
 	type TowerLocator,

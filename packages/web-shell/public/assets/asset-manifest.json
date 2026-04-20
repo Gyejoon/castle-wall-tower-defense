@@ -47,6 +47,27 @@
       "section": "preload"
     },
     {
+      "key": "tiny-swords-path-tileset",
+      "type": "spritesheet",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_path.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 16,
+      "section": "preload"
+    },
+    {
+      "key": "grass-seamless",
+      "type": "image",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_grass_seamless.png",
+      "section": "preload"
+    },
+    {
+      "key": "dirt-seamless",
+      "type": "image",
+      "path": "assets/vendor/tiny-swords/terrain/tileset/Tilemap_dirt_seamless.png",
+      "section": "preload"
+    },
+    {
       "key": "tiny-swords-rock-1",
       "type": "spritesheet",
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",
@@ -1239,6 +1260,24 @@
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_ab",
+      "type": "image",
+      "path": "assets/towers/arcane_spire.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd",
+      "type": "image",
+      "path": "assets/towers/world_tree.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-ultimate",
+      "type": "image",
+      "path": "assets/towers/divine_throne.png",
+      "section": "preload"
     },
     {
       "key": "unit-scout_drone",

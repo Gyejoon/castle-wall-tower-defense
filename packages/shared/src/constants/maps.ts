@@ -1,98 +1,30 @@
 import type { Position } from '../types/grid';
 import type { MapLayout } from '../types/map';
 
-// Forest Gate: wide S-curve with tower placement pockets between bends
-//   0 1 2 3 4 5 6 7
-// 0       S                ← spawn
-// 1       ·
-// 2   · · ·
-// 3   ·
-// 4   · · · · ·
-// 5               ·
-// 6       · · · · ·
-// 7       ·
-// 8   · · ·
-// 9   ·
-//10   · · · · ·
-//11               ·
-//12       · · · · ·
-//13       ·
-//14   · · ·
-//15   ·
-//16   · · · ·
-//17           E            ← exit
-const FOREST_GATE_PATH: Position[] = [
-	{ x: 3, y: 0 },
-	{ x: 3, y: 1 },
-	{ x: 3, y: 2 },
-	{ x: 2, y: 2 },
-	{ x: 1, y: 2 },
-	{ x: 1, y: 3 },
-	{ x: 1, y: 4 },
-	{ x: 2, y: 4 },
-	{ x: 3, y: 4 },
-	{ x: 4, y: 4 },
-	{ x: 5, y: 4 },
-	{ x: 5, y: 5 },
-	{ x: 5, y: 6 },
-	{ x: 4, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 3, y: 7 },
-	{ x: 3, y: 8 },
-	{ x: 2, y: 8 },
-	{ x: 1, y: 8 },
-	{ x: 1, y: 9 },
-	{ x: 1, y: 10 },
-	{ x: 2, y: 10 },
-	{ x: 3, y: 10 },
-	{ x: 4, y: 10 },
-	{ x: 5, y: 10 },
-	{ x: 5, y: 11 },
-	{ x: 5, y: 12 },
-	{ x: 4, y: 12 },
-	{ x: 3, y: 12 },
-	{ x: 3, y: 13 },
-	{ x: 3, y: 14 },
-	{ x: 2, y: 14 },
-	{ x: 1, y: 14 },
-	{ x: 1, y: 15 },
-	{ x: 1, y: 16 },
-	{ x: 2, y: 16 },
-	{ x: 3, y: 16 },
-	{ x: 4, y: 16 },
-	{ x: 4, y: 17 },
-];
-
-const FOREST_GATE_BLOCKED_PLACEMENT_POINTS: Position[] = [
-	{ x: 3, y: 0 },
-	{ x: 4, y: 17 },
-	{ x: 0, y: 0 },
-	{ x: 7, y: 17 },
-];
-
 function buildBuildablePoints({
 	width,
 	height,
 	path,
 	blockedPlacementPoints,
+	obstacles = [],
 }: {
 	width: number;
 	height: number;
 	path: Position[];
 	blockedPlacementPoints: Position[];
+	obstacles?: Position[];
 }): Position[] {
-	const pathSet = new Set(path.map((point) => `${point.x},${point.y}`));
-	const blockedSet = new Set(
-		blockedPlacementPoints.map((point) => `${point.x},${point.y}`),
-	);
+	const blockedSet = new Set<string>([
+		...path.map((p) => `${p.x},${p.y}`),
+		...blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+		...obstacles.map((p) => `${p.x},${p.y}`),
+	]);
 	const buildablePoints: Position[] = [];
 
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			const key = `${x},${y}`;
-			if (pathSet.has(key) || blockedSet.has(key)) {
-				continue;
-			}
+			if (blockedSet.has(key)) continue;
 			buildablePoints.push({ x, y });
 		}
 	}
@@ -100,605 +32,197 @@ function buildBuildablePoints({
 	return buildablePoints;
 }
 
-const FOREST_GATE_BUILDABLE_POINTS = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: FOREST_GATE_PATH,
-	blockedPlacementPoints: FOREST_GATE_BLOCKED_PLACEMENT_POINTS,
-});
-
-export const FOREST_GATE_MAP: MapLayout = {
-	id: 'w1_forest_a',
-	name: '숲의 성문',
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: FOREST_GATE_PATH,
-	blockedPlacementPoints: FOREST_GATE_BLOCKED_PLACEMENT_POINTS,
-	buildablePoints: FOREST_GATE_BUILDABLE_POINTS,
-	spawnPoint: { x: 3, y: 0 },
-	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-forest-gate',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 1,
-	difficultyHpMult: 1,
-	recommendedPower: 55,
-};
-
-// --- Lava Fortress: 2-lane map ---
-// Lane A (left): spawn top-left, zigzags left side
-const LAVA_LANE_A: Position[] = [
-	{ x: 1, y: 0 },
-	{ x: 1, y: 1 },
-	{ x: 1, y: 2 },
-	{ x: 2, y: 2 },
-	{ x: 3, y: 2 },
-	{ x: 3, y: 3 },
-	{ x: 3, y: 4 },
-	{ x: 2, y: 4 },
-	{ x: 1, y: 4 },
-	{ x: 1, y: 5 },
-	{ x: 1, y: 6 },
-	{ x: 2, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 3, y: 7 },
-	{ x: 3, y: 8 },
-	{ x: 2, y: 8 },
-	{ x: 1, y: 8 },
-	{ x: 1, y: 9 },
-	{ x: 1, y: 10 },
-	{ x: 2, y: 10 },
-	{ x: 3, y: 10 },
-	{ x: 3, y: 11 },
-	{ x: 3, y: 12 },
-	{ x: 2, y: 12 },
-	{ x: 1, y: 12 },
-	{ x: 1, y: 13 },
-	{ x: 1, y: 14 },
-	{ x: 2, y: 14 },
-	{ x: 3, y: 14 },
-	{ x: 3, y: 15 },
-	{ x: 3, y: 16 },
-	{ x: 3, y: 17 },
-];
-
-// Lane B (right): spawn top-right, zigzags right side
-const LAVA_LANE_B: Position[] = [
-	{ x: 6, y: 0 },
-	{ x: 6, y: 1 },
-	{ x: 6, y: 2 },
-	{ x: 5, y: 2 },
-	{ x: 4, y: 2 },
-	{ x: 4, y: 3 },
-	{ x: 4, y: 4 },
-	{ x: 5, y: 4 },
-	{ x: 6, y: 4 },
-	{ x: 6, y: 5 },
-	{ x: 6, y: 6 },
-	{ x: 5, y: 6 },
-	{ x: 4, y: 6 },
-	{ x: 4, y: 7 },
-	{ x: 4, y: 8 },
-	{ x: 5, y: 8 },
-	{ x: 6, y: 8 },
-	{ x: 6, y: 9 },
-	{ x: 6, y: 10 },
-	{ x: 5, y: 10 },
-	{ x: 4, y: 10 },
-	{ x: 4, y: 11 },
-	{ x: 4, y: 12 },
-	{ x: 5, y: 12 },
-	{ x: 6, y: 12 },
-	{ x: 6, y: 13 },
-	{ x: 6, y: 14 },
-	{ x: 5, y: 14 },
-	{ x: 4, y: 14 },
-	{ x: 4, y: 15 },
-	{ x: 4, y: 16 },
-	{ x: 4, y: 17 },
-];
-
-const LAVA_ALL_PATH_CELLS = [...LAVA_LANE_A, ...LAVA_LANE_B];
-
-const LAVA_BLOCKED: Position[] = [
-	{ x: 1, y: 0 },
-	{ x: 6, y: 0 },
-	{ x: 3, y: 17 },
-	{ x: 4, y: 17 },
-];
-
-const LAVA_BUILDABLE = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: LAVA_ALL_PATH_CELLS,
-	blockedPlacementPoints: LAVA_BLOCKED,
-});
-
-export const LAVA_FORTRESS_MAP: MapLayout = {
-	id: 'w2_forge_a',
-	name: '용암 요새',
-	unlockLevel: 3,
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: LAVA_LANE_A,
-	paths: [LAVA_LANE_A, LAVA_LANE_B],
-	blockedPlacementPoints: LAVA_BLOCKED,
-	buildablePoints: LAVA_BUILDABLE,
-	spawnPoint: { x: 1, y: 0 },
-	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-w2_forge_a',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 2,
-	difficultyHpMult: 1.3,
-	recommendedPower: 170,
-	gimmickTiles: {
-		furnaceTiles: [
-			{ x: 2, y: 3 },
-			{ x: 5, y: 3 },
-			{ x: 2, y: 9 },
-			{ x: 5, y: 9 },
-			{ x: 2, y: 15 },
-			{ x: 5, y: 15 },
-		],
-	},
-};
-
-// --- Storm Citadel: 3-lane map ---
-// Lane A (left)
-const STORM_LANE_A: Position[] = [
-	{ x: 0, y: 0 },
-	{ x: 0, y: 1 },
-	{ x: 0, y: 2 },
-	{ x: 0, y: 3 },
-	{ x: 1, y: 3 },
-	{ x: 1, y: 4 },
-	{ x: 1, y: 5 },
-	{ x: 0, y: 5 },
-	{ x: 0, y: 6 },
-	{ x: 0, y: 7 },
-	{ x: 1, y: 7 },
-	{ x: 1, y: 8 },
-	{ x: 1, y: 9 },
-	{ x: 0, y: 9 },
-	{ x: 0, y: 10 },
-	{ x: 0, y: 11 },
-	{ x: 1, y: 11 },
-	{ x: 1, y: 12 },
-	{ x: 1, y: 13 },
-	{ x: 1, y: 14 },
-	{ x: 2, y: 14 },
-	{ x: 2, y: 15 },
-	{ x: 3, y: 15 },
-	{ x: 3, y: 16 },
-	{ x: 3, y: 17 },
-];
-
-// Lane B (center)
-const STORM_LANE_B: Position[] = [
-	{ x: 3, y: 0 },
-	{ x: 3, y: 1 },
-	{ x: 3, y: 2 },
-	{ x: 3, y: 3 },
-	{ x: 3, y: 4 },
-	{ x: 4, y: 4 },
-	{ x: 4, y: 5 },
-	{ x: 4, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 3, y: 7 },
-	{ x: 3, y: 8 },
-	{ x: 4, y: 8 },
-	{ x: 4, y: 9 },
-	{ x: 4, y: 10 },
-	{ x: 3, y: 10 },
-	{ x: 3, y: 11 },
-	{ x: 3, y: 12 },
-	{ x: 4, y: 12 },
-	{ x: 4, y: 13 },
-	{ x: 4, y: 14 },
-	{ x: 4, y: 15 },
-	{ x: 4, y: 16 },
-	{ x: 4, y: 17 },
-];
-
-// Lane C (right)
-const STORM_LANE_C: Position[] = [
-	{ x: 7, y: 0 },
-	{ x: 7, y: 1 },
-	{ x: 7, y: 2 },
-	{ x: 7, y: 3 },
-	{ x: 6, y: 3 },
-	{ x: 6, y: 4 },
-	{ x: 6, y: 5 },
-	{ x: 7, y: 5 },
-	{ x: 7, y: 6 },
-	{ x: 7, y: 7 },
-	{ x: 6, y: 7 },
-	{ x: 6, y: 8 },
-	{ x: 6, y: 9 },
-	{ x: 7, y: 9 },
-	{ x: 7, y: 10 },
-	{ x: 7, y: 11 },
-	{ x: 6, y: 11 },
-	{ x: 6, y: 12 },
-	{ x: 6, y: 13 },
-	{ x: 6, y: 14 },
-	{ x: 5, y: 14 },
-	{ x: 5, y: 15 },
-	{ x: 5, y: 16 },
-	{ x: 5, y: 17 },
-];
-
-const STORM_ALL_PATH_CELLS = [
-	...STORM_LANE_A,
-	...STORM_LANE_B,
-	...STORM_LANE_C,
-];
-
-const STORM_BLOCKED: Position[] = [
-	{ x: 0, y: 0 },
-	{ x: 3, y: 0 },
-	{ x: 7, y: 0 },
-	{ x: 3, y: 17 },
-	{ x: 4, y: 17 },
-	{ x: 5, y: 17 },
-];
-
-const STORM_BUILDABLE = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: STORM_ALL_PATH_CELLS,
-	blockedPlacementPoints: STORM_BLOCKED,
-});
-
-export const STORM_CITADEL_MAP: MapLayout = {
-	id: 'w3_tower_a',
-	name: '폭풍 성채',
-	unlockLevel: 7,
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: STORM_LANE_A,
-	paths: [STORM_LANE_A, STORM_LANE_B, STORM_LANE_C],
-	blockedPlacementPoints: STORM_BLOCKED,
-	buildablePoints: STORM_BUILDABLE,
-	spawnPoint: { x: 0, y: 0 },
-	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-w3_tower_a',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 3,
-	difficultyHpMult: 1.6,
-	recommendedPower: 400,
-	gimmickTiles: {
-		arcaneCircleTiles: [
-			{ x: 2, y: 6 },
-			{ x: 5, y: 12 },
-		],
-	},
-};
-
-// --- W1 Forest B: S-curve variant ---
-const W1_FOREST_B_PATH: Position[] = [
-	{ x: 4, y: 0 },
-	{ x: 4, y: 1 },
-	{ x: 4, y: 2 },
-	{ x: 4, y: 3 },
-	{ x: 3, y: 3 },
-	{ x: 2, y: 3 },
-	{ x: 2, y: 4 },
-	{ x: 2, y: 5 },
-	{ x: 2, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 4, y: 6 },
-	{ x: 5, y: 6 },
-	{ x: 5, y: 7 },
-	{ x: 5, y: 8 },
-	{ x: 5, y: 9 },
-	{ x: 4, y: 9 },
-	{ x: 3, y: 9 },
-	{ x: 2, y: 9 },
-	{ x: 2, y: 10 },
-	{ x: 2, y: 11 },
-	{ x: 2, y: 12 },
-	{ x: 3, y: 12 },
-	{ x: 4, y: 12 },
-	{ x: 5, y: 12 },
-	{ x: 5, y: 13 },
-	{ x: 5, y: 14 },
-	{ x: 5, y: 15 },
-	{ x: 4, y: 15 },
-	{ x: 3, y: 15 },
-	{ x: 3, y: 16 },
-	{ x: 3, y: 17 },
-];
-
-const W1_FOREST_B_BLOCKED: Position[] = [
-	{ x: 4, y: 0 },
-	{ x: 3, y: 17 },
-];
-
-const W1_FOREST_B_BUILDABLE = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: W1_FOREST_B_PATH,
-	blockedPlacementPoints: W1_FOREST_B_BLOCKED,
-});
-
-export const W1_FOREST_B_MAP: MapLayout = {
-	id: 'w1_forest_b',
-	name: '변경의 숲 — 외곽 길',
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: W1_FOREST_B_PATH,
-	blockedPlacementPoints: W1_FOREST_B_BLOCKED,
-	buildablePoints: W1_FOREST_B_BUILDABLE,
-	spawnPoint: { x: 4, y: 0 },
-	exitPoint: { x: 3, y: 17 },
-	tilemapKey: 'tilemap-forest-gate',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 1,
-	difficultyHpMult: 1,
-	recommendedPower: 120,
-};
-
-// --- W2 Forge B: lava corridor ---
-const W2_FORGE_B_PATH: Position[] = [
-	{ x: 3, y: 0 },
-	{ x: 3, y: 1 },
-	{ x: 3, y: 2 },
-	{ x: 3, y: 3 },
-	{ x: 4, y: 3 },
-	{ x: 5, y: 3 },
-	{ x: 5, y: 4 },
-	{ x: 5, y: 5 },
-	{ x: 5, y: 6 },
-	{ x: 4, y: 6 },
-	{ x: 3, y: 6 },
-	{ x: 2, y: 6 },
-	{ x: 2, y: 7 },
-	{ x: 2, y: 8 },
-	{ x: 2, y: 9 },
-	{ x: 3, y: 9 },
-	{ x: 4, y: 9 },
-	{ x: 5, y: 9 },
-	{ x: 5, y: 10 },
-	{ x: 5, y: 11 },
-	{ x: 5, y: 12 },
-	{ x: 4, y: 12 },
-	{ x: 3, y: 12 },
-	{ x: 2, y: 12 },
-	{ x: 2, y: 13 },
-	{ x: 2, y: 14 },
-	{ x: 2, y: 15 },
-	{ x: 3, y: 15 },
-	{ x: 4, y: 15 },
-	{ x: 4, y: 16 },
-	{ x: 4, y: 17 },
-];
-
-const W2_FORGE_B_BLOCKED: Position[] = [
-	{ x: 3, y: 0 },
-	{ x: 4, y: 17 },
-];
-
-const W2_FORGE_B_BUILDABLE = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: W2_FORGE_B_PATH,
-	blockedPlacementPoints: W2_FORGE_B_BLOCKED,
-});
-
-export const W2_FORGE_B_MAP: MapLayout = {
-	id: 'w2_forge_b',
-	name: '불의 단조장 — 용암 통로',
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: W2_FORGE_B_PATH,
-	blockedPlacementPoints: W2_FORGE_B_BLOCKED,
-	buildablePoints: W2_FORGE_B_BUILDABLE,
-	spawnPoint: { x: 3, y: 0 },
-	exitPoint: { x: 4, y: 17 },
-	tilemapKey: 'tilemap-w2_forge_a',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 2,
-	difficultyHpMult: 1.3,
-	recommendedPower: 350,
-	gimmickTiles: {
-		furnaceTiles: [
-			{ x: 4, y: 4 },
-			{ x: 4, y: 8 },
-			{ x: 4, y: 14 },
-		],
-	},
-};
-
-// --- W3 Tower B: dual-lane ---
-const W3_TOWER_B_LANE_A: Position[] = [
-	{ x: 2, y: 0 },
-	{ x: 2, y: 1 },
-	{ x: 2, y: 2 },
-	{ x: 2, y: 3 },
-	{ x: 2, y: 4 },
-	{ x: 2, y: 5 },
-	{ x: 2, y: 6 },
-	{ x: 2, y: 7 },
-	{ x: 2, y: 8 },
-	{ x: 2, y: 9 },
-	{ x: 2, y: 10 },
-	{ x: 2, y: 11 },
-	{ x: 2, y: 12 },
-	{ x: 2, y: 13 },
-	{ x: 2, y: 14 },
-	{ x: 2, y: 15 },
-	{ x: 3, y: 15 },
-	{ x: 3, y: 16 },
-	{ x: 3, y: 17 },
-];
-
-const W3_TOWER_B_LANE_B: Position[] = [
-	{ x: 5, y: 0 },
-	{ x: 5, y: 1 },
-	{ x: 5, y: 2 },
-	{ x: 5, y: 3 },
-	{ x: 5, y: 4 },
-	{ x: 5, y: 5 },
-	{ x: 5, y: 6 },
-	{ x: 5, y: 7 },
-	{ x: 5, y: 8 },
-	{ x: 5, y: 9 },
-	{ x: 5, y: 10 },
-	{ x: 5, y: 11 },
-	{ x: 5, y: 12 },
-	{ x: 5, y: 13 },
-	{ x: 5, y: 14 },
-	{ x: 5, y: 15 },
-	{ x: 4, y: 15 },
-	{ x: 4, y: 16 },
-	{ x: 4, y: 17 },
-];
-
-const W3_TOWER_B_BLOCKED: Position[] = [
-	{ x: 2, y: 0 },
-	{ x: 5, y: 0 },
-	{ x: 3, y: 17 },
-	{ x: 4, y: 17 },
-];
-
-const W3_TOWER_B_BUILDABLE = buildBuildablePoints({
-	width: 8,
-	height: 18,
-	path: [...W3_TOWER_B_LANE_A, ...W3_TOWER_B_LANE_B],
-	blockedPlacementPoints: W3_TOWER_B_BLOCKED,
-});
-
-export const W3_TOWER_B_MAP: MapLayout = {
-	id: 'w3_tower_b',
-	name: '마탑 성채 — 이중 회랑',
-	width: 8,
-	height: 18,
-	tileSize: 32,
-	path: W3_TOWER_B_LANE_A,
-	paths: [W3_TOWER_B_LANE_A, W3_TOWER_B_LANE_B],
-	blockedPlacementPoints: W3_TOWER_B_BLOCKED,
-	buildablePoints: W3_TOWER_B_BUILDABLE,
-	spawnPoint: { x: 2, y: 0 },
-	exitPoint: { x: 3, y: 17 },
-	tilemapKey: 'tilemap-w3_tower_a',
-	tilesetKey: 'tileset',
-	rewardMultiplier: 3,
-	difficultyHpMult: 1.6,
-	recommendedPower: 800,
-	gimmickTiles: {
-		arcaneCircleTiles: [
-			{ x: 3, y: 8 },
-			{ x: 4, y: 8 },
-		],
-	},
-};
-
-// === Phase A Long Map (8×24, U-turn double-back, random-summon + merge) ===
+// === Phase A Long Map (9×18, U-turn double-back, random-summon + merge) ===
 //
-// The path goes DOWN the left half (cols 0-3) zigzagging, crosses the
-// BOTTOM row, then comes BACK UP the right half (cols 4-7). Every row is
-// visited TWICE (once each direction) so towers at ANY height remain useful
-// for the entire run. A tower placed at col 3-4 covers both passes.
+// 9 cols × 18 rows × 48px = 432×864 canvas (mobile viewport-friendly).
+// Spawn at top-left corner (0,0). Path zigzags DOWN the LEFT strip
+// (cols 0-3), crosses the BOTTOM row (all the way across), then zigzags
+// back UP the RIGHT strip (cols 5-8), finally turning left along row 0 to
+// reach the castle wall exit at (4,0). Every non-obstacle row is visited
+// twice (once each direction) so towers placed anywhere stay useful for
+// the full run.
 //
-//   0 1 2 3 | 4 5 6 7
-//  0 →→→→ SPAWN  ←←←← EXIT    (row 0: down sweep 1 + up sweep 8)
-//  1       ↓    ↑               (gap: towers cover both row 0 + row 3)
-//  2       ↓    ↑
-//  3 ←←←←       →→→→           (row 3: down sweep 2 + up sweep 7)
-//  4 ↓              ↑
-//  5 ↓              ↑
-//  6 →→→→       ←←←←           (row 6: down sweep 3 + up sweep 6)
-//  ...              ...
-// 21 ←←←←       →→→→           (row 21: down sweep 8 + up sweep 1)
-// 22 ↓              ↑
-// 23 →→→→→→→→→→→→→→             (turnaround across full bottom)
-//
-// Path: 46 (down) + 7 (turnaround) + 46 (up) = 99 cells
-// Buildable: 192 - 99 - 6 blocked ≈ 87 cells
-// Tower range 2+ tiles → col 3/4 towers cover BOTH passes simultaneously
+// Obstacles sit on the center column (col 4 at rows 2/5/8/11/14) — they
+// block the middle so the eye reads the U-turn shape cleanly. Commit 7.4
+// renders them as tree/rock/bush sprites.
 
-const PHASE_A_SWEEP_ROWS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
-
-function generateHalfZigzag(
-	colStart: number,
-	colEnd: number,
-	sweepRows: readonly number[],
-	direction: 'down' | 'up',
-): Position[] {
+function generateLeftDescent(): Position[] {
 	const path: Position[] = [];
-	const rows = direction === 'down' ? [...sweepRows] : [...sweepRows].reverse();
-
-	for (let i = 0; i < rows.length; i++) {
-		const row = rows[i];
-		const goRight = i % 2 === 0;
-		if (goRight) {
-			for (let x = colStart; x <= colEnd; x++) path.push({ x, y: row });
-		} else {
-			for (let x = colEnd; x >= colStart; x--) path.push({ x, y: row });
-		}
-		if (i < rows.length - 1) {
-			const nextRow = rows[i + 1];
-			const transCol = goRight ? colEnd : colStart;
-			if (direction === 'down') {
-				for (let y = row + 1; y < nextRow; y++) path.push({ x: transCol, y });
-			} else {
-				for (let y = row - 1; y > nextRow; y--) path.push({ x: transCol, y });
-			}
-		}
-	}
+	// Helper to generate a horizontal sweep starting at given column.
+	// Row 0: (0,0) → (3,0)
+	for (let x = 0; x <= 3; x++) path.push({ x, y: 0 });
+	// col 3: (3,1), (3,2)
+	path.push({ x: 3, y: 1 });
+	path.push({ x: 3, y: 2 });
+	// Row 2 (continuing): (2,2) → (0,2)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 2 });
+	// col 0: (0,3), (0,4)
+	path.push({ x: 0, y: 3 });
+	path.push({ x: 0, y: 4 });
+	// Row 4: (1,4) → (3,4)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 4 });
+	// col 3: (3,5), (3,6)
+	path.push({ x: 3, y: 5 });
+	path.push({ x: 3, y: 6 });
+	// Row 6: (2,6) → (0,6)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 6 });
+	// col 0: (0,7), (0,8)
+	path.push({ x: 0, y: 7 });
+	path.push({ x: 0, y: 8 });
+	// Row 8: (1,8) → (3,8)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 8 });
+	// col 3: (3,9), (3,10)
+	path.push({ x: 3, y: 9 });
+	path.push({ x: 3, y: 10 });
+	// Row 10: (2,10) → (0,10)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 10 });
+	// col 0: (0,11), (0,12)
+	path.push({ x: 0, y: 11 });
+	path.push({ x: 0, y: 12 });
+	// Row 12: (1,12) → (3,12)
+	for (let x = 1; x <= 3; x++) path.push({ x, y: 12 });
+	// col 3: (3,13), (3,14)
+	path.push({ x: 3, y: 13 });
+	path.push({ x: 3, y: 14 });
+	// Row 14: (2,14) → (0,14)
+	for (let x = 2; x >= 0; x--) path.push({ x, y: 14 });
+	// col 0: (0,15), (0,16), (0,17)
+	path.push({ x: 0, y: 15 });
+	path.push({ x: 0, y: 16 });
 	return path;
 }
 
-// Down pass: cols 0-3, rows top→bottom
-const PHASE_A_DOWN = generateHalfZigzag(0, 3, PHASE_A_SWEEP_ROWS, 'down');
-// Turnaround: bottom row connecting left half → right half
-const PHASE_A_TURN: Position[] = [
-	{ x: 0, y: 22 },
-	{ x: 0, y: 23 },
-	{ x: 1, y: 23 },
-	{ x: 2, y: 23 },
-	{ x: 3, y: 23 },
-	{ x: 4, y: 23 },
-	{ x: 4, y: 22 },
-];
-// Up pass: cols 4-7, rows bottom→top
-const PHASE_A_UP = generateHalfZigzag(4, 7, PHASE_A_SWEEP_ROWS, 'up');
+function generateBottomTraverse(): Position[] {
+	// Row 17: (0,17) → (8,17) — full width crossing
+	const path: Position[] = [];
+	path.push({ x: 0, y: 17 });
+	for (let x = 1; x <= 8; x++) path.push({ x, y: 17 });
+	return path;
+}
+
+function generateRightAscent(): Position[] {
+	const path: Position[] = [];
+	// (8,16), (8,15), (8,14)
+	path.push({ x: 8, y: 16 });
+	path.push({ x: 8, y: 15 });
+	path.push({ x: 8, y: 14 });
+	// Row 14: (7,14) → (5,14)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 14 });
+	// col 5: (5,13), (5,12)
+	path.push({ x: 5, y: 13 });
+	path.push({ x: 5, y: 12 });
+	// Row 12: (6,12) → (8,12)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 12 });
+	// col 8: (8,11), (8,10)
+	path.push({ x: 8, y: 11 });
+	path.push({ x: 8, y: 10 });
+	// Row 10: (7,10) → (5,10)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 10 });
+	// col 5: (5,9), (5,8)
+	path.push({ x: 5, y: 9 });
+	path.push({ x: 5, y: 8 });
+	// Row 8: (6,8) → (8,8)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 8 });
+	// col 8: (8,7), (8,6)
+	path.push({ x: 8, y: 7 });
+	path.push({ x: 8, y: 6 });
+	// Row 6: (7,6) → (5,6)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 6 });
+	// col 5: (5,5), (5,4)
+	path.push({ x: 5, y: 5 });
+	path.push({ x: 5, y: 4 });
+	// Row 4: (6,4) → (8,4)
+	for (let x = 6; x <= 8; x++) path.push({ x, y: 4 });
+	// col 8: (8,3), (8,2)
+	path.push({ x: 8, y: 3 });
+	path.push({ x: 8, y: 2 });
+	// Row 2: (7,2) → (5,2)
+	for (let x = 7; x >= 5; x--) path.push({ x, y: 2 });
+	// col 5: (5,1), (5,0)
+	path.push({ x: 5, y: 1 });
+	path.push({ x: 5, y: 0 });
+	// Row 0 traverse back to exit
+	path.push({ x: 4, y: 0 });
+	return path;
+}
+
+// Descent from (0,0) at row 0 down to row 16 on col 0.
+// Then bottom crossing: path continues from (0,16) → (0,17) → (8,17) → (8,16).
+// But descent ends at (0,16). We need to join to (0,17) first.
+const PHASE_A_LEFT = generateLeftDescent();
+const PHASE_A_BOTTOM = generateBottomTraverse();
+const PHASE_A_RIGHT = generateRightAscent();
 
 const PHASE_A_LONG_PATH: Position[] = [
-	...PHASE_A_DOWN,
-	...PHASE_A_TURN,
-	...PHASE_A_UP,
+	...PHASE_A_LEFT,
+	...PHASE_A_BOTTOM,
+	...PHASE_A_RIGHT,
 ];
 
+// Only the corners that are neither path nor obstacle are explicitly blocked
+// so no tower can sit on the spawn/exit tile itself.
 const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
-	{ x: 0, y: 0 },
-	{ x: 4, y: 0 },
-	{ x: 0, y: 23 },
-	{ x: 4, y: 23 },
-	{ x: 7, y: 0 },
-	{ x: 7, y: 23 },
+	{ x: 0, y: 0 }, // spawn
+	{ x: 4, y: 0 }, // exit
+	{ x: 8, y: 0 },
+];
+
+// Fixed obstacles. Col 4 punctuations block the middle lane visually and
+// give the 9×18 grid a clear "two strips + crossing" read.
+const PHASE_A_LONG_OBSTACLES: Position[] = [
+	{ x: 4, y: 2 },
+	{ x: 4, y: 5 },
+	{ x: 4, y: 8 },
+	{ x: 4, y: 11 },
+	{ x: 4, y: 14 },
 ];
 
 const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
-	width: 8,
-	height: 24,
+	width: 9,
+	height: 18,
 	path: PHASE_A_LONG_PATH,
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
+	obstacles: PHASE_A_LONG_OBSTACLES,
 });
+
+// Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional
+// allowed) so they read as background scenery and never compete with tower
+// placement tiles or block the U-turn path. Pure visual layer — no
+// pathfinding / buildable impact.
+const PHASE_A_LONG_DECORATIONS: MapLayout['decorations'] = [
+	// Left-edge tree line — clustered toward top + mid + bottom
+	{ x: -1.2, y: 0.5, kind: 'tree', variant: 1 },
+	{ x: -1.5, y: 3.5, kind: 'tree', variant: 2 },
+	{ x: -1.1, y: 7.2, kind: 'tree', variant: 3 },
+	{ x: -1.4, y: 11.1, kind: 'tree', variant: 4 },
+	// Right-edge tree line
+	{ x: 9.3, y: 2.3, kind: 'tree', variant: 2 },
+	{ x: 9.5, y: 6.8, kind: 'tree', variant: 3 },
+	{ x: 9.2, y: 10.9, kind: 'tree', variant: 1 },
+	{ x: 9.4, y: 15.2, kind: 'tree', variant: 4 },
+	// Corner bushes (just outside the four corners)
+	{ x: -0.7, y: -0.8, kind: 'bush', variant: 1 },
+	{ x: 9.1, y: -0.7, kind: 'bush', variant: 2 },
+	{ x: -0.6, y: 17.8, kind: 'bush', variant: 3 },
+	{ x: 9.0, y: 17.9, kind: 'bush', variant: 4 },
+	// Mid-edge bushes for rhythm
+	{ x: -0.8, y: 5.5, kind: 'bush', variant: 2 },
+	{ x: 9.1, y: 13.6, kind: 'bush', variant: 1 },
+	// Scattered small rocks along the edges
+	{ x: -1.0, y: 9.3, kind: 'rock', variant: 3 },
+	{ x: 9.2, y: 4.1, kind: 'rock', variant: 4 },
+	{ x: -0.9, y: 13.8, kind: 'rock', variant: 3 },
+	{ x: 9.1, y: 8.5, kind: 'rock', variant: 4 },
+];
 
 export const PHASE_A_MAP_ID = 'phase_a_long' as const;
 
 export const PHASE_A_LONG_MAP: MapLayout = {
 	id: PHASE_A_MAP_ID,
 	name: 'Phase A — 왕복 회랑',
-	width: 8,
-	height: 24,
-	tileSize: 32,
+	width: 9,
+	height: 18,
+	tileSize: 48,
 	path: PHASE_A_LONG_PATH,
 	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
 	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
@@ -709,27 +233,16 @@ export const PHASE_A_LONG_MAP: MapLayout = {
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,
 	recommendedPower: 55,
+	obstacles: PHASE_A_LONG_OBSTACLES,
+	castleWallTiles: [{ x: 4, y: 0 }],
+	decorations: PHASE_A_LONG_DECORATIONS,
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {
-	// W1
-	w1_forest_a: FOREST_GATE_MAP,
-	w1_forest_b: W1_FOREST_B_MAP,
-	// W2
-	w2_forge_a: LAVA_FORTRESS_MAP,
-	w2_forge_b: W2_FORGE_B_MAP,
-	// W3
-	w3_tower_a: STORM_CITADEL_MAP,
-	w3_tower_b: W3_TOWER_B_MAP,
-	// Phase A pivot — random-summon + merge core loop
 	phase_a_long: PHASE_A_LONG_MAP,
-	// Legacy aliases
-	forest_gate: FOREST_GATE_MAP,
-	lava_fortress: LAVA_FORTRESS_MAP,
-	storm_citadel: STORM_CITADEL_MAP,
 };
 
-export const DEFAULT_MAP_ID = 'w1_forest_a';
+export const DEFAULT_MAP_ID = PHASE_A_MAP_ID;
 
 export function getMapById(mapId: string): MapLayout {
 	const map = MAP_REGISTRY[mapId];
@@ -758,14 +271,6 @@ export function getSpawnExitPairs(
 			spawn: lane[0],
 			exit: lane[lane.length - 1],
 		}));
-}
-
-/** Returns the next map in the world after the given mapId, or null if last. */
-export function getNextMapInWorld(currentMapId: string): string | null {
-	const keys = Object.keys(MAP_REGISTRY);
-	const idx = keys.indexOf(currentMapId);
-	if (idx === -1 || idx >= keys.length - 1) return null;
-	return keys[idx + 1];
 }
 
 /** Returns all path cells across all lanes (deduplicated). */

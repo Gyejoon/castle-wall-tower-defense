@@ -205,19 +205,12 @@ describe('GameScene', () => {
 
 		expect(EventBus.emit).toHaveBeenCalledWith('game-over', {
 			result: 'victory',
-			reason: 'all_waves_cleared',
-			finalSlot: 20,
-			mapId: 'forest_gate',
-			selectedStar: 1,
-			starCleared: true,
-			hpRemaining: 20,
 			stats: {
 				wavesCleared: 20,
-				totalWaves: 5,
+				totalWaves: 10,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
-				rewardMultiplier: 1,
 			},
 		});
 	});
@@ -266,19 +259,12 @@ describe('GameScene', () => {
 
 		expect(EventBus.emit).toHaveBeenCalledWith('game-over', {
 			result: 'defeat',
-			reason: 'base_hp_depleted',
-			finalSlot: 5,
-			mapId: 'forest_gate',
-			selectedStar: 1,
-			starCleared: false,
-			hpRemaining: 0,
 			stats: {
 				wavesCleared: 4, // finalSlot-1
-				totalWaves: 5,
+				totalWaves: 10,
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
-				rewardMultiplier: 1,
 			},
 		});
 	});

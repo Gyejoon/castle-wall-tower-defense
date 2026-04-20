@@ -511,14 +511,14 @@ describe('Boss phase system', () => {
 	});
 
 	it('transitions to phase 2 when HP drops to 50%', () => {
-		// dragon: hp=500, armor=10, phase transition at 50% = 250 HP
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		// orc_warlord: hp=2000, armor=10, phase transition at 50% = 1000 HP
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
 
-		// Deal 251 armorPierce damage: 500 - 251 = 249 (below 250 threshold)
-		const result = system.applyDamage(unitId, 251, true);
+		// Deal 1001 armorPierce damage: 2000 - 1001 = 999 (below 1000 threshold)
+		const result = system.applyDamage(unitId, 1001, true);
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(false);
 
@@ -526,8 +526,7 @@ describe('Boss phase system', () => {
 		const positions = system.getUnitPositions();
 		expect(positions[0].hp).toBeGreaterThanOrEqual(1);
 
-		// Access bossPhase via a second damage call that should be blocked by invulnerability
-		// Confirm invulnerability is active by dealing more damage and verifying HP didn't change
+		// Confirm invulnerability by dealing more damage and verifying HP didn't change
 		const hpAfterTransition = positions[0].hp;
 		system.applyDamage(unitId, 100, true);
 		const positionsAfterBlock = system.getUnitPositions();
@@ -535,13 +534,13 @@ describe('Boss phase system', () => {
 	});
 
 	it('blocks damage during invulnerability', () => {
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
 
-		// Trigger phase transition (500 * 0.5 = 250 threshold)
-		system.applyDamage(unitId, 251, true); // HP drops to 249 → phase 2, invulnerable
+		// Trigger phase transition (2000 * 0.5 = 1000 threshold)
+		system.applyDamage(unitId, 1001, true); // HP→999, phase 2, invulnerable
 
 		const hpAfterTransition = system.getUnitPositions()[0].hp;
 
@@ -550,7 +549,6 @@ describe('Boss phase system', () => {
 		expect(blockedResult).not.toBeNull();
 		expect(blockedResult?.killed).toBe(false);
 		expect(blockedResult?.actualDamage).toBe(0);
-		// Invulnerability is silent, distinct from MISS (which is only for armor full absorb)
 		expect(blockedResult?.outcome).toBe('invulnerable');
 
 		// HP should be unchanged
@@ -558,42 +556,42 @@ describe('Boss phase system', () => {
 	});
 
 	it('applies hpMultiplier for wave 10 boss', () => {
-		// dragon base hp=500, hpMultiplier=2 → final HP = 1000
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 2 });
+		// orc_warlord base hp=2000, hpMultiplier=2 → final HP = 4000
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 2 });
 		system.update(0, 300); // spawn
 
 		const positions = system.getUnitPositions();
-		expect(positions[0].hp).toBe(1000);
+		expect(positions[0].hp).toBe(4000);
 	});
 
 	it('kills boss in phase 2 when HP reaches 0', () => {
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
 
-		// Trigger phase 2: deal 251 armor-piercing → HP=249, phase 2, invulnerable
-		system.applyDamage(unitId, 251, true);
+		// Trigger phase 2: deal 1001 armor-piercing → HP=999, phase 2, invulnerable
+		system.applyDamage(unitId, 1001, true);
 
-		// Wait out invulnerability (1000ms)
-		system.update(0, 1100);
+		// Wait out invulnerability (500ms post-nerf)
+		system.update(0, 600);
 
 		// Now deal lethal damage in phase 2
-		const result = system.applyDamage(unitId, 300, true);
+		const result = system.applyDamage(unitId, 2000, true);
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
-		expect(result?.bounty).toBe(60); // dragon bounty
+		expect(result?.bounty).toBe(300); // orc_warlord bounty
 		expect(system.getUnitPositions()).toHaveLength(0);
 	});
 
 	it('kills boss on one-shot without triggering phase transition', () => {
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
 		system.update(0, 300); // spawn
 
 		const unitId = system.getUnitPositions()[0].instanceId;
 
-		// One-shot: 600 armor-piercing → HP=-100, no phase transition
-		const result = system.applyDamage(unitId, 600, true);
+		// One-shot: 3000 armor-piercing → HP=-1000, no phase transition
+		const result = system.applyDamage(unitId, 3000, true);
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
@@ -628,12 +626,20 @@ describe('Boss animation fallback', () => {
 	});
 
 	it('does not request missing dragon death animation when boss dies', () => {
-		system.queueUnits('dragon', 1, { isBoss: true, hpMultiplier: 1 });
+		// Dragon has 60000 base HP + phase2 (30000) + phase3 (15000) invuln
+		// windows. Use a direct HP stub path — damage > base HP one-shots if
+		// it fires before the phase gate; but the test really just wants to
+		// verify the animation key fallback, not the HP pipeline. Stub HP to
+		// a tiny value via hpMultiplier so one-shot is trivial.
+		system.queueUnits('dragon', 1, {
+			isBoss: true,
+			hpMultiplier: 0.001, // 60 HP effective
+		});
 		system.update(0, 300); // spawn
 
 		const sprite = scene.add.sprite.mock.results[0]?.value;
 		const unitId = system.getUnitPositions()[0].instanceId;
-		const result = system.applyDamage(unitId, 600, true);
+		const result = system.applyDamage(unitId, 99999, true);
 
 		expect(result?.killed).toBe(true);
 		expect(sprite.play).not.toHaveBeenCalledWith('dragon-death');

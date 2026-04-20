@@ -1,36 +1,35 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-14 (v2 — Phase A 피벗 적용)
-> **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md` + Phase A Core Loop Pivot plan (PR #170)
+> **Last Updated:** 2026-04-20 (v3 — Phase A 단독 모드 승격)
+> **Source:** Phase A sole-mode plan `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 >
-> **v2 피벗 노트 (2026-04-14)**: 4타워 덱 시스템에서 **픽셀 중세 랜덤 타워 합성 디펜스**로 코어 루프 피벗. 보유 풀에서 랜덤 1성 소환 + 같은 등급 두 타워 드래그 합성으로 등급을 올리는 구조 (Random Dice 류 8년 검증 장르). Phase A Core 시스템(SummonPoolSystem, RandomSummonSystem, MergeSystem, PhaseAOrchestrator)이 PR #170으로 머지되어 `phase_a_long` 전용 맵 + 로비 `[LAB]` 런치 버튼에서 실제 end-to-end 플레이 가능. 기존 W1~W3 레거시 스테이지(24개)는 4타워 덱 흐름으로 **완전 비파괴**. 본 문서의 §1, §3, §4, §5, §10은 v2 방향을 반영하며, 레거시 4타워 시스템의 운명은 Phase A "한 판 더" 플레이 검증 결과에 따라 Phase B 시점에 결정된다.
+> **v3 노트 (2026-04-20)**: Phase A를 **게임의 유일한 모드**로 승격. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
 
 ---
 
 ## 1. Game Definition
 
-### 한 줄 정의 (v2)
+### 한 줄 정의 (v3)
 
-> 픽셀 중세 랜덤 타워 합성 디펜스. 보유 풀에서 에너지를 써 랜덤 1성 타워를 소환하고, 같은 등급 두 개를 합성해 빌드를 만들어 wave를 버틴다.
+> Grid Line Defense — 랜덤 합성 타워 디펜스. 4 가문 타워를 랜덤 소환하고 합성해 tier 1~6로 키워 wave를 버틴다.
 
-### 기본 정보 (v2)
+### 기본 정보 (v3)
 
 | 항목 | 내용 |
 |------|------|
-| Title | 영웅 (코드네임, 변경 가능) |
+| Title | Grid Line Defense |
 | Genre | 픽셀 중세 Random Tower Defense + Merge |
 | Platform | Mobile Web (App In Toss) |
-| Player Count | Single (비동기 PVP seam — leaderboard / ghost replay — 은 미래 가능성만 인정) |
-| Camera/View | Top-down / Portrait Long Field (Phase A: 8×24 grid, S-curve path) |
-| Input | Touch — 소환 버튼 + 타워 2회 탭으로 합성 |
+| Player Count | Single |
+| Camera/View | Top-down / Portrait Long Field (**9×18 grid, 48px 타일**, U-turn path + 중앙 프리미엄 배치 지대) |
+| Input | Touch — 소환·가챠 버튼 + 타워 2회 탭으로 합성 |
 | Session Length | 5~10분 |
-| Core Fantasy | 보유 타워 풀에서 운명을 뽑아 합성으로 강해진 빌드를 만들어 wave를 막는 지휘관 |
-| Core Fun | 랜덤 소환 슬롯머신 도파민 + 합성/등급업 도파민 + 보드 위 빌드 결정 + wave 대응 + 픽셀 중세 톤 |
-| Win Condition | 생존 (Phase A `phase_a_s1`: 50 wave 무한 에스컬레이션, 보스 10 wave마다 교대 출현. 실질적으로 wave 15~35에서 자연 패배) |
-| Lose Condition | 기지 HP 0 (적이 경로 끝 도달 시 -1) 또는 보스 leak 즉시 패배 |
-
-**레거시 4타워 덱 시스템** (W1~W3 24스테이지): 이전 v1 GDD 정의대로 동작하며, Phase A 피벗 검증 기간 동안 비파괴로 유지된다. 최종 폐기 또는 병존 여부는 Phase B 시점에 결정.
+| Core Fantasy | 랜덤으로 뽑은 4 가문 타워를 합성해 tier 6 "세계의 끝"까지 키우는 지휘관 |
+| Core Fun | 랜덤 소환 도파민 + 합성/승급 도파민 + 보스 웨이브 로그라이크 강화 선택 + 픽셀 중세 톤 |
+| Win Condition | 생존 (Phase A: 50 wave 무한 에스컬레이션, 보스 10 wave마다 출현). 실질적 자연 패배 wave 15~35. |
+| Lose Condition | 기지 HP 0 (적이 exitPoint 도달 시 -1) 또는 보스 leak 즉시 패배 |
+| Modes | **Phase A 단독**. 시나리오 모드(월드/스테이지/덱)는 제거됨. |
 
 ---
 
@@ -46,129 +45,140 @@
 
 ---
 
-## 3. Core Loop / Meta Loop (v2)
+## 3. Core Loop / Meta Loop (v3)
 
-**Phase A Core Loop (신규 — `phase_a_long` 맵 전용)**
+**In-battle Loop (Phase A sole mode)**
 ```
-로비 홈 탭 → [LAB] Phase A 버튼 → phase_a_s1 스테이지 진입 → prep 5초
-  → [반복] 에너지 = 킬 보상 (+1, 5배수 wave ×2) → 소환 버튼 탭 (⚡20) → 랜덤 1성 타워 드로우 → 유저가 빈 칸 탭해 배치 → scale 펀치 VFX
-        → 같은 타워 + 같은 등급 두 칸 차례 탭 → request-merge-towers → MergeSystem validation
-              → 성공 시 한 칸 사라지고 다른 칸 등급 ↑ + scale 펀치 + 골드 tint flash
-              → 실패 시 한국어 토스트 (다른 타워 / 다른 등급 / 최고 등급 / 잘못된 칸)
-        → wave 진입 → 자동 전투 → 웨이브 클리어 +5 에너지
-  → wave 무한 에스컬레이션 (HP·속도 선형 증가, 30마리/wave, 보스 10 wave마다) → 패배 시 결과 화면 → 로비
-```
-
-**레거시 Core Loop (W1~W3 24스테이지, v1)**
-```
-로비 → 월드맵 → 스테이지 상세(덱 확인) → 게임 → 에너지 축적 → 4타워 중 선택 배치 → 10웨이브/보스 → 결과 → 보상
-```
-
-**Meta Loop (Phase A 기준 — 대부분 OFF)**
-```
-플레이 → 보유 타워 풀 확장 (가챠 또는 클리어 보상)
-       → 다음 런에서 더 다양한 합성 빌드 가능
+마당 홈 탭 → "전투 시작" → phase_a_long 진입 → prep countdown
+  → [반복] 에너지 수급: +1/sec 베이스 + 킬당 +1 + 보스 킬 +20 + 30초 내 fast-clear +20 (ENERGY_MAX=200)
+        ├─ 기본 소환 ⚡20 → 랜덤 T1 (archer/nova_cannon/emp/shield 중 1) → 빈 칸 탭해 배치
+        └─ 인게임 가챠 ⚡40/80/160 → T2(60%) / T3(20%) / T4(5%) 시도, 실패 시 T1 폴백
+        → 같은 tier 1~3 같은 family 2개 합성 → tier+1 승급 (archer+archer → wind_spire 등)
+        → tier 4 혼합 합성 → hybrid_ab (archer+siege) / hybrid_cd (frost+stun)
+        → hybrid_ab + hybrid_cd → ultimate (tier 6 세계의 끝)
+        → 타워 인게임 enhance: 탭 → 골드 소비 → Lv+1 (L10 cap, +15% 데미지/레벨)
+        → wave 진입 → 자동 전투
+  → 보스 웨이브 클리어 시 로그라이크 3카드 중 1 선택 (런 한정 스택) → 광고 보고 리롤 옵션
+  → wave 무한 에스컬레이션 → 패배 시 "광고 보고 이어서 하기" (1회 한정, +5 HP) or 로비 복귀
 ```
 
-Phase A의 메타 강화 / 별 등급 / 승급 / 150레벨 / 일일 미션 등 레거시 메타 시스템은 **인게임 합성이 진행감을 흡수**한다는 가정으로 일시 비활성. 어느 메타를 살릴지는 Phase C에서 재설계한다. 레거시 스테이지에서는 기존 메타 루프가 그대로 작동한다.
+**Meta Loop (Phase 9 shell)**
+```
+플레이 → 런 종료 시 글로벌 공격력 % / 패밀리 퍽 / 영구 강화 누적 (localStorage persist)
+       → 다음 런에서 TowerSystem.setGlobalModifiers({ atkPct }) 주입
+       → 메타 강화 페이지는 전쟁탁자 탭에서 진입
+```
+
+**BM Loop (Phase 10 stub)**
+```
+광고 시청 → MockAdService('rewarded')
+  - 로그라이크 리롤: 광고 1회 → 3카드 재추첨
+  - 이어서 하기: 게임오버 시 광고 1회 → +5 HP + wave 재개 (런당 1회)
+```
 
 ---
 
-## 4. Core Systems (v2)
+## 4. Core Systems (v3)
 
-### Phase A 신규 시스템 (v2 — `phase_a_long` 맵 전용)
+### 타워 모델: family × tier (4 계열 × 4 티어 + hybrid × 2 + ultimate × 1 = 19종)
 
-| 시스템 | 정의 | 핵심 파라미터 |
-|--------|------|-------------|
-| SummonPoolSystem | 보유 타워 풀 런타임 관리. `draw()`, `replacePool()`, `reset()` | `initialPool` (Phase A: `[archer, plasma, emp, nova_cannon, flame_tower]`), injectable `rng` |
-| RandomSummonSystem | 빈 buildable 타일 선택 + 풀에서 draw 컴포지션. `requestSummon(ctx)` | `SummonPlacementContext` (`listBuildableTiles`, `isOccupied`) |
-| MergeSystem | 순수 합성 validation. `tryMerge(ctx, fromCol, fromRow, toCol, toRow)` → discriminated union | `MergeContext.getTowerAt`, `nextGrade()` |
-| PhaseAOrchestrator | SummonPool + MergeSystem owning + TowerSystem 어댑터 + EventBus 리스너 (idempotent off→on) + EnergySystem gating. 2-step 소환: draw → 유저 배치 | `PHASE_A_SUMMON_COST = 20`, `PhaseAEnergyApi` 구조적 surface |
+`grade` 시스템 (normal/rare/unique/epic)은 **제거**. 모든 타워는 `family: TowerFamily`와 `tier: 1~6`으로 식별된다.
 
-### Phase A 로그라이트 강화 시스템
+| Family | 역할 | T1 | T2 | T3 | T4 | 색상 |
+|--------|------|----|----|----|----|------|
+| archer | 단일 대상 빠른 공격 | archer | wind_spire | flame_tower | arcane_spire | #c8a04a (gold) |
+| siege | 스플래시 중심 | nova_cannon | fortress | earth_golem | celestial | #8b4513 (brown) |
+| frost | 슬로우 + 약한 데미지 | emp | stasis_field | disruptor | world_tree | #5bc8e8 (cyan) |
+| stun | 스턴 + 약한 데미지 | shield | twin_archer | holy_shrine | divine_throne | #f0d060 (gold) |
+| hybrid | T5 복합 | — | — | — | — | #9060e0 (purple) |
+| ultimate | T6 최종 | — | — | — | — | #ffe870 (rainbow-gold) |
 
-10 웨이브마다 보스 클리어 시 게임 일시정지 → 3장의 랜덤 강화 카드 중 1장 선택 → 재개.
-카드는 중복 선택 가능(무한 스택). 런 한정(판 끝나면 리셋).
+**제거된 타워**: `plasma`, `dragon_nest` (Phase 1 마이그레이션 때 purge).
 
-| ID | 이름 | 효과 | 스택 방식 |
-|---|---|---|---|
-| `dmg_up` | 공격력 강화 | 전체 타워 데미지 ×1.15 | 곱연산 |
-| `spd_up` | 공격속도 강화 | 전체 타워 공속 ×1.20 | 곱연산 |
-| `range_up` | 사거리 확장 | 전체 타워 범위 +0.5 tile | 합연산 |
-| `kill_energy` | 에너지 헌터 | 킬 에너지 보상 +1 추가 | 합연산 |
-| `energy_regen` | 에너지 재생 | 5초마다 에너지 +1 | 합연산 |
-| `summon_discount` | 소환 할인 | 소환 비용 -3 (최소 5) | 합연산 |
+### 합성 규칙 (`MERGE_CHAIN` / `resolveMerge`)
 
-- **UpgradePickOverlay**: React 전체화면 오버레이, 3장 카드 탭 선택
-- **PhaseAOrchestrator**: `activeUpgrades` Map으로 스택 관리, `getModifier()` → TowerSystem에 주입
-- **TowerSystem.modifierFn**: 데미지/공속/범위 modifier를 매 공격마다 적용
-- **최종 웨이브에서는 강화 선택 스킵** (승리 직전 오버레이 방지)
+- **T1~T3 동계열 합성**: 같은 family, 같은 tier 2개 → family의 다음 tier (예: archer + archer → wind_spire)
+- **T4 혼합 합성** (cross-family only — 같은 family T4 2개는 불가):
+  - arcane_spire + celestial → **hybrid_ab** (tier 5)
+  - world_tree + divine_throne → **hybrid_cd** (tier 5)
+- **T5 ultimate 합성**:
+  - hybrid_ab + hybrid_cd → **ultimate** (tier 6 세계의 끝)
 
+모든 commute 키 (`B+A`)도 `MERGE_CHAIN`에 등록. ultimate 이후 `max-tier`로 거절.
 
-**핵심 메커니즘 변경**
-- **소환 취소**: 소환 취소 시 같은 타워 유지 (리롤 방지). 재소환 시 동일 타워 재표시.
-- **Placement (v2)**: 직접 배치 → **랜덤 소환 + 자동 빈 칸 배치**. 유저는 어디에 놓을지 선택하지 않음, 어떤 타워가 나올지도 선택하지 않음. 유일한 결정은 언제 소환할지 + 무엇을 합성할지.
-- **Tower Upgrade (v2)**: 영구 메타 강화 → **인게임 합성 등급** (`normal → rare → unique → epic`). 같은 타워 같은 등급 2개 → 1개로 병합 + 1등급 ↑. max-grade(`epic`) 도달 시 더 이상 합성 불가. 합성 시 sprite texture 재설정 + `effectiveDamage` 재계산.
-- **Energy Economy (v2)**: 킬 보상 기반. 몬스터 처치당 +1 에너지 (5배수 wave에서는 ×2). 시간 리젠(1/sec) 비활성, 웨이브 클리어 보너스 비활성. **소환당 20 에너지**. 초기 40 → 2회 무료 소환. 이후 킬 효율로 에너지 축적 → 소환 가능. 30킬/wave × +1 = 30 에너지/wave → 소환 1.5회분. Phase A에서는 에너지 상한(100) 제거 — 킬 에너지가 무제한 축적.
-- **Tower Sell (v2)**: Phase A에서 활성화 — PhaseAHud의 합성 선택 화면에서 판매 버튼 제공. 에너지로 환불.
-  등급별 환불 (총 투자 에너지의 50%):
-  - Normal: 10, Rare: 20, Unique: 40, Epic: 80
-- **Tower Move (v2)**: Phase A에서 활성화 — 타워 선택 → "이동" 버튼 → 빈 buildable 타일 탭 → 타워 재배치. 경로 재계산 포함. 비용 없음.
-
-### 레거시 시스템 (v1 — W1~W3 24스테이지에서 그대로 작동)
+### 시스템
 
 | 시스템 | 정의 | 핵심 파라미터 |
 |--------|------|-------------|
-| Combat | 타워 자동 공격 + 적 고정 경로 이동 실시간 방어 | damage, armor, attackSpeed, target priority |
-| Movement | 적은 spawn→exit 세로 레인 이동, 탭으로 배치 | speed, path rules, blocked path prevention |
-| Placement (legacy) | 에너지 소비해 4타워 카드 중 1개 선택 → buildable tile 배치 | 초기 40, 1/sec 축적, 웨이브 클리어 +5, 공격형 10 / CC형 20 |
-| Tower Sell (legacy) | 배치된 타워 탭 → 판매 패널 → 에너지 50% 환급 | `TowerSystem.calcRefund()` 단일 출처 |
-| Element | 화/수/번개/무 속성 상성 | element_type, matchup_multiplier (0.7x/1.0x/1.3x) |
-| Gacha/Box | 상자에서 히든 타워 획득 | box_type, cost, rate_table, pity(50회) |
-| Upgrade (legacy) | 골드 소비 레벨업 + 등급 승급 (확률 기반) | level, grade, stat growth |
-| Boss/Encounter | `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 월드별 보스: orc_warlord(W1), forge_master(W2), corrupted_archmage(W3) | boss timing, warning telegraph, phase, reward |
-| GimmickSystem | 월드별 고유 기믹 (용광로 폭발, 마력 폭주 등) | gimmick_id, active_tiles, intensity_by_star |
+| SummonPoolSystem | T1 4종 (archer/nova_cannon/emp/shield) 균등 draw | `PHASE_A_SUMMON_COST = 20`, injectable `rng` |
+| GachaSystem | T2/T3/T4 시도. 실패 시 T1 폴백. `tier_odds_up` 로그라이크 스택 반영 (cap 10) | `INGAME_GACHA.tier2/3/4` (cost, successRate) |
+| MergeSystem | family/tier 기반 validation. `resolveMerge` 호출 | `tryMerge(a, b) → {kind: 'success'\|'failure'}` |
+| PhaseAOrchestrator | 소환/가챠/합성/강화/로그라이크/광고 전체 파이프라인. `pendingSummon` 큐 + 취소 리롤 방지 (`cancelledPoolDraw` 보존) | `PHASE_A_MAX_CONTINUES_PER_RUN = 1` |
+| EnergySystem | +1/sec 베이스 + 킬 에너지 + 보스 보너스. `ENERGY_MAX = 200` | CC 가드레일 2 참조 |
+| GoldSystem | run-scoped 골드 풀. 킬 bounty로 축적, 타워 인게임 강화 소비 | `inBattleEnhanceCost(level)` 150% 성장 |
+| UnitSystem | `ccResistance` (boss 0.5~0.7), 슬로우/스턴 duration × (1 - ccResistance), `MIN_MOVE_SPEED = 0.15`, 2초 stun immunity | |
 
-**공존 방식**: `GameScene.create()`에서 `currentMap.id === PHASE_A_MAP_ID` 분기로 PhaseAOrchestrator 생성 여부를 결정. Phase A 맵에서는 DeckSystem을 빈 덱으로 생성해 4타워 덱 흐름을 자연스럽게 skip.
+### 로그라이크 강화 (6 카드, 보스 웨이브 클리어 시)
+
+보스 wave clear 트리거 (이전: `slotIndex % 10 === 0` — v3에서 `wave-completed.phase === 'boss'`). 3장 랜덤 카드 중 1장 선택. 중복 스택 허용, 런 한정. 광고 보고 리롤 옵션.
+
+| ID | 이름 | 효과 | 스택 | 적용 지점 |
+|---|---|---|---|---|
+| `dmg_up` | 공격력 증폭 | +20% 데미지 | multiply | TowerSystem.calculateDamage |
+| `crit_dmg` | 치명의 일격 | +25%p 크리 데미지 | add | TowerSystem (Phase 12 proper crit migration TODO) |
+| `energy_harvest` | 에너지 수확 | 킬당 +1 에너지 | add | Game.ts kill 핸들러 |
+| `energy_regen` | 에너지 재생 | 5초마다 +2 에너지 | add (interval 5000, amount 2) | EnergySystem.tickExtra |
+| `effect_amp` | 상태효과 증폭 | 슬로우/스턴 +25% 지속 | multiply | Game.processCombatField |
+| `tier_odds_up` | 운의 가호 | 가챠 성공률 +5%p | add (cap 10 stacks → +50%p max, min(0.95, base+bonus)) | GachaSystem.rollTier |
+
+### 인게임 타워 강화 (골드 소비)
+
+TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrchestrator가 GoldSystem.spend(cost) → TowerSystem.enhanceTower(col, row) → level+1.
+- `BASE_ENHANCE_COST = 50`, 성장 1.5× 기하 (레벨당 5 단위 round)
+- `MAX_IN_BATTLE_LEVEL = 10`
+- damage × (1 + 0.15 × (level - 1)) — base 대비 L10 = ×2.35
+
+### 메커니즘 주요 변경
+
+- **소환 취소 시 towerId 유지** (cancelledPoolDraw): 리롤 꼼수 방지. 재소환 시 동일 towerId 재발급. 가챠는 취소 시 refund만 (다음 tap에서 새 roll).
+- **Placement**: 랜덤 소환 + 사용자가 빈 buildable 탭해 배치. 경로 차단 검증 (pathfinding).
+- **Tower Sell**: 타워 선택 → "판매" → sellValue 환불. tier별 sell value.
+- **Tower Move**: 타워 선택 → "이동" → 빈 buildable 탭해 재배치.
+- **In-battle Enhance**: 골드로 개별 타워 Lv+1 (L10 cap).
 
 ---
 
-## 5. Content Plan (v2)
+## 5. Content Plan (v3)
 
-### Phase A 콘텐츠 (v2)
+### Phase A 콘텐츠 (sole mode)
 
 | 분류 | 수량 | 비고 |
 |------|------|------|
-| 소환 풀 타워 | 5종 (`archer`, `plasma`, `emp`, `nova_cannon`, `flame_tower`) | 역할 커버: 단일/에너지/CC/스플래시/DOT |
-| 등급 단계 | 4단계 (`normal → rare → unique → epic`) | 기존 `TowerGrade` 재활용, 텍스처도 기존 에셋 |
-| 맵 | 1종 (`phase_a_long`, 8×24 long portrait) | 4-sweep S-curve, 55 path cells, ~131 buildable |
-| 스테이지 | 1종 (`phase_a_s1`) | hidden world `phase_a_lab` (order 99, WORLD_ORDER 밖), 로비 `[LAB]` 버튼 진입 |
-| 웨이브 | 50 (endless, 보스 10 wave마다) | 30마리/wave, 1초 간격 스폰. 보스: orc_warlord ↔ forge_master 교대 |
-| 적 유형 | 3종 재활용 (`scout_drone`, `battle_robot`, `heavy_walker`) + 보스 1종 | 신규 유닛 없음, 레거시 자산 100% 재활용 |
+| 소환 풀 타워 | 4종 T1 (archer, nova_cannon, emp, shield) | 4 family 각 1개, 균등 draw |
+| 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
+| **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
+| 맵 | 1종 (`phase_a_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
+| 스테이지 | Phase A 단독 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
+| 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
+| 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |
 
-**Phase B 확장 예정 (Phase A 플레이 검증 통과 후)**
-- 소환 풀을 19종 전체로 확장
-- 맵 3~5개 추가 (각각 다른 path 모양)
-- 액티브 스킬 1~2개 (Overdrive 우선, #145)
-- 기믹 1~2개 + 대응 수단 (#154)
+### 메타 / BM 스텁
 
-### ★ 별 등급 시스템 (레거시)
+| 분류 | 상태 | 비고 |
+|------|------|------|
+| 메타 강화 페이지 | Phase 9 shell | 글로벌 공격력 % + 4 family 퍽 카운트 표시. 퍽 선택 UX, 영구 강화 구매 UX는 후속 단계 |
+| AdService | Phase 10 stub (MockAdService) | 항상 `rewarded` 반환 (500ms delay). 리롤, 이어서 하기 2개 placement |
+| 이어서 하기 | 런당 1회 한정 | HP +5 복원, wave 타이머 재시작, 타워/업그레이드 상태 유지 |
+| 광고 리롤 | 로그라이크 3카드 화면 | 재추첨 |
 
-W1~W3 레거시 스테이지에만 작동. Phase A 스테이지는 ★ 비활성 (selectedStar=1 고정).
-- ★1(정복)/★2(정예)/★3(지옥) 3단계 난이도
-- ★1: 기본 1.0×, 생존 조건
-- ★2: HP 2.5×, 방어 1.5×, 속도 1.2×, CC 저항 20%, HP 50%+ 유지
-- ★3: HP 5.0×, 방어 2.5×, 속도 1.4×, CC 저항 40%, HP 80%+ 유지
+### 제거된 콘텐츠 (Phase 6~7)
 
-### 레거시 콘텐츠 (v1 — W1~W3)
-
-| 분류 | 수량 | 해금 조건 |
-|------|------|---------|
-| 타워 | 18종 × 5티어 | 기본 풀 + 가챠 획득 |
-| 적 유형 | 9종 (W1: scout_drone, battle_robot, heavy_walker, stealth_drone, dragon / W2: flame_imp, lava_golem / W3: arcane_mage, mana_shield) | 월드별 제공 |
-| 보스 | 월드별 보스 3종 (orc_warlord, forge_master, corrupted_archmage) — 2페이즈 | 보스 스테이지(s8): boss 웨이브 10 |
-| 스테이지 | 3월드 × 8스테이지 = 24스테이지 | 기본 / LV.3 / LV.7 |
-| 웨이브 | 10웨이브 구조 (보스 1회, 최종 웨이브) | — |
+- **시나리오 모드**: W1 Forest / W2 Forge / W3 Tower + 24 stages — 전부 제거
+- **덱 편성**: 4타워 덱 개념 제거. Phase A는 랜덤 소환 기반
+- **월드 기믹**: GimmickSystem (용광로 폭발, 마력 폭주 등) 제거
+- **임무 / 업적**: 시나리오 전용. 퍽 기반 메타 루프로 대체 (Phase 9+)
+- **★ 별 등급**: 스테이지 개념 자체가 없으므로 제거
+- **제거된 타워**: plasma, dragon_nest (family/tier 모델에 맞지 않아 purge)
 
 ---
 
@@ -176,37 +186,33 @@ W1~W3 레거시 스테이지에만 작동. Phase A 스테이지는 ★ 비활성
 
 > 상세 수치는 [02-balance-sheet.md](./02-balance-sheet.md) 참조.
 
-### 타워 18종 (역할군별)
+### 19 타워 전체 목록 (family × tier)
 
-| 역할군 | 에너지 비용 | 특성 | 패시브 |
-|--------|----------|------|-------|
-| 집중 공격형 | 10 | 단일 타겟 고데미지 | armor pierce |
-| 다중 공격형 | 10 | splash 50% | — |
-| 슬로우 | 20 | 쿨타임 기반, 중복 불가 | — |
-| 스턴 | 20 | 쿨타임 기반, 중복 불가 | — |
+| id | name | family | tier | damage | range | aspd | special |
+|----|------|--------|------|--------|-------|------|---------|
+| archer | 궁수탑 | archer | 1 | 20 | 4.0 | 1.0 | — |
+| wind_spire | 바람첨탑 | archer | 2 | 35 | 4.5 | 1.2 | — |
+| flame_tower | 화염탑 | archer | 3 | 60 | 5.0 | 1.3 | — |
+| arcane_spire | 비전첨탑 | archer | 4 | 100 | 5.5 | 1.5 | — |
+| nova_cannon | 투석기 | siege | 1 | 30 | 3.5 | 0.5 | splash 1.2 |
+| fortress | 공성대포 | siege | 2 | 55 | 4.0 | 0.6 | splash 1.5 |
+| earth_golem | 대지골렘 | siege | 3 | 90 | 4.5 | 0.7 | splash 1.8 |
+| celestial | 천상의탑 | siege | 4 | 150 | 5.0 | 0.8 | splash 2.2 |
+| emp | 눈보라탑 | frost | 1 | 8 | 3.5 | 0.8 | slow 30% |
+| stasis_field | 서리마탑 | frost | 2 | 14 | 4.0 | 0.9 | slow 45% |
+| disruptor | 빙하제단 | frost | 3 | 24 | 4.5 | 1.0 | slow 60% |
+| world_tree | 세계수 | frost | 4 | 40 | 5.0 | 1.1 | slow 75% |
+| shield | 성기사제단 | stun | 1 | 5 | 3.0 | 0.5 | stun 300ms |
+| twin_archer | 수호탑 | stun | 2 | 10 | 3.5 | 0.6 | stun 500ms |
+| holy_shrine | 신성제단 | stun | 3 | 18 | 4.0 | 0.7 | stun 800ms |
+| divine_throne | 신의 옥좌 | stun | 4 | 30 | 4.5 | 0.8 | stun 1200ms |
+| hybrid_ab | 비전포성 | hybrid | 5 | 200 | 6.0 | 1.4 | splash 1.6 |
+| hybrid_cd | 동결의군림 | hybrid | 5 | 80 | 5.5 | 1.2 | slow 80% + stun 600ms |
+| ultimate | 세계의 끝 | ultimate | 6 | 500 | 7.0 | 1.6 | splash 2.5 + slow 90% + stun 1500ms |
 
-### 타워 전체 목록
+**frost / stun 타워 설계 원칙**: 약한 데미지 + 강한 상태 효과. 순수 utility 아님.
 
-| id | name | tier | element | role |
-|----|------|------|---------|------|
-| archer | 궁수 탑 | 1 | 무 | 집중 공격형 |
-| plasma | 투석기 | 1 | 무 | 다중 공격형 |
-| emp | 서리 마탑 | 1 | 수 | 슬로우 |
-| shield | 성기사 제단 | 1 | 무 | 스턴 |
-| twin_archer | 쌍궁 탑 | 2 | 무 | 집중 공격형 |
-| disruptor | 눈보라 탑 | 2 | 수 | 슬로우 |
-| nova_cannon | 공성 대포 | 2 | 화 | 다중 공격형 |
-| fortress | 수호 탑 | 2 | 무 | 스턴 |
-| stasis_field | 빙하 제단 | 3 | 수 | 슬로우 |
-| flame_tower | 화염 탑 | 3 | 화 | 집중 공격형 |
-| wind_spire | 바람의 첨탑 | 3 | 번개 | 다중 공격형 |
-| earth_golem | 대지 골렘 | 3 | 무 | 집중 공격형 |
-| holy_shrine | 신성 제단 | 4 | 무 | 스턴 |
-| dragon_nest | 용의 둥지 | 4 | 화 | 다중 공격형 |
-| arcane_spire | 비전 첨탑 | 4 | 번개 | 집중 공격형 |
-| world_tree | 세계수 | 4 | 무 | 슬로우 |
-| celestial | 천상의 탑 | 5 | 번개 | 다중 공격형 |
-| divine_throne | 신의 옥좌 | 5 | 무 | 스턴 |
+**제거된 타워**: plasma, dragon_nest (family/tier 모델 불일치로 purge).
 
 ### 속성 상성표
 
@@ -332,22 +338,42 @@ W1~W3 레거시 스테이지에만 작동. Phase A 스테이지는 ★ 비활성
 
 ---
 
-## 8. UI / UX
+## 8. UI / UX (v3)
 
-### UI 구조
+### Phase A HUD 구조
 
-- **HUD**: HP, 에너지, 웨이브 카운터, 보스 경고, 결과 오버레이, 나가기 버튼, 배속 토글
-  - HP 변화 시 scale flash 애니메이션 (250ms ease-out, 초기 마운트 시 스킵)
-  - 부유 데미지 넘버 (Phaser Text 오브젝트 풀 24개, 600ms ease-out-quad 부유)
-- **ProfileBar** (로비 상단): 아바타/닉네임/Lv, XP 바, 골드 잔액, 다이아 잔액
-- **Lobby**: BottomTabBar 3탭 (Home·Collection·Settings) + Home 탭 우측 상단 플로팅 아이콘 (Missions·Achievements). 각 아이콘에 수령 가능 카운트 뱃지(`-top-1 -right-1`, `bg-danger`, `text-[8px] font-pixel`, `warningPulse 1.6s` 애니메이션, `aria-label`에 카운트 포함, `useClaimableCounts` 훅이 `metaStore`에서 `current >= target && !claimed` 집계). Home 탭에 단일 "성벽 막기" 골드 버튼. Collection 탭(전쟁탁자)에 출전덱 4슬롯 미리보기 + 편집 버튼
-- **WorldMapPage** (스테이지 선택): 세로 카드 리스트 레이아웃. 각 카드는 좌측 64×64 landmark 썸네일 + 중앙 맵 이름(subtitle 13px) + 해금조건/추천 레벨(label 10px) + 별 진행도(★1/★2/★3 10×10 아이콘) + 우측 진입 화살표(해금 시만). 해금/잠금 상태 시각 구분: 해금=맵별 theme borderColor + accent 텍스트, 잠금=border #4a3a20 + opacity 45% + grayscale + 🔒 오버레이. 카드 간 간격 8px, 카드 내부 패딩 12px, 썸네일-정보 간격 12px (8/16/32/64 그리드 리듬). 터치 타겟 카드 전체 ≥ 88×358px (44×44 기준 초과). 상단 고정 헤더("스테이지 선택" + 좌측 돌아가기 + 우측 Lv 뱃지). 월드맵 괴리감 해소 및 맵 목록 스캔 용이성 우선.
-- **StageDetailPage** (스테이지 상세): 히어로 썸네일 + 정보 카드(최대 XP/골드/웨이브/경로) + 클리어 기록 프로그레스바 + 2배속 가이드(클리어 완료 시 "▶▶ 클리어 완료 — 2배속 플레이 가능" 표시) + 출전 덱 4슬롯 미리보기 + 게임 시작
-- **Deck/Build Panel (DeckEditSheet)**: 상단 고정 4슬롯 프리뷰(border-dashed 빈 슬롯, 루비 보석 × 아이콘으로 개별 제거) + 하단 스크롤 티어별 소유 타워 리스트(2열 그리드). 슬롯 탭 = × 아이콘, 리스트 탭 = 추가 (모드 혼동 방지). 확인 버튼 하단 고정.
-- **Tower Sell Panel**: 배치된 타워 탭 시 하단 중앙에 표시 (타워 이름 + "판매 E+N" danger 버튼)
-- **Exit Modal**: "나가기" 텍스트 버튼 탭 → 확인 모달 (게임 일시정지, "나가기"/"계속하기")
-- **Result Screen**: 방어 성공/실패, 재도전, 로비 복귀. 현재 스테이지 이름 표시. 승리 시 "다음 스테이지" 버튼 (다음 스테이지 ★1로 이동)
-- **Tutorial Overlay**: 첫 세션 5단계 (step 1~2만 강제)
+- **TopHud (상단 정보 배지)**: HP 20, ⚡{energy} badge with ring, `웨이브 N/50 - {timer}s` 또는 `준비 N`
+- **하단 액션바** (safe-area-inset-bottom padding):
+  - **소환 ⚡20** (primary CTA, `flex-[2]`, accent 색)
+  - **T2 ⚡40 60%** (gacha T2)
+  - **T3 ⚡80 20%** (gacha T3, disabled when energy < 80)
+  - **T4 ⚡160 5%** (gacha T4, disabled when energy < 160)
+  - **메뉴 ☰** (60px fixed, 누르면 PauseModal)
+- **TowerActionSheet (플로팅)**: 타워 선택 시 bottom-[120px]에 floating 패널. 5 버튼 (합성 / 이동 / 판매 +{sellValue} / 강화 Lv{n+1} 💰{cost} / ✕). 각 min-h 52px.
+- **SummonRevealOverlay (코너 토스트)**: `phase-a-summon-ready` 이벤트 시 우상단 top-[52px] right-[8px]에 작은 카드 (max-w-180px) 2초 노출. `pointer-events-none` (맵 터치 차단 X). Slide-in from right 150ms.
+- **UpgradePickOverlay (전체 오버레이)**: 보스 wave clear 시 3카드 + 광고 리롤 버튼. 카드 선택 시 PhaseAOrchestrator.applyUpgrade → activeUpgrades 스택.
+- **PauseModal**: 메뉴 버튼 → scene.pause() + "게임으로 돌아가기" / "나가기" 버튼. 나가기 확인 후 enterLobby.
+- **GameOverScreen**: victory/defeat 배너 (success/danger 색) + 스탯 그리드 (wavesCleared/towersPlaced/timeSurvivedSec/goldEarned) + 3 버튼:
+  - "🎬 광고 보고 이어서 하기" (defeat만, 런당 1회)
+  - "다시 시작"
+  - "로비로"
+- **Merge-mode 배너**: TowerActionSheet 합성 버튼 → `enter-merge-mode` → "합성할 타워를 탭하세요" 상단 배너 + ESC/cancel. 두 번째 타워 탭 시 `request-merge-towers` emit.
+
+### 로비 구조
+
+- **TopHud ProfileBar**: 아바타 + Commander + Lv + 전투력, 우측에 골드/다이아 ResourceChip
+- **BottomTabBar 3탭**: 전쟁탁자 / 마당 (기본) / 설정
+- **마당 (HomeTab)**: Cinematic Keyart (성 실루엣, 달, 횃불, 안개) + NEXT UP CTA 카드 (pulse "⚔ 전투 시작")
+- **전쟁탁자 (CollectionTab)**: 최상단 "⚒ 메타 강화" 엔트리 + 보유 타워 그리드 + 소환의 제단 (gacha)
+- **메타 강화 (MetaForgePage)**: 전쟁탁자에서 진입. 글로벌 공격력 % + 4 family 퍽 카운트
+- **설정 (SettingsTab)**: BGM/SFX 볼륨, 화면 흔들림, 색맹 모드
+
+### 제거된 UI (Phase 6)
+
+- ~~WorldMapPage / StageDetailPage / StageSelectPage~~
+- ~~DeckDock / DeckEditSheet~~ (Phase A는 랜덤 소환 기반)
+- ~~MissionsTab / AchievementPage~~
+- ~~Home 탭 플로팅 아이콘 (임무/업적 뱃지)~~
 
 ### LoadingScreen & 페이지 전환
 
@@ -476,21 +502,23 @@ screenShake 동기화:
 
 ---
 
-## 10. 게임 정체성 (Edge Point) (v2)
+## 10. 게임 정체성 (Edge Point) (v3)
 
-> 이 게임은 일반적인 모바일 TD와 달리 **랜덤 소환 슬롯머신 + 인게임 합성 도파민 + 픽셀 중세 자산**을 5~10분 세션에서 밀도 있게 반복시켜, Random Dice 류 검증 루프에 한국 모바일 특유의 중세 세로형 감성을 덧입힌다. "어떤 타워가 뽑힐까 → 같은 거 두 개 맞춰서 합성 → 등급 올라가는 순간의 번쩍임" 세 박자를 매 소환마다 돌린다.
+> Grid Line Defense는 **랜덤 소환 슬롯머신 + 인게임 합성 도파민 + 픽셀 중세 자산**을 Phase A 단독 모드로 응축한다. 시나리오/월드/덱 없이 한 판 5~10분 루프에 집중. "어떤 타워가 뽑힐까 → family/tier 맞춰서 합성 → ultimate 도달하는 쾌감" 세 박자를 매 소환·가챠마다 돌린다.
 
-※ **랜덤 소환의 결정 재미**: 유저는 어디에 놓을지 / 어떤 타워를 뽑을지 둘 다 통제하지 못한다. 유일한 결정은 **언제 소환할지 + 무엇을 합성할지**. 이 제약이 짧은 세션에서 피로를 낮추고 슬롯머신 기대감을 강화한다.
+※ **랜덤 소환 + 가챠 2중 레이어**: 기본 소환은 T1 균등 랜덤, 인게임 가챠는 에너지로 T2/T3/T4 시도 (60/20/5% 성공률). 로그라이크 `tier_odds_up` 카드로 확률을 올려가는 진행감.
 
-※ **합성 진행감이 메타 강화를 흡수**: 영구 메타 강화(별, 승급, 150레벨) 없이도 한 판 안에서 `normal → epic`까지 빌드가 성장하는 느낌을 준다. 메타 P2W 의존도가 자연스럽게 낮아진다.
+※ **합성 체인 5 단계**: T1→T4 family promotion → T4 cross-family → hybrid T5 → ultimate T6. 같은 family T4 2개는 합성 불가 (반드시 다른 family 필요) — 플레이어가 어떤 hybrid를 노릴지 결정하게 만드는 전략 축.
 
-※ **레거시 ★ 시스템은 W1~W3에서만 유지**: Phase A는 단일 난이도. 본인 플레이 검증 후 Phase C에서 메타 재설계 시 ★ 시스템의 운명이 결정된다.
+※ **메타 최소화**: 영구 메타는 글로벌 공격력 + 패밀리 퍽만 (Phase 9 shell). 한 판 안에서 ultimate까지 도달하는 감각이 주된 진행감. P2W 의존도 자연 저하.
+
+※ **BM은 광고 리워드 2곳**: 로그라이크 리롤 + 이어서 하기. 양쪽 모두 "한 번 더 뽑고 싶다/한 번 더 돌고 싶다" 감정 지점에 정확히 붙음.
 
 **점검 질문**
-- 5분 1세션 후 "한 판 더" 즉시 누르고 싶은가 (Phase A 핵심 Go/No-Go 게이트)
-- 합성 / 등급업 / 적 클리어 도파민이 명확히 느껴지는가
-- 픽셀 + 중세 톤이 랜덤 소환 메커니즘과 잘 어울리는가
-- 첫 5분 안에 Random Dice와 다른 차별점(path 기반 레인 + 픽셀 중세)이 체감되는가
+- 5분 1세션 후 "한 판 더" 즉시 누르고 싶은가 (핵심 Go/No-Go 게이트)
+- T4 도달 / hybrid 생성 / ultimate 조합 도파민이 명확히 느껴지는가
+- 픽셀 + 중세 톤이 랜덤 소환·합성 메커니즘과 잘 어울리는가
+- 첫 5분 안에 Random Dice와 다른 차별점(path 기반 레인 + family 합성 트리 + 픽셀 중세)이 체감되는가
 
 ---
 
@@ -508,3 +536,4 @@ screenShake 동기화:
 | 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
 | 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |
 | 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 U-turn 왕복) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. PhaseAHud(React) + 3배속 + 웨이브 타이머 HUD. PR #170. |
+| 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 Phase A 단독 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |

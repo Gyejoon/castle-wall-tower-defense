@@ -1,20 +1,10 @@
-import type { StarRating } from '../constants/starDifficulty';
-
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 8;
 export const SAVE_STORAGE_KEY = 'gld-save-data';
-
-export type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic';
-export const TOWER_GRADES: readonly TowerGrade[] = [
-	'normal',
-	'rare',
-	'unique',
-	'epic',
-] as const;
 
 export interface OwnedTower {
 	defId: string;
-	level: number; // 1~30
-	grade: TowerGrade;
+	level: number; // 1~MAX_TOWER_LEVEL
+	tier: number; // 1-6; Phase-A family/tier model (replaces legacy grade)
 	acquiredAt: number;
 	awakening: 0 | 1 | 2 | 3;
 	duplicateCount: number;
@@ -31,50 +21,17 @@ export interface ProfileData {
 	losses: number;
 	winStreak: number;
 	bestWinStreak: number;
-	combatPower: number;
-}
-
-export type MissionType =
-	| 'reach_wave'
-	| 'place_towers'
-	| 'defeat_boss'
-	| 'clear_stage'
-	| 'use_element'
-	| 'attendance'
-	| 'clear_map'
-	| 'defeat_boss_map';
-
-export interface MissionProgress {
-	id: string;
-	type: MissionType;
-	target: number;
-	current: number;
-	reward: { type: 'diamond' | 'gold'; amount: number };
-	claimed: boolean;
-	mapId?: string;
 }
 
 export interface ProgressData {
-	highestWave: Record<string, number>;
-	stagesCleared: string[];
+	/** Highest wave reached in any Phase A run. Scalar since Phase 7 (v8). */
+	highestWave: number;
 	totalBattles: number;
 	tutorialCompleted: boolean;
 	gachaPityCount: number;
 	dailyFreeBoxClaimedAt: string | null;
 	dailyAdBoxCount: number;
 	dailyResetAt: string | null;
-	dailyMissions: MissionProgress[];
-	weeklyMissions: MissionProgress[];
-	lastDailyMissionResetAt: string | null;
-	lastWeeklyMissionResetAt: string | null;
-	lastAttendanceDate: string | null;
-	/** Key is stageId (e.g. "w1_s1"). Pre-v5 saves used mapId keys and are migrated. */
-	stageStars: Record<string, StarRating>;
-	achievements: {
-		claimed: string[];
-		progress: Record<string, number>;
-	};
-	awakeningStones: number;
 }
 
 export interface SettingsData {

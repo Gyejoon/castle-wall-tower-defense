@@ -1,25 +1,46 @@
 export type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 
-export type TowerType = 'archer' | 'plasma' | 'emp' | 'shield';
+/**
+ * Tower family — Phase A family/tier model. Replaces the old TowerType /
+ * FusionTowerType string union. Each of the four base families (archer /
+ * siege / frost / stun) has tiers 1→4; T4s from two different base families
+ * merge into T5 hybrids (hybrid_ab, hybrid_cd); the two hybrids merge into
+ * the T6 ultimate.
+ */
+export type TowerFamily =
+	| 'archer'
+	| 'siege'
+	| 'frost'
+	| 'stun'
+	| 'hybrid'
+	| 'ultimate';
 
-export type FusionTowerType =
-	| 'twin_archer'
-	| 'disruptor'
+export type TowerId =
+	// archer family T1-T4
+	| 'archer'
+	| 'wind_spire'
+	| 'flame_tower'
+	| 'arcane_spire'
+	// siege family T1-T4
 	| 'nova_cannon'
 	| 'fortress'
-	| 'stasis_field'
-	| 'flame_tower'
-	| 'wind_spire'
 	| 'earth_golem'
-	| 'holy_shrine'
-	| 'dragon_nest'
-	| 'arcane_spire'
-	| 'world_tree'
 	| 'celestial'
+	// frost family T1-T4
+	| 'emp'
+	| 'stasis_field'
+	| 'disruptor'
+	| 'world_tree'
+	// stun family T1-T4
+	| 'shield'
+	| 'twin_archer'
+	| 'holy_shrine'
 	| 'divine_throne'
-	| 'hidden';
-
-export type TowerTier = 'common' | 'rare' | 'heroic' | 'legendary' | 'god';
+	// hybrid T5
+	| 'hybrid_ab'
+	| 'hybrid_cd'
+	// ultimate T6
+	| 'ultimate';
 
 export interface TowerStats {
 	damage: number;
@@ -31,10 +52,10 @@ export interface TowerStats {
 }
 
 export interface TowerDef {
-	id: string;
+	id: string; // Canonical: one of TowerId, but kept as string for ergonomic call sites
 	name: string;
-	type: TowerType | FusionTowerType;
-	tier: number; // 1=common, 2=rare, 3=heroic, 4=legendary, 5=god
+	family: TowerFamily;
+	tier: number; // 1-6
 	stats: TowerStats;
 	cost: number;
 	element: ElementType;
@@ -49,11 +70,3 @@ export interface PlacedTower {
 	position: { x: number; y: number };
 	level: number;
 }
-
-export const TIER_NAMES: Record<number, TowerTier> = {
-	1: 'common',
-	2: 'rare',
-	3: 'heroic',
-	4: 'legendary',
-	5: 'god',
-};

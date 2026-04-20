@@ -1,31 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { buildDeckCardsSafe, DEFAULT_DECK } from '../src';
 import { buildDeckCards, towerToRole } from '../src/constants/deck';
-import { ALL_TOWERS } from '../src/constants/towers';
+import { TOWER_DEFS } from '../src/constants/towers';
 
 describe('towerToRole', () => {
 	it('maps splash tower to splash role', () => {
-		const plasma = ALL_TOWERS.find((t) => t.id === 'plasma');
-		expect(plasma).toBeDefined();
-		if (plasma) expect(towerToRole(plasma)).toBe('splash');
+		const siege = TOWER_DEFS.find((t) => t.id === 'nova_cannon');
+		expect(siege).toBeDefined();
+		if (siege) expect(towerToRole(siege)).toBe('splash');
 	});
 	it('maps slow tower to slow role', () => {
-		const emp = ALL_TOWERS.find((t) => t.id === 'emp');
+		const emp = TOWER_DEFS.find((t) => t.id === 'emp');
 		expect(emp).toBeDefined();
 		if (emp) expect(towerToRole(emp)).toBe('slow');
 	});
 	it('maps stun tower to stun role', () => {
-		const shield = ALL_TOWERS.find((t) => t.id === 'shield');
+		const shield = TOWER_DEFS.find((t) => t.id === 'shield');
 		expect(shield).toBeDefined();
 		if (shield) expect(towerToRole(shield)).toBe('stun');
 	});
-	it('maps damage tower to attacker role', () => {
-		const archer = ALL_TOWERS.find((t) => t.id === 'archer');
+	it('maps damage-only tower to attacker role', () => {
+		const archer = TOWER_DEFS.find((t) => t.id === 'archer');
 		expect(archer).toBeDefined();
 		if (archer) expect(towerToRole(archer)).toBe('attacker');
 	});
-	it('categorizes all 18 towers without error', () => {
-		for (const tower of ALL_TOWERS) {
+	it('categorizes all towers without error', () => {
+		for (const tower of TOWER_DEFS) {
 			expect(['attacker', 'splash', 'slow', 'stun']).toContain(
 				towerToRole(tower),
 			);
@@ -34,12 +34,12 @@ describe('towerToRole', () => {
 });
 
 describe('buildDeckCards', () => {
-	it('builds 4 DeckCardDef from valid tower IDs', () => {
-		const cards = buildDeckCards(['archer', 'plasma', 'emp', 'shield']);
+	it('builds 4 DeckCardDef from valid T1 ids', () => {
+		const cards = buildDeckCards(['archer', 'nova_cannon', 'emp', 'shield']);
 		expect(cards).toHaveLength(4);
 		expect(cards[0]).toEqual({
 			towerDefId: 'archer',
-			energyCost: 10,
+			energyCost: 20,
 			role: 'attacker',
 		});
 		expect(cards[2]).toEqual({
@@ -48,35 +48,29 @@ describe('buildDeckCards', () => {
 			role: 'slow',
 		});
 	});
-	it('works with higher tier towers', () => {
-		const cards = buildDeckCards([
-			'dragon_nest',
-			'disruptor',
-			'holy_shrine',
-			'wind_spire',
-		]);
-		expect(cards[0].energyCost).toBe(10);
-		expect(cards[1].role).toBe('slow');
-		expect(cards[2].role).toBe('stun');
-	});
 	it('throws on unknown tower ID', () => {
 		expect(() =>
-			buildDeckCards(['nonexistent', 'archer', 'plasma', 'emp']),
+			buildDeckCards(['nonexistent', 'archer', 'nova_cannon', 'emp']),
 		).toThrow();
 	});
 });
 
 describe('buildDeckCardsSafe', () => {
 	it('returns valid cards for all-known ids', () => {
-		const cards = buildDeckCardsSafe(['archer', 'plasma', 'emp', 'shield']);
+		const cards = buildDeckCardsSafe([
+			'archer',
+			'nova_cannon',
+			'emp',
+			'shield',
+		]);
 		expect(cards).toHaveLength(4);
 		expect(cards[0].towerDefId).toBe('archer');
 	});
 
 	it('filters out unknown tower ids without throwing', () => {
-		const cards = buildDeckCardsSafe(['archer', 'not_a_tower', 'plasma']);
+		const cards = buildDeckCardsSafe(['archer', 'not_a_tower', 'nova_cannon']);
 		expect(cards).toHaveLength(2);
-		expect(cards.map((c) => c.towerDefId)).toEqual(['archer', 'plasma']);
+		expect(cards.map((c) => c.towerDefId)).toEqual(['archer', 'nova_cannon']);
 	});
 
 	it('falls back to DEFAULT_DECK when input is empty', () => {

@@ -1,30 +1,24 @@
 import {
 	type ActiveUnit,
 	type AssetManifest,
-	buildDeckCardsSafe,
-	checkStarClear,
-	DEFAULT_DECK,
-	DEFAULT_MAP_ID,
-	DEFAULT_STAGE_ID,
+	ENERGY_PER_BOSS_FAST_CLEAR,
+	ENERGY_PER_BOSS_KILL,
+	ENERGY_PER_KILL,
 	ENERGY_PER_WAVE_CLEAR,
+	FAST_CLEAR_THRESHOLD_MS,
+	generatePhaseAWaves,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
-	getStageById,
-	getStarDifficultyMult,
-	getTotalWavesForStage,
-	getWavesForStage,
 	INITIAL_PLAYER_HP,
 	type MapLayout,
+	MockAdService,
 	PHASE_A_MAP_ID,
 	PHASER_COLORS,
-	pickRandomUpgrades,
-	type StarRating,
 	UNITS,
 	type WaveDef,
 	type WavePhase,
-	type WorldId,
 } from '@gld/shared';
 import Phaser from 'phaser';
 import {
@@ -38,8 +32,10 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 import {
+	DIRT_SEAMLESS_KEY,
+	GRASS_PLATFORM_FRAMES,
+	PLATFORM_LIFT,
 	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_GROUND_FRAMES,
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
@@ -53,28 +49,19 @@ interface MapTheme {
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
-	forest_gate: {
-		groundTint: 0xffffff, // no tint — natural green/brown
-		decorTint: 0xffffff,
-		pathColor: 0x9f8258,
+	// Phase 7.5: warm sandstone palette tuned for the 9×18 Phase A board.
+	// Path/grid lines run at very low alpha so towers and obstacles stay
+	// the visual focus instead of tile chrome.
+	phase_a_long: {
+		groundTint: 0xc8b89a,
+		decorTint: 0xc8b89a,
+		pathColor: 0x7a6040,
 		pathLineColor: 0xb8956a,
-	},
-	lava_fortress: {
-		groundTint: 0xd4a070, // warm orange/brown cast
-		decorTint: 0xc89060,
-		pathColor: 0xb05030,
-		pathLineColor: 0xc06040,
-	},
-	storm_citadel: {
-		groundTint: 0x8898c0, // cool blue/purple cast
-		decorTint: 0x7888b0,
-		pathColor: 0x5060a0,
-		pathLineColor: 0x6070b0,
 	},
 };
 
 function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.forest_gate;
+	return MAP_THEMES[mapId] ?? MAP_THEMES.phase_a_long;
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
@@ -84,10 +71,7 @@ import { CastleWallSystem } from '../systems/CastleWallSystem';
 import '../systems/boss-ai/orcWarlord';
 import '../systems/boss-ai/forgeMaster';
 import '../systems/boss-ai/corruptedArchmage';
-import { createWorldGimmick } from '../systems/world-gimmicks/registry';
-import type { WorldGimmick } from '../systems/world-gimmicks/types';
-import '../systems/world-gimmicks/W2FurnaceGimmick';
-import '../systems/world-gimmicks/W3ArcaneGimmick';
+import '../systems/boss-ai/dragon';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
@@ -100,15 +84,15 @@ import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
-// Phase A pivot starter pool: 5 towers covering single-target, AOE, CC,
-// splash, and DOT roles. All from existing assets so the random-summon +
-// merge loop reuses pixel medieval sprites without new art.
+// Phase A summon pool (Task 1.4 spec): tier-1 only, one per base family
+// (archer, siege, frost, stun). Higher tiers are reached through merge and
+// the in-game gacha (tier2/3/4 buttons). Mirrors DEFAULT_POOL in
+// @gld/shared/data/summonPool.ts — keep the two in sync.
 const PHASE_A_INITIAL_POOL: readonly string[] = [
-	'archer',
-	'plasma',
-	'emp',
-	'nova_cannon',
-	'flame_tower',
+	'archer', // archer T1
+	'nova_cannon', // siege T1
+	'emp', // frost T1
+	'shield', // stun T1
 ];
 
 export class GameScene extends Phaser.Scene {
@@ -119,13 +103,16 @@ export class GameScene extends Phaser.Scene {
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
 	private phaseAOrchestrator?: PhaseAOrchestrator;
-	private onPhaseASummonReady?: (data: { towerId: string }) => void;
+	private onPhaseASummonReady?: (data: {
+		towerId: string;
+		source: 'summon' | 'gacha';
+	}) => void;
 	private onUpgradeApplied?: () => void;
+	private onGameResumed?: (data: { livesRestored: number }) => void;
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
 	private playerHp = INITIAL_PLAYER_HP;
-	private selectedStar: StarRating = 1;
 	private energySystem = new EnergySystem();
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
@@ -133,9 +120,7 @@ export class GameScene extends Phaser.Scene {
 	private isPhaseAMap = false;
 	private currentWaveSlot = 1;
 	private lastTimerTickSec = -1;
-	private rewardMultiplier = 1;
 	private currentSlotDef!: WaveDef;
-	private currentStageId!: string;
 
 	private hoverGraphics!: Phaser.GameObjects.Graphics;
 	private selectionGraphics!: Phaser.GameObjects.Graphics;
@@ -180,6 +165,7 @@ export class GameScene extends Phaser.Scene {
 		slotIndex: number;
 		delaySec: number;
 		cleared: boolean;
+		phase: WavePhase;
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
@@ -194,16 +180,6 @@ export class GameScene extends Phaser.Scene {
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
 	private currentMap!: MapLayout;
-	private worldGimmick: WorldGimmick | null = null;
-	private furnaceTintOverlays: Phaser.GameObjects.Rectangle[] = [];
-	private onFurnaceCycle!: (data: {
-		active: boolean;
-		tiles: Array<{ x: number; y: number }>;
-	}) => void;
-	private onArcaneBurst!: (data: {
-		area: { startX: number; startY: number; endX: number; endY: number };
-		stunMs: number;
-	}) => void;
 	private bossBehaviors = new Map<string, BossBehavior>(); // key = unit instanceId
 
 	constructor() {
@@ -234,12 +210,15 @@ export class GameScene extends Phaser.Scene {
 		this.speedMultiplier = 1;
 		this.time.timeScale = 1;
 		this.anims.globalTimeScale = 1;
+		// Phase 7: scenario maps purged. Phase A is the only mode; ignore any
+		// non-Phase-A registry mapId and pin to PHASE_A_MAP_ID.
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
-			DEFAULT_MAP_ID;
-		this.currentMap = getMapById(mapId);
-		this.rewardMultiplier = this.currentMap.rewardMultiplier;
+			PHASE_A_MAP_ID;
+		this.currentMap = getMapById(
+			mapId === PHASE_A_MAP_ID ? mapId : PHASE_A_MAP_ID,
+		);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
@@ -258,11 +237,21 @@ export class GameScene extends Phaser.Scene {
 			collection,
 			getSpawnExitPairs(this.currentMap),
 		);
+		// Phase 9: inject meta progression's global atk% via the scene
+		// registry. `PhaserGame.tsx` sets 'meta:atkPct' from the web-shell
+		// metaProgressStore before the scene starts; default to 0 if absent
+		// (tests, legacy boots). phaser-game package MUST NOT import from
+		// web-shell — the registry/event bridge is the only allowed channel.
+		const metaAtkPct =
+			(this.game.registry.get('meta:atkPct') as number | undefined) ?? 0;
+		this.playerTowers.setGlobalModifiers({ atkPct: metaAtkPct });
 		this.playerUnits = new UnitSystem(this, this.playerGrid);
 		this.playerUnits.setTowerSystem(this.playerTowers);
 		this.playerUnits.setStageLevel(1); // Phase 1: LV.1 fixed, Phase 3 will use map-specific levels
 		this.playerUnits.setUnitSpawnedCallback((instanceId, defId, isBoss) => {
 			if (!isBoss) return;
+			// Record boss spawn timestamp for fast-clear energy bonus ([F18]).
+			this.playerWaves?.markBossSpawned();
 			const def = UNITS.find((u) => u.id === defId);
 			if (!def?.bossBehaviorId) return;
 			const behavior = createBossBehavior(def.bossBehaviorId);
@@ -272,55 +261,16 @@ export class GameScene extends Phaser.Scene {
 			this.bossBehaviors.set(instanceId, behavior);
 			behavior.onSpawn(this.buildBossContext(unit.data));
 		});
-		const rawStageId = this.game.registry.get('selectedStageId') as
-			| string
-			| undefined;
-		const stageId = rawStageId ?? DEFAULT_STAGE_ID;
-		this.currentStageId = stageId;
-		const stageDef = getStageById(stageId);
-		const stageWaves = getWavesForStage(stageDef.waveSetId);
-		if (stageWaves.length === 0) {
-			throw new Error(
-				`[GameScene] Stage "${stageId}" has empty wave definitions`,
-			);
-		}
+		const stageWaves = generatePhaseAWaves(50);
 		this.currentSlotDef = stageWaves[0];
-		const rawStar = this.game.registry.get('selectedStar');
-		const selectedStar: StarRating =
-			rawStar === 2 || rawStar === 3 ? rawStar : 1;
-		this.selectedStar = selectedStar;
-		const starMult = getStarDifficultyMult(selectedStar);
-		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves, undefined, {
-			difficultyHpMult: this.currentMap.difficultyHpMult * starMult.hp,
-			armorMult: starMult.armor,
-			speedMult: starMult.speed,
-			ccResist: starMult.ccResist,
-		});
-		this.worldGimmick = createWorldGimmick(stageDef.worldId as WorldId, {
-			worldId: stageDef.worldId as WorldId,
-			map: this.currentMap,
-			star: selectedStar,
-			eventBus: EventBus,
-			getSceneTimeMs: () => this.scaledGameTime,
-			getTowers: () => this.playerTowers.getAllTowers(),
-		});
-		this.worldGimmick?.init();
-		this.worldGimmick?.onBattleStart();
-		this.playerTowers.setWorldGimmick(this.worldGimmick);
-
+		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves);
 		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
 		const isPhaseAMap = this.isPhaseAMap;
-		const deckIds = this.game.registry.get('deckIds') as string[] | undefined;
-		const deckCards = isPhaseAMap
-			? []
-			: deckIds && deckIds.length > 0
-				? buildDeckCardsSafe(deckIds)
-				: DEFAULT_DECK;
-		// Phase A bypasses the 4-tower deck entirely. We still construct
-		// DeckSystem (with an empty deck) so the rest of the scene keeps the
-		// same field shape and cleanup contract; the React HUD detects the
+		// Phase A bypasses the 4-tower deck entirely; we still construct
+		// DeckSystem with an empty deck so the rest of the scene keeps the
+		// same field shape and cleanup contract. The React HUD detects the
 		// empty deck-loaded payload and renders the Phase A summon UI instead.
-		this.playerDeck = new DeckSystem(deckCards);
+		this.playerDeck = new DeckSystem([]);
 
 		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
 		// SummonPool + MergeSystem to TowerSystem via PhaseAOrchestrator and
@@ -332,10 +282,14 @@ export class GameScene extends Phaser.Scene {
 				towerSystem: this.playerTowers,
 				initialPool: PHASE_A_INITIAL_POOL,
 				energySystem: this.energySystem,
+				// Phase 10 BM stub. Real provider swaps in behind the same
+				// `AdService` contract without touching this call site.
+				adService: MockAdService,
 			});
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
 				this.selectedTowerId = data.towerId;
+				this.showBuildableZone();
 				this.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 				this.renderPlaceableHighlights();
@@ -343,6 +297,9 @@ export class GameScene extends Phaser.Scene {
 			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
 			this.playerTowers.setModifierFn((id) =>
 				this.phaseAOrchestrator!.getModifier(id),
+			);
+			this.playerTowers.setFamilyDamageFn((family, towerId) =>
+				this.phaseAOrchestrator!.getFamilyDamageMultiplier(family, towerId),
 			);
 			// Phase A: 1 unit per second (1000ms) instead of default 300ms
 			this.playerUnits.setSpawnInterval(1000);
@@ -363,6 +320,8 @@ export class GameScene extends Phaser.Scene {
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
 		this.renderPath(this.playerGrid);
+		this.renderObstacles();
+		this.renderAmbientDecorations();
 
 		this.castleWall = new CastleWallSystem(
 			this,
@@ -382,6 +341,7 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
+			this.showBuildableZone();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
 			this.renderPlaceableHighlights();
@@ -389,6 +349,7 @@ export class GameScene extends Phaser.Scene {
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
@@ -400,7 +361,6 @@ export class GameScene extends Phaser.Scene {
 			this.currentWaveSlot = data.slotIndex;
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
-			this.worldGimmick?.onWaveStart(data.wave);
 		};
 
 		this.onBossWarning = () => {
@@ -418,31 +378,30 @@ export class GameScene extends Phaser.Scene {
 			slotIndex: number;
 			delaySec: number;
 			cleared: boolean;
+			phase: WavePhase;
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			// Phase A: no wave-clear energy bonus — energy comes from kills only
-			if (data.cleared && !this.isPhaseAMap) {
+			// Phase A: flat +ENERGY_PER_WAVE_CLEAR at the end of every wave
+			// (natural clear + timer-forced alike) to pace summon/gacha cadence.
+			// Final wave is skipped because the run is already ending.
+			if (this.isPhaseAMap && data.slotIndex < data.totalWaves) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
-			// Phase A: every 10 waves, offer 3 random upgrade cards
+			// Phase 4 Task 4.2: roguelike pick now triggers on BOSS-phase clears
+			// only. WaveSystem tags each `wave-completed` with the phase that
+			// just ended (Task 4.0 [F7]); we bypass the pick if the wave was
+			// forced-cleared by the timer (`cleared === false`) or if it was
+			// the final wave (defeat/victory HUD owns the run-end flow).
 			if (
 				data.cleared &&
 				this.isPhaseAMap &&
-				data.slotIndex % 10 === 0 &&
-				data.slotIndex > 0 &&
-				data.slotIndex < data.totalWaves
+				data.phase === 'boss' &&
+				data.slotIndex < data.totalWaves &&
+				this.phaseAOrchestrator
 			) {
-				const choices = pickRandomUpgrades(3);
 				EventBus.emit('request-pause');
-				EventBus.emit('upgrade-choice-ready', {
-					choices: choices.map((c) => ({
-						id: c.id,
-						name: c.name,
-						description: c.description,
-						icon: c.icon,
-					})),
-				});
+				this.phaseAOrchestrator.requestUpgradePick(3);
 			}
 		};
 
@@ -474,6 +433,7 @@ export class GameScene extends Phaser.Scene {
 			if (!this.isSceneAlive()) return;
 			this.movePending = { fromCol, fromRow };
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			this.renderPlaceableHighlights();
@@ -503,69 +463,7 @@ export class GameScene extends Phaser.Scene {
 			this.scene.resume();
 		};
 
-		this.onFurnaceCycle = ({ active, tiles }) => {
-			if (!this.isSceneAlive()) return;
-
-			if (!active) {
-				// OFF transition: fadeOut 300ms then destroy
-				for (const overlay of this.furnaceTintOverlays) {
-					this.tweens.add({
-						targets: overlay,
-						alpha: 0,
-						duration: 300,
-						ease: 'Quad.easeIn',
-						onComplete: () => overlay.destroy(),
-					});
-				}
-				this.furnaceTintOverlays = [];
-				return;
-			}
-
-			// Clear any leftover overlays before creating new ones
-			for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-			this.furnaceTintOverlays = [];
-
-			for (const tile of tiles) {
-				const world = this.playerGrid.gridToWorld(tile.x, tile.y);
-				const size = this.playerGrid.orthoTile;
-				const rect = this.add.rectangle(
-					world.x,
-					world.y,
-					size,
-					size,
-					0xcc6600,
-					0.3,
-				);
-				rect.setDepth(0.5);
-				this.furnaceTintOverlays.push(rect);
-				this.tweens.add({
-					targets: rect,
-					alpha: { from: 0, to: 0.3 },
-					duration: 200,
-					ease: 'Quad.easeOut',
-				});
-			}
-		};
-
-		this.onArcaneBurst = ({ area, stunMs: _stunMs }) => {
-			if (!this.isSceneAlive()) return;
-			const topLeft = this.playerGrid.gridToWorld(area.startX, area.startY);
-			const bottomRight = this.playerGrid.gridToWorld(area.endX, area.endY);
-			const tileSize = this.playerGrid.orthoTile;
-			const cx = (topLeft.x + bottomRight.x) / 2;
-			const cy = (topLeft.y + bottomRight.y) / 2;
-			const w = bottomRight.x - topLeft.x + tileSize;
-			const h = bottomRight.y - topLeft.y + tileSize;
-			const flash = this.add.rectangle(cx, cy, w, h, 0x8040c0, 0.4);
-			flash.setDepth(0.9);
-			this.tweens.add({
-				targets: flash,
-				alpha: 0,
-				duration: 600,
-				ease: 'Quad.easeOut',
-				onComplete: () => flash.destroy(),
-			});
-		};
+		// Phase 6: furnace/arcane gimmick VFX removed with world-gimmicks.
 
 		EventBus.on('request-select-tower', this.onSelectTower);
 		EventBus.on('request-clear-tower-selection', this.onClearTowerSelection);
@@ -578,8 +476,6 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('boss-warning', this.onBossWarning);
 		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
-		EventBus.on('furnace-cycle', this.onFurnaceCycle);
-		EventBus.on('arcane-burst', this.onArcaneBurst);
 
 		// Phase A upgrade flow: resume game after player picks an upgrade
 		if (isPhaseAMap) {
@@ -588,6 +484,39 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('request-resume');
 			};
 			EventBus.on('upgrade-applied', this.onUpgradeApplied);
+
+			// Phase 10 Task 10.3 [F11]: on a successful continue-run the
+			// orchestrator emits `game-resumed`. We reverse the partial
+			// shutdown performed by `emitGameOver` so wave ticks and HP
+			// updates flow again.
+			//
+			// TODO(phase-12): preserve placed towers across game-over so
+			// continue truly restores the pre-defeat board. Currently
+			// `playerTowers.destroy()` has already run, so the player
+			// rebuilds their board after continue.
+			this.onGameResumed = (data) => {
+				if (!this.isSceneAlive()) return;
+				this.gameOver = false;
+				this.playerHp = Math.max(1, data.livesRestored);
+				EventBus.emit('base-hp-changed', {
+					hp: this.playerHp,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(this.playerHp);
+				// Re-subscribe the wave lifecycle handlers that emitGameOver
+				// tore down so future wave-started / wave-completed events
+				// keep HUD state coherent.
+				EventBus.off('wave-started', this.onWaveStartedLifecycle);
+				EventBus.on('wave-started', this.onWaveStartedLifecycle);
+				EventBus.off('boss-warning', this.onBossWarning);
+				EventBus.on('boss-warning', this.onBossWarning);
+				EventBus.off('wave-completed', this.onWaveCompleted);
+				EventBus.on('wave-completed', this.onWaveCompleted);
+				EventBus.off('request-set-speed', this.onSetSpeed);
+				EventBus.on('request-set-speed', this.onSetSpeed);
+			};
+			EventBus.on('game-resumed', this.onGameResumed);
 		}
 
 		EventBus.emit('game-ready');
@@ -650,70 +579,156 @@ export class GameScene extends Phaser.Scene {
 			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 	}
 
-	private renderFieldPathOverlay(grid: GridManager, dark: boolean): void {
-		const graphics = this.add.graphics();
-		const theme = getMapTheme(this.currentMap.id);
-		const pathColor = dark ? 0x5c6585 : theme.pathColor;
-
-		const allCells = getAllPathCells(this.currentMap);
-		for (const point of allCells) {
-			grid.fillTileRect(
-				graphics,
-				point.x,
-				point.y,
-				pathColor,
-				dark ? 0.4 : 0.52,
-			);
-		}
-	}
-
 	private renderField(grid: GridManager, dark: boolean): void {
 		const theme = getMapTheme(this.currentMap.id);
-		const tile = this.playerGrid.orthoTile;
+		const tile = grid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
 
-		// Calculate how many extra tiles needed to fill the canvas beyond the grid
-		const gridPixelW = tile * this.currentMap.width;
-		const gridPixelH = tile * this.currentMap.height;
-		const extraLeft = Math.ceil((canvasW - gridPixelW) / 2 / tile) + 1;
-		const extraRight = extraLeft;
-		const extraTop = Math.ceil((canvasH - gridPixelH) / 2 / tile) + 1;
-		const extraBottom = extraTop;
+		// Layer 0: Dirt/sand base (low ground — monster path level)
+		if (typeof this.add.tileSprite === 'function') {
+			const dirtBg = this.add.tileSprite(
+				canvasW / 2,
+				canvasH / 2,
+				canvasW,
+				canvasH,
+				DIRT_SEAMLESS_KEY,
+			);
+			dirtBg.setDepth(0);
+			dirtBg.setScrollFactor(0);
+			if (dark) dirtBg.setTint(0x5c6585);
+		}
 
-		const startX = -extraLeft;
-		const endX = this.currentMap.width + extraRight;
-		const startY = -extraTop;
-		const endY = this.currentMap.height + extraBottom;
+		// Build path lookup — path cells are "low ground" (monster walkway).
+		const pathCells = getAllPathCells(this.currentMap);
+		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
+		const isLow = (x: number, y: number) =>
+			pathSet.has(`${x},${y}`) ||
+			x < 0 ||
+			x >= this.currentMap.width ||
+			y < 0 ||
+			y >= this.currentMap.height;
 
-		for (let y = startY; y < endY; y++) {
-			for (let x = startX; x < endX; x++) {
+		// Layer 2: Elevated grass platform tiles (tower placement level).
+		const lift = tile * PLATFORM_LIFT;
+		const extraTiles = 2;
+		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
+			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
+				if (isLow(x, y)) continue;
+
+				// NSEW bitmask: which neighbors are "low" (path / outside).
+				let bitmask = 0;
+				if (isLow(x, y - 1)) bitmask |= 1;
+				if (isLow(x + 1, y)) bitmask |= 2;
+				if (isLow(x, y + 1)) bitmask |= 4;
+				if (isLow(x - 1, y)) bitmask |= 8;
+
+				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
 				const world = grid.gridToWorld(x, y);
-				const frame =
-					TINY_SWORDS_GROUND_FRAMES[
-						((((x % 2) + 2) % 2) + (((y % 2) + 2) % 2)) %
-							TINY_SWORDS_GROUND_FRAMES.length
-					];
-				const sprite = this.add.sprite(
+
+				const spr = this.add.sprite(
 					world.x,
-					world.y,
+					world.y - lift,
 					TINY_SWORDS_PRIMARY_TILESET.key,
 					frame,
 				);
-				sprite.setDisplaySize(tile, tile);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(0);
+				spr.setDisplaySize(tile, tile);
+				spr.setOrigin(0.5, 0.5);
+				spr.setDepth(2);
+				if (dark) spr.setTint(0x6b7899);
+				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
 
-				if (dark) {
-					sprite.setTint(0x6b7899);
-				} else if (theme.groundTint !== 0xffffff) {
-					sprite.setTint(theme.groundTint);
+				// Cliff walls drawn as graphics layers (no stretched tileset frames).
+				const hasSouth = !!(bitmask & 4);
+				const hasEast = !!(bitmask & 2);
+				const hasWest = !!(bitmask & 8);
+
+				if (hasSouth || hasEast || hasWest) {
+					const cg = this.add.graphics();
+					cg.setDepth(1.5);
+					const baseX = world.x - tile / 2;
+					const baseY = world.y - lift + tile / 2;
+
+					if (hasSouth) {
+						const cliffH = tile * 0.6;
+						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
+						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
+						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
+						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
+						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
+						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
+						cg.fillRect(baseX, baseY, tile, 2);
+					}
+
+					if (hasEast) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
+					}
+
+					if (hasWest) {
+						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
+					}
 				}
 			}
 		}
 
-		this.renderFieldPathOverlay(grid, dark);
+		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
+		if (!dark) {
+			const shadowGraphics = this.add.graphics();
+			shadowGraphics.setDepth(0.5);
+			for (const p of pathCells) {
+				if (!isLow(p.x, p.y - 1)) {
+					const w = grid.gridToWorld(p.x, p.y);
+					shadowGraphics.fillStyle(0x000000, 0.15);
+					shadowGraphics.fillRect(
+						w.x - tile / 2,
+						w.y - tile / 2,
+						tile,
+						tile * 0.4,
+					);
+				}
+			}
+		}
+
 		this.renderDecorations(grid, dark);
+	}
+
+	private buildableZoneGraphics?: Phaser.GameObjects.Graphics;
+
+	private showBuildableZone(): void {
+		if (!this.buildableZoneGraphics) {
+			this.buildableZoneGraphics = this.add.graphics();
+			this.buildableZoneGraphics.setDepth(3);
+		}
+		this.buildableZoneGraphics.clear();
+		if (!this.selectedTowerId) return;
+
+		const tile = this.playerGrid.orthoTile;
+		const lift = tile * PLATFORM_LIFT;
+		for (const point of this.currentMap.buildablePoints) {
+			if (!this.playerGrid.canPlaceTower(point.x, point.y)) continue;
+			const world = this.playerGrid.gridToWorld(point.x, point.y);
+			this.buildableZoneGraphics.fillStyle(0x44ff44, 0.15);
+			this.buildableZoneGraphics.fillRect(
+				world.x - tile / 2,
+				world.y - lift - tile / 2,
+				tile,
+				tile,
+			);
+			this.buildableZoneGraphics.lineStyle(1, 0x44ff44, 0.3);
+			this.buildableZoneGraphics.strokeRect(
+				world.x - tile / 2,
+				world.y - lift - tile / 2,
+				tile,
+				tile,
+			);
+		}
+	}
+
+	private hideBuildableZone(): void {
+		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
 	}
 
 	private renderDecorations(grid: GridManager, dark: boolean): void {
@@ -749,7 +764,9 @@ export class GameScene extends Phaser.Scene {
 		for (const path of paths) {
 			if (path.length < 2) continue;
 
-			graphics.lineStyle(4, lineColor, 0.08);
+			// Phase 7.5: very low-alpha path stroke so the underlying tilemap
+			// reads clean — was 0.08 / 0.40 in scenario builds.
+			graphics.lineStyle(4, lineColor, 0.04);
 			graphics.beginPath();
 			const first = grid.gridToWorld(path[0].x, path[0].y);
 			graphics.moveTo(first.x, first.y);
@@ -759,7 +776,7 @@ export class GameScene extends Phaser.Scene {
 			}
 			graphics.strokePath();
 
-			graphics.fillStyle(lineColor, 0.4);
+			graphics.fillStyle(lineColor, 0.25);
 			for (let i = 0; i < path.length - 1; i++) {
 				const a = grid.gridToWorld(path[i].x, path[i].y);
 				const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);
@@ -778,6 +795,63 @@ export class GameScene extends Phaser.Scene {
 			);
 			graphics.fillCircle(last.x, last.y, 1.5);
 		}
+	}
+
+	/**
+	 * Render fixed map obstacles (trees / rocks / bushes) at their grid
+	 * positions. Obstacles are visual only — buildBuildablePoints already
+	 * excluded them from placement, and the unit pathPoints data does not
+	 * include them so units never try to walk through.
+	 *
+	 * Falls back silently when the optional `obstacles` field is missing.
+	 */
+	private renderObstacles(): void {
+		const obstacles = this.currentMap.obstacles;
+		if (!obstacles || obstacles.length === 0) return;
+		const ASSET_KEYS = [
+			'tiny-swords-tree-1',
+			'tiny-swords-rock-1',
+			'tiny-swords-bush-1',
+		] as const;
+		const tile = this.playerGrid.orthoTile;
+		const lift = tile * PLATFORM_LIFT;
+		obstacles.forEach((pos, i) => {
+			const key = ASSET_KEYS[i % ASSET_KEYS.length];
+			if (!this.textures.exists(key)) return;
+			const world = this.playerGrid.gridToWorld(pos.x, pos.y);
+			// Lift obstacles onto the elevated grass platform.
+			const sprite = this.add.sprite(world.x, world.y - lift, key, 0);
+			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
+			sprite.setOrigin(0.5, 0.7);
+			sprite.setDepth(3 + pos.x + pos.y);
+		});
+	}
+
+	/**
+	 * Render ambient decoration sprites (trees/bushes/rocks) from
+	 * `map.decorations`. Purely visual — zero pathfinding / placement impact.
+	 * Decorations are usually placed just off the playfield (fractional grid
+	 * coordinates like -1.2 / 9.3) so they read as background scenery.
+	 */
+	private renderAmbientDecorations(): void {
+		const decorations = this.currentMap.decorations;
+		if (!decorations || decorations.length === 0) return;
+		const tile = this.playerGrid.orthoTile;
+		// Ambient props stay on the low ground (no PLATFORM_LIFT) so they
+		// match the dirt base layer visually.
+		decorations.forEach((deco) => {
+			const variant = deco.variant ?? 1;
+			const key = `tiny-swords-${deco.kind}-${variant}`;
+			if (!this.textures.exists(key)) return;
+			const world = this.playerGrid.gridToWorld(deco.x, deco.y);
+			const sprite = this.add.sprite(world.x, world.y, key, 0);
+			const scale = deco.kind === 'tree' ? 1.1 : 0.85;
+			sprite.setDisplaySize(tile * scale, tile * scale);
+			sprite.setOrigin(0.5, 0.72);
+			sprite.setAlpha(0.85);
+			// Decorations never overlap gameplay cells, so a flat depth is fine.
+			sprite.setDepth(2.5);
+		});
 	}
 
 	private setupInput(): void {
@@ -850,7 +924,7 @@ export class GameScene extends Phaser.Scene {
 					col: gridPos.x,
 					row: gridPos.y,
 					refund,
-					grade: tower.grade,
+					tier: tower.tier,
 				});
 				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
 			} else {
@@ -922,35 +996,20 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
-		EventBus.off('furnace-cycle', this.onFurnaceCycle);
-		EventBus.off('arcane-burst', this.onArcaneBurst);
-		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-		this.furnaceTintOverlays = [];
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
-		const starCleared =
-			payload.result === 'victory'
-				? checkStarClear(this.selectedStar, this.playerHp, INITIAL_PLAYER_HP)
-				: false;
-
-		const mapId = this.currentMap.id;
 		EventBus.emit('game-over', {
-			...payload,
-			mapId,
-			selectedStar: this.selectedStar,
-			starCleared,
-			hpRemaining: Math.max(0, this.playerHp),
+			result: payload.result,
 			stats: {
 				wavesCleared:
 					payload.result === 'victory'
 						? payload.finalSlot
 						: Math.max(0, payload.finalSlot - 1),
-				totalWaves: getTotalWavesForStage(this.currentStageId),
+				totalWaves: this.playerWaves.getMaxWaves(),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned * this.rewardMultiplier,
-				rewardMultiplier: this.rewardMultiplier,
+				goldEarned: this.goldEarned,
 			},
 		});
 	}
@@ -964,6 +1023,7 @@ export class GameScene extends Phaser.Scene {
 		if (this.phaseAOrchestrator?.hasPendingSummon()) {
 			this.phaseAOrchestrator.completePlacement(gridX, gridY);
 			this.selectedTowerId = null;
+			this.hideBuildableZone();
 			this.selectionGraphics.clear();
 			this.clearRangeOverlay();
 			return;
@@ -1074,16 +1134,27 @@ export class GameScene extends Phaser.Scene {
 					onKill();
 				}
 			}
+			// Phase 4 [F15]: `effect_amp` scales slow/stun durations (multiply).
+			// Applied at the Game scene boundary so UnitSystem stays decoupled
+			// from the roguelike stack tracker.
+			const effectAmp =
+				this.isPhaseAMap && this.phaseAOrchestrator
+					? this.phaseAOrchestrator.getEffectDurationMultiplier()
+					: 1;
 			if (evt.slow) {
 				const behavior = this.bossBehaviors.get(evt.unitId);
 				if (!behavior?.isCcImmune()) {
-					unitSystem.applySlow(evt.unitId, evt.slow.factor, evt.slow.duration);
+					unitSystem.applySlow(
+						evt.unitId,
+						evt.slow.factor,
+						evt.slow.duration * effectAmp,
+					);
 				}
 			}
 			if (evt.stun) {
 				const behavior = this.bossBehaviors.get(evt.unitId);
 				if (!behavior?.isCcImmune()) {
-					unitSystem.applyStun(evt.unitId, evt.stun.duration);
+					unitSystem.applyStun(evt.unitId, evt.stun.duration * effectAmp);
 				}
 			}
 		}
@@ -1097,7 +1168,6 @@ export class GameScene extends Phaser.Scene {
 		const scaledDelta = delta * this.speedMultiplier;
 		this.scaledGameTime += scaledDelta;
 
-		this.worldGimmick?.onTick(scaledDelta);
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
 		// Phase A: energy from kills only, no time-based regen
@@ -1127,13 +1197,16 @@ export class GameScene extends Phaser.Scene {
 			scaledDelta,
 			() => {
 				soundGenerator.playUnitDeath();
-				// Phase A: energy from kills, not time. +1 per kill, x2 on every 5th wave
+				// Phase 4 [F15]: +1 per kill baseline, with the roguelike
+				// `energy_harvest` upgrade stacking additively on top (+1 per
+				// stack). Every 5th wave doubles the baseline as a soft pacing
+				// buff — stack bonus is additive on top of the doubled value.
 				if (this.isPhaseAMap) {
-					const killEnergyBonus =
-						this.phaseAOrchestrator?.getUpgradeStacks('kill_energy') ?? 0;
-					const bonus =
-						(this.currentWaveSlot % 5 === 0 ? 2 : 1) + killEnergyBonus;
-					this.energySystem.add(bonus);
+					const harvestBonus =
+						this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
+					const baseline =
+						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
+					this.energySystem.add(baseline + harvestBonus);
 				}
 			},
 			(unitId, result) => {
@@ -1142,6 +1215,20 @@ export class GameScene extends Phaser.Scene {
 				if (!behavior) return;
 				const unit = this.playerUnits.getUnit(unitId);
 				if (result.killed) {
+					// Phase 3 (sole-mode): boss-kill energy reward, plus a
+					// fast-clear bonus if the boss dies within
+					// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
+					// to wave start if bossSpawnMs was not recorded (e.g. if
+					// the boss died before the spawn callback fired).
+					if (this.isPhaseAMap) {
+						this.energySystem.add(ENERGY_PER_BOSS_KILL);
+						const elapsed =
+							this.playerWaves.getElapsedMs() -
+							(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
+						if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
+							this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
+						}
+					}
 					behavior.destroy();
 					this.bossBehaviors.delete(unitId);
 					return;
@@ -1268,10 +1355,11 @@ export class GameScene extends Phaser.Scene {
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
 		EventBus.off('request-set-speed', this.onSetSpeed);
-		EventBus.off('furnace-cycle', this.onFurnaceCycle);
-		EventBus.off('arcane-burst', this.onArcaneBurst);
 		if (this.onUpgradeApplied) {
 			EventBus.off('upgrade-applied', this.onUpgradeApplied);
+		}
+		if (this.onGameResumed) {
+			EventBus.off('game-resumed', this.onGameResumed);
 		}
 		if (this.onPhaseASummonReady) {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
@@ -1280,14 +1368,8 @@ export class GameScene extends Phaser.Scene {
 		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();
 
-		for (const overlay of this.furnaceTintOverlays) overlay.destroy();
-		this.furnaceTintOverlays = [];
-
 		this.tutorial?.destroy();
 		this.tutorial = undefined;
-
-		this.worldGimmick?.destroy();
-		this.worldGimmick = null;
 
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();

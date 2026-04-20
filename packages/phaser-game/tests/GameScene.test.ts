@@ -211,6 +211,8 @@ describe('GameScene', () => {
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
+				remainingHp: 20,
+				initialHp: 20,
 			},
 		});
 	});
@@ -265,6 +267,8 @@ describe('GameScene', () => {
 				towersPlaced: 0,
 				timeSurvivedSec: 0,
 				goldEarned: 0,
+				remainingHp: 0,
+				initialHp: 20,
 			},
 		});
 	});

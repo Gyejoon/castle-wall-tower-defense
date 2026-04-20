@@ -20,7 +20,7 @@ export type RunStatus =
 	| 'running'
 	| 'victory'
 	| 'defeat';
-export type LobbyTab = 'home' | 'collection' | 'settings';
+export type LobbyTab = 'home' | 'collection' | 'leaderboard' | 'settings';
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
 export interface UiToast {
@@ -97,6 +97,8 @@ interface GameStoreState {
 	setPlacementFeedback: (reason: PlacementFailureReason | null) => void;
 	setWavePreview: (preview: WavePreviewGroup[] | null) => void;
 	setLobbyTab: (tab: LobbyTab) => void;
+	profilePageOpen: boolean;
+	openProfilePage: (open: boolean) => void;
 	setPlayerTowerCount: (count: number) => void;
 	patchCombatHud: (patch: Partial<CombatHudState>) => void;
 	pushToast: (message: React.ReactNode, tone?: ToastTone) => void;
@@ -179,6 +181,8 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	setPlacementFeedback: (reason) => set({ placementFeedback: reason }),
 	setWavePreview: (preview) => set({ wavePreview: preview }),
 	setLobbyTab: (tab) => set({ lobbyTab: tab }),
+	profilePageOpen: false,
+	openProfilePage: (open) => set({ profilePageOpen: open }),
 	setPlayerTowerCount: (count) => set({ playerTowerCount: count }),
 	patchCombatHud: (patch) =>
 		set((state) => ({

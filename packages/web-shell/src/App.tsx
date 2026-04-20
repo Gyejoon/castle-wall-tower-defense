@@ -1,8 +1,12 @@
 import { ALL_TOWERS, DEFAULT_DECK_IDS } from '@gld/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { uiMobileArt } from './assets/uiMobileArt';
+import { AuthModal } from './components/auth/AuthModal';
+import { ProfileSetupModal } from './components/auth/ProfileSetupModal';
 import { LobbyPage } from './pages/LobbyPage';
 import { MetaForgePage } from './pages/MetaForgePage';
+import { ProfilePage } from './pages/ProfilePage';
+import { useAuthStore } from './stores/authStore';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
 import { preloadImages } from './utils/preloadAssets';
@@ -41,6 +45,7 @@ export function App() {
 	const runStatus = useGameStore((s) => s.runStatus);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const colorblindMode = useGameStore((s) => s.colorblindMode);
+	const profilePageOpen = useGameStore((s) => s.profilePageOpen);
 
 	useEffect(() => {
 		try {
@@ -70,6 +75,10 @@ export function App() {
 		} catch (err) {
 			console.error('[GLD] Boot sequence failed:', err);
 		}
+		useAuthStore
+			.getState()
+			.hydrate()
+			.catch((err) => console.error('[GLD] auth hydrate failed', err));
 		// 로비 진입 시 UI 이미지 pop-in 방지를 위한 사전 로드 (블로킹 없음)
 		preloadImages(Object.values(uiMobileArt));
 		const onSaveError = () =>
@@ -111,6 +120,9 @@ export function App() {
 			>
 				{content}
 			</div>
+			{runStatus === 'lobby' && profilePageOpen && <ProfilePage />}
+			<AuthModal />
+			<ProfileSetupModal />
 		</div>
 	);
 }

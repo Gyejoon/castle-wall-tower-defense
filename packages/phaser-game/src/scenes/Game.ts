@@ -1010,6 +1010,8 @@ export class GameScene extends Phaser.Scene {
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
 				goldEarned: this.goldEarned,
+				remainingHp: Math.max(0, this.playerHp),
+				initialHp: INITIAL_PLAYER_HP,
 			},
 		});
 	}

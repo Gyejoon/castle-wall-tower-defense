@@ -74,14 +74,14 @@ export function AssetReviewPage() {
 	);
 
 	return (
-		<div className="grid h-dvh grid-cols-[280px_1fr_360px] bg-slate-950 text-slate-100">
+		<div className="grid h-dvh grid-cols-[280px_1fr_360px] bg-bg text-text">
 			{/* Left: asset list */}
-			<aside className="flex flex-col border-r border-slate-800 bg-slate-900">
-				<header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+			<aside className="flex flex-col border-r border-border bg-panel">
+				<header className="flex items-center justify-between border-b border-border px-4 py-3">
 					<h1 className="font-mono text-sm tracking-wide">Asset Review</h1>
 					<button
 						type="button"
-						className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800 disabled:opacity-40"
+						className="rounded border border-border px-2 py-1 text-xs hover:bg-border disabled:opacity-40"
 						onClick={reload}
 						disabled={busy !== 'none'}
 					>
@@ -90,7 +90,7 @@ export function AssetReviewPage() {
 				</header>
 				<div className="min-h-0 flex-1 overflow-y-auto">
 					{entries.length === 0 && (
-						<p className="px-4 py-6 text-center text-xs text-slate-500">
+						<p className="px-4 py-6 text-center text-xs text-text-secondary/70">
 							No staged assets.
 							<br />
 							Run <code>bun gld-pipe forge &lt;id&gt;</code>.
@@ -108,18 +108,18 @@ export function AssetReviewPage() {
 			</aside>
 
 			{/* Middle: preview */}
-			<main className="flex min-w-0 flex-col bg-slate-950">
+			<main className="flex min-w-0 flex-col bg-bg">
 				{selected ? (
 					<AssetPreview entry={selected} />
 				) : (
-					<div className="flex flex-1 items-center justify-center text-slate-500">
+					<div className="flex flex-1 items-center justify-center text-text-secondary/70">
 						Select an asset to review.
 					</div>
 				)}
 			</main>
 
 			{/* Right: actions + metadata */}
-			<aside className="flex flex-col overflow-y-auto border-l border-slate-800 bg-slate-900">
+			<aside className="flex flex-col overflow-y-auto border-l border-border bg-panel">
 				{selected && (
 					<ActionsPanel
 						entry={selected}
@@ -135,12 +135,12 @@ export function AssetReviewPage() {
 
 			{/* Floating toast / error */}
 			{toast && (
-				<div className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-emerald-600 px-4 py-2 text-sm shadow-lg">
+				<div className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-success px-4 py-2 text-sm text-bg shadow-lg">
 					{toast}
 				</div>
 			)}
 			{error && (
-				<div className="fixed bottom-4 left-1/2 max-w-xl -translate-x-1/2 rounded bg-red-600 px-4 py-2 text-xs shadow-lg">
+				<div className="fixed bottom-4 left-1/2 max-w-xl -translate-x-1/2 rounded bg-danger px-4 py-2 text-xs text-text shadow-lg">
 					<button
 						type="button"
 						className="float-right ml-2"
@@ -168,38 +168,38 @@ function AssetRow({
 	const status = meta?.status ?? 'pending';
 	const statusColor =
 		status === 'accepted'
-			? 'bg-emerald-500'
+			? 'bg-success'
 			: status === 'rejected'
-				? 'bg-red-500'
-				: 'bg-amber-500';
+				? 'bg-danger'
+				: 'bg-accent';
 	return (
 		<button
 			type="button"
 			onClick={onSelect}
-			className={`flex w-full items-center gap-3 border-b border-slate-800 px-3 py-2 text-left hover:bg-slate-800 ${
-				active ? 'bg-slate-800' : ''
+			className={`flex w-full items-center gap-3 border-b border-border px-3 py-2 text-left hover:bg-border ${
+				active ? 'bg-border' : ''
 			}`}
 		>
 			{entry.hasPolished ? (
 				<img
 					src={stagingFileUrl(entry.id, 'polished.png')}
 					alt={entry.id}
-					className="h-10 w-10 shrink-0 rounded border border-slate-700 bg-slate-800 object-contain"
+					className="h-10 w-10 shrink-0 rounded border border-border bg-border object-contain"
 					style={{ imageRendering: 'pixelated' }}
 				/>
 			) : (
-				<div className="h-10 w-10 shrink-0 rounded border border-slate-700 bg-slate-800" />
+				<div className="h-10 w-10 shrink-0 rounded border border-border bg-border" />
 			)}
 			<div className="min-w-0 flex-1">
 				<div className="truncate font-mono text-xs">{entry.id}</div>
-				<div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+				<div className="flex items-center gap-1.5 text-[10px] text-text-secondary">
 					<span className={`h-1.5 w-1.5 rounded-full ${statusColor}`} />
 					<span>{status}</span>
 					{meta?.polishLevel === 'libresprite-polished' && (
-						<span className="rounded bg-slate-700 px-1 font-mono">LSP</span>
+						<span className="rounded bg-border/60 px-1 font-mono">LSP</span>
 					)}
 					{meta?.warnings?.length ? (
-						<span className="text-amber-400">⚠ {meta.warnings.length}</span>
+						<span className="text-accent">⚠ {meta.warnings.length}</span>
 					) : null}
 				</div>
 			</div>
@@ -214,7 +214,9 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 		<div className="flex flex-1 flex-col gap-4 overflow-auto p-6">
 			<header>
 				<h2 className="font-mono text-lg">{entry.id}</h2>
-				<p className="font-mono text-xs text-slate-400">{meta?.sourcePath}</p>
+				<p className="font-mono text-xs text-text-secondary">
+					{meta?.sourcePath}
+				</p>
 			</header>
 
 			<div className="grid grid-cols-2 gap-4">
@@ -241,19 +243,19 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 			</div>
 
 			{isSheet && (
-				<details className="text-xs text-slate-400">
+				<details className="text-xs text-text-secondary">
 					<summary className="cursor-pointer">Raw sheet</summary>
 					<div className="mt-2 grid grid-cols-2 gap-2">
 						<img
 							src={stagingFileUrl(entry.id, 'original.png')}
 							alt="original sheet"
-							className="border border-slate-800"
+							className="border border-border"
 							style={{ imageRendering: 'pixelated' }}
 						/>
 						<img
 							src={stagingFileUrl(entry.id, 'polished.png')}
 							alt="polished sheet"
-							className="border border-slate-800"
+							className="border border-border"
 							style={{ imageRendering: 'pixelated' }}
 						/>
 					</div>
@@ -280,15 +282,15 @@ function PreviewPane({
 }) {
 	if (!url) {
 		return (
-			<div className="flex min-h-[240px] items-center justify-center rounded border border-slate-800 text-slate-600">
+			<div className="flex min-h-[240px] items-center justify-center rounded border border-border text-text-secondary/50">
 				{title} — missing
 			</div>
 		);
 	}
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="text-xs text-slate-400">{title}</div>
-			<div className="flex min-h-[320px] items-center justify-center rounded border border-slate-800 bg-[repeating-conic-gradient(#1f2937_0%_25%,#111827_0%_50%)_50%/16px_16px]">
+			<div className="text-xs text-text-secondary">{title}</div>
+			<div className="flex min-h-[320px] items-center justify-center rounded border border-border bg-[repeating-conic-gradient(#1f2937_0%_25%,#111827_0%_50%)_50%/16px_16px]">
 				{isSheet &&
 				frameW !== undefined &&
 				frameH !== undefined &&
@@ -373,7 +375,7 @@ function ActionsPanel({
 			<section className="flex flex-col gap-2">
 				<button
 					type="button"
-					className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold hover:bg-emerald-500 disabled:opacity-40"
+					className="rounded bg-success px-3 py-2 text-sm font-semibold text-bg hover:brightness-110 disabled:opacity-40"
 					onClick={onAccept}
 					disabled={disabled || !entry.hasPolished}
 				>
@@ -381,7 +383,7 @@ function ActionsPanel({
 				</button>
 				<button
 					type="button"
-					className="rounded bg-slate-700 px-3 py-2 text-sm hover:bg-slate-600 disabled:opacity-40"
+					className="rounded border border-border bg-panel px-3 py-2 text-sm text-text hover:bg-border/40 disabled:opacity-40"
 					onClick={onRegenerate}
 					disabled={disabled}
 				>
@@ -389,7 +391,7 @@ function ActionsPanel({
 				</button>
 				<button
 					type="button"
-					className="rounded bg-red-600 px-3 py-2 text-sm hover:bg-red-500 disabled:opacity-40"
+					className="rounded bg-danger px-3 py-2 text-sm text-text hover:brightness-110 disabled:opacity-40"
 					onClick={onReject}
 					disabled={disabled}
 				>
@@ -405,28 +407,28 @@ function ActionsPanel({
 function MetadataPanel({ meta }: { meta: StagingMetadata }) {
 	return (
 		<section className="flex flex-col gap-2 text-xs">
-			<div className="font-mono text-slate-400">metadata</div>
-			<dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 rounded bg-slate-800 p-3">
-				<dt className="text-slate-500">status</dt>
+			<div className="font-mono text-text-secondary">metadata</div>
+			<dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 rounded bg-border p-3">
+				<dt className="text-text-secondary/70">status</dt>
 				<dd>{meta.status}</dd>
-				<dt className="text-slate-500">polish</dt>
+				<dt className="text-text-secondary/70">polish</dt>
 				<dd>{meta.polishLevel}</dd>
-				<dt className="text-slate-500">forged</dt>
+				<dt className="text-text-secondary/70">forged</dt>
 				<dd className="truncate">
 					{meta.forgedAt.slice(0, 16).replace('T', ' ')}
 				</dd>
-				<dt className="text-slate-500">rim / shadow</dt>
+				<dt className="text-text-secondary/70">rim / shadow</dt>
 				<dd>
 					{meta.polish.rimLight.strength}% / {meta.polish.rimLight.shadow}%
 				</dd>
-				<dt className="text-slate-500">noise</dt>
+				<dt className="text-text-secondary/70">noise</dt>
 				<dd>
 					d={meta.polish.noise.density.toFixed(2)}, seed=
 					{meta.polish.noise.seed.toString(16).padStart(8, '0')}
 				</dd>
 				{meta.polish.animation && (
 					<>
-						<dt className="text-slate-500">frames</dt>
+						<dt className="text-text-secondary/70">frames</dt>
 						<dd>
 							{meta.polish.animation.frameCount}× {meta.polish.animation.frameW}
 							×{meta.polish.animation.frameH}
@@ -436,11 +438,11 @@ function MetadataPanel({ meta }: { meta: StagingMetadata }) {
 			</dl>
 
 			{meta.warnings.length > 0 && (
-				<div className="rounded bg-amber-950/50 p-3">
-					<div className="mb-1 text-amber-400">
+				<div className="rounded border border-accent/40 bg-accent/10 p-3">
+					<div className="mb-1 text-accent">
 						warnings ({meta.warnings.length})
 					</div>
-					<ul className="list-disc pl-4 text-slate-300">
+					<ul className="list-disc pl-4 text-text">
 						{meta.warnings.map((w) => (
 							<li key={w} className="break-words">
 								{w}
@@ -451,9 +453,9 @@ function MetadataPanel({ meta }: { meta: StagingMetadata }) {
 			)}
 
 			{meta.animation?.warnings && meta.animation.warnings.length > 0 && (
-				<div className="rounded bg-amber-950/50 p-3">
-					<div className="mb-1 text-amber-400">animation drift</div>
-					<ul className="list-disc pl-4 text-slate-300">
+				<div className="rounded border border-accent/40 bg-accent/10 p-3">
+					<div className="mb-1 text-accent">animation drift</div>
+					<ul className="list-disc pl-4 text-text">
 						{meta.animation.warnings.map((w) => (
 							<li key={`${w.from}-${w.to}`}>
 								{w.from}→{w.to}: {w.drift.toFixed(2)}px &gt; {w.maxDrift}

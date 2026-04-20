@@ -77,6 +77,11 @@ export default defineConfig({
 						(id.includes('/react/') || id.includes('/react-dom/'))
 					)
 						return 'react';
+					// supabase-js + its deps (realtime, postgrest, gotrue, storage) bundle
+					// into ~120KB. Splitting to its own chunk means main index stays lean
+					// and repeat visitors don't re-download supabase on app code updates.
+					if (id.includes('node_modules') && id.includes('@supabase'))
+						return 'supabase';
 				},
 			},
 		},

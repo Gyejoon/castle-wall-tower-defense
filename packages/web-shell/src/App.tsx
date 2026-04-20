@@ -1,11 +1,8 @@
 import { ALL_TOWERS, DEFAULT_DECK_IDS } from '@gld/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { uiMobileArt } from './assets/uiMobileArt';
-import { AuthModal } from './components/auth/AuthModal';
-import { ProfileSetupModal } from './components/auth/ProfileSetupModal';
 import { LobbyPage } from './pages/LobbyPage';
 import { MetaForgePage } from './pages/MetaForgePage';
-import { ProfilePage } from './pages/ProfilePage';
 import { useAuthStore } from './stores/authStore';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
@@ -13,6 +10,22 @@ import { preloadImages } from './utils/preloadAssets';
 
 const GamePage = lazy(async () =>
 	import('./pages/GamePage').then((m) => ({ default: m.GamePage })),
+);
+
+// Auth/ranking UI is only reached after user interaction, so defer the bundle
+// until first open. supabase-js lives in the 'supabase' manualChunk, but these
+// UI components + their wiring add another ~20KB that doesn't belong in the
+// critical-path index chunk.
+const AuthModal = lazy(async () =>
+	import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })),
+);
+const ProfileSetupModal = lazy(async () =>
+	import('./components/auth/ProfileSetupModal').then((m) => ({
+		default: m.ProfileSetupModal,
+	})),
+);
+const ProfilePage = lazy(async () =>
+	import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 );
 
 function LoadingScreen() {
@@ -120,9 +133,15 @@ export function App() {
 			>
 				{content}
 			</div>
-			{runStatus === 'lobby' && profilePageOpen && <ProfilePage />}
-			<AuthModal />
-			<ProfileSetupModal />
+			{runStatus === 'lobby' && profilePageOpen && (
+				<Suspense fallback={null}>
+					<ProfilePage />
+				</Suspense>
+			)}
+			<Suspense fallback={null}>
+				<AuthModal />
+				<ProfileSetupModal />
+			</Suspense>
 		</div>
 	);
 }

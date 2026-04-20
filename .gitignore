@@ -35,3 +35,6 @@ Thumbs.db
 .claude/.skip-gate
 .claude/quality-tracker.json
 .ralreview-state.json
+
+# Asset forge staging (HITL review buffer — not committed)
+staging/

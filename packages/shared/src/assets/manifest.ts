@@ -12,6 +12,8 @@ export type AssetManifestSection =
 	| 'tutorial'
 	| 'gacha';
 
+export type AssetPolishLevel = 'canvas-only' | 'libresprite-polished';
+
 export interface AssetManifestEntry {
 	key: string;
 	type: AssetManifestType;
@@ -20,6 +22,13 @@ export interface AssetManifestEntry {
 	frameWidth?: number;
 	frameHeight?: number;
 	frameCount?: number;
+	/**
+	 * Post-process level. Absent or 'canvas-only' means the PNG is the raw
+	 * canvas generator output. 'libresprite-polished' means the file was
+	 * produced via `gld-pipe forge → accept` and has palette/rim-light/noise
+	 * post-processing applied.
+	 */
+	polish?: AssetPolishLevel;
 }
 
 export interface AssetManifest {

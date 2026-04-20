@@ -42,19 +42,23 @@ export class SpawnHutSystem {
 			const hutY = world.y - TILE_SIZE / 2; // align hut top to tile top edge
 			const baseDepth = sp.x + sp.y;
 
-			// Hut sprite
+			// Hut sprite — 48×60 matches new tower/tile scale so it fits row 0
+			// without overflowing into row 1 where grass platforms live.
+			// Depth must sit above the flat depth=2 grass platform layer (see
+			// Game.ts Layer 2 loop); we use 100+ to stay well clear of every
+			// grid-relative depth layer.
 			const hut = this.scene.add.sprite(world.x, hutY, 'spawn-hut-idle');
-			hut.setDisplaySize(64, 80);
+			hut.setDisplaySize(48, 60);
 			hut.setOrigin(0.5, 0.0);
-			hut.setDepth(baseDepth + 1);
+			hut.setDepth(100 + baseDepth);
 
-			// Smoke sprite (below door area)
+			// Smoke sprite (below door area) — 60-tall hut => smoke at y+45
 			const smoke = this.scene.add.sprite(
 				world.x,
-				hutY + 60,
+				hutY + 45,
 				'vfx-spawn-smoke',
 			);
-			smoke.setDepth(baseDepth + 2);
+			smoke.setDepth(101 + baseDepth);
 			smoke.setVisible(false);
 			smoke.play('spawn-smoke');
 			smoke.anims.pause();

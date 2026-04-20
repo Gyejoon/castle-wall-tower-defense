@@ -324,7 +324,7 @@ describe('GamePage', () => {
 		// which is required for safe-area-inset-top to reach the status bar
 		// correctly on devices like Galaxy S25.
 		expect(shell.style.transform).toBe('');
-		expect(shell.className).toContain('max-w-[430px]');
+		expect(shell.className).toContain('max-w-[520px]');
 		expect(shell.className).toContain('flex-col');
 	});
 

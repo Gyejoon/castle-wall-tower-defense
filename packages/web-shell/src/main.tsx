@@ -5,6 +5,7 @@ initSentry();
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { DesignSystemGallery } from './components/ds/__demos__/DesignSystemGallery';
 import { requestWakeLock, setupWakeLockReacquire } from './lib/wakeLock';
 import './styles/global.css';
 
@@ -14,10 +15,11 @@ if (!rootElement) {
 	throw new Error('Root element #root not found');
 }
 
+const isDsGallery =
+	new URLSearchParams(window.location.search).get('ds') === '1';
+
 createRoot(rootElement).render(
-	<StrictMode>
-		<App />
-	</StrictMode>,
+	<StrictMode>{isDsGallery ? <DesignSystemGallery /> : <App />}</StrictMode>,
 );
 
 // Screen orientation lock (portrait)

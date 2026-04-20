@@ -32,6 +32,55 @@
   --color-accent-20: rgba(200, 160, 74, 0.2);
 
   --font-pixel: 'Galmuri11', 'Press Start 2P', cursive;
+  --font-display: 'Press Start 2P', 'Galmuri11', cursive;
+
+  /* Spacing scale (4px base) — use as `p-xs`, `gap-md`, `m-2xl` */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+
+  /* Radius scale — use as `rounded-xs`, `rounded-md`, `rounded-pill` */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  /* Elevation — pixel drop shadows, use as `shadow-1`..`shadow-4` */
+  --shadow-1: 0 2px 0 rgba(10, 8, 4, 0.55);
+  --shadow-2: 0 3px 0 #7a5a10;
+  --shadow-3: 0 4px 0 rgba(10, 8, 4, 0.65), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow-4: 0 6px 0 rgba(10, 8, 4, 0.75), 0 2px 0 rgba(255, 255, 255, 0.06) inset;
+
+  /* Z-index semantic layers — use as `z-board`, `z-hud`, `z-modal`, etc. */
+  --z-board: 0;
+  --z-hud: 10;
+  --z-floating: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+
+  /* Motion duration — use as `duration-fast`..`duration-cinematic` */
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+  --duration-cinematic: 650ms;
+
+  /* Interactive state colors (non-core) */
+  --color-state-hover: #e0b860;
+  --color-state-focus: #ffcf66;
+  --color-state-warning: #c88c40;
+  --color-state-pressed: #7a5a10;
+
+  /* Surface levels */
+  --color-surface-elevated: #352818;
+  --color-surface-sunken: #1f1608;
 }
 
 /* Tailwind v4 preflight (@layer base) already resets margin/padding/box-sizing.
@@ -348,6 +397,10 @@ body {
   @keyframes slideDown {
     from { transform: translateY(0); opacity: 1; }
     to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes slideInFromRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(0); opacity: 1; }
   }
   @keyframes fadeSlideIn {
     from { opacity: 1; transform: translateY(0); }

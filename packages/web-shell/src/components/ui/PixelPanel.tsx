@@ -1,22 +1,9 @@
+/**
+ * Backwards-compat adapter — new code should import `Card` or `Panel` from `components/ds`.
+ */
 import type { HTMLAttributes } from 'react';
-import { cn } from '../../utils/cn';
+import { Card } from '../ds/Card';
 
-export function PixelPanel({
-	className,
-	style,
-	children,
-	...props
-}: HTMLAttributes<HTMLDivElement>) {
-	return (
-		<div
-			className={cn(
-				'p-4 bg-panel border-2 border-border shadow-[4px_4px_0px_var(--color-border)]',
-				className,
-			)}
-			style={style}
-			{...props}
-		>
-			{children}
-		</div>
-	);
+export function PixelPanel(props: HTMLAttributes<HTMLDivElement>) {
+	return <Card variant="panel" intent="default" {...props} />;
 }

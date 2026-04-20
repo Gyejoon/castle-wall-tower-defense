@@ -27,12 +27,17 @@ import type { TowerSystem } from './TowerSystem';
  * entries carry `energyRefund` — the amount to restore if the summon is
  * cancelled. Gacha summons spend energy at enqueue time (refund = cost);
  * regular pool summons defer spend to placement (refund = 0).
+ *
+ * `targetTier` is set only for gacha entries and lets the cancelled-draw
+ * cache key re-rolls by tier — a tier 2 cancel re-uses the drawn tower
+ * only if the next gacha request is also tier 2.
  */
 interface PendingSummonRequest {
 	requestId: string;
 	towerId: TowerId;
 	source: 'summon' | 'gacha';
 	energyRefund: number;
+	targetTier?: 2 | 3 | 4;
 }
 
 function makeRequestId(): string {
@@ -107,14 +112,24 @@ export class PhaseAOrchestrator {
 	private pendingSummon: PendingSummonRequest | null = null;
 	private summonQueue: PendingSummonRequest[] = [];
 	/**
-	 * Drawn pool tower that was cancelled before placement. Next
-	 * `request-summon-tower` consumes this instead of drawing a fresh one,
-	 * preventing a reroll exploit where the player cancels until they see a
-	 * tower they like. Only tracks pool draws (source === 'summon'); gacha
-	 * cancels refund upfront-paid energy and are free to re-roll since the
-	 * player already spent the cost.
+	 * Drawn pool tower that was cancelled (or failed to place) before
+	 * placement. Next `request-summon-tower` consumes this instead of drawing
+	 * a fresh one, preventing a reroll exploit where the player cancels until
+	 * they see a tower they like.
 	 */
 	private cancelledPoolDraw: TowerId | null = null;
+	/**
+	 * Gacha equivalent of `cancelledPoolDraw`. Cancelling (or failing to
+	 * place) a gacha summon preserves both the drawn tower and the tier so
+	 * the next same-tier gacha request re-uses the cached roll (spending the
+	 * cost again) instead of rolling a fresh one. Requesting a different
+	 * tier clears the cache — the player's explicit escape hatch when they
+	 * want a fresh roll at a different price point.
+	 */
+	private cancelledGachaDraw: {
+		towerId: TowerId;
+		targetTier: 2 | 3 | 4;
+	} | null = null;
 	private destroyed = false;
 	private activeUpgrades: Map<UpgradeId, number> = new Map();
 	private familyUpgradeLevels: Map<UpgradeableFamily, number> = new Map();
@@ -625,6 +640,7 @@ export class PhaseAOrchestrator {
 	private handleGachaRequest(data: { targetTier: 2 | 3 | 4 }): void {
 		const cost = GachaSystem.getCost(data.targetTier);
 		const energy = this.deps.energySystem;
+
 		if (energy && !energy.spend(cost)) {
 			EventBus.emit('gacha-insufficient-energy', {
 				targetTier: data.targetTier,
@@ -633,12 +649,38 @@ export class PhaseAOrchestrator {
 			});
 			return;
 		}
+
+		// Tier mismatch clears stale cache — pressing a different tier button
+		// is the player's explicit exit from the cached roll.
+		if (
+			this.cancelledGachaDraw &&
+			this.cancelledGachaDraw.targetTier !== data.targetTier
+		) {
+			this.cancelledGachaDraw = null;
+		}
+
+		// Cached same-tier re-roll: re-use the previously drawn tower. Cost
+		// already spent above; the re-charge per attempt mirrors the
+		// pool-cache pattern where re-summon defers cost to placement.
+		if (this.cancelledGachaDraw?.targetTier === data.targetTier) {
+			const preserved = this.cancelledGachaDraw.towerId;
+			this.cancelledGachaDraw = null;
+			this.enqueueSummon({
+				towerId: preserved,
+				source: 'gacha',
+				energyRefund: cost,
+				targetTier: data.targetTier,
+			});
+			return;
+		}
+
 		const oddsBonus = this.getTierOddsBonus();
 		const towerId = GachaSystem.rollTier(data.targetTier, this.rng, oddsBonus);
 		this.enqueueSummon({
 			towerId,
 			source: 'gacha',
 			energyRefund: cost,
+			targetTier: data.targetTier,
 		});
 	}
 
@@ -665,25 +707,40 @@ export class PhaseAOrchestrator {
 	/**
 	 * Resolve the current pending summon and advance the queue.
 	 *
-	 * - `placed` → no refund, next queue entry surfaces.
-	 * - `cancelled` → refund `energyRefund` (gacha paid upfront; pool was 0).
-	 * - `cancelled-no-refund` → placement failed after the caller already
-	 *   refunded the charged cost; advance without double-refunding.
+	 * - `placed` → no refund, both draw caches cleared, next queue entry
+	 *   surfaces. Clearing is defensive: at most one cache is non-null at a
+	 *   time, but a successful placement is an unambiguous signal that the
+	 *   previous cancelled draw is no longer relevant.
+	 * - `cancelled` → refund `energyRefund` (gacha paid upfront; pool was 0)
+	 *   AND cache the draw (pool → `cancelledPoolDraw`, gacha →
+	 *   `cancelledGachaDraw`). Caching both sources closes the reroll-abuse
+	 *   loophole where a gacha cancel used to let the player re-roll for
+	 *   free cost at the pre-refund price.
+	 * - `cancelled-no-refund` → placement failed after `completePlacement`
+	 *   already refunded the charged cost; same caching as `cancelled` but
+	 *   no energy movement so we don't double-refund.
 	 */
 	private settlePendingSummon(
 		outcome: 'placed' | 'cancelled' | 'cancelled-no-refund',
 	): void {
 		const cur = this.pendingSummon;
 		this.pendingSummon = null;
-		if (cur && outcome === 'cancelled') {
-			// Gacha cancels refund the upfront-paid energy and DO NOT preserve
-			// the drawn tower — re-rolling after a refund is fine because the
-			// player has to spend again. Pool cancels preserve the drawn
-			// tower so the next summon tap can't reroll into a better draw.
-			if (cur.energyRefund > 0) this.deps.energySystem?.add(cur.energyRefund);
+		if (cur && (outcome === 'cancelled' || outcome === 'cancelled-no-refund')) {
+			if (outcome === 'cancelled' && cur.energyRefund > 0) {
+				this.deps.energySystem?.add(cur.energyRefund);
+			}
 			if (cur.source === 'summon') {
 				this.cancelledPoolDraw = cur.towerId;
+			} else if (cur.source === 'gacha' && cur.targetTier !== undefined) {
+				this.cancelledGachaDraw = {
+					towerId: cur.towerId,
+					targetTier: cur.targetTier,
+				};
 			}
+		}
+		if (outcome === 'placed') {
+			this.cancelledPoolDraw = null;
+			this.cancelledGachaDraw = null;
 		}
 		const next = this.summonQueue.shift();
 		if (next) {

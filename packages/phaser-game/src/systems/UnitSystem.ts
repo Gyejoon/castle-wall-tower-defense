@@ -591,7 +591,7 @@ export class UnitSystem {
 			EventBus.emit('boss-hp-update', {
 				unitId: unit.data.instanceId,
 				defId: unit.def.id,
-				hp: Math.max(0, unit.data.hp),
+				hp: Math.max(0, Math.floor(unit.data.hp)),
 				maxHp: unit.maxHp,
 				phase: unit.bossPhase,
 			});

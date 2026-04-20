@@ -26,6 +26,8 @@ vi.mock('phaser', () => ({
 		Scale: {
 			FIT: 'FIT',
 			CENTER_HORIZONTALLY: 'CENTER_HORIZONTALLY',
+			NONE: 'NONE',
+			NO_CENTER: 'NO_CENTER',
 		},
 	},
 }));
@@ -37,5 +39,11 @@ describe('gameConfig', () => {
 		expect(gameConfig.width).toBe(ORTHO_CANVAS_W);
 		expect(gameConfig.height).toBe(GAME_CANVAS_H);
 		expect(gameConfig.plugins?.global).toBeUndefined();
+	});
+
+	it('pins scale mode to NONE so React owns device-level scaling (Phase A [B4])', async () => {
+		const { gameConfig } = await import('../src/config');
+		expect(gameConfig.scale?.mode).toBe('NONE');
+		expect(gameConfig.scale?.autoCenter).toBe('NO_CENTER');
 	});
 });

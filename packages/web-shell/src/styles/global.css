@@ -43,6 +43,17 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Phase A [B4]: pin the Phaser canvas container to the fixed logical
+   resolution. React wraps this container in a CSS transform scale, so
+   Phaser renders once at 432×960 and the browser scales the UI uniformly.
+   Keep width/height explicit — the flex-1 ancestor sets the canvas slot
+   but Phaser canvas itself needs deterministic pixel dimensions. */
+#game-container,
+#game-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);

@@ -15,9 +15,14 @@ import { TutorialOverlay } from '../components/game/TutorialOverlay';
 import { UpgradePickOverlay } from '../components/game/UpgradePickOverlay';
 import { PhaserGame } from '../game/PhaserGame';
 import { useGameEvents } from '../hooks/useGameEvents';
+import { useViewportScale } from '../hooks/useViewportScale';
 import { useGameStore } from '../stores/gameStore';
 
+const BASE_WIDTH = 432;
+const BASE_HEIGHT = 960;
+
 export function GamePage() {
+	const viewportScale = useViewportScale(BASE_WIDTH, BASE_HEIGHT);
 	const runId = useGameStore((s) => s.runId);
 	const runStatus = useGameStore((s) => s.runStatus);
 	const gameReady = useGameStore((s) => s.gameReady);
@@ -260,8 +265,17 @@ export function GamePage() {
 	const isBossPhase = combatHud.bossWarning || combatHud.phase === 'boss';
 
 	return (
-		<div className="flex h-full w-full justify-center bg-bg">
-			<div className="relative flex h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+		<div className="flex h-full w-full items-center justify-center overflow-hidden bg-bg">
+			<div
+				data-testid="game-scale-wrapper"
+				className="relative flex flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+				style={{
+					width: `${BASE_WIDTH}px`,
+					height: `${BASE_HEIGHT}px`,
+					transform: `scale(${viewportScale})`,
+					transformOrigin: 'top center',
+				}}
+			>
 				{!gameReady && (
 					<div
 						className="absolute inset-0 z-[5] flex flex-col items-center justify-center"

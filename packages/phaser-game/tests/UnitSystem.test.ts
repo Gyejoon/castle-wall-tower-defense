@@ -19,6 +19,7 @@ vi.mock('../src/EventBus', () => ({
 	EventBus: { emit: vi.fn(), on: vi.fn(), off: vi.fn() },
 }));
 
+import { EventBus } from '../src/EventBus';
 import { UnitSystem } from '../src/systems/UnitSystem';
 
 function createSprite() {
@@ -595,6 +596,27 @@ describe('Boss phase system', () => {
 		expect(result).not.toBeNull();
 		expect(result?.killed).toBe(true);
 		expect(system.getUnitPositions()).toHaveLength(0);
+	});
+
+	it('emits boss-hp-update with integer hp (no decimals in HUD)', () => {
+		system.queueUnits('orc_warlord', 1, { isBoss: true, hpMultiplier: 1 });
+		system.update(0, 300); // spawn
+		const unitId = system.getUnitPositions()[0].instanceId;
+
+		// Fractional damage exercises the floor guard — orc_warlord armor=10
+		// means a 17.3 raw hit resolves to a non-integer internal hp.
+		system.applyDamage(unitId, 17.3, false);
+
+		const emitCalls = (EventBus.emit as unknown as ReturnType<typeof vi.fn>)
+			.mock.calls;
+		const bossUpdates = emitCalls.filter(
+			(c: unknown[]) => c[0] === 'boss-hp-update',
+		);
+		expect(bossUpdates.length).toBeGreaterThan(0);
+		for (const [, payload] of bossUpdates) {
+			const hp = (payload as { hp: number }).hp;
+			expect(Number.isInteger(hp)).toBe(true);
+		}
 	});
 });
 

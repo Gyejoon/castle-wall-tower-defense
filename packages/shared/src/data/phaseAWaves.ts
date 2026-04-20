@@ -57,7 +57,7 @@ const PHASE_A_BOSS_SLOTS: Record<number, BossSlot> = {
  * complexity with slot index: scout_drone only through slot 4, battle_robot
  * from slot 5, heavy_walker from slot 10, stealth_drone from slot 20.
  *
- * Called once at module load with count=50. `getWaveScaling`'s exponential
+ * Called once at module load with count=50. `getWaveScaling`'s linear
  * HP ramp past slot 10 combined with per-boss `hpMultiplier` overrides
  * ensures that each boss slot is a clear escalation over the previous.
  */

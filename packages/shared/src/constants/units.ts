@@ -58,11 +58,16 @@ export const UNITS: UnitDef[] = [
 		id: 'dragon',
 		name: '고대 드래곤',
 		type: 'dragon',
-		stats: { hp: 500, speed: 0.5, armor: 25 },
+		// Wave 50 final boss. Flies so it ignores ground collisions,
+		// resists CC heavily, and hits the biggest base HP in the pool so
+		// family upgrades + ultimate merges are the only real answer.
+		stats: { hp: 60000, speed: 0.6, armor: 35 },
 		element: 'fire',
-		bounty: 60,
+		bounty: 1500,
 		isPremium: false,
 		flying: true,
+		bossBehaviorId: 'dragon',
+		bossCcResist: 0.8,
 	},
 	// W2 — Forge
 	{

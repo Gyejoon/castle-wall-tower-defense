@@ -4,6 +4,10 @@ import type { UnitType } from '../types/unit';
 export interface WaveGroup {
 	unitId: UnitType;
 	count: number;
+	/** Optional per-group HP boost that stacks on top of WAVE_SCALING. Used
+	 *  to make specific boss slots (e.g. wave 40) noticeably tougher than
+	 *  the previous boss even when base stats are identical. Default 1. */
+	hpMultiplier?: number;
 }
 
 export type WaveSlotKind = 'normal' | 'boss';

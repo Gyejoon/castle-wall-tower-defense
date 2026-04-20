@@ -64,14 +64,34 @@ describe('generatePhaseAWaves', () => {
 		}
 	});
 
-	it('bosses alternate orc_warlord / forge_master', () => {
+	it('5 고유 보스 라인업 (orc → forge → archmage → archmage+hp×2.5 → dragon)', () => {
 		const bossWaves = phaseA.filter((w) => w.kind === 'boss');
 		expect(bossWaves).toHaveLength(5);
+		const expectedBosses = [
+			'orc_warlord',
+			'forge_master',
+			'corrupted_archmage',
+			'corrupted_archmage',
+			'dragon',
+		];
 		bossWaves.forEach((w, i) => {
-			const expected = i % 2 === 0 ? 'orc_warlord' : 'forge_master';
-			expect(w.groups[0].unitId).toBe(expected);
+			expect(w.groups[0].unitId).toBe(expectedBosses[i]);
 			expect(w.groups[0].count).toBe(1);
 		});
+	});
+
+	it('wave 40 archmage에 hpMultiplier 2.5 붙어 wave 30 archmage보다 확실히 세다', () => {
+		const wave30 = phaseA.find((w) => w.slotIndex === 30);
+		const wave40 = phaseA.find((w) => w.slotIndex === 40);
+		expect(wave30?.groups[0].hpMultiplier).toBeUndefined();
+		expect(wave40?.groups[0].hpMultiplier).toBe(2.5);
+	});
+
+	it('wave 50 dragon은 기본 escort로 flame_imp 6마리 동반', () => {
+		const wave50 = phaseA.find((w) => w.slotIndex === 50);
+		expect(wave50?.groups[0].unitId).toBe('dragon');
+		const flameImps = wave50?.groups.find((g) => g.unitId === 'flame_imp');
+		expect(flameImps?.count).toBe(6);
 	});
 
 	it('normal waves carry 30 units', () => {

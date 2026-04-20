@@ -71,6 +71,7 @@ import { CastleWallSystem } from '../systems/CastleWallSystem';
 import '../systems/boss-ai/orcWarlord';
 import '../systems/boss-ai/forgeMaster';
 import '../systems/boss-ai/corruptedArchmage';
+import '../systems/boss-ai/dragon';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';

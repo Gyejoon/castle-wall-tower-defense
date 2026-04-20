@@ -273,7 +273,8 @@ export class WaveSystem {
 			const isBoss = !!unitDef?.bossBehaviorId;
 			const hpMultiplier =
 				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
-				this.difficultyHpMult;
+				this.difficultyHpMult *
+				(group.hpMultiplier ?? 1);
 			this.unitSystem.queueUnits(group.unitId, group.count, {
 				source: 'base',
 				countsTowardClear: true,

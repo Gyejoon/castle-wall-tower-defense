@@ -61,7 +61,7 @@ bun dev:web                                        # 개발 서버 (port 3000)
 
 - **TypedEventBus** — React↔Phaser 양방향 typed 이벤트 통신. `request-*` (React→Game), 서술형 (Game→React).
 - **runStatus 흐름** — `lobby → building → running → victory | defeat`. Zustand 스토어가 전체 런 상태를 관리.
-- **Phase A 단일 모드** — 소환 / 합성 / 가챠 / 보스 / 로그라이크 / 메타 강화 루프. 시나리오(월드/스테이지/미션/덱)는 제거.
+- **단일 정식 모드** — 소환 / 합성 / 가챠 / 보스 / 로그라이크 / 메타 강화 루프. 시나리오(월드/스테이지/미션/덱)는 제거.
 - **에너지 v3** — 초당 +1, 킬 +1, 보스 처치 +20, fast-clear +20. CAP 200. 웨이브 클리어 고정 보너스는 없다.
 - **Save 마이그레이션** — v6→v7 (grade→tier, plasma/dragon_nest 제거), v7→v8 (시나리오 키 정리). 현재 v8.
 - **디자인 토큰** — Tailwind v4 `@theme`. accent `#c8a04a`, panel `#2a2010`, border `#4a3a20`, danger `#c03020`, info `#4a7a9a`. `font-pixel` (Press Start 2P + Galmuri11).
@@ -69,12 +69,15 @@ bun dev:web                                        # 개발 서버 (port 3000)
 
 ## 로드맵
 
-| Phase | 설명 | 상태 |
-|-------|------|------|
-| A | 단일 모드 확정 — 소환/합성/가챠/보스/로그라이크/메타 shell (이 빌드) | **완료** |
-| 9 | 메타 루프 본 구현 — `metaProgressStore` 영속화, `globalAtkPct` 주입 | **shell 완료** |
-| 10 | BM stub — `AdService` + `MockAdService`, 이어서 하기 (1회/런) | **완료** |
-| 11 | 실광고 SDK 연결, 튜토리얼, LiveOps | 계획 |
+| 트랙 | 설명 | 상태 |
+|------|------|------|
+| R1 | 정식 모드 확정 — 소환/합성/가챠/보스/로그라이크/메타 shell + 4 안정화 픽스 (B1-B4) | **완료** |
+| R1 | 메타 루프 본 구현 — `metaProgressStore` 영속화, `globalAtkPct` 주입 | **shell 완료** |
+| R1 | BM stub — `AdService` + `MockAdService`, 이어서 하기 (1회/런) | **완료** |
+| R2 | 타워 강화 UX 확장 / 메타 퍽 선택 UI / 맵 2~3종 / FTUE 튜토리얼 | 계획 |
+| R3 | 실광고 SDK 연결, LiveOps, 서버 동기화, BM 본격화 | 계획 |
+
+자세한 트랙 정의는 `docs/game-spec/06-milestone.md` 참조.
 
 활성 스펙과 플랜은 `docs/superpowers/` 아래에서 관리된다.
 

@@ -42,9 +42,9 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 루프(Phase A). 시나리오 모드(월드/스테이지/미션/덱)는 제거됨.
+Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. (코드상 `PhaseAOrchestrator` / `PHASE_A_MAP_ID` 등 식별자는 이전 프로토타입 트랙명을 이어받은 historical identifier — 런타임 모드 구분이 아님.)
 
-**구현 완료 (Phase A, 유일 모드):**
+**구현 완료 (정식 모드):**
 - **맵:** 9×18 세로 그리드, 중앙 레인 프리미엄 존 + 장애물 9개(tiny-swords 나무/바위/덤불). 50 wave endless.
 - **타워:** 19종 = 4 family × 4 tier + tier-5 하이브리드 2 + tier-6 궁극기 1. Grade 개념 제거, tier + family로 통합. 합성 경로는 `MERGE_CHAIN` / `resolveMerge`(`shared/src/constants/towers.ts`)로 정의.
 - **인게임 가챠:** T2 (⚡40, 60%) / T3 (⚡80, 20%) / T4 (⚡160, 5%). 로그라이크 카드 `tier_odds_up`이 +50%p까지 스택.
@@ -52,7 +52,7 @@ Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 →
 - **에너지 v3:** +1/sec, 킬 +1, 보스 처치 +20, fast-clear +20, CAP 200. 웨이브 클리어 보너스 없음.
 - **HUD:** 하단 액션바(Summon + 가챠 3종 + Menu), 상단 정보 배지, floating `TowerActionSheet`(merge/move/sell), `SummonRevealOverlay`, `UpgradePickOverlay`, `PauseModal`.
 - **CC 가드레일:** `ccResistance`(보스 0.5~0.7), `MIN_MOVE_SPEED=0.15` 하한, 2초 스턴 면역 윈도우.
-- **메타 루프 (Phase 9 shell):** `metaProgressStore`(Zustand + persist). `globalAtkPct`가 scene registry를 통해 TowerSystem에 주입.
+- **메타 루프 (shell 수준):** `metaProgressStore`(Zustand + persist). `globalAtkPct`가 scene registry를 통해 TowerSystem에 주입.
 - **BM stub:** `AdService` 인터페이스 + `MockAdService`. 패배 시 "이어서 하기"(런당 최대 1회).
 - **저장소:** save v6→v7 (grade→tier, plasma/dragon_nest 제거), v7→v8 (시나리오 키 정리). 현재 v8.
 - 기타: 모바일 세로형 셸(430px), iOS AudioContext 자동 해금, 절차적 픽셀 아트 에셋 파이프라인, Sentry 에러 추적, 3배속 토글.
@@ -127,7 +127,7 @@ lobby → building → running → victory | defeat → lobby
 | `packages/web-shell/src/stores/gameStore.ts` | Zustand 상태 — runStatus, gold, lives, wave 등 |
 | `packages/web-shell/src/game/PhaserGame.tsx` | React 측 Phaser 마운트 |
 | `packages/web-shell/src/App.tsx` | 상태 기반 라우팅 (lobby ↔ game) |
-| `packages/web-shell/src/pages/LobbyPage.tsx` | 로비 — Phase A 단일 진입점, 메타 강화 |
+| `packages/web-shell/src/pages/LobbyPage.tsx` | 로비 — 정식 모드 단일 진입점, 메타 강화 |
 | `packages/web-shell/src/pages/GamePage.tsx` | 게임 UI, HUD(하단 액션바 + 상단 배지), TowerActionSheet, PauseModal |
 | `packages/web-shell/src/stores/metaProgressStore.ts` | 메타 루프 shell (Zustand + persist, globalAtkPct 등) |
 | `packages/shared/src/services/AdService.ts` | BM stub: `AdService` 인터페이스 + `MockAdService` |
@@ -146,7 +146,7 @@ lobby → building → running → victory | defeat → lobby
 | `RandomSummonSystem.ts` | SummonPool 기반 랜덤 소환 |
 | `MergeSystem.ts` | `MERGE_CHAIN`/`resolveMerge` 기반 합성 (family/tier) |
 | `GachaSystem.ts` | 인게임 가챠 (T2/T3/T4, `tier_odds_up` 스택) |
-| `PhaseAOrchestrator.ts` | Phase A 코어 루프 조율, 보스 웨이브 클리어 시 로그라이크 카드 선택 트리거 |
+| `PhaseAOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`). 클래스명은 이전 프로토타입 트랙 명칭에서 유지 (historical identifier) |
 | `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
 
 ## 커맨드

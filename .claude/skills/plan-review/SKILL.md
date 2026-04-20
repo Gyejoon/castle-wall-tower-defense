@@ -161,9 +161,9 @@ Phase 1 완료 후, Step 0-4에서 Phase 1에 할당된 스펙 문서를 `docs/g
 | 차원 | 대조 문서 | 검증 내용 |
 |------|---------|---------|
 | 코어 루프 정합 | 01-GDD §3 (Core Loop / Meta Loop) | Plan이 코어 루프(소환→배치→합성→웨이브→킬에너지)나 메타 루프(성장→도전)를 변경/확장하는가? 변경 시 GDD의 정의와 충돌하지 않는가? |
-| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 9대 레거시 시스템(Combat, Movement, Placement, Tower Sell, Element, Gacha/Box, Upgrade, Boss/Encounter, GimmickSystem) + 4대 Phase A 시스템(SummonPoolSystem, RandomSummonSystem, MergeSystem, PhaseAOrchestrator)과 충돌하지 않는가? |
+| 시스템 범위 | 01-GDD §4 (Core Systems) | Plan이 새 시스템을 추가하거나 기존 시스템의 역할을 변경하는가? 정식 모드 핵심 시스템(SummonPoolSystem, RandomSummonSystem, MergeSystem, GachaSystem, PhaseAOrchestrator, EnergySystem, GoldSystem, UnitSystem, TowerSystem)과 충돌하지 않는가? |
 | 수익화 원칙 | 03-BM §1 (BM 구조) | Plan이 BM 금지선(진입장벽, pay-to-win, 강제 광고, 밸런스 영향 코스메틱)을 위반하는가? |
-| 타임라인 정합 | 06-milestone (출시 전) | Plan의 작업이 현재 Phase 위치와 맞는가? 미래 Phase 기능을 선행하고 있지 않은가? |
+| 타임라인 정합 | 06-milestone (출시 전) | Plan의 작업이 현재 R 트랙(R1/R2/R3) 위치와 맞는가? 미래 트랙 기능을 선행하고 있지 않은가? |
 | 게임 정체성 | 01-GDD §10 (Edge Point) | Plan이 게임의 Edge Point(랜덤 소환 슬롯머신 도파민, 인게임 합성 등급업 도파민, 5~10분 밀도 세션, 픽셀 중세 세로형 single-field)를 희석하는가? |
 
 #### 판정 기준
@@ -309,7 +309,7 @@ Step 0-4에서 Phase 2에 할당된 스펙 문서를 `docs/game-spec/`에서 읽
 | 에셋 규격 | 07-asset-def §1 (공통 제작 사양), §3 (타워), §10 (네이밍) | Plan이 제안하는 에셋이 공통 규격(64×80 타워, 40×48 유닛, 8-frame 스프라이트시트, center pivot, PNG+WebP)을 따르는가? |
 | 속성/등급 색상 | 07-asset-def §4 (색상 정책), §11 (등급 토큰) | Plan이 사용하는 속성 색상(fire #e74c3c, water #3498db, lightning #f39c12, neutral #c8a04a)과 등급 색상이 에셋 정의와 일치하는가? |
 | UI 구조 | 01-GDD §8 (UI 구조) | Plan이 추가하는 UI 요소가 기존 UI 구조(HUD, ProfileBar, Lobby 3탭+플로팅 아이콘, WorldMap, StageDetail, Deck, Result, Tutorial, Tower Sell Panel, Exit Modal)와 충돌하지 않는가? |
-| 콘텐츠 범위 | 01-GDD §5 (Content Plan) | Plan이 참조하는 타워·적·스테이지·웨이브 수가 콘텐츠 플랜(18타워×5티어, 적 9종+보스 3종, 3월드×8스테이지=24스테이지, 10웨이브)과 일치하는가? Phase A: phase_a_long 맵(8×24 U-turn), 50 wave endless, 랜덤 소환+합성 코어 루프, 킬 에너지 경제, 로그라이트 강화 선택(10 웨이브마다 3장 중 1장) |
+| 콘텐츠 범위 | 01-GDD §5 (Content Plan) | Plan이 참조하는 타워·적·스테이지·웨이브 수가 콘텐츠 플랜(**19타워** = 4 family × 4 tier + hybrid×2 + ultimate×1, 적 3종 + 보스 3종, 단일 맵 `phase_a_long` = **9×18 grid 48px 타일 U-turn path**, 50 wave endless, 보스 10 wave마다)과 일치하는가? 코어 루프(랜덤 소환+합성+가챠), 킬 에너지 경제(+1/sec baseline + 킬+1 + 보스+20 + fast-clear+20, CAP 200), 로그라이트 강화 선택(보스 웨이브 클리어 시 3장 중 1장)을 전제로 검증. |
 
 판정 기준과 충돌 리포트 형식은 Step 1과 동일하다.
 

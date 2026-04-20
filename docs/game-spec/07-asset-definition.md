@@ -6,7 +6,7 @@
 >
 > **v3 변경 요약**: plasma, dragon_nest 타워 **완전 제거** (family/tier 모델 불일치). hybrid_ab / hybrid_cd / ultimate 3종 신규 placeholder 상태 명시. PR #173 포팅으로 Tilemap_dirt_seamless / grass_seamless / path seamless 타일셋 도입. Cinematic keyart 로비 에셋 (성 실루엣 CSS-only, 에셋 없음).
 >
-> **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE` + React CSS transform wrapper (`useViewportScale`) 도입으로 **게임 내부 논리 해상도는 모든 기기에서 고정 432×960**. 타워 스프라이트(64×80), 유닛 스프라이트(40×48 / 60×72), 타일(48×48) 등 픽셀 아트 에셋은 캔버스 1:1 기준으로 렌더되며, 디바이스 스케일링은 canvas 바깥의 CSS transform에서만 이루어진다. 에셋 제작 시에도 이 논리 해상도를 기준 좌표계로 간주한다.
+> **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 타워 스프라이트(64×80), 유닛 스프라이트(40×48 / 60×72), 타일(48×48) 등 픽셀 아트 에셋은 이 내부 좌표계 1:1 기준으로 렌더되며, 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas). 에셋 제작 시에도 이 논리 해상도를 기준 좌표계로 간주한다.
 
 ---
 
@@ -359,4 +359,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-10 | §1, §2, §5, §6 | 일반 몬스터 4종 에셋 강화: 3-tone+1px 아웃라인, walk 8f + idle 6f + death 6f, 유닛별 실루엣 훅, stealth_drone 추상형→캐릭터형, 공용 unit-death 폐기, §1 spritesheet 규격 idle/death 추가, 보스 §6 후속 이슈 주석 |
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
 | 2026-04-20 | §3, §11 (전반) | **v3 정식 모드 승격**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |
-| 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE` + React CSS transform wrapper (`useViewportScale`)로 모든 디바이스에서 캔버스 내부 픽셀 기준을 동일하게 유지. 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 이 고정 좌표계를 전제로 제작·배치. |
+| 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 이 고정 좌표계를 전제로 제작·배치. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |

@@ -6,7 +6,7 @@
 >
 > **v3 노트 (2026-04-20)**: 2026-04-14 피벗으로 도입된 랜덤 소환 + 합성 루프를 **게임의 유일한 정식 모드**로 확정. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
 >
-> **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser `Scale.NONE` + React CSS transform 기반 고정 432×960 논리 해상도 wrapper (`useViewportScale` 훅) 도입해 기기별 타워/몬스터 비율 드리프트 차단. PR #175.
+> **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`, 생존 중 최소 1 clamp). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser `Scale.NONE`으로 내부 해상도 432×960 고정 + 모바일 세로형 표준 레이아웃 (React shell은 `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + `safe-area-inset-top`, 캔버스가 flex-1 슬롯을 채움). 기기별 타워/몬스터 비율은 캔버스 내부 좌표계에서 보존. PR #175.
 
 ---
 
@@ -354,14 +354,18 @@ speed = min(WAVE_SCALING[10].speed + (slot - 10) × 0.03, 2.2)
 
 ## 8. UI / UX (v3)
 
-### 논리 해상도 & 뷰포트 스케일 (v3.1 B4 픽스)
+### 논리 해상도 & 레이아웃 (v3.1 B4 픽스, mobile portrait standard)
 
-Phaser canvas와 HUD 전체가 **고정 432×960 논리 해상도**로 렌더링되고, React CSS transform wrapper(`useViewportScale` 훅)가 뷰포트 크기에 맞춰 **균등 scale**을 적용한다. 이전 `Scale.FIT` + `h-dvh` 조합은 기기별 부모 CSS 크기에 따라 내부 단위를 재계산해 타워(64×80) / 몬스터(40×48/60×72) 상대 크기가 드리프트하는 문제가 있었다.
+Phaser **캔버스 내부** 해상도는 `Scale.NONE`으로 432×960 고정 — 어떤 기기에서 렌더되든 타워(64×80) / 몬스터(40×48 / 60×72) / 타일(48×48) 스프라이트의 상대 크기가 동일하다. 이전 `Scale.FIT` + `h-dvh` 조합은 기기별 부모 CSS 크기에 따라 canvas CSS 크기를 비례 재조정해 시각적 비율이 드리프트했다.
 
-- **Phaser**: `scale.mode = Phaser.Scale.NONE`, `autoCenter = NO_CENTER` — 내부 해상도 고정
-- **React wrapper**: `game-scale-wrapper`가 `width: 432px; height: 960px; transform: scale(min(ww/432, wh/960))` — 뷰포트에 비례 축소
-- **HUD + 게임 컨테이너 모두 wrapper 안에 포함** — 함께 스케일되므로 HUD:캔버스 비율 유지
-- **터치 이벤트**: CSS transform으로 hit area도 함께 스케일. Phaser input은 canvas DOMRect 기준이라 내부적으로 1:1 매핑 유지
+레이아웃은 **모바일 2D 세로형 표준**을 따른다 — HUD는 자연 DOM 크기 / flex-1 canvas 영역 / 안전영역 패딩. CSS transform 스케일 wrapper는 사용하지 않는다(초기 구현 시 전체 레이아웃을 스케일하는 접근이 Galaxy S25 등 중간 뷰포트에서 헤더 HUD를 상태바와 충돌시켜 폐기).
+
+- **Phaser**: `scale.mode = Phaser.Scale.NONE`, `autoCenter = NO_CENTER` — 내부 bitmap 432×960 고정
+- **React shell (`GamePage`)**: `data-testid="game-portrait-shell"`, `width: 100% max-w-[430px]`, `height: 100dvh`, `flex-col`
+- **TopHud**: `shrink-0`, `paddingTop: max(0, env(safe-area-inset-top))` — 펀치홀 / 상태바 회피
+- **게임 영역 (flex-1)**: `#game-container`가 남은 공간을 채우고, 내부 canvas는 `width/height: 100%`로 슬롯에 스트레치. 캔버스 내부는 uniform 스케일(좌표계 보존)
+- **PhaseAHud**: `shrink-0`, `paddingBottom: max(8px, env(safe-area-inset-bottom))` — 홈 인디케이터 회피
+- **터치 이벤트**: 네이티브 DOM 크기 유지라 별도 보정 불필요
 
 ### HUD 구조
 
@@ -567,4 +571,4 @@ screenShake 동기화:
 | 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |
 | 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 U-turn 왕복) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. PhaseAHud(React) + 3배속 + 웨이브 타이머 HUD. PR #170. |
 | 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 정식 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |
-| 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 PhaseAOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 고정 432×960 논리 해상도 wrapper — `useViewportScale` 훅이 `scale(min(ww/432, wh/960))` 적용해 기기별 canvas 내부 해상도 드리프트 차단. §8 "논리 해상도 & 뷰포트 스케일" 소섹션 신설. 용어 정리: "Phase A" → "정식 모드" 전반 치환 (map/event id 등 코드 상수는 유지). |
+| 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 PhaseAOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" → "정식 모드" 전반 치환 (map/event id 등 코드 상수는 유지). |

@@ -38,7 +38,7 @@
 | R1 | Cinematic keyart 로비 (성 실루엣·달·횃불) + NEXT UP CTA 카드 | ✅ | PR 디자인 프로토타입 "Option C" 포팅 |
 | R1 | 인게임 타워 강화 (GoldSystem + 골드 소비 Lv+1, L10 cap) | ✅ | Post-ship fix — 사용자 피드백 #4 |
 | R1 | 공성 projectile VFX 회귀 fix + 타워 idle tween 복원 + 취소 꼼수 방지 | ✅ | Post-ship fix |
-| R1 | **v3.1 안정화 4 버그 픽스 (PR #175)** — B1 풀·가챠 양쪽 재소환 리롤 차단 / B2 보스 HP 정수 guard / B3 선형 HP 스케일 (HP_SLOPE=0.55) / B4 고정 432×960 논리 해상도 + `useViewportScale` | ✅ | 로컬 플레이테스트 회귀 커밋 |
+| R1 | **v3.1 안정화 4 버그 픽스 (PR #175)** — B1 풀·가챠 양쪽 재소환 리롤 차단 / B2 보스 HP 정수 guard (생존 시 min 1 clamp) / B3 선형 HP 스케일 (HP_SLOPE=0.55) / B4 Phaser Scale.NONE + 모바일 세로형 표준 레이아웃 (100dvh + max-w-[430px] + flex-col + safe-area-inset-top) | ✅ | 로컬 플레이테스트 회귀 커밋 |
 | R1 | **모바일 5분 플레이 Go/No-Go 검증** | ⬜ | **핵심 게이트** |
 | R2 | 타워 인게임 업그레이드 UX 확장 (골드 경제 밸런싱) | ⬜ | R1 통과 시 |
 | R2 | 메타 퍽 선택 UX 구현 (퍽 카드 drop 조건 + 선택 UI) | ⬜ | R1 통과 시 |

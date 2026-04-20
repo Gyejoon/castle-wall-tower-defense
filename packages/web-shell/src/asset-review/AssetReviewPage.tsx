@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	acceptAsset,
 	listStaging,
@@ -261,11 +261,18 @@ function AssetThumbnail({ entry }: { entry: StagingEntry }) {
 
 const ZOOM_LEVELS = [2, 4, 6, 8] as const;
 type ZoomLevel = (typeof ZOOM_LEVELS)[number];
+type ViewMode = 'side' | 'split';
 
 function AssetPreview({ entry }: { entry: StagingEntry }) {
 	const meta = entry.metadata;
 	const isSheet = !!meta?.polish.animation;
 	const [zoom, setZoom] = useState<ZoomLevel>(4);
+	const [mode, setMode] = useState<ViewMode>('side');
+	// Sheets have sync animation state on each pane. Split mode would need to
+	// drive both from the same clock, which is more complexity than the
+	// comparison helps with. Degrade to side-by-side for sheets silently.
+	const effectiveMode: ViewMode = isSheet ? 'side' : mode;
+	const hasBoth = entry.hasOriginal && entry.hasPolished;
 	return (
 		<div className="flex flex-1 flex-col gap-4 overflow-auto p-6">
 			<header className="flex items-center justify-between gap-4">
@@ -275,51 +282,86 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 						{meta?.sourcePath}
 					</p>
 				</div>
-				<fieldset
-					className="flex shrink-0 items-center gap-1 rounded border border-border bg-panel p-0.5"
-					aria-label="zoom level"
-				>
-					{ZOOM_LEVELS.map((z) => (
-						<button
-							key={z}
-							type="button"
-							onClick={() => setZoom(z)}
-							className={`rounded px-2 py-1 font-mono text-xs ${
-								z === zoom
-									? 'bg-accent text-bg'
-									: 'text-text-secondary hover:text-text'
-							}`}
+				<div className="flex shrink-0 items-center gap-2">
+					{!isSheet && hasBoth && (
+						<fieldset
+							className="flex items-center gap-1 rounded border border-border bg-panel p-0.5"
+							aria-label="view mode"
 						>
-							{z}×
-						</button>
-					))}
-				</fieldset>
+							{(['side', 'split'] as const).map((m) => (
+								<button
+									key={m}
+									type="button"
+									onClick={() => setMode(m)}
+									className={`rounded px-2 py-1 font-mono text-xs ${
+										m === mode
+											? 'bg-accent text-bg'
+											: 'text-text-secondary hover:text-text'
+									}`}
+								>
+									{m === 'side' ? 'Side' : 'Split'}
+								</button>
+							))}
+						</fieldset>
+					)}
+					<fieldset
+						className="flex items-center gap-1 rounded border border-border bg-panel p-0.5"
+						aria-label="zoom level"
+					>
+						{ZOOM_LEVELS.map((z) => (
+							<button
+								key={z}
+								type="button"
+								onClick={() => setZoom(z)}
+								className={`rounded px-2 py-1 font-mono text-xs ${
+									z === zoom
+										? 'bg-accent text-bg'
+										: 'text-text-secondary hover:text-text'
+								}`}
+							>
+								{z}×
+							</button>
+						))}
+					</fieldset>
+				</div>
 			</header>
 
-			<div className="grid grid-cols-2 gap-4">
-				<PreviewPane
-					title="Original (canvas)"
-					url={
-						entry.hasOriginal ? stagingFileUrl(entry.id, 'original.png') : null
-					}
-					isSheet={isSheet}
+			{effectiveMode === 'split' && hasBoth ? (
+				<SplitPane
+					originalUrl={stagingFileUrl(entry.id, 'original.png')}
+					polishedUrl={stagingFileUrl(entry.id, 'polished.png')}
 					zoom={zoom}
-					frameW={meta?.polish.animation?.frameW}
-					frameH={meta?.polish.animation?.frameH}
-					frameCount={meta?.polish.animation?.frameCount}
 				/>
-				<PreviewPane
-					title="Polished (LSP)"
-					url={
-						entry.hasPolished ? stagingFileUrl(entry.id, 'polished.png') : null
-					}
-					isSheet={isSheet}
-					zoom={zoom}
-					frameW={meta?.polish.animation?.frameW}
-					frameH={meta?.polish.animation?.frameH}
-					frameCount={meta?.polish.animation?.frameCount}
-				/>
-			</div>
+			) : (
+				<div className="grid grid-cols-2 gap-4">
+					<PreviewPane
+						title="Original (canvas)"
+						url={
+							entry.hasOriginal
+								? stagingFileUrl(entry.id, 'original.png')
+								: null
+						}
+						isSheet={isSheet}
+						zoom={zoom}
+						frameW={meta?.polish.animation?.frameW}
+						frameH={meta?.polish.animation?.frameH}
+						frameCount={meta?.polish.animation?.frameCount}
+					/>
+					<PreviewPane
+						title="Polished (LSP)"
+						url={
+							entry.hasPolished
+								? stagingFileUrl(entry.id, 'polished.png')
+								: null
+						}
+						isSheet={isSheet}
+						zoom={zoom}
+						frameW={meta?.polish.animation?.frameW}
+						frameH={meta?.polish.animation?.frameH}
+						frameCount={meta?.polish.animation?.frameCount}
+					/>
+				</div>
+			)}
 
 			{isSheet && (
 				<details className="text-xs text-text-secondary">
@@ -340,6 +382,105 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 					</div>
 				</details>
 			)}
+		</div>
+	);
+}
+
+/**
+ * Before/after split scrubber. Polished image fills the frame; original is
+ * overlaid on the LEFT portion via clip-path, revealed as the user drags the
+ * divider. Pixel-art aware: both images are rendered at the same zoom and
+ * pixel-pixelated so edges align exactly at the cut.
+ */
+function SplitPane({
+	originalUrl,
+	polishedUrl,
+	zoom,
+}: {
+	originalUrl: string;
+	polishedUrl: string;
+	zoom: ZoomLevel;
+}) {
+	const [split, setSplit] = useState(50);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const dragging = useRef(false);
+
+	const updateFromClientX = useCallback((clientX: number) => {
+		const el = containerRef.current;
+		if (!el) return;
+		const rect = el.getBoundingClientRect();
+		const pct = ((clientX - rect.left) / rect.width) * 100;
+		setSplit(Math.min(100, Math.max(0, pct)));
+	}, []);
+
+	const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+		dragging.current = true;
+		(e.target as HTMLElement).setPointerCapture(e.pointerId);
+		updateFromClientX(e.clientX);
+	};
+	const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+		if (!dragging.current) return;
+		updateFromClientX(e.clientX);
+	};
+	const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+		dragging.current = false;
+		(e.target as HTMLElement).releasePointerCapture(e.pointerId);
+	};
+
+	const imgStyle: React.CSSProperties = {
+		imageRendering: 'pixelated',
+		transform: `scale(${zoom})`,
+		transformOrigin: 'center',
+	};
+
+	return (
+		<div className="flex flex-col gap-2">
+			<div className="flex items-center justify-between text-xs text-text-secondary">
+				<span>Original (canvas)</span>
+				<span>{split.toFixed(0)}% · drag to compare</span>
+				<span>Polished (LSP)</span>
+			</div>
+			<div
+				ref={containerRef}
+				className="relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded border border-border"
+				style={{
+					backgroundImage:
+						'repeating-conic-gradient(var(--color-panel) 0% 25%, var(--color-bg) 0% 50%)',
+					backgroundSize: '16px 16px',
+					cursor: 'ew-resize',
+					touchAction: 'none',
+				}}
+				onPointerDown={onPointerDown}
+				onPointerMove={onPointerMove}
+				onPointerUp={onPointerUp}
+			>
+				{/* Polished as base layer (right side reveals through split) */}
+				<img
+					src={polishedUrl}
+					alt="polished"
+					className="pointer-events-none"
+					style={imgStyle}
+				/>
+				{/* Original clipped to the left portion */}
+				<img
+					src={originalUrl}
+					alt="original"
+					className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+					style={{
+						...imgStyle,
+						clipPath: `inset(0 ${100 - split}% 0 0)`,
+					}}
+				/>
+				{/* Divider handle */}
+				<div
+					className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-accent shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+					style={{ left: `${split}%` }}
+				>
+					<div className="absolute top-1/2 left-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-bg bg-accent text-[10px] font-bold text-bg">
+						↔
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -7,6 +7,7 @@ import {
 	type PlacedTower,
 	type Position,
 	scaleUnitStats,
+	TILE_SIZE,
 	UNITS,
 	type UnitDef,
 } from '@gld/shared';
@@ -228,7 +229,10 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(entry.isBoss ? 48 : 32, entry.isBoss ? 56 : 40);
+		sprite.setDisplaySize(
+			entry.isBoss ? TILE_SIZE : (TILE_SIZE * 2) / 3,
+			entry.isBoss ? (TILE_SIZE * 7) / 6 : (TILE_SIZE * 5) / 6,
+		);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -944,7 +948,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(32, 40);
+		sprite.setDisplaySize((TILE_SIZE * 2) / 3, (TILE_SIZE * 5) / 6);
 		sprite.play(`${def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (def.element !== 'neutral') {

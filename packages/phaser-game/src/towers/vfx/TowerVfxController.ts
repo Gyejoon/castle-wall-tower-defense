@@ -1,3 +1,4 @@
+import { TILE_SIZE } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../../assets/assetManifest';
 import { PLATFORM_LIFT } from '../../fieldAssets';
@@ -70,10 +71,10 @@ export class TowerVfxController {
 		const lift = this.deps.gridManager.orthoTile * PLATFORM_LIFT;
 		const effect = this.deps.scene.add.sprite(
 			towerWorld.x,
-			towerWorld.y - lift - 20,
+			towerWorld.y - lift - (TILE_SIZE * 5) / 12,
 			textureKey,
 		);
-		effect.setDisplaySize(48, 60);
+		effect.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
 		effect.setDepth(this.deps.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
 		effect.play(animationKey);
 

@@ -67,21 +67,22 @@ export class CastleWallSystem {
 			const wallY = world.y + TILE_SIZE / 2; // align wall bottom to tile bottom edge
 			const baseDepth = ep.x + ep.y;
 
-			// Wall sprite — 48×60 matches the new tower/tile scale so the
-			// wall fits its row without overflowing into neighbouring rows.
-			// Depth sits above the flat depth=2 grass platform layer (see
-			// Game.ts Layer 2 loop); 100+ stays clear of every grid-relative
-			// depth layer below.
+			// Wall sprite sized to TILE_SIZE × TILE_SIZE*5/4 so the wall fits
+			// its row without overflowing into neighbouring rows. Depth sits
+			// above the flat depth=2 grass platform layer (see Game.ts
+			// Layer 2 loop); 100+ stays clear of every grid-relative depth
+			// layer below.
 			const wall = this.scene.add.sprite(world.x, wallY, 'castle-wall-hp3');
-			wall.setDisplaySize(48, 60);
+			wall.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
 			wall.setOrigin(0.5, 1.0);
 			wall.setDepth(100 + baseDepth);
 
-			// VFX offsets scaled down proportionally to the new wall size
-			// (48/64 = 0.75x) so smoke/fire still sit on the wall visually.
+			// VFX offsets scaled proportionally to the wall size so smoke/fire
+			// still sit on the wall visually. Ratios preserved from the
+			// original 48-based hand-tuned values.
 			const smoke = this.scene.add.sprite(
-				world.x - 12,
-				wallY - 18,
+				world.x - TILE_SIZE / 4,
+				wallY - (TILE_SIZE * 3) / 8,
 				'vfx-wall-smoke',
 			);
 			smoke.setDepth(101 + baseDepth);
@@ -90,8 +91,8 @@ export class CastleWallSystem {
 			smoke.anims.pause();
 
 			const fire1 = this.scene.add.sprite(
-				world.x + 8,
-				wallY - 6,
+				world.x + TILE_SIZE / 6,
+				wallY - TILE_SIZE / 8,
 				'vfx-wall-fire',
 			);
 			fire1.setDepth(101 + baseDepth);
@@ -100,8 +101,8 @@ export class CastleWallSystem {
 			fire1.anims.pause();
 
 			const fire2 = this.scene.add.sprite(
-				world.x + 18,
-				wallY + 3,
+				world.x + (TILE_SIZE * 3) / 8,
+				wallY + TILE_SIZE / 16,
 				'vfx-wall-fire',
 			);
 			fire2.setDepth(101 + baseDepth);

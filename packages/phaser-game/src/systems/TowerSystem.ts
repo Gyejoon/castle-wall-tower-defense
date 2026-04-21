@@ -12,6 +12,7 @@ import {
 	ALL_TOWERS,
 	getEffectiveStats,
 	getElementMultiplier,
+	TILE_SIZE,
 } from '@gld/shared';
 import type Phaser from 'phaser';
 import { soundGenerator } from '../audio/SoundGenerator';
@@ -238,7 +239,7 @@ export class TowerSystem {
 			const arrow = this.scene.add.image(0, 0, textureKey);
 			arrow.setVisible(false);
 			arrow.setDepth(25);
-			arrow.setDisplaySize(24, 6);
+			arrow.setDisplaySize(TILE_SIZE / 2, TILE_SIZE / 8);
 			this.arrowPool.push(arrow);
 		}
 	}
@@ -302,8 +303,8 @@ export class TowerSystem {
 			worldPos.y - lift,
 			textureKey,
 		);
-		sprite.setDisplaySize(48, 60);
-		sprite.setY(worldPos.y - lift - 20);
+		sprite.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
+		sprite.setY(worldPos.y - lift - (TILE_SIZE * 5) / 12);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
 		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
 		this.renderTowerBase(base, liftedPos, def);
@@ -330,7 +331,7 @@ export class TowerSystem {
 				sprite.y,
 				'tower-nova_cannon-barrel',
 			);
-			barrelSprite.setDisplaySize(16, 8);
+			barrelSprite.setDisplaySize(TILE_SIZE / 3, TILE_SIZE / 6);
 			barrelSprite.setDepth(sprite.depth + 1);
 		}
 

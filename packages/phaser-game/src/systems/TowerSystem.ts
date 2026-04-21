@@ -854,16 +854,17 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
-				// Phase 2.1: `archer` was removed from this selector — it's now
-				// handled by ArcherFamilyTower via the new-strategy registry and
-				// never reaches this legacy path. `twin_archer` stays until its
-				// family migrates in Phase 2.3.
-				const style =
-					this.hasSplash(special) || def.id === 'earth_golem'
-						? ('arc' as const)
-						: def.id === 'twin_archer'
-							? ('arrow' as const)
-							: ('beam' as const);
+				// Phase 2.1: `archer` was removed from this selector — handled by
+				// ArcherFamilyTower via the new-strategy registry.
+				// Phase 2.3: `twin_archer` was removed — handled by
+				// StunFamilyTower (MultiShotArrowEmitter). The `'arrow'` branch
+				// below is unreachable from any live legacy tower; Phase 2.Final
+				// will delete the dead branch along with the arrow pool. The
+				// `: 'beam' | 'arc' | 'arrow'` annotation prevents TS from
+				// narrowing away the dead branch's `style === 'arrow'` checks.
+				const style = (
+					this.hasSplash(special) || def.id === 'earth_golem' ? 'arc' : 'beam'
+				) as 'beam' | 'arc' | 'arrow';
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {
 					this.ensureArrowPool();

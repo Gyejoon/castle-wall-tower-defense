@@ -2,3 +2,4 @@
 // into the registry at import time. Phase 2.3–2.5 will add more here.
 import './archer';
 import './frost';
+import './stun';

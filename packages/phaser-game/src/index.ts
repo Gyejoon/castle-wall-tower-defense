@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameConfig } from './config';
 
+export { bgmPlayer } from './audio/BgmPlayer';
 export { soundGenerator } from './audio/SoundGenerator';
 export { gameConfig } from './config';
 export type { GameEventMap } from './EventBus';

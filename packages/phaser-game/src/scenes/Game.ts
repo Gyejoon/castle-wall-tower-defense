@@ -31,7 +31,6 @@ import {
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
 
-import { getPlacementGuardFailure } from '../placementRules';
 import { createBossBehavior } from '../systems/boss-ai/registry';
 import type { BossBehavior } from '../systems/boss-ai/types';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
@@ -50,6 +49,8 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { InputController } from './input/InputController';
+import { PlacementCoordinator } from './input/PlacementCoordinator';
 import { FieldRenderer } from './render/FieldRenderer';
 import { RangeOverlayController } from './render/RangeOverlayController';
 
@@ -83,7 +84,6 @@ export class GameScene extends Phaser.Scene {
 	private damageNumbers!: DamageNumberSystem;
 	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
-	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
 	private isPhaseAMap = false;
@@ -93,6 +93,8 @@ export class GameScene extends Phaser.Scene {
 
 	private fieldRenderer!: FieldRenderer;
 	private rangeOverlay!: RangeOverlayController;
+	private inputController!: InputController;
+	private placement!: PlacementCoordinator;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
@@ -107,7 +109,6 @@ export class GameScene extends Phaser.Scene {
 		fromCol: number;
 		fromRow: number;
 	}) => void;
-	private movePending: { fromCol: number; fromRow: number } | null = null;
 	private onPause!: () => void;
 	private onResume!: () => void;
 	private onWaveStartedLifecycle!: (data: {
@@ -248,11 +249,11 @@ export class GameScene extends Phaser.Scene {
 			});
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
-				this.selectedTowerId = data.towerId;
-				this.rangeOverlay.showBuildableZone(this.selectedTowerId);
+				this.inputController.setSelectedTowerId(data.towerId);
+				this.rangeOverlay.showBuildableZone(data.towerId);
 				this.rangeOverlay.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
-				this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
+				this.rangeOverlay.renderPlaceableHighlights(data.towerId);
 			};
 			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
 			this.playerTowers.setModifierFn((id) =>
@@ -293,21 +294,94 @@ export class GameScene extends Phaser.Scene {
 		this.spawnHut = new SpawnHutSystem(this, this.playerGrid, this.currentMap);
 		this.spawnHut.create();
 
-		this.setupInput();
+		this.placement = new PlacementCoordinator({
+			towers: this.playerTowers,
+			energy: this.energySystem,
+			deck: this.playerDeck,
+			orchestrator: this.phaseAOrchestrator,
+			waves: this.playerWaves,
+			emit: EventBus.emit.bind(EventBus),
+			onPhaseAFastPath: () => {
+				// Mirror the pre-Phase-5 inline cleanup after a Phase A
+				// fast-path placement (Game.ts.handlePlaceTower lines 622-626).
+				this.inputController.setSelectedTowerId(null);
+				this.rangeOverlay.hideBuildableZone();
+				this.rangeOverlay.clearSelection();
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onBeforeSuccessEmit: () => {
+				// Mirror the pre-Phase-5 overlay clears that happened between
+				// energy.spend and the tower-deselected emit.
+				this.inputController.setSelectedTowerId(null);
+				this.rangeOverlay.clearSelection();
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onSuccess: () => {
+				this.playerUnits.setPaths(getMapPaths(this.currentMap));
+				this.fieldRenderer.refreshPath();
+			},
+		});
+
+		this.inputController = new InputController(this, this.playerGrid, {
+			hoverGraphics: this.rangeOverlay.getHoverGraphics(),
+			onPlace: (col, row, id) => this.placement.place(col, row, id),
+			onSelectTower: (col, row, tower) => {
+				const refund = TowerSystem.calcRefund(tower.def.cost);
+				EventBus.emit('tower-selected', {
+					towerDefId: tower.def.id,
+					towerName: tower.def.name,
+					col,
+					row,
+					refund,
+					tier: tower.tier,
+				});
+				this.rangeOverlay.drawRangeOverlay(col, row, tower.def.stats.range);
+			},
+			onDeselect: () => {
+				EventBus.emit('tower-deselected');
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onMoveCommit: (from, to) => {
+				this.rangeOverlay.clearSelection();
+				const ok = this.playerTowers.moveTower(
+					from.col,
+					from.row,
+					to.col,
+					to.row,
+				);
+				if (ok) {
+					EventBus.emit('tower-moved', {
+						fromCol: from.col,
+						fromRow: from.row,
+						toCol: to.col,
+						toRow: to.row,
+					});
+					EventBus.emit('tower-deselected');
+					this.rangeOverlay.clearRangeOverlay();
+					this.playerUnits.setPaths(getMapPaths(this.currentMap));
+					this.fieldRenderer.refreshPath();
+				} else {
+					EventBus.emit('move-failed', { reason: 'invalid-tile' });
+				}
+			},
+			isGameOver: () => this.gameOver,
+			getTowerAt: (col, row) => this.playerTowers.getTowerAt(col, row),
+		});
+		this.inputController.setup();
 
 		this.onSelectTower = (data) => {
 			if (!this.isSceneAlive()) return;
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
-			this.selectedTowerId = data.towerDefId;
-			this.rangeOverlay.showBuildableZone(this.selectedTowerId);
+			this.inputController.setSelectedTowerId(data.towerDefId);
+			this.rangeOverlay.showBuildableZone(data.towerDefId);
 			this.rangeOverlay.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
-			this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
+			this.rangeOverlay.renderPlaceableHighlights(data.towerDefId);
 		};
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
-			this.selectedTowerId = null;
+			this.inputController.setSelectedTowerId(null);
 			this.rangeOverlay.hideBuildableZone();
 			this.rangeOverlay.clearSelection();
 			this.rangeOverlay.clearRangeOverlay();
@@ -390,12 +464,12 @@ export class GameScene extends Phaser.Scene {
 
 		this.onEnterMoveMode = ({ fromCol, fromRow }) => {
 			if (!this.isSceneAlive()) return;
-			this.movePending = { fromCol, fromRow };
-			this.selectedTowerId = null;
+			this.inputController.setMovePending({ fromCol, fromRow });
+			this.inputController.setSelectedTowerId(null);
 			this.rangeOverlay.hideBuildableZone();
 			this.rangeOverlay.clearSelection();
 			this.rangeOverlay.clearRangeOverlay();
-			this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
+			this.rangeOverlay.renderPlaceableHighlights(null);
 		};
 
 		this.onMoveTower = ({ fromCol, fromRow, toCol, toRow }) => {
@@ -494,91 +568,6 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.start();
 	}
 
-	private setupInput(): void {
-		const hoverGraphics = this.rangeOverlay.getHoverGraphics();
-		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.playerGrid.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-			hoverGraphics.clear();
-
-			if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
-				const canPlace = this.playerGrid.canPlaceTower(gridPos.x, gridPos.y);
-				this.playerGrid.fillTileRect(
-					hoverGraphics,
-					gridPos.x,
-					gridPos.y,
-					canPlace ? PHASER_COLORS.accent : PHASER_COLORS.danger,
-					0.2,
-				);
-			}
-		});
-
-		this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.playerGrid.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-
-			if (this.gameOver) return;
-			if (!this.playerGrid.isInBounds(gridPos.x, gridPos.y)) return;
-
-			if (this.movePending) {
-				const { fromCol, fromRow } = this.movePending;
-				this.movePending = null;
-				this.rangeOverlay.clearSelection();
-				const ok = this.playerTowers.moveTower(
-					fromCol,
-					fromRow,
-					gridPos.x,
-					gridPos.y,
-				);
-				if (ok) {
-					EventBus.emit('tower-moved', {
-						fromCol,
-						fromRow,
-						toCol: gridPos.x,
-						toRow: gridPos.y,
-					});
-					EventBus.emit('tower-deselected');
-					this.rangeOverlay.clearRangeOverlay();
-					this.playerUnits.setPaths(getMapPaths(this.currentMap));
-					this.fieldRenderer.refreshPath();
-				} else {
-					EventBus.emit('move-failed', { reason: 'invalid-tile' });
-				}
-				return;
-			}
-
-			if (this.selectedTowerId) {
-				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
-				return;
-			}
-
-			const tower = this.playerTowers.getTowerAt(gridPos.x, gridPos.y);
-			if (tower) {
-				const refund = TowerSystem.calcRefund(tower.def.cost);
-				EventBus.emit('tower-selected', {
-					towerDefId: tower.def.id,
-					towerName: tower.def.name,
-					col: gridPos.x,
-					row: gridPos.y,
-					refund,
-					tier: tower.tier,
-				});
-				this.rangeOverlay.drawRangeOverlay(
-					gridPos.x,
-					gridPos.y,
-					tower.def.stats.range,
-				);
-			} else {
-				EventBus.emit('tower-deselected');
-				this.rangeOverlay.clearRangeOverlay();
-			}
-		});
-	}
-
 	private emitGameOver(payload: {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
@@ -609,82 +598,6 @@ export class GameScene extends Phaser.Scene {
 				initialHp: INITIAL_PLAYER_HP,
 			},
 		});
-	}
-
-	private handlePlaceTower(
-		gridX: number,
-		gridY: number,
-		towerDefId: string,
-	): void {
-		// Phase A: orchestrator handles energy + placement directly
-		if (this.phaseAOrchestrator?.hasPendingSummon()) {
-			this.phaseAOrchestrator.completePlacement(gridX, gridY);
-			this.selectedTowerId = null;
-			this.rangeOverlay.hideBuildableZone();
-			this.rangeOverlay.clearSelection();
-			this.rangeOverlay.clearRangeOverlay();
-			return;
-		}
-
-		const card = this.playerDeck.getCardByTowerId(towerDefId);
-		if (!card) return;
-
-		const energyCost = card.energyCost;
-		if (!this.energySystem.canAfford(energyCost)) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: 'insufficient_energy',
-			});
-			return;
-		}
-
-		const guardFailure = getPlacementGuardFailure({
-			phase: this.playerWaves.getPhase(),
-		});
-
-		if (guardFailure) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: guardFailure,
-			});
-			return;
-		}
-
-		const placed = this.playerTowers.placeTower(gridX, gridY, towerDefId);
-		if (!placed.success) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: placed.reason,
-			});
-			return;
-		}
-
-		this.energySystem.spend(energyCost);
-		this.selectedTowerId = null;
-		this.rangeOverlay.clearSelection();
-		this.rangeOverlay.clearRangeOverlay();
-		EventBus.emit('tower-deselected');
-		EventBus.emit('tower-placed', {
-			col: gridX,
-			row: gridY,
-			towerId: towerDefId,
-			success: true,
-			energySpent: energyCost,
-		});
-		EventBus.emit('player-tower-count', {
-			count: this.playerTowers.getTowers().length,
-		});
-		this.playerUnits.setPaths(getMapPaths(this.currentMap));
-		this.fieldRenderer.refreshPath();
 	}
 
 	private processCombatField(
@@ -961,6 +874,14 @@ export class GameScene extends Phaser.Scene {
 		if (this.onPhaseASummonReady) {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
 		}
+
+		// Input controllers destroy AFTER EventBus.off (so handlers that
+		// might read their state have already detached) but BEFORE the
+		// gameplay systems they observe are torn down. Matches the
+		// AGENTS.md cleanup order: bus → controllers → systems → renderers.
+		this.inputController?.destroy();
+		this.placement?.destroy();
+
 		this.phaseAOrchestrator?.destroy();
 		this.phaseAOrchestrator = undefined;
 		soundGenerator.reset();

@@ -592,6 +592,24 @@ export class TowerSystem {
 				),
 			);
 		};
+		// Phase 2.4: splash damage formula deliberately skips familyMod —
+		// matches legacy TowerSystem.ts:712-720 which omits family multiplier
+		// from splash damage (main damage at :607-614 has it). Half-damage
+		// factor (0.5) is baked in.
+		const resolveSplashDamage = (target: UnitSnapshot): number => {
+			const elementMult = getElementMultiplier(def.element, target.element);
+			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+			const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+			return Math.round(
+				this.resolveFinalDamage(
+					tower.effectiveDamage *
+						elementMult *
+						0.5 *
+						dmgMod *
+						(1 + critBonus),
+				),
+			);
+		};
 		return {
 			time,
 			delta,
@@ -602,6 +620,7 @@ export class TowerSystem {
 			pushDamage: this.pushDamage,
 			vfx: this.towerVfxController,
 			resolveDamage,
+			resolveSplashDamage,
 		};
 	}
 
@@ -627,6 +646,10 @@ export class TowerSystem {
 		// Nova cannon barrel tracking — rotate toward nearest enemy
 		for (const tower of this.towers.values()) {
 			if (tower.def.id !== 'nova_cannon' || !tower.barrelSprite) continue;
+			// Phase 2.4: NovaCannonT1 handles barrel rotation in its own
+			// update(). Skip here to avoid double-rotation for registered
+			// nova_cannon instances.
+			if (this.newTowerInstances.has(tower.data.instanceId)) continue;
 			const towerWorld = this.gridManager.gridToWorld(
 				tower.data.position.x,
 				tower.data.position.y,
@@ -862,8 +885,10 @@ export class TowerSystem {
 				// will delete the dead branch along with the arrow pool. The
 				// `: 'beam' | 'arc' | 'arrow'` annotation prevents TS from
 				// narrowing away the dead branch's `style === 'arrow'` checks.
+				// Phase 2.4: earth_golem's explicit id branch removed — its
+				// `splash_1.8` special already triggers `hasSplash(special)`.
 				const style = (
-					this.hasSplash(special) || def.id === 'earth_golem' ? 'arc' : 'beam'
+					this.hasSplash(special) ? 'arc' : 'beam'
 				) as 'beam' | 'arc' | 'arrow';
 				let arrowIndex: number | undefined;
 				if (style === 'arrow') {

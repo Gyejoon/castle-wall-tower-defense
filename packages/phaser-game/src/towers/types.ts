@@ -42,6 +42,13 @@ export interface AttackContext {
 	 *  Behaviors call this right before pushing a DamageEvent so the
 	 *  buffer never carries pre-multiplier numbers. */
 	resolveDamage(target: UnitSnapshot): number;
+	/** Returns the fully-modified SPLASH damage for a given target.
+	 *  Formula: effectiveDamage * elementMult(target) * 0.5 * dmgMod *
+	 *           (1 + critBonus), wrapped by resolveFinalDamage (adds globalAtkPct).
+	 *  Note: deliberately skips familyMod — matches legacy TowerSystem.ts:712-720
+	 *  which omits family multiplier from splash damage. Half-damage factor (0.5)
+	 *  is baked in. */
+	resolveSplashDamage(target: UnitSnapshot): number;
 }
 
 export interface TargetingStrategy {

@@ -51,7 +51,7 @@
 
 **In-battle Loop**
 ```
-마당 홈 탭 → "전투 시작" → 맵 `phase_a_long` 진입 → prep countdown
+마당 홈 탭 → "전투 시작" → 맵 `main_long` 진입 → prep countdown
   → [반복] 에너지 수급: +1/sec 베이스 + 킬당 +1 + 보스 킬 +20 + 30초 내 fast-clear +20 (ENERGY_MAX=200)
         ├─ 기본 소환 ⚡20 → 랜덤 T1 (archer/nova_cannon/emp/shield 중 1) → 빈 칸 탭해 배치
         └─ 인게임 가챠 ⚡40/80/160 → T2(60%) / T3(20%) / T4(5%) 시도, 실패 시 T1 폴백
@@ -112,10 +112,10 @@
 
 | 시스템 | 정의 | 핵심 파라미터 |
 |--------|------|-------------|
-| SummonPoolSystem | T1 4종 (archer/nova_cannon/emp/shield) 균등 draw | `PHASE_A_SUMMON_COST = 20` (legacy const name), injectable `rng` |
+| SummonPoolSystem | T1 4종 (archer/nova_cannon/emp/shield) 균등 draw | `SUMMON_COST = 20`, injectable `rng` |
 | GachaSystem | T2/T3/T4 시도. 실패 시 T1 폴백. `tier_odds_up` 로그라이크 스택 반영 (cap 10) | `INGAME_GACHA.tier2/3/4` (cost, successRate) |
 | MergeSystem | family/tier 기반 validation. `resolveMerge` 호출 | `tryMerge(a, b) → {kind: 'success'\|'failure'}` |
-| PhaseAOrchestrator | 소환/가챠/합성/강화/로그라이크/광고 전체 파이프라인. `pendingSummon` 큐 + **풀/가챠 양쪽 취소·배치실패 리롤 방지** (`cancelledPoolDraw` + `cancelledGachaDraw` 캐시) | `PHASE_A_MAX_CONTINUES_PER_RUN = 1` (legacy const name) |
+| CoreOrchestrator | 소환/가챠/합성/강화/로그라이크/광고 전체 파이프라인. `pendingSummon` 큐 + **풀/가챠 양쪽 취소·배치실패 리롤 방지** (`cancelledPoolDraw` + `cancelledGachaDraw` 캐시) | `MAX_CONTINUES_PER_RUN = 1` |
 | EnergySystem | +1/sec 베이스 + 킬 에너지 + 보스 보너스. `ENERGY_MAX = 200` | CC 가드레일 2 참조 |
 | GoldSystem | run-scoped 골드 풀. 킬 bounty로 축적, 타워 인게임 강화 소비 | `inBattleEnhanceCost(level)` 150% 성장 |
 | UnitSystem | `ccResistance` (boss 0.5~0.7), 슬로우/스턴 duration × (1 - ccResistance), `MIN_MOVE_SPEED = 0.15`, 2초 stun immunity | |
@@ -135,7 +135,7 @@
 
 ### 인게임 타워 강화 (골드 소비)
 
-TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrchestrator가 GoldSystem.spend(cost) → TowerSystem.enhanceTower(col, row) → level+1.
+TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchestrator가 GoldSystem.spend(cost) → TowerSystem.enhanceTower(col, row) → level+1.
 - `BASE_ENHANCE_COST = 50`, 성장 1.5× 기하 (레벨당 5 단위 round)
 - `MAX_IN_BATTLE_LEVEL = 10`
 - damage × (1 + 0.15 × (level - 1)) — base 대비 L10 = ×2.35
@@ -159,7 +159,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → PhaseAOrche
 | 소환 풀 타워 | 4종 T1 (archer, nova_cannon, emp, shield) | 4 family 각 1개, 균등 draw |
 | 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
 | **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
-| 맵 | 1종 (`phase_a_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
+| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
 | 스테이지 | 단일 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
 | 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
 | 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |
@@ -374,7 +374,7 @@ Phaser **캔버스 내부** 해상도는 `Scale.NONE`으로 432×960 고정 — 
 - **React shell (`GamePage`)**: `data-testid="game-portrait-shell"`, `width: 100% max-w-[430px]`, `height: 100dvh`, `flex-col`
 - **TopHud**: `shrink-0`, `paddingTop: max(0, env(safe-area-inset-top))` — 펀치홀 / 상태바 회피
 - **게임 영역 (flex-1)**: `#game-container`가 남은 공간을 채우고, 내부 canvas는 `width/height: 100%`로 슬롯에 스트레치. 캔버스 내부는 uniform 스케일(좌표계 보존)
-- **PhaseAHud**: `shrink-0`, `paddingBottom: max(8px, env(safe-area-inset-bottom))` — 홈 인디케이터 회피
+- **GameHud**: `shrink-0`, `paddingBottom: max(8px, env(safe-area-inset-bottom))` — 홈 인디케이터 회피
 - **터치 이벤트**: 네이티브 DOM 크기 유지라 별도 보정 불필요
 
 ### HUD 구조
@@ -387,8 +387,8 @@ Phaser **캔버스 내부** 해상도는 `Scale.NONE`으로 432×960 고정 — 
   - **T4 ⚡160 5%** (gacha T4, disabled when energy < 160)
   - **메뉴 ☰** (60px fixed, 누르면 PauseModal)
 - **TowerActionSheet (플로팅)**: 타워 선택 시 bottom-[120px]에 floating 패널. 5 버튼 (합성 / 이동 / 판매 +{sellValue} / 강화 Lv{n+1} 💰{cost} / ✕). 각 min-h 52px.
-- **SummonRevealOverlay (코너 토스트)**: `phase-a-summon-ready` 이벤트 시 우상단 top-[52px] right-[8px]에 작은 카드 (max-w-180px) 2초 노출. `pointer-events-none` (맵 터치 차단 X). Slide-in from right 150ms.
-- **UpgradePickOverlay (전체 오버레이)**: 보스 wave clear 시 3카드 + 광고 리롤 버튼. 카드 선택 시 PhaseAOrchestrator.applyUpgrade → activeUpgrades 스택.
+- **SummonRevealOverlay (코너 토스트)**: `summon-ready` 이벤트 시 우상단 top-[52px] right-[8px]에 작은 카드 (max-w-180px) 2초 노출. `pointer-events-none` (맵 터치 차단 X). Slide-in from right 150ms.
+- **UpgradePickOverlay (전체 오버레이)**: 보스 wave clear 시 3카드 + 광고 리롤 버튼. 카드 선택 시 CoreOrchestrator.applyUpgrade → activeUpgrades 스택.
 - **PauseModal**: 메뉴 버튼 → scene.pause() + "게임으로 돌아가기" / "나가기" 버튼. 나가기 확인 후 enterLobby.
 - **GameOverScreen**: victory/defeat 배너 (success/danger 색) + 스탯 그리드 (wavesCleared/towersPlaced/timeSurvivedSec/goldEarned) + 3 버튼:
   - "🎬 광고 보고 이어서 하기" (defeat만, 런당 1회)
@@ -579,6 +579,7 @@ screenShake 동기화:
 | 2026-04-09 | §8, §10 | WorldMapPage를 세로 카드 리스트로 재정의(이슈 #94). 5초 prep 페이즈를 모든 전투에 도입(이슈 #93, 에너지 증가 정지). 10연 가차 순차 등장 애니메이션(이슈 #83). 타워 사거리 오버레이(이슈 #103). 덱 편집 상단 고정 4슬롯 + 루비 보석 제거 아이콘(이슈 #85). |
 | 2026-04-11 | §4, §5, §6, §7, §8 | 에너지 시스템 오버홀(초기 40, 킬 보상 제거, 웨이브 클리어 +5, 마지막 보스전 리젠/클리어 보상 비활성화). 웨이브 30초 타이머(마지막 웨이브 면제). 몬스터 충돌 비활성화. 보스 판정 `wave.kind === 'boss' \|\| unitDef.bossBehaviorId`. 보스 leak 즉시패배 boss-kind 웨이브에서만. FINAL_BOSS_HP_MULTIPLIER 마지막 웨이브에만 적용. STAGE_WAVES 단일 원천(레거시 배열 제거). 승리 시 "다음 스테이지" 버튼 + 현재 스테이지 이름 표시. |
 | 2026-04-12 | §1, §4, §8, §9 | 타워 배치를 드래그 앤 드롭에서 탭 선택 → 그리드 탭 배치로 전환(HTML5 Drag API + 터치 롱프레스 폴백 제거, 고스트 추적 제거). `damage_numbers` 설정 제거(항상 표시) 및 `showDamageNumbers` 런타임 동기화 경로 제거. 튜토리얼 step 2 "드래그 배치"→"탭 배치". |
-| 2026-04-14 | §1, §3, §4, §5, §10 | **v2 Phase A 피벗 적용**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / PhaseAOrchestrator 신규 시스템. `phase_a_long` 맵(8×24 U-turn 왕복) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. PhaseAHud(React) + 3배속 + 웨이브 타이머 HUD. PR #170. |
+| 2026-04-14 | §1, §3, §4, §5, §10 | **v2 정식 모드 피벗 (당시 "Phase A" 트랙명)**. 픽셀 중세 랜덤 타워 합성 디펜스로 코어 루프 전환. SummonPoolSystem / MergeSystem / CoreOrchestrator(당시 `PhaseAOrchestrator`) 신규 시스템. `main_long` 맵(8×24 U-turn 왕복; 당시 id `phase_a_long`) + `phase_a_s1` 스테이지(50 wave endless, 보스 10 wave마다) + hidden `phase_a_lab` 월드 추가. 소환당 에너지 20 (킬 보상 +1, 5배수 wave ×2), 시간 리젠 비활성. 2-step 소환(드로우 → 유저 배치). 5종 풀 랜덤 소환 + 같은 등급 2개 합성. GameHud(당시 `PhaseAHud`; React) + 3배속 + 웨이브 타이머 HUD. PR #170. |
 | 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 정식 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |
-| 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 PhaseAOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" → "정식 모드" 전반 치환 (map/event id 등 코드 상수는 유지). |
+| 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 CoreOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" prose → "정식 모드" 치환 (이후 v4에서 코드 상수까지 전면 제거). |
+| 2026-04-21 | §1, §3, §4, §8 | **v4 용어 정리 완료**. "Phase A" 프로토타입 트랙명 전면 제거. 코드 식별자 `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid `phase-a-*` → `hud-*`. 에셋 파일 `phase-a-long.json` → `main-long.json` + manifest key `tilemap-phase-a-long` → `tilemap-main-long`. SaveData 스키마 변화 없음 (v8 유지). |

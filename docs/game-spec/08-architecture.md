@@ -36,25 +36,25 @@ GridManager
     └─► UnitSystem   (GridManager)
         └─► WaveSystem   (UnitSystem, mapWaves, difficultyHpMult)
 DeckSystem    (deckCards — 현행 맵에서는 빈 배열로 생성, 4타워 흐름 skip. 구 시나리오 맵 대비 호환용 shell)
-PhaseAOrchestrator  (towerSystem, gridManager, buildablePoints, initialPool, energySystem)
+CoreOrchestrator  (towerSystem, gridManager, buildablePoints, initialPool, energySystem)
     └─► SummonPoolSystem  (initialPool, rng)
     └─► RandomSummonSystem  (summonPool, rng)
     └─► MergeSystem
 DamageNumberSystem  (scene)
 EnergySystem  (standalone)
-GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 — 정식 모드 `phase_a_long` 맵에는 등록된 factory 없음 (legacy hook)
+GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 — 정식 모드 `main_long` 맵에는 등록된 factory 없음 (legacy hook)
 TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 
-**맵 분기 로직 (legacy)**: `currentMap.id === PHASE_A_MAP_ID` 일 때만 `PhaseAOrchestrator`를 생성하고 `this.phaseAOrchestrator` 필드에 저장. 정식 모드에서는 이 분기가 항상 true로 평가되지만, 구 시나리오 맵 코드 경로가 일부 남아 있어 optional chaining + cleanup 안전성을 유지한다. 후속 정리 과제.
+**맵 분기 로직 (legacy)**: `currentMap.id === MAIN_MAP_ID` 일 때만 `CoreOrchestrator`를 생성하고 `this.orchestrator` 필드에 저장. 정식 모드에서는 이 분기가 항상 true로 평가되지만, 구 시나리오 맵 코드 경로가 일부 남아 있어 optional chaining + cleanup 안전성을 유지한다. 후속 정리 과제.
 
-> **클래스 이름 주의**: `PhaseAOrchestrator`, `PHASE_A_MAP_ID`, `phase_a_long` 등의 식별자는 코드 상수/클래스 이름으로, 이력 상 "Phase A" 프로토타입 트랙에서 이어진 명칭이다. 런타임 모드 구분이 아니며, 이 문서의 "정식 모드"와 동의어로 읽으면 된다.
+> **네이밍 노트**: `CoreOrchestrator`, `MAIN_MAP_ID`, `main_long`, `GameHud`, `summon-ready` 등은 정식 모드 전용 모드 중립 식별자다. 구 프로토타입 트랙명 "Phase A"에서 유래한 `PhaseAOrchestrator` / `PHASE_A_MAP_ID` / `phase_a_long` / `phase-a-summon-ready` 등은 전면 제거되었다.
 
-**PhaseAOrchestrator 책임 경계**
+**CoreOrchestrator 책임 경계**
 - 생성자에서 3개 정식 모드 시스템을 owning하고 EventBus 리스너를 **idempotent off→on** 으로 등록 (HMR / 씬 재마운트로 이전 인스턴스 리스너가 남아도 중복 없음)
 - **취소·배치 실패 리롤 차단** (v3.1 PR #175): 풀 소환은 `cancelledPoolDraw`, 가챠는 `cancelledGachaDraw`(towerId + targetTier) 캐시 필드로 draw 보존. `settlePendingSummon('cancelled' | 'cancelled-no-refund')`에서 양쪽 경로가 동일 캐시에 기록되며, 동일 tier 재요청 시 캐시 재사용 (가챠는 비용 재지불, 풀은 배치 시 지불). 다른 tier 가챠 요청은 캐시 폐기 + 새 roll.
 - `TowerSystem.getTowerLocator` / `TowerSystem.applyMerge` / `TowerSystem.placeTower({ gradeOverride, levelOverride })` 로만 TowerSystem에 접근 — 직접 mutation 없음
-- 에너지 gating은 `PhaseAEnergyApi` 구조적 인터페이스(`canAfford` + `spend`)로 받음. `EnergySystem`을 직접 import하지 않아 테스트 fake 주입 가능
+- 에너지 gating은 `CoreEnergyApi` 구조적 인터페이스(`canAfford` + `spend`)로 받음. `EnergySystem`을 직접 import하지 않아 테스트 fake 주입 가능
 - `destroy()`는 idempotent — 두 번 호출해도 안전
 - `activeUpgrades` Map으로 로그라이트 강화 스택 관리, `getModifier()` → `TowerSystem.setModifierFn` 콜백으로 데미지/공속/범위 modifier 주입
 
@@ -63,7 +63,7 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 1. WaveSystem.update(scaledDelta, activeUnitCount)
 2. EnergySystem.update(scaledDelta / 1000)
-2.5 PhaseAOrchestrator.tickEnergyRegen (energy_regen 로그라이크 upgrade tick)
+2.5 CoreOrchestrator.tickEnergyRegen (energy_regen 로그라이크 upgrade tick)
 3. GimmickSystem.update(scaledDelta)  ← [M2+ 추가]
 4. processCombatField()
    ├─ TowerSystem.update() → damageEvents
@@ -103,7 +103,7 @@ Game.ts ──────────────────────► Ev
 
 ```
 EventBus 리스너 해제 (request-select-tower, request-sell-tower, wave-started 등)
-PhaseAOrchestrator.destroy() [v2, phase_a_long 전용, optional chaining]
+CoreOrchestrator.destroy() [v2, main_long 전용, optional chaining]
     └─► EventBus.off('request-summon-tower', ...)
     └─► EventBus.off('request-merge-towers', ...)
 soundGenerator.reset()
@@ -117,7 +117,7 @@ EnergySystem.reset()
 옵셔널 에셋 언로드
 ```
 
-**순서 이유**: PhaseAOrchestrator는 EventBus 리스너만 가지고 있으므로 TowerSystem.destroy() 이전에 먼저 EventBus.off를 호출해 이후 request-* 이벤트가 destroy된 TowerSystem에 닿지 않도록 막는다.
+**순서 이유**: CoreOrchestrator는 EventBus 리스너만 가지고 있으므로 TowerSystem.destroy() 이전에 먼저 EventBus.off를 호출해 이후 request-* 이벤트가 destroy된 TowerSystem에 닿지 않도록 막는다.
 
 ---
 
@@ -162,19 +162,19 @@ EnergySystem.reset()
 | `request-tutorial-advance` | 튜토리얼 UI | TutorialSystem |
 | `request-gimmick-info` | UI에서 기믹 상태 요청 | GimmickSystem |
 | `star-selected` | StageDetail에서 별 선택 | game.registry sync |
-| `request-summon-tower` [v2] | `PhaseAHud` 소환 버튼 | `PhaseAOrchestrator.handleSummonRequest` |
-| `request-merge-towers` [v2] | `PhaseAHud` 두 번째 타워 탭 | `PhaseAOrchestrator.handleMergeRequest` |
-| `request-enter-move-mode` [v2] | `PhaseAHud` 이동 버튼 | `PhaseAOrchestrator.handleMoveMode` |
-| `request-move-tower` [v2] | `PhaseAHud` 빈 칸 탭 | `PhaseAOrchestrator.handleMoveTower` |
+| `request-summon-tower` [v2] | `GameHud` 소환 버튼 | `CoreOrchestrator.handleSummonRequest` |
+| `request-merge-towers` [v2] | `GameHud` 두 번째 타워 탭 | `CoreOrchestrator.handleMergeRequest` |
+| `request-enter-move-mode` [v2] | `GameHud` 이동 버튼 | `CoreOrchestrator.handleMoveMode` |
+| `request-move-tower` [v2] | `GameHud` 빈 칸 탭 | `CoreOrchestrator.handleMoveTower` |
 
-### 정식 모드 주요 이벤트 (맵 id: `phase_a_long`)
+### 정식 모드 주요 이벤트 (맵 id: `main_long`)
 
 | 이벤트 | 방향 | 페이로드 | 발화 시점 |
 |--------|------|---------|----------|
 | `request-summon-tower` | React → Game | `undefined` | 소환 버튼 탭 + 에너지 충분 |
 | `request-merge-towers` | React → Game | `{ fromCol, fromRow, toCol, toRow }` | 두 번째 타워 탭 |
-| `tower-summoned` | Game → React | `{ col, row, towerId, grade: TowerGrade }` | 소환 성공 직후 (placeTower + playPhaseASummonVfx 뒤) |
-| `towers-merged` | Game → React | `{ col, row, towerId, fromGrade, toGrade }` | 합성 성공 직후 (applyMerge + playPhaseAMergeVfx 뒤) |
+| `tower-summoned` | Game → React | `{ col, row, towerId, grade: TowerGrade }` | 소환 성공 직후 (placeTower + playSummonVfx 뒤) |
+| `towers-merged` | Game → React | `{ col, row, towerId, fromGrade, toGrade }` | 합성 성공 직후 (applyMerge + playMergeVfx 뒤) |
 | `merge-failed` | Game → React | `{ fromCol, fromRow, toCol, toRow, reason }` | MergeSystem validation 실패 또는 applyMerge post-validation 실패 |
 | `request-enter-move-mode` | React→Game | `{ fromCol, fromRow }` | 이동 모드 진입 |
 | `request-move-tower` | React→Game | `{ fromCol, fromRow, toCol, toRow }` | 타워 이동 요청 |
@@ -185,7 +185,7 @@ EnergySystem.reset()
 | `request-apply-upgrade` | React→Game | `{ upgradeId: string }` | 유저가 카드 선택 |
 | `upgrade-applied` | Game→React | `{ upgradeId: string, totalStacks: number }` | 강화 적용 완료 |
 
-**merge-failed 이유 타입**: `'different-tower' | 'different-grade' | 'max-grade' | 'invalid-tile'`. PhaseAHud가 한국어 라벨로 변환해 토스트 표시.
+**merge-failed 이유 타입**: `'different-tower' | 'different-grade' | 'max-grade' | 'invalid-tile'`. GameHud가 한국어 라벨로 변환해 토스트 표시.
 
 `request-summon-tower` 페이로드는 의도적으로 `undefined` — 다른 parameterless 이벤트(`request-pause`, `request-reset-run`)와 일치시키기 위해서며, TypedEventBus 오버로드가 zero-arg로 취급한다.
 
@@ -209,9 +209,9 @@ EnergySystem.reset()
 | 저장소 | 내용 |
 |--------|------|
 | `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted) |
-| 시스템 내부 상태 | TowerSystem(배치된 타워 + 각 타워의 grade/effectiveDamage), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase), PhaseAOrchestrator(SummonPool + RandomSummon + Merge 내부 상태)[v2] |
+| 시스템 내부 상태 | TowerSystem(배치된 타워 + 각 타워의 grade/effectiveDamage), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase), CoreOrchestrator(SummonPool + RandomSummon + Merge 내부 상태)[v2] |
 
-**정식 모드는 전용 gameStore 슬라이스를 추가하지 않는다**: PhaseAHud는 로컬 `useState` + `useRef`로 `firstPick` 상태를 관리하고, 에너지는 기존 `gameStore.energy` 셀렉터를 그대로 사용한다. 합성 실패/성공 피드백은 기존 `pushToast` 경로로 흐른다. 이는 전환 검증 기간 중 gameStore 변경을 최소화해 롤백을 쉽게 만들기 위한 의도적 선택이었으며, 정식 승격 이후에도 구조적 가치를 유지하므로 그대로 두었다.
+**정식 모드는 전용 gameStore 슬라이스를 추가하지 않는다**: GameHud는 로컬 `useState` + `useRef`로 `firstPick` 상태를 관리하고, 에너지는 기존 `gameStore.energy` 셀렉터를 그대로 사용한다. 합성 실패/성공 피드백은 기존 `pushToast` 경로로 흐른다. 이는 전환 검증 기간 중 gameStore 변경을 최소화해 롤백을 쉽게 만들기 위한 의도적 선택이었으며, 정식 승격 이후에도 구조적 가치를 유지하므로 그대로 두었다.
 
 ### 동기화 규칙
 
@@ -329,5 +329,6 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 |------|------|---------|
 | 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
 | 2026-04-11 | §2, §3, §7 | 유닛 이동 방향 표현 추가(비행 보스 setRotation, 지상 보스/일반 유닛 flipX). 몬스터 충돌 비활성화(sweepCollisions disabled). 웨이브 30초 타이머(마지막 웨이브 면제). drag-drop/drag-hover 이벤트 추가(드래그 앤 드롭 타워 배치). |
-| 2026-04-14 | §2, §3, §4 | **v2 랜덤 소환 + 합성 피벗 (당시 "Phase A" 트랙) 시스템 추가**. `PhaseAOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === PHASE_A_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. 전용 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + PhaseAHud 로컬 state 조합. DeckSystem은 phase_a_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `phaseAOrchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
-| 2026-04-20 | §2, §3 헤더 | **v3.1 정식 모드 안정화 (PR #175)**. 용어 정리: "Phase A"를 "정식 모드"로 치환, 코드 상수(`PhaseAOrchestrator`, `PHASE_A_MAP_ID`, `phase_a_long`, `phase-a-summon-ready` 등)는 historical identifier로 유지. `PhaseAOrchestrator.handleGachaRequest` + `settlePendingSummon('cancelled' \| 'cancelled-no-refund')` 경로에 `cancelledGachaDraw` 캐시 추가 — 풀·가챠 양쪽 재소환 리롤 차단, 다른 tier 가챠는 캐시 폐기 + 새 roll. Phaser `scale.mode = Scale.NONE` + `autoCenter = NO_CENTER` 고정, React `GamePage` shell은 `100dvh + max-w-[430px] + flex-col` 모바일 세로형 표준 레이아웃 (TopHud safe-area-inset-top, PhaseAHud safe-area-inset-bottom, 캔버스가 flex-1 슬롯 채움). `UnitSystem.applyDamage`의 `boss-hp-update` emit에 `Math.max(1, Math.floor(hp))` 가드 + `BossHpBar` 렌더 가드. `getWaveScaling` slots 11+ 공식 선형화 (`HP_SLOPE = 0.55`). |
+| 2026-04-14 | §2, §3, §4 | **v2 랜덤 소환 + 합성 피벗 (당시 "Phase A" 트랙) 시스템 추가**. `CoreOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === MAIN_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. 전용 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + GameHud 로컬 state 조합. DeckSystem은 main_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `orchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
+| 2026-04-20 | §2, §3 헤더 | **v3.1 정식 모드 안정화 (PR #175)**. 용어 정리 1차: "Phase A" prose → "정식 모드" 치환 (당시 코드 상수 `PhaseAOrchestrator`/`PHASE_A_MAP_ID`/`phase_a_long`/`phase-a-summon-ready`는 historical identifier로 유지 — v4에서 완전 제거됨). `CoreOrchestrator.handleGachaRequest` + `settlePendingSummon('cancelled' \| 'cancelled-no-refund')` 경로에 `cancelledGachaDraw` 캐시 추가 — 풀·가챠 양쪽 재소환 리롤 차단, 다른 tier 가챠는 캐시 폐기 + 새 roll. Phaser `scale.mode = Scale.NONE` + `autoCenter = NO_CENTER` 고정, React `GamePage` shell은 `100dvh + max-w-[430px] + flex-col` 모바일 세로형 표준 레이아웃 (TopHud safe-area-inset-top, GameHud safe-area-inset-bottom, 캔버스가 flex-1 슬롯 채움). `UnitSystem.applyDamage`의 `boss-hp-update` emit에 `Math.max(1, Math.floor(hp))` 가드 + `BossHpBar` 렌더 가드. `getWaveScaling` slots 11+ 공식 선형화 (`HP_SLOPE = 0.55`). |
+| 2026-04-21 | §2, §3, §8 | **v4 용어 정리 완결**. "Phase A" 식별자 전면 제거 (파일/클래스/상수/이벤트키/testid/에셋). 주요 코드 심볼 rename: `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, TowerSystem `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid prefix `phase-a-*` → `hud-*`. 에셋 `phase-a-long.json` → `main-long.json` + manifest key 동기화. SaveData 스키마 변화 없음 (v8 유지; `selectedMapId`는 in-memory only). |

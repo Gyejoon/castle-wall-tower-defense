@@ -9,22 +9,14 @@ import type {
 import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
-/** Splash radius for all siege towers in grid-tile units squared.
- *  Matches legacy TowerSystem.SPLASH_RADIUS_SQ = 2.25 (= 1.5²). The
- *  per-tower `splash_X.X` suffix on def.stats.special is vestigial —
- *  legacy ignores it and uses this constant for every splash tower. */
+// def.stats.special의 splash 배율 접미사는 무시되고 이 상수로 통일한다.
 const SPLASH_RADIUS_SQ = 2.25;
 
 export interface ArcEmitterOpts {
-	/** Override fire origin (e.g. nova_cannon's barrel tip). If undefined,
-	 *  uses tower world center with platform-lift y offset. */
 	fireOrigin?: (
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
 	) => { x: number; y: number };
-	/** Override muzzle VFX spawning (nova_cannon uses hit-flash at barrel
-	 *  tip instead of animated muzzle spritesheet). Default: spawn muzzle
-	 *  spritesheet via ctx.vfx.spawnMuzzleVfx. */
 	spawnMuzzle?: (
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
@@ -32,14 +24,6 @@ export interface ArcEmitterOpts {
 	) => void;
 }
 
-/** Arc-style (parabolic) projectile emitter for siege towers. Authors
- *  damage events inline (main + splash) and defers them via
- *  `pendingDamage` on the attack line, matching legacy arc behavior
- *  where all damage lands on projectile impact (legacy mirror:
- *  TowerSystem.ts:689-728 splash branch + :730-825 attackLine build).
- *
- *  Siege towers compose with `behaviors: []` — this emitter owns all
- *  damage event creation (no separate SplashAttack behavior). */
 export class ArcEmitter implements ProjectileEmitter {
 	constructor(private readonly opts: ArcEmitterOpts = {}) {}
 
@@ -59,11 +43,8 @@ export class ArcEmitter implements ProjectileEmitter {
 			? this.opts.fireOrigin(tower, ctx)
 			: { x: towerWorld.x, y: towerWorld.y - fireLift };
 
-		// Build pending damage batch
 		const pending: DamageEvent[] = [];
 
-		// Main-target damage. Legacy: `armorPierce = !def.stats.special`.
-		// All siege towers have `splash_X.X` specials, so this is false.
 		const armorPierce = !tower.def.stats.special;
 		pending.push({
 			unitId: target.instanceId,
@@ -71,8 +52,7 @@ export class ArcEmitter implements ProjectileEmitter {
 			armorPierce,
 		});
 
-		// Splash: all other living units within SPLASH_RADIUS_SQ of the PRIMARY
-		// TARGET's grid position. Each gets 0.5× damage via resolveSplashDamage.
+		// Splash 범위는 주 타겟의 그리드 좌표 기준. 0.5× 데미지는 resolveSplashDamage에 내장.
 		const targetGrid = ctx.gridManager.worldToGridFloat(target.x, target.y);
 		for (const unit of ctx.units) {
 			if (unit.instanceId === target.instanceId || unit.hp <= 0) continue;
@@ -87,8 +67,7 @@ export class ArcEmitter implements ProjectileEmitter {
 			}
 		}
 
-		// TTL: grid-space distance from tower grid to target grid (not pixels).
-		// Mirrors ArrowEmitter / legacy TowerSystem.ts:842-851.
+		// TTL은 픽셀이 아닌 그리드 셀 거리 기준.
 		const projSpeed = tower.def.stats.projectileSpeed;
 		let maxTtl: number;
 		if (projSpeed && projSpeed > 0) {
@@ -120,8 +99,6 @@ export class ArcEmitter implements ProjectileEmitter {
 		};
 		ctx.vfx.pushAttackLine(line);
 
-		// Muzzle VFX — nova_cannon overrides to render a hit-flash at the
-		// barrel tip instead of the animated muzzle spritesheet.
 		if (this.opts.spawnMuzzle) {
 			this.opts.spawnMuzzle(tower, ctx, fireOrigin);
 		} else {

@@ -1,7 +1,3 @@
-/**
- * drawBadge — small in-canvas pill/tag used for tier indicators, wave warnings,
- * and damage flash markers. Uses design tokens for consistent look with DOM `Badge`.
- */
 import type Phaser from 'phaser';
 import { colors, radiusPx } from './tokens';
 

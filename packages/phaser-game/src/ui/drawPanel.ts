@@ -1,13 +1,3 @@
-/**
- * drawPanel — in-canvas pixel-art frame renderer.
- *
- * Draws a filled rounded rectangle with an outer border and an optional inner
- * highlight line, using tokens from `design/tokens`. Matches the DOM `Card` look.
- *
- * Typical usage in a Phaser scene:
- *   const g = this.add.graphics();
- *   drawPanel(g, { x: 0, y: 0, width: 120, height: 48, intent: 'default' });
- */
 import type Phaser from 'phaser';
 import { colors, radiusPx } from './tokens';
 
@@ -18,15 +8,10 @@ export interface PanelOptions {
 	y: number;
 	width: number;
 	height: number;
-	/** Semantic intent selects border/highlight colors */
 	intent?: PanelIntent;
-	/** Override fill color (defaults to core.panel) */
 	fill?: number;
-	/** 0..1 fill alpha */
 	fillAlpha?: number;
-	/** Corner radius key (defaults to 'sm') */
 	radius?: keyof typeof radiusPx;
-	/** Render the 1px inner highlight line (default true) */
 	highlight?: boolean;
 }
 
@@ -43,10 +28,7 @@ function intentBorder(intent: PanelIntent): number {
 	}
 }
 
-/**
- * Draw the panel into `g`. Does NOT clear — caller may call `g.clear()` first.
- * Returns the Graphics for chaining.
- */
+// g.clear()는 호출자 책임.
 export function drawPanel(
 	g: Phaser.GameObjects.Graphics,
 	opts: PanelOptions,
@@ -65,15 +47,12 @@ export function drawPanel(
 	const r = radiusPx[radius];
 	const border = intentBorder(intent);
 
-	// Body fill
 	g.fillStyle(fill, fillAlpha);
 	g.fillRoundedRect(x, y, width, height, r);
 
-	// Outer border — 2px equivalent (stroke twice)
 	g.lineStyle(2, border, 1);
 	g.strokeRoundedRect(x, y, width, height, r);
 
-	// Inner highlight (1px inset)
 	if (highlight) {
 		g.lineStyle(1, colors.core.gold, 0.18);
 		g.strokeRoundedRect(

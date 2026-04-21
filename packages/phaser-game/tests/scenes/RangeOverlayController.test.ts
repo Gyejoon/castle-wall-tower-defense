@@ -152,7 +152,7 @@ describe('RangeOverlayController', () => {
 	});
 
 	it('showBuildableZone is idempotent (safe to call twice)', () => {
-		const { scene, graphicsList, addGraphics } = buildScene();
+		const { scene, graphicsList } = buildScene();
 		const grid = buildGridManager();
 		const map = buildMap();
 

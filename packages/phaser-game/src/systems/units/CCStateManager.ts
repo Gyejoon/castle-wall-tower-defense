@@ -1,36 +1,20 @@
 import { MIN_MOVE_SPEED, STUN_IMMUNITY_WINDOW_MS } from '@gld/shared';
 
-/**
- * Phase 3 refactor — per-unit CC (slow/stun) state extracted from
- * UnitSystem. Keeps the deterministic `ccResistance` duration cut
- * separate from the probabilistic `ccImmunityChance` resist roll,
- * mirroring the legacy UnitSystem semantics exactly.
- */
+// ccResistance(결정적 duration 감소)와 ccImmunityChance(확률적 회피)는 별개다.
 export interface CCState {
-	/** 1.0 = no slow, < 1.0 = slower. Floored at MIN_MOVE_SPEED when applied. */
 	slowFactor: number;
 	slowRemaining: number;
 	stunRemaining: number;
-	/** Boss phase-transition invulnerability window (ms). */
 	invulnerableMs: number;
-	/** 0..1 deterministic duration cut for applied CC. */
 	ccResistance: number;
-	/** 0..1 probabilistic resist roll — dodge chance per CC application. */
 	ccImmunityChance: number;
-	/** Scene-time (ms) until which new stuns are rejected. */
 	stunImmunityUntil: number;
 }
 
 export interface CCTickResult {
-	/** Speed multiplier to apply to the unit's base move speed (1 = full,
-	 *  < 1 for slow). Equal to `slowFactor`. */
 	speedMultiplier: number;
-	/** True if the unit is currently stunned. */
 	isStunned: boolean;
-	/** True if the stun just ended this tick. Caller applies the
-	 *  `stunImmunityUntil = sceneNowMs + STUN_IMMUNITY_WINDOW_MS` window. */
 	stunJustEnded: boolean;
-	/** True if the slow just ended this tick. */
 	slowJustEnded: boolean;
 }
 
@@ -69,21 +53,12 @@ export class CCStateManager {
 		this.states.delete(unitId);
 	}
 
-	/**
-	 * Apply a slow effect. Mirrors legacy `UnitSystem.applySlow`:
-	 *  - `ccImmunityChance > 0 && rng() < ccImmunityChance` → resisted.
-	 *  - Duration multiplied by `(1 - ccResistance)`.
-	 *  - Factor floored at `MIN_MOVE_SPEED`.
-	 *  - Stronger slow wins (`Math.min` on factor); longer duration wins
-	 *    (`Math.max` on remaining).
-	 *
-	 * Returns true if the slow was applied; false if resisted.
-	 */
+	// 강한 slow와 긴 duration이 승리 (Math.min / Math.max).
 	applySlow(unitId: string, factor: number, durationMs: number): boolean {
 		const state = this.states.get(unitId);
 		if (!state) return false;
 		if (state.ccImmunityChance > 0 && this.rng() < state.ccImmunityChance) {
-			return false; // CC resisted
+			return false;
 		}
 		const effectiveDuration = durationMs * (1 - state.ccResistance);
 		const flooredFactor = Math.max(MIN_MOVE_SPEED, factor);
@@ -92,14 +67,7 @@ export class CCStateManager {
 		return true;
 	}
 
-	/**
-	 * Apply a stun effect. Mirrors legacy `UnitSystem.applyStun`:
-	 *  - Resist roll as above.
-	 *  - Refused inside the post-stun immunity window.
-	 *  - Duration multiplied by `(1 - ccResistance)`.
-	 *
-	 * Returns true if the stun was applied; false if resisted / inside immunity window.
-	 */
+	// post-stun immunity window 내에는 거부된다.
 	applyStun(unitId: string, durationMs: number, sceneNowMs: number): boolean {
 		const state = this.states.get(unitId);
 		if (!state) return false;
@@ -112,11 +80,7 @@ export class CCStateManager {
 		return true;
 	}
 
-	/**
-	 * Per-frame tick: decrements slow/stun/invuln timers and reports the
-	 * unit's current movement state. Sets `stunImmunityUntil` automatically
-	 * when a stun ends.
-	 */
+	// stun 종료 시 stunImmunityUntil을 자동 설정한다.
 	tick(unitId: string, dtMs: number, sceneNowMs: number): CCTickResult {
 		const state = this.states.get(unitId);
 		if (!state) {
@@ -132,7 +96,6 @@ export class CCStateManager {
 			state.invulnerableMs = Math.max(0, state.invulnerableMs - dtMs);
 		}
 
-		// Slow tick
 		let slowJustEnded = false;
 		if (state.slowRemaining > 0) {
 			state.slowRemaining = Math.max(0, state.slowRemaining - dtMs);
@@ -142,7 +105,6 @@ export class CCStateManager {
 			}
 		}
 
-		// Stun tick
 		const wasStunned = state.stunRemaining > 0;
 		if (state.stunRemaining > 0) {
 			state.stunRemaining = Math.max(0, state.stunRemaining - dtMs);
@@ -160,7 +122,6 @@ export class CCStateManager {
 		};
 	}
 
-	/** For boss phase transitions — set invulnerability directly. */
 	setInvulnerable(unitId: string, durationMs: number): void {
 		const state = this.states.get(unitId);
 		if (!state) return;
@@ -172,13 +133,11 @@ export class CCStateManager {
 		return (state?.invulnerableMs ?? 0) > 0;
 	}
 
-	/** True iff a slow is currently active. */
 	isSlowed(unitId: string): boolean {
 		const state = this.states.get(unitId);
 		return (state?.slowRemaining ?? 0) > 0;
 	}
 
-	/** True iff a stun is currently active. */
 	isStunned(unitId: string): boolean {
 		const state = this.states.get(unitId);
 		return (state?.stunRemaining ?? 0) > 0;

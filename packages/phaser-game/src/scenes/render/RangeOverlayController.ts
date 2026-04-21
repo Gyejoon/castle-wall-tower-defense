@@ -3,14 +3,6 @@ import type Phaser from 'phaser';
 import { PLATFORM_LIFT } from '../../fieldAssets';
 import type { GridManager } from '../../systems/GridManager';
 
-/**
- * Owns the four Graphics objects used to visualize tower selection,
- * placement hover, range rings, and the buildable-zone highlight.
- *
- * Extracted from Game.ts (Phase 4 refactor). Game.ts used to hold each
- * of these Graphics objects on `this.*` and drew into them from inline
- * helpers; this class centralizes ownership and destruction.
- */
 export class RangeOverlayController {
 	private hoverGraphics: Phaser.GameObjects.Graphics;
 	private selectionGraphics: Phaser.GameObjects.Graphics;
@@ -30,35 +22,26 @@ export class RangeOverlayController {
 		this.rangeOverlayGraphics.setAlpha(0);
 	}
 
-	/** Expose the hover graphics so the scene input handler can paint into it. */
 	getHoverGraphics(): Phaser.GameObjects.Graphics {
 		return this.hoverGraphics;
 	}
 
-	/** Expose the selection graphics for direct clear from Game.ts. */
 	getSelectionGraphics(): Phaser.GameObjects.Graphics {
 		return this.selectionGraphics;
 	}
 
-	/** Expose the range overlay graphics for direct clear on game over. */
 	getRangeOverlayGraphics(): Phaser.GameObjects.Graphics {
 		return this.rangeOverlayGraphics;
 	}
 
-	/** Clear only the selection highlight layer. */
 	clearSelection(): void {
 		this.selectionGraphics.clear();
 	}
 
-	/** Clear only the hover highlight layer. */
 	clearHover(): void {
 		this.hoverGraphics.clear();
 	}
 
-	/**
-	 * Draw the gold range ring around the tower at (col, row) with the
-	 * given tile-space range, fading in over 120ms.
-	 */
 	drawRangeOverlay(col: number, row: number, range: number): void {
 		this.rangeOverlayGraphics.clear();
 		this.scene.tweens.killTweensOf(this.rangeOverlayGraphics);
@@ -79,7 +62,6 @@ export class RangeOverlayController {
 		});
 	}
 
-	/** Fade out the range overlay, clearing the underlying graphics on complete. */
 	clearRangeOverlay(): void {
 		this.scene.tweens.killTweensOf(this.rangeOverlayGraphics);
 		this.scene.tweens.add({
@@ -91,12 +73,6 @@ export class RangeOverlayController {
 		});
 	}
 
-	/**
-	 * Highlight every tile in `map.buildablePoints` that still passes
-	 * `grid.canPlaceTower`. Lazily creates the underlying graphics on
-	 * first call so scenes that never enter placement mode don't
-	 * allocate it.
-	 */
 	showBuildableZone(selectedTowerId: string | null): void {
 		if (!this.buildableZoneGraphics) {
 			this.buildableZoneGraphics = this.scene.add.graphics();
@@ -127,15 +103,10 @@ export class RangeOverlayController {
 		}
 	}
 
-	/** Clear the buildable-zone highlight; safe to call before it's created. */
 	hideBuildableZone(): void {
 		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
 	}
 
-	/**
-	 * Fill every placeable tile in the map with a translucent accent tint,
-	 * using GridManager.fillTileRect for consistent tile geometry.
-	 */
 	renderPlaceableHighlights(selectedTowerId: string | null): void {
 		this.selectionGraphics.clear();
 		if (!selectedTowerId) return;

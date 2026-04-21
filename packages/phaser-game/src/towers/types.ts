@@ -1,4 +1,4 @@
-import type { PlacedTower, TowerDef, ElementType } from '@gld/shared';
+import type { ElementType, PlacedTower, TowerDef } from '@gld/shared';
 import type Phaser from 'phaser';
 import type { GridManager } from '../systems/GridManager';
 import type { TowerVfxController } from './vfx/TowerVfxController';
@@ -37,17 +37,8 @@ export interface AttackContext {
 	readonly primaryTarget: UnitSnapshot | null;
 	pushDamage(evt: DamageEvent): void;
 	readonly vfx: TowerVfxController;
-	/** Returns the fully-modified damage for a given target, applying
-	 *  element multiplier, dmg_up / crit_dmg / family / globalAtkPct.
-	 *  Behaviors call this right before pushing a DamageEvent so the
-	 *  buffer never carries pre-multiplier numbers. */
 	resolveDamage(target: UnitSnapshot): number;
-	/** Returns the fully-modified SPLASH damage for a given target.
-	 *  Formula: effectiveDamage * elementMult(target) * 0.5 * dmgMod *
-	 *           (1 + critBonus), wrapped by resolveFinalDamage (adds globalAtkPct).
-	 *  Note: deliberately skips familyMod — matches legacy TowerSystem.ts:712-720
-	 *  which omits family multiplier from splash damage. Half-damage factor (0.5)
-	 *  is baked in. */
+	// Splash는 familyMod 미적용, 0.5 half-damage factor 포함.
 	resolveSplashDamage(target: UnitSnapshot): number;
 }
 
@@ -60,10 +51,6 @@ export interface TargetingStrategy {
 	): UnitSnapshot | null;
 }
 
-/** One damage/CC application step composed into a tower's fire sequence
- *  (e.g. SingleTargetAttack, SplashAttack, SingleTargetSlow). Stateless —
- *  all state flows through AttackContext. Multiple AttackBehaviors can be
- *  composed per tower (see CompositeTower for T5/T6 hybrids). */
 export interface AttackBehavior {
 	readonly id: string;
 	apply(ctx: AttackContext, tower: TowerRuntimeRef): void;
@@ -78,9 +65,6 @@ export interface ProjectileEmitter {
 	): void;
 }
 
-/** The per-instance tower controller returned by a TowerFactory. Owns
- *  cooldown/disabled state and dispatches its composed AttackBehaviors
- *  each frame via update(). One per PlacedTower. */
 export interface TowerBehavior {
 	readonly id: string;
 	readonly runtime: TowerRuntimeRef;

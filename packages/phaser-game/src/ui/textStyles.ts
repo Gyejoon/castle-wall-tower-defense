@@ -1,13 +1,3 @@
-/**
- * In-canvas text style presets. Consume via `this.add.text(x, y, str, textStyles.h1)`.
- *
- * Presets cover the same scale as `@gld/shared` typography:
- *   display40, h1, h2, body16, body14, label12, caption10
- *
- * Each base style defaults to `core.text` color; use the `tint` helpers to
- * switch foreground without duplicating the whole style object.
- */
-
 import { core } from '@gld/shared';
 import type Phaser from 'phaser';
 import { textStyles as baseStyles } from './tokens';
@@ -29,10 +19,6 @@ const intentColor: Record<TextIntent, string> = {
 	info: core.info,
 };
 
-/**
- * Build a text style by combining a scale preset with a tint intent.
- * Returns a new object — safe to mutate.
- */
 export function makeTextStyle(
 	scale: keyof typeof baseStyles,
 	intent: TextIntent = 'text',

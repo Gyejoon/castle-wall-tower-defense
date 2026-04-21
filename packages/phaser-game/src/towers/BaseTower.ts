@@ -25,7 +25,7 @@ export abstract class BaseTower implements TowerBehavior {
 			level: deps.level,
 			sprite,
 			barrelSprite: deps.barrelSprite,
-			// Live-read so moveTower updates propagate without an onMoved hook.
+			// onMoved 훅 없이도 moveTower 반영되도록 live-read.
 			worldPos: {
 				get x() {
 					return sprite.x;
@@ -45,20 +45,14 @@ export abstract class BaseTower implements TowerBehavior {
 		if (ctx.time < this.disabledUntilMs) return;
 		const speed = this.runtime.def.stats.attackSpeed ?? 0;
 		if (speed <= 0) {
-			// Passive aura path: every behavior runs each frame; each is
-			// responsible for its own internal cooldown via def stats.
+			// attackSpeed<=0은 패시브 오라. 각 behavior 내부 쿨다운으로 동작.
 			for (const b of this.behaviors) b.apply(ctx, this.runtime);
 			return;
 		}
 		const interval = 1000 / speed;
 		if (ctx.time - this.lastAttackMs < interval) return;
-		// Use the authoritative grid position from the PlacedTower data, NOT
-		// derived from sprite.x/sprite.y — sprite has visual lift
-		// (PLATFORM_LIFT + y-20) and the gridToWorld/worldToGridFloat
-		// round-trip isn't symmetric (half-tile offset). Net drift would be
-		// +0.5 x cells / -0.32 y cells vs. legacy TowerSystem, which indexes
-		// targeting directly off data.position. moveTower mutates
-		// data.position in place so this stays fresh without a hook.
+		// sprite 위치는 PLATFORM_LIFT+y-20 오프셋이 있고 gridToWorld 왕복이 비대칭이라
+		// 타겟팅 기준으로 쓰면 셀이 어긋난다. data.position이 단일 진실의 원천.
 		const grid = this.runtime.data.position;
 		const rangeCells = this.runtime.def.stats.range;
 		const target = this.targeting.pick(

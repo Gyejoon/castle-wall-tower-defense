@@ -58,12 +58,7 @@ interface UnitInstance {
 	lastRangedAttackMs?: number;
 	animationState: UnitAnimationState;
 	pendingDestroy: boolean;
-	/**
-	 * Phase 3 refactor: the following CC-related fields are defined as
-	 * live getter proxies that read from the CCStateManager. They preserve
-	 * the legacy UnitInstance surface for test-side introspection (see
-	 * tests/CCGuardrails.test.ts) without duplicating state.
-	 */
+	// CC·boss·path 필드는 하위 매니저의 라이브 getter 프록시다.
 	readonly slowFactor: number;
 	readonly slowRemaining: number;
 	readonly stunRemaining: number;
@@ -88,18 +83,6 @@ interface QueueUnitsOptions {
 	ccResist?: number;
 }
 
-/**
- * UnitSystem — orchestrates unit spawning, damage, and per-frame updates.
- *
- * Phase 3 refactor: per-unit state is now split across three focused
- * sub-managers under `./units/`:
- *  - `PathFollower`: lane + path progression.
- *  - `CCStateManager`: slow / stun / invulnerability / CC resist timers.
- *  - `BossPhaseTracker`: 50% / 25% HP phase transitions.
- *
- * UnitSystem keeps the sprite/HP-bar wiring, damage/armor/shield math,
- * the spawn queue, and the public API that Game.ts relies on (unchanged).
- */
 export class UnitSystem {
 	private units: Map<string, UnitInstance> = new Map();
 	private scene: Phaser.Scene;
@@ -158,7 +141,6 @@ export class UnitSystem {
 		this.pathFollower.setPaths(paths);
 		this.nextLane = 0;
 
-		// Reassign existing units to their closest point on their (new) lane
 		for (const unit of this.units.values()) {
 			this.pathFollower.reassignToClosest(
 				unit.data.instanceId,
@@ -283,18 +265,12 @@ export class UnitSystem {
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
-		// Register with the three sub-managers FIRST so the live accessors
-		// attached to the UnitInstance below can resolve state on first read.
+		// UnitInstance의 live accessor가 첫 읽기에 state를 풀 수 있도록 선등록.
 		this.pathFollower.register(instanceId, laneIndex, 0);
 		const ccImmunityChance = Math.min(
 			1,
-			scaled.ccImmunityChance +
-				entry.ccResist +
-				(entry.def.bossCcResist ?? 0),
+			scaled.ccImmunityChance + entry.ccResist + (entry.def.bossCcResist ?? 0),
 		);
-		// Phase 11 [F16]: deterministic CC duration cut. Reuses the unit
-		// def's `bossCcResist` — normal mobs default to 0 while bosses
-		// inherit 0.5–0.7.
 		const ccResistance = Math.min(1, entry.def.bossCcResist ?? 0);
 		this.cc.register(instanceId, ccResistance, ccImmunityChance);
 		if (entry.isBoss) {
@@ -336,15 +312,7 @@ export class UnitSystem {
 		this.unitSpawnedCallback?.(instanceId, entry.def.id, entry.isBoss);
 	}
 
-	/**
-	 * Build a UnitInstance with live accessors for legacy CC/boss/path
-	 * fields that read from the sub-managers (PathFollower / CCStateManager /
-	 * BossPhaseTracker). External code that inspects `unit.slowRemaining`,
-	 * `unit.ccResistance`, `unit.bossPhase`, etc. sees the live runtime value
-	 * without any field duplication.
-	 *
-	 * IMPORTANT: sub-managers must already be registered for this instanceId.
-	 */
+	// 호출 전에 해당 instanceId가 모든 하위 매니저에 등록되어 있어야 한다.
 	private buildUnitInstance(
 		init: Omit<
 			UnitInstance,
@@ -370,13 +338,22 @@ export class UnitSystem {
 		const ccGet = (k: keyof NonNullable<ReturnType<CCStateManager['get']>>) =>
 			(this.cc.get(id)?.[k] as number | undefined) ?? 0;
 		Object.defineProperties(base, {
-			slowFactor: { enumerable: true, get: () => this.cc.get(id)?.slowFactor ?? 1 },
+			slowFactor: {
+				enumerable: true,
+				get: () => this.cc.get(id)?.slowFactor ?? 1,
+			},
 			slowRemaining: { enumerable: true, get: () => ccGet('slowRemaining') },
 			stunRemaining: { enumerable: true, get: () => ccGet('stunRemaining') },
 			invulnerableMs: { enumerable: true, get: () => ccGet('invulnerableMs') },
 			ccResistance: { enumerable: true, get: () => ccGet('ccResistance') },
-			ccImmunityChance: { enumerable: true, get: () => ccGet('ccImmunityChance') },
-			stunImmunityUntil: { enumerable: true, get: () => ccGet('stunImmunityUntil') },
+			ccImmunityChance: {
+				enumerable: true,
+				get: () => ccGet('ccImmunityChance'),
+			},
+			stunImmunityUntil: {
+				enumerable: true,
+				get: () => ccGet('stunImmunityUntil'),
+			},
 			pathProgress: {
 				enumerable: true,
 				get: () => this.pathFollower.get(id)?.pathProgress ?? 0,
@@ -443,8 +420,7 @@ export class UnitSystem {
 		if (unit.pendingDestroy) return;
 		const applied = this.cc.applySlow(unitId, factor, durationMs);
 		if (!applied) return;
-		// Tint only flips to "slowed" if the unit isn't currently stunned —
-		// stun tint takes visual precedence.
+		// Stun tint가 slow tint보다 시각적으로 우선한다.
 		if (!this.cc.isStunned(unitId)) {
 			unit.sprite.setTint(0x88ccff);
 		}
@@ -453,12 +429,8 @@ export class UnitSystem {
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		// Bug guard: once a unit is flagged for destruction the death
-		// animation is already playing and its ANIMATION_COMPLETE listener
-		// owns sprite cleanup. Applying stun here would call
-		// `setUnitAnimationState(unit, 'idle')` which interrupts the death
-		// animation, so ANIMATION_COMPLETE never fires and the ghost sprite
-		// lingers on screen forever.
+		// pendingDestroy 상태에 stun을 적용하면 idle 애니메이션이 death 애니메이션을
+		// 가로채 ANIMATION_COMPLETE가 발화되지 않아 고스트 스프라이트가 남는다.
 		if (unit.pendingDestroy) return;
 		const now = this.scene.time?.now ?? 0;
 		const applied = this.cc.applyStun(unitId, durationMs, now);
@@ -538,7 +510,6 @@ export class UnitSystem {
 
 		unit.data.hp -= damage;
 
-		// Boss phase transition check. While-alive gate lives inside onDamage.
 		if (unit.isBoss) {
 			const transition = this.bossPhase.onDamage(
 				unitId,
@@ -715,11 +686,9 @@ export class UnitSystem {
 				continue;
 			}
 
-			// CC tick — handles invuln/slow/stun timers. stunJustEnded has the
-			// side effect of setting stunImmunityUntil inside the CC manager.
+			// stunJustEnded 시 CCStateManager 내부에서 stunImmunityUntil이 설정된다.
 			const ccTick = this.cc.tick(id, delta, time);
 
-			// Has the unit reached the lane's terminal waypoint already?
 			const unitLane = this.pathFollower.getLane(unit.laneIndex);
 			const pathIdx = unit.data.pathIndex;
 			if (pathIdx >= unitLane.length - 1) {
@@ -735,14 +704,11 @@ export class UnitSystem {
 				continue;
 			}
 
-			// Slow tint cleanup when it expires. Matches legacy UnitSystem
-			// which called `restoreUnitTint` when slow dropped to 0.
 			if (ccTick.slowJustEnded && !ccTick.isStunned) {
 				this.restoreUnitTint(unit);
 			}
 
-			// Stun tint/animation cleanup when stun ends. Preserve slow tint
-			// if slow still active; otherwise restore base tint.
+			// stun 해제 시 slow가 남아있으면 slow tint 유지, 아니면 base tint 복원.
 			if (ccTick.stunJustEnded) {
 				if (this.cc.isSlowed(id)) {
 					unit.sprite.setTint(0x88ccff);
@@ -752,7 +718,6 @@ export class UnitSystem {
 				this.setUnitAnimationState(unit, 'walk');
 			}
 
-			// Skip movement while stunned.
 			if (ccTick.isStunned) continue;
 
 			// Enemies with ranged_tower_attack disable the nearest tower on cooldown
@@ -803,11 +768,8 @@ export class UnitSystem {
 				this.gridManager.orthoTile *
 				ccTick.speedMultiplier;
 
-			// Capture pre-advance facing vector (mirrors legacy loop which
-			// used `dx = target - worldX` against the PRE-advance state, so
-			// sprite.setFlipX / rotation see the direction the unit was
-			// travelling this frame, not the direction to the next-next cell
-			// after a snap).
+			// flip/rotation은 advance 전 방향 벡터를 사용해야 한다. advance 후
+			// snap된 위치를 기준으로 하면 다음-다음 셀 방향을 바라보게 된다.
 			const unitLaneWorld = this.pathFollower.getLaneWorld(unit.laneIndex);
 			const preTarget = unitLaneWorld[unit.data.pathIndex + 1] ?? {
 				x: unit.worldX,
@@ -842,8 +804,6 @@ export class UnitSystem {
 			} else {
 				unit.sprite.setPosition(unit.worldX, unit.worldY);
 			}
-			// Flying boss: rotate to face movement direction.
-			// Ground boss/units: flip sprite horizontally based on movement.
 			const dist = Math.sqrt(dx * dx + dy * dy);
 			if (unit.isBoss && dist > 0.01) {
 				if (unit.def.flying) {
@@ -994,15 +954,14 @@ export class UnitSystem {
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
-		// Sub-manager registration happens BEFORE constructing the instance
-		// so the live CC/path accessors below can resolve on first read.
+		// UnitInstance의 live accessor가 첫 읽기에 state를 풀 수 있도록 선등록.
+		// 소환된 미니언은 보스가 아니므로 BossPhaseTracker는 건너뛴다.
 		this.pathFollower.register(instanceId, laneIndex, initialPathIndex);
 		this.cc.register(
 			instanceId,
 			Math.min(1, def.bossCcResist ?? 0),
 			scaled.ccImmunityChance,
 		);
-		// Summoned minions are never bosses — skip BossPhaseTracker.register.
 
 		const instance = this.buildUnitInstance({
 			instanceId,

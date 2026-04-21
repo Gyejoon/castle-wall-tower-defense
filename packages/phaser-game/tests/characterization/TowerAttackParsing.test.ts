@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-// Phase 2.Final: the 4 special-string parsing helpers moved from
-// TowerSystem private methods into `src/towers/specialParsing.ts` as
-// pure functions. The characterization suite pins their exact behavior
-// so the new-strategy emitters (archer/frost/stun/siege/composite) that
-// depend on them through `ctx`/registry paths keep matching the legacy
-// TowerSystem semantics documented at the original call sites.
 import {
 	hasSplash,
 	isSlowSpecial,
@@ -14,18 +8,15 @@ import {
 } from '../../src/towers/specialParsing';
 
 describe('TowerSystem special parsing (characterization)', () => {
+	// parseSlowFactor는 잔여 속도 비율(1 - pct/100)을 반환한다.
 	it('parseSlowFactor handles slow_30% → 0.7 (returns 1 - 0.30)', () => {
-		// Note: parseSlowFactor returns the *remaining speed fraction*, i.e.
-		// 1 - pct/100. A slow_30% tower leaves the unit at 0.7x speed.
 		expect(parseSlowFactor('slow_30%')).toBeCloseTo(0.7);
 	});
 	it('parseSlowFactor handles slow_75%_aoe → 0.25 (1 - 0.75)', () => {
 		expect(parseSlowFactor('slow_75%_aoe')).toBeCloseTo(0.25);
 	});
+	// 정규식 매칭 실패 시 30% slow로 너그럽게 fallback.
 	it('parseSlowFactor returns 0.7 for unmatched input (current fallback)', () => {
-		// Fallback when the regex misses — intentionally lenient, treat as a
-		// mild 30% slow. If this is ever tightened to throw/return 1 the
-		// refactor must update callers.
 		expect(parseSlowFactor('unknown')).toBeCloseTo(0.7);
 	});
 

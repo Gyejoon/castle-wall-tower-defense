@@ -1,20 +1,18 @@
-// Side-effect import: populates the tower registry with every migrated
-// family. Imported before the public exports so any consumer of
-// `'../towers'` (TowerSystem) sees a ready registry.
+// 사이드이펙트: instances import가 tower registry를 채운다. public export보다 먼저 실행되어야 한다.
 import './instances';
 
-export * from './types';
+export { BaseTower } from './BaseTower';
 export {
 	__resetTowerRegistry,
 	createTower,
 	hasTowerFactory,
 	registerTower,
 } from './registry';
-export { BaseTower } from './BaseTower';
-export { TowerVfxController } from './vfx/TowerVfxController';
 export {
 	hasSplash,
 	isSlowSpecial,
 	isStunSpecial,
 	parseSlowFactor,
 } from './specialParsing';
+export * from './types';
+export { TowerVfxController } from './vfx/TowerVfxController';

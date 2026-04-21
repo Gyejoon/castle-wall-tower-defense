@@ -18,32 +18,13 @@ interface CombatMediatorDeps {
 		| 'update'
 	>;
 	damageNumbers: Pick<DamageNumberSystem, 'show' | 'showMiss'>;
-	/**
-	 * Live reference to Game.ts's bossBehaviors Map (READ ONLY). Game.ts
-	 * retains ownership — it populates on spawn, removes on defeat.
-	 * CombatMediator only reads to consult isCcImmune() per unit.
-	 */
+	// 소유는 Game.ts. 여기서는 CC 면역 조회만 한다.
 	bossBehaviors: ReadonlyMap<string, BossBehavior>;
 	orchestrator: PhaseAOrchestrator | undefined;
 	isPhaseAMap: boolean;
 }
 
-/**
- * Tick-scoped combat mediator: tower→unit damage dispatch, CC application
- * with boss immunity guard, floating damage numbers, and gold accumulation
- * via callback. Extracted from `Game.ts.processCombatField` in Phase 6.
- *
- * Invariants preserved from the inline form:
- *  - Damage events with `damage > 0` route through `units.applyDamage`,
- *    show a floating number for `hit`, MISS for `miss`, nothing for
- *    `absorbed`/`invulnerable`.
- *  - `onKill` fires once per killed unit; bounty comes from applyDamage.
- *  - `effectAmp` multiplier from the Phase A orchestrator is applied to
- *    slow/stun durations when and only when `isPhaseAMap && orchestrator`.
- *  - Boss CC immunity (`bossBehaviors.get(unitId)?.isCcImmune()`) gates
- *    both slow and stun. `tests/characterization/BossCcImmunity.test.ts`
- *    pins this predicate.
- */
+// CC 면역 분기는 BossCcImmunity.test.ts가 고정한다.
 export class CombatMediator {
 	constructor(private readonly deps: CombatMediatorDeps) {}
 

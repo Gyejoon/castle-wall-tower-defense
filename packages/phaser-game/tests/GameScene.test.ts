@@ -60,12 +60,7 @@ function createScene(): GameScene & Record<string, unknown> {
 	return new GameScene() as GameScene & Record<string, unknown>;
 }
 
-/**
- * Phase 6: scenes that previously poked `scene.playerHp`, `scene.gameOver`,
- * etc. now route through a real GameStateManager. This helper wires one up
- * with the same `onEndGame` / `onExitSideEffect` contract Game.ts uses in
- * production so the update() flow still drives terminal events.
- */
+// Game.ts와 동일한 onEndGame/onExitSideEffect 계약으로 GameStateManager를 세팅한다.
 function installRuntimeControllers(
 	scene: GameScene & Record<string, unknown>,
 	opts: {
@@ -223,13 +218,6 @@ describe('GameScene', () => {
 	});
 
 	it('clears selected tower state after a successful placement', async () => {
-		// Phase 5: handlePlaceTower lives on PlacementCoordinator now. The
-		// scene-level invariants this test pinned (selectedTowerId cleared,
-		// rangeOverlay cleared, tower-deselected emitted) are preserved by
-		// the coordinator's `onBeforeSuccessEmit` callback — Game.ts wires
-		// that callback to exactly those side effects. Rebuild the
-		// equivalent check by driving the coordinator directly with a mock
-		// scene + matching callbacks.
 		const { PlacementCoordinator } = await import(
 			'../src/scenes/input/PlacementCoordinator'
 		);

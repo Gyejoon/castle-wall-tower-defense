@@ -12,12 +12,9 @@ export type OverlayIntent = 'pause' | 'result' | 'choice' | 'reveal';
 
 export interface OverlayProps extends HTMLAttributes<HTMLDivElement> {
 	intent?: OverlayIntent;
-	/** Dim strength — overrides intent default */
 	dim?: keyof typeof overlayDim;
-	/** Whether to trap clicks on the backdrop */
 	dismissOnBackdrop?: boolean;
 	onDismiss?: () => void;
-	/** The focused content — rendered centered or as intent-specific layout */
 	children: ReactNode;
 }
 
@@ -28,14 +25,6 @@ const intentDim: Record<OverlayIntent, keyof typeof overlayDim> = {
 	reveal: 'heavy',
 };
 
-/**
- * Full-viewport overlay with dimmed backdrop.
- * Intent defines default dim level and layout affordances:
- *   - pause:   centered small panel (confirm/resume)
- *   - result:  centered large panel + banner above (victory/defeat)
- *   - choice:  top-anchored title + side-by-side choices (upgrade pick)
- *   - reveal:  centered card with room for burst/particle effects (summon)
- */
 export function Overlay({
 	intent = 'pause',
 	dim,
@@ -69,9 +58,7 @@ export function Overlay({
 		...style,
 	};
 
-	// Escape dismissal is window-scoped so it fires without needing tabIndex/focus.
-	// Store the callback in a ref so the window listener only re-registers when
-	// `dismissOnBackdrop` toggles — not every time the parent passes an inline arrow.
+	// onDismiss를 ref로 보관해 리스너 등록이 dismissOnBackdrop 변경 시에만 재수행되도록.
 	const onDismissRef = useRef(onDismiss);
 	useEffect(() => {
 		onDismissRef.current = onDismiss;

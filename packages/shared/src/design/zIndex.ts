@@ -1,15 +1,4 @@
-/**
- * Z-index scale — 5 semantic layers, no raw `z-[N]` literals allowed.
- *
- * Layer order (low → high):
- *   board      → game canvas (default stacking)
- *   hud        → top/bottom HUD chrome (always visible over board)
- *   floating   → tower action sheet, in-canvas callouts
- *   overlay    → upgrade pick, summon reveal (dimmed backdrop)
- *   modal      → pause, game-over, major state gates
- *   toast      → transient notifications on top of everything
- */
-
+// 저→고: board / hud / floating / overlay / modal / toast. 원시 z-[N] 리터럴 금지.
 export const zIndex = {
 	board: 0,
 	hud: 10,

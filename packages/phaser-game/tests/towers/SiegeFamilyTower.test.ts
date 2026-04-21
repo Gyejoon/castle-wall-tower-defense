@@ -299,8 +299,9 @@ describe('SiegeFamilyTower', () => {
 			expect(barrel.rotation).toBeCloseTo(Math.PI / 2);
 
 			// Fire cadence is blocked by disable(), so no attack-line emitted.
-			const spy = ctx2.vfx
-				.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
+			const spy = ctx2.vfx.pushAttackLine as unknown as ReturnType<
+				typeof vi.fn
+			>;
 			expect(spy).not.toHaveBeenCalled();
 		});
 	});

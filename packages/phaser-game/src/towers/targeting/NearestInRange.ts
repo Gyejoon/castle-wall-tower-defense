@@ -1,9 +1,6 @@
 import type { GridManager } from '../../systems/GridManager';
 import type { TargetingStrategy, UnitSnapshot } from '../types';
 
-/** Pick the in-range living unit whose grid-distance-squared is smallest.
- *  Mirrors the legacy targeting loop in `TowerSystem.update()` at
- *  TowerSystem.ts:671-684. */
 export class NearestInRange implements TargetingStrategy {
 	pick(
 		towerGrid: { x: number; y: number },

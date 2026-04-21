@@ -9,13 +9,6 @@ interface BossContextBuilderDeps {
 	getSceneTime: () => number;
 }
 
-/**
- * Builds the per-tick `BossContext` that boss AI behaviors consume.
- * Extracted from `GameScene.buildBossContext` in Phase 6.
- *
- * The `disableTower('__random__', ...)` branch preserves the Corrupted
- * Archmage sentinel lifted straight from the inline version.
- */
 export class BossContextBuilder {
 	constructor(private readonly deps: BossContextBuilderDeps) {}
 
@@ -28,6 +21,7 @@ export class BossContextBuilder {
 				units.spawnAdditionalUnit(unitId, pos, metadata);
 			},
 			disableTower: (towerId, untilMs) => {
+				// Corrupted Archmage 전용 sentinel: 임의의 타워를 선택해 disable.
 				if (towerId === '__random__') {
 					const all = towers.getAllTowers();
 					if (all.length === 0) return;

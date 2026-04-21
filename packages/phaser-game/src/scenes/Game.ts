@@ -324,16 +324,12 @@ export class GameScene extends Phaser.Scene {
 			waves: this.playerWaves,
 			emit: EventBus.emit.bind(EventBus),
 			onPhaseAFastPath: () => {
-				// Mirror the pre-Phase-5 inline cleanup after a Phase A
-				// fast-path placement (Game.ts.handlePlaceTower lines 622-626).
 				this.inputController.setSelectedTowerId(null);
 				this.rangeOverlay.hideBuildableZone();
 				this.rangeOverlay.clearSelection();
 				this.rangeOverlay.clearRangeOverlay();
 			},
 			onBeforeSuccessEmit: () => {
-				// Mirror the pre-Phase-5 overlay clears that happened between
-				// energy.spend and the tower-deselected emit.
 				this.inputController.setSelectedTowerId(null);
 				this.rangeOverlay.clearSelection();
 				this.rangeOverlay.clearRangeOverlay();
@@ -592,13 +588,6 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.start();
 	}
 
-	/**
-	 * Scene-side last-mile cleanup triggered by GameStateManager.endGame.
-	 * Emits the `game-over` payload (with run stats), tears down the range
-	 * overlay, detaches wave/lifecycle handlers, and destroys the tower
-	 * system. GameStateManager already set the `gameOver` flag before this
-	 * runs.
-	 */
 	private handleEndGame(payload: {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
@@ -688,11 +677,8 @@ export class GameScene extends Phaser.Scene {
 
 	private onUnitKilled(): void {
 		soundGenerator.playUnitDeath();
-		// Phase 4 [F15]: +1 per kill baseline, with the roguelike
-		// `energy_harvest` upgrade stacking additively on top (+1 per
-		// stack). Every 5th wave doubles the baseline as a soft pacing
-		// buff — stack bonus is additive on top of the doubled value.
 		if (this.isPhaseAMap) {
+			// 5웨이브마다 baseline 2배. harvest 보너스는 배율 적용 없이 가산.
 			const harvestBonus =
 				this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
 			const baseline =
@@ -710,13 +696,9 @@ export class GameScene extends Phaser.Scene {
 		if (!behavior) return;
 		const unit = this.playerUnits.getUnit(unitId);
 		if (result.killed) {
-			// Phase 3 (sole-mode): boss-kill energy reward, plus a
-			// fast-clear bonus if the boss dies within
-			// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
-			// to wave start if bossSpawnMs was not recorded (e.g. if
-			// the boss died before the spawn callback fired).
 			if (this.isPhaseAMap) {
 				this.energySystem.add(ENERGY_PER_BOSS_KILL);
+				// bossSpawnMs 미기록 시 elapsed=0이 되어 fast-clear 보너스가 항상 지급됨.
 				const elapsed =
 					this.playerWaves.getElapsedMs() -
 					(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
@@ -759,11 +741,8 @@ export class GameScene extends Phaser.Scene {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
 		}
 
-		// Controllers destroy AFTER EventBus.off (so handlers that might
-		// read their state have already detached) but BEFORE the gameplay
-		// systems they observe are torn down. Matches the AGENTS.md
-		// cleanup order: EventBus.off → input/placement →
-		// combat/state/bossCtx → systems → renderers.
+		// 정리 순서: EventBus.off → 컨트롤러 → systems → renderer.
+		// 컨트롤러는 핸들러 해제 후 감시 대상 system 파괴 전에 정리해야 stale 참조가 없다.
 		this.inputController?.destroy();
 		this.placement?.destroy();
 		this.state?.destroy();
@@ -787,10 +766,6 @@ export class GameScene extends Phaser.Scene {
 		this.playerDeck.reset();
 		this.energySystem.reset();
 
-		// Renderer destroy runs AFTER EventBus.off + system destroy per
-		// AGENTS.md scene-teardown rule. Handler guards (isSceneAlive)
-		// also prevent stale callbacks from touching controllers that
-		// may be mid-destroy.
 		this.fieldRenderer?.destroy();
 		this.rangeOverlay?.destroy();
 

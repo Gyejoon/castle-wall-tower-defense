@@ -8,11 +8,7 @@ import type {
 import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
-/** Instant beam projectile. Damage is pushed by `SingleTargetAttack`
- *  before this emitter runs; we only produce the visual beam line and the
- *  immediate impact flash. Mirrors the beam branch of the legacy fire
- *  path at TowerSystem.ts:857-861 (immediate damage push) and
- *  TowerSystem.ts:903-936 (beam attack-line + impact VFX). */
+// 데미지는 이 emitter 실행 전 SingleTargetAttack이 push한다. 여기서는 VFX만 담당.
 export class BeamEmitter implements ProjectileEmitter {
 	emit(
 		_origin: { x: number; y: number },
@@ -20,9 +16,7 @@ export class BeamEmitter implements ProjectileEmitter {
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
 	): void {
-		// See ArrowEmitter: `origin` is the sprite-lifted sprite position, but
-		// legacy uses grid-world as `towerWorld` for VFX. Recompute from
-		// data.position so both paths produce identical attack-lines.
+		// sprite.x/y에는 lift 오프셋이 있어 그리드 좌표 기준으로 재계산한다.
 		const towerWorld = ctx.gridManager.gridToWorld(
 			tower.data.position.x,
 			tower.data.position.y,
@@ -46,8 +40,6 @@ export class BeamEmitter implements ProjectileEmitter {
 		};
 		ctx.vfx.pushAttackLine(line);
 
-		// Beam: instant impact VFX — archer-family beams never splash, so the
-		// VFX key is the plain hit-flash (mirrors TowerSystem.ts:929-936).
 		ctx.vfx.spawnImpactVfx('projectile-hit-flash', target.x, target.y);
 
 		ctx.vfx.spawnMuzzleVfx(

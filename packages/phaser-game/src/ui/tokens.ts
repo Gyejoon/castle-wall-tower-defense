@@ -1,12 +1,3 @@
-/**
- * Phaser-friendly adapter over `@gld/shared/design` tokens.
- *
- * Converts hex strings to 0x numbers (Phaser expects number format for fill/stroke),
- * and exposes spacing/radius as plain numbers (px).
- *
- * Import here instead of re-deriving hex literals inside systems/scenes.
- */
-
 import {
 	core,
 	duration,
@@ -33,7 +24,6 @@ const mapValues = <T extends Record<string, string>>(
 	return out;
 };
 
-/** 0x-format colors for Phaser Graphics/Text fills & strokes */
 export const colors = {
 	core: mapValues(core),
 	state: {
@@ -98,14 +88,10 @@ export const colors = {
 	},
 } as const;
 
-/** Spacing in px numbers — Phaser consumes numeric pixel offsets */
 export const spacingPx = spacing;
-/** Radius in px numbers — for Graphics.fillRoundedRect */
 export const radiusPx = radius;
-/** Motion duration in ms — for Phaser Tweens `duration` */
 export const durationMs = duration;
 
-/** Typography presets converted to Phaser TextStyle objects */
 const pxSize = (v: string): number => Number.parseInt(v.replace('px', ''), 10);
 
 export const textStyles = {
@@ -146,6 +132,5 @@ export const textStyles = {
 	},
 } as const;
 
-/** Backwards-compat re-export; existing code imports `PHASER_COLORS` from @gld/shared. */
 export { PHASER_COLORS } from '@gld/shared';
 export { motion, palette, zIndex };

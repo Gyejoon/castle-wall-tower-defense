@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Hoisted routing EventBus — same pattern as tests/PhaseAOrchestrator.test.ts.
-// emit() actually dispatches to registered handlers so we can exercise the
-// full request → orchestrator → placeTower chain that Game.ts:1024-1032 is
-// going to delegate to after Phase 5 extracts the scene input layer.
+// emit이 등록된 핸들러로 실제 dispatch하도록 만든 routing EventBus.
 const { EventBus, resetBus } = vi.hoisted(() => {
 	const handlers = new Map<string, Set<(payload?: unknown) => void>>();
 	const emit = vi.fn((event: string, payload?: unknown) => {
@@ -76,16 +73,7 @@ beforeEach(() => {
 	resetBus();
 });
 
-// Characterization: Game.ts:1024-1032 routes placement clicks through the
-// orchestrator when `hasPendingSummon()` is true. Phase 5 will move this
-// branch into a scene-input module; the invariant below is what that module
-// must preserve.
-//
-// The existing PhaseAOrchestrator.test.ts covers draw → complete → tower-
-// summoned end-to-end. This file is intentionally narrow: it pins the
-// **ordering** contract the scene relies on, so refactor drift in either
-// direction (renaming completePlacement, adding an intermediate step,
-// stashing state on a different field) is caught immediately.
+// summon → placement 사이의 ordering/상태 계약을 고정. completePlacement 이름/단계 변경 시 감지된다.
 describe('PhaseA summon → placement ordering (characterization)', () => {
 	it('hasPendingSummon flips true on draw and false exactly at completePlacement', () => {
 		const towerSystem = makeFakeTowerSystem();
@@ -95,18 +83,13 @@ describe('PhaseA summon → placement ordering (characterization)', () => {
 			rng: () => 0,
 		});
 
-		// Baseline: no draw yet.
 		expect(orch.hasPendingSummon()).toBe(false);
 
-		// Drawing flips the flag before any placeTower call — Game.ts:1025
-		// branches on exactly this bit.
 		EventBus.emit('request-summon-tower');
 		expect(orch.hasPendingSummon()).toBe(true);
 		expect(towerSystem.placeTower).not.toHaveBeenCalled();
 
-		// completePlacement is the *only* method that consumes the pending
-		// state into a placeTower call. If a future refactor introduces a
-		// "confirmPlacement" intermediate step, this assertion trips.
+		// completePlacement만이 pending을 placeTower 호출로 소비한다.
 		orch.completePlacement(3, 4);
 		expect(orch.hasPendingSummon()).toBe(false);
 		expect(towerSystem.placeTower).toHaveBeenCalledTimes(1);
@@ -118,10 +101,7 @@ describe('PhaseA summon → placement ordering (characterization)', () => {
 	});
 
 	it('completePlacement without a pending summon is a no-op (does not call placeTower)', () => {
-		// Game.ts guards the fast-path with `hasPendingSummon()` — but if a
-		// refactor ever drops the guard, the orchestrator itself must stay
-		// safe. Pin the current "silent no-op" behavior so the scene-input
-		// extraction can rely on it.
+		// 호출자의 가드가 빠져도 orchestrator 자체는 silent no-op으로 안전해야 한다.
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,
@@ -138,9 +118,6 @@ describe('PhaseA summon → placement ordering (characterization)', () => {
 	});
 
 	it('cancelPendingSummon — not completePlacement — is the only way to clear without placing', () => {
-		// The scene's cancel-path goes through `cancelPendingSummon`. This
-		// test pins the API surface: after a draw, calling completePlacement
-		// *must* produce a placeTower call, and cancel *must not*.
 		const towerSystem = makeFakeTowerSystem();
 		const orch = new PhaseAOrchestrator({
 			towerSystem: towerSystem as never,

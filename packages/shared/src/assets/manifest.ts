@@ -22,12 +22,7 @@ export interface AssetManifestEntry {
 	frameWidth?: number;
 	frameHeight?: number;
 	frameCount?: number;
-	/**
-	 * Post-process level. Absent or 'canvas-only' means the PNG is the raw
-	 * canvas generator output. 'libresprite-polished' means the file was
-	 * produced via `gld-pipe forge → accept` and has palette/rim-light/noise
-	 * post-processing applied.
-	 */
+	// canvas-only: 생성기 원본 PNG. libresprite-polished: palette/rim-light/noise 후처리 적용본.
 	polish?: AssetPolishLevel;
 }
 

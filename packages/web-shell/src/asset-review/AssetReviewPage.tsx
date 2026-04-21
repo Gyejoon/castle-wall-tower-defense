@@ -18,8 +18,7 @@ export function AssetReviewPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [toast, setToast] = useState<string | null>(null);
 
-	// Use functional updater for setSelectedId so reload doesn't need
-	// selectedId in its closure — then useEffect can safely depend on reload.
+	// setSelectedId 함수형 업데이터로 selectedId 의존성을 제거하여 reload를 useEffect에서 재진입 없이 쓴다.
 	const reload = useCallback(async () => {
 		setBusy('reload');
 		setError(null);
@@ -214,12 +213,7 @@ function AssetRow({
 	);
 }
 
-/**
- * Thumbnail that crops to the first frame for sprite sheets. Without this,
- * a 512×80 sheet of 8 frames would render as a tiny compressed horizontal
- * strip in a 40×40 list cell. We use the sheet PNG as a background-image
- * sized so the first frame maps into the 40×40 box.
- */
+// 스프라이트 시트는 background-image로 첫 프레임만 40×40 셀에 맞춰 크롭 표시한다.
 function AssetThumbnail({ entry }: { entry: StagingEntry }) {
 	const anim = entry.metadata?.polish.animation;
 	const url = stagingFileUrl(entry.id, 'polished.png');
@@ -233,14 +227,12 @@ function AssetThumbnail({ entry }: { entry: StagingEntry }) {
 			/>
 		);
 	}
-	// Scale the sheet so frame 0 fits inside a 40×40 box preserving aspect
-	// ratio. Scale by the LONGER of frame dims so the full frame is visible.
 	const BOX = 40;
+	// 프레임 긴 변 기준으로 축소해 전체 프레임이 박스에 들어가도록.
 	const scale = BOX / Math.max(anim.frameW, anim.frameH);
 	const sheetW = anim.frameW * anim.frameCount * scale;
 	const sheetH = anim.frameH * scale;
 	const frameW = anim.frameW * scale;
-	// Horizontally center the first frame in the box.
 	const offsetX = (BOX - frameW) / 2;
 	const offsetY = (BOX - sheetH) / 2;
 	return (
@@ -268,9 +260,8 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 	const isSheet = !!meta?.polish.animation;
 	const [zoom, setZoom] = useState<ZoomLevel>(4);
 	const [mode, setMode] = useState<ViewMode>('side');
-	// Sheets have sync animation state on each pane. Split mode would need to
-	// drive both from the same clock, which is more complexity than the
-	// comparison helps with. Degrade to side-by-side for sheets silently.
+	// split 모드는 양쪽 패널의 애니메이션 시각을 동기화해야 해 비용 대비 이득이 적음.
+	// 시트는 split을 무시하고 side-by-side로 강제한다.
 	const effectiveMode: ViewMode = isSheet ? 'side' : mode;
 	const hasBoth = entry.hasOriginal && entry.hasPolished;
 	return (
@@ -386,12 +377,6 @@ function AssetPreview({ entry }: { entry: StagingEntry }) {
 	);
 }
 
-/**
- * Before/after split scrubber. Polished image fills the frame; original is
- * overlaid on the LEFT portion via clip-path, revealed as the user drags the
- * divider. Pixel-art aware: both images are rendered at the same zoom and
- * pixel-pixelated so edges align exactly at the cut.
- */
 function SplitPane({
 	originalUrl,
 	polishedUrl,
@@ -562,9 +547,7 @@ function SheetAnimation({
 }) {
 	const [frame, setFrame] = useState(0);
 	useEffect(() => {
-		// Respect prefers-reduced-motion: show frame 0 statically so a reviewer
-		// with the setting can still inspect the sheet per-frame via the raw
-		// sheet disclosure below the preview.
+		// prefers-reduced-motion이면 프레임 0을 정지 상태로 보여준다.
 		const mq =
 			typeof window !== 'undefined' && window.matchMedia
 				? window.matchMedia('(prefers-reduced-motion: reduce)')

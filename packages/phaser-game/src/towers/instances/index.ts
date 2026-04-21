@@ -1,5 +1,4 @@
-// Side-effect imports: each family module registers its tower defIds
-// into the registry at import time. Phase 2.3–2.5 will add more here.
+// 각 family 모듈은 import 시점에 registerTower 호출로 registry를 채운다.
 import './archer';
 import './composite';
 import './frost';

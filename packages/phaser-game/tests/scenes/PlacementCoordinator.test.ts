@@ -62,7 +62,9 @@ function makeDeck(opts: { card?: { energyCost: number } | null } = {}) {
 }
 
 function makeTowers(
-	placeResult: { success: true } | { success: false; reason: PlacementFailureReason } = {
+	placeResult:
+		| { success: true }
+		| { success: false; reason: PlacementFailureReason } = {
 		success: true,
 	},
 	towerCount = 1,
@@ -79,16 +81,18 @@ function makeWaves(phase: WavePhase = 'prep') {
 	};
 }
 
-function buildCoordinator(overrides: {
-	towers?: ReturnType<typeof makeTowers>;
-	energy?: ReturnType<typeof makeEnergy>;
-	deck?: ReturnType<typeof makeDeck>;
-	orchestrator?: FakeOrchestrator | undefined;
-	waves?: ReturnType<typeof makeWaves>;
-	onSuccess?: ReturnType<typeof vi.fn>;
-	onBeforeSuccessEmit?: ReturnType<typeof vi.fn>;
-	onPhaseAFastPath?: ReturnType<typeof vi.fn>;
-} = {}) {
+function buildCoordinator(
+	overrides: {
+		towers?: ReturnType<typeof makeTowers>;
+		energy?: ReturnType<typeof makeEnergy>;
+		deck?: ReturnType<typeof makeDeck>;
+		orchestrator?: FakeOrchestrator | undefined;
+		waves?: ReturnType<typeof makeWaves>;
+		onSuccess?: ReturnType<typeof vi.fn>;
+		onBeforeSuccessEmit?: ReturnType<typeof vi.fn>;
+		onPhaseAFastPath?: ReturnType<typeof vi.fn>;
+	} = {},
+) {
 	const towers = overrides.towers ?? makeTowers();
 	const energy = overrides.energy ?? makeEnergy();
 	const deck = overrides.deck ?? makeDeck();

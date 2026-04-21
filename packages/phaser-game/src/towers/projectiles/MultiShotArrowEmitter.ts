@@ -10,17 +10,8 @@ import type {
 import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
-/** Multi-shot arrow emitter (twin_archer pattern). Fires N arrows with
- *  staggered ttl + offsetY; each arrow's pendingDamage carries a
- *  HALVED damage event plus the stun event (damage=0). Legacy applies
- *  stun twice (once per arrow) but UnitSystem.applyStun uses Math.max,
- *  so the effective stun duration is 1×. Damage is split 2× (half each
- *  arrow) → total = full damage.
- *
- *  Behaviors remain empty on the owning tower — this emitter authors the
- *  full pendingDamage batch (damage + stun). Legacy mirror:
- *  TowerSystem.ts:784-825 (stun event build), :913-954 (2-shot fire
- *  loop with offsetY and +80ms stagger). */
+// 데미지는 shotCount로 분할되어 각 화살 도달 시 적용되며, 총합은 1회치 데미지.
+// stun은 각 화살에 동일 이벤트로 실려 applyStun의 Math.max 덕에 실효 1× 지속.
 export class MultiShotArrowEmitter implements ProjectileEmitter {
 	constructor(private readonly shotCount: number = 2) {}
 
@@ -31,8 +22,6 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 		ctx: AttackContext,
 	): void {
 		const data = tower.data;
-		// Match ArrowEmitter/BeamEmitter: use grid-derived world position
-		// for attackLine fireOrigin (NOT sprite.x/sprite.y which has lift).
 		const towerWorld = ctx.gridManager.gridToWorld(
 			data.position.x,
 			data.position.y,
@@ -40,8 +29,7 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 		const fireLift = ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 
-		// TTL: grid-space distance from tower grid to target grid (not pixels),
-		// matching ArrowEmitter. Legacy: TowerSystem.ts:842-851.
+		// TTL은 그리드 셀 거리 기준.
 		const projSpeed = tower.def.stats.projectileSpeed;
 		let baseMaxTtl: number;
 		if (projSpeed && projSpeed > 0) {
@@ -56,11 +44,8 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 		}
 
 		const color = parseHexColor(tower.def.color);
-		// Legacy: armorPierce = !def.stats.special. twin_archer has a
-		// `stun_500ms` special → false.
 		const armorPierce = !tower.def.stats.special;
 
-		// Build shared batch: halved damage + full-duration stun.
 		const fullDamage = ctx.resolveDamage(target);
 		const halvedDamage = Math.round(fullDamage / this.shotCount);
 		const batch: DamageEvent[] = [

@@ -10,21 +10,6 @@ import type {
 	TowerConstructorDeps,
 } from '../types';
 
-/** Archer/wind_spire/flame_tower/arcane_spire share the same fire
- *  loop: nearest-in-range targeting, single-target armor-piercing hit.
- *  Projectile style differs per def:
- *   - `archer` → ArrowEmitter (deferred damage via attack-line
- *     `pendingDamage`, applied on impact by the legacy render loop at
- *     TowerSystem.ts:1056-1074). Behaviors array stays empty so damage is
- *     authored by the emitter alone — applying damage immediately via
- *     `SingleTargetAttack` would double-hit when the arrow lands.
- *   - `wind_spire` / `flame_tower` / `arcane_spire` → BeamEmitter
- *     (instant damage via `SingleTargetAttack`, beam attack-line for the
- *     render loop, immediate impact VFX).
- *
- *  The archer-vs-beam split mirrors the legacy `style` selector at
- *  TowerSystem.ts:826-831: only archer/twin_archer get 'arrow'; other
- *  single-target archer-family towers default to 'beam'. */
 export class ArcherFamilyTower extends BaseTower {
 	readonly id = 'archer-family';
 	protected readonly targeting: TargetingStrategy = new NearestInRange();
@@ -33,18 +18,12 @@ export class ArcherFamilyTower extends BaseTower {
 
 	constructor(deps: TowerConstructorDeps) {
 		super(deps);
-		// NOTE: Only these 4 IDs reach this class via instances/archer.ts.
-		// Any other id that somehow gets here silently takes the beam path —
-		// acceptable since mis-registration would be caught in Phase 2.2+
-		// family tests.
 		if (deps.def.id === 'archer') {
 			this.emitter = new ArrowEmitter();
-			// Arrow projectile defers damage to impact — no immediate-damage
-			// behavior or the unit takes damage twice (once at fire, once at
-			// impact).
+			// ArrowEmitter가 impact 시점에 pendingDamage로 데미지 적용한다.
+			// 즉시 데미지 behavior를 추가하면 화살 도달 시 이중 타격이 된다.
 			this.behaviors = [];
 		} else {
-			// wind_spire / flame_tower / arcane_spire fire instant beams.
 			this.emitter = new BeamEmitter();
 			this.behaviors = [new SingleTargetAttack()];
 		}

@@ -4,45 +4,26 @@ import type { GridManager } from '../../systems/GridManager';
 import type { TowerSystem } from '../../systems/TowerSystem';
 
 export interface InputControllerDeps {
-	/**
-	 * The hover-highlight graphics layer. Owned by RangeOverlayController,
-	 * passed in here so pointer-move can paint into it. We deliberately do
-	 * NOT take ownership of the destroy lifecycle — RangeOverlayController
-	 * still calls `.destroy()` on it during teardown.
-	 */
+	// RangeOverlayController가 소유·해제. 여기서는 그리기만 하고 lifecycle은 건드리지 않는다.
 	hoverGraphics: Phaser.GameObjects.Graphics;
-	/** Emitted on pointerdown when a tower def is selected (Phase A summon UI is a selection too). */
 	onPlace: (col: number, row: number, defId: string) => void;
-	/**
-	 * Emitted on pointerdown when the click lands on an existing tower.
-	 * The col/row are the clicked grid coords — the tower payload is
-	 * whatever `getTowerAt` returned (callers typically forward def +
-	 * tier into a `tower-selected` event).
-	 */
 	onSelectTower: (
 		col: number,
 		row: number,
 		tower: NonNullable<ReturnType<TowerSystem['getTowerAt']>>,
 	) => void;
-	/** Emitted on pointerdown on an empty tile with no active selection. */
 	onDeselect: () => void;
-	/** Emitted when a move-mode click resolves (success or failure handled by callback). */
 	onMoveCommit: (
 		from: { col: number; row: number },
 		to: { col: number; row: number },
 	) => void;
-	/** Accessor for the scene's gameOver flag; pointerdown is a no-op when true. */
 	isGameOver: () => boolean;
-	/** Look up an existing tower at a grid cell for pointerdown dispatch. */
-	getTowerAt: (col: number, row: number) => ReturnType<TowerSystem['getTowerAt']>;
+	getTowerAt: (
+		col: number,
+		row: number,
+	) => ReturnType<TowerSystem['getTowerAt']>;
 }
 
-/**
- * Owns scene pointer-event handling. Extracted from `Game.ts.setupInput`
- * in Phase 5. Also owns the `selectedTowerId` + `movePending` state that
- * was previously on the scene — those fields are pointer-lifecycle only,
- * so keeping them here removes two scene fields.
- */
 export class InputController {
 	private selectedTowerId: string | null = null;
 	private movePending: { fromCol: number; fromRow: number } | null = null;
@@ -80,8 +61,6 @@ export class InputController {
 			if (this.deps.isGameOver()) return;
 			if (!this.grid.isInBounds(gridPos.x, gridPos.y)) return;
 
-			// Pending move commit — callback owns the actual move + any
-			// tower-moved / move-failed event emission.
 			if (this.movePending) {
 				const { fromCol, fromRow } = this.movePending;
 				this.movePending = null;

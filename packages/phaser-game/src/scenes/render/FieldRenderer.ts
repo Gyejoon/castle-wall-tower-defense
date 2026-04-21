@@ -15,7 +15,6 @@ import {
 } from '../../fieldAssets';
 import type { GridManager } from '../../systems/GridManager';
 
-/** Per-map theme palette for ground tiles, path overlay, and decorations */
 interface MapTheme {
 	groundTint: number;
 	decorTint: number;
@@ -24,9 +23,6 @@ interface MapTheme {
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
-	// Phase 7.5: warm sandstone palette tuned for the 9×18 Phase A board.
-	// Path/grid lines run at very low alpha so towers and obstacles stay
-	// the visual focus instead of tile chrome.
 	phase_a_long: {
 		groundTint: 0xc8b89a,
 		decorTint: 0xc8b89a,
@@ -47,14 +43,6 @@ type DecorationTile = {
 	variant: string;
 };
 
-/**
- * Renders the static field layer: dirt base, grass platform tiles,
- * cliff walls, path overlay, obstacles and ambient decorations.
- *
- * Extracted from Game.ts (Phase 4 refactor). Owns the `pathGraphics`
- * Graphics object and the cached decoration data sourced from the
- * tilemap's `decorations` object layer.
- */
 export class FieldRenderer {
 	private pathGraphics?: Phaser.GameObjects.Graphics;
 	private decorationTiles: DecorationTile[] | null = null;
@@ -65,11 +53,6 @@ export class FieldRenderer {
 		private readonly map: MapLayout,
 	) {}
 
-	/**
-	 * Render everything: field → path → obstacles → ambient.
-	 * Decorations are rendered inside `renderField` as the final layer.
-	 * Call `cacheDecorationData` is triggered internally if not yet cached.
-	 */
 	renderAll(options?: { dark?: boolean }): void {
 		const dark = options?.dark ?? false;
 		if (this.decorationTiles === null) {
@@ -81,10 +64,6 @@ export class FieldRenderer {
 		this.renderAmbientDecorations();
 	}
 
-	/**
-	 * Re-render only the path layer. Called when tower placement /
-	 * movement invalidates the current path visualization.
-	 */
 	refreshPath(_path?: Position[]): void {
 		this.renderPath();
 	}
@@ -145,7 +124,6 @@ export class FieldRenderer {
 		const canvasW = this.scene.scale.width;
 		const canvasH = this.scene.scale.height;
 
-		// Layer 0: Dirt/sand base (low ground — monster path level)
 		if (typeof this.scene.add.tileSprite === 'function') {
 			const dirtBg = this.scene.add.tileSprite(
 				canvasW / 2,
@@ -159,7 +137,7 @@ export class FieldRenderer {
 			if (dark) dirtBg.setTint(0x5c6585);
 		}
 
-		// Build path lookup — path cells are "low ground" (monster walkway).
+		// 맵 밖과 path 셀은 low ground로 취급.
 		const pathCells = getAllPathCells(this.map);
 		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
 		const isLow = (x: number, y: number) =>
@@ -169,14 +147,13 @@ export class FieldRenderer {
 			y < 0 ||
 			y >= this.map.height;
 
-		// Layer 2: Elevated grass platform tiles (tower placement level).
 		const lift = tile * PLATFORM_LIFT;
 		const extraTiles = 2;
 		for (let y = -extraTiles; y < this.map.height + extraTiles; y++) {
 			for (let x = -extraTiles; x < this.map.width + extraTiles; x++) {
 				if (isLow(x, y)) continue;
 
-				// NSEW bitmask: which neighbors are "low" (path / outside).
+				// NSEW 비트마스크: 어느 이웃이 low ground인가.
 				let bitmask = 0;
 				if (isLow(x, y - 1)) bitmask |= 1;
 				if (isLow(x + 1, y)) bitmask |= 2;
@@ -198,7 +175,6 @@ export class FieldRenderer {
 				if (dark) spr.setTint(0x6b7899);
 				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
 
-				// Cliff walls drawn as graphics layers (no stretched tileset frames).
 				const hasSouth = !!(bitmask & 4);
 				const hasEast = !!(bitmask & 2);
 				const hasWest = !!(bitmask & 8);
@@ -234,7 +210,6 @@ export class FieldRenderer {
 			}
 		}
 
-		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
 		if (!dark) {
 			const shadowGraphics = this.scene.add.graphics();
 			shadowGraphics.setDepth(0.5);
@@ -288,8 +263,6 @@ export class FieldRenderer {
 		for (const path of paths) {
 			if (path.length < 2) continue;
 
-			// Phase 7.5: very low-alpha path stroke so the underlying tilemap
-			// reads clean — was 0.08 / 0.40 in scenario builds.
 			graphics.lineStyle(4, lineColor, 0.04);
 			graphics.beginPath();
 			const first = this.grid.gridToWorld(path[0].x, path[0].y);
@@ -321,14 +294,7 @@ export class FieldRenderer {
 		}
 	}
 
-	/**
-	 * Render fixed map obstacles (trees / rocks / bushes) at their grid
-	 * positions. Obstacles are visual only — buildBuildablePoints already
-	 * excluded them from placement, and the unit pathPoints data does not
-	 * include them so units never try to walk through.
-	 *
-	 * Falls back silently when the optional `obstacles` field is missing.
-	 */
+	// obstacles는 buildable/pathPoints에서 이미 배제된 시각 전용 요소다.
 	private renderObstacles(): void {
 		const obstacles = this.map.obstacles;
 		if (!obstacles || obstacles.length === 0) return;
@@ -343,7 +309,6 @@ export class FieldRenderer {
 			const key = ASSET_KEYS[i % ASSET_KEYS.length];
 			if (!this.scene.textures.exists(key)) return;
 			const world = this.grid.gridToWorld(pos.x, pos.y);
-			// Lift obstacles onto the elevated grass platform.
 			const sprite = this.scene.add.sprite(world.x, world.y - lift, key, 0);
 			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
 			sprite.setOrigin(0.5, 0.7);
@@ -351,18 +316,11 @@ export class FieldRenderer {
 		});
 	}
 
-	/**
-	 * Render ambient decoration sprites (trees/bushes/rocks) from
-	 * `map.decorations`. Purely visual — zero pathfinding / placement impact.
-	 * Decorations are usually placed just off the playfield (fractional grid
-	 * coordinates like -1.2 / 9.3) so they read as background scenery.
-	 */
+	// 배경 장식: 게임 플레이 좌표와 겹치지 않는 시각 전용 스프라이트.
 	private renderAmbientDecorations(): void {
 		const decorations = this.map.decorations;
 		if (!decorations || decorations.length === 0) return;
 		const tile = this.grid.orthoTile;
-		// Ambient props stay on the low ground (no PLATFORM_LIFT) so they
-		// match the dirt base layer visually.
 		decorations.forEach((deco) => {
 			const variant = deco.variant ?? 1;
 			const key = `tiny-swords-${deco.kind}-${variant}`;
@@ -373,7 +331,6 @@ export class FieldRenderer {
 			sprite.setDisplaySize(tile * scale, tile * scale);
 			sprite.setOrigin(0.5, 0.72);
 			sprite.setAlpha(0.85);
-			// Decorations never overlap gameplay cells, so a flat depth is fine.
 			sprite.setDepth(2.5);
 		});
 	}

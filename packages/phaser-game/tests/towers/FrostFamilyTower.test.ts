@@ -138,28 +138,28 @@ describe('FrostFamilyTower', () => {
 		{ defId: 'stasis_field', special: 'slow_45%', factor: 0.55 },
 		{ defId: 'disruptor', special: 'slow_60%', factor: 0.4 },
 		{ defId: 'world_tree', special: 'slow_75%', factor: 0.25 },
-	])(
-		'$defId: parses $special → slow factor $factor',
-		({ defId, special, factor }) => {
-			const ctx = buildCtx();
-			const tower = buildFrostTower(defId, special);
-			tower.update(ctx);
-			const pushed = (ctx.pushDamage as ReturnType<typeof vi.fn>).mock.calls;
-			expect(pushed).toHaveLength(2);
-			expect(pushed[1][0].slow.factor).toBeCloseTo(factor, 3);
-			expect(pushed[1][0].slow.duration).toBe(2000);
-			// Damage event stays consistent across defIds — armorPierce=false
-			// because `special` is set.
-			expect(pushed[0][0].armorPierce).toBe(false);
-		},
-	);
+	])('$defId: parses $special → slow factor $factor', ({
+		defId,
+		special,
+		factor,
+	}) => {
+		const ctx = buildCtx();
+		const tower = buildFrostTower(defId, special);
+		tower.update(ctx);
+		const pushed = (ctx.pushDamage as ReturnType<typeof vi.fn>).mock.calls;
+		expect(pushed).toHaveLength(2);
+		expect(pushed[1][0].slow.factor).toBeCloseTo(factor, 3);
+		expect(pushed[1][0].slow.duration).toBe(2000);
+		// Damage event stays consistent across defIds — armorPierce=false
+		// because `special` is set.
+		expect(pushed[0][0].armorPierce).toBe(false);
+	});
 
 	it('honors attackSpeed cooldown (fires once per interval)', () => {
 		const tower = buildFrostTower('emp', 'slow_30%');
 		const base = buildCtx({ time: 5000 });
 		tower.update(base);
-		const spy =
-			base.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
+		const spy = base.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
 		expect(spy).toHaveBeenCalledTimes(1);
 		tower.update({ ...base, time: 5500 });
 		expect(spy).toHaveBeenCalledTimes(1); // under 1000ms cooldown

@@ -10,16 +10,8 @@ import type {
 	TowerRuntimeRef,
 } from '../types';
 
-/** T1 Siege — nova_cannon. Unique behavior vs. other siege towers:
- *  - Rotating barrel sprite tracks nearest enemy every frame (independent
- *    of fire cadence). Mirrors legacy TowerSystem.ts:597-621.
- *  - Fire origin is barrel-tip, not tower world center:
- *    `barrel.x + cos(rot)*10, barrel.y + sin(rot)*10`. Mirrors legacy
- *    TowerSystem.ts:772-781.
- *  - Muzzle VFX is a hit-flash at the barrel-tip instead of the animated
- *    muzzle spritesheet used by other towers. Mirrors legacy
- *    TowerSystem.ts:826-831.
- */
+// 다른 siege 타워와 차이: 회전 포신이 매 프레임 가장 가까운 적을 추적하고
+// 발사 원점이 타워 월드 중심이 아닌 포신 끝이다.
 export class NovaCannonT1 extends BaseTower {
 	readonly id = 'nova-cannon-t1';
 	protected readonly targeting: TargetingStrategy = new NearestInRange();
@@ -31,10 +23,6 @@ export class NovaCannonT1 extends BaseTower {
 		const fireOrigin = (tower: TowerRuntimeRef) => {
 			const barrel = tower.barrelSprite;
 			if (!barrel) {
-				// Fallback: tower world center (same as default siege path
-				// without platform lift — legacy also skips the lift when the
-				// barrel branch fires, since the barrel sprite IS the lifted
-				// base position reference).
 				return { x: tower.worldPos.x, y: tower.worldPos.y };
 			}
 			return {
@@ -53,10 +41,7 @@ export class NovaCannonT1 extends BaseTower {
 	}
 
 	override update(ctx: AttackContext): void {
-		// Rotate barrel toward nearest living unit every frame, matching
-		// legacy TowerSystem.ts:597-621. Runs independent of fire cooldown —
-		// the barrel tracks continuously even while the tower is disabled or
-		// on cooldown.
+		// 포신은 fire 쿨다운/disable과 무관하게 매 프레임 회전.
 		const barrel = this.runtime.barrelSprite;
 		if (barrel) {
 			const data = this.runtime.data;
@@ -84,8 +69,6 @@ export class NovaCannonT1 extends BaseTower {
 			}
 		}
 
-		// Delegate to BaseTower fire logic (disabled check, cooldown,
-		// targeting, behaviors, emitter).
 		super.update(ctx);
 	}
 }

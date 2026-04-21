@@ -105,7 +105,9 @@ describe('CCStateManager', () => {
 			expect(r2.isStunned).toBe(false);
 			expect(r2.stunJustEnded).toBe(true);
 			// stunImmunityUntil is now = sceneNowMs + window
-			expect(cc.get('u1')?.stunImmunityUntil).toBe(200 + STUN_IMMUNITY_WINDOW_MS);
+			expect(cc.get('u1')?.stunImmunityUntil).toBe(
+				200 + STUN_IMMUNITY_WINDOW_MS,
+			);
 		});
 
 		it('decrements invulnerability timer', () => {

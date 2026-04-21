@@ -1,8 +1,3 @@
-/** Tower special-string parsers — pure functions. Previously private
- *  methods on TowerSystem; extracted during Phase 2.Final refactor so
- *  behaviors/emitters can share them without going through TowerSystem.
- *  Phase 0 characterization tests pin this exact behavior. */
-
 export function parseSlowFactor(special: string): number {
 	const match = special.match(/slow_(\d+)%/);
 	if (!match) return 0.7;

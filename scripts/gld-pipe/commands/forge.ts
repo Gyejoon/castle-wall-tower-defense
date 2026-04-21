@@ -134,9 +134,8 @@ function runChain(
     },
   });
 
-  // Execute destructive chain. A failed step MUST halt the chain — otherwise
-  // the next step reads a stale output and we'd promote half-polished pixels
-  // as "polished", silently breaking the HITL contract.
+  // 실패한 스텝은 체인 중단. 그렇지 않으면 다음 스텝이 stale 출력을 읽어 반쯤 폴리시된 PNG가
+  // "polished"로 승격되어 HITL 계약이 소리없이 깨진다.
   const warnings: string[] = [];
   for (const step of chain) {
     const outPath = step.vars.OUTPUT as string;
@@ -257,8 +256,7 @@ export async function runForge(opts: ForgeOptions): Promise<void> {
       let warnings: string[] = [];
       let animation: VerifyReport | undefined;
       let polishLevel: 'canvas-only' | 'libresprite-polished' = 'canvas-only';
-      // Effective spec includes any --seed CLI override so metadata can
-      // reproduce the exact inputs used for this forge run.
+      // --seed CLI 오버라이드를 반영해 metadata가 실제 입력 그대로 재생 가능하게 보존.
       const seedOverride = opts.seed ?? spec.polish.noise.seed;
       const effectiveSpec: AssetSpec = {
         ...spec,
@@ -274,7 +272,7 @@ export async function runForge(opts: ForgeOptions): Promise<void> {
         animation = out.animation;
         polishLevel = 'libresprite-polished';
       } else {
-        // Graceful degradation: polished == original.
+        // libresprite 없으면 graceful degradation: polished = original.
         copyFileSync(sourceAbs, join(stagingDir, 'polished.png'));
         warnings.push('libresprite_missing');
       }

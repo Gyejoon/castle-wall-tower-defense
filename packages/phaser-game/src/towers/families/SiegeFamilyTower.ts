@@ -8,15 +8,7 @@ import type {
 	TowerConstructorDeps,
 } from '../types';
 
-/** Siege family: fortress / earth_golem / celestial. All use arc-style
- *  projectiles with splash damage authored by `ArcEmitter`. Behaviors
- *  array is empty — the emitter owns main + splash damage event creation
- *  because arc projectiles defer all damage to impact via `pendingDamage`
- *  (legacy mirror: TowerSystem.ts:857-861 `!hasProjectile` guard).
- *
- *  nova_cannon uses the `NovaCannonT1` subclass (in instances/NovaCannonT1.ts)
- *  for its rotating barrel + barrel-tip fire origin.
- */
+// Arc projectile이 impact 시 main+splash 데미지를 모두 발행하므로 behaviors는 빈 배열.
 export class SiegeFamilyTower extends BaseTower {
 	readonly id = 'siege-family';
 	protected readonly targeting: TargetingStrategy = new NearestInRange();

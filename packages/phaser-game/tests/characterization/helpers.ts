@@ -1,15 +1,5 @@
 import { vi } from 'vitest';
 
-/**
- * Shared Phaser-ish stubs for the characterization suite. Matches the
- * superset of fields used by tests/SiegeProjectileVfx.test.ts — so when
- * Phase 1-2 tests start piling on, new files should import from here
- * rather than duplicating the harness.
- *
- * NOTE: tests/SiegeProjectileVfx.test.ts still owns its own copy; moving
- * that file is out of scope for Phase 0.
- */
-
 export function createGraphics() {
 	return {
 		setDepth: vi.fn().mockReturnThis(),
@@ -29,13 +19,7 @@ export function createGraphics() {
 	};
 }
 
-/**
- * Image stub with plain-object `x` / `y` / `rotation` fields so direct
- * property assignment (e.g. TowerSystem's nova_cannon barrel rotation
- * update) actually persists. `setPosition`/`setRotation` are vi.fn mocks
- * — they return `this` but do NOT mutate the tracked fields, matching
- * the existing SiegeProjectileVfx.test.ts contract.
- */
+// x/y/rotation 필드가 plain 객체라 nova_cannon barrel 회전 등 직접 대입이 유효하다.
 export function createImage() {
 	return {
 		setDisplaySize: vi.fn().mockReturnThis(),

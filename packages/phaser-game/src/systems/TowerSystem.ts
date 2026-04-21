@@ -13,17 +13,17 @@ import {
 	getEffectiveStats,
 	getElementMultiplier,
 } from '@gld/shared';
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { PLATFORM_LIFT } from '../fieldAssets';
 import {
 	type AttackContext,
-	type DamageEvent,
-	type TowerBehavior,
-	type UnitSnapshot,
 	createTower,
+	type DamageEvent,
 	hasTowerFactory,
+	type TowerBehavior,
 	TowerVfxController,
+	type UnitSnapshot,
 } from '../towers';
 import { parseHexColor } from '../towers/vfx/colors';
 import type { AttackLineEntry } from '../towers/vfx/TowerVfxController';
@@ -144,17 +144,9 @@ export class TowerSystem {
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
 	private static readonly ARROW_POOL_SIZE = 16;
-	/** Phase 2.0: VFX controller shared by tower behaviors created via the new
-	 *  strategy registry. Phase 1 ships it as a no-op shell; Phase 2.x will
-	 *  port the muzzle/impact spawn + attack-line buffer into it. */
 	private readonly towerVfxController: TowerVfxController;
-	/** Phase 2.0: instance-scoped map of placed tower instanceId → new-strategy
-	 *  behavior. Populated only when `hasTowerFactory(defId)` returns true.
-	 *  Empty at runtime until Phase 2.1+ registers concrete factories. */
 	private readonly newTowerInstances: Map<string, TowerBehavior> = new Map();
-	/** Phase 2.0: prebound damage-push callback for `AttackContext`. Allocated
-	 *  once at construction instead of per-frame per-tower inside
-	 *  `buildAttackContext` (~1800 alloc/s at 30-tower full board × 60fps). */
+	// 매 프레임 재할당 방지를 위해 construction 시점에 바인딩.
 	private readonly pushDamage = (evt: DamageEvent): void => {
 		this.damageEventsBuffer.push(evt);
 	};
@@ -188,14 +180,7 @@ export class TowerSystem {
 		});
 	}
 
-	/**
-	 * Phase 2.1: ensure the arrow pool is initialized, then reserve an
-	 * invisible slot and return its index. Used by `TowerVfxController` so
-	 * arrow-style projectile emitters can request a pooled arrow sprite
-	 * without owning the pool themselves. Returns `undefined` when the
-	 * pool is exhausted or the arrow texture isn't loaded — callers
-	 * fall back to drawing the projectile with Graphics.
-	 */
+	// pool 고갈/텍스처 미로딩 시 undefined 반환 → 호출자는 Graphics로 fallback.
 	private acquireArrowIndex(): number | undefined {
 		this.ensureArrowPool();
 		const idx = this.arrowPool.findIndex((a) => !a.visible);
@@ -363,11 +348,6 @@ export class TowerSystem {
 			baseY,
 		});
 
-		// Phase 2.0: if a factory is registered for this defId, construct the
-		// new-strategy behavior and record it so update() dispatches there.
-		// Unregistered defIds fall through to the legacy update path. The
-		// registry is empty until Phase 2.1+, so this branch is dead-code at
-		// runtime today — wired now to lock in the injection point.
 		if (hasTowerFactory(def.id)) {
 			const behavior = createTower(def.id, {
 				def,
@@ -514,20 +494,8 @@ export class TowerSystem {
 		stun?: { duration: number };
 	}> = [];
 
-	/**
-	 * Phase 2.0: single injection point for AttackContext construction. Every
-	 * new-strategy tower routes through here so Phase 2.1+ migrations don't
-	 * each hand-roll the plumbing (damage events buffer, vfx controller,
-	 * grid/time/delta).
-	 *
-	 * `effectiveDamage` is deliberately the pre-element, pre-modifier value
-	 * stored on the tower instance — Phase 2.1 will refine when the first
-	 * real tower migrates and reveals what it needs (element mult, dmg_up,
-	 * crit_dmg, family mult, globalAtkPct). Keeping it raw here avoids
-	 * prematurely committing to a shape the first migration might want to
-	 * change. `primaryTarget` is null; `BaseTower.update()` rebinds it after
-	 * targeting.
-	 */
+	// effectiveDamage는 element·modifier 미적용 원시값. resolve* 클로저가 최종값 계산.
+	// primaryTarget은 BaseTower.update()가 targeting 후 재바인딩한다.
 	private buildAttackContext(
 		tower: TowerInstance,
 		time: number,
@@ -535,10 +503,6 @@ export class TowerSystem {
 		unitPositions: readonly UnitSnapshot[],
 	): AttackContext {
 		const { def } = tower;
-		// Phase 2.1: closure replicates the legacy damage math at
-		// TowerSystem.ts:688-710 for a single target. Behaviors call
-		// `ctx.resolveDamage(target)` right before pushing a DamageEvent so
-		// the buffer always carries the fully-multiplied value.
 		const resolveDamage = (target: UnitSnapshot): number => {
 			const elementMult = getElementMultiplier(def.element, target.element);
 			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
@@ -556,21 +520,14 @@ export class TowerSystem {
 				),
 			);
 		};
-		// Phase 2.4: splash damage formula deliberately skips familyMod —
-		// matches legacy TowerSystem.ts:712-720 which omits family multiplier
-		// from splash damage (main damage at :607-614 has it). Half-damage
-		// factor (0.5) is baked in.
+		// Splash는 의도적으로 familyMod 미적용. 0.5 half-damage factor 포함.
 		const resolveSplashDamage = (target: UnitSnapshot): number => {
 			const elementMult = getElementMultiplier(def.element, target.element);
 			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
 			const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
 			return Math.round(
 				this.resolveFinalDamage(
-					tower.effectiveDamage *
-						elementMult *
-						0.5 *
-						dmgMod *
-						(1 + critBonus),
+					tower.effectiveDamage * elementMult * 0.5 * dmgMod * (1 + critBonus),
 				),
 			);
 		};
@@ -618,13 +575,7 @@ export class TowerSystem {
 			}
 		}
 
-		// Phase 2.Final: every tower defId is registered via the new-strategy
-		// registry (src/towers/instances/*). Each registered behavior owns its
-		// full lifecycle — targeting, damage math, CC effects, projectile VFX,
-		// sound throttle — so the legacy fire/passive/nova-cannon-pre-loops
-		// were deleted. The `!behavior` guard is a safety net: a newly-added
-		// tower def without a registered factory silently does not fire
-		// rather than crashing on an undefined dispatch.
+		// registry 미등록 defId는 silent no-op (크래시 대신).
 		for (const tower of this.towers.values()) {
 			const behavior = this.newTowerInstances.get(tower.data.instanceId);
 			if (!behavior) continue;
@@ -794,7 +745,6 @@ export class TowerSystem {
 		targetInstance.barrelSprite?.destroy();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
-		// Phase 2.0: tear down new-strategy behavior if one was attached.
 		const soldBehavior = this.newTowerInstances.get(targetKey);
 		if (soldBehavior) {
 			soldBehavior.destroy();
@@ -912,7 +862,6 @@ export class TowerSystem {
 		instance.barrelSprite?.destroy();
 		instance.base.destroy();
 		instance.sprite.destroy();
-		// Phase 2.0: tear down new-strategy behavior if one was attached.
 		const removedBehavior = this.newTowerInstances.get(key);
 		if (removedBehavior) {
 			removedBehavior.destroy();
@@ -1095,8 +1044,6 @@ export class TowerSystem {
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}
-		// Phase 2.0: tear down new-strategy behaviors before clearing the map
-		// so each tower's destroy() hook runs. No-op today (registry empty).
 		for (const behavior of this.newTowerInstances.values()) {
 			behavior.destroy();
 		}

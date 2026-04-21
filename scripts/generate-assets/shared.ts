@@ -8,10 +8,7 @@ import {
   tier as dsTier,
 } from '../../packages/shared/src/design/palette';
 
-// === Color Palette (medieval nature theme) ===
-// Source of truth for UI-shared colors lives in `packages/shared/src/design/palette.ts`.
-// Keys in this PALETTE are kept stable so that existing generate-*.ts scripts keep working.
-// Only nature/stage/asset-specific pigments are defined inline below.
+// UI 공용 색상 원본은 design/palette.ts. 여기는 자연/스테이지/에셋 전용 색만 정의.
 export const PALETTE = {
   // Grid tiles
   gridDark:      '#5a8a30',  // 어두운 잔디

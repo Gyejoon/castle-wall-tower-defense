@@ -1,7 +1,3 @@
-/**
- * Pixel-art currency icons — replaces emoji for cross-platform consistency.
- * All colors pulled from `@gld/shared` design tokens; no local hex literals.
- */
 import { core, element } from '@gld/shared';
 
 export function DiamondIcon({ size = 12 }: { size?: number }) {

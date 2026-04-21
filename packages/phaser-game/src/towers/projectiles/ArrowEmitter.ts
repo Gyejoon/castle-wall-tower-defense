@@ -8,12 +8,7 @@ import type {
 import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
-/** Emits an arrow-style projectile with `impactPending` semantics. For
- *  arrow projectiles the legacy render loop at TowerSystem.ts:1056-1074
- *  applies damage on impact rather than at fire — so the emitter owns
- *  damage entry construction via `pendingDamage` and does NOT push through
- *  `ctx.pushDamage`. This matches the `!hasProjectile` guard at
- *  TowerSystem.ts:857-861. */
+// 데미지는 화살이 타겟에 도달할 때 pendingDamage로 적용된다. ctx.pushDamage 경유 금지.
 export class ArrowEmitter implements ProjectileEmitter {
 	emit(
 		_origin: { x: number; y: number },
@@ -21,19 +16,13 @@ export class ArrowEmitter implements ProjectileEmitter {
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
 	): void {
-		// `origin` argument is intentionally ignored — BaseTower passes the
-		// sprite's world position, but archer-family legacy uses the raw grid
-		// center (pre-lift) as `towerWorld`. Recompute here so both the
-		// attack-line fireOriginY and muzzle VFX placement match
-		// TowerSystem.ts:665-668 / :868-876 exactly.
+		// sprite.x/y는 PLATFORM_LIFT 오프셋이 섞여있어 그리드 셀 기준으로 재계산한다.
 		const towerWorld = ctx.gridManager.gridToWorld(
 			tower.data.position.x,
 			tower.data.position.y,
 		);
 
-		// TTL math replicates TowerSystem.ts:842-851. `dist` is in *grid units*
-		// (legacy used `sqrt(closestDistSq)` where closestDistSq was grid-space),
-		// not pixels — so recompute via `worldToGridFloat` here.
+		// TTL은 그리드 셀 거리 기준 (픽셀 아님).
 		const projSpeed = tower.def.stats.projectileSpeed;
 		let maxTtl: number;
 		if (projSpeed && projSpeed > 0) {

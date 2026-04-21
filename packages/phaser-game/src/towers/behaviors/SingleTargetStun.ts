@@ -1,14 +1,7 @@
 import { CC_AURA_CONFIGS, stunDurationMultiplier } from '@gld/shared';
 import type { AttackBehavior, AttackContext, TowerRuntimeRef } from '../types';
 
-/** Applies a stun effect to the primary target based on the tower's
- *  `def.stats.special` string (e.g. 'stun_300ms'). Duration logic mirrors
- *  legacy TowerSystem.ts:784-788: looks up CC_AURA_CONFIGS[configKey];
- *  if miss (which is always true for per-tower stun_XXXms specials),
- *  falls back to 1000ms. Then scales by stunDurationMultiplier(level).
- *
- *  The `_XXXms` suffix in def.stats.special is currently vestigial —
- *  legacy doesn't parse it. Preserved here for parity. */
+// `_XXXms` 서픽스는 파싱하지 않고 CC_AURA_CONFIGS 조회 실패 시 1000ms로 fallback.
 export class SingleTargetStun implements AttackBehavior {
 	readonly id = 'single-target-stun';
 
@@ -17,7 +10,8 @@ export class SingleTargetStun implements AttackBehavior {
 		if (!target) return;
 		const special = tower.def.stats.special;
 		if (!special || !special.startsWith('stun')) return;
-		if (special.includes('aoe')) return; // defer to AoeStun (not in this phase)
+		// AoE 변형은 별도 behavior 담당.
+		if (special.includes('aoe')) return;
 		const configKey = special.replace(/%/g, '');
 		const baseDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
 		const level = tower.data.level ?? 1;

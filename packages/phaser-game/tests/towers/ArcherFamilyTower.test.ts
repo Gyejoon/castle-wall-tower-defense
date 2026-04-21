@@ -95,8 +95,9 @@ describe('ArcherFamilyTower', () => {
 			const tower = buildArcherTower('archer');
 			tower.update(ctx);
 			expect(ctx.pushDamage).not.toHaveBeenCalled();
-			const pushSpy =
-				ctx.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
+			const pushSpy = ctx.vfx.pushAttackLine as unknown as ReturnType<
+				typeof vi.fn
+			>;
 			expect(pushSpy).toHaveBeenCalled();
 			const line = pushSpy.mock.calls[0][0];
 			expect(line.style).toBe('arrow');
@@ -114,8 +115,9 @@ describe('ArcherFamilyTower', () => {
 			const tower = buildArcherTower('archer');
 			const base = buildCtx({ time: 5000 });
 			tower.update(base);
-			const spy =
-				base.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
+			const spy = base.vfx.pushAttackLine as unknown as ReturnType<
+				typeof vi.fn
+			>;
 			expect(spy).toHaveBeenCalledTimes(1);
 			// Same vfx handle reused across updates so mock call counts
 			// accumulate — only the time changes.
@@ -138,27 +140,16 @@ describe('ArcherFamilyTower', () => {
 					armorPierce: true,
 				}),
 			);
-			const spy =
-				ctx.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
+			const spy = ctx.vfx.pushAttackLine as unknown as ReturnType<typeof vi.fn>;
 			expect(spy.mock.calls[0][0].style).toBe('beam');
 			expect(spy.mock.calls[0][0].impactPending).toBeUndefined();
 		});
 	});
 
-	// Regression: BaseTower.update() must derive targeting grid from
-	// `runtime.data.position` (integer, authoritative) rather than round-
-	// tripping `sprite.x/y` through `worldToGridFloat`. Sprites carry a
-	// PLATFORM_LIFT + 20px y-offset and the gridToWorld/worldToGridFloat
-	// round-trip is asymmetric: only `gridToWorld` adds the half-tile
-	// offset, so a sprite-derived tower center drifts by about
-	// (+0.5x, -0.32y) cells vs. legacy TowerSystem — flipping which unit
-	// wins "nearest" for any range-boundary case.
+	// 타게팅은 반드시 data.position 기준이어야 한다. sprite.x/y에는 PLATFORM_LIFT 오프셋이 있고
+	// gridToWorld(+t/2)와 worldToGridFloat(순수 /t)가 비대칭이라 sprite 경로는 +0.5x/-0.32y 만큼 어긋난다.
 	describe('targeting parity (real GridManager round-trip)', () => {
-		// Faithful mirror of src/systems/GridManager.ts:140-155. NOTE:
-		// `worldToGridFloat` is just `(x/t, y/t)` — there is NO -0.5 offset.
-		// The asymmetry between gridToWorld (+t/2) and worldToGridFloat is
-		// exactly what produces the targeting drift the fix addresses. This
-		// test would be useless if the fake symmetrized the two sides.
+		// 실제 GridManager와 동일 구현. 두 함수를 대칭화하면 이 테스트 자체가 의미를 잃는다.
 		function realGridManager() {
 			return {
 				orthoTile: 48,

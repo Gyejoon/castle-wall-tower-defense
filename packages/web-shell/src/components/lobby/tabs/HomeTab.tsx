@@ -3,26 +3,7 @@ import type { CSSProperties } from 'react';
 import { useGameStore } from '../../../stores/gameStore';
 import { Button } from '../../ds';
 
-/**
- * Phase A lobby home — "Option C · Cinematic keyart" redesign.
- *
- * Visual language transplanted from the Claude Design prototype
- * (Home Prototype C). The game is Phase A only, so the prototype's
- * left rail (world progress / event), right rail (missions / shop / mail),
- * and deck preview have been dropped. Kept:
- *   - fullscreen cinematic keyart (moon, stars, castle silhouette,
- *     torches, fog) — purely decorative, aria-hidden
- *   - NEXT UP CTA card floating over the keyart with a pulsing 전투 시작
- *     button
- *
- * 메타 강화 entry moved to the 전쟁탁자 (CollectionTab) header so this tab
- * stays focused on a single CTA.
- *
- * Top chrome (avatar / level / resources) is rendered by ProfileBar
- * above this tab; BottomTabBar renders below. We only own the tab panel.
- */
-
-// core.gold + alpha hex (40% = 0x66, 20% = 0x33)
+// core.gold에 알파값 hex suffix 적용 (40% = 0x66, 20% = 0x33).
 const CORNER_COLOR = `${core.gold}66`;
 const STAR_UNFILLED_COLOR = `${core.gold}33`;
 

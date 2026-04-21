@@ -148,11 +148,7 @@ describe('FieldRenderer', () => {
 		const grid = buildGridManager();
 		const map = buildMap();
 
-		const renderer = new FieldRenderer(
-			scene as never,
-			grid as never,
-			map,
-		);
+		const renderer = new FieldRenderer(scene as never, grid as never, map);
 		renderer.renderAll();
 
 		// Expect the path graphics to be allocated plus cliff graphics for
@@ -170,11 +166,7 @@ describe('FieldRenderer', () => {
 		const grid = buildGridManager();
 		const map = buildMap();
 
-		const renderer = new FieldRenderer(
-			scene as never,
-			grid as never,
-			map,
-		);
+		const renderer = new FieldRenderer(scene as never, grid as never, map);
 		renderer.renderAll();
 
 		const pathGraphicsBefore = graphicsList.length;
@@ -202,11 +194,7 @@ describe('FieldRenderer', () => {
 		const grid = buildGridManager();
 		const map = buildMap();
 
-		const renderer = new FieldRenderer(
-			scene as never,
-			grid as never,
-			map,
-		);
+		const renderer = new FieldRenderer(scene as never, grid as never, map);
 		renderer.renderAll();
 
 		const pathGraphicsCount = graphicsList.length;

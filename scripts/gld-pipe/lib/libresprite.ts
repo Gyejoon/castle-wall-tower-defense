@@ -41,11 +41,8 @@ export function findLibreSprite(): LibreSpriteBinary | LibreSpriteMissing {
 }
 
 export interface ScriptStep {
-  /** Absolute path to the .js template in scripts/libresprite/ */
   templatePath: string;
-  /** Human-readable label for log lines */
   label: string;
-  /** Template variable substitutions, including __INPUT__/__OUTPUT__ */
   vars: Record<string, string | number>;
 }
 
@@ -56,14 +53,8 @@ export interface RunScriptResult {
   ok: boolean;
 }
 
-/**
- * Materialize a templated script to a temp file and run it under LibreSprite --batch.
- *
- * LibreSprite v1.1 has a benign mutex teardown crash after saveAs on macOS 15 —
- * exit code 134/139 after a successful saveAs is NOT a real failure. We detect
- * success by checking that the expected output path exists and mtime is newer
- * than the input.
- */
+// LibreSprite 1.1은 macOS 15에서 saveAs 성공 후 mutex teardown 크래시(134/139)를 내므로
+// exit code만으로 실패 판단 불가. 호출자가 output 파일 존재/mtime으로 성공 판정한다.
 export function runScript(
   bin: string,
   step: ScriptStep,
@@ -74,11 +65,11 @@ export function runScript(
   let body = template;
   for (const [k, v] of Object.entries(step.vars)) {
     const needle = `__${k}__`;
-    // Escape backslashes and double quotes for safe embedding in JS string literals.
+    // JS 문자열 리터럴 임베딩을 위한 이스케이프.
     const safe = String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     body = body.split(needle).join(safe);
   }
-  // Fail fast if any placeholders remain — likely a caller bug.
+  // 미치환 플레이스홀더가 남으면 호출자 버그.
   const leftover = body.match(/__[A-Z][A-Z0-9_]+__/g);
   if (leftover) {
     throw new Error(
@@ -97,16 +88,13 @@ export function runScript(
   const stderr = result.stderr ?? '';
   const spawnError = result.error as NodeJS.ErrnoException | undefined;
   if (spawnError && (spawnError.code === 'ENOENT' || spawnError.code === 'EACCES')) {
-    // Binary unreachable — not a recoverable script error, re-surface.
     throw new LibreSpriteSpawnError(
       `libresprite spawn failed (${spawnError.code}): ${bin}`,
       spawnError,
     );
   }
-  // Timeout or non-mutex-shutdown signal kill: the script did NOT run to
-  // completion. Mutex-shutdown on macOS 15 sends SIGABRT (exit 134) or
-  // SIGSEGV (139) AFTER saveAs persisted, with no spawnError set — those
-  // stay ok=true and the caller still verifies the output file exists.
+  // macOS 15 mutex-shutdown은 saveAs 후 SIGABRT/SIGSEGV를 보내는데 spawnError는 없다 → ok 유지.
+  // 진짜 실패는 timeout 또는 status null + signal 존재로 감지.
   const timedOut = spawnError?.code === 'ETIMEDOUT';
   const killedMidRun =
     result.signal !== null && result.signal !== undefined && result.status === null;

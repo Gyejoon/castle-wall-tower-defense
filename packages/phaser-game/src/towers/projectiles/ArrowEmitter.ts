@@ -5,6 +5,7 @@ import type {
 	TowerRuntimeRef,
 	UnitSnapshot,
 } from '../types';
+import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
 /** Emits an arrow-style projectile with `impactPending` semantics. For
@@ -80,10 +81,4 @@ export class ArrowEmitter implements ProjectileEmitter {
 		);
 		ctx.vfx.playTowerAttackThrottled(tower.def.id, ctx.time);
 	}
-}
-
-/** Copy of TowerSystem.parseHexColor — kept local until Phase 2.Final
- *  consolidates. Input like "#a3ff00" → 0xa3ff00. */
-function parseHexColor(hex: string): number {
-	return parseInt(hex.replace('#', ''), 16);
 }

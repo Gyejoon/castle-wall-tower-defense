@@ -33,6 +33,10 @@ export class ArcherFamilyTower extends BaseTower {
 
 	constructor(deps: TowerConstructorDeps) {
 		super(deps);
+		// NOTE: Only these 4 IDs reach this class via instances/archer.ts.
+		// Any other id that somehow gets here silently takes the beam path —
+		// acceptable since mis-registration would be caught in Phase 2.2+
+		// family tests.
 		if (deps.def.id === 'archer') {
 			this.emitter = new ArrowEmitter();
 			// Arrow projectile defers damage to impact — no immediate-damage

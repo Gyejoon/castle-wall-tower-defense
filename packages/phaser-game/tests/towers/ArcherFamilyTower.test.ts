@@ -148,15 +148,17 @@ describe('ArcherFamilyTower', () => {
 	// Regression: BaseTower.update() must derive targeting grid from
 	// `runtime.data.position` (integer, authoritative) rather than round-
 	// tripping `sprite.x/y` through `worldToGridFloat`. Sprites carry a
-	// PLATFORM_LIFT + 20px y-offset and gridToWorld/worldToGridFloat aren't
-	// symmetric, so the sprite-derived path drifts by (+0.5x, -0.32y) cells
-	// and flips range-boundary targeting decisions vs. the legacy path.
+	// PLATFORM_LIFT + 20px y-offset and the gridToWorld/worldToGridFloat
+	// round-trip is asymmetric: only `gridToWorld` adds the half-tile
+	// offset, so a sprite-derived tower center drifts by about
+	// (+0.5x, -0.32y) cells vs. legacy TowerSystem — flipping which unit
+	// wins "nearest" for any range-boundary case.
 	describe('targeting parity (real GridManager round-trip)', () => {
-		// Mirror the real GridManager math from
-		// src/systems/GridManager.ts:140-155: gridToWorld places the tile
-		// center at ((gx+0.5)*tile, (gy+0.5)*tile); worldToGridFloat inverts
-		// that with the -0.5 offset. No offsetX/Y in this harness (offset
-		// defaults to 0 without canvasWidth/canvasHeight).
+		// Faithful mirror of src/systems/GridManager.ts:140-155. NOTE:
+		// `worldToGridFloat` is just `(x/t, y/t)` — there is NO -0.5 offset.
+		// The asymmetry between gridToWorld (+t/2) and worldToGridFloat is
+		// exactly what produces the targeting drift the fix addresses. This
+		// test would be useless if the fake symmetrized the two sides.
 		function realGridManager() {
 			return {
 				orthoTile: 48,
@@ -166,12 +168,12 @@ describe('ArcherFamilyTower', () => {
 					y: (gy + 0.5) * 48,
 				}),
 				worldToGrid: (x: number, y: number) => ({
-					x: Math.round(x / 48 - 0.5),
-					y: Math.round(y / 48 - 0.5),
+					x: Math.floor(x / 48),
+					y: Math.floor(y / 48),
 				}),
 				worldToGridFloat: (x: number, y: number) => ({
-					x: x / 48 - 0.5,
-					y: y / 48 - 0.5,
+					x: x / 48,
+					y: y / 48,
 				}),
 			};
 		}
@@ -217,26 +219,45 @@ describe('ArcherFamilyTower', () => {
 			});
 		}
 
-		it('targets off data.position when sprite-derived grid would drift out of range', () => {
+		it('picks nearest unit off data.position, not sprite-derived grid', () => {
 			const gm = realGridManager();
-			// Tower grid (5,5). Sprite placed at a deliberately offset world
-			// position whose worldToGridFloat round-trip lands at (~2.92,
-			// ~2.92) — i.e. if BaseTower derived the targeting center from
-			// sprite.x/y it would shift ~2.1 cells away from data.position.
+			// Tower grid (5,5) → world center (264, 264). In production
+			// TowerSystem.placeTower places the sprite at
+			// (worldPos.x, worldPos.y - PLATFORM_LIFT*tile - 20) — that's
+			// (264, 224.8) for tile=48 and PLATFORM_LIFT=0.4. The faithful
+			// worldToGridFloat of that sprite is (264/48, 224.8/48) =
+			// (5.5, 4.683) — the same drift (+0.5x, -0.317y) that the bug
+			// produced in production.
 			const tower = buildTowerWithOffsetSprite(
 				'archer',
 				{ x: 5, y: 5 },
-				{ x: 164, y: 164 },
+				{ x: 264, y: 224.8 },
 			);
 
-			// Unit at grid (4,5): distance² from data.position (5,5) = 1 ≤
-			// rangeSq(4) → should be targeted. Distance² from sprite-derived
-			// (2.92,2.92) ≈ 5.5 → would be OUT of range. So this test fires
-			// only when BaseTower uses data.position.
-			const unit: UnitSnapshot = {
-				instanceId: 'target_1',
-				x: (4 + 0.5) * 48,
-				y: (5 + 0.5) * 48,
+			// Two units, both comfortably in range (rangeSq = 2^2 = 4), but
+			// the nearest-of-two winner flips between the two candidate
+			// centers:
+			//
+			//   Unit X — grid (5, 5.5), world (240, 264). South of (5,5).
+			//     distSq from (5, 5):        0.25    ← closest under FIX
+			//     distSq from (5.5, 4.683):  0.917
+			//   Unit Y — grid (6, 4.5), world (288, 216). NE of (5,5).
+			//     distSq from (5, 5):        1.25
+			//     distSq from (5.5, 4.683):  0.283   ← closest under BUG
+			//
+			// FIX → NearestInRange picks X (0.25 < 1.25).
+			// BUG → NearestInRange picks Y (0.283 < 0.917).
+			const unitX: UnitSnapshot = {
+				instanceId: 'target_X',
+				x: 240,
+				y: 264,
+				hp: 50,
+				element: 'neutral',
+			};
+			const unitY: UnitSnapshot = {
+				instanceId: 'target_Y',
+				x: 288,
+				y: 216,
 				hp: 50,
 				element: 'neutral',
 			};
@@ -245,7 +266,7 @@ describe('ArcherFamilyTower', () => {
 			const ctx: AttackContext = {
 				time: 5000,
 				delta: 16,
-				units: [unit],
+				units: [unitX, unitY],
 				gridManager: gm as never,
 				effectiveDamage: 10,
 				primaryTarget: null,
@@ -263,11 +284,10 @@ describe('ArcherFamilyTower', () => {
 
 			tower.update(ctx);
 
-			// Fix: tower uses data.position → in range → fires.
-			// Regression: tower uses sprite-derived grid → out of range → no fire.
 			expect(pushAttackLine).toHaveBeenCalledTimes(1);
 			const line = pushAttackLine.mock.calls[0][0];
-			expect(line.pendingDamage[0].unitId).toBe('target_1');
+			// Fix: data.position (5,5) picks unit_X. Bug would pick unit_Y.
+			expect(line.pendingDamage[0].unitId).toBe('target_X');
 		});
 	});
 });

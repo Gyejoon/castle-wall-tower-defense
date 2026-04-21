@@ -5,6 +5,7 @@ import type {
 	TowerRuntimeRef,
 	UnitSnapshot,
 } from '../types';
+import { parseHexColor } from '../vfx/colors';
 import type { AttackLineEntry } from '../vfx/TowerVfxController';
 
 /** Instant beam projectile. Damage is pushed by `SingleTargetAttack`
@@ -57,8 +58,4 @@ export class BeamEmitter implements ProjectileEmitter {
 		);
 		ctx.vfx.playTowerAttackThrottled(tower.def.id, ctx.time);
 	}
-}
-
-function parseHexColor(hex: string): number {
-	return parseInt(hex.replace('#', ''), 16);
 }

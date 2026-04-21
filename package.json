@@ -14,7 +14,9 @@
     "lint": "bun run --filter '*' lint",
     "lint:check": "bunx biome check .",
     "generate:assets": "bun run scripts/generate-assets/generate-all.ts",
-    "gld-pipe": "bun run scripts/gld-pipe/index.ts"
+    "gld-pipe": "bun run scripts/gld-pipe/index.ts",
+    "test:visual": "bun run --filter web-shell playwright",
+    "test:visual:update": "bun run --filter web-shell playwright:update"
   },
   "engines": {
     "node": ">=22"
@@ -22,7 +24,9 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
     "@napi-rs/canvas": "^0.1.97",
+    "@playwright/test": "^1.59.1",
     "phaser3spectorjs": "^0.0.8",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "web-shell": "workspace:*"
   }
 }

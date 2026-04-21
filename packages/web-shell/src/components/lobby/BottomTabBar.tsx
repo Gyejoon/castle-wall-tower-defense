@@ -1,6 +1,11 @@
+import { core } from '@gld/shared';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { type LobbyTab, useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
+
+// core.gold + alpha hex (CSS Color Level 4 8-digit hex)
+const GOLD_GLOW_OUTER = `${core.gold}26`; // 15% alpha
+const GOLD_GLOW_INNER = `${core.gold}1a`; // 10% alpha
 
 interface TabDef {
 	id: LobbyTab;
@@ -69,8 +74,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 							style={
 								isActive
 									? {
-											boxShadow:
-												'0 -2px 12px rgba(240,208,96,0.15), inset 0 1px 0 rgba(240,208,96,0.1)',
+											boxShadow: `0 -2px 12px ${GOLD_GLOW_OUTER}, inset 0 1px 0 ${GOLD_GLOW_INNER}`,
 										}
 									: undefined
 							}

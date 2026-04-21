@@ -52,10 +52,14 @@ export abstract class BaseTower implements TowerBehavior {
 		}
 		const interval = 1000 / speed;
 		if (ctx.time - this.lastAttackMs < interval) return;
-		const grid = ctx.gridManager.worldToGridFloat(
-			this.runtime.worldPos.x,
-			this.runtime.worldPos.y,
-		);
+		// Use the authoritative grid position from the PlacedTower data, NOT
+		// derived from sprite.x/sprite.y — sprite has visual lift
+		// (PLATFORM_LIFT + y-20) and the gridToWorld/worldToGridFloat
+		// round-trip isn't symmetric (half-tile offset). Net drift would be
+		// +0.5 x cells / -0.32 y cells vs. legacy TowerSystem, which indexes
+		// targeting directly off data.position. moveTower mutates
+		// data.position in place so this stays fresh without a hook.
+		const grid = this.runtime.data.position;
 		const rangeCells = this.runtime.def.stats.range;
 		const target = this.targeting.pick(
 			grid,

@@ -1,4 +1,4 @@
-import { EventBus, soundGenerator } from '@gld/phaser-game';
+import { bgmPlayer, EventBus, soundGenerator } from '@gld/phaser-game';
 import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
@@ -55,6 +55,23 @@ export function GamePage() {
 	useEffect(() => {
 		const sfxVol = useGameStore.getState().sfxVolume;
 		soundGenerator.setMasterVolume(sfxVol);
+	}, []);
+
+	// BGM: play on game entry, loop, stop on exit. Subscribe to bgmVolume changes.
+	useEffect(() => {
+		let lastVolume = useGameStore.getState().bgmVolume;
+		bgmPlayer.setVolume(lastVolume);
+		bgmPlayer.play('/assets/audio/bgm/gates_of_the_waning_moon.mp3');
+		const unsubscribe = useGameStore.subscribe((state) => {
+			if (state.bgmVolume !== lastVolume) {
+				lastVolume = state.bgmVolume;
+				bgmPlayer.setVolume(lastVolume);
+			}
+		});
+		return () => {
+			unsubscribe();
+			bgmPlayer.stop();
+		};
 	}, []);
 
 	// iOS AudioContext unlock on first user gesture

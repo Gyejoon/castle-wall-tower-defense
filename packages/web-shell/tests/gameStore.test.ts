@@ -12,6 +12,11 @@ vi.mock('@gld/phaser-game', () => ({
 	soundGenerator: {
 		setMasterVolume: vi.fn(),
 	},
+	bgmPlayer: {
+		play: vi.fn(),
+		stop: vi.fn(),
+		setVolume: vi.fn(),
+	},
 }));
 
 describe('gameStore', () => {

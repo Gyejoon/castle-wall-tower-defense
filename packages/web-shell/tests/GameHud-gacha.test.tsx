@@ -69,6 +69,11 @@ vi.mock('@gld/phaser-game', () => {
 			setMasterVolume: vi.fn(),
 			unlock: vi.fn().mockResolvedValue(undefined),
 		},
+		bgmPlayer: {
+			play: vi.fn(),
+			stop: vi.fn(),
+			setVolume: vi.fn(),
+		},
 	};
 });
 

@@ -117,7 +117,8 @@ export class GameStateManager {
 		}
 
 		if (defeated) {
-			// 보스 누수는 HP와 무관하게 즉시 패배. HP=0으로 통지해 성벽 연출을 비운다.
+			// 보스 누수는 HP와 무관하게 즉시 패배. 내부 HP와 성벽 연출 모두 0으로 맞춘다.
+			this.hp = 0;
 			this.deps.onExitSideEffect?.(0, defeatFromBoss);
 			this.endGame({ result: 'defeat', reason: 'base_hp_depleted' });
 			return;

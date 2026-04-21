@@ -372,6 +372,73 @@ describe('GameScene', () => {
 		});
 	});
 
+	it('accumulates bounty into goldEarned when a tower kills a unit', () => {
+		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
+		scene.currentMap = { id: 'forest_gate' };
+		scene.damageNumbers = {
+			update: vi.fn(),
+			show: vi.fn(),
+			showMiss: vi.fn(),
+			destroy: vi.fn(),
+			setEnabled: vi.fn(),
+		};
+		scene.playerWaves = {
+			update: vi.fn(),
+			getPhase: vi.fn(() => 'running'),
+			getElapsedMs: vi.fn(() => 0),
+			getWaveRemainingSec: vi.fn(() => -1),
+			getMaxWaves: vi.fn(() => 10),
+		};
+		// Tower emits one damage event against unit u1 that kills it with bounty=42.
+		scene.playerTowers = {
+			update: vi.fn(() => [{ unitId: 'u1', damage: 99 }]),
+			getTowers: vi.fn(() => []),
+			destroy: vi.fn(),
+		};
+		scene.playerUnits = {
+			getUnitPositions: vi.fn(() => [
+				{
+					instanceId: 'u1',
+					x: 0,
+					y: 0,
+					hp: 1,
+					element: 'neutral' as const,
+				},
+			]),
+			getUnitElement: vi.fn(() => 'neutral'),
+			getUnitWorldPos: vi.fn(() => ({ x: 0, y: 0 })),
+			applyDamage: vi.fn(() => ({
+				outcome: 'hit',
+				killed: true,
+				bounty: 42,
+				unitDefId: 'grunt',
+				countsTowardClear: true,
+				source: 'base',
+				isBoss: false,
+				actualDamage: 99,
+			})),
+			applySlow: vi.fn(),
+			applyStun: vi.fn(),
+			update: vi.fn(() => ({ reachedExit: [] })),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+		const state = installRuntimeControllers(scene, {
+			initialHp: 20,
+			slotIndex: 3,
+		});
+
+		scene.update(0, 16);
+
+		expect(state.getGoldEarned()).toBe(42);
+	});
+
 	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };

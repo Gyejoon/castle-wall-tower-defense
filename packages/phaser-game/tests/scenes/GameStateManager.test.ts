@@ -77,6 +77,8 @@ describe('GameStateManager', () => {
 			reason: 'base_hp_depleted',
 		});
 		expect(onExitSideEffect).toHaveBeenLastCalledWith(0, true);
+		// 내부 HP도 0으로 맞춰져야 한다. 안 맞추면 getHp()가 defeat 이후에도 양수를 반환.
+		expect(state.getHp()).toBe(0);
 	});
 
 	it('endGame is idempotent', () => {

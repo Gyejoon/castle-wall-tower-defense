@@ -636,7 +636,7 @@ export class GameScene extends Phaser.Scene {
 		const { reachedExit } = this.combat.tick(
 			this.state.getScaledTime(),
 			scaledDelta,
-			() => this.onUnitKilled(),
+			({ bounty }) => this.onUnitKilled(bounty),
 			(unitId, result) => this.onBossDamageResult(unitId, result),
 		);
 
@@ -675,8 +675,9 @@ export class GameScene extends Phaser.Scene {
 		}
 	}
 
-	private onUnitKilled(): void {
+	private onUnitKilled(bounty: number): void {
 		soundGenerator.playUnitDeath();
+		this.state.addGold(bounty);
 		if (this.isPhaseAMap) {
 			// 5웨이브마다 baseline 2배. harvest 보너스는 배율 적용 없이 가산.
 			const harvestBonus =

@@ -52,9 +52,96 @@ vi.mock('../src/audio/SoundGenerator', () => ({
 }));
 
 import { GameScene } from '../src/scenes/Game';
+import { BossContextBuilder } from '../src/scenes/runtime/BossContextBuilder';
+import { CombatMediator } from '../src/scenes/runtime/CombatMediator';
+import { GameStateManager } from '../src/scenes/runtime/GameStateManager';
 
 function createScene(): GameScene & Record<string, unknown> {
 	return new GameScene() as GameScene & Record<string, unknown>;
+}
+
+/**
+ * Phase 6: scenes that previously poked `scene.playerHp`, `scene.gameOver`,
+ * etc. now route through a real GameStateManager. This helper wires one up
+ * with the same `onEndGame` / `onExitSideEffect` contract Game.ts uses in
+ * production so the update() flow still drives terminal events.
+ */
+function installRuntimeControllers(
+	scene: GameScene & Record<string, unknown>,
+	opts: {
+		initialHp?: number;
+		slotIndex: number;
+		bossBehaviors?: Map<string, unknown>;
+	} = { slotIndex: 0 },
+): GameStateManager {
+	const state = new GameStateManager({
+		initialHp: opts.initialHp,
+		emit: EventBus.emit as never,
+		onEndGame: (reason) => {
+			const rangeOverlay = scene.rangeOverlay as {
+				getRangeOverlayGraphics: () => { clear: () => void };
+			};
+			rangeOverlay?.getRangeOverlayGraphics().clear();
+			const towers = scene.playerTowers as {
+				getTowers: () => unknown[];
+				destroy: () => void;
+			};
+			const towersPlaced = towers.getTowers().length;
+			towers.destroy();
+			const waves = scene.playerWaves as {
+				getMaxWaves: () => number;
+				getElapsedMs: () => number;
+			};
+			const finalSlot =
+				(state.getCurrentSlotDef()?.slotIndex as number | undefined) ?? 0;
+			EventBus.emit('game-over', {
+				result: reason.result,
+				stats: {
+					wavesCleared:
+						reason.result === 'victory'
+							? finalSlot
+							: Math.max(0, finalSlot - 1),
+					totalWaves: waves.getMaxWaves(),
+					towersPlaced,
+					timeSurvivedSec: Math.round(waves.getElapsedMs() / 1000),
+					goldEarned: state.getGoldEarned(),
+					remainingHp: Math.max(0, state.getHp()),
+					initialHp: state.getInitialHp(),
+				},
+			});
+		},
+		onExitSideEffect: (remainingHp) => {
+			const castleWall = scene.castleWall as
+				| { update: (n: number) => void; onHit: () => void }
+				| undefined;
+			EventBus.emit('base-hp-changed', {
+				hp: remainingHp,
+				maxHp: state.getInitialHp(),
+				laneIndex: 0,
+			});
+			castleWall?.update(remainingHp);
+			castleWall?.onHit();
+		},
+	});
+	state.setCurrentSlotDef({
+		slotIndex: opts.slotIndex,
+	} as never);
+	scene.state = state;
+	scene.combat = new CombatMediator({
+		towers: scene.playerTowers as never,
+		units: scene.playerUnits as never,
+		damageNumbers: scene.damageNumbers as never,
+		bossBehaviors: (opts.bossBehaviors ?? new Map()) as never,
+		orchestrator: undefined,
+		isPhaseAMap: false,
+	});
+	scene.bossCtx = new BossContextBuilder({
+		units: scene.playerUnits as never,
+		towers: scene.playerTowers as never,
+		getSceneTime: () => state.getScaledTime(),
+	});
+	scene.bossBehaviors = opts.bossBehaviors ?? new Map();
+	return state;
 }
 
 describe('GameScene', () => {
@@ -188,7 +275,6 @@ describe('GameScene', () => {
 		scene.rangeOverlay = {
 			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
 		};
-		scene.currentSlotDef = { slotIndex: 20 };
 		scene.currentMap = { id: 'forest_gate' };
 		scene.damageNumbers = {
 			update: vi.fn(),
@@ -219,6 +305,7 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 0),
 		};
+		installRuntimeControllers(scene, { initialHp: 20, slotIndex: 20 });
 
 		scene.update(0, 16);
 
@@ -243,9 +330,7 @@ describe('GameScene', () => {
 		scene.rangeOverlay = {
 			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
 		};
-		scene.currentSlotDef = { slotIndex: 5 };
 		scene.currentMap = { id: 'forest_gate' };
-		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
 		scene.spawnHut = { setActive: vi.fn(), destroy: vi.fn() };
 		scene.damageNumbers = {
@@ -277,6 +362,11 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 1),
 		};
+		const state = installRuntimeControllers(scene, {
+			initialHp: 20,
+			slotIndex: 5,
+		});
+		state.setHp(1); // one more hit defeats
 
 		scene.update(0, 16);
 
@@ -298,7 +388,6 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.currentSlotDef = { slotIndex: 7 };
 		scene.damageNumbers = {
 			update: vi.fn(),
 			show: vi.fn(),
@@ -322,11 +411,13 @@ describe('GameScene', () => {
 			getUnitElement: vi.fn(() => 'neutral'),
 			getUnitWorldPos: vi.fn(() => ({ x: 100, y: 200 })),
 			applyDamage: vi.fn(() => ({
+				outcome: 'hit',
 				killed: true,
 				unitDefId: 'scout_drone',
 				bounty: 3,
 				countsTowardClear: true,
 				source: 'base',
+				actualDamage: 99,
 			})),
 			applySlow: vi.fn(),
 			update: vi.fn(() => ({ reachedExit: [] })),
@@ -334,6 +425,7 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 1),
 		};
+		installRuntimeControllers(scene, { slotIndex: 7 });
 
 		scene.update(0, 16);
 

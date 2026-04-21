@@ -1,5 +1,4 @@
 import {
-	type ActiveUnit,
 	type AssetManifest,
 	ENERGY_PER_BOSS_FAST_CLEAR,
 	ENERGY_PER_BOSS_KILL,
@@ -53,6 +52,9 @@ import { InputController } from './input/InputController';
 import { PlacementCoordinator } from './input/PlacementCoordinator';
 import { FieldRenderer } from './render/FieldRenderer';
 import { RangeOverlayController } from './render/RangeOverlayController';
+import { BossContextBuilder } from './runtime/BossContextBuilder';
+import { CombatMediator } from './runtime/CombatMediator';
+import { GameStateManager } from './runtime/GameStateManager';
 
 // Phase A summon pool (Task 1.4 spec): tier-1 only, one per base family
 // (archer, siege, frost, stun). Higher tiers are reached through merge and
@@ -82,15 +84,13 @@ export class GameScene extends Phaser.Scene {
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
-	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
-	private gameOver = false;
-	private goldEarned = 0;
 	private isPhaseAMap = false;
-	private currentWaveSlot = 1;
 	private lastTimerTickSec = -1;
-	private currentSlotDef!: WaveDef;
 
+	private state!: GameStateManager;
+	private combat!: CombatMediator;
+	private bossCtx!: BossContextBuilder;
 	private fieldRenderer!: FieldRenderer;
 	private rangeOverlay!: RangeOverlayController;
 	private inputController!: InputController;
@@ -125,8 +125,6 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
-	private speedMultiplier: 1 | 2 | 3 = 1;
-	private scaledGameTime = 0;
 	private onWaveCompleted!: (data: {
 		wave: number;
 		totalWaves: number;
@@ -167,8 +165,19 @@ export class GameScene extends Phaser.Scene {
 
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
-		this.scaledGameTime = 0;
-		this.speedMultiplier = 1;
+		this.state = new GameStateManager({
+			emit: EventBus.emit.bind(EventBus),
+			onEndGame: (reason) => this.handleEndGame(reason),
+			onExitSideEffect: (remainingHp, _isBossLeak) => {
+				EventBus.emit('base-hp-changed', {
+					hp: remainingHp,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(remainingHp);
+				this.castleWall.onHit();
+			},
+		});
 		this.time.timeScale = 1;
 		this.anims.globalTimeScale = 1;
 		// Phase 7: scenario maps purged. Phase A is the only mode; ignore any
@@ -220,10 +229,10 @@ export class GameScene extends Phaser.Scene {
 			const unit = this.playerUnits.getUnit(instanceId);
 			if (!unit) return;
 			this.bossBehaviors.set(instanceId, behavior);
-			behavior.onSpawn(this.buildBossContext(unit.data));
+			behavior.onSpawn(this.bossCtx.build(unit.data));
 		});
 		const stageWaves = generatePhaseAWaves(50);
-		this.currentSlotDef = stageWaves[0];
+		this.state.setCurrentSlotDef(stageWaves[0]);
 		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves);
 		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
 		const isPhaseAMap = this.isPhaseAMap;
@@ -267,6 +276,19 @@ export class GameScene extends Phaser.Scene {
 		}
 
 		this.damageNumbers = new DamageNumberSystem(this);
+		this.bossCtx = new BossContextBuilder({
+			units: this.playerUnits,
+			towers: this.playerTowers,
+			getSceneTime: () => this.state.getScaledTime(),
+		});
+		this.combat = new CombatMediator({
+			towers: this.playerTowers,
+			units: this.playerUnits,
+			damageNumbers: this.damageNumbers,
+			bossBehaviors: this.bossBehaviors,
+			orchestrator: this.phaseAOrchestrator,
+			isPhaseAMap: this.isPhaseAMap,
+		});
 		this.events.on('shutdown', this.cleanup, this);
 
 		this.fieldRenderer = new FieldRenderer(
@@ -289,7 +311,7 @@ export class GameScene extends Phaser.Scene {
 			this.currentMap,
 		);
 		this.castleWall.create();
-		this.castleWall.update(this.playerHp);
+		this.castleWall.update(this.state.getHp());
 
 		this.spawnHut = new SpawnHutSystem(this, this.playerGrid, this.currentMap);
 		this.spawnHut.create();
@@ -364,7 +386,7 @@ export class GameScene extends Phaser.Scene {
 					EventBus.emit('move-failed', { reason: 'invalid-tile' });
 				}
 			},
-			isGameOver: () => this.gameOver,
+			isGameOver: () => this.state.isGameOver(),
 			getTowerAt: (col, row) => this.playerTowers.getTowerAt(col, row),
 		});
 		this.inputController.setup();
@@ -390,8 +412,10 @@ export class GameScene extends Phaser.Scene {
 
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
-			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
-			this.currentWaveSlot = data.slotIndex;
+			this.state.setCurrentSlotDef(
+				stageWaves[data.slotIndex - 1] ?? stageWaves[0],
+			);
+			this.state.setCurrentWaveSlot(data.slotIndex);
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 		};
@@ -440,7 +464,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.onSetSpeed = ({ multiplier }) => {
 			if (!this.isSceneAlive()) return;
-			this.speedMultiplier = multiplier;
+			this.state.setSpeed(multiplier);
 			this.time.timeScale = multiplier;
 			this.anims.globalTimeScale = multiplier;
 		};
@@ -529,14 +553,14 @@ export class GameScene extends Phaser.Scene {
 			// rebuilds their board after continue.
 			this.onGameResumed = (data) => {
 				if (!this.isSceneAlive()) return;
-				this.gameOver = false;
-				this.playerHp = Math.max(1, data.livesRestored);
+				this.state.setGameOver(false);
+				this.state.setHp(Math.max(1, data.livesRestored));
 				EventBus.emit('base-hp-changed', {
-					hp: this.playerHp,
+					hp: this.state.getHp(),
 					maxHp: INITIAL_PLAYER_HP,
 					laneIndex: 0,
 				});
-				this.castleWall.update(this.playerHp);
+				this.castleWall.update(this.state.getHp());
 				// Re-subscribe the wave lifecycle handlers that emitGameOver
 				// tore down so future wave-started / wave-completed events
 				// keep HUD state coherent.
@@ -568,13 +592,17 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.start();
 	}
 
-	private emitGameOver(payload: {
+	/**
+	 * Scene-side last-mile cleanup triggered by GameStateManager.endGame.
+	 * Emits the `game-over` payload (with run stats), tears down the range
+	 * overlay, detaches wave/lifecycle handlers, and destroys the tower
+	 * system. GameStateManager already set the `gameOver` flag before this
+	 * runs.
+	 */
+	private handleEndGame(payload: {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
-		finalSlot: number;
 	}): void {
-		if (this.gameOver) return;
-		this.gameOver = true;
 		this.rangeOverlay.getRangeOverlayGraphics().clear();
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
@@ -583,100 +611,25 @@ export class GameScene extends Phaser.Scene {
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
+		const finalSlot = this.state.getCurrentSlotDef()?.slotIndex ?? 0;
 		EventBus.emit('game-over', {
 			result: payload.result,
 			stats: {
 				wavesCleared:
-					payload.result === 'victory'
-						? payload.finalSlot
-						: Math.max(0, payload.finalSlot - 1),
+					payload.result === 'victory' ? finalSlot : Math.max(0, finalSlot - 1),
 				totalWaves: this.playerWaves.getMaxWaves(),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned,
-				remainingHp: Math.max(0, this.playerHp),
+				goldEarned: this.state.getGoldEarned(),
+				remainingHp: Math.max(0, this.state.getHp()),
 				initialHp: INITIAL_PLAYER_HP,
 			},
 		});
 	}
 
-	private processCombatField(
-		towerSystem: Pick<TowerSystem, 'update'>,
-		unitSystem: Pick<
-			UnitSystem,
-			| 'applyDamage'
-			| 'applySlow'
-			| 'applyStun'
-			| 'getUnitPositions'
-			| 'getUnitWorldPos'
-			| 'update'
-		>,
-		time: number,
-		delta: number,
-		onKill: () => void,
-		onDamageResult?: (
-			unitId: string,
-			result: ReturnType<UnitSystem['applyDamage']>,
-		) => void,
-	): { id: string; isBoss: boolean }[] {
-		const unitPositions = unitSystem.getUnitPositions();
-		const damageEvents = towerSystem.update(time, delta, unitPositions);
-
-		for (const evt of damageEvents) {
-			if (evt.damage > 0) {
-				const pos = unitSystem.getUnitWorldPos(evt.unitId);
-				const result = unitSystem.applyDamage(
-					evt.unitId,
-					evt.damage,
-					evt.armorPierce,
-				);
-				if (pos && result) {
-					// hit: show number. miss: show MISS. absorbed/invulnerable: silent.
-					if (result.outcome === 'hit') {
-						this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
-					} else if (result.outcome === 'miss') {
-						this.damageNumbers.showMiss(pos.x, pos.y);
-					}
-				}
-				onDamageResult?.(evt.unitId, result);
-				if (result?.killed) {
-					this.goldEarned += result.bounty;
-					onKill();
-				}
-			}
-			// Phase 4 [F15]: `effect_amp` scales slow/stun durations (multiply).
-			// Applied at the Game scene boundary so UnitSystem stays decoupled
-			// from the roguelike stack tracker.
-			const effectAmp =
-				this.isPhaseAMap && this.phaseAOrchestrator
-					? this.phaseAOrchestrator.getEffectDurationMultiplier()
-					: 1;
-			if (evt.slow) {
-				const behavior = this.bossBehaviors.get(evt.unitId);
-				if (!behavior?.isCcImmune()) {
-					unitSystem.applySlow(
-						evt.unitId,
-						evt.slow.factor,
-						evt.slow.duration * effectAmp,
-					);
-				}
-			}
-			if (evt.stun) {
-				const behavior = this.bossBehaviors.get(evt.unitId);
-				if (!behavior?.isCcImmune()) {
-					unitSystem.applyStun(evt.unitId, evt.stun.duration * effectAmp);
-				}
-			}
-		}
-
-		const { reachedExit } = unitSystem.update(time, delta);
-		return reachedExit;
-	}
-
 	update(_time: number, delta: number) {
-		if (this.gameOver) return;
-		const scaledDelta = delta * this.speedMultiplier;
-		this.scaledGameTime += scaledDelta;
+		if (this.state.isGameOver()) return;
+		const scaledDelta = this.state.tick(delta);
 
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
@@ -689,65 +642,13 @@ export class GameScene extends Phaser.Scene {
 			this.phaseAOrchestrator.tickEnergyRegen(scaledDelta / 1000);
 		}
 
-		// Tick boss behaviors before combat so they can react with fresh sceneTime
-		for (const [instanceId, behavior] of this.bossBehaviors) {
-			const unit = this.playerUnits.getUnit(instanceId);
-			if (!unit || unit.pendingDestroy) {
-				behavior.destroy();
-				this.bossBehaviors.delete(instanceId);
-				continue;
-			}
-			behavior.onTick(this.buildBossContext(unit.data), scaledDelta);
-		}
+		this.tickBossBehaviors(scaledDelta);
 
-		const playerExits = this.processCombatField(
-			this.playerTowers,
-			this.playerUnits,
-			this.scaledGameTime,
+		const { reachedExit } = this.combat.tick(
+			this.state.getScaledTime(),
 			scaledDelta,
-			() => {
-				soundGenerator.playUnitDeath();
-				// Phase 4 [F15]: +1 per kill baseline, with the roguelike
-				// `energy_harvest` upgrade stacking additively on top (+1 per
-				// stack). Every 5th wave doubles the baseline as a soft pacing
-				// buff — stack bonus is additive on top of the doubled value.
-				if (this.isPhaseAMap) {
-					const harvestBonus =
-						this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
-					const baseline =
-						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
-					this.energySystem.add(baseline + harvestBonus);
-				}
-			},
-			(unitId, result) => {
-				if (!result) return;
-				const behavior = this.bossBehaviors.get(unitId);
-				if (!behavior) return;
-				const unit = this.playerUnits.getUnit(unitId);
-				if (result.killed) {
-					// Phase 3 (sole-mode): boss-kill energy reward, plus a
-					// fast-clear bonus if the boss dies within
-					// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
-					// to wave start if bossSpawnMs was not recorded (e.g. if
-					// the boss died before the spawn callback fired).
-					if (this.isPhaseAMap) {
-						this.energySystem.add(ENERGY_PER_BOSS_KILL);
-						const elapsed =
-							this.playerWaves.getElapsedMs() -
-							(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
-						if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
-							this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
-						}
-					}
-					behavior.destroy();
-					this.bossBehaviors.delete(unitId);
-					return;
-				}
-				if (unit) {
-					const hpRatio = unit.data.hp / unit.maxHp;
-					behavior.onDamageTaken(this.buildBossContext(unit.data), hpRatio);
-				}
-			},
+			() => this.onUnitKilled(),
+			(unitId, result) => this.onBossDamageResult(unitId, result),
 		);
 
 		// Wave timer tick — throttled to 1 emit/sec to avoid event spam
@@ -756,98 +657,81 @@ export class GameScene extends Phaser.Scene {
 			this.lastTimerTickSec = remainingSec;
 			EventBus.emit('wave-timer-tick', {
 				remainingSec,
-				wave: this.currentWaveSlot,
+				wave: this.state.getCurrentWaveSlot(),
 				totalWaves: this.playerWaves.getMaxWaves(),
 			});
 		}
 
 		this.damageNumbers.update(_time, delta);
 
-		for (const exit of playerExits) {
-			this.playerHp = Math.max(0, this.playerHp - 1);
-			EventBus.emit('player-damaged', {
-				playerId: 'local',
-				damage: 1,
-				remainingHp: this.playerHp,
-			});
+		this.state.applyExits(reachedExit);
+		if (this.state.isGameOver()) return;
 
-			// Boss leak = instant defeat (isBoss is only true for bossBehaviorId units)
-			if (exit.isBoss) {
-				EventBus.emit('base-hp-changed', {
-					hp: 0,
-					maxHp: INITIAL_PLAYER_HP,
-					laneIndex: 0,
-				});
-				this.castleWall.update(0);
-				this.castleWall.onHit();
-				this.emitGameOver({
-					result: 'defeat',
-					reason: 'base_hp_depleted',
-					finalSlot: this.currentSlotDef.slotIndex,
-				});
-				return;
+		this.state.checkVictoryCondition(
+			this.playerWaves.getPhase(),
+			this.playerUnits.hasActiveUnits(),
+			this.playerUnits.hasQueuedUnits(),
+		);
+	}
+
+	private tickBossBehaviors(scaledDelta: number): void {
+		for (const [instanceId, behavior] of this.bossBehaviors) {
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit || unit.pendingDestroy) {
+				behavior.destroy();
+				this.bossBehaviors.delete(instanceId);
+				continue;
 			}
-
-			if (this.playerHp <= 0) {
-				EventBus.emit('base-hp-changed', {
-					hp: 0,
-					maxHp: INITIAL_PLAYER_HP,
-					laneIndex: 0,
-				});
-				this.castleWall.update(0);
-				this.castleWall.onHit();
-				this.emitGameOver({
-					result: 'defeat',
-					reason: 'base_hp_depleted',
-					finalSlot: this.currentSlotDef.slotIndex,
-				});
-				return;
-			}
-		}
-
-		if (playerExits.length > 0) {
-			EventBus.emit('base-hp-changed', {
-				hp: this.playerHp,
-				maxHp: INITIAL_PLAYER_HP,
-				laneIndex: 0,
-			});
-			this.castleWall.update(this.playerHp);
-			this.castleWall.onHit();
-		}
-
-		if (
-			this.playerWaves.getPhase() === 'ended' &&
-			!this.playerUnits.hasActiveUnits() &&
-			!this.playerUnits.hasQueuedUnits()
-		) {
-			this.emitGameOver({
-				result: 'victory',
-				reason: 'all_waves_cleared',
-				finalSlot: this.currentSlotDef.slotIndex,
-			});
+			behavior.onTick(this.bossCtx.build(unit.data), scaledDelta);
 		}
 	}
 
-	private buildBossContext(
-		boss: ActiveUnit,
-	): import('../systems/boss-ai/types').BossContext {
-		return {
-			boss,
-			sceneTimeMs: this.scaledGameTime,
-			spawnUnit: (unitId, pos, metadata) => {
-				this.playerUnits.spawnAdditionalUnit(unitId, pos, metadata);
-			},
-			disableTower: (towerId, untilMs) => {
-				if (towerId === '__random__') {
-					const towers = this.playerTowers.getAllTowers();
-					if (towers.length === 0) return;
-					const target = towers[Math.floor(Math.random() * towers.length)];
-					this.playerTowers.disableTower(target.data.instanceId, untilMs);
-				} else {
-					this.playerTowers.disableTower(towerId, untilMs);
+	private onUnitKilled(): void {
+		soundGenerator.playUnitDeath();
+		// Phase 4 [F15]: +1 per kill baseline, with the roguelike
+		// `energy_harvest` upgrade stacking additively on top (+1 per
+		// stack). Every 5th wave doubles the baseline as a soft pacing
+		// buff — stack bonus is additive on top of the doubled value.
+		if (this.isPhaseAMap) {
+			const harvestBonus =
+				this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
+			const baseline =
+				ENERGY_PER_KILL * (this.state.getCurrentWaveSlot() % 5 === 0 ? 2 : 1);
+			this.energySystem.add(baseline + harvestBonus);
+		}
+	}
+
+	private onBossDamageResult(
+		unitId: string,
+		result: ReturnType<UnitSystem['applyDamage']>,
+	): void {
+		if (!result) return;
+		const behavior = this.bossBehaviors.get(unitId);
+		if (!behavior) return;
+		const unit = this.playerUnits.getUnit(unitId);
+		if (result.killed) {
+			// Phase 3 (sole-mode): boss-kill energy reward, plus a
+			// fast-clear bonus if the boss dies within
+			// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
+			// to wave start if bossSpawnMs was not recorded (e.g. if
+			// the boss died before the spawn callback fired).
+			if (this.isPhaseAMap) {
+				this.energySystem.add(ENERGY_PER_BOSS_KILL);
+				const elapsed =
+					this.playerWaves.getElapsedMs() -
+					(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
+				if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
+					this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
 				}
-			},
-		};
+			}
+			behavior.destroy();
+			this.bossBehaviors.delete(unitId);
+			return;
+		}
+		if (unit) {
+			const hpRatio = unit.data.hp / unit.maxHp;
+			behavior.onDamageTaken(this.bossCtx.build(unit.data), hpRatio);
+		}
 	}
 
 	private cleanup() {
@@ -875,12 +759,14 @@ export class GameScene extends Phaser.Scene {
 			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
 		}
 
-		// Input controllers destroy AFTER EventBus.off (so handlers that
-		// might read their state have already detached) but BEFORE the
-		// gameplay systems they observe are torn down. Matches the
-		// AGENTS.md cleanup order: bus → controllers → systems → renderers.
+		// Controllers destroy AFTER EventBus.off (so handlers that might
+		// read their state have already detached) but BEFORE the gameplay
+		// systems they observe are torn down. Matches the AGENTS.md
+		// cleanup order: EventBus.off → input/placement →
+		// combat/state/bossCtx → systems → renderers.
 		this.inputController?.destroy();
 		this.placement?.destroy();
+		this.state?.destroy();
 
 		this.phaseAOrchestrator?.destroy();
 		this.phaseAOrchestrator = undefined;

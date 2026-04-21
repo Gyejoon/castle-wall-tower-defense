@@ -90,7 +90,7 @@ React는 Tailwind `p-md`, `gap-sm` 클래스로 소비. Phaser는 `spacingPx.md`
 
 ### Z-index (`zIndex.ts`)
 
-**5단 강제.** `z-[N]` 리터럴 금지.
+**6단 강제.** `z-[N]` 리터럴 금지.
 board(0) → hud(10) → floating(20) → overlay(30) → modal(40) → toast(50).
 
 ### 모션 (`motion.ts`)

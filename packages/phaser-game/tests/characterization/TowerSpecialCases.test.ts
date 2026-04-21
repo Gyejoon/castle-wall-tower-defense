@@ -15,116 +15,7 @@ vi.mock('../../src/audio/SoundGenerator', () => ({
 vi.mock('../../src/EventBus', () => ({ EventBus: { emit: vi.fn() } }));
 
 import { TowerSystem } from '../../src/systems/TowerSystem';
-
-// Mirror SiegeProjectileVfx.test.ts helpers — minimal Phaser-ish stubs that
-// satisfy TowerSystem's render/audio calls without a real scene.
-function createGraphics() {
-	return {
-		setDepth: vi.fn().mockReturnThis(),
-		clear: vi.fn().mockReturnThis(),
-		fillStyle: vi.fn().mockReturnThis(),
-		fillEllipse: vi.fn().mockReturnThis(),
-		strokeEllipse: vi.fn().mockReturnThis(),
-		lineStyle: vi.fn().mockReturnThis(),
-		fillCircle: vi.fn().mockReturnThis(),
-		strokeCircle: vi.fn().mockReturnThis(),
-		fillRect: vi.fn().mockReturnThis(),
-		beginPath: vi.fn().mockReturnThis(),
-		moveTo: vi.fn().mockReturnThis(),
-		lineTo: vi.fn().mockReturnThis(),
-		strokePath: vi.fn().mockReturnThis(),
-		destroy: vi.fn(),
-	};
-}
-
-function createImage() {
-	return {
-		setDisplaySize: vi.fn().mockReturnThis(),
-		setPosition: vi.fn().mockReturnThis(),
-		setRotation: vi.fn().mockReturnThis(),
-		setAlpha: vi.fn().mockReturnThis(),
-		setY: vi.fn().mockReturnThis(),
-		setDepth: vi.fn().mockReturnThis(),
-		setVisible: vi.fn().mockReturnThis(),
-		visible: false,
-		active: true,
-		x: 100,
-		y: 100,
-		rotation: 0,
-		destroy: vi.fn(),
-	};
-}
-
-function createSprite() {
-	return {
-		setDisplaySize: vi.fn().mockReturnThis(),
-		setDepth: vi.fn().mockReturnThis(),
-		setY: vi.fn().mockReturnThis(),
-		setPosition: vi.fn().mockReturnThis(),
-		setTint: vi.fn().mockReturnThis(),
-		clearTint: vi.fn().mockReturnThis(),
-		setRotation: vi.fn().mockReturnThis(),
-		setVisible: vi.fn().mockReturnThis(),
-		play: vi.fn().mockReturnThis(),
-		once: vi.fn(),
-		active: true,
-		scaleX: 1,
-		scaleY: 1,
-		x: 100,
-		y: 100,
-		rotation: 0,
-		destroy: vi.fn(),
-	};
-}
-
-/**
- * Build a scene that claims the given texture keys exist. Nova cannon needs
- * `tower-nova_cannon-barrel` to be present so the rotating barrel sprite is
- * created and the fireOrigin formula at TowerSystem.ts:774-781 is exercised.
- */
-function buildScene(existsKeys: Set<string> = new Set()) {
-	return {
-		scene: {
-			add: {
-				graphics: vi.fn(() => createGraphics()),
-				image: vi.fn(() => createImage()),
-				sprite: vi.fn(() => createSprite()),
-			},
-			textures: {
-				exists: vi.fn((key: string) => existsKeys.has(key)),
-			},
-			anims: {
-				exists: vi.fn(() => false),
-			},
-			tweens: {
-				add: vi.fn(() => ({ stop: vi.fn(), remove: vi.fn() })),
-			},
-		},
-	};
-}
-
-function buildGridManager() {
-	return {
-		orthoTile: 48,
-		isInBounds: vi.fn(() => true),
-		isWalkable: vi.fn(() => true),
-		canPlaceTower: vi.fn(() => true),
-		placeTower: vi.fn(() => true),
-		removeTower: vi.fn(),
-		getWalkabilityGrid: vi.fn(() => []),
-		spawnPoint: { x: 0, y: 0 },
-		exitPoint: { x: 4, y: 17 },
-		gridToWorld: vi.fn((col: number, row: number) => ({
-			x: col * 48,
-			y: row * 48,
-		})),
-		getDepth: vi.fn(() => 10),
-		worldToGridFloat: vi.fn((x: number, y: number) => ({
-			x: x / 48,
-			y: y / 48,
-		})),
-	};
-}
+import { buildGridManager, buildScene } from './helpers';
 
 const pathfinding = {
 	invalidateCache: vi.fn(),
@@ -217,7 +108,8 @@ describe('TowerSystem special-case tower VFX (characterization)', () => {
 		]);
 
 		const lines = getAttackLines(towerSystem);
-		expect(lines.length).toBeGreaterThan(0);
+		// nova_cannon is single-shot — exactly one attack line per fire tick.
+		expect(lines).toHaveLength(1);
 		expect(lines[0].style).toBe('arc');
 		expect(lines[0].towerType).toBe('nova_cannon');
 
@@ -254,8 +146,9 @@ describe('TowerSystem special-case tower VFX (characterization)', () => {
 		const lines = getAttackLines(towerSystem);
 		// Characterization of the `def.id === 'earth_golem'` branch at :732 —
 		// earth_golem must render as arc-style even if a future refactor drops
-		// `splash_` from its special string.
-		expect(lines.length).toBeGreaterThan(0);
+		// `splash_` from its special string. Single-shot (no twin-archer style
+		// pairing) → exactly one attack line.
+		expect(lines).toHaveLength(1);
 		expect(lines[0].style).toBe('arc');
 		expect(lines[0].towerType).toBe('earth_golem');
 		expect(lines[0].impactPending).toBe(true);

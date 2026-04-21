@@ -34,9 +34,9 @@ export function Panel({
 			className={cn('flex flex-col gap-sm', className)}
 			{...props}
 		>
-			{(title || titleTrailing) && (
+			{(title != null || titleTrailing != null) && (
 				<div className="flex items-center justify-between gap-sm">
-					{title ? (
+					{title != null ? (
 						<div className="font-pixel font-bold text-[14px] text-text">
 							{title}
 						</div>

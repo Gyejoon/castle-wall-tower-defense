@@ -34,20 +34,32 @@ function atomicCopy(src: string, dst: string) {
   renameSync(tmp, dst);
 }
 
-function resolveSelectors(selectors: string[]): string[] {
+/**
+ * `mode` picks the gate. accept requires a completed forge run (metadata.json
+ * signals the chain ran to completion), but reject must work on any staging
+ * directory — including half-written ones from a crashed forge — so the user
+ * can always recover.
+ */
+function resolveSelectors(
+  selectors: string[],
+  mode: 'accept' | 'reject',
+): string[] {
   const out = new Set<string>();
   for (const s of selectors) {
     for (const id of resolveAssetIds(s)) {
-      if (existsSync(join(STAGING_ROOT, id, 'metadata.json'))) {
-        out.add(id);
-      }
+      const dir = join(STAGING_ROOT, id);
+      const exists =
+        mode === 'accept'
+          ? existsSync(join(dir, 'metadata.json'))
+          : existsSync(dir);
+      if (exists) out.add(id);
     }
   }
   return [...out];
 }
 
 export async function runAccept(opts: ReviewOptions): Promise<void> {
-  const ids = resolveSelectors(opts.selectors);
+  const ids = resolveSelectors(opts.selectors, 'accept');
   if (ids.length === 0) {
     console.log('accept: no staged assets match selector');
     return;
@@ -106,7 +118,7 @@ export async function runAccept(opts: ReviewOptions): Promise<void> {
 }
 
 export async function runReject(opts: ReviewOptions): Promise<void> {
-  const ids = resolveSelectors(opts.selectors);
+  const ids = resolveSelectors(opts.selectors, 'reject');
   if (ids.length === 0) {
     console.log('reject: no staged assets match selector');
     return;

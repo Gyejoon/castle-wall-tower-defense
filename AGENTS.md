@@ -42,7 +42,7 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. (코드상 `PhaseAOrchestrator` / `PHASE_A_MAP_ID` 등 식별자는 이전 프로토타입 트랙명을 이어받은 historical identifier — 런타임 모드 구분이 아님.)
+Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. 코드 식별자는 `CoreOrchestrator` / `MAIN_MAP_ID` / `main_long` / `GameHud` 등 모드 중립 네이밍을 사용한다.
 
 **구현 완료 (정식 모드):**
 - **맵:** 9×18 세로 그리드, 중앙 레인 프리미엄 존 + 장애물 9개(tiny-swords 나무/바위/덤불). 50 wave endless.
@@ -146,7 +146,7 @@ lobby → building → running → victory | defeat → lobby
 | `RandomSummonSystem.ts` | SummonPool 기반 랜덤 소환 |
 | `MergeSystem.ts` | `MERGE_CHAIN`/`resolveMerge` 기반 합성 (family/tier) |
 | `GachaSystem.ts` | 인게임 가챠 (T2/T3/T4, `tier_odds_up` 스택) |
-| `PhaseAOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`). 클래스명은 이전 프로토타입 트랙 명칭에서 유지 (historical identifier) |
+| `CoreOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`) |
 | `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
 
 ## 커맨드

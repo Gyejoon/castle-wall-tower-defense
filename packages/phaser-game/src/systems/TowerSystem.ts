@@ -20,6 +20,14 @@ import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { PLATFORM_LIFT } from '../fieldAssets';
+import {
+	type AttackContext,
+	type TowerBehavior,
+	type UnitSnapshot,
+	createTower,
+	hasTowerFactory,
+	TowerVfxController,
+} from '../towers';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
@@ -161,6 +169,14 @@ export class TowerSystem {
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
 	private static readonly ARROW_POOL_SIZE = 16;
+	/** Phase 2.0: VFX controller shared by tower behaviors created via the new
+	 *  strategy registry. Phase 1 ships it as a no-op shell; Phase 2.x will
+	 *  port the muzzle/impact spawn + attack-line buffer into it. */
+	private readonly towerVfxController: TowerVfxController;
+	/** Phase 2.0: instance-scoped map of placed tower instanceId → new-strategy
+	 *  behavior. Populated only when `hasTowerFactory(defId)` returns true.
+	 *  Empty at runtime until Phase 2.1+ registers concrete factories. */
+	private readonly newTowerInstances: Map<string, TowerBehavior> = new Map();
 
 	constructor(
 		scene: Phaser.Scene,
@@ -176,6 +192,7 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
+		this.towerVfxController = new TowerVfxController(scene);
 	}
 
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
@@ -339,6 +356,27 @@ export class TowerSystem {
 			lastAuraTime: 0,
 		});
 
+		// Phase 2.0: if a factory is registered for this defId, construct the
+		// new-strategy behavior and record it so update() dispatches there.
+		// Unregistered defIds fall through to the legacy update path. The
+		// registry is empty until Phase 2.1+, so this branch is dead-code at
+		// runtime today — wired now to lock in the injection point.
+		if (hasTowerFactory(def.id)) {
+			const behavior = createTower(def.id, {
+				def,
+				data: towerData,
+				scene: this.scene,
+				gridManager: this.gridManager,
+				vfx: this.towerVfxController,
+				level: towerLevel,
+				sprite,
+				barrelSprite,
+			});
+			if (behavior) {
+				this.newTowerInstances.set(instanceId, behavior);
+			}
+		}
+
 		// Phase 11 [F23]: tier-5/6 placeholder differentiation. Until dedicated
 		// art ships, hybrid_ab/hybrid_cd/ultimate share T4 sprites; a tinted
 		// pulsing aura under the sprite makes them visually distinct without
@@ -497,6 +535,53 @@ export class TowerSystem {
 		return special?.startsWith('slow_') ?? false;
 	}
 
+	/**
+	 * Phase 2.0: single injection point for AttackContext construction. Every
+	 * new-strategy tower routes through here so Phase 2.1+ migrations don't
+	 * each hand-roll the plumbing (damage events buffer, vfx controller,
+	 * grid/time/delta).
+	 *
+	 * `effectiveDamage` is deliberately the pre-element, pre-modifier value
+	 * stored on the tower instance — Phase 2.1 will refine when the first
+	 * real tower migrates and reveals what it needs (element mult, dmg_up,
+	 * crit_dmg, family mult, globalAtkPct). Keeping it raw here avoids
+	 * prematurely committing to a shape the first migration might want to
+	 * change. `primaryTarget` is null; `BaseTower.update()` rebinds it after
+	 * targeting.
+	 */
+	private buildAttackContext(
+		tower: TowerInstance,
+		time: number,
+		delta: number,
+		unitPositions: Array<{
+			instanceId: string;
+			x: number;
+			y: number;
+			hp: number;
+			element: ElementType;
+		}>,
+	): AttackContext {
+		const pushDamage = (evt: {
+			unitId: string;
+			damage: number;
+			armorPierce?: boolean;
+			slow?: { factor: number; duration: number };
+			stun?: { duration: number };
+		}): void => {
+			this.damageEventsBuffer.push(evt);
+		};
+		return {
+			time,
+			delta,
+			units: unitPositions as readonly UnitSnapshot[],
+			gridManager: this.gridManager,
+			effectiveDamage: tower.effectiveDamage,
+			primaryTarget: null,
+			pushDamage,
+			vfx: this.towerVfxController,
+		};
+	}
+
 	update(
 		time: number,
 		delta: number,
@@ -556,6 +641,19 @@ export class TowerSystem {
 
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
+
+			// Phase 2.0: new-strategy dispatch. A registered behavior owns the
+			// entire lifecycle for this tower (active + passive), so we hand
+			// off and skip both legacy loops. Registry is empty at runtime
+			// today — this is a no-op branch until Phase 2.1 migrations land.
+			const behavior = this.newTowerInstances.get(data.instanceId);
+			if (behavior) {
+				behavior.update(
+					this.buildAttackContext(tower, time, delta, unitPositions),
+				);
+				continue;
+			}
+
 			if (def.stats.attackSpeed <= 0) continue;
 
 			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
@@ -852,6 +950,9 @@ export class TowerSystem {
 		// Passive CC aura (attackSpeed=0 towers)
 		for (const tower of this.towers.values()) {
 			const { def, data } = tower;
+			// Phase 2.0: skip passive loop for towers owned by the new
+			// strategy system — the registered behavior already ran above.
+			if (this.newTowerInstances.has(data.instanceId)) continue;
 			if (def.stats.attackSpeed > 0) continue;
 			const special = def.stats.special;
 			if (!special) continue;
@@ -1149,6 +1250,12 @@ export class TowerSystem {
 		targetInstance.barrelSprite?.destroy();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
+		// Phase 2.0: tear down new-strategy behavior if one was attached.
+		const soldBehavior = this.newTowerInstances.get(targetKey);
+		if (soldBehavior) {
+			soldBehavior.destroy();
+			this.newTowerInstances.delete(targetKey);
+		}
 		this.towers.delete(targetKey);
 		this.gridManager.removeTower(gridX, gridY);
 		this.pathfinding.invalidateCache();
@@ -1261,6 +1368,12 @@ export class TowerSystem {
 		instance.barrelSprite?.destroy();
 		instance.base.destroy();
 		instance.sprite.destroy();
+		// Phase 2.0: tear down new-strategy behavior if one was attached.
+		const removedBehavior = this.newTowerInstances.get(key);
+		if (removedBehavior) {
+			removedBehavior.destroy();
+			this.newTowerInstances.delete(key);
+		}
 		this.towers.delete(key);
 		this.gridManager.removeTower(col, row);
 		this.pathfinding.invalidateCache();
@@ -1438,6 +1551,13 @@ export class TowerSystem {
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}
+		// Phase 2.0: tear down new-strategy behaviors before clearing the map
+		// so each tower's destroy() hook runs. No-op today (registry empty).
+		for (const behavior of this.newTowerInstances.values()) {
+			behavior.destroy();
+		}
+		this.newTowerInstances.clear();
+		this.towerVfxController.destroy();
 		this.towers.clear();
 		this.attackGraphics?.destroy();
 		this.attackLines.length = 0;

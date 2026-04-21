@@ -1,9 +1,4 @@
-/**
- * Design-system gallery — dev-only preview of every ds/ primitive.
- *
- * Gated by `?ds=1` query string. Never linked from app navigation.
- */
-
+// 개발 전용 갤러리. ?ds=1 쿼리로만 접근.
 import { core } from '@gld/shared';
 import { type ReactNode, useState } from 'react';
 import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';

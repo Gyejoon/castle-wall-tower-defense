@@ -3,19 +3,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
 
-/**
- * Dev-only asset-review API.
- *
- *   GET  /api/asset-review/staging                       list all staged assets
- *   GET  /api/asset-review/staging/:id/:file             serve original.png / polished.png / etc.
- *   POST /api/asset-review/staging/:id/accept            copy polished → public/assets
- *   POST /api/asset-review/staging/:id/reject            delete staging/<id>
- *   POST /api/asset-review/staging/:id/regenerate        re-run forge with fresh seed
- *
- * The plugin does NOT import game code — it shells out to gld-pipe for the
- * mutating operations so the CLI and dashboard share the same logic.
- */
-
+// 개발용 asset-review API. mutation은 gld-pipe CLI로 위임해 CLI와 동일한 로직을 공유한다.
 export interface AssetReviewPluginOptions {
 	repoRoot?: string;
 }

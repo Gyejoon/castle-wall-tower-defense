@@ -1,12 +1,4 @@
-/**
- * UI color palette shared across React (DOM) and Phaser (Canvas).
- * Phaser uses 0x-prefixed number format; React uses hex strings.
- *
- * NOTE: This file is a backwards-compatibility adapter.
- * The real source of truth is `packages/shared/src/design/palette.ts`.
- * New code should import `core` / `palette` from `@gld/shared` directly.
- */
-
+// 하위 호환 어댑터. 원본은 design/palette.ts. 신규 코드는 core/palette 직접 import.
 import { core } from '../design/palette';
 
 export const UI_COLORS = {
@@ -26,10 +18,8 @@ export const UI_COLORS = {
 	armorPierce: core.armorPierce,
 } as const;
 
-/** Convert a `#rrggbb` hex string to Phaser's `0xrrggbb` number format */
 const toHexNumber = (hex: string): number => Number.parseInt(hex.slice(1), 16);
 
-/** Same palette as UI_COLORS but in Phaser-compatible 0x number format */
 export const PHASER_COLORS = {
 	bg: toHexNumber(core.bg),
 	panel: toHexNumber(core.panel),

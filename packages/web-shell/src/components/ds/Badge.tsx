@@ -21,7 +21,6 @@ export type BadgeIntent =
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 	variant?: BadgeVariant;
 	intent?: BadgeIntent;
-	/** Leading icon (emoji, SVG element, or image) */
 	icon?: ReactNode;
 }
 
@@ -74,12 +73,6 @@ const variantClass: Record<BadgeVariant, string> = {
 	counter: 'rounded-sm px-sm py-[2px] text-[12px] font-bold tabular-nums',
 };
 
-/**
- * Compact label used for HUD values, tier tags, counters.
- *  - pill:    HP/Energy mini chip (TopHud)
- *  - tag:     tier / family tag on tower cards
- *  - counter: numeric + icon (energy cost, inventory count)
- */
 export function Badge({
 	variant = 'pill',
 	intent = 'default',

@@ -103,6 +103,8 @@ Game.ts ──────────────────────► Ev
 
 ```
 EventBus 리스너 해제 (request-select-tower, request-sell-tower, wave-started 등)
+입력/배치 컨트롤러 destroy (InputController, PlacementCoordinator)
+런타임 컨트롤러 destroy (GameStateManager, CombatMediator는 stateless, BossContextBuilder는 stateless)
 PhaseAOrchestrator.destroy() [v2, phase_a_long 전용, optional chaining]
     └─► EventBus.off('request-summon-tower', ...)
     └─► EventBus.off('request-merge-towers', ...)
@@ -114,10 +116,35 @@ UnitSystem.destroy()
 WaveSystem.destroy()
 DeckSystem.reset()
 EnergySystem.reset()
+FieldRenderer.destroy() / RangeOverlayController.destroy()
 옵셔널 에셋 언로드
 ```
 
-**순서 이유**: PhaseAOrchestrator는 EventBus 리스너만 가지고 있으므로 TowerSystem.destroy() 이전에 먼저 EventBus.off를 호출해 이후 request-* 이벤트가 destroy된 TowerSystem에 닿지 않도록 막는다.
+**순서 이유 (AGENTS.md Phase 6 규정)**: `EventBus.off → input/placement → combat/state/bossCtx → systems → renderers`. Bus를 먼저 끊어 이후 request-* 이벤트가 destroy된 컨트롤러에 닿지 않게 하고, 컨트롤러를 시스템보다 먼저 내려 stale 상태에서 TowerSystem/UnitSystem을 touch하지 못하게 하고, renderer는 마지막에 내려 destroy 중인 컨트롤러의 마지막 프레임까지 그릴 수 있게 한다.
+
+### Scene sub-packages (`src/scenes/**`, Phase 4–6 분해)
+
+Phase 4–6 리팩토링으로 `GameScene.ts`의 주요 책임이 다음 하위 패키지로 분해됐다:
+
+| 패키지 | 파일 | 역할 |
+|--------|------|------|
+| `src/scenes/render/` | `FieldRenderer.ts` | 타일/경로/장식 정적 렌더 |
+| | `RangeOverlayController.ts` | 사거리/선택/배치 가능 오버레이 |
+| `src/scenes/input/` | `InputController.ts` | 포인터 입력 → 타워 배치/선택/이동 모드 |
+| | `PlacementCoordinator.ts` | Phase A fast-path + 배치 가드 + 성공/실패 이벤트 |
+| `src/scenes/runtime/` | `CombatMediator.ts` | 타워→유닛 데미지 디스패치, 보스 CC 면역 가드, 데미지 넘버, 킬 골드 |
+| | `GameStateManager.ts` | playerHp / gameOver / goldEarned / speedMultiplier / scaledGameTime / currentWaveSlot + applyExits/endGame |
+| | `BossContextBuilder.ts` | 보스 AI 틱당 `BossContext` 생성 |
+
+`Game.ts`는 scene 셋업, EventBus 구독/해제, 컨트롤러 오케스트레이션만 담당한다 (update() ~25줄).
+
+### UnitSystem sub-managers (`src/systems/units/`, Phase 3 분해)
+
+| 파일 | 역할 |
+|------|------|
+| `PathFollower.ts` | path index 진행 + world 좌표 보간 |
+| `CCStateManager.ts` | 슬로우/스턴/invulnerability 타이머 집계 |
+| `BossPhaseTracker.ts` | 보스 HP 구간 → phase 1/2 전이 + enrage 상태 관리 |
 
 ---
 

@@ -1,7 +1,4 @@
-/**
- * Backwards-compat adapter — new code should import `Button` from `components/ds`.
- * This wrapper preserves the pre-design-system API so existing callers keep working.
- */
+// 하위 호환 어댑터. 신규 코드는 components/ds의 Button 직접 사용.
 import type { ButtonHTMLAttributes } from 'react';
 import { Button, type ButtonVariant } from '../ds/Button';
 

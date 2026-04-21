@@ -8,7 +8,6 @@ export type CardIntent = 'default' | 'accent' | 'danger';
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 	variant?: CardVariant;
 	intent?: CardIntent;
-	/** Adds a subtle inner glow for emphasis */
 	highlight?: boolean;
 }
 
@@ -24,21 +23,12 @@ const intentGlow: Record<CardIntent, string> = {
 	danger: 'rgba(192, 48, 32, 0.25)',
 };
 
-/** Framed variant gradient — outer metallic band tinted per intent so accent/danger
- *  framed cards read differently from default gold. Accent uses an accent-dominant
- *  palette so gacha/upgrade cards read as "focused attention" rather than neutral. */
 const framedGradient: Record<CardIntent, string> = {
 	default: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
 	accent: `linear-gradient(180deg, ${core.accent} 0%, ${core.gold} 50%, ${core.accent} 100%)`,
 	danger: `linear-gradient(180deg, ${tier[6].bright} 0%, ${core.danger} 50%, ${tier[4].dark} 100%)`,
 };
 
-/**
- * Container primitive for grouped content. Three variants:
- *   - panel:   base card (bordered, solid background)
- *   - framed:  gold-edge frame + inner panel, used for gacha cards/upgrade choices
- *   - keyart:  translucent overlay card for lobby hero art (gradient backdrop)
- */
 export function Card({
 	variant = 'panel',
 	intent = 'default',
@@ -98,7 +88,6 @@ export function Card({
 		);
 	}
 
-	// keyart — translucent hero card; needs a stronger edge so it doesn't bleed into bg
 	const keyartBorder = intent === 'default' ? core.accent : border;
 	const keyartGlow =
 		intent === 'default' ? 'rgba(200, 160, 74, 0.28)' : intentGlow[intent];

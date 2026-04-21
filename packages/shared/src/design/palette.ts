@@ -1,16 +1,4 @@
-/**
- * Color palette — single source of truth for all colors used across the game.
- *
- * Consumers:
- *   - `packages/shared/src/constants/ui-colors.ts` (re-exports `core` + derived PHASER_COLORS)
- *   - `packages/web-shell/src/styles/global.css` (@theme variable mapping)
- *   - `packages/phaser-game/src/ui/tokens.ts` (0x-format adapter)
- *   - `scripts/generate-assets/shared.ts` (core/state/element/tier imports)
- *
- * Any new color must be added here first. Do not introduce hex literals elsewhere.
- */
-
-/** Core UI palette — 13 named colors used across DOM and Canvas */
+// 이 파일이 모든 색상의 단일 원본. 다른 곳에 hex 리터럴 추가 금지.
 export const core = {
 	bg: '#1a1208',
 	panel: '#2a2010',
@@ -28,23 +16,15 @@ export const core = {
 	armorPierce: '#a0a8b0',
 } as const;
 
-/** Interactive state colors — derived from core, kept here to avoid ad-hoc lighten/darken in components */
 export const state = {
-	/** hover ring + lighter border on interactive elements */
-	hover: '#e0b860', // +12% lightness over accent
-	/** focus ring — use as outline or box-shadow glow */
+	hover: '#e0b860',
 	focus: '#ffcf66',
-	/** disabled foreground / reduced-contrast text */
 	disabledFg: 'rgba(240, 232, 216, 0.4)',
-	/** disabled background overlay */
 	disabledBg: 'rgba(74, 58, 32, 0.5)',
-	/** warning — non-destructive caution (energy low, cooldown) */
 	warning: '#c88c40',
-	/** pressed/active depth color (bottom shadow on PixelButton) */
 	pressed: '#7a5a10',
 } as const;
 
-/** Element attribute colors — fire/water/lightning/earth/neutral */
 export const element = {
 	fire: { primary: '#e74c3c', glow: '#ff6b4a' },
 	water: { primary: '#3498db', glow: '#5dade2' },
@@ -53,27 +33,20 @@ export const element = {
 	neutral: { primary: '#c8a04a', glow: '#f0d060' },
 } as const;
 
-/** Tier colors — T1 ~ T6 progression palette */
 export const tier = {
-	1: { primary: '#c8a04a', dark: '#8b6a2a', bright: '#e0b860' }, // Common
-	2: { primary: '#5bc8e8', dark: '#3a90b0', bright: '#80d8f0' }, // Rare
-	3: { primary: '#c040d0', dark: '#8020a0', bright: '#d880e8' }, // Heroic — matches pixel-art tierHeroic
-	4: { primary: '#e04040', dark: '#a02020', bright: '#f06060' }, // Legendary
-	5: { primary: '#f0d060', dark: '#c0a030', bright: '#ffe89a' }, // God
-	6: { primary: '#ff6b4a', dark: '#c04020', bright: '#ff9070' }, // Ultimate (T6 hybrid)
+	1: { primary: '#c8a04a', dark: '#8b6a2a', bright: '#e0b860' },
+	2: { primary: '#5bc8e8', dark: '#3a90b0', bright: '#80d8f0' },
+	3: { primary: '#c040d0', dark: '#8020a0', bright: '#d880e8' },
+	4: { primary: '#e04040', dark: '#a02020', bright: '#f06060' },
+	5: { primary: '#f0d060', dark: '#c0a030', bright: '#ffe89a' },
+	6: { primary: '#ff6b4a', dark: '#c04020', bright: '#ff9070' },
 } as const;
 
-/** Surface colors — semantic backgrounds with alpha variants */
 export const surface = {
-	/** page background */
 	bg: core.bg,
-	/** panel — base card surface */
 	panel: core.panel,
-	/** panel elevated — one level above panel (e.g., floating sheet on dimmed background) */
 	panelElevated: '#352818',
-	/** panel sunken — inset surface (e.g., input well, stat bar track) */
 	panelSunken: '#1f1608',
-	/** alpha variants — used for layered translucency */
 	alpha: {
 		bg76: 'rgba(26, 18, 8, 0.76)',
 		bg80: 'rgba(26, 18, 8, 0.8)',
@@ -93,7 +66,6 @@ export const surface = {
 	},
 } as const;
 
-/** Convenience: all palette groups under one namespace */
 export const palette = {
 	core,
 	state,

@@ -60,9 +60,6 @@ const COLORBLIND_FILTERS: Record<string, string> = {
 	tritan: 'url(#tritan-filter)',
 };
 
-// Dev-only asset review dashboard — mounted by main.tsx when the URL path
-// begins with /asset-review. Exported here so callers don't need to know
-// the file location.
 export function AssetReviewApp() {
 	return (
 		<Suspense fallback={<LoadingScreen />}>

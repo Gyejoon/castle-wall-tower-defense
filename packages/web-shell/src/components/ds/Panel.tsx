@@ -5,18 +5,12 @@ import { Card, type CardIntent, type CardVariant } from './Card';
 export interface PanelProps
 	extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
 	title?: ReactNode;
-	/** Element rendered to the right of the title (e.g., close button) */
 	titleTrailing?: ReactNode;
-	/** Optional footer action row */
 	actions?: ReactNode;
 	variant?: CardVariant;
 	intent?: CardIntent;
 }
 
-/**
- * Panel = Card + title row + body + actions row.
- * Used for TowerActionSheet, PauseModal, UpgradePick columns, etc.
- */
 export function Panel({
 	title,
 	titleTrailing,

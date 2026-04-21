@@ -1,5 +1,5 @@
 /**
- * v7 → v8 migration (Phase A sole-mode).
+ * v7 → v8 migration (정식 모드 sole-mode).
  *
  * - Bumps `version` to 8.
  * - Drops scenario-mode fields from `progress`:
@@ -8,9 +8,9 @@
  *     achievements, awakeningStones, stagesCleared, starProgress,
  *     worldUnlocks
  * - Reduces `progress.highestWave` from `Record<stageId, number>` to a
- *   single scalar — Phase A uses one continuous wave counter.
+ *   single scalar — 정식 모드 uses one continuous wave counter.
  * - Preserves collection, profile, settings, selectedDeck, and the
- *   Phase-A–relevant progress fields (gacha + tutorial).
+ *   정식 모드 관련 progress fields (gacha + tutorial).
  */
 
 const REMOVED_PROGRESS_KEYS = [

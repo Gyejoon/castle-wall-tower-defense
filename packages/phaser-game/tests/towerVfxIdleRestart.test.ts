@@ -1,4 +1,4 @@
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -102,19 +102,19 @@ function createScene() {
 }
 
 describe('TowerSystem VFX idle-tween restart', () => {
-	it('playPhaseASummonVfx restarts the idle breathing tween after punch', () => {
+	it('playSummonVfx restarts the idle breathing tween after punch', () => {
 		const scene = createScene();
-		const gridManager = new GridManager(PHASE_A_LONG_MAP);
+		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
 			invalidateCache: vi.fn(),
-			findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+			findPath: vi.fn(() => MAIN_LONG_MAP.path),
 		};
 		const towerSystem = new TowerSystem(
 			scene as never,
 			gridManager,
 			pathfinding as never,
 		);
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		expect(towerSystem.placeTower(p.x, p.y, 'archer').success).toBe(true);
 
 		// Baseline: initial placement created exactly one idle tween
@@ -124,7 +124,7 @@ describe('TowerSystem VFX idle-tween restart', () => {
 		);
 		expect(idleBefore.length).toBe(1);
 
-		towerSystem.playPhaseASummonVfx(p.x, p.y);
+		towerSystem.playSummonVfx(p.x, p.y);
 
 		// After the punch tween's onComplete fires synchronously, the idle
 		// tween should have been re-added — so we now have 2 repeat:-1 tweens.
@@ -134,19 +134,19 @@ describe('TowerSystem VFX idle-tween restart', () => {
 		expect(idleAfter.length).toBe(2);
 	});
 
-	it('playPhaseAMergeVfx restarts the idle breathing tween after punch', () => {
+	it('playMergeVfx restarts the idle breathing tween after punch', () => {
 		const scene = createScene();
-		const gridManager = new GridManager(PHASE_A_LONG_MAP);
+		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
 			invalidateCache: vi.fn(),
-			findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+			findPath: vi.fn(() => MAIN_LONG_MAP.path),
 		};
 		const towerSystem = new TowerSystem(
 			scene as never,
 			gridManager,
 			pathfinding as never,
 		);
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		expect(towerSystem.placeTower(p.x, p.y, 'archer').success).toBe(true);
 
 		const idleBefore = scene.addedTweens.filter(
@@ -154,7 +154,7 @@ describe('TowerSystem VFX idle-tween restart', () => {
 		);
 		expect(idleBefore.length).toBe(1);
 
-		towerSystem.playPhaseAMergeVfx(p.x, p.y);
+		towerSystem.playMergeVfx(p.x, p.y);
 
 		const idleAfter = scene.addedTweens.filter(
 			(t) => t.repeat === -1 && t.yoyo === true,

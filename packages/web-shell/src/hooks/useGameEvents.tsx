@@ -45,7 +45,7 @@ export function useGameEvents() {
 	// Dedupe submit-per-run so a "이어서 하기" flow (game-over → game-resumed →
 	// later game-over) doesn't double-insert and trip the rate_limit trigger.
 	// Keyed by gameStore.runId, which increments only on resetRun/enterLobby/
-	// startPhaseA — not on resume. Intentionally auth-agnostic: if the user
+	// startGame — not on resume. Intentionally auth-agnostic: if the user
 	// signs out mid-run, we still treat the run as already submitted for
 	// whichever identity owned it, to preserve "one run = one row" semantics.
 	const submittedRunIdRef = useRef<number>(-1);

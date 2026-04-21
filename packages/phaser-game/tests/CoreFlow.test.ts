@@ -33,7 +33,7 @@ class FakeBoard implements SummonPlacementContext {
 	}
 }
 
-describe('Phase A core flow — summon (Phase 1, merge stubbed)', () => {
+describe('정식 모드 core flow — summon (merge stubbed)', () => {
 	it('archer 풀에서 두 번 소환하면 보드에 2개가 쌓인다', () => {
 		const pool = new SummonPoolSystem(['archer'], () => 0);
 		const summoner = new RandomSummonSystem(pool, () => 0);

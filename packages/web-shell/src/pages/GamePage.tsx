@@ -2,8 +2,8 @@ import { EventBus, soundGenerator } from '@gld/phaser-game';
 import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
+import { GameHud } from '../components/game/GameHud';
 import { GameOverScreen } from '../components/game/GameOverScreen';
-import { PhaseAHud } from '../components/game/PhaseAHud';
 import { SummonRevealOverlay } from '../components/game/SummonRevealOverlay';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
@@ -35,7 +35,7 @@ export function GamePage() {
 	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	// Phase 6: Phase A is the only mode, so 2x speed is always available.
+	// Phase 6: 정식 모드가 유일한 모드이므로 2x speed is always available.
 	const speed2xUnlocked = true;
 
 	const { waitCountdown } = useGameEvents();
@@ -345,7 +345,7 @@ export function GamePage() {
 					{/* Phase 8 Task 8.3 — 2s summon/gacha result celebration. */}
 					<SummonRevealOverlay />
 					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
-					    sell/move/merge buttons in PhaseAHud. Hidden while the merge
+					    sell/move/merge buttons in GameHud. Hidden while the merge
 					    target picker is active (Task 8.5 [F10]). */}
 					<TowerActionSheet
 						selectedTower={mergeSourceId ? null : selectedTower}
@@ -426,7 +426,7 @@ export function GamePage() {
 					)}
 				</div>
 
-				{runStatus !== 'victory' && runStatus !== 'defeat' && <PhaseAHud />}
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <GameHud />}
 			</div>
 		</div>
 	);

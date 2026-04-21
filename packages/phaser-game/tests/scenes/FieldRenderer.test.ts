@@ -111,7 +111,7 @@ function buildGridManager() {
 
 function buildMap(): MapLayout {
 	return {
-		id: 'phase_a_long',
+		id: 'main_long',
 		name: 'Phase A Long',
 		width: 3,
 		height: 3,

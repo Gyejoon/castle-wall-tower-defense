@@ -3,6 +3,25 @@ import type { CSSProperties } from 'react';
 import { useGameStore } from '../../../stores/gameStore';
 import { Button } from '../../ds';
 
+/**
+ * 정식 모드 lobby home — "Option C · Cinematic keyart" redesign.
+ *
+ * Visual language transplanted from the Claude Design prototype
+ * (Home Prototype C). The game is 정식 모드 only, so the prototype's
+ * left rail (world progress / event), right rail (missions / shop / mail),
+ * and deck preview have been dropped. Kept:
+ *   - fullscreen cinematic keyart (moon, stars, castle silhouette,
+ *     torches, fog) — purely decorative, aria-hidden
+ *   - NEXT UP CTA card floating over the keyart with a pulsing 전투 시작
+ *     button
+ *
+ * 메타 강화 entry moved to the 전쟁탁자 (CollectionTab) header so this tab
+ * stays focused on a single CTA.
+ *
+ * Top chrome (avatar / level / resources) is rendered by ProfileBar
+ * above this tab; BottomTabBar renders below. We only own the tab panel.
+ */
+
 // core.gold에 알파값 hex suffix 적용 (40% = 0x66, 20% = 0x33).
 const CORNER_COLOR = `${core.gold}66`;
 const STAR_UNFILLED_COLOR = `${core.gold}33`;
@@ -326,7 +345,7 @@ function Star({ filled }: { filled: boolean }) {
 }
 
 export function HomeTab() {
-	const startPhaseA = useGameStore((s) => s.startPhaseA);
+	const startGame = useGameStore((s) => s.startGame);
 
 	return (
 		<div
@@ -386,14 +405,14 @@ export function HomeTab() {
 								</div>
 								<div className="mt-[4px]">
 									<span className="font-pixel text-[10px] text-text-secondary">
-										Phase A · 9×18 맵 · 소환 → 합성 → 보스
+										정식 모드 · 9×18 맵 · 소환 → 합성 → 보스
 									</span>
 								</div>
 							</div>
 							<Button
 								variant="gold"
 								size="lg"
-								onClick={startPhaseA}
+								onClick={startGame}
 								aria-label="전투 시작"
 								className="pulse-cta flex-shrink-0"
 							>

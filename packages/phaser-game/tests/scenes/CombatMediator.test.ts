@@ -70,7 +70,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: dmg,
 			bossBehaviors: new Map(),
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		});
 
 		const onKill = vi.fn();
@@ -104,7 +104,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: dmg,
 			bossBehaviors: new Map(),
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, onKill);
 
 		expect(dmg.show).not.toHaveBeenCalled();
@@ -133,7 +133,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: new Map(),
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, onKill);
 
 		expect(onKill).toHaveBeenCalledWith({ bounty: 7 });
@@ -150,7 +150,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: new Map(),
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, vi.fn());
 
 		expect(units.applySlow).toHaveBeenCalledWith('u1', 0.5, 1000);
@@ -169,7 +169,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: bossBehaviors as never,
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, vi.fn());
 
 		expect(units.applySlow).not.toHaveBeenCalled();
@@ -188,7 +188,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: bossBehaviors as never,
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, vi.fn());
 
 		expect(units.applySlow).toHaveBeenCalledWith('boss-1', 0.5, 1000);
@@ -207,7 +207,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: bossBehaviors as never,
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, vi.fn());
 
 		expect(units.applyStun).not.toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: new Map(),
 			orchestrator: orchestrator as never,
-			isPhaseAMap: true,
+			isGameMap: true,
 		}).tick(0, 16, vi.fn());
 
 		expect(units.applySlow).toHaveBeenCalledWith('u1', 0.5, 2000);
@@ -250,7 +250,7 @@ describe('CombatMediator.tick', () => {
 			damageNumbers: makeDamageNumbers(),
 			bossBehaviors: new Map(),
 			orchestrator: undefined,
-			isPhaseAMap: false,
+			isGameMap: false,
 		}).tick(0, 16, vi.fn());
 
 		expect(result.reachedExit).toEqual([{ id: 'u1', isBoss: true }]);

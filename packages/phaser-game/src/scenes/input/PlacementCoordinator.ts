@@ -1,8 +1,8 @@
 import type { EventBus as EventBusType } from '../../EventBus';
 import { getPlacementGuardFailure } from '../../placementRules';
+import type { CoreOrchestrator } from '../../systems/CoreOrchestrator';
 import type { DeckSystem } from '../../systems/DeckSystem';
 import type { EnergySystem } from '../../systems/EnergySystem';
-import type { PhaseAOrchestrator } from '../../systems/PhaseAOrchestrator';
 import type { TowerSystem } from '../../systems/TowerSystem';
 import type { WaveSystem } from '../../systems/WaveSystem';
 
@@ -12,15 +12,15 @@ interface PlacementCoordinatorDeps {
 	towers: TowerSystem;
 	energy: EnergySystem;
 	deck: DeckSystem;
-	orchestrator: PhaseAOrchestrator | undefined;
+	orchestrator: CoreOrchestrator | undefined;
 	waves: WaveSystem;
 	emit: Emit;
 	onBeforeSuccessEmit?: () => void;
 	onSuccess?: () => void;
-	onPhaseAFastPath?: () => void;
+	onFastPath?: () => void;
 }
 
-// 결정/이벤트 순서는 PhaseASummonFlow.test.ts가 고정한다. 변경 시 동반 수정 필요.
+// 결정/이벤트 순서는 CoreSummonFlow.test.ts가 고정한다. 변경 시 동반 수정 필요.
 export class PlacementCoordinator {
 	constructor(private readonly deps: PlacementCoordinatorDeps) {}
 
@@ -34,13 +34,13 @@ export class PlacementCoordinator {
 			emit,
 			onBeforeSuccessEmit,
 			onSuccess,
-			onPhaseAFastPath,
+			onFastPath,
 		} = this.deps;
 
-		// Phase A 소환은 orchestrator가 에너지·배치를 전담한다. tower-placed 미발행.
+		// 정식 모드 소환은 orchestrator가 에너지·배치를 전담한다. tower-placed 미발행.
 		if (orchestrator?.hasPendingSummon()) {
 			orchestrator.completePlacement(col, row);
-			onPhaseAFastPath?.();
+			onFastPath?.();
 			return;
 		}
 

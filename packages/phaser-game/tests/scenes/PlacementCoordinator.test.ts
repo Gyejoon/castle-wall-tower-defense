@@ -1,7 +1,7 @@
 import type { PlacementFailureReason, WavePhase } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Hoisted routing EventBus mock — mirrors tests/PhaseAOrchestrator.test.ts.
+// Hoisted routing EventBus mock — mirrors tests/CoreOrchestrator.test.ts.
 // emit() actually dispatches to registered handlers so observers can record
 // what PlacementCoordinator emits.
 const { EventBus, getEmits, resetBus } = vi.hoisted(() => {
@@ -90,7 +90,7 @@ function buildCoordinator(
 		waves?: ReturnType<typeof makeWaves>;
 		onSuccess?: ReturnType<typeof vi.fn>;
 		onBeforeSuccessEmit?: ReturnType<typeof vi.fn>;
-		onPhaseAFastPath?: ReturnType<typeof vi.fn>;
+		onFastPath?: ReturnType<typeof vi.fn>;
 	} = {},
 ) {
 	const towers = overrides.towers ?? makeTowers();
@@ -100,7 +100,7 @@ function buildCoordinator(
 	const waves = overrides.waves ?? makeWaves();
 	const onSuccess = overrides.onSuccess ?? vi.fn();
 	const onBeforeSuccessEmit = overrides.onBeforeSuccessEmit ?? vi.fn();
-	const onPhaseAFastPath = overrides.onPhaseAFastPath ?? vi.fn();
+	const onFastPath = overrides.onFastPath ?? vi.fn();
 	const coord = new PlacementCoordinator({
 		towers: towers as never,
 		energy: energy as never,
@@ -110,7 +110,7 @@ function buildCoordinator(
 		emit: EventBus.emit.bind(EventBus),
 		onBeforeSuccessEmit,
 		onSuccess,
-		onPhaseAFastPath,
+		onFastPath,
 	});
 	return {
 		coord,
@@ -121,7 +121,7 @@ function buildCoordinator(
 		waves,
 		onSuccess,
 		onBeforeSuccessEmit,
-		onPhaseAFastPath,
+		onFastPath,
 	};
 }
 
@@ -148,13 +148,13 @@ describe('PlacementCoordinator', () => {
 			expect(events).not.toContain('player-tower-count');
 		});
 
-		it('invokes onPhaseAFastPath for post-placement cleanup hooks', () => {
+		it('invokes onFastPath for post-placement cleanup hooks', () => {
 			const orchestrator = makeOrchestrator(true);
-			const { coord, onPhaseAFastPath } = buildCoordinator({ orchestrator });
+			const { coord, onFastPath } = buildCoordinator({ orchestrator });
 
 			coord.place(1, 2, 'archer');
 
-			expect(onPhaseAFastPath).toHaveBeenCalledTimes(1);
+			expect(onFastPath).toHaveBeenCalledTimes(1);
 		});
 
 		it('falls through to normal path when orchestrator.hasPendingSummon is false', () => {

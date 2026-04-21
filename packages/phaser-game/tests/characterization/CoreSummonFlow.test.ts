@@ -27,7 +27,7 @@ const { EventBus, resetBus } = vi.hoisted(() => {
 
 vi.mock('../../src/EventBus', () => ({ EventBus }));
 
-import { PhaseAOrchestrator } from '../../src/systems/PhaseAOrchestrator';
+import { CoreOrchestrator } from '../../src/systems/CoreOrchestrator';
 
 interface FakeTower {
 	col: number;
@@ -47,8 +47,8 @@ function makeFakeTowerSystem() {
 	let nextId = 0;
 	return {
 		towers,
-		playPhaseASummonVfx: vi.fn(),
-		playPhaseAMergeVfx: vi.fn(),
+		playSummonVfx: vi.fn(),
+		playMergeVfx: vi.fn(),
 		playMergeRevealVfx: vi.fn(),
 		placeTower: vi.fn((col: number, row: number, defId: string) => {
 			const meta = TEST_FAMILY[defId] ?? { family: 'archer', tier: 1 };
@@ -74,10 +74,10 @@ beforeEach(() => {
 });
 
 // summon → placement 사이의 ordering/상태 계약을 고정. completePlacement 이름/단계 변경 시 감지된다.
-describe('PhaseA summon → placement ordering (characterization)', () => {
+describe('Core summon → placement ordering (characterization)', () => {
 	it('hasPendingSummon flips true on draw and false exactly at completePlacement', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -103,7 +103,7 @@ describe('PhaseA summon → placement ordering (characterization)', () => {
 	it('completePlacement without a pending summon is a no-op (does not call placeTower)', () => {
 		// 호출자의 가드가 빠져도 orchestrator 자체는 silent no-op으로 안전해야 한다.
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -119,7 +119,7 @@ describe('PhaseA summon → placement ordering (characterization)', () => {
 
 	it('cancelPendingSummon — not completePlacement — is the only way to clear without placing', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,

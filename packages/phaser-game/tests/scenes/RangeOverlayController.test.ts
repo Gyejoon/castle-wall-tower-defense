@@ -60,8 +60,8 @@ function buildGridManager() {
 
 function buildMap(): MapLayout {
 	return {
-		id: 'phase_a_long',
-		name: 'Phase A Long',
+		id: 'main_long',
+		name: 'Main Long',
 		width: 3,
 		height: 3,
 		tileSize: 48,

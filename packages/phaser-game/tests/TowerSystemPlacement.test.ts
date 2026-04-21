@@ -1,4 +1,4 @@
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -85,10 +85,10 @@ function createScene() {
 
 function createTowerSystem() {
 	const scene = createScene();
-	const gridManager = new GridManager(PHASE_A_LONG_MAP);
+	const gridManager = new GridManager(MAIN_LONG_MAP);
 	const pathfinding = {
 		invalidateCache: vi.fn(),
-		findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+		findPath: vi.fn(() => MAIN_LONG_MAP.path),
 	};
 	const towerSystem = new TowerSystem(
 		scene as never,
@@ -102,7 +102,7 @@ function createTowerSystem() {
 describe('TowerSystem placement contract', () => {
 	it('rejects placement on a path tile', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const pathPoint = PHASE_A_LONG_MAP.path[1];
+		const pathPoint = MAIN_LONG_MAP.path[1];
 
 		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'archer')).toEqual({
 			success: false,
@@ -126,7 +126,7 @@ describe('TowerSystem placement contract', () => {
 
 	it('allows placement on a valid buildable tile', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildablePoint = MAIN_LONG_MAP.buildablePoints[0];
 
 		const result = towerSystem.placeTower(
 			buildablePoint.x,
@@ -142,7 +142,7 @@ describe('TowerSystem placement contract', () => {
 
 	it('sellTower returns 50% refund and frees tile', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildablePoint = MAIN_LONG_MAP.buildablePoints[0];
 
 		towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer');
 		const result = towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
@@ -177,7 +177,7 @@ describe('TowerSystem Phase 9 global modifiers (meta atk%)', () => {
 	}> {
 		// emp tower: beam style (no projectileSpeed), damage=8,
 		// slow_30% special → immediate damage events on update().
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildable = MAIN_LONG_MAP.buildablePoints[0];
 		system.placeTower(buildable.x, buildable.y, 'emp');
 
 		const towerWorld = grid.gridToWorld(buildable.x, buildable.y);
@@ -238,10 +238,10 @@ describe('TowerSystem Phase 9 global modifiers (meta atk%)', () => {
 	});
 });
 
-describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => {
+describe('TowerSystem 정식 모드 merge support (merge stubbed)', () => {
 	it('placeTower uses the tower def tier', () => {
 		const { towerSystem } = createTowerSystem();
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		expect(towerSystem.getTowerLocator(p.x, p.y)?.tier).toBe(1);
 	});
@@ -253,7 +253,7 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('getTowerLocator returns instanceId/towerId/family/tier/x/y for placed tower', () => {
 		const { towerSystem } = createTowerSystem();
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const locator = towerSystem.getTowerLocator(p.x, p.y);
 		expect(locator).toMatchObject({
@@ -268,20 +268,20 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 
 	it('removeTowerAt clears a placed tower without refund', () => {
 		const { towerSystem, gridManager } = createTowerSystem();
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		expect(towerSystem.removeTowerAt(p.x, p.y)).toBe(true);
 		expect(towerSystem.getTowerLocator(p.x, p.y)).toBeNull();
 		expect(gridManager.getTile(p.x, p.y)?.occupied).toBe(false);
 	});
 
-	it('playPhaseASummonVfx adds a scale-punch tween on the tower sprite', () => {
+	it('playSummonVfx adds a scale-punch tween on the tower sprite', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const tweenAddCallsBefore = scene.tweens.add.mock.calls.length;
 
-		towerSystem.playPhaseASummonVfx(p.x, p.y);
+		towerSystem.playSummonVfx(p.x, p.y);
 
 		const tweenAddCallsAfter = scene.tweens.add.mock.calls.length;
 		expect(tweenAddCallsAfter).toBeGreaterThan(tweenAddCallsBefore);
@@ -291,20 +291,20 @@ describe('TowerSystem Phase A merge support (Phase 1 — merge stubbed)', () => 
 		expect(lastCall.duration).toBeLessThanOrEqual(200);
 	});
 
-	it('playPhaseASummonVfx is a no-op on empty tile', () => {
+	it('playSummonVfx is a no-op on empty tile', () => {
 		const { scene, towerSystem } = createTowerSystem();
 		const before = scene.tweens.add.mock.calls.length;
-		expect(() => towerSystem.playPhaseASummonVfx(99, 99)).not.toThrow();
+		expect(() => towerSystem.playSummonVfx(99, 99)).not.toThrow();
 		expect(scene.tweens.add.mock.calls.length).toBe(before);
 	});
 
-	it('playPhaseAMergeVfx adds scale punch + gold tint on the kept tower', () => {
+	it('playMergeVfx adds scale punch + gold tint on the kept tower', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const p = PHASE_A_LONG_MAP.buildablePoints[0];
+		const p = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(p.x, p.y, 'archer');
 		const before = scene.tweens.add.mock.calls.length;
 
-		towerSystem.playPhaseAMergeVfx(p.x, p.y);
+		towerSystem.playMergeVfx(p.x, p.y);
 
 		// Two tweens added: scale punch + tint cleanup counter
 		expect(scene.tweens.add.mock.calls.length).toBe(before + 2);

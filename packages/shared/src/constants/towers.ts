@@ -3,7 +3,7 @@ import type { TowerDef, TowerFamily, TowerId } from '../types/tower';
 /**
  * Tier → cost scale used by the new family/tier model. T1 entries are the
  * ones that appear in the random summon pool (cost=20 matches
- * PHASE_A_SUMMON_COST); T2+ are reached via merging, so their "cost" is
+ * SUMMON_COST); T2+ are reached via merging, so their "cost" is
  * informational (sale refund scaling).
  */
 const TIER_COST: Record<number, number> = {

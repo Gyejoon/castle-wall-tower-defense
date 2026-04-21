@@ -18,11 +18,11 @@ type _HasRequestUpgradeReroll = Expect<HasKey<'request-upgrade-reroll'>>;
 type _HasRequestContinueRun = Expect<HasKey<'request-continue-run'>>;
 type _HasEnterMergeMode = Expect<HasKey<'enter-merge-mode'>>;
 type _HasUpgradeChoiceReady = Expect<HasKey<'upgrade-choice-ready'>>;
-type _HasPhaseASummonReady = Expect<HasKey<'phase-a-summon-ready'>>;
+type _HasSummonReady = Expect<HasKey<'summon-ready'>>;
 
 // Payload-shape assertions — these force the compiler to validate the
 // new fields introduced in Task 4.0 (phase on wave-completed, tier on
-// tower-summoned, source on phase-a-summon-ready, etc.).
+// tower-summoned, source on summon-ready, etc.).
 const _gachaReq: GameEventMap['request-gacha-summon'] = { targetTier: 2 };
 const _gachaFail: GameEventMap['gacha-insufficient-energy'] = {
 	targetTier: 3,
@@ -33,7 +33,7 @@ const _continueRun: GameEventMap['request-continue-run'] = {
 	livesRestored: 5,
 };
 const _enterMerge: GameEventMap['enter-merge-mode'] = { sourceId: 'tower_1' };
-const _summonReady: GameEventMap['phase-a-summon-ready'] = {
+const _summonReady: GameEventMap['summon-ready'] = {
 	towerId: 'archer',
 	source: 'gacha',
 };
@@ -70,7 +70,7 @@ describe('EventBus type contract', () => {
 		void (0 as _HasRequestContinueRun | 0);
 		void (0 as _HasEnterMergeMode | 0);
 		void (0 as _HasUpgradeChoiceReady | 0);
-		void (0 as _HasPhaseASummonReady | 0);
+		void (0 as _HasSummonReady | 0);
 		void (undefined as _RerollPayload);
 		expect(true).toBe(true);
 	});

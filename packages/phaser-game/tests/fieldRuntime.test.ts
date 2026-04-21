@@ -1,4 +1,4 @@
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import {
 	TINY_SWORDS_DECORATION_ASSETS,
@@ -148,7 +148,7 @@ function createText() {
 }
 
 describe('GameScene field runtime', () => {
-	it('loads the Phase A endless wave set on scene create', async () => {
+	it('loads the endless wave set on scene create', async () => {
 		waveSystemCtorSpy.mockClear();
 		const addSprite = vi.fn(() => createImage());
 		const addGraphics = vi.fn(() => createGraphics());
@@ -233,7 +233,7 @@ describe('GameScene field runtime', () => {
 			kind: string;
 			groups: Array<{ unitId: string; count: number }>;
 		}>;
-		// Phase A endless set: 50 waves total, first wave is 30 scout_drone
+		// 정식 모드 endless set: 50 waves total, first wave is 30 scout_drone
 		expect(waveDefs).toHaveLength(50);
 		expect(waveDefs?.[0]?.slotIndex).toBe(1);
 		expect(waveDefs?.[0]?.groups).toEqual([
@@ -250,8 +250,8 @@ describe('GameScene field runtime', () => {
 			getObjectLayer: vi.fn(() => ({
 				objects: [
 					{
-						x: PHASE_A_LONG_MAP.tileSize * 4,
-						y: PHASE_A_LONG_MAP.tileSize * 1,
+						x: MAIN_LONG_MAP.tileSize * 4,
+						y: MAIN_LONG_MAP.tileSize * 1,
 						properties: [
 							{ name: 'kind', value: TINY_SWORDS_DECORATION_ASSETS[0].kind },
 							{ name: 'assetKey', value: TINY_SWORDS_DECORATION_ASSETS[0].key },

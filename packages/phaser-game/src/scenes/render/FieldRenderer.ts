@@ -23,7 +23,7 @@ interface MapTheme {
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
-	phase_a_long: {
+	main_long: {
 		groundTint: 0xc8b89a,
 		decorTint: 0xc8b89a,
 		pathColor: 0x7a6040,
@@ -32,7 +32,7 @@ const MAP_THEMES: Record<string, MapTheme> = {
 };
 
 function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.phase_a_long;
+	return MAP_THEMES[mapId] ?? MAP_THEMES.main_long;
 }
 
 type DecorationTile = {

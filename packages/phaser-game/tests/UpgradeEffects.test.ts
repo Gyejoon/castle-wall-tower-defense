@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Same EventBus routing harness as PhaseAOrchestrator.test.ts — emit()
+// Same EventBus routing harness as CoreOrchestrator.test.ts — emit()
 // actually fires handlers so we can observe event → side-effect loops.
 const { EventBus, resetBus } = vi.hoisted(() => {
 	const handlers = new Map<string, Set<(payload?: unknown) => void>>();
@@ -29,9 +29,9 @@ const { EventBus, resetBus } = vi.hoisted(() => {
 vi.mock('../src/EventBus', () => ({ EventBus }));
 
 import {
-	PhaseAOrchestrator,
+	CoreOrchestrator,
 	UPGRADE_MAX_STACKS,
-} from '../src/systems/PhaseAOrchestrator';
+} from '../src/systems/CoreOrchestrator';
 
 function makeFakeTowerSystem() {
 	return {
@@ -39,8 +39,8 @@ function makeFakeTowerSystem() {
 		getTowerLocator: vi.fn(() => null),
 		getTowerAt: vi.fn(() => null),
 		removeTowerAt: vi.fn(() => false),
-		playPhaseASummonVfx: vi.fn(),
-		playPhaseAMergeVfx: vi.fn(),
+		playSummonVfx: vi.fn(),
+		playMergeVfx: vi.fn(),
 	};
 }
 
@@ -64,7 +64,7 @@ function makeFakeEnergy() {
 
 function makeOrchestrator(energySystem?: ReturnType<typeof makeFakeEnergy>) {
 	const ts = makeFakeTowerSystem();
-	return new PhaseAOrchestrator({
+	return new CoreOrchestrator({
 		towerSystem: ts as never,
 		initialPool: ['archer'],
 		rng: () => 0,

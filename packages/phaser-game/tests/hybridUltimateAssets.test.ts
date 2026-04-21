@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -103,10 +103,10 @@ function createScene(textureExists: (key: string) => boolean = () => false) {
 
 function createTowerSystem(textureExists?: (key: string) => boolean) {
 	const scene = createScene(textureExists);
-	const gridManager = new GridManager(PHASE_A_LONG_MAP);
+	const gridManager = new GridManager(MAIN_LONG_MAP);
 	const pathfinding = {
 		invalidateCache: vi.fn(),
-		findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+		findPath: vi.fn(() => MAIN_LONG_MAP.path),
 	};
 	const towerSystem = new TowerSystem(
 		scene as never,
@@ -146,7 +146,7 @@ describe('Phase 11 — placement tolerates hybrid/ultimate towers without crashi
 	for (const towerId of ['hybrid_ab', 'hybrid_cd', 'ultimate'] as const) {
 		it(`placeTower(${towerId}) succeeds and triggers the aura tween`, () => {
 			const { towerSystem, scene } = createTowerSystem();
-			const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+			const buildable = MAIN_LONG_MAP.buildablePoints[0];
 
 			const result = towerSystem.placeTower(buildable.x, buildable.y, towerId);
 
@@ -161,7 +161,7 @@ describe('Phase 11 — placement tolerates hybrid/ultimate towers without crashi
 		// the placeholder ancestor `tower-arcane_spire` is present.
 		const exists = vi.fn((key: string) => key === 'tower-arcane_spire');
 		const { towerSystem, scene } = createTowerSystem(exists);
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[1];
+		const buildable = MAIN_LONG_MAP.buildablePoints[1];
 		const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const result = towerSystem.placeTower(

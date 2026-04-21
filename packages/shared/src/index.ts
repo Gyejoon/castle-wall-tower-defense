@@ -77,9 +77,9 @@ export {
 	getMapPaths,
 	getSpawnExitPairs,
 	isMapUnlocked,
+	MAIN_LONG_MAP,
+	MAIN_MAP_ID,
 	MAP_REGISTRY,
-	PHASE_A_LONG_MAP,
-	PHASE_A_MAP_ID,
 } from './constants/maps';
 export {
 	battleXp,
@@ -122,13 +122,12 @@ export {
 	getWavesForMap,
 	MAX_WAVE_DURATION_MS,
 } from './constants/waves';
-export { generatePhaseAWaves } from './data/phaseAWaves';
 export type { SummonPool, SummonResult } from './data/summonPool';
 export {
 	createSummonPool,
 	drawRandomSummon,
-	getPhaseARefund,
-	PHASE_A_SUMMON_COST,
+	getSummonRefund,
+	SUMMON_COST,
 } from './data/summonPool';
 export type {
 	UpgradeCard,
@@ -136,6 +135,7 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
+export { generateWaves } from './data/waves';
 export type {
 	CoreColor,
 	DurationKey,

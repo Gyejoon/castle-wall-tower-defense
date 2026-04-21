@@ -3,7 +3,7 @@ import {
 	familyUpgradeCost,
 	INGAME_GACHA,
 	MAX_FAMILY_UPGRADE_LEVEL,
-	PHASE_A_SUMMON_COST,
+	SUMMON_COST,
 	UPGRADEABLE_FAMILIES,
 	type UpgradeableFamily,
 } from '@gld/shared';
@@ -25,12 +25,12 @@ const FAMILY_LABEL: Record<UpgradeableFamily, string> = {
 	stun: '성전',
 };
 
-export function PhaseAHud() {
+export function GameHud() {
 	const pushToast = useGameStore((s) => s.pushToast);
 	const energy = useGameStore((s) => s.energy);
 	const wave = useGameStore((s) => s.wave);
 	const lives = useGameStore((s) => s.lives);
-	const summonCost = PHASE_A_SUMMON_COST;
+	const summonCost = SUMMON_COST;
 	const canAfford = energy >= summonCost;
 
 	const [paused, setPaused] = useState(false);
@@ -166,23 +166,23 @@ export function PhaseAHud() {
 	return (
 		<>
 			<div
-				data-testid="phase-a-hud"
+				data-testid="hud"
 				className="relative h-[158px] shrink-0"
 				style={{ background: 'var(--color-bg-95)' }}
 			>
 				{/* Info badges — quick-glance ⚡ energy / W wave / 🛡 lives */}
 				<div
-					data-testid="phase-a-info-badges"
+					data-testid="hud-info-badges"
 					className="absolute top-[8px] left-[8px] right-[8px] z-[1] flex items-center gap-2 pointer-events-none"
 				>
-					<InfoBadge testId="phase-a-badge-energy" icon="⚡" value={energy} />
-					<InfoBadge testId="phase-a-badge-wave" icon="W" value={wave} />
-					<InfoBadge testId="phase-a-badge-lives" icon="🛡" value={lives} />
+					<InfoBadge testId="hud-badge-energy" icon="⚡" value={energy} />
+					<InfoBadge testId="hud-badge-wave" icon="W" value={wave} />
+					<InfoBadge testId="hud-badge-lives" icon="🛡" value={lives} />
 				</div>
 
 				{/* Family upgrade row — energy-spend pills for archer/siege/frost/stun */}
 				<div
-					data-testid="phase-a-family-upgrade-row"
+					data-testid="hud-family-upgrade-row"
 					className="absolute top-[36px] left-0 right-0 flex gap-1 px-2"
 				>
 					{familyRows.map(({ family, level, atMax, cost, disabled }) => (
@@ -204,7 +204,7 @@ export function PhaseAHud() {
 
 				{/* Bottom fixed action bar: summon (primary) + T2/T3/T4 + menu */}
 				<div
-					data-testid="phase-a-action-bar"
+					data-testid="hud-action-bar"
 					className="absolute bottom-0 left-0 right-0 flex gap-1 px-2 border-t"
 					style={{
 						background: 'var(--color-bg-95)',
@@ -267,7 +267,7 @@ function FamilyUpgradeButton({
 	return (
 		<button
 			type="button"
-			data-testid={`phase-a-family-upgrade-${family}`}
+			data-testid={`hud-family-upgrade-${family}`}
 			onClick={onClick}
 			disabled={disabled}
 			aria-disabled={disabled}
@@ -337,7 +337,7 @@ function SummonButton({ disabled, cost, onClick }: SummonButtonProps) {
 	return (
 		<button
 			type="button"
-			data-testid="phase-a-summon-button"
+			data-testid="hud-summon-button"
 			onClick={onClick}
 			disabled={disabled}
 			aria-disabled={disabled}
@@ -377,7 +377,7 @@ function GachaButton({
 	return (
 		<button
 			type="button"
-			data-testid={`phase-a-gacha-t${tier}`}
+			data-testid={`hud-gacha-t${tier}`}
 			onClick={onClick}
 			disabled={disabled}
 			aria-disabled={disabled}
@@ -418,7 +418,7 @@ function MenuButton({ onClick }: MenuButtonProps) {
 	return (
 		<button
 			type="button"
-			data-testid="phase-a-menu-button"
+			data-testid="hud-menu-button"
 			onClick={onClick}
 			aria-label="메뉴"
 			className="w-[60px] h-[72px] border-2 flex items-center justify-center font-pixel text-[16px] active:scale-95 transition-transform"

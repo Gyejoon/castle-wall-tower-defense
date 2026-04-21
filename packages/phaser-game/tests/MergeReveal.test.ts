@@ -1,4 +1,4 @@
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -95,10 +95,10 @@ function createScene() {
 
 function createTowerSystem() {
 	const scene = createScene();
-	const gridManager = new GridManager(PHASE_A_LONG_MAP);
+	const gridManager = new GridManager(MAIN_LONG_MAP);
 	const pathfinding = {
 		invalidateCache: vi.fn(),
-		findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+		findPath: vi.fn(() => MAIN_LONG_MAP.path),
 	};
 	const towerSystem = new TowerSystem(
 		scene as never,
@@ -111,7 +111,7 @@ function createTowerSystem() {
 describe('Phase 11 Task 11.2 — playMergeRevealVfx', () => {
 	it('does nothing for sub-tier-5 merges', () => {
 		const { towerSystem, scene } = createTowerSystem();
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildable = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(buildable.x, buildable.y, 'archer');
 		// Reset call counts so we only see VFX-triggered calls below.
 		scene.flash.mockClear();
@@ -125,7 +125,7 @@ describe('Phase 11 Task 11.2 — playMergeRevealVfx', () => {
 
 	it('on tier-5 merge: flashes camera, scale-punches sprite, adds expanding ring', () => {
 		const { towerSystem, scene } = createTowerSystem();
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildable = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(buildable.x, buildable.y, 'archer');
 		scene.flash.mockClear();
 		const ringGraphicsBefore = scene.add.graphics.mock.calls.length;
@@ -163,7 +163,7 @@ describe('Phase 11 Task 11.2 — playMergeRevealVfx', () => {
 
 	it('on tier-6 merge: adds two concentric rings (tier-6 emphasis)', () => {
 		const { towerSystem, scene } = createTowerSystem();
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildable = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(buildable.x, buildable.y, 'archer');
 		const graphicsCallsBefore = scene.add.graphics.mock.calls.length;
 
@@ -183,7 +183,7 @@ describe('Phase 11 Task 11.2 — playMergeRevealVfx', () => {
 
 	it('tolerates a scene with no cameras.main (test stub)', () => {
 		const { towerSystem, scene } = createTowerSystem();
-		const buildable = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildable = MAIN_LONG_MAP.buildablePoints[0];
 		towerSystem.placeTower(buildable.x, buildable.y, 'archer');
 		// Strip camera plugin entirely.
 		(scene as unknown as { cameras?: unknown }).cameras = undefined;

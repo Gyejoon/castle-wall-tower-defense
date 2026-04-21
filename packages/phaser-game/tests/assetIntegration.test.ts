@@ -86,7 +86,7 @@ describe('asset integration', () => {
 
 	// Phase 7: the forest-gate tilemap JSON integrity test was scenario-
 	// specific (asserts width/height/path counts from FOREST_GATE_MAP).
-	// Phase A uses an on-the-fly generated grid with no Tiled JSON source,
+	// 정식 모드 uses an on-the-fly generated grid with no Tiled JSON source,
 	// so the check no longer applies. Commit 7.4 adds obstacle placement
-	// tests that cover the Phase A spatial contract.
+	// tests that cover the 정식 모드 spatial contract.
 });

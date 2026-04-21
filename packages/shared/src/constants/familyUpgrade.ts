@@ -12,7 +12,7 @@ import type { TowerFamily } from '../types/tower';
 /** Four base families the upgrade UI exposes. Hybrid/ultimate damage
  *  inherits from their feeder pair: `hybrid_ab` sums archer+siege levels,
  *  `hybrid_cd` sums frost+stun levels, and `ultimate` sums all four — see
- *  `PhaseAOrchestrator.getFamilyDamageMultiplier` for the dispatch. */
+ *  `CoreOrchestrator.getFamilyDamageMultiplier` for the dispatch. */
 export const UPGRADEABLE_FAMILIES = [
 	'archer',
 	'siege',

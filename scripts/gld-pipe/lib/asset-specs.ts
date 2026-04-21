@@ -1,3 +1,12 @@
+/**
+ * Asset specs for the forge pipeline. Each entry declares how to polish a
+ * canvas-generated PNG: what palette to enforce, rim/shadow strengths, noise
+ * params, and (for sheets) frame dimensions for centroid-drift auditing.
+ *
+ * 정식 모드 MVP scope: archer tower (all 4 grades) × (static, fire sheet).
+ * Other assets default to `polish: canvas-only` and skip the forge chain.
+ */
+
 export type AssetPolishLevel = 'canvas-only' | 'libresprite-polished';
 
 export interface PolishParams {

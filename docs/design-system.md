@@ -147,7 +147,7 @@ const style = makeTextStyle('h1', 'gold', { stroke: '#000', strokeThickness: 2 }
 | CurrencyIcon 토큰화 | Phase 2 완료 |
 | Phaser `ui/drawPanel`, `drawBadge`, `textStyles` | Phase 2 완료 |
 | 로비 (HomeTab/ProfileBar/CollectionTab/BottomTabBar) | Phase 3-A 미진행 |
-| 게임 HUD (TopHud/PhaseAHud) | Phase 3-B 미진행 |
+| 게임 HUD (TopHud/GameHud) | Phase 3-B 미진행 |
 | 오버레이 (TowerActionSheet/Upgrade/Summon/Pause/GameOver) | Phase 3-C 진행 중 |
 | Phaser in-canvas HUD (data indicator, wave warning) | Phase 3-D 미진행 |
 | 절차적 에셋 5-tone 셰이딩 | Phase 3-E (유저 요청 시만) |

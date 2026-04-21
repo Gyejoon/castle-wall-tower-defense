@@ -7,7 +7,7 @@ import {
 	TOWER_DEFS,
 } from '../src/constants/towers';
 
-describe('TOWER_DEFS — Phase A family/tier layout', () => {
+describe('TOWER_DEFS — family/tier layout', () => {
 	it('has exactly 19 towers', () => {
 		expect(TOWER_DEFS).toHaveLength(19);
 	});

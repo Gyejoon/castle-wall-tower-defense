@@ -2117,9 +2117,9 @@
       "section": "preload"
     },
     {
-      "key": "tilemap-phase-a-long",
+      "key": "tilemap-main-long",
       "type": "tilemapTiledJSON",
-      "path": "assets/maps/phase-a-long.json",
+      "path": "assets/maps/main-long.json",
       "section": "preload"
     },
     {

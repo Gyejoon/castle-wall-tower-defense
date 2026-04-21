@@ -1,11 +1,9 @@
 import type { WaveDef, WaveGroup } from '../constants/waves';
 
 /**
- * Phase A boss lineup — each boss wave is distinct so the player sees a
- * new silhouette every 10 waves. Base HP is the unit def's raw hp; the
- * per-slot `hpMultiplier` stacks on top of WAVE_SCALING to make each boss
- * a clear step up over the previous fight (the raw bases alone can't
- * carry that because some late-slot reuses happen).
+ * 정식 모드 보스 라인업 — 10 wave마다 새로운 실루엣을 보이도록 5종을 배치.
+ * 각 슬롯의 `hpMultiplier`는 WAVE_SCALING 위에 누적되어, 원시 base HP만으로는
+ * 만들 수 없는 보스 간 체감 격차를 보장한다.
  *
  *   Wave 10: orc_warlord        base 2000  → intro boss
  *   Wave 20: forge_master       base 5000  → fire tower-disable pressure
@@ -24,7 +22,7 @@ interface BossSlot {
 	readonly escorts?: readonly { unitId: WaveGroup['unitId']; count: number }[];
 }
 
-const PHASE_A_BOSS_SLOTS: Record<number, BossSlot> = {
+const BOSS_SLOTS: Record<number, BossSlot> = {
 	10: {
 		unitId: 'orc_warlord',
 		escorts: [{ unitId: 'battle_robot', count: 4 }],
@@ -52,24 +50,26 @@ const PHASE_A_BOSS_SLOTS: Record<number, BossSlot> = {
 };
 
 /**
- * Phase A endless wave generator. Boss every 10 waves (five distinct
- * bosses; see `PHASE_A_BOSS_SLOTS`). Normal waves grow composition
- * complexity with slot index: scout_drone only through slot 4, battle_robot
- * from slot 5, heavy_walker from slot 10, stealth_drone from slot 20.
+ * 정식 모드 무한 Wave 생성기. 10 wave마다 보스(고유 5종; `BOSS_SLOTS` 참조).
+ * 일반 wave는 슬롯 인덱스에 따라 구성이 다양해진다: scout_drone은 슬롯 4까지,
+ * battle_robot은 슬롯 5부터, heavy_walker는 슬롯 10부터, stealth_drone은
+ * 슬롯 20부터 등장.
  *
- * Called once at module load with count=50. `getWaveScaling`'s linear
- * HP ramp past slot 10 combined with per-boss `hpMultiplier` overrides
- * ensures that each boss slot is a clear escalation over the previous.
+ * 모듈 로드 시점에 count=50으로 한 번 호출된다. 슬롯 10 이후 `getWaveScaling`
+ * 의 선형 HP 램프와 보스별 `hpMultiplier`가 합쳐져 보스마다 직전 대비 명확한
+ * 상승이 보장된다.
  */
-export function generatePhaseAWaves(count: number): WaveDef[] {
+export function generateWaves(count: number): WaveDef[] {
 	const UNITS_PER_WAVE = 30;
 	const waves: WaveDef[] = [];
 	for (let i = 1; i <= count; i++) {
 		const isBoss = i % 10 === 0;
 		if (isBoss) {
-			const slot = PHASE_A_BOSS_SLOTS[i];
+			const slot = BOSS_SLOTS[i];
 			if (!slot) {
-				throw new Error(`phaseAWaves: missing boss slot config for wave ${i}`);
+				throw new Error(
+					`generateWaves: missing boss slot config for wave ${i}`,
+				);
 			}
 			const groups: WaveGroup[] = [
 				{

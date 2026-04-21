@@ -1,6 +1,6 @@
 import type { BossBehavior } from '../../systems/boss-ai/types';
+import type { CoreOrchestrator } from '../../systems/CoreOrchestrator';
 import type { DamageNumberSystem } from '../../systems/DamageNumberSystem';
-import type { PhaseAOrchestrator } from '../../systems/PhaseAOrchestrator';
 import type { TowerSystem } from '../../systems/TowerSystem';
 import type { UnitSystem } from '../../systems/UnitSystem';
 
@@ -20,8 +20,8 @@ interface CombatMediatorDeps {
 	damageNumbers: Pick<DamageNumberSystem, 'show' | 'showMiss'>;
 	// 소유는 Game.ts. 여기서는 CC 면역 조회만 한다.
 	bossBehaviors: ReadonlyMap<string, BossBehavior>;
-	orchestrator: PhaseAOrchestrator | undefined;
-	isPhaseAMap: boolean;
+	orchestrator: CoreOrchestrator | undefined;
+	isGameMap: boolean;
 }
 
 // CC 면역 분기는 BossCcImmunity.test.ts가 고정한다.
@@ -44,7 +44,7 @@ export class CombatMediator {
 		const damageEvents = towers.update(time, delta, unitPositions);
 
 		const effectAmp =
-			this.deps.isPhaseAMap && orchestrator
+			this.deps.isGameMap && orchestrator
 				? orchestrator.getEffectDurationMultiplier()
 				: 1;
 

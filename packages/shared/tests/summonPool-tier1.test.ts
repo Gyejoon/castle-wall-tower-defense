@@ -3,10 +3,10 @@ import { getTowerById } from '../src/constants/towers';
 import {
 	createSummonPool,
 	drawRandomSummon,
-	PHASE_A_SUMMON_COST,
+	SUMMON_COST,
 } from '../src/data/summonPool';
 
-describe('Phase A summon pool — tier 1 only', () => {
+describe('정식 모드 summon pool — tier 1 only', () => {
 	it('default pool has exactly the 4 base-family T1 ids', () => {
 		const pool = createSummonPool();
 		expect(new Set(pool.towerIds)).toEqual(
@@ -37,8 +37,8 @@ describe('Phase A summon pool — tier 1 only', () => {
 		expect(r).toEqual({ towerId: 'archer' });
 	});
 
-	it('PHASE_A_SUMMON_COST === 20 (matches T1 cost)', () => {
-		expect(PHASE_A_SUMMON_COST).toBe(20);
+	it('SUMMON_COST === 20 (matches T1 cost)', () => {
+		expect(SUMMON_COST).toBe(20);
 	});
 
 	it('empty pool throws', () => {

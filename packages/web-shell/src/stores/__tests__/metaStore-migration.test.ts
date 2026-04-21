@@ -35,7 +35,7 @@ describe('migrateV7toV8 (scenario-field drop)', () => {
 		const v7 = {
 			version: 7,
 			progress: {
-				highestWave: { w1_s1: 5, w2_s1: 10, phase_a_s1: 25 },
+				highestWave: { w1_s1: 5, w2_s1: 10, legacy_s1: 25 },
 				stagesCleared: ['w1_s1'],
 				totalBattles: 7,
 				tutorialCompleted: true,
@@ -144,7 +144,7 @@ describe('parseSave end-to-end — v7 save upgrades to current', () => {
 				},
 			],
 			progress: {
-				highestWave: { w1_s1: 5, phase_a_s1: 17 },
+				highestWave: { w1_s1: 5, legacy_s1: 17 },
 				stagesCleared: ['w1_s1'],
 				totalBattles: 7,
 				tutorialCompleted: true,

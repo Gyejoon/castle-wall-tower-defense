@@ -42,7 +42,7 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. (코드상 `PhaseAOrchestrator` / `PHASE_A_MAP_ID` 등 식별자는 이전 프로토타입 트랙명을 이어받은 historical identifier — 런타임 모드 구분이 아님.)
+Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. 코드 식별자는 `CoreOrchestrator` / `MAIN_MAP_ID` / `main_long` / `GameHud` 등 모드 중립 네이밍을 사용한다.
 
 **구현 완료 (정식 모드):**
 - **맵:** 9×18 세로 그리드, 중앙 레인 프리미엄 존 + 장애물 9개(tiny-swords 나무/바위/덤불). 50 wave endless.
@@ -146,8 +146,30 @@ lobby → building → running → victory | defeat → lobby
 | `RandomSummonSystem.ts` | SummonPool 기반 랜덤 소환 |
 | `MergeSystem.ts` | `MERGE_CHAIN`/`resolveMerge` 기반 합성 (family/tier) |
 | `GachaSystem.ts` | 인게임 가챠 (T2/T3/T4, `tier_odds_up` 스택) |
-| `PhaseAOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`). 클래스명은 이전 프로토타입 트랙 명칭에서 유지 (historical identifier) |
+| `CoreOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`) |
 | `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
+
+UnitSystem 서브매니저 (`packages/phaser-game/src/systems/units/`, Phase 3 분해):
+
+| 파일 | 역할 |
+|------|------|
+| `PathFollower.ts` | path index 진행 + world 좌표 보간 |
+| `CCStateManager.ts` | 슬로우/스턴/invulnerability 타이머 집계 |
+| `BossPhaseTracker.ts` | 보스 HP 구간 → phase 1/2 전이 + enrage 상태 관리 |
+
+Scene 서브패키지 (`packages/phaser-game/src/scenes/**`, Phase 4–6 분해):
+
+| 파일 | 역할 |
+|------|------|
+| `scenes/render/FieldRenderer.ts` | 타일/경로/장식 정적 렌더 |
+| `scenes/render/RangeOverlayController.ts` | 사거리/선택/배치 가능 오버레이 |
+| `scenes/input/InputController.ts` | 포인터 입력 → 타워 배치/선택/이동 모드 |
+| `scenes/input/PlacementCoordinator.ts` | 정식 모드 fast-path + 배치 가드 + 성공/실패 이벤트 |
+| `scenes/runtime/CombatMediator.ts` | 타워→유닛 데미지 디스패치, 보스 CC 면역 가드, 데미지 넘버, 킬 골드 |
+| `scenes/runtime/GameStateManager.ts` | playerHp / gameOver / goldEarned / speedMultiplier / scaledGameTime / currentWaveSlot + applyExits/endGame |
+| `scenes/runtime/BossContextBuilder.ts` | 보스 AI 틱당 `BossContext` 생성 |
+
+`Game.ts`는 scene 셋업, EventBus 구독/해제, 컨트롤러 오케스트레이션만 담당한다 (update() ~25줄).
 
 ## 커맨드
 

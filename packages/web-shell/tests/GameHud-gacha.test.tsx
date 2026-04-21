@@ -21,14 +21,14 @@ type EventBusHarness = {
 
 declare global {
 	// eslint-disable-next-line no-var
-	var __phaseAHudBusHarness__: EventBusHarness | undefined;
+	var __gameHudBusHarness__: EventBusHarness | undefined;
 }
 
 function getHarness(): EventBusHarness {
-	if (!globalThis.__phaseAHudBusHarness__) {
-		throw new Error('PhaseAHud test bus harness not initialized');
+	if (!globalThis.__gameHudBusHarness__) {
+		throw new Error('GameHud test bus harness not initialized');
 	}
-	return globalThis.__phaseAHudBusHarness__;
+	return globalThis.__gameHudBusHarness__;
 }
 
 // jsdom + React Testing Library bootstrap — mirrors GamePage.test.tsx.
@@ -53,7 +53,7 @@ vi.mock('@gld/phaser-game', () => {
 	const offSpy = vi.fn((event: string, handler: EventHandler) => {
 		listeners.get(event)?.delete(handler);
 	});
-	globalThis.__phaseAHudBusHarness__ = { listeners, emitSpy, offSpy };
+	globalThis.__gameHudBusHarness__ = { listeners, emitSpy, offSpy };
 	return {
 		EventBus: {
 			emit: emitSpy,
@@ -72,11 +72,11 @@ vi.mock('@gld/phaser-game', () => {
 	};
 });
 
-let PhaseAHud: typeof import('../src/components/game/PhaseAHud').PhaseAHud;
+let GameHud: typeof import('../src/components/game/GameHud').GameHud;
 
-describe('PhaseAHud gacha buttons', () => {
+describe('GameHud gacha buttons', () => {
 	beforeAll(async () => {
-		({ PhaseAHud } = await import('../src/components/game/PhaseAHud'));
+		({ GameHud } = await import('../src/components/game/GameHud'));
 	});
 
 	beforeEach(() => {
@@ -98,11 +98,11 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 200 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		expect(screen.getByTestId('phase-a-gacha-t2')).toBeDefined();
-		expect(screen.getByTestId('phase-a-gacha-t3')).toBeDefined();
-		expect(screen.getByTestId('phase-a-gacha-t4')).toBeDefined();
+		expect(screen.getByTestId('hud-gacha-t2')).toBeDefined();
+		expect(screen.getByTestId('hud-gacha-t3')).toBeDefined();
+		expect(screen.getByTestId('hud-gacha-t4')).toBeDefined();
 	});
 
 	it('clicking T2 gacha button emits request-gacha-summon with targetTier 2', () => {
@@ -110,9 +110,9 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 200 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		const btn = screen.getByTestId('phase-a-gacha-t2') as HTMLButtonElement;
+		const btn = screen.getByTestId('hud-gacha-t2') as HTMLButtonElement;
 		act(() => {
 			btn.click();
 		});
@@ -130,11 +130,11 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 30 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		const t2 = screen.getByTestId('phase-a-gacha-t2') as HTMLButtonElement;
-		const t3 = screen.getByTestId('phase-a-gacha-t3') as HTMLButtonElement;
-		const t4 = screen.getByTestId('phase-a-gacha-t4') as HTMLButtonElement;
+		const t2 = screen.getByTestId('hud-gacha-t2') as HTMLButtonElement;
+		const t3 = screen.getByTestId('hud-gacha-t3') as HTMLButtonElement;
+		const t4 = screen.getByTestId('hud-gacha-t4') as HTMLButtonElement;
 
 		// Cost table: T2 = 40, T3 = 80, T4 = 160. Energy 30 disables all.
 		expect(t2.disabled).toBe(true);
@@ -147,15 +147,11 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 80, wave: 7, lives: 15 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		expect(screen.getByTestId('phase-a-badge-energy').textContent).toContain(
-			'80',
-		);
-		expect(screen.getByTestId('phase-a-badge-wave').textContent).toContain('7');
-		expect(screen.getByTestId('phase-a-badge-lives').textContent).toContain(
-			'15',
-		);
+		expect(screen.getByTestId('hud-badge-energy').textContent).toContain('80');
+		expect(screen.getByTestId('hud-badge-wave').textContent).toContain('7');
+		expect(screen.getByTestId('hud-badge-lives').textContent).toContain('15');
 	});
 
 	it('[Phase 8] summon button emits request-summon-tower when affordable', () => {
@@ -163,11 +159,9 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 100 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		const btn = screen.getByTestId(
-			'phase-a-summon-button',
-		) as HTMLButtonElement;
+		const btn = screen.getByTestId('hud-summon-button') as HTMLButtonElement;
 		expect(btn.disabled).toBe(false);
 		act(() => {
 			btn.click();
@@ -185,11 +179,9 @@ describe('PhaseAHud gacha buttons', () => {
 			useGameStore.setState({ energy: 50 });
 		});
 
-		render(<PhaseAHud />);
+		render(<GameHud />);
 
-		const menuBtn = screen.getByTestId(
-			'phase-a-menu-button',
-		) as HTMLButtonElement;
+		const menuBtn = screen.getByTestId('hud-menu-button') as HTMLButtonElement;
 		act(() => {
 			menuBtn.click();
 		});

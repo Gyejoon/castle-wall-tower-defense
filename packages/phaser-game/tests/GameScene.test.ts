@@ -128,7 +128,7 @@ function installRuntimeControllers(
 		damageNumbers: scene.damageNumbers as never,
 		bossBehaviors: (opts.bossBehaviors ?? new Map()) as never,
 		orchestrator: undefined,
-		isPhaseAMap: false,
+		isGameMap: false,
 	});
 	scene.bossCtx = new BossContextBuilder({
 		units: scene.playerUnits as never,

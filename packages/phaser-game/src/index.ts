@@ -6,6 +6,10 @@ export { gameConfig } from './config';
 export type { GameEventMap } from './EventBus';
 export { EventBus } from './EventBus';
 export { getPlacementGuardFailure } from './placementRules';
+export {
+	CoreOrchestrator,
+	type CoreOrchestratorDeps,
+} from './systems/CoreOrchestrator';
 // Re-export systems for testing
 export { DeckSystem } from './systems/DeckSystem';
 export { GridManager } from './systems/GridManager';
@@ -16,10 +20,6 @@ export {
 	type TowerLocator,
 } from './systems/MergeSystem';
 export { findPath, PathfindingSystem } from './systems/PathfindingSystem';
-export {
-	PhaseAOrchestrator,
-	type PhaseAOrchestratorDeps,
-} from './systems/PhaseAOrchestrator';
 export { SummonPoolSystem } from './systems/SummonPoolSystem';
 export { WaveSystem } from './systems/WaveSystem';
 

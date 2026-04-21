@@ -17,14 +17,14 @@ export interface MapLayout {
 	unlockLevel?: number; // undefined = always unlocked
 	/** Recommended combat power for this map. */
 	recommendedPower: number;
-	/** Gold and XP reward multiplier. Phase A pivot keeps this at 1. */
+	/** Gold and XP reward multiplier. 정식 모드 pivot keeps this at 1. */
 	rewardMultiplier: number;
 	/** HP multiplier applied to all spawned units. Default 1. */
 	difficultyHpMult: number;
 	/**
 	 * Fixed obstacle tiles. Towers cannot be placed here and units cannot
-	 * path through. Added in Phase 7.2 for the Phase A redesign — optional so
-	 * pre-Phase-A test fixtures keep compiling.
+	 * path through. Added in Phase 7.2 for the 정식 모드 redesign — optional so
+	 * legacy test fixtures keep compiling.
 	 */
 	obstacles?: Position[];
 	/**
@@ -37,7 +37,7 @@ export interface MapLayout {
 	 * richness. Purely cosmetic — they do NOT affect pathfinding, placement,
 	 * or obstacle logic. Coordinates are grid units and may be fractional or
 	 * outside the playfield (decorations placed just off-grid read as
-	 * "background scenery"). Added in Phase A map-decoration-boost.
+	 * "background scenery"). Added in 정식 모드 map-decoration-boost.
 	 */
 	decorations?: Array<{
 		x: number;

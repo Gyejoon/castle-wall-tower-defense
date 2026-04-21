@@ -1,4 +1,4 @@
-import { generatePhaseAWaves } from '../data/phaseAWaves';
+import { generateWaves } from '../data/waves';
 import type { UnitType } from '../types/unit';
 
 export interface WaveGroup {
@@ -62,18 +62,18 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
 }
 
 /**
- * Phase A endless wave set. Generated once at module load with 50 waves;
- * `getWaveScaling` takes over beyond slot 10 to keep scaling the HP ramp.
+ * 정식 모드 무한 Wave 세트. 모듈 로드 시 50 wave로 한 번 생성되고,
+ * 슬롯 10 이후는 getWaveScaling의 선형 HP 램프가 이어받는다.
  */
-const PHASE_A_WAVES: WaveDef[] = generatePhaseAWaves(50);
+const WAVES: WaveDef[] = generateWaves(50);
 
 export function getWavesForMap(_mapId: string): WaveDef[] {
-	return PHASE_A_WAVES;
+	return WAVES;
 }
 
 export function getTotalWavesForMap(mapId: string): number {
 	return getWavesForMap(mapId).length;
 }
 
-/** Back-compat shim — Phase A is the only wave set. */
+/** Back-compat shim — 정식 모드가 유일한 wave set. */
 export const MAX_WAVE_DURATION_MS = 30_000;

@@ -90,8 +90,8 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.fieldRenderer = { destroy: vi.fn() };
+		scene.rangeOverlay = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -151,16 +151,18 @@ describe('GameScene', () => {
 		};
 		scene.playerUnits = { setPaths: vi.fn() };
 		scene.currentMap = { paths: [[{ x: 0, y: 0 }]] };
-		scene.renderPath = vi.fn();
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.clearRangeOverlay = vi.fn();
+		scene.fieldRenderer = { refreshPath: vi.fn() };
+		scene.rangeOverlay = {
+			clearSelection: vi.fn(),
+			clearRangeOverlay: vi.fn(),
+		};
 		scene.selectedTowerId = 'archer';
 
 		scene.handlePlaceTower(1, 2, 'archer');
 
 		expect(scene.selectedTowerId).toBeNull();
-		expect(scene.selectionGraphics.clear).toHaveBeenCalledOnce();
-		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
+		expect(scene.rangeOverlay.clearSelection).toHaveBeenCalledOnce();
+		expect(scene.rangeOverlay.clearRangeOverlay).toHaveBeenCalledOnce();
 		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
 	});
 
@@ -168,7 +170,9 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
 		scene.currentSlotDef = { slotIndex: 20 };
 		scene.currentMap = { id: 'forest_gate' };
 		scene.damageNumbers = {
@@ -221,7 +225,9 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
 		scene.currentSlotDef = { slotIndex: 5 };
 		scene.currentMap = { id: 'forest_gate' };
 		scene.playerHp = 1; // one more hit defeats
@@ -345,8 +351,8 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.fieldRenderer = { destroy: vi.fn() };
+		scene.rangeOverlay = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

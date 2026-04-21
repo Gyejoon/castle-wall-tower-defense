@@ -7,7 +7,6 @@ import {
 	ENERGY_PER_WAVE_CLEAR,
 	FAST_CLEAR_THRESHOLD_MS,
 	generatePhaseAWaves,
-	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
@@ -31,38 +30,6 @@ import {
 } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
-import {
-	DIRT_SEAMLESS_KEY,
-	GRASS_PLATFORM_FRAMES,
-	PLATFORM_LIFT,
-	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_PRIMARY_TILESET,
-	type TinySwordsDecorationKind,
-} from '../fieldAssets';
-
-/** Per-map theme palette for ground tiles, path overlay, and decorations */
-interface MapTheme {
-	groundTint: number;
-	decorTint: number;
-	pathColor: number;
-	pathLineColor: number;
-}
-
-const MAP_THEMES: Record<string, MapTheme> = {
-	// Phase 7.5: warm sandstone palette tuned for the 9×18 Phase A board.
-	// Path/grid lines run at very low alpha so towers and obstacles stay
-	// the visual focus instead of tile chrome.
-	phase_a_long: {
-		groundTint: 0xc8b89a,
-		decorTint: 0xc8b89a,
-		pathColor: 0x7a6040,
-		pathLineColor: 0xb8956a,
-	},
-};
-
-function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.phase_a_long;
-}
 
 import { getPlacementGuardFailure } from '../placementRules';
 import { createBossBehavior } from '../systems/boss-ai/registry';
@@ -83,6 +50,8 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { FieldRenderer } from './render/FieldRenderer';
+import { RangeOverlayController } from './render/RangeOverlayController';
 
 // Phase A summon pool (Task 1.4 spec): tier-1 only, one per base family
 // (archer, siege, frost, stun). Higher tiers are reached through merge and
@@ -122,10 +91,8 @@ export class GameScene extends Phaser.Scene {
 	private lastTimerTickSec = -1;
 	private currentSlotDef!: WaveDef;
 
-	private hoverGraphics!: Phaser.GameObjects.Graphics;
-	private selectionGraphics!: Phaser.GameObjects.Graphics;
-	private rangeOverlayGraphics!: Phaser.GameObjects.Graphics;
-	private pathGraphics?: Phaser.GameObjects.Graphics;
+	private fieldRenderer!: FieldRenderer;
+	private rangeOverlay!: RangeOverlayController;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
@@ -169,13 +136,6 @@ export class GameScene extends Phaser.Scene {
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
-	private decorationTiles: Array<{
-		x: number;
-		y: number;
-		assetKey: string;
-		kind: TinySwordsDecorationKind;
-		variant: string;
-	}> | null = null;
 	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
@@ -289,10 +249,10 @@ export class GameScene extends Phaser.Scene {
 			this.onPhaseASummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
 				this.selectedTowerId = data.towerId;
-				this.showBuildableZone();
-				this.clearRangeOverlay();
+				this.rangeOverlay.showBuildableZone(this.selectedTowerId);
+				this.rangeOverlay.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
-				this.renderPlaceableHighlights();
+				this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
 			};
 			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
 			this.playerTowers.setModifierFn((id) =>
@@ -308,20 +268,19 @@ export class GameScene extends Phaser.Scene {
 		this.damageNumbers = new DamageNumberSystem(this);
 		this.events.on('shutdown', this.cleanup, this);
 
-		this.cacheDecorationData();
-		this.renderField(this.playerGrid, false);
-
-		this.hoverGraphics = this.add.graphics();
-		this.selectionGraphics = this.add.graphics();
-		this.selectionGraphics.setDepth(15);
-		this.rangeOverlayGraphics = this.add.graphics();
-		this.rangeOverlayGraphics.setDepth(22);
-		this.rangeOverlayGraphics.setAlpha(0);
+		this.fieldRenderer = new FieldRenderer(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.rangeOverlay = new RangeOverlayController(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.fieldRenderer.renderAll();
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
-		this.renderPath(this.playerGrid);
-		this.renderObstacles();
-		this.renderAmbientDecorations();
 
 		this.castleWall = new CastleWallSystem(
 			this,
@@ -341,17 +300,17 @@ export class GameScene extends Phaser.Scene {
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
 			this.selectedTowerId = data.towerDefId;
-			this.showBuildableZone();
-			this.clearRangeOverlay();
+			this.rangeOverlay.showBuildableZone(this.selectedTowerId);
+			this.rangeOverlay.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
-			this.renderPlaceableHighlights();
+			this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
 		};
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
 			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
+			this.rangeOverlay.hideBuildableZone();
+			this.rangeOverlay.clearSelection();
+			this.rangeOverlay.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
 		};
 
@@ -424,7 +383,7 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('player-tower-count', {
 					count: this.playerTowers.getTowers().length,
 				});
-				this.clearRangeOverlay();
+				this.rangeOverlay.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 			}
 		};
@@ -433,10 +392,10 @@ export class GameScene extends Phaser.Scene {
 			if (!this.isSceneAlive()) return;
 			this.movePending = { fromCol, fromRow };
 			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
-			this.renderPlaceableHighlights();
+			this.rangeOverlay.hideBuildableZone();
+			this.rangeOverlay.clearSelection();
+			this.rangeOverlay.clearRangeOverlay();
+			this.rangeOverlay.renderPlaceableHighlights(this.selectedTowerId);
 		};
 
 		this.onMoveTower = ({ fromCol, fromRow, toCol, toRow }) => {
@@ -445,10 +404,10 @@ export class GameScene extends Phaser.Scene {
 			if (ok) {
 				EventBus.emit('tower-moved', { fromCol, fromRow, toCol, toRow });
 				EventBus.emit('tower-deselected');
-				this.clearRangeOverlay();
-				this.selectionGraphics.clear();
+				this.rangeOverlay.clearRangeOverlay();
+				this.rangeOverlay.clearSelection();
 				this.playerUnits.setPaths(getMapPaths(this.currentMap));
-				this.renderPath(this.playerGrid);
+				this.fieldRenderer.refreshPath();
 			} else {
 				EventBus.emit('move-failed', { reason: 'invalid-tile' });
 			}
@@ -535,337 +494,19 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.start();
 	}
 
-	private cacheDecorationData(): void {
-		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
-		const decorLayer = tilemap.getObjectLayer?.('decorations');
-		if (!decorLayer) {
-			this.decorationTiles = [];
-			return;
-		}
-
-		this.decorationTiles = decorLayer.objects
-			.map((object) => {
-				const properties = new Map(
-					(object.properties ?? []).map(
-						(property: { name: string; value: unknown }) => [
-							property.name,
-							property.value,
-						],
-					),
-				);
-				const assetKey = properties.get('assetKey');
-				const kind = properties.get('kind');
-				const variant = properties.get('variant');
-
-				if (
-					typeof assetKey !== 'string' ||
-					typeof kind !== 'string' ||
-					typeof variant !== 'string'
-				) {
-					return null;
-				}
-
-				const objectX = typeof object.x === 'number' ? object.x : 0;
-				const objectY = typeof object.y === 'number' ? object.y : 0;
-
-				return {
-					x: Math.round(objectX / this.currentMap.tileSize),
-					y: Math.round(objectY / this.currentMap.tileSize),
-					assetKey,
-					kind: kind as TinySwordsDecorationKind,
-					variant,
-				};
-			})
-			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-	}
-
-	private renderField(grid: GridManager, dark: boolean): void {
-		const theme = getMapTheme(this.currentMap.id);
-		const tile = grid.orthoTile;
-		const canvasW = this.scale.width;
-		const canvasH = this.scale.height;
-
-		// Layer 0: Dirt/sand base (low ground — monster path level)
-		if (typeof this.add.tileSprite === 'function') {
-			const dirtBg = this.add.tileSprite(
-				canvasW / 2,
-				canvasH / 2,
-				canvasW,
-				canvasH,
-				DIRT_SEAMLESS_KEY,
-			);
-			dirtBg.setDepth(0);
-			dirtBg.setScrollFactor(0);
-			if (dark) dirtBg.setTint(0x5c6585);
-		}
-
-		// Build path lookup — path cells are "low ground" (monster walkway).
-		const pathCells = getAllPathCells(this.currentMap);
-		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
-		const isLow = (x: number, y: number) =>
-			pathSet.has(`${x},${y}`) ||
-			x < 0 ||
-			x >= this.currentMap.width ||
-			y < 0 ||
-			y >= this.currentMap.height;
-
-		// Layer 2: Elevated grass platform tiles (tower placement level).
-		const lift = tile * PLATFORM_LIFT;
-		const extraTiles = 2;
-		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
-			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
-				if (isLow(x, y)) continue;
-
-				// NSEW bitmask: which neighbors are "low" (path / outside).
-				let bitmask = 0;
-				if (isLow(x, y - 1)) bitmask |= 1;
-				if (isLow(x + 1, y)) bitmask |= 2;
-				if (isLow(x, y + 1)) bitmask |= 4;
-				if (isLow(x - 1, y)) bitmask |= 8;
-
-				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
-				const world = grid.gridToWorld(x, y);
-
-				const spr = this.add.sprite(
-					world.x,
-					world.y - lift,
-					TINY_SWORDS_PRIMARY_TILESET.key,
-					frame,
-				);
-				spr.setDisplaySize(tile, tile);
-				spr.setOrigin(0.5, 0.5);
-				spr.setDepth(2);
-				if (dark) spr.setTint(0x6b7899);
-				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
-
-				// Cliff walls drawn as graphics layers (no stretched tileset frames).
-				const hasSouth = !!(bitmask & 4);
-				const hasEast = !!(bitmask & 2);
-				const hasWest = !!(bitmask & 8);
-
-				if (hasSouth || hasEast || hasWest) {
-					const cg = this.add.graphics();
-					cg.setDepth(1.5);
-					const baseX = world.x - tile / 2;
-					const baseY = world.y - lift + tile / 2;
-
-					if (hasSouth) {
-						const cliffH = tile * 0.6;
-						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
-						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
-						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
-						cg.fillRect(baseX, baseY, tile, 2);
-					}
-
-					if (hasEast) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
-					}
-
-					if (hasWest) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
-					}
-				}
-			}
-		}
-
-		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
-		if (!dark) {
-			const shadowGraphics = this.add.graphics();
-			shadowGraphics.setDepth(0.5);
-			for (const p of pathCells) {
-				if (!isLow(p.x, p.y - 1)) {
-					const w = grid.gridToWorld(p.x, p.y);
-					shadowGraphics.fillStyle(0x000000, 0.15);
-					shadowGraphics.fillRect(
-						w.x - tile / 2,
-						w.y - tile / 2,
-						tile,
-						tile * 0.4,
-					);
-				}
-			}
-		}
-
-		this.renderDecorations(grid, dark);
-	}
-
-	private buildableZoneGraphics?: Phaser.GameObjects.Graphics;
-
-	private showBuildableZone(): void {
-		if (!this.buildableZoneGraphics) {
-			this.buildableZoneGraphics = this.add.graphics();
-			this.buildableZoneGraphics.setDepth(3);
-		}
-		this.buildableZoneGraphics.clear();
-		if (!this.selectedTowerId) return;
-
-		const tile = this.playerGrid.orthoTile;
-		const lift = tile * PLATFORM_LIFT;
-		for (const point of this.currentMap.buildablePoints) {
-			if (!this.playerGrid.canPlaceTower(point.x, point.y)) continue;
-			const world = this.playerGrid.gridToWorld(point.x, point.y);
-			this.buildableZoneGraphics.fillStyle(0x44ff44, 0.15);
-			this.buildableZoneGraphics.fillRect(
-				world.x - tile / 2,
-				world.y - lift - tile / 2,
-				tile,
-				tile,
-			);
-			this.buildableZoneGraphics.lineStyle(1, 0x44ff44, 0.3);
-			this.buildableZoneGraphics.strokeRect(
-				world.x - tile / 2,
-				world.y - lift - tile / 2,
-				tile,
-				tile,
-			);
-		}
-	}
-
-	private hideBuildableZone(): void {
-		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
-	}
-
-	private renderDecorations(grid: GridManager, dark: boolean): void {
-		if (!this.decorationTiles) return;
-		const theme = getMapTheme(this.currentMap.id);
-
-		for (const { x, y, assetKey } of this.decorationTiles) {
-			const asset = TINY_SWORDS_DECORATION_BY_KEY[assetKey];
-			if (!asset) continue;
-
-			const world = grid.gridToWorld(x, y);
-			const sprite = this.add.sprite(world.x, world.y, assetKey, 0);
-			sprite.setDisplaySize(asset.renderWidth, asset.renderHeight);
-			sprite.setOrigin(0.5, asset.originY);
-			sprite.setDepth(3 + x + y + asset.depthOffset);
-			if (dark) {
-				sprite.setTint(0x66758f);
-			} else if (theme.decorTint !== 0xffffff) {
-				sprite.setTint(theme.decorTint);
-			}
-		}
-	}
-
-	private renderPath(grid: GridManager): void {
-		if (!this.pathGraphics) this.pathGraphics = this.add.graphics();
-		const graphics = this.pathGraphics;
-		graphics.clear();
-
-		const theme = getMapTheme(this.currentMap.id);
-		const lineColor = theme.pathLineColor;
-		const paths = getMapPaths(this.currentMap);
-
-		for (const path of paths) {
-			if (path.length < 2) continue;
-
-			// Phase 7.5: very low-alpha path stroke so the underlying tilemap
-			// reads clean — was 0.08 / 0.40 in scenario builds.
-			graphics.lineStyle(4, lineColor, 0.04);
-			graphics.beginPath();
-			const first = grid.gridToWorld(path[0].x, path[0].y);
-			graphics.moveTo(first.x, first.y);
-			for (let i = 1; i < path.length; i++) {
-				const pt = grid.gridToWorld(path[i].x, path[i].y);
-				graphics.lineTo(pt.x, pt.y);
-			}
-			graphics.strokePath();
-
-			graphics.fillStyle(lineColor, 0.25);
-			for (let i = 0; i < path.length - 1; i++) {
-				const a = grid.gridToWorld(path[i].x, path[i].y);
-				const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);
-				for (let s = 0; s < 4; s += 2) {
-					const t = s / 4;
-					graphics.fillCircle(
-						a.x + (b.x - a.x) * t,
-						a.y + (b.y - a.y) * t,
-						1.5,
-					);
-				}
-			}
-			const last = grid.gridToWorld(
-				path[path.length - 1].x,
-				path[path.length - 1].y,
-			);
-			graphics.fillCircle(last.x, last.y, 1.5);
-		}
-	}
-
-	/**
-	 * Render fixed map obstacles (trees / rocks / bushes) at their grid
-	 * positions. Obstacles are visual only — buildBuildablePoints already
-	 * excluded them from placement, and the unit pathPoints data does not
-	 * include them so units never try to walk through.
-	 *
-	 * Falls back silently when the optional `obstacles` field is missing.
-	 */
-	private renderObstacles(): void {
-		const obstacles = this.currentMap.obstacles;
-		if (!obstacles || obstacles.length === 0) return;
-		const ASSET_KEYS = [
-			'tiny-swords-tree-1',
-			'tiny-swords-rock-1',
-			'tiny-swords-bush-1',
-		] as const;
-		const tile = this.playerGrid.orthoTile;
-		const lift = tile * PLATFORM_LIFT;
-		obstacles.forEach((pos, i) => {
-			const key = ASSET_KEYS[i % ASSET_KEYS.length];
-			if (!this.textures.exists(key)) return;
-			const world = this.playerGrid.gridToWorld(pos.x, pos.y);
-			// Lift obstacles onto the elevated grass platform.
-			const sprite = this.add.sprite(world.x, world.y - lift, key, 0);
-			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
-			sprite.setOrigin(0.5, 0.7);
-			sprite.setDepth(3 + pos.x + pos.y);
-		});
-	}
-
-	/**
-	 * Render ambient decoration sprites (trees/bushes/rocks) from
-	 * `map.decorations`. Purely visual — zero pathfinding / placement impact.
-	 * Decorations are usually placed just off the playfield (fractional grid
-	 * coordinates like -1.2 / 9.3) so they read as background scenery.
-	 */
-	private renderAmbientDecorations(): void {
-		const decorations = this.currentMap.decorations;
-		if (!decorations || decorations.length === 0) return;
-		const tile = this.playerGrid.orthoTile;
-		// Ambient props stay on the low ground (no PLATFORM_LIFT) so they
-		// match the dirt base layer visually.
-		decorations.forEach((deco) => {
-			const variant = deco.variant ?? 1;
-			const key = `tiny-swords-${deco.kind}-${variant}`;
-			if (!this.textures.exists(key)) return;
-			const world = this.playerGrid.gridToWorld(deco.x, deco.y);
-			const sprite = this.add.sprite(world.x, world.y, key, 0);
-			const scale = deco.kind === 'tree' ? 1.1 : 0.85;
-			sprite.setDisplaySize(tile * scale, tile * scale);
-			sprite.setOrigin(0.5, 0.72);
-			sprite.setAlpha(0.85);
-			// Decorations never overlap gameplay cells, so a flat depth is fine.
-			sprite.setDepth(2.5);
-		});
-	}
-
 	private setupInput(): void {
+		const hoverGraphics = this.rangeOverlay.getHoverGraphics();
 		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
 			const gridPos = this.playerGrid.worldToGrid(
 				pointer.worldX,
 				pointer.worldY,
 			);
-			this.hoverGraphics.clear();
+			hoverGraphics.clear();
 
 			if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
 				const canPlace = this.playerGrid.canPlaceTower(gridPos.x, gridPos.y);
 				this.playerGrid.fillTileRect(
-					this.hoverGraphics,
+					hoverGraphics,
 					gridPos.x,
 					gridPos.y,
 					canPlace ? PHASER_COLORS.accent : PHASER_COLORS.danger,
@@ -886,7 +527,7 @@ export class GameScene extends Phaser.Scene {
 			if (this.movePending) {
 				const { fromCol, fromRow } = this.movePending;
 				this.movePending = null;
-				this.selectionGraphics.clear();
+				this.rangeOverlay.clearSelection();
 				const ok = this.playerTowers.moveTower(
 					fromCol,
 					fromRow,
@@ -901,9 +542,9 @@ export class GameScene extends Phaser.Scene {
 						toRow: gridPos.y,
 					});
 					EventBus.emit('tower-deselected');
-					this.clearRangeOverlay();
+					this.rangeOverlay.clearRangeOverlay();
 					this.playerUnits.setPaths(getMapPaths(this.currentMap));
-					this.renderPath(this.playerGrid);
+					this.fieldRenderer.refreshPath();
 				} else {
 					EventBus.emit('move-failed', { reason: 'invalid-tile' });
 				}
@@ -926,62 +567,16 @@ export class GameScene extends Phaser.Scene {
 					refund,
 					tier: tower.tier,
 				});
-				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
+				this.rangeOverlay.drawRangeOverlay(
+					gridPos.x,
+					gridPos.y,
+					tower.def.stats.range,
+				);
 			} else {
 				EventBus.emit('tower-deselected');
-				this.clearRangeOverlay();
+				this.rangeOverlay.clearRangeOverlay();
 			}
 		});
-	}
-
-	private drawRangeOverlay(col: number, row: number, range: number): void {
-		this.rangeOverlayGraphics.clear();
-		this.tweens.killTweensOf(this.rangeOverlayGraphics);
-		const worldPos = this.playerGrid.gridToWorld(col, row);
-		const radius = range * this.playerGrid.tileSize;
-
-		this.rangeOverlayGraphics.fillStyle(PHASER_COLORS.gold, 0.08);
-		this.rangeOverlayGraphics.fillCircle(worldPos.x, worldPos.y, radius);
-		this.rangeOverlayGraphics.lineStyle(2, PHASER_COLORS.gold, 0.6);
-		this.rangeOverlayGraphics.strokeCircle(worldPos.x, worldPos.y, radius);
-
-		this.rangeOverlayGraphics.setAlpha(0);
-		this.tweens.add({
-			targets: this.rangeOverlayGraphics,
-			alpha: 1,
-			duration: 120,
-			ease: 'Quad.easeOut',
-		});
-	}
-
-	private clearRangeOverlay(): void {
-		this.tweens.killTweensOf(this.rangeOverlayGraphics);
-		this.tweens.add({
-			targets: this.rangeOverlayGraphics,
-			alpha: 0,
-			duration: 60,
-			ease: 'Quad.easeIn',
-			onComplete: () => this.rangeOverlayGraphics.clear(),
-		});
-	}
-
-	private renderPlaceableHighlights(): void {
-		this.selectionGraphics.clear();
-		if (!this.selectedTowerId) return;
-
-		for (let y = 0; y < this.currentMap.height; y++) {
-			for (let x = 0; x < this.currentMap.width; x++) {
-				if (this.playerGrid.canPlaceTower(x, y)) {
-					this.playerGrid.fillTileRect(
-						this.selectionGraphics,
-						x,
-						y,
-						PHASER_COLORS.accent,
-						0.12,
-					);
-				}
-			}
-		}
 	}
 
 	private emitGameOver(payload: {
@@ -991,7 +586,7 @@ export class GameScene extends Phaser.Scene {
 	}): void {
 		if (this.gameOver) return;
 		this.gameOver = true;
-		this.rangeOverlayGraphics.clear();
+		this.rangeOverlay.getRangeOverlayGraphics().clear();
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
@@ -1025,9 +620,9 @@ export class GameScene extends Phaser.Scene {
 		if (this.phaseAOrchestrator?.hasPendingSummon()) {
 			this.phaseAOrchestrator.completePlacement(gridX, gridY);
 			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
+			this.rangeOverlay.hideBuildableZone();
+			this.rangeOverlay.clearSelection();
+			this.rangeOverlay.clearRangeOverlay();
 			return;
 		}
 
@@ -1075,8 +670,8 @@ export class GameScene extends Phaser.Scene {
 
 		this.energySystem.spend(energyCost);
 		this.selectedTowerId = null;
-		this.selectionGraphics.clear();
-		this.clearRangeOverlay();
+		this.rangeOverlay.clearSelection();
+		this.rangeOverlay.clearRangeOverlay();
 		EventBus.emit('tower-deselected');
 		EventBus.emit('tower-placed', {
 			col: gridX,
@@ -1089,7 +684,7 @@ export class GameScene extends Phaser.Scene {
 			count: this.playerTowers.getTowers().length,
 		});
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
-		this.renderPath(this.playerGrid);
+		this.fieldRenderer.refreshPath();
 	}
 
 	private processCombatField(
@@ -1376,10 +971,6 @@ export class GameScene extends Phaser.Scene {
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();
 
-		this.selectionGraphics.clear();
-		this.rangeOverlayGraphics.clear();
-		this.hoverGraphics?.destroy();
-		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();
 		this.playerTowers.destroy();
 		for (const b of this.bossBehaviors.values()) b.destroy();
@@ -1388,6 +979,13 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.destroy();
 		this.playerDeck.reset();
 		this.energySystem.reset();
+
+		// Renderer destroy runs AFTER EventBus.off + system destroy per
+		// AGENTS.md scene-teardown rule. Handler guards (isSceneAlive)
+		// also prevent stale callbacks from touching controllers that
+		// may be mid-destroy.
+		this.fieldRenderer?.destroy();
+		this.rangeOverlay?.destroy();
 
 		unloadAssetSections(
 			this,

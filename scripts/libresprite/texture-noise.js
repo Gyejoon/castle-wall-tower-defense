@@ -38,7 +38,11 @@ if (!doc || !doc.sprite) {
         for (var x = 0; x < w; ++x) {
             var px = img.getPixel(x, y);
             var a = col.rgbaA(px);
-            if (a === 0) continue;
+            // Noise is an opaque-surface pass only. Perturbing semi-transparent
+            // edge pixels produces halos on anti-aliased silhouettes because the
+            // stored RGB is already premultiplied by alpha — any dither lands in
+            // a different place after the next saveAs re-premultiplies.
+            if (a !== 255) continue;
             if (rng() > density) continue;
             var r = col.rgbaR(px);
             var g = col.rgbaG(px);

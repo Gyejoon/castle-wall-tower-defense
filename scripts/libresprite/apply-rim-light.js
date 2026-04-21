@@ -48,6 +48,20 @@ if (!doc || !doc.sprite) {
             var r = col.rgbaR(px);
             var g = col.rgbaG(px);
             var b = col.rgbaB(px);
+            // @napi-rs/canvas writes + LibreSprite saveAs both premultiply
+            // partial-alpha channels on disk, so `r/g/b` read here are
+            // already premultiplied. Doing rim/shadow math directly on
+            // premultiplied values distorts the author intent on
+            // anti-aliased edges. Recover straight-alpha first, apply the
+            // rim/shadow, let the next saveAs re-premultiply on write.
+            if (a < 255) {
+                r = ((r * 255 + (a >> 1)) / a) | 0;
+                g = ((g * 255 + (a >> 1)) / a) | 0;
+                b = ((b * 255 + (a >> 1)) / a) | 0;
+                if (r > 255) r = 255;
+                if (g > 255) g = 255;
+                if (b > 255) b = 255;
+            }
             var nr = r, ng = g, nb = b;
             if (isTop) {
                 // Brighten toward white by rimPct%.

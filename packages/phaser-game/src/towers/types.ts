@@ -37,6 +37,11 @@ export interface AttackContext {
 	readonly primaryTarget: UnitSnapshot | null;
 	pushDamage(evt: DamageEvent): void;
 	readonly vfx: TowerVfxController;
+	/** Returns the fully-modified damage for a given target, applying
+	 *  element multiplier, dmg_up / crit_dmg / family / globalAtkPct.
+	 *  Behaviors call this right before pushing a DamageEvent so the
+	 *  buffer never carries pre-multiplier numbers. */
+	resolveDamage(target: UnitSnapshot): number;
 }
 
 export interface TargetingStrategy {

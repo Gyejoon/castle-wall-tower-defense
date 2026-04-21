@@ -29,6 +29,7 @@ import {
 	hasTowerFactory,
 	TowerVfxController,
 } from '../towers';
+import type { AttackLineEntry } from '../towers/vfx/TowerVfxController';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
@@ -145,28 +146,7 @@ export class TowerSystem {
 		| null = null;
 	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
-	private attackLines: Array<{
-		x1: number;
-		y1: number;
-		x2: number;
-		y2: number;
-		color: number;
-		ttl: number;
-		maxTtl: number;
-		style: 'beam' | 'arc' | 'arrow';
-		towerType?: string;
-		arrowIndex?: number;
-		targetUnitId?: string;
-		impactPending?: boolean;
-		pendingDamage?: Array<{
-			unitId: string;
-			damage: number;
-			armorPierce?: boolean;
-			slow?: { factor: number; duration: number };
-			stun?: { duration: number };
-		}>;
-		impactVfxKey?: string;
-	}> = [];
+	private attackLines: AttackLineEntry[] = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
 	private static readonly ARROW_POOL_SIZE = 16;
@@ -199,7 +179,35 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
-		this.towerVfxController = new TowerVfxController(scene);
+		this.towerVfxController = new TowerVfxController({
+			scene,
+			gridManager,
+			attackLines: this.attackLines,
+			acquireArrow: () => this.acquireArrowIndex(),
+			playTowerAttack: (defId, time) => {
+				const last = this.lastSoundTime.get(defId) ?? 0;
+				if (time - last >= TowerSystem.SOUND_THROTTLE_MS) {
+					soundGenerator.playTowerAttack(defId);
+					this.lastSoundTime.set(defId, time);
+				}
+			},
+		});
+	}
+
+	/**
+	 * Phase 2.1: ensure the arrow pool is initialized, then reserve an
+	 * invisible slot and return its index. Used by `TowerVfxController` so
+	 * arrow-style projectile emitters can request a pooled arrow sprite
+	 * without owning the pool themselves. Returns `undefined` when the
+	 * pool is exhausted or the arrow texture isn't loaded — callers
+	 * fall back to drawing the projectile with Graphics.
+	 */
+	private acquireArrowIndex(): number | undefined {
+		this.ensureArrowPool();
+		const idx = this.arrowPool.findIndex((a) => !a.visible);
+		if (idx < 0) return undefined;
+		this.arrowPool[idx].setVisible(true);
+		return idx;
 	}
 
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
@@ -562,6 +570,28 @@ export class TowerSystem {
 		delta: number,
 		unitPositions: readonly UnitSnapshot[],
 	): AttackContext {
+		const { def } = tower;
+		// Phase 2.1: closure replicates the legacy damage math at
+		// TowerSystem.ts:688-710 for a single target. Behaviors call
+		// `ctx.resolveDamage(target)` right before pushing a DamageEvent so
+		// the buffer always carries the fully-multiplied value.
+		const resolveDamage = (target: UnitSnapshot): number => {
+			const elementMult = getElementMultiplier(def.element, target.element);
+			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+			const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+			const familyMod = this.familyDamageFn
+				? this.familyDamageFn(def.family, def.id)
+				: 1;
+			return Math.round(
+				this.resolveFinalDamage(
+					tower.effectiveDamage *
+						elementMult *
+						dmgMod *
+						familyMod *
+						(1 + critBonus),
+				),
+			);
+		};
 		return {
 			time,
 			delta,
@@ -571,6 +601,7 @@ export class TowerSystem {
 			primaryTarget: null,
 			pushDamage: this.pushDamage,
 			vfx: this.towerVfxController,
+			resolveDamage,
 		};
 	}
 
@@ -823,10 +854,14 @@ export class TowerSystem {
 				}
 
 				const color = TowerSystem.parseHexColor(def.color);
+				// Phase 2.1: `archer` was removed from this selector — it's now
+				// handled by ArcherFamilyTower via the new-strategy registry and
+				// never reaches this legacy path. `twin_archer` stays until its
+				// family migrates in Phase 2.3.
 				const style =
 					this.hasSplash(special) || def.id === 'earth_golem'
 						? ('arc' as const)
-						: def.id === 'archer' || def.id === 'twin_archer'
+						: def.id === 'twin_archer'
 							? ('arrow' as const)
 							: ('beam' as const);
 				let arrowIndex: number | undefined;

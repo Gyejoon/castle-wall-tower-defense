@@ -1,12 +1,133 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
+import { getOptionalAnimationKey } from '../../assets/assetManifest';
+import { PLATFORM_LIFT } from '../../fieldAssets';
+import type { GridManager } from '../../systems/GridManager';
 
-/** Phase 1: empty shell. Phase 2 will port TowerSystem's spawnMuzzleVfx /
- *  spawnImpactVfx / attackLines push logic into this class. For now it
- *  exists so `types.ts` can reference it without circular pulls. */
+/** Attack-line entry shape shared with TowerSystem. Kept identical to the
+ *  legacy `attackLines` array element so the render loop in
+ *  `TowerSystem.update()` can consume entries pushed from either path. */
+export interface AttackLineEntry {
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	color: number;
+	ttl: number;
+	maxTtl: number;
+	style: 'beam' | 'arc' | 'arrow';
+	towerType?: string;
+	arrowIndex?: number;
+	targetUnitId?: string;
+	impactPending?: boolean;
+	pendingDamage?: Array<{
+		unitId: string;
+		damage: number;
+		armorPierce?: boolean;
+		slow?: { factor: number; duration: number };
+		stun?: { duration: number };
+	}>;
+	impactVfxKey?: string;
+}
+
+/** Dependencies injected by TowerSystem. Everything the controller needs
+ *  lives on the TowerSystem side (attackLines buffer, arrow pool slot
+ *  allocator, sound throttle). Each callback is bound by TowerSystem's
+ *  constructor. */
+export interface TowerVfxDeps {
+	scene: Phaser.Scene;
+	gridManager: GridManager;
+	/** Shared mutable buffer — TowerSystem clears + mutates each frame. */
+	attackLines: AttackLineEntry[];
+	/** Reserve an invisible arrow pool slot and return its index, or
+	 *  `undefined` if the pool is exhausted (fallback to graphics draw). */
+	acquireArrow: () => number | undefined;
+	/** Plays the per-tower attack sound respecting the SOUND_THROTTLE_MS
+	 *  window. Throttle state lives on TowerSystem. */
+	playTowerAttack: (defId: string, time: number) => void;
+}
+
+/** Phase 2.1: concrete VFX controller for tower strategies. Port of the
+ *  archer/beam-family methods from `TowerSystem.update()`. Other helpers
+ *  (splash impact, siege arc, passive aura flashes) stay no-op until the
+ *  respective phases migrate. */
 export class TowerVfxController {
-	constructor(private readonly _scene: Phaser.Scene) {}
-	spawnMuzzleVfx(_x: number, _y: number, _key?: string): void {}
-	spawnImpactVfx(_x: number, _y: number, _key?: string): void {}
-	pushAttackLine(_payload: unknown): void {}
+	constructor(private readonly deps: TowerVfxDeps) {}
+
+	pushAttackLine(line: AttackLineEntry): void {
+		this.deps.attackLines.push(line);
+	}
+
+	acquireArrow(): number | undefined {
+		return this.deps.acquireArrow();
+	}
+
+	playTowerAttackThrottled(defId: string, time: number): void {
+		this.deps.playTowerAttack(defId, time);
+	}
+
+	/** Spawns the animated fire spritesheet on top of a tower, hiding the
+	 *  static sprite for the animation's duration. Mirrors
+	 *  `TowerSystem.spawnMuzzleVfx` at TowerSystem.ts:1162-1204. */
+	spawnMuzzleVfx(
+		towerDefId: string,
+		towerWorld: { x: number; y: number },
+		gridPos: { x: number; y: number },
+		towerSprite: Phaser.GameObjects.Image,
+	): void {
+		const textureKey = `tower-${towerDefId}-fire`;
+		const animationKey = getOptionalAnimationKey(textureKey);
+		if (
+			!this.deps.scene.textures.exists(textureKey) ||
+			!this.deps.scene.anims.exists(animationKey)
+		) {
+			return;
+		}
+
+		towerSprite.setVisible(false);
+
+		const lift = this.deps.gridManager.orthoTile * PLATFORM_LIFT;
+		const effect = this.deps.scene.add.sprite(
+			towerWorld.x,
+			towerWorld.y - lift - 20,
+			textureKey,
+		);
+		effect.setDisplaySize(48, 60);
+		effect.setDepth(this.deps.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
+		effect.play(animationKey);
+
+		const restoreVisibility = () => {
+			if (towerSprite.active) towerSprite.setVisible(true);
+		};
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+			effect.destroy();
+			restoreVisibility();
+		});
+		effect.once(Phaser.GameObjects.Events.DESTROY, restoreVisibility);
+	}
+
+	/** Spawns an instant impact VFX sprite at (x,y). Mirrors
+	 *  `TowerSystem.spawnImpactVfx` at TowerSystem.ts:1206-1223. Beam-style
+	 *  towers (wind_spire/flame_tower/arcane_spire) call this immediately
+	 *  on fire; arrow-style (archer) defers to the render loop's impact
+	 *  branch at TowerSystem.ts:1056-1074. */
+	spawnImpactVfx(textureKey: string, x: number, y: number): void {
+		const animationKey = getOptionalAnimationKey(textureKey);
+		if (
+			!this.deps.scene.textures.exists(textureKey) ||
+			!this.deps.scene.anims.exists(animationKey)
+		) {
+			return;
+		}
+
+		const effect = this.deps.scene.add.sprite(x, y, textureKey);
+		const size = textureKey === 'projectile-hit-flash' ? 16 : 32;
+		effect.setDisplaySize(size, size);
+		effect.setDepth(30);
+		effect.play(animationKey);
+		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
+			effect.destroy(),
+		);
+	}
+
 	destroy(): void {}
 }

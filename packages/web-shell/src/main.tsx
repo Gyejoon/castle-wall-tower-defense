@@ -2,10 +2,9 @@ import { initSentry } from './lib/sentry';
 
 initSentry();
 
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { DesignSystemGallery } from './components/ds/__demos__/DesignSystemGallery';
 import { requestWakeLock, setupWakeLockReacquire } from './lib/wakeLock';
 import './styles/global.css';
 
@@ -18,8 +17,24 @@ if (!rootElement) {
 const isDsGallery =
 	new URLSearchParams(window.location.search).get('ds') === '1';
 
+// Lazy-load the design-system demo gallery so it doesn't inflate the main
+// bundle for regular users — only fetched when `?ds=1` is in the URL.
+const DesignSystemGallery = lazy(() =>
+	import('./components/ds/__demos__/DesignSystemGallery').then((m) => ({
+		default: m.DesignSystemGallery,
+	})),
+);
+
 createRoot(rootElement).render(
-	<StrictMode>{isDsGallery ? <DesignSystemGallery /> : <App />}</StrictMode>,
+	<StrictMode>
+		{isDsGallery ? (
+			<Suspense fallback={null}>
+				<DesignSystemGallery />
+			</Suspense>
+		) : (
+			<App />
+		)}
+	</StrictMode>,
 );
 
 // Screen orientation lock (portrait)

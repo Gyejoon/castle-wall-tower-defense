@@ -1,4 +1,4 @@
-import { xpToNextLevel } from '@gld/shared';
+import { surface, xpToNextLevel } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { useMetaStore } from '../../stores/metaStore';
@@ -38,10 +38,7 @@ export function ProfileBar() {
 	const xpProgress = xpNeeded > 0 ? profile.xp / xpNeeded : 0;
 
 	return (
-		<div
-			className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border"
-			style={{ background: 'var(--color-panel-85)' }}
-		>
+		<div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border bg-panel-85">
 			{/* Avatar + Nickname + XP bar */}
 			<img
 				src={uiMobileArt.profileAvatar}
@@ -60,7 +57,7 @@ export function ProfileBar() {
 				{/* XP progress bar */}
 				<div
 					className="w-full h-[3px] rounded-[1px] overflow-hidden"
-					style={{ background: 'rgba(0,0,0,0.3)' }}
+					style={{ background: surface.panelSunken }}
 				>
 					<div
 						className="h-full bg-gold transition-[width] duration-300 ease-[ease]"

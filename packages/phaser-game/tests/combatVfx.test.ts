@@ -226,9 +226,10 @@ describe('optional combat vfx', () => {
 			'tower-archer-fire',
 		);
 		const fireSprite = addSprite.mock.results[0]?.value;
-		// Fire spritesheet always uses 64×80 regardless of base tower resolution
-		// (drawFireFrame coordinate system is calibrated for 64×80).
-		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(64, 80);
+		// Fire spritesheet source frames are authored in 64×80 but rendered at
+		// the current tower render size (48×60) so the animation lines up with
+		// the base tower sprite.
+		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(48, 60);
 
 		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
 		// Drive the TTL to zero with a second update.

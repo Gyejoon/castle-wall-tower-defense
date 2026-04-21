@@ -1,9 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { BottomTabBar } from '../components/lobby/BottomTabBar';
 import { ProfileBar } from '../components/lobby/ProfileBar';
 import { CollectionTab } from '../components/lobby/tabs/CollectionTab';
 import { HomeTab } from '../components/lobby/tabs/HomeTab';
 import { SettingsTab } from '../components/lobby/tabs/SettingsTab';
 import { useGameStore } from '../stores/gameStore';
+
+// Leaderboard tab is only seen when the user navigates to it; its fetch code
+// lives behind a lazy boundary so first-paint of the lobby doesn't pay for it.
+const LeaderboardTab = lazy(async () =>
+	import('../components/lobby/tabs/LeaderboardTab').then((m) => ({
+		default: m.LeaderboardTab,
+	})),
+);
 
 export function LobbyPage() {
 	const lobbyTab = useGameStore((s) => s.lobbyTab);
@@ -28,6 +37,11 @@ export function LobbyPage() {
 					>
 						{lobbyTab === 'home' && <HomeTab />}
 						{lobbyTab === 'collection' && <CollectionTab />}
+						{lobbyTab === 'leaderboard' && (
+							<Suspense fallback={null}>
+								<LeaderboardTab />
+							</Suspense>
+						)}
 						{lobbyTab === 'settings' && <SettingsTab />}
 					</div>
 				</div>

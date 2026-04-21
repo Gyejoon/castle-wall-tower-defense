@@ -3,12 +3,29 @@ import { lazy, Suspense, useEffect } from 'react';
 import { uiMobileArt } from './assets/uiMobileArt';
 import { LobbyPage } from './pages/LobbyPage';
 import { MetaForgePage } from './pages/MetaForgePage';
+import { useAuthStore } from './stores/authStore';
 import { useGameStore } from './stores/gameStore';
 import { useMetaStore } from './stores/metaStore';
 import { preloadImages } from './utils/preloadAssets';
 
 const GamePage = lazy(async () =>
 	import('./pages/GamePage').then((m) => ({ default: m.GamePage })),
+);
+
+// Auth/ranking UI is only reached after user interaction, so defer the bundle
+// until first open. supabase-js lives in the 'supabase' manualChunk, but these
+// UI components + their wiring add another ~20KB that doesn't belong in the
+// critical-path index chunk.
+const AuthModal = lazy(async () =>
+	import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })),
+);
+const ProfileSetupModal = lazy(async () =>
+	import('./components/auth/ProfileSetupModal').then((m) => ({
+		default: m.ProfileSetupModal,
+	})),
+);
+const ProfilePage = lazy(async () =>
+	import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 );
 
 function LoadingScreen() {
@@ -41,6 +58,7 @@ export function App() {
 	const runStatus = useGameStore((s) => s.runStatus);
 	const pushToast = useGameStore((s) => s.pushToast);
 	const colorblindMode = useGameStore((s) => s.colorblindMode);
+	const profilePageOpen = useGameStore((s) => s.profilePageOpen);
 
 	useEffect(() => {
 		try {
@@ -70,6 +88,10 @@ export function App() {
 		} catch (err) {
 			console.error('[GLD] Boot sequence failed:', err);
 		}
+		useAuthStore
+			.getState()
+			.hydrate()
+			.catch((err) => console.error('[GLD] auth hydrate failed', err));
 		// 로비 진입 시 UI 이미지 pop-in 방지를 위한 사전 로드 (블로킹 없음)
 		preloadImages(Object.values(uiMobileArt));
 		const onSaveError = () =>
@@ -111,6 +133,15 @@ export function App() {
 			>
 				{content}
 			</div>
+			{runStatus === 'lobby' && profilePageOpen && (
+				<Suspense fallback={null}>
+					<ProfilePage />
+				</Suspense>
+			)}
+			<Suspense fallback={null}>
+				<AuthModal />
+				<ProfileSetupModal />
+			</Suspense>
 		</div>
 	);
 }

@@ -6,6 +6,7 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
+import { useAuthStore } from '../stores/authStore';
 import { useGameStore } from '../stores/gameStore';
 import { useMetaStore } from '../stores/metaStore';
 
@@ -41,6 +42,13 @@ export function useGameEvents() {
 	const bossWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	// Dedupe submit-per-run so a "이어서 하기" flow (game-over → game-resumed →
+	// later game-over) doesn't double-insert and trip the rate_limit trigger.
+	// Keyed by gameStore.runId, which increments only on resetRun/enterLobby/
+	// startPhaseA — not on resume. Intentionally auth-agnostic: if the user
+	// signs out mid-run, we still treat the run as already submitted for
+	// whichever identity owned it, to preserve "one run = one row" semantics.
+	const submittedRunIdRef = useRef<number>(-1);
 
 	useEffect(() => {
 		const onDamaged = (data: { remainingHp: number }) =>
@@ -55,6 +63,8 @@ export function useGameEvents() {
 				towersPlaced: number;
 				timeSurvivedSec: number;
 				goldEarned: number;
+				remainingHp: number;
+				initialHp: number;
 			};
 		}) => {
 			setRunStatus(data.result);
@@ -79,6 +89,67 @@ export function useGameEvents() {
 			meta.addXp(xpEarned);
 			meta.recordBattle(data.result);
 			meta.updateHighestWave(data.stats.wavesCleared);
+
+			const auth = useAuthStore.getState();
+			if (!auth.userId) {
+				pushToast('로그인하면 랭킹에 기록됩니다', 'info');
+				return;
+			}
+			const currentRunId = useGameStore.getState().runId;
+			if (submittedRunIdRef.current === currentRunId) {
+				// already submitted for this run (e.g., intermediate defeat before
+				// "이어서 하기"); skip to avoid duplicate rows and rate_limit reject.
+				return;
+			}
+			submittedRunIdRef.current = currentRunId;
+			auth
+				.submitRun({
+					waveReached: Math.max(
+						0,
+						Math.min(50, Math.round(data.stats.wavesCleared)),
+					),
+					remainingHp: Math.max(
+						0,
+						Math.min(25, Math.round(data.stats.remainingHp)),
+					),
+					initialHp: Math.max(
+						1,
+						Math.min(25, Math.round(data.stats.initialHp)),
+					),
+					result: data.result,
+					towersPlaced: Math.max(
+						0,
+						Math.min(200, Math.round(data.stats.towersPlaced)),
+					),
+					durationSec: Math.max(
+						10,
+						Math.min(14400, Math.round(data.stats.timeSurvivedSec)),
+					),
+					goldEarned: Math.max(
+						0,
+						Math.min(1000000, Math.round(data.stats.goldEarned)),
+					),
+				})
+				.then((r) => {
+					if (r.kind === 'ok') pushToast('랭킹에 기록되었습니다', 'success');
+					else if (r.kind === 'queued')
+						pushToast('오프라인 저장됨. 다음 접속 시 전송', 'info');
+					else if (r.kind === 'rejected')
+						pushToast('제출이 제한되었습니다', 'warning');
+					else if (r.kind === 'invalid') {
+						// permanent validation failure (CHECK/RLS) — surface as error
+						// so we don't claim silent success or promise a retry.
+						pushToast('기록 전송 실패 (유효하지 않은 값)', 'error');
+						console.error('[GLD] submitRun rejected as invalid', r.reason);
+					}
+					// 'disabled' and 'unauthenticated' are silent — already handled
+					// above or config-level, no user-facing message needed here.
+				})
+				.catch((err) => {
+					// failure is terminal for this run; allow a retry only after
+					// next runId bump (new run) so we don't hammer the endpoint.
+					console.error('[GLD] submitRun failed', err);
+				});
 		};
 		// Phase 10 Task 10.3 [F11] — scene revival after a rewarded continue.
 		// Reverses the `onGameOver` state so the GameOverScreen unmounts and

@@ -14,8 +14,11 @@ interface TabDef {
 	inactiveIcon: string;
 }
 
-// Phase 6: missions/achievements tabs removed with the scenario purge.
-const tabs: [TabDef, TabDef, TabDef] = [
+// 4탭 구성: 전쟁탁자 / 마당(elevated) / 랭킹 / 설정
+// 랭킹 탭은 별도 active/inactive 에셋이 없어 trophyIcon 단일 에셋을 재사용하고
+// 활성 상태는 opacity·색상 전환으로 처리한다.
+// TODO(assets): ranking-tab-icon-{active,inactive}.webp 전용 스프라이트 제작 후 교체.
+const tabs: [TabDef, TabDef, TabDef, TabDef] = [
 	{
 		id: 'collection',
 		label: '전쟁탁자',
@@ -27,6 +30,12 @@ const tabs: [TabDef, TabDef, TabDef] = [
 		label: '마당',
 		activeIcon: uiMobileArt.homeTabIconActive,
 		inactiveIcon: uiMobileArt.homeTabIconInactive,
+	},
+	{
+		id: 'leaderboard',
+		label: '랭킹',
+		activeIcon: uiMobileArt.trophyIcon,
+		inactiveIcon: uiMobileArt.trophyIcon,
 	},
 	{
 		id: 'settings',
@@ -108,6 +117,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 					);
 				}
 
+				const isLeaderboard = tab.id === 'leaderboard';
 				return (
 					<button
 						type="button"
@@ -119,7 +129,7 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 						disabled={disabled}
 						onClick={() => !disabled && setLobbyTab(tab.id)}
 						className={cn(
-							'flex-1 flex flex-col items-center gap-1 py-2.5 bg-transparent border-none touch-manipulation transition-all duration-150',
+							'flex-1 flex flex-col items-center gap-1 py-2.5 min-h-[44px] bg-transparent border-none touch-manipulation transition-all duration-150',
 							disabled
 								? 'cursor-not-allowed opacity-50'
 								: 'cursor-pointer active:scale-95',
@@ -130,7 +140,10 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 							alt=""
 							width={22}
 							height={22}
-							className="[image-rendering:pixelated]"
+							className={cn(
+								'[image-rendering:pixelated] transition-opacity duration-150',
+								isLeaderboard && !isActive && 'opacity-55',
+							)}
 							aria-hidden="true"
 						/>
 						<span

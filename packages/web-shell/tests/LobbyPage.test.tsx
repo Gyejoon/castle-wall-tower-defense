@@ -27,8 +27,8 @@ describe('LobbyPage', () => {
 		expect(view.getByText('Commander')).toBeTruthy();
 
 		const tabs = view.getAllByRole('tab');
-		expect(tabs).toHaveLength(3);
-		// Center tab (마당/home) is index 1, should be selected by default
+		expect(tabs).toHaveLength(4);
+		// Tab order: [전쟁탁자, 마당, 랭킹, 설정]; 마당(home) is index 1, default.
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
 		// Phase A redesign ("Option C · cinematic keyart"):
@@ -45,19 +45,24 @@ describe('LobbyPage', () => {
 	it('switches tabs on click', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		// Tab order: [전쟁탁자, 마당, 설정]
+		// Tab order: [전쟁탁자, 마당, 랭킹, 설정]
 		const collectionTab = tabs[0];
-		const settingsTab = tabs[2];
+		const leaderboardTab = tabs[2];
+		const settingsTab = tabs[3];
 
 		expect(collectionTab).toBeTruthy();
+		expect(leaderboardTab).toBeTruthy();
 		expect(settingsTab).toBeTruthy();
-		if (!(collectionTab && settingsTab)) {
+		if (!(collectionTab && leaderboardTab && settingsTab)) {
 			throw new Error('expected lobby tabs to render');
 		}
 
 		fireEvent.click(collectionTab);
 		expect(useGameStore.getState().lobbyTab).toBe('collection');
 		expect(collectionTab.getAttribute('aria-selected')).toBe('true');
+
+		fireEvent.click(leaderboardTab);
+		expect(useGameStore.getState().lobbyTab).toBe('leaderboard');
 
 		fireEvent.click(settingsTab);
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
@@ -103,7 +108,7 @@ describe('LobbyPage', () => {
 	it('shows settings tab with toggles', () => {
 		const view = render(<LobbyPage />);
 		const tabs = view.getAllByRole('tab');
-		const settingsTab = tabs[2]; // 설정 is last
+		const settingsTab = tabs[3]; // 설정 is last of [전쟁탁자, 마당, 랭킹, 설정]
 
 		expect(settingsTab).toBeTruthy();
 		if (!settingsTab) {

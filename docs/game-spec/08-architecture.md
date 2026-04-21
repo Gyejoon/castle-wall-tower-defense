@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-14 (v2 — Phase A 피벗 시스템 추가)
+> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 고정 논리 해상도)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -35,21 +35,24 @@ GridManager
     └─► TowerSystem  (GridManager, PathfindingSystem, collection, spawnExitPairs)
     └─► UnitSystem   (GridManager)
         └─► WaveSystem   (UnitSystem, mapWaves, difficultyHpMult)
-DeckSystem    (deckCards — phase_a_long에서는 빈 배열로 생성, 4타워 흐름 skip)
-PhaseAOrchestrator [v2, phase_a_long 전용]  (towerSystem, gridManager, buildablePoints, initialPool, energySystem)
+DeckSystem    (deckCards — 현행 맵에서는 빈 배열로 생성, 4타워 흐름 skip. 구 시나리오 맵 대비 호환용 shell)
+PhaseAOrchestrator  (towerSystem, gridManager, buildablePoints, initialPool, energySystem)
     └─► SummonPoolSystem  (initialPool, rng)
     └─► RandomSummonSystem  (summonPool, rng)
     └─► MergeSystem
 DamageNumberSystem  (scene)
 EnergySystem  (standalone)
-GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 [M2+, phase_a_lab 월드에는 등록된 factory 없음]
+GimmickSystem (scene, gridManager, starRating) — 월드별 기믹 처리 — 정식 모드 `phase_a_long` 맵에는 등록된 factory 없음 (legacy hook)
 TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 
-**Phase A 분기 로직**: `currentMap.id === PHASE_A_MAP_ID` 일 때만 `PhaseAOrchestrator`를 생성하고 `this.phaseAOrchestrator` 필드에 저장. 레거시 맵에서는 `undefined`이며 cleanup에서 optional chaining으로 안전하게 skip된다.
+**맵 분기 로직 (legacy)**: `currentMap.id === PHASE_A_MAP_ID` 일 때만 `PhaseAOrchestrator`를 생성하고 `this.phaseAOrchestrator` 필드에 저장. 정식 모드에서는 이 분기가 항상 true로 평가되지만, 구 시나리오 맵 코드 경로가 일부 남아 있어 optional chaining + cleanup 안전성을 유지한다. 후속 정리 과제.
+
+> **클래스 이름 주의**: `PhaseAOrchestrator`, `PHASE_A_MAP_ID`, `phase_a_long` 등의 식별자는 코드 상수/클래스 이름으로, 이력 상 "Phase A" 프로토타입 트랙에서 이어진 명칭이다. 런타임 모드 구분이 아니며, 이 문서의 "정식 모드"와 동의어로 읽으면 된다.
 
 **PhaseAOrchestrator 책임 경계**
-- 생성자에서 3개 Phase A 시스템을 owning하고 EventBus 리스너를 **idempotent off→on** 으로 등록 (HMR / 씬 재마운트로 이전 인스턴스 리스너가 남아도 중복 없음)
+- 생성자에서 3개 정식 모드 시스템을 owning하고 EventBus 리스너를 **idempotent off→on** 으로 등록 (HMR / 씬 재마운트로 이전 인스턴스 리스너가 남아도 중복 없음)
+- **취소·배치 실패 리롤 차단** (v3.1 PR #175): 풀 소환은 `cancelledPoolDraw`, 가챠는 `cancelledGachaDraw`(towerId + targetTier) 캐시 필드로 draw 보존. `settlePendingSummon('cancelled' | 'cancelled-no-refund')`에서 양쪽 경로가 동일 캐시에 기록되며, 동일 tier 재요청 시 캐시 재사용 (가챠는 비용 재지불, 풀은 배치 시 지불). 다른 tier 가챠 요청은 캐시 폐기 + 새 roll.
 - `TowerSystem.getTowerLocator` / `TowerSystem.applyMerge` / `TowerSystem.placeTower({ gradeOverride, levelOverride })` 로만 TowerSystem에 접근 — 직접 mutation 없음
 - 에너지 gating은 `PhaseAEnergyApi` 구조적 인터페이스(`canAfford` + `spend`)로 받음. `EnergySystem`을 직접 import하지 않아 테스트 fake 주입 가능
 - `destroy()`는 idempotent — 두 번 호출해도 안전
@@ -60,7 +63,7 @@ TutorialSystem  (scene) — tutorialCompleted가 false일 때만
 ```
 1. WaveSystem.update(scaledDelta, activeUnitCount)
 2. EnergySystem.update(scaledDelta / 1000)
-2.5 PhaseAOrchestrator.tickEnergyRegen (Phase A: energy_regen upgrade tick)
+2.5 PhaseAOrchestrator.tickEnergyRegen (energy_regen 로그라이크 upgrade tick)
 3. GimmickSystem.update(scaledDelta)  ← [M2+ 추가]
 4. processCombatField()
    ├─ TowerSystem.update() → damageEvents
@@ -164,7 +167,7 @@ EnergySystem.reset()
 | `request-enter-move-mode` [v2] | `PhaseAHud` 이동 버튼 | `PhaseAOrchestrator.handleMoveMode` |
 | `request-move-tower` [v2] | `PhaseAHud` 빈 칸 탭 | `PhaseAOrchestrator.handleMoveTower` |
 
-### Phase A 신규 이벤트 (v2 — `phase_a_long` 전용)
+### 정식 모드 주요 이벤트 (맵 id: `phase_a_long`)
 
 | 이벤트 | 방향 | 페이로드 | 발화 시점 |
 |--------|------|---------|----------|
@@ -208,7 +211,7 @@ EnergySystem.reset()
 | `game.registry` | React→Phaser 초기값 전달 (deckIds, collection, tutorialCompleted) |
 | 시스템 내부 상태 | TowerSystem(배치된 타워 + 각 타워의 grade/effectiveDamage), UnitSystem(유닛 목록), EnergySystem(현재 에너지), WaveSystem(웨이브 인덱스/phase), PhaseAOrchestrator(SummonPool + RandomSummon + Merge 내부 상태)[v2] |
 
-**Phase A는 신규 gameStore 슬라이스를 추가하지 않는다**: PhaseAHud는 로컬 `useState` + `useRef`로 `firstPick` 상태를 관리하고, 에너지는 기존 `gameStore.energy` 셀렉터를 그대로 사용한다. 합성 실패/성공 피드백은 기존 `pushToast` 경로로 흐른다. 이는 피벗 검증 기간 중 gameStore 변경을 최소화해 롤백을 쉽게 만들기 위한 의도적 선택이다.
+**정식 모드는 전용 gameStore 슬라이스를 추가하지 않는다**: PhaseAHud는 로컬 `useState` + `useRef`로 `firstPick` 상태를 관리하고, 에너지는 기존 `gameStore.energy` 셀렉터를 그대로 사용한다. 합성 실패/성공 피드백은 기존 `pushToast` 경로로 흐른다. 이는 전환 검증 기간 중 gameStore 변경을 최소화해 롤백을 쉽게 만들기 위한 의도적 선택이었으며, 정식 승격 이후에도 구조적 가치를 유지하므로 그대로 두었다.
 
 ### 동기화 규칙
 
@@ -326,4 +329,5 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 |------|------|---------|
 | 2026-04-09 | §3, §5, §7 | WavePhase `prep` 상태 추가(이슈 #93, 모든 전투 시작 시 5초 준비 + 에너지 증가 정지). `wave-prep-started`/`wave-prep-tick` 이벤트 추가. Range overlay depth 22 신설(이슈 #103 사거리 시각화). |
 | 2026-04-11 | §2, §3, §7 | 유닛 이동 방향 표현 추가(비행 보스 setRotation, 지상 보스/일반 유닛 flipX). 몬스터 충돌 비활성화(sweepCollisions disabled). 웨이브 30초 타이머(마지막 웨이브 면제). drag-drop/drag-hover 이벤트 추가(드래그 앤 드롭 타워 배치). |
-| 2026-04-14 | §2, §3, §4 | **v2 Phase A 피벗 시스템 추가**. `PhaseAOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === PHASE_A_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. Phase A는 신규 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + PhaseAHud 로컬 state 조합. DeckSystem은 phase_a_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `phaseAOrchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
+| 2026-04-14 | §2, §3, §4 | **v2 랜덤 소환 + 합성 피벗 (당시 "Phase A" 트랙) 시스템 추가**. `PhaseAOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === PHASE_A_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. 전용 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + PhaseAHud 로컬 state 조합. DeckSystem은 phase_a_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `phaseAOrchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
+| 2026-04-20 | §2, §3 헤더 | **v3.1 정식 모드 안정화 (PR #175)**. 용어 정리: "Phase A"를 "정식 모드"로 치환, 코드 상수(`PhaseAOrchestrator`, `PHASE_A_MAP_ID`, `phase_a_long`, `phase-a-summon-ready` 등)는 historical identifier로 유지. `PhaseAOrchestrator.handleGachaRequest` + `settlePendingSummon('cancelled' \| 'cancelled-no-refund')` 경로에 `cancelledGachaDraw` 캐시 추가 — 풀·가챠 양쪽 재소환 리롤 차단, 다른 tier 가챠는 캐시 폐기 + 새 roll. Phaser `scale.mode = Scale.NONE` + `autoCenter = NO_CENTER` 고정, React `GamePage` shell은 `100dvh + max-w-[430px] + flex-col` 모바일 세로형 표준 레이아웃 (TopHud safe-area-inset-top, PhaseAHud safe-area-inset-bottom, 캔버스가 flex-1 슬롯 채움). `UnitSystem.applyDamage`의 `boss-hp-update` emit에 `Math.max(1, Math.floor(hp))` 가드 + `BossHpBar` 렌더 가드. `getWaveScaling` slots 11+ 공식 선형화 (`HP_SLOPE = 0.55`). |

@@ -4,6 +4,7 @@ import {
 	getTotalWavesForMap,
 	getWaveScaling,
 	getWavesForMap,
+	HP_SLOPE,
 } from '../src/constants/waves';
 import { generatePhaseAWaves } from '../src/data/phaseAWaves';
 
@@ -130,10 +131,24 @@ describe('getWaveScaling — endless wave formula', () => {
 		expect(getWaveScaling(10)).toEqual({ hp: 3.8, speed: 1.15 });
 	});
 
-	it('slot 11+ scales exponentially — hp ×1.12 per slot, speed +0.03', () => {
-		expect(getWaveScaling(11).hp).toBeCloseTo(3.8 * 1.12, 3);
-		expect(getWaveScaling(20).hp).toBeCloseTo(3.8 * 1.12 ** 10, 3);
+	it('slot 11+ scales linearly — hp += HP_SLOPE per slot, speed +0.03', () => {
+		expect(getWaveScaling(11).hp).toBeCloseTo(3.8 + HP_SLOPE, 5);
+		expect(getWaveScaling(20).hp).toBeCloseTo(3.8 + 10 * HP_SLOPE, 5);
 		expect(getWaveScaling(11).speed).toBeCloseTo(1.15 + 0.03, 5);
+	});
+
+	it('linear slope keeps hp finite at slot 100 (exponential regression guard)', () => {
+		const hp = getWaveScaling(100).hp;
+		expect(Number.isFinite(hp)).toBe(true);
+		// With slope 0.55 over 90 extra waves: 3.8 + 90*0.55 = 53.3 — well
+		// below the exponential curve's ~1.8×10^6 at slot 100.
+		expect(hp).toBeLessThan(100);
+	});
+
+	it('boss slot gap is consistent between W10 and W20 under linear scaling', () => {
+		const w10 = getWaveScaling(10).hp;
+		const w20 = getWaveScaling(20).hp;
+		expect(w20).toBeCloseTo(w10 + 10 * HP_SLOPE, 5);
 	});
 
 	it('speed is capped at 2.2', () => {

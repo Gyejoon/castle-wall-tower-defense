@@ -32,6 +32,8 @@ export interface GameEventMap {
 			towersPlaced: number;
 			timeSurvivedSec: number;
 			goldEarned: number;
+			remainingHp: number;
+			initialHp: number;
 		};
 	};
 	'energy-changed': { energy: number };

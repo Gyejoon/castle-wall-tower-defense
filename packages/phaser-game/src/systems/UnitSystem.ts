@@ -249,7 +249,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(entry.isBoss ? 60 : 40, entry.isBoss ? 72 : 48);
+		sprite.setDisplaySize(entry.isBoss ? 48 : 32, entry.isBoss ? 56 : 40);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -588,10 +588,13 @@ export class UnitSystem {
 		}
 
 		if (unit.isBoss && unit.data.hp > 0) {
+			// Boss is alive in this branch — clamp floored HP to min 1 so
+			// `Math.floor(0.5) → 0` doesn't render an empty HP bar on a live
+			// boss (HUD then contradicts the "still alive" game state).
 			EventBus.emit('boss-hp-update', {
 				unitId: unit.data.instanceId,
 				defId: unit.def.id,
-				hp: Math.max(0, unit.data.hp),
+				hp: Math.max(1, Math.floor(unit.data.hp)),
 				maxHp: unit.maxHp,
 				phase: unit.bossPhase,
 			});
@@ -987,7 +990,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(40, 48);
+		sprite.setDisplaySize(32, 40);
 		sprite.play(`${def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (def.element !== 'neutral') {

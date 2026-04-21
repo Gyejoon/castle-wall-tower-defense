@@ -10,15 +10,15 @@
 | 툴 | 역할 | 비용 |
 |----|------|------|
 | Claude | AI 코딩 에이전트 | 월 $110 |
-| Supabase | DB (서버 동기화, Phase 5) | — |
+| Supabase | DB (서버 동기화, R3 후속) | — |
 | Vercel | Deploy | — |
 | InappToss | 결제, 로그인 | — |
 | Resend | 이메일 (알림, 트랜잭션) | — |
 | Cloudflare | DNS | — |
 | PostHog | 유저 분석 | — |
 | Sentry | 에러 추적 | — |
-| Upstash | Redis (세션/캐시, Phase 5) | — |
-| Pinecone | 벡터 DB (AI 기능, Phase 5+) | — |
+| Upstash | Redis (세션/캐시, R3 후속) | — |
+| Pinecone | 벡터 DB (AI 기능, R3+ 후속) | — |
 
 ---
 
@@ -30,7 +30,7 @@
 |--------|----------|------|
 | JS Exception | 5분 내 10건+ | 즉시 확인 |
 | 게임 프리즈 (메모리 누수) | 실기기 재현 시 | P0 대응 |
-| API 오류 (Phase 5+) | 에러율 1%+ | 알림 |
+| API 오류 (R3+ 서버 연동 후) | 에러율 1%+ | 알림 |
 
 ---
 
@@ -46,8 +46,8 @@
 | Wave 10 Clear Rate | 최종 클리어율 |
 | Retry Rate | 즉시 재도전 비율 |
 | Tower Placement Heatmap | 배치 패턴 분석 |
-| Ad Views / DAU | 광고 시청량 (Phase 5+) |
-| Conversion Rate | 결제 전환율 (Phase 5+) |
+| Ad Views / DAU | 광고 시청량 (R3 광고 SDK 연동 후) |
+| Conversion Rate | 결제 전환율 (R3 BM 재진입 후) |
 
 ---
 
@@ -66,9 +66,9 @@
 | 항목 | 내용 | 코드 위치 |
 |------|------|---------|
 | 주간 미션 | 매주 월요일 KST 00:00 리셋 | `missions.ts` |
-| 주간 접속 팩 | 7d 쿨타임 오퍼 | Phase 5 |
+| 주간 접속 팩 | 7d 쿨타임 오퍼 | R3 후속 |
 
-### 이벤트 (Phase 5+)
+### 이벤트 (R3+ 후속)
 
 | 항목 | 내용 |
 |------|------|

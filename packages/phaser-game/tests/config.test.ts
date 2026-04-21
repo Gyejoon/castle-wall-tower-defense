@@ -26,6 +26,9 @@ vi.mock('phaser', () => ({
 		Scale: {
 			FIT: 'FIT',
 			CENTER_HORIZONTALLY: 'CENTER_HORIZONTALLY',
+			CENTER_BOTH: 'CENTER_BOTH',
+			NONE: 'NONE',
+			NO_CENTER: 'NO_CENTER',
 		},
 	},
 }));
@@ -37,5 +40,11 @@ describe('gameConfig', () => {
 		expect(gameConfig.width).toBe(ORTHO_CANVAS_W);
 		expect(gameConfig.height).toBe(GAME_CANVAS_H);
 		expect(gameConfig.plugins?.global).toBeUndefined();
+	});
+
+	it('uses Scale.FIT + CENTER_BOTH for uniform letterbox (v3.1 final)', async () => {
+		const { gameConfig } = await import('../src/config');
+		expect(gameConfig.scale?.mode).toBe('FIT');
+		expect(gameConfig.scale?.autoCenter).toBe('CENTER_BOTH');
 	});
 });

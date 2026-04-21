@@ -12,8 +12,12 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 	height: GAME_CANVAS_H,
 	parent: 'game-container',
 	backgroundColor: '#1a1a2e',
+	pixelArt: true,
 	render: {
 		preserveDrawingBuffer: true,
+		pixelArt: true,
+		antialias: false,
+		roundPixels: true,
 	},
 	scale: {
 		// v3.1: Scale.FIT keeps the internal logical resolution fixed at

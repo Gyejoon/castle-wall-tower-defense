@@ -184,7 +184,7 @@ describe('optional combat vfx', () => {
 		};
 
 		const gridManager = {
-			orthoTile: 48,
+			orthoTile: 64,
 			isInBounds: vi.fn(() => true),
 			isWalkable: vi.fn(() => true),
 			canPlaceTower: vi.fn(() => true),
@@ -219,17 +219,17 @@ describe('optional combat vfx', () => {
 			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
 		]);
 
-		// y = towerWorld.y(120) - lift(48*0.4=19.2) - 20 = 80.8
+		// y = towerWorld.y(120) - lift(64*0.4=25.6) - TILE_SIZE*5/12(26.67) ≈ 67.73
 		expect(addSprite).toHaveBeenCalledWith(
 			100,
-			expect.closeTo(80.8, 1),
+			expect.closeTo(67.73, 1),
 			'tower-archer-fire',
 		);
 		const fireSprite = addSprite.mock.results[0]?.value;
-		// Fire spritesheet source frames are authored in 64×80 but rendered at
-		// the current tower render size (48×60) so the animation lines up with
-		// the base tower sprite.
-		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(48, 60);
+		// Fire spritesheet source frames render at the current tower size
+		// (TILE_SIZE × TILE_SIZE*5/4 = 64×80) so the animation lines up
+		// with the base tower sprite.
+		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(64, 80);
 
 		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
 		// Drive the TTL to zero with a second update.

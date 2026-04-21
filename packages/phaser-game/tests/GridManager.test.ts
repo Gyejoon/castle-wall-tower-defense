@@ -42,7 +42,7 @@ describe('GridManager', () => {
 		const gm = new GridManager(TEST_CONFIG);
 		expect(gm.width).toBe(10);
 		expect(gm.height).toBe(10);
-		expect(gm.tileSize).toBe(48);
+		expect(gm.tileSize).toBe(ORTHO_TILE);
 		expect(gm.spawnPoint).toEqual({ x: 0, y: 5 });
 		expect(gm.exitPoint).toEqual({ x: 5, y: 5 });
 	});

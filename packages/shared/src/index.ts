@@ -136,6 +136,41 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
+export type {
+	CoreColor,
+	DurationKey,
+	EasingKey,
+	ElementKey,
+	ElevationKey,
+	OverlayDimKey,
+	RadiusKey,
+	SpacingKey,
+	StateColor,
+	TierKey,
+	Tokens,
+	TypographyScale,
+	ZIndexKey,
+} from './design/tokens';
+export {
+	core,
+	duration,
+	easing,
+	element,
+	elevation,
+	fontFamily,
+	fontWeight,
+	motion,
+	overlayDim,
+	palette,
+	radius,
+	spacing,
+	state,
+	surface,
+	tier,
+	tokens,
+	typography,
+	zIndex,
+} from './design/tokens';
 export type { AdPlacement, AdResult, AdService } from './services/AdService';
 export { MockAdService } from './services/AdService';
 // Phase 7 (v8): scenario-mode constants (stages/worlds/missions/achievements

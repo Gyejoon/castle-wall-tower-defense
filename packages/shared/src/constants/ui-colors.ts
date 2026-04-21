@@ -2,40 +2,47 @@
  * UI color palette shared across React (DOM) and Phaser (Canvas).
  * Phaser uses 0x-prefixed number format; React uses hex strings.
  *
- * Source of truth for the design system — see .impeccable.md
+ * NOTE: This file is a backwards-compatibility adapter.
+ * The real source of truth is `packages/shared/src/design/palette.ts`.
+ * New code should import `core` / `palette` from `@gld/shared` directly.
  */
 
+import { core } from '../design/palette';
+
 export const UI_COLORS = {
-	bg: '#1a1208',
-	panel: '#2a2010',
-	border: '#4a3a20',
-	accent: '#c8a04a',
-	success: '#7ab648',
-	danger: '#c03020',
-	gold: '#f0d060',
-	info: '#5bc8e8',
-	text: '#f0e8d8',
-	textSecondary: '#a09070',
-	gradeUnique: '#9060e0',
-	tierBright: '#ffe870',
-	bossPhase1: '#c87020',
-	armorPierce: '#a0a8b0',
+	bg: core.bg,
+	panel: core.panel,
+	border: core.border,
+	accent: core.accent,
+	success: core.success,
+	danger: core.danger,
+	gold: core.gold,
+	info: core.info,
+	text: core.text,
+	textSecondary: core.textSecondary,
+	gradeUnique: core.gradeUnique,
+	tierBright: core.tierBright,
+	bossPhase1: core.bossPhase1,
+	armorPierce: core.armorPierce,
 } as const;
+
+/** Convert a `#rrggbb` hex string to Phaser's `0xrrggbb` number format */
+const toHexNumber = (hex: string): number => Number.parseInt(hex.slice(1), 16);
 
 /** Same palette as UI_COLORS but in Phaser-compatible 0x number format */
 export const PHASER_COLORS = {
-	bg: 0x1a1208,
-	panel: 0x2a2010,
-	border: 0x4a3a20,
-	accent: 0xc8a04a,
-	success: 0x7ab648,
-	danger: 0xc03020,
-	gold: 0xf0d060,
-	info: 0x5bc8e8,
-	text: 0xf0e8d8,
-	textSecondary: 0xa09070,
-	gradeUnique: 0x9060e0,
-	tierBright: 0xffe870,
-	bossPhase1: 0xc87020,
-	armorPierce: 0xa0a8b0,
+	bg: toHexNumber(core.bg),
+	panel: toHexNumber(core.panel),
+	border: toHexNumber(core.border),
+	accent: toHexNumber(core.accent),
+	success: toHexNumber(core.success),
+	danger: toHexNumber(core.danger),
+	gold: toHexNumber(core.gold),
+	info: toHexNumber(core.info),
+	text: toHexNumber(core.text),
+	textSecondary: toHexNumber(core.textSecondary),
+	gradeUnique: toHexNumber(core.gradeUnique),
+	tierBright: toHexNumber(core.tierBright),
+	bossPhase1: toHexNumber(core.bossPhase1),
+	armorPierce: toHexNumber(core.armorPierce),
 } as const;

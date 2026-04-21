@@ -1,4 +1,4 @@
-import { xpToNextLevel } from '@gld/shared';
+import { surface, xpToNextLevel } from '@gld/shared';
 import { useEffect, useRef, useState } from 'react';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { AVATAR_PRESETS } from '../../data/avatarPresets';
@@ -63,10 +63,7 @@ export function ProfileBar() {
 	};
 
 	return (
-		<div
-			className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border"
-			style={{ background: 'var(--color-panel-85)' }}
-		>
+		<div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border bg-panel-85">
 			{/* Avatar + Nickname + XP bar — clickable region */}
 			<button
 				type="button"
@@ -110,7 +107,7 @@ export function ProfileBar() {
 					{/* XP progress bar */}
 					<span
 						className="block w-full h-[3px] rounded-[1px] overflow-hidden"
-						style={{ background: 'rgba(0,0,0,0.3)' }}
+						style={{ background: surface.panelSunken }}
 					>
 						<span
 							className="block h-full bg-gold transition-[width] duration-300 ease-[ease]"

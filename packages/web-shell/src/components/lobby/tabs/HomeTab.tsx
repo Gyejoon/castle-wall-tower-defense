@@ -1,5 +1,7 @@
+import { core, surface } from '@gld/shared';
 import type { CSSProperties } from 'react';
 import { useGameStore } from '../../../stores/gameStore';
+import { Button } from '../../ds';
 
 /**
  * Phase A lobby home — "Option C · Cinematic keyart" redesign.
@@ -20,7 +22,9 @@ import { useGameStore } from '../../../stores/gameStore';
  * above this tab; BottomTabBar renders below. We only own the tab panel.
  */
 
-const CORNER_COLOR = 'rgba(240, 208, 96, 0.4)';
+// core.gold + alpha hex (40% = 0x66, 20% = 0x33)
+const CORNER_COLOR = `${core.gold}66`;
+const STAR_UNFILLED_COLOR = `${core.gold}33`;
 
 const cornerBase: CSSProperties = {
 	position: 'absolute',
@@ -329,9 +333,9 @@ function Star({ filled }: { filled: boolean }) {
 		<span
 			aria-hidden="true"
 			style={{
-				color: filled ? 'var(--color-gold)' : 'rgba(240,208,96,0.2)',
+				color: filled ? core.gold : STAR_UNFILLED_COLOR,
 				fontSize: 11,
-				textShadow: filled ? '0 0 6px var(--color-gold)' : undefined,
+				textShadow: filled ? `0 0 6px ${core.gold}` : undefined,
 				lineHeight: 1,
 			}}
 		>
@@ -353,7 +357,7 @@ export function HomeTab() {
 		>
 			<Keyart />
 
-			<div className="relative z-[1] flex flex-col flex-1 min-h-0">
+			<div className="relative z-hud flex flex-col flex-1 min-h-0">
 				{/* Title removed — keyart carries the brand; CTA card introduces
 				    the run copy. Keeps the keep/moon/silhouette fully in view. */}
 
@@ -363,13 +367,11 @@ export function HomeTab() {
 				{/* NEXT UP CTA card */}
 				<div className="px-[14px] pb-[14px]">
 					<div
-						className="relative border-2"
+						className="relative border-2 border-gold"
 						style={{
-							background: 'rgba(10,6,4,0.88)',
-							borderColor: 'var(--color-gold)',
+							background: 'rgba(10,6,4,0.88)', // keyart용 의도된 혼합 톤 유지 (bg + 약간 어둡게)
 							padding: '14px 16px',
-							boxShadow:
-								'0 10px 32px rgba(0,0,0,0.7), 0 0 20px rgba(240,208,96,0.2), inset 0 1px 0 rgba(240,208,96,0.2)',
+							boxShadow: `0 10px 32px ${surface.alpha.overlay70}, 0 0 20px ${core.gold}33, inset 0 1px 0 ${core.gold}33`,
 							backdropFilter: 'blur(6px)',
 							WebkitBackdropFilter: 'blur(6px)',
 						}}
@@ -407,27 +409,16 @@ export function HomeTab() {
 									</span>
 								</div>
 							</div>
-							<button
-								type="button"
+							<Button
+								variant="gold"
+								size="lg"
 								onClick={startPhaseA}
 								aria-label="전투 시작"
-								className="pulse-cta flex-shrink-0 border-2 font-pixel active:translate-y-[3px] transition-transform"
-								style={{
-									background: 'var(--color-gold)',
-									color: '#2a1a08',
-									borderColor: '#a07020',
-									padding: '14px 18px',
-									fontSize: 14,
-									letterSpacing: 0.3,
-									boxShadow:
-										'0 3px 0 #7a5a10, inset 0 1px 0 rgba(255,255,255,0.15)',
-								}}
+								className="pulse-cta flex-shrink-0"
 							>
-								<span className="inline-flex items-center gap-[6px]">
-									<span aria-hidden="true">⚔</span>
-									전투 시작
-								</span>
-							</button>
+								<span aria-hidden="true">⚔</span>
+								전투 시작
+							</Button>
 						</div>
 					</div>
 				</div>

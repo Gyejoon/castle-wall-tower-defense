@@ -1,5 +1,6 @@
 import {
 	CC_AURA_CONFIGS,
+	core,
 	dupesRequiredForLevel,
 	enhancementCost,
 	GLOBAL_RANGE_THRESHOLD,
@@ -11,8 +12,7 @@ import {
 } from '@gld/shared';
 import { useGameStore } from '../../../../stores/gameStore';
 import { useMetaStore } from '../../../../stores/metaStore';
-import { colors } from '../../../../styles/tokens';
-import { PixelButton } from '../../../ui/PixelButton';
+import { Button, Sheet } from '../../../ds';
 import { ELEMENT_COLORS, ELEMENT_NAMES, translateSpecial } from './constants';
 import { StatDisplay } from './StatDisplay';
 
@@ -64,11 +64,11 @@ export function TowerBottomSheet({
 		dupesHave >= dupesNeeded;
 
 	return (
-		<div
-			className="absolute bottom-0 left-0 right-0 z-5 flex flex-col gap-2.5 bg-[rgba(26,18,8,0.96)] p-4 animate-[slideUp_0.2s_ease-out]"
-			style={{
-				borderTop: `2px solid ${elementColor}`,
-			}}
+		<Sheet
+			anchor="bottom"
+			backdrop
+			onDismiss={onClose}
+			style={{ borderTop: `2px solid ${elementColor}` }}
 		>
 			{/* Header */}
 			<div className="flex items-center justify-between">
@@ -104,12 +104,12 @@ export function TowerBottomSheet({
 				<StatDisplay
 					label="공격력"
 					value={effectiveDmg.toFixed(1)}
-					color={colors.danger}
+					color={core.danger}
 				/>
 				<StatDisplay
 					label="공속"
 					value={`${def.stats.attackSpeed}s`}
-					color={colors.info}
+					color={core.info}
 				/>
 				<StatDisplay
 					label="사거리"
@@ -118,7 +118,7 @@ export function TowerBottomSheet({
 							? '전체 맵'
 							: String(def.stats.range)
 					}
-					color={colors.textSecondary}
+					color={core.textSecondary}
 				/>
 				<StatDisplay
 					label="속성"
@@ -129,7 +129,7 @@ export function TowerBottomSheet({
 					<StatDisplay
 						label="방어 무시"
 						value="적용"
-						color={colors.armorPierce}
+						color={core.armorPierce}
 					/>
 				)}
 			</div>
@@ -157,10 +157,7 @@ export function TowerBottomSheet({
 								특수: {translateSpecial(special)}
 							</p>
 							{cfg && (
-								<p
-									className="font-pixel text-[10px] leading-[1.4]"
-									style={{ color: colors.textSecondary }}
-								>
+								<p className="font-pixel text-[10px] leading-[1.4] text-text-secondary">
 									{isStun ? '스턴' : '슬로우'}{' '}
 									{((scaledDurationMs ?? 0) / 1000).toFixed(1)}s / 쿨{' '}
 									{((scaledCooldownMs ?? 0) / 1000).toFixed(1)}s /{' '}
@@ -173,12 +170,7 @@ export function TowerBottomSheet({
 
 			{/* Enhancement section — dupe + gold cost */}
 			{owned && (
-				<div
-					className="flex flex-col gap-2 bg-[rgba(42,32,16,0.6)] p-2"
-					style={{
-						border: `1px solid ${colors.border}`,
-					}}
-				>
+				<div className="flex flex-col gap-2 bg-panel-70 p-2 border border-border">
 					{level < MAX_TOWER_LEVEL ? (
 						<>
 							<div className="flex flex-col gap-0.5 font-pixel text-[11px]">
@@ -214,14 +206,15 @@ export function TowerBottomSheet({
 									</span>
 								</div>
 							</div>
-							<PixelButton
+							<Button
 								variant="gold"
-								style={{ width: '100%', fontSize: '12px' }}
+								size="sm"
+								block
 								onClick={handleEnhance}
 								disabled={!canEnhance}
 							>
 								레벨업 Lv.{level + 1}
-							</PixelButton>
+							</Button>
 						</>
 					) : (
 						<span className="text-center font-pixel text-[11px] text-gold">
@@ -236,6 +229,6 @@ export function TowerBottomSheet({
 					소환의 제단에서 타워를 획득하세요!
 				</span>
 			)}
-		</div>
+		</Sheet>
 	);
 }

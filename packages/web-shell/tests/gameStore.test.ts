@@ -160,9 +160,9 @@ describe('gameStore', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('startPhaseA puts the store in building state', () => {
+	it('startGame puts the store in building state', () => {
 		expect(useGameStore.getState().runStatus).toBe('lobby');
-		useGameStore.getState().startPhaseA();
+		useGameStore.getState().startGame();
 		expect(useGameStore.getState().runStatus).toBe('building');
 		expect(useGameStore.getState().lobbyTab).toBe('home');
 	});

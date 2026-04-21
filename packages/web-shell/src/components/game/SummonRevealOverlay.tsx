@@ -16,9 +16,9 @@ interface PendingReveal {
 
 /**
  * Phase 8 Task 8.3 — transient celebration overlay that surfaces each
- * Phase A summon/gacha result for 2 seconds before fading out.
+ * summon/gacha result for 2 seconds before fading out.
  *
- * [F21] timer lives in a useRef so rapid successive `phase-a-summon-ready`
+ * [F21] timer lives in a useRef so rapid successive `summon-ready`
  *       events don't leak stale setTimeout handles.
  */
 export function SummonRevealOverlay() {
@@ -38,9 +38,9 @@ export function SummonRevealOverlay() {
 				key: counterRef.current,
 			});
 		};
-		EventBus.on('phase-a-summon-ready', handleReady);
+		EventBus.on('summon-ready', handleReady);
 		return () => {
-			EventBus.off('phase-a-summon-ready', handleReady);
+			EventBus.off('summon-ready', handleReady);
 			if (timerRef.current) clearTimeout(timerRef.current);
 		};
 	}, []);

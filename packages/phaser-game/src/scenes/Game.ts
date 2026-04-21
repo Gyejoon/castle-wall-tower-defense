@@ -6,15 +6,15 @@ import {
 	ENERGY_PER_KILL,
 	ENERGY_PER_WAVE_CLEAR,
 	FAST_CLEAR_THRESHOLD_MS,
-	generatePhaseAWaves,
+	generateWaves,
 	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
 	INITIAL_PLAYER_HP,
+	MAIN_MAP_ID,
 	type MapLayout,
 	MockAdService,
-	PHASE_A_MAP_ID,
 	PHASER_COLORS,
 	UNITS,
 	type WaveDef,
@@ -49,10 +49,10 @@ interface MapTheme {
 }
 
 const MAP_THEMES: Record<string, MapTheme> = {
-	// Phase 7.5: warm sandstone palette tuned for the 9×18 Phase A board.
+	// Phase 7.5: warm sandstone palette tuned for the 9×18 정식 모드 board.
 	// Path/grid lines run at very low alpha so towers and obstacles stay
 	// the visual focus instead of tile chrome.
-	phase_a_long: {
+	main_long: {
 		groundTint: 0xc8b89a,
 		decorTint: 0xc8b89a,
 		pathColor: 0x7a6040,
@@ -61,7 +61,7 @@ const MAP_THEMES: Record<string, MapTheme> = {
 };
 
 function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.phase_a_long;
+	return MAP_THEMES[mapId] ?? MAP_THEMES.main_long;
 }
 
 import { getPlacementGuardFailure } from '../placementRules';
@@ -72,23 +72,23 @@ import '../systems/boss-ai/orcWarlord';
 import '../systems/boss-ai/forgeMaster';
 import '../systems/boss-ai/corruptedArchmage';
 import '../systems/boss-ai/dragon';
+import { CoreOrchestrator } from '../systems/CoreOrchestrator';
 import { DamageNumberSystem } from '../systems/DamageNumberSystem';
 import { DeckSystem } from '../systems/DeckSystem';
 import { EnergySystem } from '../systems/EnergySystem';
 import { GridManager } from '../systems/GridManager';
 import { PathfindingSystem } from '../systems/PathfindingSystem';
-import { PhaseAOrchestrator } from '../systems/PhaseAOrchestrator';
 import { SpawnHutSystem } from '../systems/SpawnHutSystem';
 import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
-// Phase A summon pool (Task 1.4 spec): tier-1 only, one per base family
+// 정식 모드 summon pool (Task 1.4 spec): tier-1 only, one per base family
 // (archer, siege, frost, stun). Higher tiers are reached through merge and
 // the in-game gacha (tier2/3/4 buttons). Mirrors DEFAULT_POOL in
 // @gld/shared/data/summonPool.ts — keep the two in sync.
-const PHASE_A_INITIAL_POOL: readonly string[] = [
+const INITIAL_SUMMON_POOL: readonly string[] = [
 	'archer', // archer T1
 	'nova_cannon', // siege T1
 	'emp', // frost T1
@@ -102,8 +102,8 @@ export class GameScene extends Phaser.Scene {
 	private playerUnits!: UnitSystem;
 	private playerWaves!: WaveSystem;
 	private playerDeck!: DeckSystem;
-	private phaseAOrchestrator?: PhaseAOrchestrator;
-	private onPhaseASummonReady?: (data: {
+	private orchestrator?: CoreOrchestrator;
+	private onSummonReady?: (data: {
 		towerId: string;
 		source: 'summon' | 'gacha';
 	}) => void;
@@ -117,7 +117,7 @@ export class GameScene extends Phaser.Scene {
 	private selectedTowerId: string | null = null;
 	private gameOver = false;
 	private goldEarned = 0;
-	private isPhaseAMap = false;
+	private isGameMap = false;
 	private currentWaveSlot = 1;
 	private lastTimerTickSec = -1;
 	private currentSlotDef!: WaveDef;
@@ -210,15 +210,13 @@ export class GameScene extends Phaser.Scene {
 		this.speedMultiplier = 1;
 		this.time.timeScale = 1;
 		this.anims.globalTimeScale = 1;
-		// Phase 7: scenario maps purged. Phase A is the only mode; ignore any
-		// non-Phase-A registry mapId and pin to PHASE_A_MAP_ID.
+		// Phase 7: scenario maps purged. 정식 모드가 유일한 모드; ignore any
+		// non-main registry mapId and pin to MAIN_MAP_ID.
 		const mapId =
 			data?.mapId ??
 			(this.game.registry.get('mapId') as string | undefined) ??
-			PHASE_A_MAP_ID;
-		this.currentMap = getMapById(
-			mapId === PHASE_A_MAP_ID ? mapId : PHASE_A_MAP_ID,
-		);
+			MAIN_MAP_ID;
+		this.currentMap = getMapById(mapId === MAIN_MAP_ID ? mapId : MAIN_MAP_ID);
 		this.optionalAssetManifest = getCachedAssetManifest(this);
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
@@ -261,32 +259,32 @@ export class GameScene extends Phaser.Scene {
 			this.bossBehaviors.set(instanceId, behavior);
 			behavior.onSpawn(this.buildBossContext(unit.data));
 		});
-		const stageWaves = generatePhaseAWaves(50);
+		const stageWaves = generateWaves(50);
 		this.currentSlotDef = stageWaves[0];
 		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves);
-		this.isPhaseAMap = this.currentMap.id === PHASE_A_MAP_ID;
-		const isPhaseAMap = this.isPhaseAMap;
-		// Phase A bypasses the 4-tower deck entirely; we still construct
+		this.isGameMap = this.currentMap.id === MAIN_MAP_ID;
+		const isGameMap = this.isGameMap;
+		// 정식 모드 bypasses the 4-tower deck entirely; we still construct
 		// DeckSystem with an empty deck so the rest of the scene keeps the
 		// same field shape and cleanup contract. The React HUD detects the
-		// empty deck-loaded payload and renders the Phase A summon UI instead.
+		// empty deck-loaded payload and renders the 정식 모드 summon UI instead.
 		this.playerDeck = new DeckSystem([]);
 
-		// Phase A pivot: only active on the dedicated phase_a_long map. Wires
-		// SummonPool + MergeSystem to TowerSystem via PhaseAOrchestrator and
+		// 정식 모드 pivot: only active on the dedicated main_long map. Wires
+		// SummonPool + MergeSystem to TowerSystem via CoreOrchestrator and
 		// listens for request-summon-tower / request-merge-towers from the
 		// React HUD. Legacy maps continue to use the 4-tower deck flow above.
-		if (isPhaseAMap) {
+		if (isGameMap) {
 			this.energySystem.disableCap();
-			this.phaseAOrchestrator = new PhaseAOrchestrator({
+			this.orchestrator = new CoreOrchestrator({
 				towerSystem: this.playerTowers,
-				initialPool: PHASE_A_INITIAL_POOL,
+				initialPool: INITIAL_SUMMON_POOL,
 				energySystem: this.energySystem,
 				// Phase 10 BM stub. Real provider swaps in behind the same
 				// `AdService` contract without touching this call site.
 				adService: MockAdService,
 			});
-			this.onPhaseASummonReady = (data) => {
+			this.onSummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
 				this.selectedTowerId = data.towerId;
 				this.showBuildableZone();
@@ -294,14 +292,14 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('tower-deselected');
 				this.renderPlaceableHighlights();
 			};
-			EventBus.on('phase-a-summon-ready', this.onPhaseASummonReady);
+			EventBus.on('summon-ready', this.onSummonReady);
 			this.playerTowers.setModifierFn((id) =>
-				this.phaseAOrchestrator!.getModifier(id),
+				this.orchestrator!.getModifier(id),
 			);
 			this.playerTowers.setFamilyDamageFn((family, towerId) =>
-				this.phaseAOrchestrator!.getFamilyDamageMultiplier(family, towerId),
+				this.orchestrator!.getFamilyDamageMultiplier(family, towerId),
 			);
-			// Phase A: 1 unit per second (1000ms) instead of default 300ms
+			// 정식 모드: 1 unit per second (1000ms) instead of default 300ms
 			this.playerUnits.setSpawnInterval(1000);
 		}
 
@@ -382,10 +380,10 @@ export class GameScene extends Phaser.Scene {
 		}) => {
 			if (!this.isSceneAlive()) return;
 			this.spawnHut.setActive(false);
-			// Phase A: flat +ENERGY_PER_WAVE_CLEAR at the end of every wave
+			// 정식 모드: flat +ENERGY_PER_WAVE_CLEAR at the end of every wave
 			// (natural clear + timer-forced alike) to pace summon/gacha cadence.
 			// Final wave is skipped because the run is already ending.
-			if (this.isPhaseAMap && data.slotIndex < data.totalWaves) {
+			if (this.isGameMap && data.slotIndex < data.totalWaves) {
 				this.energySystem.add(ENERGY_PER_WAVE_CLEAR);
 			}
 			// Phase 4 Task 4.2: roguelike pick now triggers on BOSS-phase clears
@@ -395,13 +393,13 @@ export class GameScene extends Phaser.Scene {
 			// the final wave (defeat/victory HUD owns the run-end flow).
 			if (
 				data.cleared &&
-				this.isPhaseAMap &&
+				this.isGameMap &&
 				data.phase === 'boss' &&
 				data.slotIndex < data.totalWaves &&
-				this.phaseAOrchestrator
+				this.orchestrator
 			) {
 				EventBus.emit('request-pause');
-				this.phaseAOrchestrator.requestUpgradePick(3);
+				this.orchestrator.requestUpgradePick(3);
 			}
 		};
 
@@ -477,8 +475,8 @@ export class GameScene extends Phaser.Scene {
 		EventBus.on('wave-completed', this.onWaveCompleted);
 		EventBus.on('request-set-speed', this.onSetSpeed);
 
-		// Phase A upgrade flow: resume game after player picks an upgrade
-		if (isPhaseAMap) {
+		// 정식 모드 upgrade flow: resume game after player picks an upgrade
+		if (isGameMap) {
 			this.onUpgradeApplied = () => {
 				if (!this.isSceneAlive()) return;
 				EventBus.emit('request-resume');
@@ -1021,9 +1019,9 @@ export class GameScene extends Phaser.Scene {
 		gridY: number,
 		towerDefId: string,
 	): void {
-		// Phase A: orchestrator handles energy + placement directly
-		if (this.phaseAOrchestrator?.hasPendingSummon()) {
-			this.phaseAOrchestrator.completePlacement(gridX, gridY);
+		// 정식 모드: orchestrator handles energy + placement directly
+		if (this.orchestrator?.hasPendingSummon()) {
+			this.orchestrator.completePlacement(gridX, gridY);
 			this.selectedTowerId = null;
 			this.hideBuildableZone();
 			this.selectionGraphics.clear();
@@ -1140,8 +1138,8 @@ export class GameScene extends Phaser.Scene {
 			// Applied at the Game scene boundary so UnitSystem stays decoupled
 			// from the roguelike stack tracker.
 			const effectAmp =
-				this.isPhaseAMap && this.phaseAOrchestrator
-					? this.phaseAOrchestrator.getEffectDurationMultiplier()
+				this.isGameMap && this.orchestrator
+					? this.orchestrator.getEffectDurationMultiplier()
 					: 1;
 			if (evt.slow) {
 				const behavior = this.bossBehaviors.get(evt.unitId);
@@ -1172,13 +1170,13 @@ export class GameScene extends Phaser.Scene {
 
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
-		// Phase A: energy from kills only, no time-based regen
-		if (phase !== 'prep' && !this.isPhaseAMap) {
+		// 정식 모드: energy from kills only, no time-based regen
+		if (phase !== 'prep' && !this.isGameMap) {
 			this.energySystem.update(scaledDelta / 1000);
 		}
-		// Phase A: energy_regen upgrade tick
-		if (this.isPhaseAMap && this.phaseAOrchestrator) {
-			this.phaseAOrchestrator.tickEnergyRegen(scaledDelta / 1000);
+		// 정식 모드: energy_regen upgrade tick
+		if (this.isGameMap && this.orchestrator) {
+			this.orchestrator.tickEnergyRegen(scaledDelta / 1000);
 		}
 
 		// Tick boss behaviors before combat so they can react with fresh sceneTime
@@ -1203,9 +1201,8 @@ export class GameScene extends Phaser.Scene {
 				// `energy_harvest` upgrade stacking additively on top (+1 per
 				// stack). Every 5th wave doubles the baseline as a soft pacing
 				// buff — stack bonus is additive on top of the doubled value.
-				if (this.isPhaseAMap) {
-					const harvestBonus =
-						this.phaseAOrchestrator?.getEnergyPerKillBonus() ?? 0;
+				if (this.isGameMap) {
+					const harvestBonus = this.orchestrator?.getEnergyPerKillBonus() ?? 0;
 					const baseline =
 						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
 					this.energySystem.add(baseline + harvestBonus);
@@ -1222,7 +1219,7 @@ export class GameScene extends Phaser.Scene {
 					// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
 					// to wave start if bossSpawnMs was not recorded (e.g. if
 					// the boss died before the spawn callback fired).
-					if (this.isPhaseAMap) {
+					if (this.isGameMap) {
 						this.energySystem.add(ENERGY_PER_BOSS_KILL);
 						const elapsed =
 							this.playerWaves.getElapsedMs() -
@@ -1363,11 +1360,11 @@ export class GameScene extends Phaser.Scene {
 		if (this.onGameResumed) {
 			EventBus.off('game-resumed', this.onGameResumed);
 		}
-		if (this.onPhaseASummonReady) {
-			EventBus.off('phase-a-summon-ready', this.onPhaseASummonReady);
+		if (this.onSummonReady) {
+			EventBus.off('summon-ready', this.onSummonReady);
 		}
-		this.phaseAOrchestrator?.destroy();
-		this.phaseAOrchestrator = undefined;
+		this.orchestrator?.destroy();
+		this.orchestrator = undefined;
 		soundGenerator.reset();
 
 		this.tutorial?.destroy();

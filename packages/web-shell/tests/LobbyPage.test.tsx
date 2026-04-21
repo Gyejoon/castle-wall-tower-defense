@@ -21,7 +21,7 @@ describe('LobbyPage', () => {
 		cleanup();
 	});
 
-	it('renders the home tab as a Phase A start screen', () => {
+	it('renders the home tab as a 정식 모드 start screen', () => {
 		const view = render(<LobbyPage />);
 
 		expect(view.getByText('Commander')).toBeTruthy();
@@ -31,7 +31,7 @@ describe('LobbyPage', () => {
 		// Tab order: [전쟁탁자, 마당, 랭킹, 설정]; 마당(home) is index 1, default.
 		expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
 
-		// Phase A redesign ("Option C · cinematic keyart"):
+		// 정식 모드 redesign ("Option C · cinematic keyart"):
 		// keyart carries the brand — no hero title. CTA card has NEXT UP
 		// copy + 전투 시작 button. 메타 강화 lives in the 전쟁탁자 tab header.
 		expect(view.queryByText('Grid Line Defense')).toBeNull();
@@ -68,7 +68,7 @@ describe('LobbyPage', () => {
 		expect(useGameStore.getState().lobbyTab).toBe('settings');
 	});
 
-	it('starts a Phase A run on 전투 시작 click', () => {
+	it('starts a 정식 모드 run on 전투 시작 click', () => {
 		const view = render(<LobbyPage />);
 		fireEvent.click(view.getByRole('button', { name: '전투 시작' }));
 

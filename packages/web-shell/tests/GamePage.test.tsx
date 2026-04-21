@@ -153,7 +153,7 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('shows Phase A HUD with HP, energy, and timer', () => {
+	it('shows the HUD with HP, energy, and timer', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
@@ -170,11 +170,11 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		// Phase 8 [8.2]: energy 60 shows in both TopHud and the PhaseAHud
+		// Phase 8 [8.2]: energy 60 shows in both TopHud and the GameHud
 		// info badge, so getAllByText disambiguates the match.
 		expect(view.getAllByText('60').length).toBeGreaterThan(0);
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		// Phase 6: scenario deck dock removed. Phase A HUD is always mounted.
+		// Phase 6: scenario deck dock removed. HUD is always mounted.
 		expect(view.queryByTestId('deck-dock')).toBeNull();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
@@ -308,7 +308,7 @@ describe('GamePage', () => {
 		expect(state.profile.totalGoldEarned).toBeGreaterThanOrEqual(200);
 	});
 
-	it('Phase 6: 2x speed is always unlocked in Phase A', () => {
+	it('Phase 6: 2x speed is always unlocked', () => {
 		useGameStore.setState({ runStatus: 'running' });
 		const view = render(<GamePage />);
 

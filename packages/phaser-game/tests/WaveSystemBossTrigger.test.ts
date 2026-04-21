@@ -1,7 +1,7 @@
 import { INITIAL_PREP_MS, type WaveDef } from '@gld/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mini routing EventBus mock — same pattern as PhaseAOrchestrator tests.
+// Mini routing EventBus mock — same pattern as CoreOrchestrator tests.
 const { EventBus, getEmits, resetBus } = vi.hoisted(() => {
 	const handlers = new Map<string, Set<(payload?: unknown) => void>>();
 	const emit = vi.fn((event: string, payload?: unknown) => {

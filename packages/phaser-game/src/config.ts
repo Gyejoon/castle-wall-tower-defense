@@ -5,7 +5,7 @@ import { GameScene } from './scenes/Game';
 import { Preloader } from './scenes/Preloader';
 
 // Phase 6: StageDetailScene was removed along with the scenario-mode
-// purge. Phase A routes directly into GameScene from the lobby.
+// purge. 정식 모드 routes directly into GameScene from the lobby.
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
 	width: ORTHO_CANVAS_W,

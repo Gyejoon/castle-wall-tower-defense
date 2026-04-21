@@ -3,8 +3,8 @@ import {
 	familyDamageMultiplier,
 	familyUpgradeCost,
 	MAX_FAMILY_UPGRADE_LEVEL,
-	PHASE_A_SUMMON_COST,
 	pickRandomUpgrades,
+	SUMMON_COST,
 	type TowerId,
 	UPGRADE_CARDS,
 	type UpgradeableFamily,
@@ -48,7 +48,7 @@ function makeRequestId(): string {
 
 /** Minimal energy-system surface the orchestrator needs. Structural so we
  *  don't import EnergySystem and can swap in a fake in tests. */
-export interface PhaseAEnergyApi {
+export interface CoreEnergyApi {
 	canAfford(cost: number): boolean;
 	spend(cost: number): boolean;
 	add(amount: number): void;
@@ -60,25 +60,25 @@ export interface PhaseAEnergyApi {
  * keep passing while the canonical contract uses `'skipped' | 'error'`. All
  * non-`'rewarded'` results are treated as "not rewarded" at call sites.
  */
-export interface PhaseAAdServiceApi {
+export interface CoreAdServiceApi {
 	watchAd?(
 		placement: string,
 	): Promise<'rewarded' | 'skipped' | 'error' | 'dismissed' | 'failed'>;
 }
 
-export interface PhaseAOrchestratorDeps {
+export interface CoreOrchestratorDeps {
 	towerSystem: TowerSystem;
 	initialPool: readonly string[];
 	rng?: () => number;
-	energySystem?: PhaseAEnergyApi;
+	energySystem?: CoreEnergyApi;
 	summonCost?: number;
 	/**
 	 * Shared {@link AdService} implementation. Phase 10 injects `MockAdService`
 	 * from the scene boot path. Orchestrator call sites upcast the shared type
-	 * to {@link PhaseAAdServiceApi} so mocks in tests can keep returning the
+	 * to {@link CoreAdServiceApi} so mocks in tests can keep returning the
 	 * legacy `'dismissed'` outcome.
 	 */
-	adService?: AdService | PhaseAAdServiceApi;
+	adService?: AdService | CoreAdServiceApi;
 }
 
 /**
@@ -94,10 +94,10 @@ export const UPGRADE_MAX_STACKS = 10;
  * the loss state. If live data shows players expect more revives, bump this
  * via design-time config in Phase 12.
  */
-export const PHASE_A_MAX_CONTINUES_PER_RUN = 1;
+export const MAX_CONTINUES_PER_RUN = 1;
 
 /**
- * Phase A pivot wiring. Owns SummonPoolSystem + MergeSystem and bridges
+ * 정식 모드 core loop orchestrator. Owns SummonPoolSystem + MergeSystem and bridges
  * them to TowerSystem via EventBus.
  *
  * Phase 4 adds roguelike stack tracking (capped at `UPGRADE_MAX_STACKS`)
@@ -105,7 +105,7 @@ export const PHASE_A_MAX_CONTINUES_PER_RUN = 1;
  * tick / effect-amp / tier-odds are consumed by the relevant systems via
  * the `getModifier` + dedicated getters below.
  */
-export class PhaseAOrchestrator {
+export class CoreOrchestrator {
 	private readonly summonPool: SummonPoolSystem;
 	private readonly summonCost: number;
 	private readonly rng: () => number;
@@ -136,8 +136,8 @@ export class PhaseAOrchestrator {
 	private energyRegenTimer = 0;
 	private pendingChoices: UpgradeCard[] | null = null;
 	/** Phase 10 Task 10.3 [F11]: number of continues granted for this run.
-	 *  Capped at `PHASE_A_MAX_CONTINUES_PER_RUN`. Reset whenever the scene
-	 *  boots a new PhaseAOrchestrator (i.e. a fresh run). */
+	 *  Capped at `MAX_CONTINUES_PER_RUN`. Reset whenever the scene
+	 *  boots a new CoreOrchestrator (i.e. a fresh run). */
 	private continueCount = 0;
 
 	private readonly onSummonRequest = (): void => this.handleSummonRequest();
@@ -167,9 +167,9 @@ export class PhaseAOrchestrator {
 		family: UpgradeableFamily;
 	}): void => this.handleFamilyUpgradeRequest(data.family);
 
-	constructor(private readonly deps: PhaseAOrchestratorDeps) {
+	constructor(private readonly deps: CoreOrchestratorDeps) {
 		this.summonPool = new SummonPoolSystem(deps.initialPool, deps.rng);
-		this.summonCost = deps.summonCost ?? PHASE_A_SUMMON_COST;
+		this.summonCost = deps.summonCost ?? SUMMON_COST;
 		this.rng = deps.rng ?? Math.random;
 
 		EventBus.off('request-summon-tower', this.onSummonRequest);
@@ -373,7 +373,7 @@ export class PhaseAOrchestrator {
 							this.getFamilyUpgradeLevel('stun'),
 					);
 				}
-				// Unknown hybrid variant (shouldn't happen in Phase A): sum all 4.
+				// Unknown hybrid variant (shouldn't happen): sum all 4.
 				return familyDamageMultiplier(this.getTotalFamilyLevel());
 			}
 			case 'ultimate':
@@ -474,12 +474,12 @@ export class PhaseAOrchestrator {
 	private async handleContinueRequest(data: {
 		livesRestored: number;
 	}): Promise<void> {
-		if (this.continueCount >= PHASE_A_MAX_CONTINUES_PER_RUN) {
+		if (this.continueCount >= MAX_CONTINUES_PER_RUN) {
 			// Cap reached — no second revive from the same run.
 			return;
 		}
 		this.continueCount += 1;
-		const adService = this.deps.adService as PhaseAAdServiceApi | undefined;
+		const adService = this.deps.adService as CoreAdServiceApi | undefined;
 		let rewarded = true;
 		if (adService?.watchAd) {
 			const result = await adService.watchAd('continue');
@@ -502,14 +502,14 @@ export class PhaseAOrchestrator {
 	}
 
 	private async handleRerollRequest(): Promise<void> {
-		const adService = this.deps.adService as PhaseAAdServiceApi | undefined;
+		const adService = this.deps.adService as CoreAdServiceApi | undefined;
 		let rewarded = true;
 		if (adService?.watchAd) {
 			const result = await adService.watchAd('reroll');
 			rewarded = result === 'rewarded';
 		} else {
 			console.warn(
-				'[PhaseAOrchestrator] request-upgrade-reroll without adService; granting reroll (Phase 10 will wire real ad).',
+				'[CoreOrchestrator] request-upgrade-reroll without adService; granting reroll (Phase 10 will wire real ad).',
 			);
 		}
 		if (!rewarded) return;
@@ -570,7 +570,7 @@ export class PhaseAOrchestrator {
 			});
 			return;
 		}
-		this.deps.towerSystem.playPhaseASummonVfx(col, row);
+		this.deps.towerSystem.playSummonVfx(col, row);
 
 		// Task 4.0 [F7]: emit the family/tier payload (grade is gone). The
 		// placed tower record is the source of truth for instanceId; tier
@@ -600,7 +600,7 @@ export class PhaseAOrchestrator {
 		// already pending re-emits the same tower (no reroll exploit, no
 		// double-queueing). Only the gacha path enqueues concurrently.
 		if (this.pendingSummon && this.pendingSummon.source === 'summon') {
-			EventBus.emit('phase-a-summon-ready', {
+			EventBus.emit('summon-ready', {
 				towerId: this.pendingSummon.towerId,
 				source: 'summon',
 			});
@@ -686,7 +686,7 @@ export class PhaseAOrchestrator {
 
 	private currentEnergy(): number {
 		const energy = this.deps.energySystem as
-			| (PhaseAEnergyApi & { current?: number })
+			| (CoreEnergyApi & { current?: number })
 			| undefined;
 		return energy?.current ?? 0;
 	}
@@ -698,7 +698,7 @@ export class PhaseAOrchestrator {
 			return;
 		}
 		this.pendingSummon = full;
-		EventBus.emit('phase-a-summon-ready', {
+		EventBus.emit('summon-ready', {
 			towerId: full.towerId,
 			source: full.source,
 		});
@@ -745,7 +745,7 @@ export class PhaseAOrchestrator {
 		const next = this.summonQueue.shift();
 		if (next) {
 			this.pendingSummon = next;
-			EventBus.emit('phase-a-summon-ready', {
+			EventBus.emit('summon-ready', {
 				towerId: next.towerId,
 				source: next.source,
 			});
@@ -809,7 +809,7 @@ export class PhaseAOrchestrator {
 			return;
 		}
 
-		towerSystem.playPhaseAMergeVfx(targetCol, targetRow);
+		towerSystem.playMergeVfx(targetCol, targetRow);
 		// Phase 11 Task 11.2: stronger reveal punch + particle stand-in for
 		// tier-5/tier-6 merges so hybrid/ultimate landings feel earned.
 		towerSystem.playMergeRevealVfx(targetCol, targetRow, result.toTier);

@@ -37,7 +37,7 @@ export class WaveSystem {
 	private waveStartMs = 0;
 	/**
 	 * Timestamp (in `elapsedMs` clock) when the active boss unit first spawns.
-	 * Used by the Phase A fast-clear energy bonus. Reset to `undefined` on
+	 * Used by the 정식 모드 fast-clear energy bonus. Reset to `undefined` on
 	 * each new wave; set by `markBossSpawned()` (called from the unit-spawned
 	 * callback). See plan [F18].
 	 */
@@ -261,7 +261,7 @@ export class WaveSystem {
 			});
 		}
 
-		// Spawn units — use getWaveScaling so Phase A's endless waves keep
+		// Spawn units — use getWaveScaling so 정식 모드's endless waves keep
 		// ramping HP/speed past slot 10 instead of silently flat-lining on
 		// the 10-entry WAVE_SCALING table.
 		const waveScale = getWaveScaling(wave.slotIndex);

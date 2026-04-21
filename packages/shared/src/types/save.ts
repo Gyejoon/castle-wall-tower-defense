@@ -4,7 +4,7 @@ export const SAVE_STORAGE_KEY = 'gld-save-data';
 export interface OwnedTower {
 	defId: string;
 	level: number; // 1~MAX_TOWER_LEVEL
-	tier: number; // 1-6; Phase-A family/tier model (replaces legacy grade)
+	tier: number; // 1-6; family/tier model (replaces legacy grade)
 	acquiredAt: number;
 	awakening: 0 | 1 | 2 | 3;
 	duplicateCount: number;
@@ -24,7 +24,7 @@ export interface ProfileData {
 }
 
 export interface ProgressData {
-	/** Highest wave reached in any Phase A run. Scalar since Phase 7 (v8). */
+	/** Highest wave reached in any 정식 모드 run. Scalar since Phase 7 (v8). */
 	highestWave: number;
 	totalBattles: number;
 	tutorialCompleted: boolean;

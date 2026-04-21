@@ -31,7 +31,7 @@ const { EventBus, getEmits, resetBus } = vi.hoisted(() => {
 
 vi.mock('../src/EventBus', () => ({ EventBus }));
 
-import { PhaseAOrchestrator } from '../src/systems/PhaseAOrchestrator';
+import { CoreOrchestrator } from '../src/systems/CoreOrchestrator';
 
 interface FakeTower {
 	col: number;
@@ -54,8 +54,8 @@ function makeFakeTowerSystem() {
 	let nextId = 0;
 	return {
 		towers,
-		playPhaseASummonVfx: vi.fn(),
-		playPhaseAMergeVfx: vi.fn(),
+		playSummonVfx: vi.fn(),
+		playMergeVfx: vi.fn(),
 		playMergeRevealVfx: vi.fn(),
 		placeTower: vi.fn((col: number, row: number, defId: string) => {
 			const meta = TEST_FAMILY[defId] ?? { family: 'archer', tier: 1 };
@@ -124,10 +124,10 @@ beforeEach(() => {
 	resetBus();
 });
 
-describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
-	it('request-summon-tower → draw from pool → emit phase-a-summon-ready (towerId only)', () => {
+describe('CoreOrchestrator (merge stubbed)', () => {
+	it('request-summon-tower → draw from pool → emit summon-ready (towerId only)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -137,9 +137,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 		expect(orch.hasPendingSummon()).toBe(true);
 		expect(towerSystem.placeTower).not.toHaveBeenCalled();
-		const readyCall = getEmits().find(
-			([event]) => event === 'phase-a-summon-ready',
-		);
+		const readyCall = getEmits().find(([event]) => event === 'summon-ready');
 		expect(readyCall?.[1]).toEqual({ towerId: 'archer', source: 'summon' });
 
 		orch.destroy();
@@ -148,7 +146,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('completePlacement → placeTower + tower-summoned (no grade)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(40);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -172,7 +170,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('cancelPendingSummon clears pending state', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -188,7 +186,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		towerSystem.placeTower(0, 0, 'archer');
 		towerSystem.placeTower(1, 0, 'archer');
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -223,7 +221,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		towerSystem.placeTower(0, 0, 'archer');
 		towerSystem.placeTower(1, 0, 'nova_cannon');
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -242,7 +240,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('merge request → 빈 타일이면 invalid-tile 실패', () => {
 		const towerSystem = makeFakeTowerSystem();
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -260,7 +258,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('destroy() 후 emit이 더 이상 핸들러를 부르지 않는다', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -281,7 +279,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('에너지 부족이면 summon-failed:insufficient-energy emit + placeTower 미호출', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(0);
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -301,7 +299,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('에너지 충분 시 draw 성공 → completePlacement 후 spend + tower-summoned', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(40);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -321,7 +319,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('destroy()를 두 번 불러도 안전', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -331,7 +329,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('applyUpgrade → activeUpgrades 스택 증가 + upgrade-applied emit', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -347,7 +345,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('getModifier — dmg_up multiply: 1회=1.20, 2회=1.44', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -362,7 +360,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('effectiveSummonCost — Phase 4에서는 상수(할인 카드 제거됨)', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			summonCost: 8,
@@ -374,7 +372,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('applyUpgrade는 UPGRADE_MAX_STACKS(10)에서 포화', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -386,7 +384,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('알 수 없는 upgradeId는 무시된다', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 		});
@@ -398,7 +396,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('requestUpgradePick → upgrade-choice-ready 이벤트 { choices } 발행', () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -417,7 +415,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('request-upgrade-reroll (no adService) → 새 upgrade-choice-ready 발행', async () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -439,10 +437,10 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	});
 
 	// ── Phase 5: GachaSystem + summon queue ──────────────────────────
-	it('request-gacha-summon (T2, energy ≥ 40) → spend(40) + phase-a-summon-ready source=gacha', () => {
+	it('request-gacha-summon (T2, energy ≥ 40) → spend(40) + summon-ready source=gacha', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(100);
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -452,7 +450,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		EventBus.emit('request-gacha-summon', { targetTier: 2 });
 
 		expect(energy.spend).toHaveBeenCalledWith(40);
-		const ready = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+		const ready = getEmits().find(([e]) => e === 'summon-ready');
 		expect(ready?.[1]).toMatchObject({ source: 'gacha' });
 		expect((ready?.[1] as { towerId: string }).towerId).toBeDefined();
 		expect(energy.current).toBe(60);
@@ -461,7 +459,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('request-gacha-summon (T2, energy < 40) → gacha-insufficient-energy + no summon', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(30);
-		new PhaseAOrchestrator({
+		new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -474,16 +472,14 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 			([e]) => e === 'gacha-insufficient-energy',
 		);
 		expect(insufficient?.[1]).toEqual({ targetTier: 2, cost: 40, have: 30 });
-		expect(
-			getEmits().find(([e]) => e === 'phase-a-summon-ready'),
-		).toBeUndefined();
+		expect(getEmits().find(([e]) => e === 'summon-ready')).toBeUndefined();
 		expect(energy.current).toBe(30);
 	});
 
-	it('gacha during pending summon → queued (no second phase-a-summon-ready)', () => {
+	it('gacha during pending summon → queued (no second summon-ready)', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(200);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0.1,
@@ -495,14 +491,10 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 		expect(orch.hasPendingSummon()).toBe(true);
 
 		// Second: gacha request — should spend energy upfront but NOT emit
-		// a new phase-a-summon-ready yet.
-		const readyBefore = getEmits().filter(
-			([e]) => e === 'phase-a-summon-ready',
-		).length;
+		// a new summon-ready yet.
+		const readyBefore = getEmits().filter(([e]) => e === 'summon-ready').length;
 		EventBus.emit('request-gacha-summon', { targetTier: 2 });
-		const readyAfter = getEmits().filter(
-			([e]) => e === 'phase-a-summon-ready',
-		).length;
+		const readyAfter = getEmits().filter(([e]) => e === 'summon-ready').length;
 
 		expect(readyAfter).toBe(readyBefore);
 		expect(orch.getSummonQueueSize()).toBe(1);
@@ -512,7 +504,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('cancel pending gacha summon → energy refunded + next queue entry emitted', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(200);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0.1,
@@ -538,7 +530,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('place pending gacha summon → no refund, next queue entry emitted', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(200);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0.1,
@@ -563,7 +555,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('rapid-tap gacha T2 x3 with energy=40 → one spend, two insufficient, no queueing', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(40);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0.1,
@@ -592,7 +584,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	it('gacha oddsBonus consumed from getTierOddsBonus()', () => {
 		const towerSystem = makeFakeTowerSystem();
 		const energy = makeFakeEnergy(1000);
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0.5, // midpoint; without bonus would fail T2 (0.5 > 0.6? no — 0.5 < 0.6 = success)
@@ -608,7 +600,7 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 
 	it('request-upgrade-reroll (adService dismissed) → 재발행 안 함', async () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -633,10 +625,10 @@ describe('PhaseAOrchestrator (Phase 1 — merge stubbed)', () => {
 	});
 });
 
-describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]', () => {
+describe('CoreOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]', () => {
 	it('request-continue-run (adService rewarded) → emits game-resumed with livesRestored', async () => {
 		const towerSystem = makeFakeTowerSystem();
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -658,7 +650,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 	it('request-continue-run (adService skipped) → no game-resumed, counter rewound for retry', async () => {
 		const towerSystem = makeFakeTowerSystem();
 		const watchAd = vi.fn().mockResolvedValue('skipped');
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -683,10 +675,10 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 		orch.destroy();
 	});
 
-	it('request-continue-run beyond cap (PHASE_A_MAX_CONTINUES_PER_RUN) → rejected, no ad call', async () => {
+	it('request-continue-run beyond cap (MAX_CONTINUES_PER_RUN) → rejected, no ad call', async () => {
 		const towerSystem = makeFakeTowerSystem();
 		const watchAd = vi.fn().mockResolvedValue('rewarded');
-		const orch = new PhaseAOrchestrator({
+		const orch = new CoreOrchestrator({
 			towerSystem: towerSystem as never,
 			initialPool: ['archer'],
 			rng: () => 0,
@@ -726,14 +718,14 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			const towerSystem = makeFakeTowerSystem();
 			// Two-tower pool; rng 0 → index 0 (archer), rng 0.6 → index 1 (nova_cannon).
 			const rng = cyclingRng([0, 0.6]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer', 'nova_cannon'],
 				rng,
 			});
 
 			EventBus.emit('request-summon-tower');
-			const firstReady = getEmits().find(([e]) => e === 'phase-a-summon-ready');
+			const firstReady = getEmits().find(([e]) => e === 'summon-ready');
 			const firstTowerId = (firstReady?.[1] as { towerId: string }).towerId;
 
 			orch.cancelPendingSummon();
@@ -741,7 +733,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			// Second summon tap should re-emit the SAME tower id, not draw afresh.
 			EventBus.emit('request-summon-tower');
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const secondTowerId = (
 				readies[readies.length - 1][1] as {
 					towerId: string;
@@ -754,7 +746,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 		it('cancelled pool draw is consumed once — third summon draws fresh', () => {
 			const towerSystem = makeFakeTowerSystem();
 			const rng = cyclingRng([0, 0.6, 0.6, 0]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer', 'nova_cannon'],
 				rng,
@@ -762,7 +754,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			EventBus.emit('request-summon-tower'); // tap 1 — draws archer
 			const cancelledTowerId = (
-				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+				getEmits().find(([e]) => e === 'summon-ready') as [
 					string,
 					{ towerId: string },
 				]
@@ -778,7 +770,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			// [0, 0.6, ...], tap 3 consumes rng[1] = 0.6 → nova_cannon.
 			EventBus.emit('request-summon-tower');
 
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const thirdTowerId = (
 				readies[readies.length - 1][1] as { towerId: string }
 			).towerId;
@@ -791,7 +783,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			const towerSystem = makeFakeTowerSystem();
 			const energy = makeFakeEnergy(200);
 			const rng = cyclingRng([0, 0.6]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer'],
 				rng,
@@ -800,7 +792,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			EventBus.emit('request-gacha-summon', { targetTier: 2 });
 			const firstGachaId = (
-				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+				getEmits().find(([e]) => e === 'summon-ready') as [
 					string,
 					{ towerId: string },
 				]
@@ -811,7 +803,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			// A pool summon must draw from the pool regardless of the cached
 			// gacha roll — the two caches are independent.
 			EventBus.emit('request-summon-tower');
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const nextReady = readies[readies.length - 1][1] as {
 				towerId: string;
 				source: string;
@@ -826,7 +818,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			const towerSystem = makeFakeTowerSystem();
 			const energy = makeFakeEnergy(200);
 			const rng = cyclingRng([0, 0.6]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer'],
 				rng,
@@ -835,7 +827,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			EventBus.emit('request-gacha-summon', { targetTier: 2 });
 			const firstGachaId = (
-				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+				getEmits().find(([e]) => e === 'summon-ready') as [
 					string,
 					{ towerId: string },
 				]
@@ -847,7 +839,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			expect(orch.hasPendingSummon()).toBe(false);
 
 			EventBus.emit('request-gacha-summon', { targetTier: 2 });
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const secondReady = readies[readies.length - 1][1] as {
 				towerId: string;
 				source: string;
@@ -866,7 +858,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			// results; the cached tier 2 roll must not survive into the tier 3
 			// request.
 			const rng = cyclingRng([0, 0.95]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer'],
 				rng,
@@ -875,7 +867,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			EventBus.emit('request-gacha-summon', { targetTier: 2 });
 			const firstGachaId = (
-				getEmits().find(([e]) => e === 'phase-a-summon-ready') as [
+				getEmits().find(([e]) => e === 'summon-ready') as [
 					string,
 					{ towerId: string },
 				]
@@ -885,7 +877,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 
 			// Tier 3 request clears the cached tier 2 draw and rolls fresh.
 			EventBus.emit('request-gacha-summon', { targetTier: 3 });
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const secondReady = readies[readies.length - 1][1] as {
 				towerId: string;
 				source: string;
@@ -926,7 +918,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			);
 			const energy = makeFakeEnergy(100);
 			const rng = cyclingRng([0, 0.6]);
-			const orch = new PhaseAOrchestrator({
+			const orch = new CoreOrchestrator({
 				towerSystem: towerSystem as never,
 				initialPool: ['archer', 'nova_cannon'],
 				rng,
@@ -935,9 +927,10 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			});
 
 			EventBus.emit('request-summon-tower');
-			const firstReady = getEmits().find(
-				([e]) => e === 'phase-a-summon-ready',
-			) as [string, { towerId: string }];
+			const firstReady = getEmits().find(([e]) => e === 'summon-ready') as [
+				string,
+				{ towerId: string },
+			];
 			const drawnTowerId = firstReady[1].towerId;
 
 			// Placement fails → cached draw should survive via the
@@ -946,7 +939,7 @@ describe('PhaseAOrchestrator — Phase 10 Task 10.3 continue-run pipeline [F11]'
 			expect(orch.hasPendingSummon()).toBe(false);
 
 			EventBus.emit('request-summon-tower');
-			const readies = getEmits().filter(([e]) => e === 'phase-a-summon-ready');
+			const readies = getEmits().filter(([e]) => e === 'summon-ready');
 			const secondReady = readies[readies.length - 1][1] as {
 				towerId: string;
 				source: string;

@@ -10,7 +10,7 @@ interface PauseModalProps {
 }
 
 /**
- * Phase 8 Task 8.2 — basic pause overlay launched by the PhaseAHud ≡ button.
+ * Phase 8 Task 8.2 — basic pause overlay launched by the GameHud ≡ button.
  *
  * Scene-level pausing is driven by the existing `request-pause`/`request-resume`
  * contract that Game.ts already implements (onPause / onResume handlers).

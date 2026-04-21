@@ -32,7 +32,7 @@ function buildBuildablePoints({
 	return buildablePoints;
 }
 
-// === Phase A Long Map (9×18, U-turn double-back, random-summon + merge) ===
+// === 정식 모드 Main Long Map (9×18, U-turn double-back, random-summon + merge) ===
 //
 // 9 cols × 18 rows × 48px = 432×864 canvas (mobile viewport-friendly).
 // Spawn at top-left corner (0,0). Path zigzags DOWN the LEFT strip
@@ -149,19 +149,19 @@ function generateRightAscent(): Position[] {
 // Descent from (0,0) at row 0 down to row 16 on col 0.
 // Then bottom crossing: path continues from (0,16) → (0,17) → (8,17) → (8,16).
 // But descent ends at (0,16). We need to join to (0,17) first.
-const PHASE_A_LEFT = generateLeftDescent();
-const PHASE_A_BOTTOM = generateBottomTraverse();
-const PHASE_A_RIGHT = generateRightAscent();
+const MAIN_LEFT = generateLeftDescent();
+const MAIN_BOTTOM = generateBottomTraverse();
+const MAIN_RIGHT = generateRightAscent();
 
-const PHASE_A_LONG_PATH: Position[] = [
-	...PHASE_A_LEFT,
-	...PHASE_A_BOTTOM,
-	...PHASE_A_RIGHT,
+const MAIN_LONG_PATH: Position[] = [
+	...MAIN_LEFT,
+	...MAIN_BOTTOM,
+	...MAIN_RIGHT,
 ];
 
 // Only the corners that are neither path nor obstacle are explicitly blocked
 // so no tower can sit on the spawn/exit tile itself.
-const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
+const MAIN_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
 	{ x: 0, y: 0 }, // spawn
 	{ x: 4, y: 0 }, // exit
 	{ x: 8, y: 0 },
@@ -169,7 +169,7 @@ const PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
 
 // Fixed obstacles. Col 4 punctuations block the middle lane visually and
 // give the 9×18 grid a clear "two strips + crossing" read.
-const PHASE_A_LONG_OBSTACLES: Position[] = [
+const MAIN_LONG_OBSTACLES: Position[] = [
 	{ x: 4, y: 2 },
 	{ x: 4, y: 5 },
 	{ x: 4, y: 8 },
@@ -177,19 +177,19 @@ const PHASE_A_LONG_OBSTACLES: Position[] = [
 	{ x: 4, y: 14 },
 ];
 
-const PHASE_A_LONG_BUILDABLE_POINTS = buildBuildablePoints({
+const MAIN_LONG_BUILDABLE_POINTS = buildBuildablePoints({
 	width: 9,
 	height: 18,
-	path: PHASE_A_LONG_PATH,
-	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
-	obstacles: PHASE_A_LONG_OBSTACLES,
+	path: MAIN_LONG_PATH,
+	blockedPlacementPoints: MAIN_LONG_BLOCKED_PLACEMENT_POINTS,
+	obstacles: MAIN_LONG_OBSTACLES,
 });
 
 // Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional
 // allowed) so they read as background scenery and never compete with tower
 // placement tiles or block the U-turn path. Pure visual layer — no
 // pathfinding / buildable impact.
-const PHASE_A_LONG_DECORATIONS: MapLayout['decorations'] = [
+const MAIN_LONG_DECORATIONS: MapLayout['decorations'] = [
 	// Left-edge tree line — clustered toward top + mid + bottom
 	{ x: -1.2, y: 0.5, kind: 'tree', variant: 1 },
 	{ x: -1.5, y: 3.5, kind: 'tree', variant: 2 },
@@ -215,34 +215,34 @@ const PHASE_A_LONG_DECORATIONS: MapLayout['decorations'] = [
 	{ x: 9.1, y: 8.5, kind: 'rock', variant: 4 },
 ];
 
-export const PHASE_A_MAP_ID = 'phase_a_long' as const;
+export const MAIN_MAP_ID = 'main_long' as const;
 
-export const PHASE_A_LONG_MAP: MapLayout = {
-	id: PHASE_A_MAP_ID,
-	name: 'Phase A — 왕복 회랑',
+export const MAIN_LONG_MAP: MapLayout = {
+	id: MAIN_MAP_ID,
+	name: '왕복 회랑',
 	width: 9,
 	height: 18,
 	tileSize: 48,
-	path: PHASE_A_LONG_PATH,
-	blockedPlacementPoints: PHASE_A_LONG_BLOCKED_PLACEMENT_POINTS,
-	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
+	path: MAIN_LONG_PATH,
+	blockedPlacementPoints: MAIN_LONG_BLOCKED_PLACEMENT_POINTS,
+	buildablePoints: MAIN_LONG_BUILDABLE_POINTS,
 	spawnPoint: { x: 0, y: 0 },
 	exitPoint: { x: 4, y: 0 },
-	tilemapKey: 'tilemap-phase-a-long',
+	tilemapKey: 'tilemap-main-long',
 	tilesetKey: 'tileset',
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,
 	recommendedPower: 55,
-	obstacles: PHASE_A_LONG_OBSTACLES,
+	obstacles: MAIN_LONG_OBSTACLES,
 	castleWallTiles: [{ x: 4, y: 0 }],
-	decorations: PHASE_A_LONG_DECORATIONS,
+	decorations: MAIN_LONG_DECORATIONS,
 };
 
 export const MAP_REGISTRY: Record<string, MapLayout> = {
-	phase_a_long: PHASE_A_LONG_MAP,
+	main_long: MAIN_LONG_MAP,
 };
 
-export const DEFAULT_MAP_ID = PHASE_A_MAP_ID;
+export const DEFAULT_MAP_ID = MAIN_MAP_ID;
 
 export function getMapById(mapId: string): MapLayout {
 	const map = MAP_REGISTRY[mapId];

@@ -1,11 +1,11 @@
 /**
- * Energy cost to fire one summon in Phase A. Matches T1 tower cost
+ * Energy cost to fire one summon in 정식 모드. Matches T1 tower cost
  * in the new family/tier model so draw→place is a 1-to-1 swap.
  */
-export const PHASE_A_SUMMON_COST = 20;
+export const SUMMON_COST = 20;
 
 /**
- * Phase A summon pool. Tier-1 towers only, one per base family (archer,
+ * 정식 모드 summon pool. Tier-1 towers only, one per base family (archer,
  * siege, frost, stun). Uniform draw — replacement is the merge system.
  */
 export interface SummonPoolEntry {
@@ -47,10 +47,10 @@ export function createSummonPool(
 	};
 }
 
-/** Refund when selling a freshly-summoned tower. Tier-based — Phase A pays
+/** Refund when selling a freshly-summoned tower. Tier-based — summon pays
  *  back half of whatever the caller wants to denote as base cost. */
-export function getPhaseARefund(): number {
-	return PHASE_A_SUMMON_COST / 2;
+export function getSummonRefund(): number {
+	return SUMMON_COST / 2;
 }
 
 export function drawRandomSummon(

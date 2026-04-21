@@ -63,7 +63,7 @@ describe('Grid constants', () => {
 });
 
 describe('Tower definitions', () => {
-	it('has 19 towers in the Phase A family/tier model', () => {
+	it('has 19 towers in the family/tier model', () => {
 		expect(TOWER_DEFS).toHaveLength(19);
 		expect(ALL_TOWERS).toHaveLength(19);
 	});

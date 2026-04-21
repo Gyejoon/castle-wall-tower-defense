@@ -51,7 +51,7 @@ export type TowerPlacementResult =
  * Phase 9: run-agnostic global modifiers applied on top of the per-run
  * roguelike upgrade stack. `atkPct` is fed in from the web-shell
  * `metaProgressStore` at Game.create() via the scene registry (see
- * PhaseA meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
+ * 정식 모드 meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
  * now — future modifiers (rangePct, critChance, etc.) will extend this.
  */
 export interface GlobalModifiers {
@@ -183,7 +183,7 @@ export class TowerSystem {
 	}
 
 	/** Inject the per-family damage multiplier lookup. Game.ts wires this to
-	 *  `PhaseAOrchestrator.getFamilyDamageMultiplier` so energy-purchased
+	 *  `CoreOrchestrator.getFamilyDamageMultiplier` so energy-purchased
 	 *  family upgrades compound on top of roguelike `dmg_up` and the meta
 	 *  `atkPct` buff. `towerId` lets the orchestrator distinguish hybrid_ab
 	 *  (archer+siege feeders) from hybrid_cd (frost+stun). */
@@ -1230,7 +1230,7 @@ export class TowerSystem {
 	/**
 	 * Returns a merge-friendly locator for the tower at (col,row), or null if
 	 * the tile is empty. Shape matches `MergeSystem.TowerLocator`
-	 * (family+tier+instanceId) so the Phase A orchestrator can feed the value
+	 * (family+tier+instanceId) so the core orchestrator can feed the value
 	 * directly into `MergeSystem.tryMerge`. `x`/`y` carry the grid position
 	 * of the tower so the caller can re-spawn at the same tile after a merge.
 	 */
@@ -1268,12 +1268,12 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Phase A: pop-in scale punch on a freshly summoned tower. Kills the
+	 * Pop-in scale punch on a freshly summoned tower. Kills the
 	 * continuous idle tween for the punch, then restarts it on `onComplete`
 	 * so the tower keeps breathing afterwards (bug: previously the idle
 	 * tween never returned → towers went stiff after every summon).
 	 */
-	playPhaseASummonVfx(col: number, row: number): void {
+	playSummonVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const instance = entry.instance;
@@ -1301,13 +1301,13 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
+	 * Stronger scale punch + gold tint flash on the kept tower after
 	 * a successful merge. Tint is cleared via a follow-up tween that targets
 	 * a counter and applies clearTint in onComplete, so cleanup is bound to
 	 * the scene's tween manager (no orphan setTimeout / setInterval). Restarts
 	 * the idle breathing tween after the punch so the tower doesn't go stiff.
 	 */
-	playPhaseAMergeVfx(col: number, row: number): void {
+	playMergeVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const instance = entry.instance;
@@ -1352,7 +1352,7 @@ export class TowerSystem {
 	 * of expanding ring graphics (used in lieu of a particle emitter until
 	 * `gacha-reveal-*` is wired as a particle texture in phase-12).
 	 *
-	 * Tracked separately from the smaller `playPhaseAMergeVfx` (which already
+	 * Tracked separately from the smaller `playMergeVfx` (which already
 	 * handles the per-merge gold-tint flash for every tier). Defensive about
 	 * scene API surface so unit tests with stub scenes don't have to mock the
 	 * camera manager.

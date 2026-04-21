@@ -4,10 +4,10 @@ import { useGameStore } from '../../../stores/gameStore';
 import { Button } from '../../ds';
 
 /**
- * Phase A lobby home — "Option C · Cinematic keyart" redesign.
+ * 정식 모드 lobby home — "Option C · Cinematic keyart" redesign.
  *
  * Visual language transplanted from the Claude Design prototype
- * (Home Prototype C). The game is Phase A only, so the prototype's
+ * (Home Prototype C). The game is 정식 모드 only, so the prototype's
  * left rail (world progress / event), right rail (missions / shop / mail),
  * and deck preview have been dropped. Kept:
  *   - fullscreen cinematic keyart (moon, stars, castle silhouette,
@@ -345,7 +345,7 @@ function Star({ filled }: { filled: boolean }) {
 }
 
 export function HomeTab() {
-	const startPhaseA = useGameStore((s) => s.startPhaseA);
+	const startGame = useGameStore((s) => s.startGame);
 
 	return (
 		<div
@@ -405,14 +405,14 @@ export function HomeTab() {
 								</div>
 								<div className="mt-[4px]">
 									<span className="font-pixel text-[10px] text-text-secondary">
-										Phase A · 9×18 맵 · 소환 → 합성 → 보스
+										정식 모드 · 9×18 맵 · 소환 → 합성 → 보스
 									</span>
 								</div>
 							</div>
 							<Button
 								variant="gold"
 								size="lg"
-								onClick={startPhaseA}
+								onClick={startGame}
 								aria-label="전투 시작"
 								className="pulse-cta flex-shrink-0"
 							>

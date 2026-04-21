@@ -46,6 +46,7 @@ export function Button({
 	style,
 	children,
 	disabled,
+	type,
 	onMouseDown,
 	onMouseUp,
 	onMouseLeave,
@@ -78,6 +79,7 @@ export function Button({
 
 	return (
 		<button
+			type={type ?? 'button'}
 			className={cn(
 				'font-pixel font-bold border-2 text-center select-none',
 				'transition-[transform,box-shadow,background-color,opacity] duration-[120ms] ease-[cubic-bezier(0.2,0,0.2,1)]',

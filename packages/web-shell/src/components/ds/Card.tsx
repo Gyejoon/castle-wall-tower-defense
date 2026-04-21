@@ -25,10 +25,11 @@ const intentGlow: Record<CardIntent, string> = {
 };
 
 /** Framed variant gradient — outer metallic band tinted per intent so accent/danger
- *  framed cards read differently from default gold. */
+ *  framed cards read differently from default gold. Accent uses an accent-dominant
+ *  palette so gacha/upgrade cards read as "focused attention" rather than neutral. */
 const framedGradient: Record<CardIntent, string> = {
 	default: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
-	accent: `linear-gradient(180deg, ${core.gold} 0%, ${core.accent} 50%, ${core.border} 100%)`,
+	accent: `linear-gradient(180deg, ${core.accent} 0%, ${core.gold} 50%, ${core.accent} 100%)`,
 	danger: `linear-gradient(180deg, ${tier[6].bright} 0%, ${core.danger} 50%, ${tier[4].dark} 100%)`,
 };
 

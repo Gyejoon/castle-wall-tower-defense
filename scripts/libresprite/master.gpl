@@ -1,0 +1,87 @@
+GIMP Palette
+Name: Grid Line Defense Master
+Columns: 10
+#
+# Auto-generated from scripts/generate-assets/shared.ts PALETTE
+# Total unique colors: 80
+#
+ 90 138  48	gridDark
+122 182  72	gridLight
+ 74 122  32	gridLine
+142 200  80	edgeHighlight
+184 149 106	dirtPath
+139 106  64	dirtDark
+140 140 140	stone
+ 90  90  90	stoneDark
+176 176 176	stoneLight
+139  94  60	wood
+ 90  58  30	woodDark
+200 144  90	woodLight
+168 222 240	ice
+ 91 200 232	iceGlow
+ 64  96 224	magicBlue
+224 176  32	magicGold
+224 112  32	fireOrange
+192  48  32	fireRed
+200 160  74	archer
+139  69  19	plasma
+240 224 128	shield
+ 74 122  42	scoutDrone
+122 122 106	battleRobot
+140 140 122	heavyWalker
+ 48  32  64	stealthDrone
+192  64  32	dragon
+240 208  96	gold
+255 255 254	white
+148 161 178	gray
+ 42  31  10	shadow
+ 90  58  26	leatherWorn
+ 74  68  56	ironDark
+ 74 128  40	orcSkin
+216 200 152	bone
+106  58  32	rust
+106  26  16	bloodStain
+ 26  14  20	outline
+ 58 144 176	tierRareDark
+192  64 208	tierHeroic
+128  32 160	tierHeroicDark
+224  64  64	tierLegendary
+160  32  32	tierLegendaryDark
+255 232 154	tierGodBright
+192 160  48	tierGodDark
+ 61 122  32	moss
+212 184 150	sand
+184 154 112	sandDark
+128 224 160	mushGlow
+160 104  48	leafBrown
+192 128  64	leafOrange
+ 30  90  16	foliageDark
+ 45 122  30	foliageMid
+ 74 158  48	foliageLight
+106 190  72	foliageBright
+138 218  96	foliageTop
+ 74 142  42	grassRich
+ 42 106  20	grassShadow
+106 184  64	grassHighlight
+231  76  60	elementFire
+255 107  74	elementFireGlow
+ 52 152 219	elementWater
+ 93 173 226	elementWaterGlow
+243 156  18	elementLightning
+247 183  49	elementLightningGlow
+ 98 101 103	castleStone.dark
+113 125 126	castleStone.mid
+138 150 152	castleStone.light
+ 60  79  81	castleStone.joint
+ 40  61  64	castleStone.shadow
+118 134 138	castleStone.merlon
+ 61  90  62	castleStone.moss
+ 13  17  23	castleStone.gate
+ 58  42  26	spawnHut.woodDark
+ 42  31  21	spawnHut.woodMid
+ 74  56  40	spawnHut.woodLight
+138 122  80	spawnHut.thatch
+200 192 176	spawnHut.bone
+ 10  10  10	spawnHut.door
+ 26  18  16	spawnHut.shadow
+ 90  74  58	spawnHut.flagPole

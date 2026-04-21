@@ -1,11 +1,6 @@
-import { core } from '@gld/shared';
 import { uiMobileArt } from '../../assets/uiMobileArt';
 import { type LobbyTab, useGameStore } from '../../stores/gameStore';
 import { cn } from '../../utils/cn';
-
-// core.gold + alpha hex (CSS Color Level 4 8-digit hex)
-const GOLD_GLOW_OUTER = `${core.gold}26`; // 15% alpha
-const GOLD_GLOW_INNER = `${core.gold}1a`; // 10% alpha
 
 interface TabDef {
 	id: LobbyTab;
@@ -14,7 +9,7 @@ interface TabDef {
 	inactiveIcon: string;
 }
 
-// 4탭 구성: 전쟁탁자 / 마당(elevated) / 랭킹 / 설정
+// 4탭 구성: 전쟁탁자 / 마당 / 랭킹 / 설정
 // 랭킹 탭은 별도 active/inactive 에셋이 없어 trophyIcon 단일 에셋을 재사용하고
 // 활성 상태는 opacity·색상 전환으로 처리한다.
 // TODO(assets): ranking-tab-icon-{active,inactive}.webp 전용 스프라이트 제작 후 교체.
@@ -53,70 +48,13 @@ export function BottomTabBar({ disabled = false }: { disabled?: boolean }) {
 		<div
 			role="tablist"
 			aria-label="로비 탭"
-			className="relative flex items-end bg-panel border-t-2 border-border"
+			className="relative flex items-stretch bg-panel border-t-2 border-border"
 			style={{
 				paddingBottom: 'env(safe-area-inset-bottom, 0px)',
 			}}
 		>
 			{tabs.map((tab) => {
 				const isActive = lobbyTab === tab.id;
-				const isCenter = tab.id === 'home';
-
-				if (isCenter) {
-					return (
-						<button
-							type="button"
-							key={tab.id}
-							role="tab"
-							aria-selected={isActive}
-							aria-label={tab.label}
-							aria-controls={`tabpanel-${tab.id}`}
-							disabled={disabled}
-							onClick={() => !disabled && setLobbyTab(tab.id)}
-							className={cn(
-								'relative z-10 flex-1 flex flex-col items-center -mt-3 mx-1 pt-3 pb-2 border-2 touch-manipulation transition-all duration-200',
-								disabled
-									? 'cursor-not-allowed opacity-50'
-									: 'cursor-pointer active:scale-95',
-								isActive ? 'border-gold bg-panel' : 'border-border/50 bg-panel',
-							)}
-							style={
-								isActive
-									? {
-											boxShadow: `0 -2px 12px ${GOLD_GLOW_OUTER}, inset 0 1px 0 ${GOLD_GLOW_INNER}`,
-										}
-									: undefined
-							}
-						>
-							{isActive && (
-								<div
-									className="absolute -top-[2px] left-3 right-3 h-[2px]"
-									style={{
-										background:
-											'linear-gradient(90deg, transparent, var(--color-gold), transparent)',
-									}}
-								/>
-							)}
-							<img
-								src={isActive ? tab.activeIcon : tab.inactiveIcon}
-								alt=""
-								width={28}
-								height={28}
-								className="[image-rendering:pixelated]"
-								aria-hidden="true"
-							/>
-							<span
-								className={cn(
-									'font-pixel text-[11px] mt-1 transition-colors duration-150',
-									isActive ? 'text-gold' : 'text-text-secondary',
-								)}
-							>
-								{tab.label}
-							</span>
-						</button>
-					);
-				}
-
 				const isLeaderboard = tab.id === 'leaderboard';
 				return (
 					<button

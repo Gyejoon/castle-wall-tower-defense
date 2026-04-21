@@ -1,10 +1,3 @@
-/**
- * Design tokens barrel — single entry point for the `@gld/shared/design` API.
- *
- * Import the whole thing:      `import { tokens } from '@gld/shared';`
- * Or named groups:              `import { palette, spacing } from '@gld/shared';`
- */
-
 export type { ElevationKey, OverlayDimKey } from './elevation';
 export { elevation, overlayDim } from './elevation';
 export type { DurationKey, EasingKey } from './motion';
@@ -28,7 +21,6 @@ import { spacing } from './spacing';
 import { fontFamily, typography } from './typography';
 import { zIndex } from './zIndex';
 
-/** Aggregate object — convenient for passing the full token set into helpers/stories */
 export const tokens = {
 	palette,
 	typography,

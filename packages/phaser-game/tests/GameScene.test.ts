@@ -52,9 +52,91 @@ vi.mock('../src/audio/SoundGenerator', () => ({
 }));
 
 import { GameScene } from '../src/scenes/Game';
+import { BossContextBuilder } from '../src/scenes/runtime/BossContextBuilder';
+import { CombatMediator } from '../src/scenes/runtime/CombatMediator';
+import { GameStateManager } from '../src/scenes/runtime/GameStateManager';
 
 function createScene(): GameScene & Record<string, unknown> {
 	return new GameScene() as GameScene & Record<string, unknown>;
+}
+
+// Game.ts와 동일한 onEndGame/onExitSideEffect 계약으로 GameStateManager를 세팅한다.
+function installRuntimeControllers(
+	scene: GameScene & Record<string, unknown>,
+	opts: {
+		initialHp?: number;
+		slotIndex: number;
+		bossBehaviors?: Map<string, unknown>;
+	} = { slotIndex: 0 },
+): GameStateManager {
+	const state = new GameStateManager({
+		initialHp: opts.initialHp,
+		emit: EventBus.emit as never,
+		onEndGame: (reason) => {
+			const rangeOverlay = scene.rangeOverlay as {
+				getRangeOverlayGraphics: () => { clear: () => void };
+			};
+			rangeOverlay?.getRangeOverlayGraphics().clear();
+			const towers = scene.playerTowers as {
+				getTowers: () => unknown[];
+				destroy: () => void;
+			};
+			const towersPlaced = towers.getTowers().length;
+			towers.destroy();
+			const waves = scene.playerWaves as {
+				getMaxWaves: () => number;
+				getElapsedMs: () => number;
+			};
+			const finalSlot =
+				(state.getCurrentSlotDef()?.slotIndex as number | undefined) ?? 0;
+			EventBus.emit('game-over', {
+				result: reason.result,
+				stats: {
+					wavesCleared:
+						reason.result === 'victory'
+							? finalSlot
+							: Math.max(0, finalSlot - 1),
+					totalWaves: waves.getMaxWaves(),
+					towersPlaced,
+					timeSurvivedSec: Math.round(waves.getElapsedMs() / 1000),
+					goldEarned: state.getGoldEarned(),
+					remainingHp: Math.max(0, state.getHp()),
+					initialHp: state.getInitialHp(),
+				},
+			});
+		},
+		onExitSideEffect: (remainingHp) => {
+			const castleWall = scene.castleWall as
+				| { update: (n: number) => void; onHit: () => void }
+				| undefined;
+			EventBus.emit('base-hp-changed', {
+				hp: remainingHp,
+				maxHp: state.getInitialHp(),
+				laneIndex: 0,
+			});
+			castleWall?.update(remainingHp);
+			castleWall?.onHit();
+		},
+	});
+	state.setCurrentSlotDef({
+		slotIndex: opts.slotIndex,
+	} as never);
+	scene.state = state;
+	scene.combat = new CombatMediator({
+		towers: scene.playerTowers as never,
+		units: scene.playerUnits as never,
+		damageNumbers: scene.damageNumbers as never,
+		bossBehaviors: (opts.bossBehaviors ?? new Map()) as never,
+		orchestrator: undefined,
+		isGameMap: false,
+	});
+	scene.bossCtx = new BossContextBuilder({
+		units: scene.playerUnits as never,
+		towers: scene.playerTowers as never,
+		getSceneTime: () => state.getScaledTime(),
+	});
+	scene.bossBehaviors = opts.bossBehaviors ?? new Map();
+	return state;
 }
 
 describe('GameScene', () => {
@@ -90,8 +172,8 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.fieldRenderer = { destroy: vi.fn() };
+		scene.rangeOverlay = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],
@@ -135,32 +217,42 @@ describe('GameScene', () => {
 		);
 	});
 
-	it('clears selected tower state after a successful placement', () => {
-		const scene = createScene();
-		scene.energySystem = {
-			canAfford: vi.fn(() => true),
-			spend: vi.fn(),
-		};
-		scene.playerDeck = {
-			getCardByTowerId: vi.fn(() => ({ energyCost: 3 })),
-		};
-		scene.playerWaves = { getPhase: vi.fn(() => 'combat') };
-		scene.playerTowers = {
+	it('clears selected tower state after a successful placement', async () => {
+		const { PlacementCoordinator } = await import(
+			'../src/scenes/input/PlacementCoordinator'
+		);
+		const energy = { canAfford: vi.fn(() => true), spend: vi.fn() };
+		const deck = { getCardByTowerId: vi.fn(() => ({ energyCost: 3 })) };
+		const waves = { getPhase: vi.fn(() => 'combat') };
+		const towers = {
 			placeTower: vi.fn(() => ({ success: true })),
 			getTowers: vi.fn(() => [{}, {}]),
 		};
-		scene.playerUnits = { setPaths: vi.fn() };
-		scene.currentMap = { paths: [[{ x: 0, y: 0 }]] };
-		scene.renderPath = vi.fn();
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.clearRangeOverlay = vi.fn();
-		scene.selectedTowerId = 'archer';
+		const rangeOverlay = {
+			clearSelection: vi.fn(),
+			clearRangeOverlay: vi.fn(),
+		};
+		const selected = { id: 'archer' as string | null };
+		const coord = new PlacementCoordinator({
+			towers: towers as never,
+			energy: energy as never,
+			deck: deck as never,
+			orchestrator: undefined,
+			waves: waves as never,
+			emit: EventBus.emit as never,
+			onBeforeSuccessEmit: () => {
+				selected.id = null;
+				rangeOverlay.clearSelection();
+				rangeOverlay.clearRangeOverlay();
+			},
+			onSuccess: vi.fn(),
+		});
 
-		scene.handlePlaceTower(1, 2, 'archer');
+		coord.place(1, 2, 'archer');
 
-		expect(scene.selectedTowerId).toBeNull();
-		expect(scene.selectionGraphics.clear).toHaveBeenCalledOnce();
-		expect(scene.clearRangeOverlay).toHaveBeenCalledOnce();
+		expect(selected.id).toBeNull();
+		expect(rangeOverlay.clearSelection).toHaveBeenCalledOnce();
+		expect(rangeOverlay.clearRangeOverlay).toHaveBeenCalledOnce();
 		expect(EventBus.emit).toHaveBeenCalledWith('tower-deselected');
 	});
 
@@ -168,8 +260,9 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
-		scene.currentSlotDef = { slotIndex: 20 };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
 		scene.currentMap = { id: 'forest_gate' };
 		scene.damageNumbers = {
 			update: vi.fn(),
@@ -200,6 +293,7 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 0),
 		};
+		installRuntimeControllers(scene, { initialHp: 20, slotIndex: 20 });
 
 		scene.update(0, 16);
 
@@ -221,10 +315,10 @@ describe('GameScene', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
-		scene.currentSlotDef = { slotIndex: 5 };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
 		scene.currentMap = { id: 'forest_gate' };
-		scene.playerHp = 1; // one more hit defeats
 		scene.castleWall = { update: vi.fn(), onHit: vi.fn(), destroy: vi.fn() };
 		scene.spawnHut = { setActive: vi.fn(), destroy: vi.fn() };
 		scene.damageNumbers = {
@@ -256,6 +350,11 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 1),
 		};
+		const state = installRuntimeControllers(scene, {
+			initialHp: 20,
+			slotIndex: 5,
+		});
+		state.setHp(1); // one more hit defeats
 
 		scene.update(0, 16);
 
@@ -273,11 +372,77 @@ describe('GameScene', () => {
 		});
 	});
 
+	it('accumulates bounty into goldEarned when a tower kills a unit', () => {
+		const scene = createScene();
+		scene.hudBuyBtn = { setAlpha: vi.fn() };
+		scene.hudRolledInfo = { setText: vi.fn() };
+		scene.rangeOverlay = {
+			getRangeOverlayGraphics: vi.fn(() => ({ clear: vi.fn() })),
+		};
+		scene.currentMap = { id: 'forest_gate' };
+		scene.damageNumbers = {
+			update: vi.fn(),
+			show: vi.fn(),
+			showMiss: vi.fn(),
+			destroy: vi.fn(),
+			setEnabled: vi.fn(),
+		};
+		scene.playerWaves = {
+			update: vi.fn(),
+			getPhase: vi.fn(() => 'running'),
+			getElapsedMs: vi.fn(() => 0),
+			getWaveRemainingSec: vi.fn(() => -1),
+			getMaxWaves: vi.fn(() => 10),
+		};
+		// Tower emits one damage event against unit u1 that kills it with bounty=42.
+		scene.playerTowers = {
+			update: vi.fn(() => [{ unitId: 'u1', damage: 99 }]),
+			getTowers: vi.fn(() => []),
+			destroy: vi.fn(),
+		};
+		scene.playerUnits = {
+			getUnitPositions: vi.fn(() => [
+				{
+					instanceId: 'u1',
+					x: 0,
+					y: 0,
+					hp: 1,
+					element: 'neutral' as const,
+				},
+			]),
+			getUnitElement: vi.fn(() => 'neutral'),
+			getUnitWorldPos: vi.fn(() => ({ x: 0, y: 0 })),
+			applyDamage: vi.fn(() => ({
+				outcome: 'hit',
+				killed: true,
+				bounty: 42,
+				unitDefId: 'grunt',
+				countsTowardClear: true,
+				source: 'base',
+				isBoss: false,
+				actualDamage: 99,
+			})),
+			applySlow: vi.fn(),
+			applyStun: vi.fn(),
+			update: vi.fn(() => ({ reachedExit: [] })),
+			hasActiveUnits: vi.fn(() => false),
+			hasQueuedUnits: vi.fn(() => false),
+			getActiveCount: vi.fn(() => 0),
+		};
+		const state = installRuntimeControllers(scene, {
+			initialHp: 20,
+			slotIndex: 3,
+		});
+
+		scene.update(0, 16);
+
+		expect(state.getGoldEarned()).toBe(42);
+	});
+
 	it('never emits opponent-state or kill-transfer during the PVE combat loop', () => {
 		const scene = createScene();
 		scene.hudBuyBtn = { setAlpha: vi.fn() };
 		scene.hudRolledInfo = { setText: vi.fn() };
-		scene.currentSlotDef = { slotIndex: 7 };
 		scene.damageNumbers = {
 			update: vi.fn(),
 			show: vi.fn(),
@@ -301,11 +466,13 @@ describe('GameScene', () => {
 			getUnitElement: vi.fn(() => 'neutral'),
 			getUnitWorldPos: vi.fn(() => ({ x: 100, y: 200 })),
 			applyDamage: vi.fn(() => ({
+				outcome: 'hit',
 				killed: true,
 				unitDefId: 'scout_drone',
 				bounty: 3,
 				countsTowardClear: true,
 				source: 'base',
+				actualDamage: 99,
 			})),
 			applySlow: vi.fn(),
 			update: vi.fn(() => ({ reachedExit: [] })),
@@ -313,6 +480,7 @@ describe('GameScene', () => {
 			hasQueuedUnits: vi.fn(() => false),
 			getActiveCount: vi.fn(() => 1),
 		};
+		installRuntimeControllers(scene, { slotIndex: 7 });
 
 		scene.update(0, 16);
 
@@ -345,8 +513,8 @@ describe('GameScene', () => {
 		scene.playerUnits = { destroy: vi.fn() };
 		scene.playerWaves = { destroy: vi.fn() };
 		scene.playerDeck = { reset: vi.fn() };
-		scene.selectionGraphics = { clear: vi.fn() };
-		scene.rangeOverlayGraphics = { clear: vi.fn() };
+		scene.fieldRenderer = { destroy: vi.fn() };
+		scene.rangeOverlay = { destroy: vi.fn() };
 		scene.optionalAssetManifest = {
 			generated: '2026-04-02T00:00:00.000Z',
 			assets: [],

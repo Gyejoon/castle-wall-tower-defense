@@ -7,9 +7,7 @@ import { Button } from '../ds/Button';
 import { Card } from '../ds/Card';
 
 export interface SelectedTower {
-	/** Pseudo instance id: `${col},${row}` — the Phaser scene currently emits
-	 *  tower-selected keyed by grid coords, not instance UUID. Phase 9 can
-	 *  upgrade this to a real instanceId when tower-selected carries it. */
+	// 현재는 `${col},${row}` 형식의 의사 ID. 씬이 진짜 instanceId를 실으면 그때 교체.
 	instanceId: string;
 	col: number;
 	row: number;
@@ -28,18 +26,7 @@ type SheetMode = 'idle' | 'merge-source';
 
 type TierBadgeIntent = `tier-${1 | 2 | 3 | 4 | 5 | 6}`;
 
-/**
- * Phase 8 Task 8.1 — floating action sheet for a selected tower.
- * Uses ds/ primitives (Button, Badge, Card) for consistent look with overlays.
- *
- * Events:
- *   - 합성  → `enter-merge-mode` { sourceId }
- *   - 이동  → `request-enter-move-mode` { fromCol, fromRow }
- *   - 판매  → `request-sell-tower` { col, row }
- *   - ✕    → onDeselect
- *
- * [F21] mode resets whenever the selected tower's instanceId changes.
- */
+// 선택된 타워 변경 시 mode는 항상 idle로 리셋된다.
 export function TowerActionSheet({
 	selectedTower,
 	onDeselect,

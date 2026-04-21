@@ -1,6 +1,4 @@
-/**
- * Backwards-compat adapter — new code should import `Card` or `Panel` from `components/ds`.
- */
+// 하위 호환 어댑터. 신규 코드는 components/ds의 Card/Panel 직접 사용.
 import type { HTMLAttributes } from 'react';
 import { Card } from '../ds/Card';
 

@@ -1,5 +1,4 @@
 import {
-	type ActiveUnit,
 	type AssetManifest,
 	ENERGY_PER_BOSS_FAST_CLEAR,
 	ENERGY_PER_BOSS_KILL,
@@ -7,7 +6,6 @@ import {
 	ENERGY_PER_WAVE_CLEAR,
 	FAST_CLEAR_THRESHOLD_MS,
 	generateWaves,
-	getAllPathCells,
 	getMapById,
 	getMapPaths,
 	getSpawnExitPairs,
@@ -31,40 +29,7 @@ import {
 } from '../assets/assetManifest';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { EventBus } from '../EventBus';
-import {
-	DIRT_SEAMLESS_KEY,
-	GRASS_PLATFORM_FRAMES,
-	PLATFORM_LIFT,
-	TINY_SWORDS_DECORATION_BY_KEY,
-	TINY_SWORDS_PRIMARY_TILESET,
-	type TinySwordsDecorationKind,
-} from '../fieldAssets';
 
-/** Per-map theme palette for ground tiles, path overlay, and decorations */
-interface MapTheme {
-	groundTint: number;
-	decorTint: number;
-	pathColor: number;
-	pathLineColor: number;
-}
-
-const MAP_THEMES: Record<string, MapTheme> = {
-	// Phase 7.5: warm sandstone palette tuned for the 9×18 정식 모드 board.
-	// Path/grid lines run at very low alpha so towers and obstacles stay
-	// the visual focus instead of tile chrome.
-	main_long: {
-		groundTint: 0xc8b89a,
-		decorTint: 0xc8b89a,
-		pathColor: 0x7a6040,
-		pathLineColor: 0xb8956a,
-	},
-};
-
-function getMapTheme(mapId: string): MapTheme {
-	return MAP_THEMES[mapId] ?? MAP_THEMES.main_long;
-}
-
-import { getPlacementGuardFailure } from '../placementRules';
 import { createBossBehavior } from '../systems/boss-ai/registry';
 import type { BossBehavior } from '../systems/boss-ai/types';
 import { CastleWallSystem } from '../systems/CastleWallSystem';
@@ -83,6 +48,13 @@ import { TowerSystem } from '../systems/TowerSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UnitSystem } from '../systems/UnitSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { InputController } from './input/InputController';
+import { PlacementCoordinator } from './input/PlacementCoordinator';
+import { FieldRenderer } from './render/FieldRenderer';
+import { RangeOverlayController } from './render/RangeOverlayController';
+import { BossContextBuilder } from './runtime/BossContextBuilder';
+import { CombatMediator } from './runtime/CombatMediator';
+import { GameStateManager } from './runtime/GameStateManager';
 
 // 정식 모드 summon pool (Task 1.4 spec): tier-1 only, one per base family
 // (archer, siege, frost, stun). Higher tiers are reached through merge and
@@ -112,20 +84,17 @@ export class GameScene extends Phaser.Scene {
 	private castleWall!: CastleWallSystem;
 	private spawnHut!: SpawnHutSystem;
 	private damageNumbers!: DamageNumberSystem;
-	private playerHp = INITIAL_PLAYER_HP;
 	private energySystem = new EnergySystem();
-	private selectedTowerId: string | null = null;
-	private gameOver = false;
-	private goldEarned = 0;
 	private isGameMap = false;
-	private currentWaveSlot = 1;
 	private lastTimerTickSec = -1;
-	private currentSlotDef!: WaveDef;
 
-	private hoverGraphics!: Phaser.GameObjects.Graphics;
-	private selectionGraphics!: Phaser.GameObjects.Graphics;
-	private rangeOverlayGraphics!: Phaser.GameObjects.Graphics;
-	private pathGraphics?: Phaser.GameObjects.Graphics;
+	private state!: GameStateManager;
+	private combat!: CombatMediator;
+	private bossCtx!: BossContextBuilder;
+	private fieldRenderer!: FieldRenderer;
+	private rangeOverlay!: RangeOverlayController;
+	private inputController!: InputController;
+	private placement!: PlacementCoordinator;
 
 	private onSelectTower!: (data: { towerDefId: string }) => void;
 	private onClearTowerSelection!: () => void;
@@ -140,7 +109,6 @@ export class GameScene extends Phaser.Scene {
 		fromCol: number;
 		fromRow: number;
 	}) => void;
-	private movePending: { fromCol: number; fromRow: number } | null = null;
 	private onPause!: () => void;
 	private onResume!: () => void;
 	private onWaveStartedLifecycle!: (data: {
@@ -157,8 +125,6 @@ export class GameScene extends Phaser.Scene {
 		startAtSec: number;
 	}) => void;
 	private bossPrefetched = false;
-	private speedMultiplier: 1 | 2 | 3 = 1;
-	private scaledGameTime = 0;
 	private onWaveCompleted!: (data: {
 		wave: number;
 		totalWaves: number;
@@ -169,13 +135,6 @@ export class GameScene extends Phaser.Scene {
 	}) => void;
 	private onSetSpeed!: (data: { multiplier: 1 | 2 | 3 }) => void;
 
-	private decorationTiles: Array<{
-		x: number;
-		y: number;
-		assetKey: string;
-		kind: TinySwordsDecorationKind;
-		variant: string;
-	}> | null = null;
 	private optionalAssetManifest: AssetManifest = getEmptyAssetManifest();
 	private isCleaningUp = false;
 	private tutorial?: TutorialSystem;
@@ -206,8 +165,19 @@ export class GameScene extends Phaser.Scene {
 
 	create(data?: { mapId?: string }) {
 		this.isCleaningUp = false;
-		this.scaledGameTime = 0;
-		this.speedMultiplier = 1;
+		this.state = new GameStateManager({
+			emit: EventBus.emit.bind(EventBus),
+			onEndGame: (reason) => this.handleEndGame(reason),
+			onExitSideEffect: (remainingHp, _isBossLeak) => {
+				EventBus.emit('base-hp-changed', {
+					hp: remainingHp,
+					maxHp: INITIAL_PLAYER_HP,
+					laneIndex: 0,
+				});
+				this.castleWall.update(remainingHp);
+				this.castleWall.onHit();
+			},
+		});
 		this.time.timeScale = 1;
 		this.anims.globalTimeScale = 1;
 		// Phase 7: scenario maps purged. 정식 모드가 유일한 모드; ignore any
@@ -257,10 +227,10 @@ export class GameScene extends Phaser.Scene {
 			const unit = this.playerUnits.getUnit(instanceId);
 			if (!unit) return;
 			this.bossBehaviors.set(instanceId, behavior);
-			behavior.onSpawn(this.buildBossContext(unit.data));
+			behavior.onSpawn(this.bossCtx.build(unit.data));
 		});
 		const stageWaves = generateWaves(50);
-		this.currentSlotDef = stageWaves[0];
+		this.state.setCurrentSlotDef(stageWaves[0]);
 		this.playerWaves = new WaveSystem(this.playerUnits, stageWaves);
 		this.isGameMap = this.currentMap.id === MAIN_MAP_ID;
 		const isGameMap = this.isGameMap;
@@ -286,11 +256,11 @@ export class GameScene extends Phaser.Scene {
 			});
 			this.onSummonReady = (data) => {
 				if (!this.isSceneAlive()) return;
-				this.selectedTowerId = data.towerId;
-				this.showBuildableZone();
-				this.clearRangeOverlay();
+				this.inputController.setSelectedTowerId(data.towerId);
+				this.rangeOverlay.showBuildableZone(data.towerId);
+				this.rangeOverlay.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
-				this.renderPlaceableHighlights();
+				this.rangeOverlay.renderPlaceableHighlights(data.towerId);
 			};
 			EventBus.on('summon-ready', this.onSummonReady);
 			this.playerTowers.setModifierFn((id) =>
@@ -304,22 +274,34 @@ export class GameScene extends Phaser.Scene {
 		}
 
 		this.damageNumbers = new DamageNumberSystem(this);
+		this.bossCtx = new BossContextBuilder({
+			units: this.playerUnits,
+			towers: this.playerTowers,
+			getSceneTime: () => this.state.getScaledTime(),
+		});
+		this.combat = new CombatMediator({
+			towers: this.playerTowers,
+			units: this.playerUnits,
+			damageNumbers: this.damageNumbers,
+			bossBehaviors: this.bossBehaviors,
+			orchestrator: this.orchestrator,
+			isGameMap: this.isGameMap,
+		});
 		this.events.on('shutdown', this.cleanup, this);
 
-		this.cacheDecorationData();
-		this.renderField(this.playerGrid, false);
-
-		this.hoverGraphics = this.add.graphics();
-		this.selectionGraphics = this.add.graphics();
-		this.selectionGraphics.setDepth(15);
-		this.rangeOverlayGraphics = this.add.graphics();
-		this.rangeOverlayGraphics.setDepth(22);
-		this.rangeOverlayGraphics.setAlpha(0);
+		this.fieldRenderer = new FieldRenderer(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.rangeOverlay = new RangeOverlayController(
+			this,
+			this.playerGrid,
+			this.currentMap,
+		);
+		this.fieldRenderer.renderAll();
 
 		this.playerUnits.setPaths(getMapPaths(this.currentMap));
-		this.renderPath(this.playerGrid);
-		this.renderObstacles();
-		this.renderAmbientDecorations();
 
 		this.castleWall = new CastleWallSystem(
 			this,
@@ -327,36 +309,107 @@ export class GameScene extends Phaser.Scene {
 			this.currentMap,
 		);
 		this.castleWall.create();
-		this.castleWall.update(this.playerHp);
+		this.castleWall.update(this.state.getHp());
 
 		this.spawnHut = new SpawnHutSystem(this, this.playerGrid, this.currentMap);
 		this.spawnHut.create();
 
-		this.setupInput();
+		this.placement = new PlacementCoordinator({
+			towers: this.playerTowers,
+			energy: this.energySystem,
+			deck: this.playerDeck,
+			orchestrator: this.orchestrator,
+			waves: this.playerWaves,
+			emit: EventBus.emit.bind(EventBus),
+			onFastPath: () => {
+				this.inputController.setSelectedTowerId(null);
+				this.rangeOverlay.hideBuildableZone();
+				this.rangeOverlay.clearSelection();
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onBeforeSuccessEmit: () => {
+				this.inputController.setSelectedTowerId(null);
+				this.rangeOverlay.clearSelection();
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onSuccess: () => {
+				this.playerUnits.setPaths(getMapPaths(this.currentMap));
+				this.fieldRenderer.refreshPath();
+			},
+		});
+
+		this.inputController = new InputController(this, this.playerGrid, {
+			hoverGraphics: this.rangeOverlay.getHoverGraphics(),
+			onPlace: (col, row, id) => this.placement.place(col, row, id),
+			onSelectTower: (col, row, tower) => {
+				const refund = TowerSystem.calcRefund(tower.def.cost);
+				EventBus.emit('tower-selected', {
+					towerDefId: tower.def.id,
+					towerName: tower.def.name,
+					col,
+					row,
+					refund,
+					tier: tower.tier,
+				});
+				this.rangeOverlay.drawRangeOverlay(col, row, tower.def.stats.range);
+			},
+			onDeselect: () => {
+				EventBus.emit('tower-deselected');
+				this.rangeOverlay.clearRangeOverlay();
+			},
+			onMoveCommit: (from, to) => {
+				this.rangeOverlay.clearSelection();
+				const ok = this.playerTowers.moveTower(
+					from.col,
+					from.row,
+					to.col,
+					to.row,
+				);
+				if (ok) {
+					EventBus.emit('tower-moved', {
+						fromCol: from.col,
+						fromRow: from.row,
+						toCol: to.col,
+						toRow: to.row,
+					});
+					EventBus.emit('tower-deselected');
+					this.rangeOverlay.clearRangeOverlay();
+					this.playerUnits.setPaths(getMapPaths(this.currentMap));
+					this.fieldRenderer.refreshPath();
+				} else {
+					EventBus.emit('move-failed', { reason: 'invalid-tile' });
+				}
+			},
+			isGameOver: () => this.state.isGameOver(),
+			getTowerAt: (col, row) => this.playerTowers.getTowerAt(col, row),
+		});
+		this.inputController.setup();
 
 		this.onSelectTower = (data) => {
 			if (!this.isSceneAlive()) return;
 			const card = this.playerDeck.getCardByTowerId(data.towerDefId);
 			if (!card) return;
-			this.selectedTowerId = data.towerDefId;
-			this.showBuildableZone();
-			this.clearRangeOverlay();
+			this.inputController.setSelectedTowerId(data.towerDefId);
+			this.rangeOverlay.showBuildableZone(data.towerDefId);
+			this.rangeOverlay.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
-			this.renderPlaceableHighlights();
+			this.rangeOverlay.renderPlaceableHighlights(data.towerDefId);
 		};
 		this.onClearTowerSelection = () => {
 			if (!this.isSceneAlive()) return;
-			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
+			this.inputController.setSelectedTowerId(null);
+			this.rangeOverlay.hideBuildableZone();
+			this.rangeOverlay.clearSelection();
+			this.rangeOverlay.clearRangeOverlay();
 			EventBus.emit('tower-deselected');
 		};
 
 		this.onWaveStartedLifecycle = (data) => {
 			if (!this.isSceneAlive()) return;
-			this.currentSlotDef = stageWaves[data.slotIndex - 1] ?? stageWaves[0];
-			this.currentWaveSlot = data.slotIndex;
+			this.state.setCurrentSlotDef(
+				stageWaves[data.slotIndex - 1] ?? stageWaves[0],
+			);
+			this.state.setCurrentWaveSlot(data.slotIndex);
 			soundGenerator.playWaveStart();
 			this.spawnHut.setActive(true);
 		};
@@ -405,7 +458,7 @@ export class GameScene extends Phaser.Scene {
 
 		this.onSetSpeed = ({ multiplier }) => {
 			if (!this.isSceneAlive()) return;
-			this.speedMultiplier = multiplier;
+			this.state.setSpeed(multiplier);
 			this.time.timeScale = multiplier;
 			this.anims.globalTimeScale = multiplier;
 		};
@@ -422,19 +475,19 @@ export class GameScene extends Phaser.Scene {
 				EventBus.emit('player-tower-count', {
 					count: this.playerTowers.getTowers().length,
 				});
-				this.clearRangeOverlay();
+				this.rangeOverlay.clearRangeOverlay();
 				EventBus.emit('tower-deselected');
 			}
 		};
 
 		this.onEnterMoveMode = ({ fromCol, fromRow }) => {
 			if (!this.isSceneAlive()) return;
-			this.movePending = { fromCol, fromRow };
-			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
-			this.renderPlaceableHighlights();
+			this.inputController.setMovePending({ fromCol, fromRow });
+			this.inputController.setSelectedTowerId(null);
+			this.rangeOverlay.hideBuildableZone();
+			this.rangeOverlay.clearSelection();
+			this.rangeOverlay.clearRangeOverlay();
+			this.rangeOverlay.renderPlaceableHighlights(null);
 		};
 
 		this.onMoveTower = ({ fromCol, fromRow, toCol, toRow }) => {
@@ -443,10 +496,10 @@ export class GameScene extends Phaser.Scene {
 			if (ok) {
 				EventBus.emit('tower-moved', { fromCol, fromRow, toCol, toRow });
 				EventBus.emit('tower-deselected');
-				this.clearRangeOverlay();
-				this.selectionGraphics.clear();
+				this.rangeOverlay.clearRangeOverlay();
+				this.rangeOverlay.clearSelection();
 				this.playerUnits.setPaths(getMapPaths(this.currentMap));
-				this.renderPath(this.playerGrid);
+				this.fieldRenderer.refreshPath();
 			} else {
 				EventBus.emit('move-failed', { reason: 'invalid-tile' });
 			}
@@ -494,14 +547,14 @@ export class GameScene extends Phaser.Scene {
 			// rebuilds their board after continue.
 			this.onGameResumed = (data) => {
 				if (!this.isSceneAlive()) return;
-				this.gameOver = false;
-				this.playerHp = Math.max(1, data.livesRestored);
+				this.state.setGameOver(false);
+				this.state.setHp(Math.max(1, data.livesRestored));
 				EventBus.emit('base-hp-changed', {
-					hp: this.playerHp,
+					hp: this.state.getHp(),
 					maxHp: INITIAL_PLAYER_HP,
 					laneIndex: 0,
 				});
-				this.castleWall.update(this.playerHp);
+				this.castleWall.update(this.state.getHp());
 				// Re-subscribe the wave lifecycle handlers that emitGameOver
 				// tore down so future wave-started / wave-completed events
 				// keep HUD state coherent.
@@ -533,463 +586,11 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.start();
 	}
 
-	private cacheDecorationData(): void {
-		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
-		const decorLayer = tilemap.getObjectLayer?.('decorations');
-		if (!decorLayer) {
-			this.decorationTiles = [];
-			return;
-		}
-
-		this.decorationTiles = decorLayer.objects
-			.map((object) => {
-				const properties = new Map(
-					(object.properties ?? []).map(
-						(property: { name: string; value: unknown }) => [
-							property.name,
-							property.value,
-						],
-					),
-				);
-				const assetKey = properties.get('assetKey');
-				const kind = properties.get('kind');
-				const variant = properties.get('variant');
-
-				if (
-					typeof assetKey !== 'string' ||
-					typeof kind !== 'string' ||
-					typeof variant !== 'string'
-				) {
-					return null;
-				}
-
-				const objectX = typeof object.x === 'number' ? object.x : 0;
-				const objectY = typeof object.y === 'number' ? object.y : 0;
-
-				return {
-					x: Math.round(objectX / this.currentMap.tileSize),
-					y: Math.round(objectY / this.currentMap.tileSize),
-					assetKey,
-					kind: kind as TinySwordsDecorationKind,
-					variant,
-				};
-			})
-			.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-	}
-
-	private renderField(grid: GridManager, dark: boolean): void {
-		const theme = getMapTheme(this.currentMap.id);
-		const tile = grid.orthoTile;
-		const canvasW = this.scale.width;
-		const canvasH = this.scale.height;
-
-		// Layer 0: Dirt/sand base (low ground — monster path level)
-		if (typeof this.add.tileSprite === 'function') {
-			const dirtBg = this.add.tileSprite(
-				canvasW / 2,
-				canvasH / 2,
-				canvasW,
-				canvasH,
-				DIRT_SEAMLESS_KEY,
-			);
-			dirtBg.setDepth(0);
-			dirtBg.setScrollFactor(0);
-			if (dark) dirtBg.setTint(0x5c6585);
-		}
-
-		// Build path lookup — path cells are "low ground" (monster walkway).
-		const pathCells = getAllPathCells(this.currentMap);
-		const pathSet = new Set(pathCells.map((p) => `${p.x},${p.y}`));
-		const isLow = (x: number, y: number) =>
-			pathSet.has(`${x},${y}`) ||
-			x < 0 ||
-			x >= this.currentMap.width ||
-			y < 0 ||
-			y >= this.currentMap.height;
-
-		// Layer 2: Elevated grass platform tiles (tower placement level).
-		const lift = tile * PLATFORM_LIFT;
-		const extraTiles = 2;
-		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
-			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
-				if (isLow(x, y)) continue;
-
-				// NSEW bitmask: which neighbors are "low" (path / outside).
-				let bitmask = 0;
-				if (isLow(x, y - 1)) bitmask |= 1;
-				if (isLow(x + 1, y)) bitmask |= 2;
-				if (isLow(x, y + 1)) bitmask |= 4;
-				if (isLow(x - 1, y)) bitmask |= 8;
-
-				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
-				const world = grid.gridToWorld(x, y);
-
-				const spr = this.add.sprite(
-					world.x,
-					world.y - lift,
-					TINY_SWORDS_PRIMARY_TILESET.key,
-					frame,
-				);
-				spr.setDisplaySize(tile, tile);
-				spr.setOrigin(0.5, 0.5);
-				spr.setDepth(2);
-				if (dark) spr.setTint(0x6b7899);
-				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
-
-				// Cliff walls drawn as graphics layers (no stretched tileset frames).
-				const hasSouth = !!(bitmask & 4);
-				const hasEast = !!(bitmask & 2);
-				const hasWest = !!(bitmask & 8);
-
-				if (hasSouth || hasEast || hasWest) {
-					const cg = this.add.graphics();
-					cg.setDepth(1.5);
-					const baseX = world.x - tile / 2;
-					const baseY = world.y - lift + tile / 2;
-
-					if (hasSouth) {
-						const cliffH = tile * 0.6;
-						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
-						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
-						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
-						cg.fillRect(baseX, baseY, tile, 2);
-					}
-
-					if (hasEast) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
-					}
-
-					if (hasWest) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
-					}
-				}
-			}
-		}
-
-		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
-		if (!dark) {
-			const shadowGraphics = this.add.graphics();
-			shadowGraphics.setDepth(0.5);
-			for (const p of pathCells) {
-				if (!isLow(p.x, p.y - 1)) {
-					const w = grid.gridToWorld(p.x, p.y);
-					shadowGraphics.fillStyle(0x000000, 0.15);
-					shadowGraphics.fillRect(
-						w.x - tile / 2,
-						w.y - tile / 2,
-						tile,
-						tile * 0.4,
-					);
-				}
-			}
-		}
-
-		this.renderDecorations(grid, dark);
-	}
-
-	private buildableZoneGraphics?: Phaser.GameObjects.Graphics;
-
-	private showBuildableZone(): void {
-		if (!this.buildableZoneGraphics) {
-			this.buildableZoneGraphics = this.add.graphics();
-			this.buildableZoneGraphics.setDepth(3);
-		}
-		this.buildableZoneGraphics.clear();
-		if (!this.selectedTowerId) return;
-
-		const tile = this.playerGrid.orthoTile;
-		const lift = tile * PLATFORM_LIFT;
-		for (const point of this.currentMap.buildablePoints) {
-			if (!this.playerGrid.canPlaceTower(point.x, point.y)) continue;
-			const world = this.playerGrid.gridToWorld(point.x, point.y);
-			this.buildableZoneGraphics.fillStyle(0x44ff44, 0.15);
-			this.buildableZoneGraphics.fillRect(
-				world.x - tile / 2,
-				world.y - lift - tile / 2,
-				tile,
-				tile,
-			);
-			this.buildableZoneGraphics.lineStyle(1, 0x44ff44, 0.3);
-			this.buildableZoneGraphics.strokeRect(
-				world.x - tile / 2,
-				world.y - lift - tile / 2,
-				tile,
-				tile,
-			);
-		}
-	}
-
-	private hideBuildableZone(): void {
-		if (this.buildableZoneGraphics) this.buildableZoneGraphics.clear();
-	}
-
-	private renderDecorations(grid: GridManager, dark: boolean): void {
-		if (!this.decorationTiles) return;
-		const theme = getMapTheme(this.currentMap.id);
-
-		for (const { x, y, assetKey } of this.decorationTiles) {
-			const asset = TINY_SWORDS_DECORATION_BY_KEY[assetKey];
-			if (!asset) continue;
-
-			const world = grid.gridToWorld(x, y);
-			const sprite = this.add.sprite(world.x, world.y, assetKey, 0);
-			sprite.setDisplaySize(asset.renderWidth, asset.renderHeight);
-			sprite.setOrigin(0.5, asset.originY);
-			sprite.setDepth(3 + x + y + asset.depthOffset);
-			if (dark) {
-				sprite.setTint(0x66758f);
-			} else if (theme.decorTint !== 0xffffff) {
-				sprite.setTint(theme.decorTint);
-			}
-		}
-	}
-
-	private renderPath(grid: GridManager): void {
-		if (!this.pathGraphics) this.pathGraphics = this.add.graphics();
-		const graphics = this.pathGraphics;
-		graphics.clear();
-
-		const theme = getMapTheme(this.currentMap.id);
-		const lineColor = theme.pathLineColor;
-		const paths = getMapPaths(this.currentMap);
-
-		for (const path of paths) {
-			if (path.length < 2) continue;
-
-			// Phase 7.5: very low-alpha path stroke so the underlying tilemap
-			// reads clean — was 0.08 / 0.40 in scenario builds.
-			graphics.lineStyle(4, lineColor, 0.04);
-			graphics.beginPath();
-			const first = grid.gridToWorld(path[0].x, path[0].y);
-			graphics.moveTo(first.x, first.y);
-			for (let i = 1; i < path.length; i++) {
-				const pt = grid.gridToWorld(path[i].x, path[i].y);
-				graphics.lineTo(pt.x, pt.y);
-			}
-			graphics.strokePath();
-
-			graphics.fillStyle(lineColor, 0.25);
-			for (let i = 0; i < path.length - 1; i++) {
-				const a = grid.gridToWorld(path[i].x, path[i].y);
-				const b = grid.gridToWorld(path[i + 1].x, path[i + 1].y);
-				for (let s = 0; s < 4; s += 2) {
-					const t = s / 4;
-					graphics.fillCircle(
-						a.x + (b.x - a.x) * t,
-						a.y + (b.y - a.y) * t,
-						1.5,
-					);
-				}
-			}
-			const last = grid.gridToWorld(
-				path[path.length - 1].x,
-				path[path.length - 1].y,
-			);
-			graphics.fillCircle(last.x, last.y, 1.5);
-		}
-	}
-
-	/**
-	 * Render fixed map obstacles (trees / rocks / bushes) at their grid
-	 * positions. Obstacles are visual only — buildBuildablePoints already
-	 * excluded them from placement, and the unit pathPoints data does not
-	 * include them so units never try to walk through.
-	 *
-	 * Falls back silently when the optional `obstacles` field is missing.
-	 */
-	private renderObstacles(): void {
-		const obstacles = this.currentMap.obstacles;
-		if (!obstacles || obstacles.length === 0) return;
-		const ASSET_KEYS = [
-			'tiny-swords-tree-1',
-			'tiny-swords-rock-1',
-			'tiny-swords-bush-1',
-		] as const;
-		const tile = this.playerGrid.orthoTile;
-		const lift = tile * PLATFORM_LIFT;
-		obstacles.forEach((pos, i) => {
-			const key = ASSET_KEYS[i % ASSET_KEYS.length];
-			if (!this.textures.exists(key)) return;
-			const world = this.playerGrid.gridToWorld(pos.x, pos.y);
-			// Lift obstacles onto the elevated grass platform.
-			const sprite = this.add.sprite(world.x, world.y - lift, key, 0);
-			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
-			sprite.setOrigin(0.5, 0.7);
-			sprite.setDepth(3 + pos.x + pos.y);
-		});
-	}
-
-	/**
-	 * Render ambient decoration sprites (trees/bushes/rocks) from
-	 * `map.decorations`. Purely visual — zero pathfinding / placement impact.
-	 * Decorations are usually placed just off the playfield (fractional grid
-	 * coordinates like -1.2 / 9.3) so they read as background scenery.
-	 */
-	private renderAmbientDecorations(): void {
-		const decorations = this.currentMap.decorations;
-		if (!decorations || decorations.length === 0) return;
-		const tile = this.playerGrid.orthoTile;
-		// Ambient props stay on the low ground (no PLATFORM_LIFT) so they
-		// match the dirt base layer visually.
-		decorations.forEach((deco) => {
-			const variant = deco.variant ?? 1;
-			const key = `tiny-swords-${deco.kind}-${variant}`;
-			if (!this.textures.exists(key)) return;
-			const world = this.playerGrid.gridToWorld(deco.x, deco.y);
-			const sprite = this.add.sprite(world.x, world.y, key, 0);
-			const scale = deco.kind === 'tree' ? 1.1 : 0.85;
-			sprite.setDisplaySize(tile * scale, tile * scale);
-			sprite.setOrigin(0.5, 0.72);
-			sprite.setAlpha(0.85);
-			// Decorations never overlap gameplay cells, so a flat depth is fine.
-			sprite.setDepth(2.5);
-		});
-	}
-
-	private setupInput(): void {
-		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.playerGrid.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-			this.hoverGraphics.clear();
-
-			if (this.playerGrid.isInBounds(gridPos.x, gridPos.y)) {
-				const canPlace = this.playerGrid.canPlaceTower(gridPos.x, gridPos.y);
-				this.playerGrid.fillTileRect(
-					this.hoverGraphics,
-					gridPos.x,
-					gridPos.y,
-					canPlace ? PHASER_COLORS.accent : PHASER_COLORS.danger,
-					0.2,
-				);
-			}
-		});
-
-		this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.playerGrid.worldToGrid(
-				pointer.worldX,
-				pointer.worldY,
-			);
-
-			if (this.gameOver) return;
-			if (!this.playerGrid.isInBounds(gridPos.x, gridPos.y)) return;
-
-			if (this.movePending) {
-				const { fromCol, fromRow } = this.movePending;
-				this.movePending = null;
-				this.selectionGraphics.clear();
-				const ok = this.playerTowers.moveTower(
-					fromCol,
-					fromRow,
-					gridPos.x,
-					gridPos.y,
-				);
-				if (ok) {
-					EventBus.emit('tower-moved', {
-						fromCol,
-						fromRow,
-						toCol: gridPos.x,
-						toRow: gridPos.y,
-					});
-					EventBus.emit('tower-deselected');
-					this.clearRangeOverlay();
-					this.playerUnits.setPaths(getMapPaths(this.currentMap));
-					this.renderPath(this.playerGrid);
-				} else {
-					EventBus.emit('move-failed', { reason: 'invalid-tile' });
-				}
-				return;
-			}
-
-			if (this.selectedTowerId) {
-				this.handlePlaceTower(gridPos.x, gridPos.y, this.selectedTowerId);
-				return;
-			}
-
-			const tower = this.playerTowers.getTowerAt(gridPos.x, gridPos.y);
-			if (tower) {
-				const refund = TowerSystem.calcRefund(tower.def.cost);
-				EventBus.emit('tower-selected', {
-					towerDefId: tower.def.id,
-					towerName: tower.def.name,
-					col: gridPos.x,
-					row: gridPos.y,
-					refund,
-					tier: tower.tier,
-				});
-				this.drawRangeOverlay(gridPos.x, gridPos.y, tower.def.stats.range);
-			} else {
-				EventBus.emit('tower-deselected');
-				this.clearRangeOverlay();
-			}
-		});
-	}
-
-	private drawRangeOverlay(col: number, row: number, range: number): void {
-		this.rangeOverlayGraphics.clear();
-		this.tweens.killTweensOf(this.rangeOverlayGraphics);
-		const worldPos = this.playerGrid.gridToWorld(col, row);
-		const radius = range * this.playerGrid.tileSize;
-
-		this.rangeOverlayGraphics.fillStyle(PHASER_COLORS.gold, 0.08);
-		this.rangeOverlayGraphics.fillCircle(worldPos.x, worldPos.y, radius);
-		this.rangeOverlayGraphics.lineStyle(2, PHASER_COLORS.gold, 0.6);
-		this.rangeOverlayGraphics.strokeCircle(worldPos.x, worldPos.y, radius);
-
-		this.rangeOverlayGraphics.setAlpha(0);
-		this.tweens.add({
-			targets: this.rangeOverlayGraphics,
-			alpha: 1,
-			duration: 120,
-			ease: 'Quad.easeOut',
-		});
-	}
-
-	private clearRangeOverlay(): void {
-		this.tweens.killTweensOf(this.rangeOverlayGraphics);
-		this.tweens.add({
-			targets: this.rangeOverlayGraphics,
-			alpha: 0,
-			duration: 60,
-			ease: 'Quad.easeIn',
-			onComplete: () => this.rangeOverlayGraphics.clear(),
-		});
-	}
-
-	private renderPlaceableHighlights(): void {
-		this.selectionGraphics.clear();
-		if (!this.selectedTowerId) return;
-
-		for (let y = 0; y < this.currentMap.height; y++) {
-			for (let x = 0; x < this.currentMap.width; x++) {
-				if (this.playerGrid.canPlaceTower(x, y)) {
-					this.playerGrid.fillTileRect(
-						this.selectionGraphics,
-						x,
-						y,
-						PHASER_COLORS.accent,
-						0.12,
-					);
-				}
-			}
-		}
-	}
-
-	private emitGameOver(payload: {
+	private handleEndGame(payload: {
 		result: 'victory' | 'defeat';
 		reason: 'all_waves_cleared' | 'base_hp_depleted';
-		finalSlot: number;
 	}): void {
-		if (this.gameOver) return;
-		this.gameOver = true;
-		this.rangeOverlayGraphics.clear();
+		this.rangeOverlay.getRangeOverlayGraphics().clear();
 		EventBus.off('wave-started', this.onWaveStartedLifecycle);
 		EventBus.off('boss-warning', this.onBossWarning);
 		EventBus.off('wave-completed', this.onWaveCompleted);
@@ -997,176 +598,25 @@ export class GameScene extends Phaser.Scene {
 		const towersPlaced = this.playerTowers.getTowers().length;
 		this.playerTowers.destroy();
 
+		const finalSlot = this.state.getCurrentSlotDef()?.slotIndex ?? 0;
 		EventBus.emit('game-over', {
 			result: payload.result,
 			stats: {
 				wavesCleared:
-					payload.result === 'victory'
-						? payload.finalSlot
-						: Math.max(0, payload.finalSlot - 1),
+					payload.result === 'victory' ? finalSlot : Math.max(0, finalSlot - 1),
 				totalWaves: this.playerWaves.getMaxWaves(),
 				towersPlaced,
 				timeSurvivedSec: Math.round(this.playerWaves.getElapsedMs() / 1000),
-				goldEarned: this.goldEarned,
-				remainingHp: Math.max(0, this.playerHp),
+				goldEarned: this.state.getGoldEarned(),
+				remainingHp: Math.max(0, this.state.getHp()),
 				initialHp: INITIAL_PLAYER_HP,
 			},
 		});
 	}
 
-	private handlePlaceTower(
-		gridX: number,
-		gridY: number,
-		towerDefId: string,
-	): void {
-		// 정식 모드: orchestrator handles energy + placement directly
-		if (this.orchestrator?.hasPendingSummon()) {
-			this.orchestrator.completePlacement(gridX, gridY);
-			this.selectedTowerId = null;
-			this.hideBuildableZone();
-			this.selectionGraphics.clear();
-			this.clearRangeOverlay();
-			return;
-		}
-
-		const card = this.playerDeck.getCardByTowerId(towerDefId);
-		if (!card) return;
-
-		const energyCost = card.energyCost;
-		if (!this.energySystem.canAfford(energyCost)) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: 'insufficient_energy',
-			});
-			return;
-		}
-
-		const guardFailure = getPlacementGuardFailure({
-			phase: this.playerWaves.getPhase(),
-		});
-
-		if (guardFailure) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: guardFailure,
-			});
-			return;
-		}
-
-		const placed = this.playerTowers.placeTower(gridX, gridY, towerDefId);
-		if (!placed.success) {
-			EventBus.emit('tower-placed', {
-				col: gridX,
-				row: gridY,
-				towerId: towerDefId,
-				success: false,
-				reason: placed.reason,
-			});
-			return;
-		}
-
-		this.energySystem.spend(energyCost);
-		this.selectedTowerId = null;
-		this.selectionGraphics.clear();
-		this.clearRangeOverlay();
-		EventBus.emit('tower-deselected');
-		EventBus.emit('tower-placed', {
-			col: gridX,
-			row: gridY,
-			towerId: towerDefId,
-			success: true,
-			energySpent: energyCost,
-		});
-		EventBus.emit('player-tower-count', {
-			count: this.playerTowers.getTowers().length,
-		});
-		this.playerUnits.setPaths(getMapPaths(this.currentMap));
-		this.renderPath(this.playerGrid);
-	}
-
-	private processCombatField(
-		towerSystem: Pick<TowerSystem, 'update'>,
-		unitSystem: Pick<
-			UnitSystem,
-			| 'applyDamage'
-			| 'applySlow'
-			| 'applyStun'
-			| 'getUnitPositions'
-			| 'getUnitWorldPos'
-			| 'update'
-		>,
-		time: number,
-		delta: number,
-		onKill: () => void,
-		onDamageResult?: (
-			unitId: string,
-			result: ReturnType<UnitSystem['applyDamage']>,
-		) => void,
-	): { id: string; isBoss: boolean }[] {
-		const unitPositions = unitSystem.getUnitPositions();
-		const damageEvents = towerSystem.update(time, delta, unitPositions);
-
-		for (const evt of damageEvents) {
-			if (evt.damage > 0) {
-				const pos = unitSystem.getUnitWorldPos(evt.unitId);
-				const result = unitSystem.applyDamage(
-					evt.unitId,
-					evt.damage,
-					evt.armorPierce,
-				);
-				if (pos && result) {
-					// hit: show number. miss: show MISS. absorbed/invulnerable: silent.
-					if (result.outcome === 'hit') {
-						this.damageNumbers.show(pos.x, pos.y, result.actualDamage);
-					} else if (result.outcome === 'miss') {
-						this.damageNumbers.showMiss(pos.x, pos.y);
-					}
-				}
-				onDamageResult?.(evt.unitId, result);
-				if (result?.killed) {
-					this.goldEarned += result.bounty;
-					onKill();
-				}
-			}
-			// Phase 4 [F15]: `effect_amp` scales slow/stun durations (multiply).
-			// Applied at the Game scene boundary so UnitSystem stays decoupled
-			// from the roguelike stack tracker.
-			const effectAmp =
-				this.isGameMap && this.orchestrator
-					? this.orchestrator.getEffectDurationMultiplier()
-					: 1;
-			if (evt.slow) {
-				const behavior = this.bossBehaviors.get(evt.unitId);
-				if (!behavior?.isCcImmune()) {
-					unitSystem.applySlow(
-						evt.unitId,
-						evt.slow.factor,
-						evt.slow.duration * effectAmp,
-					);
-				}
-			}
-			if (evt.stun) {
-				const behavior = this.bossBehaviors.get(evt.unitId);
-				if (!behavior?.isCcImmune()) {
-					unitSystem.applyStun(evt.unitId, evt.stun.duration * effectAmp);
-				}
-			}
-		}
-
-		const { reachedExit } = unitSystem.update(time, delta);
-		return reachedExit;
-	}
-
 	update(_time: number, delta: number) {
-		if (this.gameOver) return;
-		const scaledDelta = delta * this.speedMultiplier;
-		this.scaledGameTime += scaledDelta;
+		if (this.state.isGameOver()) return;
+		const scaledDelta = this.state.tick(delta);
 
 		this.playerWaves.update(scaledDelta, this.playerUnits.getActiveCount());
 		const phase = this.playerWaves.getPhase();
@@ -1179,64 +629,13 @@ export class GameScene extends Phaser.Scene {
 			this.orchestrator.tickEnergyRegen(scaledDelta / 1000);
 		}
 
-		// Tick boss behaviors before combat so they can react with fresh sceneTime
-		for (const [instanceId, behavior] of this.bossBehaviors) {
-			const unit = this.playerUnits.getUnit(instanceId);
-			if (!unit || unit.pendingDestroy) {
-				behavior.destroy();
-				this.bossBehaviors.delete(instanceId);
-				continue;
-			}
-			behavior.onTick(this.buildBossContext(unit.data), scaledDelta);
-		}
+		this.tickBossBehaviors(scaledDelta);
 
-		const playerExits = this.processCombatField(
-			this.playerTowers,
-			this.playerUnits,
-			this.scaledGameTime,
+		const { reachedExit } = this.combat.tick(
+			this.state.getScaledTime(),
 			scaledDelta,
-			() => {
-				soundGenerator.playUnitDeath();
-				// Phase 4 [F15]: +1 per kill baseline, with the roguelike
-				// `energy_harvest` upgrade stacking additively on top (+1 per
-				// stack). Every 5th wave doubles the baseline as a soft pacing
-				// buff — stack bonus is additive on top of the doubled value.
-				if (this.isGameMap) {
-					const harvestBonus = this.orchestrator?.getEnergyPerKillBonus() ?? 0;
-					const baseline =
-						ENERGY_PER_KILL * (this.currentWaveSlot % 5 === 0 ? 2 : 1);
-					this.energySystem.add(baseline + harvestBonus);
-				}
-			},
-			(unitId, result) => {
-				if (!result) return;
-				const behavior = this.bossBehaviors.get(unitId);
-				if (!behavior) return;
-				const unit = this.playerUnits.getUnit(unitId);
-				if (result.killed) {
-					// Phase 3 (sole-mode): boss-kill energy reward, plus a
-					// fast-clear bonus if the boss dies within
-					// FAST_CLEAR_THRESHOLD_MS of its first spawn. Falls back
-					// to wave start if bossSpawnMs was not recorded (e.g. if
-					// the boss died before the spawn callback fired).
-					if (this.isGameMap) {
-						this.energySystem.add(ENERGY_PER_BOSS_KILL);
-						const elapsed =
-							this.playerWaves.getElapsedMs() -
-							(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
-						if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
-							this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
-						}
-					}
-					behavior.destroy();
-					this.bossBehaviors.delete(unitId);
-					return;
-				}
-				if (unit) {
-					const hpRatio = unit.data.hp / unit.maxHp;
-					behavior.onDamageTaken(this.buildBossContext(unit.data), hpRatio);
-				}
-			},
+			({ bounty }) => this.onUnitKilled(bounty),
+			(unitId, result) => this.onBossDamageResult(unitId, result),
 		);
 
 		// Wave timer tick — throttled to 1 emit/sec to avoid event spam
@@ -1245,98 +644,74 @@ export class GameScene extends Phaser.Scene {
 			this.lastTimerTickSec = remainingSec;
 			EventBus.emit('wave-timer-tick', {
 				remainingSec,
-				wave: this.currentWaveSlot,
+				wave: this.state.getCurrentWaveSlot(),
 				totalWaves: this.playerWaves.getMaxWaves(),
 			});
 		}
 
 		this.damageNumbers.update(_time, delta);
 
-		for (const exit of playerExits) {
-			this.playerHp = Math.max(0, this.playerHp - 1);
-			EventBus.emit('player-damaged', {
-				playerId: 'local',
-				damage: 1,
-				remainingHp: this.playerHp,
-			});
+		this.state.applyExits(reachedExit);
+		if (this.state.isGameOver()) return;
 
-			// Boss leak = instant defeat (isBoss is only true for bossBehaviorId units)
-			if (exit.isBoss) {
-				EventBus.emit('base-hp-changed', {
-					hp: 0,
-					maxHp: INITIAL_PLAYER_HP,
-					laneIndex: 0,
-				});
-				this.castleWall.update(0);
-				this.castleWall.onHit();
-				this.emitGameOver({
-					result: 'defeat',
-					reason: 'base_hp_depleted',
-					finalSlot: this.currentSlotDef.slotIndex,
-				});
-				return;
+		this.state.checkVictoryCondition(
+			this.playerWaves.getPhase(),
+			this.playerUnits.hasActiveUnits(),
+			this.playerUnits.hasQueuedUnits(),
+		);
+	}
+
+	private tickBossBehaviors(scaledDelta: number): void {
+		for (const [instanceId, behavior] of this.bossBehaviors) {
+			const unit = this.playerUnits.getUnit(instanceId);
+			if (!unit || unit.pendingDestroy) {
+				behavior.destroy();
+				this.bossBehaviors.delete(instanceId);
+				continue;
 			}
-
-			if (this.playerHp <= 0) {
-				EventBus.emit('base-hp-changed', {
-					hp: 0,
-					maxHp: INITIAL_PLAYER_HP,
-					laneIndex: 0,
-				});
-				this.castleWall.update(0);
-				this.castleWall.onHit();
-				this.emitGameOver({
-					result: 'defeat',
-					reason: 'base_hp_depleted',
-					finalSlot: this.currentSlotDef.slotIndex,
-				});
-				return;
-			}
-		}
-
-		if (playerExits.length > 0) {
-			EventBus.emit('base-hp-changed', {
-				hp: this.playerHp,
-				maxHp: INITIAL_PLAYER_HP,
-				laneIndex: 0,
-			});
-			this.castleWall.update(this.playerHp);
-			this.castleWall.onHit();
-		}
-
-		if (
-			this.playerWaves.getPhase() === 'ended' &&
-			!this.playerUnits.hasActiveUnits() &&
-			!this.playerUnits.hasQueuedUnits()
-		) {
-			this.emitGameOver({
-				result: 'victory',
-				reason: 'all_waves_cleared',
-				finalSlot: this.currentSlotDef.slotIndex,
-			});
+			behavior.onTick(this.bossCtx.build(unit.data), scaledDelta);
 		}
 	}
 
-	private buildBossContext(
-		boss: ActiveUnit,
-	): import('../systems/boss-ai/types').BossContext {
-		return {
-			boss,
-			sceneTimeMs: this.scaledGameTime,
-			spawnUnit: (unitId, pos, metadata) => {
-				this.playerUnits.spawnAdditionalUnit(unitId, pos, metadata);
-			},
-			disableTower: (towerId, untilMs) => {
-				if (towerId === '__random__') {
-					const towers = this.playerTowers.getAllTowers();
-					if (towers.length === 0) return;
-					const target = towers[Math.floor(Math.random() * towers.length)];
-					this.playerTowers.disableTower(target.data.instanceId, untilMs);
-				} else {
-					this.playerTowers.disableTower(towerId, untilMs);
+	private onUnitKilled(bounty: number): void {
+		soundGenerator.playUnitDeath();
+		this.state.addGold(bounty);
+		if (this.isGameMap) {
+			// 5웨이브마다 baseline 2배. harvest 보너스는 배율 적용 없이 가산.
+			const harvestBonus = this.orchestrator?.getEnergyPerKillBonus() ?? 0;
+			const baseline =
+				ENERGY_PER_KILL * (this.state.getCurrentWaveSlot() % 5 === 0 ? 2 : 1);
+			this.energySystem.add(baseline + harvestBonus);
+		}
+	}
+
+	private onBossDamageResult(
+		unitId: string,
+		result: ReturnType<UnitSystem['applyDamage']>,
+	): void {
+		if (!result) return;
+		const behavior = this.bossBehaviors.get(unitId);
+		if (!behavior) return;
+		const unit = this.playerUnits.getUnit(unitId);
+		if (result.killed) {
+			if (this.isGameMap) {
+				this.energySystem.add(ENERGY_PER_BOSS_KILL);
+				// bossSpawnMs 미기록 시 elapsed=0이 되어 fast-clear 보너스가 항상 지급됨.
+				const elapsed =
+					this.playerWaves.getElapsedMs() -
+					(this.playerWaves.bossSpawnMs ?? this.playerWaves.getElapsedMs());
+				if (elapsed < FAST_CLEAR_THRESHOLD_MS) {
+					this.energySystem.add(ENERGY_PER_BOSS_FAST_CLEAR);
 				}
-			},
-		};
+			}
+			behavior.destroy();
+			this.bossBehaviors.delete(unitId);
+			return;
+		}
+		if (unit) {
+			const hpRatio = unit.data.hp / unit.maxHp;
+			behavior.onDamageTaken(this.bossCtx.build(unit.data), hpRatio);
+		}
 	}
 
 	private cleanup() {
@@ -1363,6 +738,13 @@ export class GameScene extends Phaser.Scene {
 		if (this.onSummonReady) {
 			EventBus.off('summon-ready', this.onSummonReady);
 		}
+
+		// 정리 순서: EventBus.off → 컨트롤러 → systems → renderer.
+		// 컨트롤러는 핸들러 해제 후 감시 대상 system 파괴 전에 정리해야 stale 참조가 없다.
+		this.inputController?.destroy();
+		this.placement?.destroy();
+		this.state?.destroy();
+
 		this.orchestrator?.destroy();
 		this.orchestrator = undefined;
 		soundGenerator.reset();
@@ -1373,10 +755,6 @@ export class GameScene extends Phaser.Scene {
 		this.castleWall?.destroy();
 		this.spawnHut?.destroy();
 
-		this.selectionGraphics.clear();
-		this.rangeOverlayGraphics.clear();
-		this.hoverGraphics?.destroy();
-		this.pathGraphics?.destroy();
 		this.damageNumbers.destroy();
 		this.playerTowers.destroy();
 		for (const b of this.bossBehaviors.values()) b.destroy();
@@ -1385,6 +763,9 @@ export class GameScene extends Phaser.Scene {
 		this.playerWaves.destroy();
 		this.playerDeck.reset();
 		this.energySystem.reset();
+
+		this.fieldRenderer?.destroy();
+		this.rangeOverlay?.destroy();
 
 		unloadAssetSections(
 			this,

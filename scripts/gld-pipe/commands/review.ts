@@ -34,12 +34,7 @@ function atomicCopy(src: string, dst: string) {
   renameSync(tmp, dst);
 }
 
-/**
- * `mode` picks the gate. accept requires a completed forge run (metadata.json
- * signals the chain ran to completion), but reject must work on any staging
- * directory — including half-written ones from a crashed forge — so the user
- * can always recover.
- */
+// accept는 완료된 forge가 필요하지만 reject는 반쯤 쓰인 staging에서도 복구 가능해야 한다.
 function resolveSelectors(
   selectors: string[],
   mode: 'accept' | 'reject',
@@ -97,7 +92,6 @@ export async function runAccept(opts: ReviewOptions): Promise<void> {
       join(stagingDir, 'metadata.json'),
       JSON.stringify({ ...meta, status: 'accepted', acceptedAt: new Date().toISOString() }, null, 2),
     );
-    // Patch asset-manifest.json to record polish level for this key.
     if (manifest?.assets) {
       const manifestKey = id;
       const entry = manifest.assets.find(

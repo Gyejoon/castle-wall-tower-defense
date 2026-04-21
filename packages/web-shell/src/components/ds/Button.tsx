@@ -9,7 +9,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: ButtonVariant;
 	size?: ButtonSize;
 	loading?: boolean;
-	/** Stretch to fill parent width */
 	block?: boolean;
 }
 
@@ -33,10 +32,6 @@ const sizeClass: Record<ButtonSize, string> = {
 	lg: 'px-xl py-md text-[16px] min-h-[44px]',
 };
 
-/**
- * Base design-system button. Pixel-art drop shadow + press-offset feedback.
- * Use over raw `<button>` or PixelButton in all new code.
- */
 export function Button({
 	variant = 'primary',
 	size = 'md',

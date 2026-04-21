@@ -22,7 +22,7 @@ import { Button } from '../../ds';
  * above this tab; BottomTabBar renders below. We only own the tab panel.
  */
 
-// core.gold + alpha hex (40% = 0x66, 20% = 0x33)
+// core.gold에 알파값 hex suffix 적용 (40% = 0x66, 20% = 0x33).
 const CORNER_COLOR = `${core.gold}66`;
 const STAR_UNFILLED_COLOR = `${core.gold}33`;
 

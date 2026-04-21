@@ -48,6 +48,10 @@ export interface TargetingStrategy {
 	): UnitSnapshot | null;
 }
 
+/** One damage/CC application step composed into a tower's fire sequence
+ *  (e.g. SingleTargetAttack, SplashAttack, SingleTargetSlow). Stateless —
+ *  all state flows through AttackContext. Multiple AttackBehaviors can be
+ *  composed per tower (see CompositeTower for T5/T6 hybrids). */
 export interface AttackBehavior {
 	readonly id: string;
 	apply(ctx: AttackContext, tower: TowerRuntimeRef): void;
@@ -62,6 +66,9 @@ export interface ProjectileEmitter {
 	): void;
 }
 
+/** The per-instance tower controller returned by a TowerFactory. Owns
+ *  cooldown/disabled state and dispatches its composed AttackBehaviors
+ *  each frame via update(). One per PlacedTower. */
 export interface TowerBehavior {
 	readonly id: string;
 	readonly runtime: TowerRuntimeRef;

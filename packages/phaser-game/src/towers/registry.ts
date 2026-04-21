@@ -2,6 +2,9 @@ import type { TowerBehavior, TowerConstructorDeps, TowerFactory } from './types'
 
 const FACTORIES = new Map<string, TowerFactory>();
 
+/** Re-registering the same defId silently replaces the previous factory
+ *  (last-write-wins, via Map.set semantics). Phase 2 migrations should
+ *  import-once from ./instances to avoid accidental replacement in tests. */
 export function registerTower(defId: string, factory: TowerFactory): void {
 	FACTORIES.set(defId, factory);
 }

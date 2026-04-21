@@ -1,5 +1,4 @@
 import type { OwnedTower, TowerDef } from '@gld/shared';
-import { colors } from '../../../../styles/tokens';
 import { cn } from '../../../../utils/cn';
 
 /**
@@ -25,12 +24,9 @@ export function TowerGridCard({
 			type="button"
 			onClick={onClick}
 			className={cn(
-				'flex cursor-pointer flex-col items-center gap-1 px-1.5 py-2.5 touch-manipulation',
+				'flex cursor-pointer flex-col items-center gap-1 px-1.5 py-2.5 touch-manipulation border border-border',
 				locked ? 'bg-bg-76 opacity-50' : 'bg-panel-85',
 			)}
-			style={{
-				border: `1px solid ${colors.border}`,
-			}}
 		>
 			<div className="flex gap-[3px]">
 				<span className="font-pixel text-[9px] text-text-secondary">

@@ -19,6 +19,16 @@ export interface LibreSpriteMissing {
   tried: string[];
 }
 
+export class LibreSpriteSpawnError extends Error {
+  constructor(
+    message: string,
+    readonly cause: NodeJS.ErrnoException | undefined,
+  ) {
+    super(message);
+    this.name = 'LibreSpriteSpawnError';
+  }
+}
+
 export function findLibreSprite(): LibreSpriteBinary | LibreSpriteMissing {
   for (const p of BIN_CANDIDATES) {
     if (existsSync(p)) return { path: p, available: true };
@@ -85,13 +95,26 @@ export function runScript(
   });
   const stdout = result.stdout ?? '';
   const stderr = result.stderr ?? '';
+  const spawnError = result.error as NodeJS.ErrnoException | undefined;
+  if (spawnError && (spawnError.code === 'ENOENT' || spawnError.code === 'EACCES')) {
+    // Binary unreachable — not a recoverable script error, re-surface.
+    throw new LibreSpriteSpawnError(
+      `libresprite spawn failed (${spawnError.code}): ${bin}`,
+      spawnError,
+    );
+  }
+  // Timeout or non-mutex-shutdown signal kill: the script did NOT run to
+  // completion. Mutex-shutdown on macOS 15 sends SIGABRT (exit 134) or
+  // SIGSEGV (139) AFTER saveAs persisted, with no spawnError set — those
+  // stay ok=true and the caller still verifies the output file exists.
+  const timedOut = spawnError?.code === 'ETIMEDOUT';
+  const killedMidRun =
+    result.signal !== null && result.signal !== undefined && result.status === null;
+  const scriptError = stdout.includes('ERROR:') || stderr.includes('Error:');
   return {
     stdout,
     stderr,
     exitCode: result.status ?? -1,
-    // LibreSprite exits 0 on clean scripts but 134/139 on the mutex teardown
-    // bug after saveAs. Treat stdout-has-no-ERROR as OK and let caller verify
-    // output file.
-    ok: !stdout.includes('ERROR:') && !stderr.includes('Error:'),
+    ok: !timedOut && !killedMidRun && !scriptError,
   };
 }

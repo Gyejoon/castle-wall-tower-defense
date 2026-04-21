@@ -134,27 +134,32 @@ function runChain(
     },
   });
 
-  // Execute destructive chain.
+  // Execute destructive chain. A failed step MUST halt the chain — otherwise
+  // the next step reads a stale output and we'd promote half-polished pixels
+  // as "polished", silently breaking the HITL contract.
   const warnings: string[] = [];
   for (const step of chain) {
-    const prevMtime = existsSync(step.vars.OUTPUT as string)
-      ? statSync(step.vars.OUTPUT as string).mtimeMs
-      : 0;
+    const outPath = step.vars.OUTPUT as string;
+    const prevMtime = existsSync(outPath) ? statSync(outPath).mtimeMs : 0;
     const result = runScript(bin, step, tmpDir);
     if (!result.ok) {
-      warnings.push(
-        `${step.label}: script error — stdout=${result.stdout.slice(0, 200)}`,
+      throw new Error(
+        `${step.label}: script error (exit ${result.exitCode}) — ` +
+          `stdout=${result.stdout.slice(0, 400)} stderr=${result.stderr.slice(0, 200)}`,
       );
     }
-    const outPath = step.vars.OUTPUT as string;
     if (!existsSync(outPath)) {
       throw new Error(
-        `${step.label}: expected output ${rel(outPath)} not produced (stdout: ${result.stdout})`,
+        `${step.label}: expected output ${rel(outPath)} not produced ` +
+          `(stdout: ${result.stdout.slice(0, 200)})`,
       );
     }
     const newMtime = statSync(outPath).mtimeMs;
     if (newMtime <= prevMtime && prevMtime > 0) {
-      warnings.push(`${step.label}: output ${rel(outPath)} not updated`);
+      throw new Error(
+        `${step.label}: output ${rel(outPath)} not refreshed (mtime unchanged) — ` +
+          `a stale prior output would be promoted if chain continued`,
+      );
     }
   }
 
@@ -252,13 +257,18 @@ export async function runForge(opts: ForgeOptions): Promise<void> {
       let warnings: string[] = [];
       let animation: VerifyReport | undefined;
       let polishLevel: 'canvas-only' | 'libresprite-polished' = 'canvas-only';
+      // Effective spec includes any --seed CLI override so metadata can
+      // reproduce the exact inputs used for this forge run.
+      const seedOverride = opts.seed ?? spec.polish.noise.seed;
+      const effectiveSpec: AssetSpec = {
+        ...spec,
+        polish: {
+          ...spec.polish,
+          noise: { ...spec.polish.noise, seed: seedOverride },
+        },
+      };
 
       if (bin.available) {
-        const seedOverride = opts.seed ?? spec.polish.noise.seed;
-        const effectiveSpec: AssetSpec = {
-          ...spec,
-          polish: { ...spec.polish, noise: { ...spec.polish.noise, seed: seedOverride } },
-        };
         const out = runChain(bin.path, effectiveSpec, stagingDir);
         warnings = out.warnings;
         animation = out.animation;
@@ -275,7 +285,7 @@ export async function runForge(opts: ForgeOptions): Promise<void> {
         destPath: spec.destPath,
         forgedAt: new Date().toISOString(),
         polishLevel,
-        polish: spec.polish,
+        polish: effectiveSpec.polish,
         status: 'pending',
         warnings,
         animation,

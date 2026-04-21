@@ -12,3 +12,9 @@ export {
 } from './registry';
 export { BaseTower } from './BaseTower';
 export { TowerVfxController } from './vfx/TowerVfxController';
+export {
+	hasSplash,
+	isSlowSpecial,
+	isStunSpecial,
+	parseSlowFactor,
+} from './specialParsing';

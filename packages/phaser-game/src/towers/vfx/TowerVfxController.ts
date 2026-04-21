@@ -46,10 +46,11 @@ export interface TowerVfxDeps {
 	playTowerAttack: (defId: string, time: number) => void;
 }
 
-/** Phase 2.1: concrete VFX controller for tower strategies. Port of the
- *  archer/beam-family methods from `TowerSystem.update()`. Other helpers
- *  (splash impact, siege arc, passive aura flashes) stay no-op until the
- *  respective phases migrate. */
+/** Phase 2.Final: single source of truth for tower VFX spawning. Owns
+ *  the muzzle/impact spritesheet lookups that every registered tower
+ *  behavior calls through `ctx.vfx`. Legacy TowerSystem.spawnMuzzleVfx /
+ *  spawnImpactVfx instance methods were deleted in Phase 2.Final now
+ *  that the render loop's projectile-impact branch also delegates here. */
 export class TowerVfxController {
 	constructor(private readonly deps: TowerVfxDeps) {}
 
@@ -66,8 +67,7 @@ export class TowerVfxController {
 	}
 
 	/** Spawns the animated fire spritesheet on top of a tower, hiding the
-	 *  static sprite for the animation's duration. Mirrors
-	 *  `TowerSystem.spawnMuzzleVfx` at TowerSystem.ts:1162-1204. */
+	 *  static sprite for the animation's duration. */
 	spawnMuzzleVfx(
 		towerDefId: string,
 		towerWorld: { x: number; y: number },
@@ -105,11 +105,10 @@ export class TowerVfxController {
 		effect.once(Phaser.GameObjects.Events.DESTROY, restoreVisibility);
 	}
 
-	/** Spawns an instant impact VFX sprite at (x,y). Mirrors
-	 *  `TowerSystem.spawnImpactVfx` at TowerSystem.ts:1206-1223. Beam-style
-	 *  towers (wind_spire/flame_tower/arcane_spire) call this immediately
-	 *  on fire; arrow-style (archer) defers to the render loop's impact
-	 *  branch at TowerSystem.ts:1056-1074. */
+	/** Spawns an instant impact VFX sprite at (x,y). Beam-style towers
+	 *  (wind_spire/flame_tower/arcane_spire) call this immediately on
+	 *  fire; arrow-style (archer) defers to the render loop's impact
+	 *  branch in `TowerSystem.update()`, which also delegates here. */
 	spawnImpactVfx(textureKey: string, x: number, y: number): void {
 		const animationKey = getOptionalAnimationKey(textureKey);
 		if (

@@ -18,13 +18,22 @@ export abstract class BaseTower implements TowerBehavior {
 	protected disabledUntilMs = 0;
 
 	constructor(deps: TowerConstructorDeps) {
+		const sprite = deps.sprite;
 		this.runtime = {
 			def: deps.def,
 			data: deps.data,
 			level: deps.level,
-			sprite: deps.sprite,
+			sprite,
 			barrelSprite: deps.barrelSprite,
-			worldPos: { x: deps.sprite.x, y: deps.sprite.y },
+			// Live-read so moveTower updates propagate without an onMoved hook.
+			worldPos: {
+				get x() {
+					return sprite.x;
+				},
+				get y() {
+					return sprite.y;
+				},
+			},
 		};
 	}
 

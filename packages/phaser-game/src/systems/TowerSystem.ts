@@ -22,6 +22,7 @@ import { soundGenerator } from '../audio/SoundGenerator';
 import { PLATFORM_LIFT } from '../fieldAssets';
 import {
 	type AttackContext,
+	type DamageEvent,
 	type TowerBehavior,
 	type UnitSnapshot,
 	createTower,
@@ -177,6 +178,12 @@ export class TowerSystem {
 	 *  behavior. Populated only when `hasTowerFactory(defId)` returns true.
 	 *  Empty at runtime until Phase 2.1+ registers concrete factories. */
 	private readonly newTowerInstances: Map<string, TowerBehavior> = new Map();
+	/** Phase 2.0: prebound damage-push callback for `AttackContext`. Allocated
+	 *  once at construction instead of per-frame per-tower inside
+	 *  `buildAttackContext` (~1800 alloc/s at 30-tower full board × 60fps). */
+	private readonly pushDamage = (evt: DamageEvent): void => {
+		this.damageEventsBuffer.push(evt);
+	};
 
 	constructor(
 		scene: Phaser.Scene,
@@ -553,31 +560,16 @@ export class TowerSystem {
 		tower: TowerInstance,
 		time: number,
 		delta: number,
-		unitPositions: Array<{
-			instanceId: string;
-			x: number;
-			y: number;
-			hp: number;
-			element: ElementType;
-		}>,
+		unitPositions: readonly UnitSnapshot[],
 	): AttackContext {
-		const pushDamage = (evt: {
-			unitId: string;
-			damage: number;
-			armorPierce?: boolean;
-			slow?: { factor: number; duration: number };
-			stun?: { duration: number };
-		}): void => {
-			this.damageEventsBuffer.push(evt);
-		};
 		return {
 			time,
 			delta,
-			units: unitPositions as readonly UnitSnapshot[],
+			units: unitPositions,
 			gridManager: this.gridManager,
 			effectiveDamage: tower.effectiveDamage,
 			primaryTarget: null,
-			pushDamage,
+			pushDamage: this.pushDamage,
 			vfx: this.towerVfxController,
 		};
 	}
@@ -649,7 +641,12 @@ export class TowerSystem {
 			const behavior = this.newTowerInstances.get(data.instanceId);
 			if (behavior) {
 				behavior.update(
-					this.buildAttackContext(tower, time, delta, unitPositions),
+					this.buildAttackContext(
+						tower,
+						time,
+						delta,
+						unitPositions as readonly UnitSnapshot[],
+					),
 				);
 				continue;
 			}

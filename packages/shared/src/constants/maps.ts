@@ -171,7 +171,7 @@ export const PHASE_A_LONG_MAP: MapLayout = {
 	difficultyHpMult: 1,
 	recommendedPower: 55,
 	obstacles: PHASE_A_LONG_OBSTACLES,
-	castleWallTiles: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }],
+	castleWallTiles: [{ x: 0, y: 12 }],
 	decorations: PHASE_A_LONG_DECORATIONS,
 };
 

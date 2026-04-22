@@ -37,11 +37,12 @@ describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
 		expect(PHASE_A_LONG_MAP.tilemapKey).toBe('tilemap-phase-a-long-v2');
 	});
 
-	it('Phase A v2 keeps buildable count near the old cap while extending path length', () => {
-		expect(PHASE_A_LONG_MAP.path.length).toBeGreaterThanOrEqual(115);
-		expect(PHASE_A_LONG_MAP.path.length).toBeLessThanOrEqual(125);
-		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBeGreaterThanOrEqual(64);
-		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBeLessThanOrEqual(68);
+	it('Phase A v2 locks the path, buildable budget, and fortress contract exactly', () => {
+		expect(PHASE_A_LONG_MAP.path.length).toBe(120);
+		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBe(66);
+		expect(PHASE_A_LONG_MAP.spawnPoint).toEqual({ x: 0, y: 3 });
+		expect(PHASE_A_LONG_MAP.exitPoint).toEqual({ x: 0, y: 12 });
+		expect(PHASE_A_LONG_MAP.castleWallTiles).toEqual([{ x: 0, y: 12 }]);
 	});
 
 	it('path is continuous — each step is adjacent to the next', () => {

@@ -329,6 +329,10 @@ describe('GameScene field runtime', () => {
 
 		scene.create();
 
+		expect(makeTilemap).toHaveBeenCalledWith({
+			key: PHASE_A_LONG_MAP.tilemapKey,
+		});
+
 		const spriteKeys = addSprite.mock.calls.map((call) => call[2]);
 
 		// Elevated grass platform tiles rendered using Tiny Swords tileset

@@ -123,6 +123,12 @@ describe('field asset preload alignment', () => {
 			path: 'assets/maps/forest-gate.json',
 			section: 'preload',
 		});
+		expect(manifest.assets).toContainEqual({
+			key: 'tilemap-phase-a-long-v2',
+			type: 'tilemapTiledJSON',
+			path: 'assets/maps/phase-a-long-v2.tmj',
+			section: 'preload',
+		});
 	});
 
 	it('boot preloads the asset manifest before the main preloader runs', async () => {
@@ -203,6 +209,10 @@ describe('field asset preload alignment', () => {
 		expect(tilemapTiledJSON).toHaveBeenCalledWith(
 			'tilemap-forest-gate',
 			manifestByKey.get('tilemap-forest-gate')?.path,
+		);
+		expect(tilemapTiledJSON).toHaveBeenCalledWith(
+			'tilemap-phase-a-long-v2',
+			manifestByKey.get('tilemap-phase-a-long-v2')?.path,
 		);
 
 		expect(image).not.toHaveBeenCalledWith(

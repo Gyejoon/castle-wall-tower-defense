@@ -31,6 +31,19 @@ describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
 		expect(PHASE_A_LONG_MAP.id).toBe('phase_a_long');
 	});
 
+	it('Phase A v2 uses the widened portrait board contract', () => {
+		expect(PHASE_A_LONG_MAP.width).toBe(12);
+		expect(PHASE_A_LONG_MAP.height).toBe(20);
+		expect(PHASE_A_LONG_MAP.tilemapKey).toBe('tilemap-phase-a-long-v2');
+	});
+
+	it('Phase A v2 keeps buildable count near the old cap while extending path length', () => {
+		expect(PHASE_A_LONG_MAP.path.length).toBeGreaterThanOrEqual(115);
+		expect(PHASE_A_LONG_MAP.path.length).toBeLessThanOrEqual(125);
+		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBeGreaterThanOrEqual(64);
+		expect(PHASE_A_LONG_MAP.buildablePoints.length).toBeLessThanOrEqual(68);
+	});
+
 	it('path is continuous — each step is adjacent to the next', () => {
 		const { path } = PHASE_A_LONG_MAP;
 		for (let i = 0; i < path.length - 1; i++) {

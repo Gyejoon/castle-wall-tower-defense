@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { ALL_TOWERS } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { TINY_SWORDS_TILESET_ASSETS } from '../src/fieldAssets';
+import { collectManualManifestEntries } from '../../../scripts/generate-assets/generate-all';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -37,7 +38,79 @@ const manifest = JSON.parse(
 	}>;
 };
 
+const phaseALongV2Tilemap = JSON.parse(
+	readFileSync(
+		new URL(
+			'../../web-shell/public/assets/maps/phase-a-long-v2.tmj',
+			import.meta.url,
+		),
+		'utf-8',
+	),
+) as {
+	width: number;
+	height: number;
+	tilewidth: number;
+	tileheight: number;
+	layers: Array<
+		| {
+				type: 'tilelayer';
+				name: string;
+				data: number[];
+		  }
+		| {
+				type: 'objectgroup';
+				name: string;
+				objects: Array<{
+					x?: number;
+					y?: number;
+					width?: number;
+					height?: number;
+					properties?: Array<{
+						name: string;
+						value: unknown;
+					}>;
+				}>;
+		  }
+	>;
+};
+
 describe('asset integration', () => {
+	it('keeps manual tilemap assets in the generator-owned manifest pipeline', () => {
+		expect(collectManualManifestEntries()).toContainEqual({
+			key: 'tilemap-phase-a-long-v2',
+			type: 'tilemapTiledJSON',
+			path: 'assets/maps/phase-a-long-v2.tmj',
+			section: 'preload',
+		});
+	});
+
+	it('keeps the Phase A v2 decorations object layer parseable for GameScene runtime', () => {
+		const decorationsLayer = phaseALongV2Tilemap.layers.find(
+			(layer) => layer.type === 'objectgroup' && layer.name === 'decorations',
+		);
+
+		expect(decorationsLayer).toBeDefined();
+		expect(decorationsLayer?.type).toBe('objectgroup');
+		expect(decorationsLayer?.objects.length).toBeGreaterThan(0);
+
+		for (const object of decorationsLayer?.objects ?? []) {
+			const properties = new Map(
+				(object.properties ?? []).map((property) => [
+					property.name,
+					property.value,
+				]),
+			);
+
+			expect(typeof properties.get('kind')).toBe('string');
+			expect(typeof properties.get('assetKey')).toBe('string');
+			expect(typeof properties.get('variant')).toBe('string');
+			expect(typeof object.x).toBe('number');
+			expect(typeof object.y).toBe('number');
+			expect(object.width).toBe(phaseALongV2Tilemap.tilewidth);
+			expect(object.height).toBe(phaseALongV2Tilemap.tileheight);
+		}
+	});
+
 	// Phase 1: grade variant assets were removed alongside the grade system.
 	// Full preload coverage is re-verified in Phase 11 when placeholder towers
 	// for the new T2-T6 ids land.

@@ -56,11 +56,42 @@ export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 	return staticEntries;
 }
 
+export function collectManualManifestEntries(): ManifestEntry[] {
+	const entries = [
+		{
+			key: 'tilemap-phase-a-long-v2',
+			type: 'tilemapTiledJSON' as const,
+			path: 'assets/maps/phase-a-long-v2.tmj',
+			section: 'preload' as const,
+		},
+	];
+
+	const missing = entries
+		.filter(
+			(entry) =>
+				!existsSync(
+					new URL(
+						`../../packages/web-shell/public/${entry.path}`,
+						import.meta.url,
+					),
+				),
+		)
+		.map((entry) => entry.path);
+	if (missing.length > 0) {
+		throw new Error(
+			`[manual manifest assets] missing required assets: ${missing.join(', ')}`,
+		);
+	}
+
+	return entries;
+}
+
 export async function generateAllAssets() {
 	console.log('=== Generating all assets ===\n');
 
 	const [
 		staticFieldAssets,
+		manualManifestEntries,
 		towers,
 		units,
 		projectiles,
@@ -80,6 +111,10 @@ export async function generateAllAssets() {
 	] = await Promise.all([
 		Promise.resolve(collectStaticFieldAssetEntries()).then((result) => {
 			console.log('[vendor-field-assets] done');
+			return result;
+		}),
+		Promise.resolve(collectManualManifestEntries()).then((result) => {
+			console.log('[manual-manifest-assets] done');
 			return result;
 		}),
 		generateTowers().then((result) => {
@@ -150,6 +185,7 @@ export async function generateAllAssets() {
 
 	const allEntries = withManifestSections([
 		...staticFieldAssets,
+		...manualManifestEntries,
 		...towers,
 		...units,
 		...projectiles,

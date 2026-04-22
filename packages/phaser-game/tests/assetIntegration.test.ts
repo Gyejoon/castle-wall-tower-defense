@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { ALL_TOWERS } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
-import { TINY_SWORDS_TILESET_ASSETS } from '../src/fieldAssets';
+import {
+	TINY_SWORDS_DECORATION_ASSETS,
+	TINY_SWORDS_TILESET_ASSETS,
+} from '../src/fieldAssets';
 import { collectManualManifestEntries } from '../../../scripts/generate-assets/generate-all';
 
 vi.mock('phaser', () => ({
@@ -74,6 +77,10 @@ const phaseALongV2Tilemap = JSON.parse(
 	>;
 };
 
+const decorationAssetKeys = new Set(
+	TINY_SWORDS_DECORATION_ASSETS.map((asset) => asset.key),
+);
+
 describe('asset integration', () => {
 	it('keeps manual tilemap assets in the generator-owned manifest pipeline', () => {
 		expect(collectManualManifestEntries()).toContainEqual({
@@ -104,8 +111,13 @@ describe('asset integration', () => {
 			expect(typeof properties.get('kind')).toBe('string');
 			expect(typeof properties.get('assetKey')).toBe('string');
 			expect(typeof properties.get('variant')).toBe('string');
+			expect(decorationAssetKeys.has(properties.get('assetKey') as string)).toBe(
+				true,
+			);
 			expect(typeof object.x).toBe('number');
 			expect(typeof object.y).toBe('number');
+			expect((object.x ?? -1) % phaseALongV2Tilemap.tilewidth).toBe(0);
+			expect((object.y ?? -1) % phaseALongV2Tilemap.tileheight).toBe(0);
 			expect(object.width).toBe(phaseALongV2Tilemap.tilewidth);
 			expect(object.height).toBe(phaseALongV2Tilemap.tileheight);
 		}

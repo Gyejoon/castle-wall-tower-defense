@@ -1,6 +1,10 @@
 import { existsSync, writeFileSync } from 'fs';
 import { withManifestSections } from '../../packages/shared/src/assets/manifest';
 import {
+	PHASE_A_LONG_V2_TILEMAP_KEY,
+	PHASE_A_LONG_V2_TILEMAP_PATH,
+} from '../../packages/shared/src/constants/maps';
+import {
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_TILESET_ASSETS,
 } from '../../packages/phaser-game/src/fieldAssets';
@@ -59,9 +63,9 @@ export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 export function collectManualManifestEntries(): ManifestEntry[] {
 	const entries = [
 		{
-			key: 'tilemap-phase-a-long-v2',
+			key: PHASE_A_LONG_V2_TILEMAP_KEY,
 			type: 'tilemapTiledJSON' as const,
-			path: 'assets/maps/phase-a-long-v2.tmj',
+			path: PHASE_A_LONG_V2_TILEMAP_PATH,
 			section: 'preload' as const,
 		},
 	];

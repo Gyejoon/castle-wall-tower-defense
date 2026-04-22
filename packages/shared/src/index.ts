@@ -80,6 +80,8 @@ export {
 	MAP_REGISTRY,
 	PHASE_A_LONG_MAP,
 	PHASE_A_MAP_ID,
+	PHASE_A_LONG_V2_TILEMAP_KEY,
+	PHASE_A_LONG_V2_TILEMAP_PATH,
 } from './constants/maps';
 export {
 	battleXp,

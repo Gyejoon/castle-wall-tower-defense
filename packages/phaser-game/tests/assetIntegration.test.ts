@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { ALL_TOWERS } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	PHASE_A_LONG_MAP,
+	PHASE_A_LONG_V2_TILEMAP_KEY,
+	PHASE_A_LONG_V2_TILEMAP_PATH,
+} from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import {
+	TinySwordsDecorationKind,
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_TILESET_ASSETS,
 } from '../src/fieldAssets';
@@ -44,7 +50,7 @@ const manifest = JSON.parse(
 const phaseALongV2Tilemap = JSON.parse(
 	readFileSync(
 		new URL(
-			'../../web-shell/public/assets/maps/phase-a-long-v2.tmj',
+			`../../web-shell/public/${PHASE_A_LONG_V2_TILEMAP_PATH}`,
 			import.meta.url,
 		),
 		'utf-8',
@@ -80,13 +86,16 @@ const phaseALongV2Tilemap = JSON.parse(
 const decorationAssetKeys = new Set(
 	TINY_SWORDS_DECORATION_ASSETS.map((asset) => asset.key),
 );
+const decorationKinds = new Set<TinySwordsDecorationKind>(
+	TINY_SWORDS_DECORATION_ASSETS.map((asset) => asset.kind),
+);
 
 describe('asset integration', () => {
 	it('keeps manual tilemap assets in the generator-owned manifest pipeline', () => {
 		expect(collectManualManifestEntries()).toContainEqual({
-			key: 'tilemap-phase-a-long-v2',
+			key: PHASE_A_LONG_V2_TILEMAP_KEY,
 			type: 'tilemapTiledJSON',
-			path: 'assets/maps/phase-a-long-v2.tmj',
+			path: PHASE_A_LONG_V2_TILEMAP_PATH,
 			section: 'preload',
 		});
 	});
@@ -99,6 +108,8 @@ describe('asset integration', () => {
 		expect(decorationsLayer).toBeDefined();
 		expect(decorationsLayer?.type).toBe('objectgroup');
 		expect(decorationsLayer?.objects.length).toBeGreaterThan(0);
+		expect(phaseALongV2Tilemap.tilewidth).toBe(PHASE_A_LONG_MAP.tileSize);
+		expect(phaseALongV2Tilemap.tileheight).toBe(PHASE_A_LONG_MAP.tileSize);
 
 		for (const object of decorationsLayer?.objects ?? []) {
 			const properties = new Map(
@@ -111,6 +122,9 @@ describe('asset integration', () => {
 			expect(typeof properties.get('kind')).toBe('string');
 			expect(typeof properties.get('assetKey')).toBe('string');
 			expect(typeof properties.get('variant')).toBe('string');
+			expect(
+				decorationKinds.has(properties.get('kind') as TinySwordsDecorationKind),
+			).toBe(true);
 			expect(decorationAssetKeys.has(properties.get('assetKey') as string)).toBe(
 				true,
 			);

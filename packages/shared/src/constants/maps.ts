@@ -153,6 +153,9 @@ const PHASE_A_LONG_DECORATIONS: MapLayout['decorations'] = [
 ];
 
 export const PHASE_A_MAP_ID = 'phase_a_long' as const;
+export const PHASE_A_LONG_V2_TILEMAP_KEY = 'tilemap-phase-a-long-v2' as const;
+export const PHASE_A_LONG_V2_TILEMAP_PATH =
+	'assets/maps/phase-a-long-v2.tmj' as const;
 
 export const PHASE_A_LONG_MAP: MapLayout = {
 	id: PHASE_A_MAP_ID,
@@ -165,7 +168,7 @@ export const PHASE_A_LONG_MAP: MapLayout = {
 	buildablePoints: PHASE_A_LONG_BUILDABLE_POINTS,
 	spawnPoint: { x: 0, y: 3 },
 	exitPoint: { x: 0, y: 12 },
-	tilemapKey: 'tilemap-phase-a-long-v2',
+	tilemapKey: PHASE_A_LONG_V2_TILEMAP_KEY,
 	tilesetKey: 'tileset',
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,

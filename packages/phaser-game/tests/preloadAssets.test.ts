@@ -1,5 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { ALL_TOWERS } from '@gld/shared';
+import {
+	ALL_TOWERS,
+	PHASE_A_LONG_V2_TILEMAP_KEY,
+	PHASE_A_LONG_V2_TILEMAP_PATH,
+} from '@gld/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	prefetchAssetSections,
@@ -124,9 +128,9 @@ describe('field asset preload alignment', () => {
 			section: 'preload',
 		});
 		expect(manifest.assets).toContainEqual({
-			key: 'tilemap-phase-a-long-v2',
+			key: PHASE_A_LONG_V2_TILEMAP_KEY,
 			type: 'tilemapTiledJSON',
-			path: 'assets/maps/phase-a-long-v2.tmj',
+			path: PHASE_A_LONG_V2_TILEMAP_PATH,
 			section: 'preload',
 		});
 	});
@@ -211,8 +215,8 @@ describe('field asset preload alignment', () => {
 			manifestByKey.get('tilemap-forest-gate')?.path,
 		);
 		expect(tilemapTiledJSON).toHaveBeenCalledWith(
-			'tilemap-phase-a-long-v2',
-			manifestByKey.get('tilemap-phase-a-long-v2')?.path,
+			PHASE_A_LONG_V2_TILEMAP_KEY,
+			manifestByKey.get(PHASE_A_LONG_V2_TILEMAP_KEY)?.path,
 		);
 
 		expect(image).not.toHaveBeenCalledWith(

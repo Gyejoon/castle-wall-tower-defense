@@ -8,10 +8,6 @@ export const RECOGNIZED_VISUAL_LAYER_NAMES = [
 	'foliage_low',
 ] as const;
 
-const RECOGNIZED_VISUAL_LAYER_SET = new Set<string>(
-	RECOGNIZED_VISUAL_LAYER_NAMES,
-);
-
 type TileLayerLike = {
 	name?: unknown;
 	type?: unknown;
@@ -67,9 +63,6 @@ const toNumber = (value: unknown, fallback: number): number =>
 
 const toBoolean = (value: unknown, fallback: boolean): boolean =>
 	typeof value === 'boolean' ? value : fallback;
-
-const toName = (value: unknown): string | null =>
-	typeof value === 'string' && value.length > 0 ? value : null;
 
 const isTileLayer = (layer: unknown): layer is TileLayerLike => {
 	if (!isRecord(layer)) {
@@ -133,30 +126,35 @@ export const collectVisualLayers = (
 	const mapWidth = toNumber(tilemap.width, 0);
 	const mapHeight = toNumber(tilemap.height, 0);
 
-	const layers = RECOGNIZED_VISUAL_LAYER_NAMES.map((name, order) => {
-		const resolved = getNamedLayer(tilemap, name);
-		if (!resolved) {
-			return null;
-		}
+	const layers = RECOGNIZED_VISUAL_LAYER_NAMES.reduce<VisualLayerMetadata[]>(
+		(acc, name, order) => {
+			const resolved = getNamedLayer(tilemap, name);
+			if (!resolved) {
+				return acc;
+			}
 
-		const { layerData, tilemapLayer } = resolved;
+			const { layerData, tilemapLayer } = resolved;
 
-		return {
-			name,
-			type: 'tilelayer' as const,
-			order,
-			width: toNumber(layerData.width, mapWidth),
-			height: toNumber(layerData.height, mapHeight),
-			tileWidth,
-			tileHeight,
-			offsetX: toNumber(layerData.x, 0),
-			offsetY: toNumber(layerData.y, 0),
-			visible: toBoolean(layerData.visible, true),
-			alpha: toNumber(layerData.alpha, 1),
-			layerData,
-			tilemapLayer,
-		};
-	}).filter((layer): layer is VisualLayerMetadata => layer !== null);
+			acc.push({
+				name,
+				type: 'tilelayer',
+				order,
+				width: toNumber(layerData.width, mapWidth),
+				height: toNumber(layerData.height, mapHeight),
+				tileWidth,
+				tileHeight,
+				offsetX: toNumber(layerData.x, 0),
+				offsetY: toNumber(layerData.y, 0),
+				visible: toBoolean(layerData.visible, true),
+				alpha: toNumber(layerData.alpha, 1),
+				layerData,
+				tilemapLayer,
+			});
+
+			return acc;
+		},
+		[],
+	);
 
 	return {
 		hasRecognizedLayers: layers.length > 0,
@@ -166,21 +164,5 @@ export const collectVisualLayers = (
 };
 
 export const hasRecognizedVisualLayers = (tilemap: TilemapLike): boolean => {
-	if (Array.isArray(tilemap.layers)) {
-		for (const entry of tilemap.layers) {
-			const unwrapped = unwrapLayer(entry);
-			const name = toName(unwrapped?.layerData.name);
-			if (name && RECOGNIZED_VISUAL_LAYER_SET.has(name)) {
-				return true;
-			}
-		}
-	}
-
-	for (const name of RECOGNIZED_VISUAL_LAYER_NAMES) {
-		if (getNamedLayer(tilemap, name)) {
-			return true;
-		}
-	}
-
-	return false;
+	return collectVisualLayers(tilemap).hasRecognizedLayers;
 };

@@ -39,6 +39,7 @@ import {
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../fieldAssets';
+import { collectVisualLayers } from '../rendering/tiledFieldRenderer';
 
 /** Per-map theme palette for ground tiles, path overlay, and decorations */
 interface MapTheme {
@@ -584,9 +585,16 @@ export class GameScene extends Phaser.Scene {
 		const tile = grid.orthoTile;
 		const canvasW = this.scale.width;
 		const canvasH = this.scale.height;
+		const tilemap = this.make.tilemap({ key: this.currentMap.tilemapKey });
+		const visualLayers = collectVisualLayers(tilemap);
+		const visualLayerNames = new Set(visualLayers.layerNames);
+		const useTiledVisuals = visualLayers.hasRecognizedLayers;
 
 		// Layer 0: Dirt/sand base (low ground — monster path level)
-		if (typeof this.add.tileSprite === 'function') {
+		if (
+			typeof this.add.tileSprite === 'function' &&
+			(!useTiledVisuals || visualLayerNames.has('ground_base'))
+		) {
 			const dirtBg = this.add.tileSprite(
 				canvasW / 2,
 				canvasH / 2,
@@ -612,70 +620,84 @@ export class GameScene extends Phaser.Scene {
 		// Layer 2: Elevated grass platform tiles (tower placement level).
 		const lift = tile * PLATFORM_LIFT;
 		const extraTiles = 2;
-		for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
-			for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
-				if (isLow(x, y)) continue;
+		if (!useTiledVisuals || visualLayerNames.has('platform_high')) {
+			for (let y = -extraTiles; y < this.currentMap.height + extraTiles; y++) {
+				for (let x = -extraTiles; x < this.currentMap.width + extraTiles; x++) {
+					if (isLow(x, y)) continue;
 
-				// NSEW bitmask: which neighbors are "low" (path / outside).
-				let bitmask = 0;
-				if (isLow(x, y - 1)) bitmask |= 1;
-				if (isLow(x + 1, y)) bitmask |= 2;
-				if (isLow(x, y + 1)) bitmask |= 4;
-				if (isLow(x - 1, y)) bitmask |= 8;
+					// NSEW bitmask: which neighbors are "low" (path / outside).
+					let bitmask = 0;
+					if (isLow(x, y - 1)) bitmask |= 1;
+					if (isLow(x + 1, y)) bitmask |= 2;
+					if (isLow(x, y + 1)) bitmask |= 4;
+					if (isLow(x - 1, y)) bitmask |= 8;
 
-				const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
-				const world = grid.gridToWorld(x, y);
+					const frame = GRASS_PLATFORM_FRAMES[bitmask] ?? 10;
+					const world = grid.gridToWorld(x, y);
 
-				const spr = this.add.sprite(
-					world.x,
-					world.y - lift,
-					TINY_SWORDS_PRIMARY_TILESET.key,
-					frame,
-				);
-				spr.setDisplaySize(tile, tile);
-				spr.setOrigin(0.5, 0.5);
-				spr.setDepth(2);
-				if (dark) spr.setTint(0x6b7899);
-				else if (theme.groundTint !== 0xffffff) spr.setTint(theme.groundTint);
+					const spr = this.add.sprite(
+						world.x,
+						world.y - lift,
+						TINY_SWORDS_PRIMARY_TILESET.key,
+						frame,
+					);
+					spr.setDisplaySize(tile, tile);
+					spr.setOrigin(0.5, 0.5);
+					spr.setDepth(2);
+					if (dark) spr.setTint(0x6b7899);
+					else if (theme.groundTint !== 0xffffff)
+						spr.setTint(theme.groundTint);
 
-				// Cliff walls drawn as graphics layers (no stretched tileset frames).
-				const hasSouth = !!(bitmask & 4);
-				const hasEast = !!(bitmask & 2);
-				const hasWest = !!(bitmask & 8);
+					// Cliff walls drawn as graphics layers (no stretched tileset frames).
+					const hasSouth = !!(bitmask & 4);
+					const hasEast = !!(bitmask & 2);
+					const hasWest = !!(bitmask & 8);
 
-				if (hasSouth || hasEast || hasWest) {
-					const cg = this.add.graphics();
-					cg.setDepth(1.5);
-					const baseX = world.x - tile / 2;
-					const baseY = world.y - lift + tile / 2;
+					if (
+						(!useTiledVisuals || visualLayerNames.has('cliff_faces')) &&
+						(hasSouth || hasEast || hasWest)
+					) {
+						const cg = this.add.graphics();
+						cg.setDepth(1.5);
+						const baseX = world.x - tile / 2;
+						const baseY = world.y - lift + tile / 2;
 
-					if (hasSouth) {
-						const cliffH = tile * 0.6;
-						cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
-						cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
-						cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
-						cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
-						cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
-						cg.fillRect(baseX, baseY, tile, 2);
-					}
+						if (hasSouth) {
+							const cliffH = tile * 0.6;
+							cg.fillStyle(dark ? 0x3d4558 : 0x6b7b50, 1);
+							cg.fillRect(baseX, baseY, tile, cliffH * 0.35);
+							cg.fillStyle(dark ? 0x343d4e : 0x5a6843, 1);
+							cg.fillRect(baseX, baseY + cliffH * 0.35, tile, cliffH * 0.35);
+							cg.fillStyle(dark ? 0x2c3544 : 0x4a5636, 1);
+							cg.fillRect(baseX, baseY + cliffH * 0.7, tile, cliffH * 0.3);
+							cg.fillStyle(dark ? 0x4a5568 : 0x7d8e5c, 1);
+							cg.fillRect(baseX, baseY, tile, 2);
+						}
 
-					if (hasEast) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX + tile - 3, world.y - lift - tile / 2, 3, tile);
-					}
+						if (hasEast) {
+							cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+							cg.fillRect(
+								baseX + tile - 3,
+								world.y - lift - tile / 2,
+								3,
+								tile,
+							);
+						}
 
-					if (hasWest) {
-						cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
-						cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
+						if (hasWest) {
+							cg.fillStyle(dark ? 0x3a4355 : 0x5e6e46, 0.7);
+							cg.fillRect(baseX, world.y - lift - tile / 2, 3, tile);
+						}
 					}
 				}
 			}
 		}
 
 		// Layer 1.5: Shadow on path cells south of a platform (cliff shadow).
-		if (!dark) {
+		if (
+			!dark &&
+			(!useTiledVisuals || visualLayerNames.has('cliff_faces'))
+		) {
 			const shadowGraphics = this.add.graphics();
 			shadowGraphics.setDepth(0.5);
 			for (const p of pathCells) {

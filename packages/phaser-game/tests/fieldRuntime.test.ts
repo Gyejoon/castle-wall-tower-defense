@@ -358,4 +358,200 @@ describe('GameScene field runtime', () => {
 			'path-tile',
 		);
 	});
+
+	it('uses recognized tiled visual layers during scene create when available', async () => {
+		const addSprite = vi.fn(() => createImage());
+		const addGraphics = vi.fn(() => createGraphics());
+		const addText = vi.fn(() => createText());
+		const addTileSprite = vi.fn(() => ({
+			setDepth: vi.fn().mockReturnThis(),
+			setScrollFactor: vi.fn().mockReturnThis(),
+			setTint: vi.fn().mockReturnThis(),
+		}));
+		const tilemapData = {
+			getLayer: vi.fn((name: string) => {
+				if (
+					name === 'ground_base' ||
+					name === 'platform_high' ||
+					name === 'cliff_faces'
+				) {
+					return {
+						layer: {
+							name,
+							type: 'tilelayer',
+							width: PHASE_A_LONG_MAP.width,
+							height: PHASE_A_LONG_MAP.height,
+							visible: true,
+							alpha: 1,
+						},
+					};
+				}
+				return null;
+			}),
+			getObjectLayer: vi.fn(() => ({ objects: [] })),
+		};
+		const makeTilemap = vi.fn(() => tilemapData);
+
+		const { GameScene } = await import('../src/scenes/Game');
+		const scene = new GameScene();
+
+		Object.assign(scene, {
+			game: {
+				registry: {
+					get: vi.fn(() => undefined),
+					set: vi.fn(),
+					events: { on: vi.fn() },
+				},
+			},
+			scale: { width: 424, height: 960 },
+			add: {
+				sprite: addSprite,
+				graphics: addGraphics,
+				text: addText,
+				tileSprite: addTileSprite,
+			},
+			cache: {
+				json: {
+					get: vi.fn(() => ({
+						generated: '2026-04-02T00:00:00.000Z',
+						assets: [],
+					})),
+				},
+				tilemap: {
+					exists: vi.fn(() => false),
+					remove: vi.fn(),
+				},
+			},
+			load: {
+				image: vi.fn(),
+				spritesheet: vi.fn(),
+				tilemapTiledJSON: vi.fn(),
+				once: vi.fn((_event: string, callback: () => void) => callback()),
+				start: vi.fn(),
+			},
+			textures: {
+				exists: vi.fn(() => false),
+				remove: vi.fn(),
+			},
+			make: {
+				tilemap: makeTilemap,
+			},
+			input: {
+				on: vi.fn(),
+				setDraggable: vi.fn(),
+			},
+			events: {
+				on: vi.fn(),
+			},
+			time: { timeScale: 1 },
+			anims: {
+				globalTimeScale: 1,
+				exists: vi.fn(() => false),
+				create: vi.fn(),
+				generateFrameNumbers: vi.fn(() => []),
+			},
+			tweens: { add: vi.fn(), addCounter: vi.fn() },
+		});
+
+		scene.create();
+
+		expect(tilemapData.getLayer).toHaveBeenCalledWith('ground_base');
+		expect(tilemapData.getLayer).toHaveBeenCalledWith('platform_high');
+		expect(tilemapData.getObjectLayer).toHaveBeenCalledWith('decorations');
+	});
+
+	it('keeps the procedural field fallback when recognized tiled layers are absent', async () => {
+		const addSprite = vi.fn(() => createImage());
+		const addGraphics = vi.fn(() => createGraphics());
+		const addText = vi.fn(() => createText());
+		const addTileSprite = vi.fn(() => ({
+			setDepth: vi.fn().mockReturnThis(),
+			setScrollFactor: vi.fn().mockReturnThis(),
+			setTint: vi.fn().mockReturnThis(),
+		}));
+		const tilemapData = {
+			getLayer: vi.fn(() => null),
+			getObjectLayer: vi.fn(() => ({ objects: [] })),
+		};
+		const makeTilemap = vi.fn(() => tilemapData);
+
+		const { GameScene } = await import('../src/scenes/Game');
+		const scene = new GameScene();
+
+		Object.assign(scene, {
+			game: {
+				registry: {
+					get: vi.fn(() => undefined),
+					set: vi.fn(),
+					events: { on: vi.fn() },
+				},
+			},
+			scale: { width: 424, height: 960 },
+			add: {
+				sprite: addSprite,
+				graphics: addGraphics,
+				text: addText,
+				tileSprite: addTileSprite,
+			},
+			cache: {
+				json: {
+					get: vi.fn(() => ({
+						generated: '2026-04-02T00:00:00.000Z',
+						assets: [],
+					})),
+				},
+				tilemap: {
+					exists: vi.fn(() => false),
+					remove: vi.fn(),
+				},
+			},
+			load: {
+				image: vi.fn(),
+				spritesheet: vi.fn(),
+				tilemapTiledJSON: vi.fn(),
+				once: vi.fn((_event: string, callback: () => void) => callback()),
+				start: vi.fn(),
+			},
+			textures: {
+				exists: vi.fn(() => false),
+				remove: vi.fn(),
+			},
+			make: {
+				tilemap: makeTilemap,
+			},
+			input: {
+				on: vi.fn(),
+				setDraggable: vi.fn(),
+			},
+			events: {
+				on: vi.fn(),
+			},
+			time: { timeScale: 1 },
+			anims: {
+				globalTimeScale: 1,
+				exists: vi.fn(() => false),
+				create: vi.fn(),
+				generateFrameNumbers: vi.fn(() => []),
+			},
+			tweens: { add: vi.fn(), addCounter: vi.fn() },
+		});
+
+		scene.create();
+
+		expect(tilemapData.getLayer).toHaveBeenCalledWith('ground_base');
+		expect(tilemapData.getLayer).toHaveBeenCalledWith('platform_high');
+		expect(addTileSprite).toHaveBeenCalledWith(
+			212,
+			480,
+			424,
+			960,
+			'dirt-seamless',
+		);
+		expect(addSprite).toHaveBeenCalledWith(
+			expect.any(Number),
+			expect.any(Number),
+			TINY_SWORDS_PRIMARY_TILESET.key,
+			expect.any(Number),
+		);
+	});
 });

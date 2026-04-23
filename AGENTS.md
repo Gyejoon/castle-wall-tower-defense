@@ -65,6 +65,17 @@ Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 →
 - Codex용 수렴 리뷰 스킬: `.agents/skills/ralreview/SKILL.md`
 - 런타임 안정성 체크 기준: `.claude/skills/phaser-best-practices/SKILL.md`
 
+## Local Subagents
+
+`.claude/agents/` 에 Claude Code 프로젝트 스코프 **subagent** 9종이 배치되어 있다
+(`msitarzewski/agency-agents` 원문 그대로 임포트, MIT).
+`/agents` 명령 또는 자동 라우팅으로 호출한다.
+
+- 일반 5종: Game Designer / Game Audio Engineer / Level Designer / Narrative Designer / Technical Artist — 엔진 중립 설계 상담에 사용.
+- Unity 4종: Unity Architect / Unity Editor Tool Developer / Unity Multiplayer Engineer / Unity Shader Graph Artist — **C#/MonoBehaviour/URP 전제의 프롬프트이므로 코드 생성용이 아니라 "아키텍처 패턴 레퍼런스"로만 사용**. 본 프로젝트는 Phaser 3 런타임임을 명심할 것.
+- Phaser 관련 실제 구현은 기존 skill(`phaser-best-practices`, `game-ui-design`)을 우선 사용.
+- 출처/라이선스/세부 가이드: `.claude/agents/README.md`
+
 ## 자동 학습 룰
 
 반복 실수에서 자동 생성된 프로젝트 룰이 있다. 작업 전 확인 필수:

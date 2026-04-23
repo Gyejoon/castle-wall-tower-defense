@@ -679,15 +679,20 @@ Phaser `Game.ts.create()` 순서를 1:1 이식. Cleanup 순서(`OnDestroy`)도 P
 
 | Phase | Plan 파일 | 상태 |
 |-------|-----------|------|
-| 0a 부트스트랩 (Claude 실행 가능 범위) | `docs/superpowers/plans/2026-04-24-unity-phase-0-bootstrap.md` | ✅ 작성 완료 |
+| 0a 부트스트랩 (Claude 실행 가능 범위) | `docs/superpowers/plans/2026-04-24-unity-phase-0-bootstrap.md` | ✅ 작성 완료 (bite-sized TDD, 즉시 실행 가능) |
 | 0b 사용자 실행 (Unity 설치, secret, 첫 씬/빌드) | `docs/unity-migration/phase-0b-runbook.md`로 위임 (Plan 0a의 Task 9에서 생성) | Phase 0a 실행 시 자동 생성 |
-| 1 데이터·에셋 파이프라인 | 미작성 — Phase 0 PR 랜딩 후 착수 | 대기 |
-| 2 PoC 버티컬 슬라이스 | 미작성 | 대기 |
-| 3 코어 루프 parity | 미작성 | 대기 |
-| 4 합성·가챠·보스·로그라이크 | 미작성 | 대기 |
-| 5 UI/UX parity | 미작성 | 대기 |
-| 6 저장·오디오·BM·Sentry | 미작성 | 대기 |
-| 7 parity gate + FTUE + 성능 | 미작성 | 대기 |
-| 8 프로덕션 전환 | 미작성 | 대기 |
+| 1 데이터·에셋 파이프라인 | `docs/superpowers/plans/2026-04-24-unity-phase-1-data-asset-pipeline.md` | ✅ 작성 완료 (outline-level) |
+| 2 PoC 버티컬 슬라이스 | `docs/superpowers/plans/2026-04-24-unity-phase-2-poc-vertical-slice.md` | ✅ 작성 완료 (outline-level) |
+| 3 코어 루프 parity | `docs/superpowers/plans/2026-04-24-unity-phase-3-core-loop-parity.md` | ✅ 작성 완료 (outline-level) |
+| 4 합성·가챠·보스·로그라이크 | `docs/superpowers/plans/2026-04-24-unity-phase-4-merge-gacha-boss-roguelike.md` | ✅ 작성 완료 (outline-level) |
+| 5 UI/UX parity | `docs/superpowers/plans/2026-04-24-unity-phase-5-ui-ux-parity.md` | ✅ 작성 완료 (outline-level) |
+| 6 저장·오디오·BM·Sentry | `docs/superpowers/plans/2026-04-24-unity-phase-6-save-audio-bm-sentry.md` | ✅ 작성 완료 (outline-level) |
+| 7 parity gate + FTUE + 성능 | `docs/superpowers/plans/2026-04-24-unity-phase-7-parity-gate-ftue-performance.md` | ✅ 작성 완료 (outline-level) |
+| 8 프로덕션 전환 | `docs/superpowers/plans/2026-04-24-unity-phase-8-production-cutover.md` | ✅ 작성 완료 (outline-level, 사용자 go/no-go 결정 포함) |
 
-각 Phase는 별도 plan 문서로 분리한다 (writing-plans skill의 scope-check 룰: 독립 서브시스템은 독립 plan). Phase N Plan은 Phase N-1 Plan이 머지된 직후에 작성 — 이전 Phase 결과와 실제 코드 상태를 기반으로 세부 task를 결정하기 위함.
+**plan 수준 구분**
+
+- **bite-sized TDD (Phase 0a만)**: writing-plans skill의 "No Placeholders" 룰을 완전 준수. 각 step에 실제 코드/명령/예상 출력 포함. 지금 바로 agent가 실행 가능.
+- **outline-level (Phase 1~8)**: 플랜 헤더, 스코프, 파일 구조, task 분해는 구체적이나, Phase N의 Task 1은 항상 **담당 agent 자문 + 디자인 결정 문서화**로 시작한다. agent 자문 결과에 따라 Task 3+의 세부 구현이 revise될 수 있음을 플랜 상단에 명시. 이는 Phase N-1이 머지되기 전에는 Unity 측 구체적 파일 경로·심볼·SO 스키마가 아직 결정되지 않았기 때문의 의도된 구조. Phase 실행 직전에 plan을 rewrite하면 bite-sized로 승격 가능.
+
+각 Phase는 별도 plan 문서로 분리한다 (writing-plans skill의 scope-check 룰: 독립 서브시스템은 독립 plan). Outline-level plans는 **roadmap + 구조 설계서**로 읽되, 실제 실행 직전에는 해당 시점의 repo 상태를 반영하여 bite-sized로 재작성하는 것을 권장.

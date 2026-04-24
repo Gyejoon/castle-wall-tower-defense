@@ -100,7 +100,9 @@ git commit -m "feat(unity-game): Phase 0 label 씬 (Boot · Root) + PanelSetting
 
 ```bash
 cd packages/unity-game
-Unity -batchmode -nographics -projectPath "$PWD" \
+# macOS Unity Hub 기본 경로 자동 탐색. 다른 위치면 UNITY_PATH 환경변수로 override.
+UNITY="${UNITY_PATH:-/Applications/Unity/Hub/Editor/$(ls /Applications/Unity/Hub/Editor | sort | tail -1)/Unity.app/Contents/MacOS/Unity}"
+"$UNITY" -batchmode -nographics -projectPath "$PWD" \
   -executeMethod GLD.BuildScripts.Editor.WebGLBuilder.Build -logFile -
 ```
 

@@ -10,7 +10,7 @@ This directory tracks **current-state documentation** — runbooks, rollback pro
 |------|---------|
 | `phase-0b-runbook.md` | User-side Phase 0 tasks: secrets, local Unity install, first scene, first build. |
 
-Phases 1–8 produce additional documents (listed in the migration spec):
+Phases 1–8 **will produce** additional documents (listed in the migration spec, not yet committed):
 - Phase 7: `phase7-perf.md` (performance profile + budget evidence)
 - Phase 8: `rollback-runbook.md` (flag-day swap + drill procedure)
 

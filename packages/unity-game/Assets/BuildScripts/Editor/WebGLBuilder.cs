@@ -19,9 +19,11 @@ namespace GLD.BuildScripts.Editor
         const string TemplateName = "PROJECT:GLDMobilePortrait";
 
         [MenuItem("GLD/Build/WebGL")]
-        public static void BuildFromMenu() => Build();
+        public static void BuildFromMenu() => Build(exitOnComplete: false);
 
-        public static void Build()
+        public static void Build() => Build(exitOnComplete: true);
+
+        public static void Build(bool exitOnComplete)
         {
             string outputDir = Environment.GetEnvironmentVariable("GLD_WEBGL_OUTPUT_DIR") ?? DefaultOutputDir;
             string absOutput = Path.GetFullPath(outputDir);
@@ -65,12 +67,12 @@ namespace GLD.BuildScripts.Editor
             if (summary.result == BuildResult.Succeeded)
             {
                 Debug.Log($"[WebGLBuilder] Build succeeded: {summary.totalSize} bytes in {summary.totalTime}");
-                EditorApplication.Exit(0);
+                if (exitOnComplete) EditorApplication.Exit(0);
             }
             else
             {
                 Debug.LogError($"[WebGLBuilder] Build failed: result={summary.result}, errors={summary.totalErrors}");
-                EditorApplication.Exit(1);
+                if (exitOnComplete) EditorApplication.Exit(1);
             }
         }
     }

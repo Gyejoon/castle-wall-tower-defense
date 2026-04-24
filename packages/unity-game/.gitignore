@@ -36,6 +36,3 @@
 # OS
 .DS_Store
 Thumbs.db
-
-# Build output scanned by merge-build.ts
-Build/WebGL/

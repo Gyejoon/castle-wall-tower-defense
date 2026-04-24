@@ -54,7 +54,6 @@ jobs:
           key: Library-WebGL-${{ hashFiles('packages/unity-game/Packages/manifest.json', 'packages/unity-game/ProjectSettings/ProjectVersion.txt') }}
           restore-keys: |
             Library-WebGL-
-            Library-
 
       - name: Build with GameCI
         uses: game-ci/unity-builder@v4
@@ -67,6 +66,7 @@ jobs:
           targetPlatform: WebGL
           buildMethod: GLD.BuildScripts.Editor.WebGLBuilder.Build
           buildsPath: packages/unity-game/Build
+          # TODO(phase-0b): flip to false once ProjectSettings/ is committed.
           allowDirtyBuild: true
 
       - name: Report build size

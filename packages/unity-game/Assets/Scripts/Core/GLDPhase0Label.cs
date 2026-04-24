@@ -19,7 +19,11 @@ namespace GLD.Core
         {
             var doc = GetComponent<UIDocument>();
             var root = doc != null ? doc.rootVisualElement : null;
-            if (root == null) return;
+            if (root == null)
+            {
+                Debug.LogWarning($"[GLDPhase0Label] UIDocument on '{gameObject.name}' has no rootVisualElement — check PanelSettings + UIDocument initialization order.");
+                return;
+            }
 
             var label = root.Q<Label>(LabelElementName);
             if (label != null)

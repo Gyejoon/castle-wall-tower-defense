@@ -11,6 +11,7 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   font-family: 'Galmuri11', 'Press Start 2P', system-ui, -apple-system, sans-serif;
+  /* Galmuri11 / Press Start 2P 는 Phase 5 에서 @font-face 또는 CDN 로드 예정. 현재는 system-ui fallback. */
 }
 
 #unity-container {
@@ -89,20 +90,4 @@ html, body {
   background: rgba(96, 24, 16, 0.94);
   border-color: #c03020;
   color: #fff0e0;
-}
-
-#unity-sound-unlock {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 20px;
-  background: #c8a04a;
-  color: #1a140a;
-  border: 2px solid #4a3a20;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  z-index: 10;
 }

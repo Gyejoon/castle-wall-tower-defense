@@ -1,0 +1,19 @@
+{
+  "name": "GLD.SceneRuntime",
+  "rootNamespace": "GLD.SceneRuntime",
+  "references": [
+    "GLD.Core",
+    "GLD.Systems",
+    "GLD.UI",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

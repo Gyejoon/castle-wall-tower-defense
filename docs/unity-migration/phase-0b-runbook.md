@@ -42,7 +42,7 @@ CI needs `UNITY_LICENSE` + `UNITY_EMAIL` + `UNITY_PASSWORD` to activate Unity he
 cd /Users/jy/.superset/worktrees/castle-wall-tower-defense/endurable-hurricane
 git status packages/unity-game/ProjectSettings/ packages/unity-game/Packages/packages-lock.json packages/unity-game/Assets/**/*.meta
 git add packages/unity-game/ProjectSettings packages/unity-game/Packages/packages-lock.json
-git add packages/unity-game/Assets/Scripts packages/unity-game/Assets/UI packages/unity-game/BuildScripts
+git add packages/unity-game/Assets/Scripts packages/unity-game/Assets/UI packages/unity-game/Assets/BuildScripts
 # add ONLY .meta files for existing committed sources (do not add Library/ or Temp/).
 git commit -m "chore(unity-game): Unity 6 LTS 초기 생성 — ProjectSettings · .meta · packages-lock"
 ```

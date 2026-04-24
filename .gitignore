@@ -48,3 +48,6 @@ packages/unity-game/Build/
 packages/unity-game/Builds/
 packages/unity-game/UserSettings/
 packages/unity-game/MemoryCaptures/
+
+# Unity data pipeline — generated JSON (do not commit, re-run build:unity-json)
+packages/unity-game/Assets/Resources/GameData/*.json

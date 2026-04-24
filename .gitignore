@@ -38,3 +38,13 @@ Thumbs.db
 
 # Asset forge staging (HITL review buffer — not committed)
 staging/
+
+# Unity generated (under packages/unity-game/)
+packages/unity-game/Library/
+packages/unity-game/Temp/
+packages/unity-game/Logs/
+packages/unity-game/obj/
+packages/unity-game/Build/
+packages/unity-game/Builds/
+packages/unity-game/UserSettings/
+packages/unity-game/MemoryCaptures/

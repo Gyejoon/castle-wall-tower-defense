@@ -95,7 +95,12 @@ export async function mergeBuild(options: MergeBuildOptions): Promise<MergeBuild
   if (await exists(unityBuild)) {
     await cp(unityBuild, unityOut, { recursive: true });
     const filesCopied = await countFiles(unityOut);
-    return { unityMode: 'copied', filesCopied };
+    if (filesCopied > 0) {
+      return { unityMode: 'copied', filesCopied };
+    }
+    // Unity dir exists but empty — clean and fall through to placeholder so /unity/ stays healthy.
+    await rm(unityOut, { recursive: true, force: true });
+    await mkdir(unityOut, { recursive: true });
   }
 
   await writeFile(join(unityOut, 'index.html'), PLACEHOLDER_HTML, 'utf8');

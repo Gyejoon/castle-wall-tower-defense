@@ -27,9 +27,10 @@ jobs:
       skip: ${{ steps.check.outputs.skip }}
     steps:
       - id: check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          title="${{ github.event.pull_request.title }}"
-          if [[ "$title" == *"[skip-unity-build]"* ]]; then
+          if [[ "$PR_TITLE" == *"[skip-unity-build]"* ]]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"

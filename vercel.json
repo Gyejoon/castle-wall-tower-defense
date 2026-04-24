@@ -4,6 +4,7 @@
   "installCommand": "cd ../.. && bun install",
   "framework": null,
   "rewrites": [
+    { "source": "/unity", "destination": "/unity/index.html" },
     { "source": "/unity/:path*", "destination": "/unity/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

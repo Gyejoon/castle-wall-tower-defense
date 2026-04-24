@@ -68,6 +68,18 @@ describe('mergeBuild', () => {
     expect(second).toBe(first);
   });
 
+  it('falls back to placeholder when unity build dir exists but is empty', async () => {
+    await mkdir(unityBuild, { recursive: true });
+    // no files inside
+
+    const result = await mergeBuild({ webShellDist, unityBuild });
+
+    expect(result.unityMode).toBe('placeholder');
+    const unityIndex = await readFile(join(webShellDist, 'unity', 'index.html'), 'utf8');
+    expect(unityIndex).toContain('Unity Phase 0');
+    expect(unityIndex).toContain('pending build');
+  });
+
   it('throws if webShellDist does not exist', async () => {
     await rm(webShellDist, { recursive: true });
     await expect(

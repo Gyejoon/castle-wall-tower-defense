@@ -36,7 +36,9 @@ function normalizeValue(value: unknown): JsonValue {
 	}
 	if (typeof value === 'object') {
 		const sorted: { [key: string]: JsonValue } = {};
-		for (const key of Object.keys(value as object).sort()) {
+		for (const key of Object.keys(value as object).sort((a, b) =>
+			a < b ? -1 : a > b ? 1 : 0,
+		)) {
 			sorted[key] = normalizeValue((value as Record<string, unknown>)[key]);
 		}
 		return sorted;

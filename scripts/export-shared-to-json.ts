@@ -1,8 +1,10 @@
 /**
  * export-shared-to-json.ts
  *
- * Phase 1 Task 2 — Bun CLI that exports all 13 shared data catalogs to
+ * Phase 1 Task 2 — Bun CLI that exports all 14 shared data catalogs to
  * deterministic JSON files under packages/unity-game/Assets/Resources/GameData/.
+ *
+ * 14 shared data catalogs (13 config/content + mergeChain derived from MERGE_CHAIN).
  *
  * Exported function:
  *   exportAll(outDir: string): Promise<ExportResult>
@@ -117,10 +119,12 @@ function sha256(content: string): string {
 }
 
 /**
- * Export all 13 catalogs to `outDir` as deterministic JSON files.
+ * Export all 14 catalogs to `outDir` as deterministic JSON files.
  * Also writes `index.json` listing every emitted file with its SHA-256 hash.
  *
- * Re-running produces identical output when source data is unchanged.
+ * Re-running produces byte-identical output when source data is unchanged.
+ * (No timestamp fields — use `git log -1 --format=%cI -- <catalog.json>` if
+ * a generation timestamp is needed.)
  */
 export async function exportAll(outDir: string): Promise<ExportResult> {
   const absOut = resolve(outDir);
@@ -142,9 +146,10 @@ export async function exportAll(outDir: string): Promise<ExportResult> {
   }
 
   // Write index.json
+  // NOTE: No generatedAt timestamp — keeps the file deterministic across runs.
+  // Callers that need a generation time can use: git log -1 --format=%cI -- index.json
   const indexContent =
     stableStringify({
-      generatedAt: new Date().toISOString(),
       catalogs: entries,
     }) + '\n';
   const indexFile = join(absOut, 'index.json');

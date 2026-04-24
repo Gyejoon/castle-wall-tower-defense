@@ -102,6 +102,10 @@ public sealed class MergeChainSO : ScriptableObject
 }
 ```
 
+> **Implementation note:** `mergeChain` is exported as a separate JSON catalog by
+> `scripts/export-shared-to-json.ts`. Task 4's `JsonToSOImporter` must read it
+> and populate `MergeChainSO.rules` alongside the per-tower SO import.
+
 ### Q1-3. JSON Round-Trip Serializer
 
 **Decision: (B) Newtonsoft.Json (`com.unity.nuget.newtonsoft-json`), Editor-only asmdef 참조.**

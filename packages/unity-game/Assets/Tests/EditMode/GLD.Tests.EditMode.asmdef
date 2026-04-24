@@ -3,6 +3,7 @@
   "rootNamespace": "GLD.Tests.EditMode",
   "references": [
     "GLD.Data",
+    "GLD.Data.Editor",
     "UnityEditor",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",

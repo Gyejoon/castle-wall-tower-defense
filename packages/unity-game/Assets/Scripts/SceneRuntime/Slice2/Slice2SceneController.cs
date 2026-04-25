@@ -42,6 +42,10 @@ namespace GLD.SceneRuntime.Slice2
     ///     own prepEndSec gate paces the first spawn 3 seconds in.
     /// Public access for tests via the read-only system properties.
     /// </summary>
+    // Explicit default order (0) paired with PlacementController's -100 makes
+    // the §1.4 tick-order contract visible at the class declaration: input
+    // buffering runs first, this controller drains in the applyInputs phase.
+    [DefaultExecutionOrder(0)]
     public sealed class Slice2SceneController : MonoBehaviour
     {
         // ── Inspector wiring ──────────────────────────────────────────────

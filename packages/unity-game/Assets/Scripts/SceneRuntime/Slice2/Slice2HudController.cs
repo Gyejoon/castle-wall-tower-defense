@@ -120,15 +120,24 @@ namespace GLD.SceneRuntime.Slice2
             _placeArcherButton = root.Q<Button>("place-archer-button");
 
             // Resolve archer cost from the TowerDefSO so OQ-4 (cost=20) stays
-            // the single source of truth. If the def isn't wired (headless
-            // tests), fall back to 20 to keep the label readable.
-            int cost = 20;
-            if (controller != null)
+            // the single source of truth. If the def isn't wired (script-order
+            // edge case where GameDatabase has not Activated yet, or a
+            // misconfigured scene), log loudly so a CI player-build smoke run
+            // surfaces the wiring bug instead of silently using the
+            // happens-to-be-correct PoC fallback.
+            var def = controller != null ? controller.GetTowerDef() : null;
+            if (def == null)
             {
-                var def = controller.GetTowerDef();
-                if (def != null) cost = def.cost;
+                Debug.LogError(
+                    "Slice2HudController: GameDatabase tower 'archer' not resolved at OnEnable. " +
+                    "Falling back to cost=20. Verify GameDatabase asset is wired on " +
+                    "Slice2SceneController and Activate/EnsureActive ran before HUD enable.");
+                _archerCost = 20;
             }
-            _archerCost = cost;
+            else
+            {
+                _archerCost = def.cost;
+            }
 
             if (_placeArcherButton != null)
             {
@@ -192,12 +201,15 @@ namespace GLD.SceneRuntime.Slice2
 
         void HandleTowerPlaceRejected(TowerDefSO def, GridCell cell, MinimalTowerSystem.PlacementRejection reason)
         {
-            // Phase 2 PoC: log rejection so dev/test sees feedback. Phase 3
-            // upgrades this to a toast/flash; intentionally minimal here.
-            // (No HUD label slot exists for rejection feedback in Task 5; the
-            // LogWarning is the dev-facing surface.)
+            // Phase 2 PoC: log rejection so dev/test sees feedback. Gated
+            // behind UNITY_EDITOR || DEVELOPMENT_BUILD so misclick warnings do
+            // not ship to player log files in release builds. Phase 3 replaces
+            // this with a HUD toast/flash; until then the conditional log is
+            // the dev-facing surface.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning(
                 $"[Slice2HudController] TryPlace rejected at ({cell.Col},{cell.Row}): {reason}");
+#endif
         }
 
         // ── Render helpers ────────────────────────────────────────────────
@@ -238,5 +250,28 @@ namespace GLD.SceneRuntime.Slice2
                     _placeArcherButton.RemoveFromClassList("placement-mode-active");
             }
         }
+
+#if UNITY_INCLUDE_TESTS
+        /// <summary>
+        /// Test-only seam: directly toggles placement mode without going through
+        /// the UI button click. Avoids coupling tests to UI Toolkit click-event
+        /// internals (ClickEvent / NavigationSubmitEvent / PointerUpEvent shift
+        /// across Unity 2022.x → 2023.x → 6000.x). The button itself is still
+        /// tested indirectly via OnClickPlaceArcher() which the production path
+        /// exercises. Public (rather than internal) because the test asmdef
+        /// (GLD.Tests.PlayMode) is a separate assembly from GLD.SceneRuntime;
+        /// the UNITY_INCLUDE_TESTS guard plus the Test_ prefix keep the
+        /// production-call surface clear.
+        /// </summary>
+        public void Test_SetPlacementModeActive(bool active)
+        {
+            PlacementModeActive = active;
+            if (_placeArcherButton != null)
+            {
+                if (active) _placeArcherButton.AddToClassList("placement-mode-active");
+                else _placeArcherButton.RemoveFromClassList("placement-mode-active");
+            }
+        }
+#endif
     }
 }

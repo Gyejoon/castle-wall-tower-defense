@@ -40,6 +40,12 @@ namespace GLD.SceneRuntime.Slice2
     /// <see cref="ApplyPendingInputs"/> (called from
     /// <see cref="Slice2SceneController.Update"/>).
     /// </summary>
+    // §1.4 tick-order contract: PlacementController.Update buffers presses;
+    // Slice2SceneController.Update drains them at the applyInputs phase. Same-
+    // frame drain requires PlacementController to run first, so pin its order
+    // ahead of any default-priority MB. Without this, Unity's same-priority
+    // Update order is undefined and a press can leak to the next frame.
+    [DefaultExecutionOrder(-100)]
     public sealed class PlacementController : MonoBehaviour
     {
         [Header("Wiring (set in scene inspector — NEVER FindObjectOfType)")]

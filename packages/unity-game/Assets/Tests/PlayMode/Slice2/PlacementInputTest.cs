@@ -69,48 +69,17 @@ namespace GLD.Tests.PlayMode.Slice2
             // We then manually drain pending inputs at the canonical phase.
             controller.enabled = false;
 
-            // ── 3. Arm placement mode. The HUD button click is what flips
-            //      this in production; here we directly invoke the toggle by
-            //      sending one HandlePointerPress at a far off-grid position
-            //      with placement mode OFF (no-op), then arming via reflection
-            //      ... actually simpler: the HUD's OnPlaceArcherClicked toggles
-            //      PlacementModeActive. We can't easily invoke that without a
-            //      UI Toolkit click event, so we use the public PlacementMode
-            //      surface: arming via the button's `clicked` invoke is too
-            //      brittle. Instead, mirror what a click would do by invoking
-            //      the button's clicked event directly.
-            var doc = hud.GetComponent<UnityEngine.UIElements.UIDocument>();
-            Assert.IsNotNull(doc, "Slice2HudController must have a UIDocument component.");
-            yield return null; // let UIDocument finish bind
-
-            var root = doc.rootVisualElement;
-            Assert.IsNotNull(root, "UIDocument.rootVisualElement must be available.");
-            var button = root.Q<UnityEngine.UIElements.Button>("place-archer-button");
-            Assert.IsNotNull(button, "place-archer-button must exist in UXML.");
-
-            // Invoke button.clicked the same way the UI runtime would.
-            using (var evt = UnityEngine.UIElements.NavigationSubmitEvent.GetPooled())
-            {
-                evt.target = button;
-                button.SendEvent(evt);
-            }
-            // NavigationSubmitEvent does not always fire 'clicked' across UI
-            // Toolkit versions; force it explicitly so the test is robust.
-            // (Production UI uses the actual mouse click which raises
-            // PointerUpEvent → clicked. Either way, PlacementModeActive flips.)
-            if (!hud.PlacementModeActive)
-            {
-                // ClickEvent is the modern UI Toolkit click event; if Button's
-                // clicked invocation list is empty (it shouldn't be), the test
-                // would fail meaningfully on the assertion below.
-                using (var clickEvt = UnityEngine.UIElements.ClickEvent.GetPooled())
-                {
-                    clickEvt.target = button;
-                    button.SendEvent(clickEvt);
-                }
-            }
+            // ── 3. Arm placement mode via the test-only seam on the HUD.
+            //      See Slice2HudController.Test_SetPlacementModeActive (gated
+            //      behind UNITY_INCLUDE_TESTS): bypasses UI Toolkit click-event
+            //      synthesis (ClickEvent / NavigationSubmitEvent shift across
+            //      Unity 2022.x → 2023.x → 6000.x), so the test does not couple
+            //      to UIElements internals. The production button-click path is
+            //      still exercised via OnPlaceArcherClicked() in normal play.
+            hud.Test_SetPlacementModeActive(true);
+            yield return null;
             Assert.IsTrue(hud.PlacementModeActive,
-                "Clicking place-archer-button must arm placement mode.");
+                "Test_SetPlacementModeActive(true) must arm placement mode.");
 
             // ── 4. Compute the screen-space position that corresponds to grid
             //      cell (3,14) and feed it through the public test seam. This

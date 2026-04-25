@@ -51,3 +51,6 @@ packages/unity-game/MemoryCaptures/
 
 # Unity data pipeline — generated JSON (do not commit, re-run build:unity-json)
 packages/unity-game/Assets/Resources/GameData/*.json
+
+# Unity Burst compiler cache (생성물 — Editor 가 자동 생성/갱신)
+packages/unity-game/Data/

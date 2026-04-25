@@ -1,9 +1,11 @@
 {
-  "buildCommand": "cd ../.. && bunx tsc -b packages/web-shell && cd packages/web-shell && bunx vite build",
+  "buildCommand": "cd ../.. && bun run build:all",
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && bun install",
   "framework": null,
   "rewrites": [
+    { "source": "/unity", "destination": "/unity/index.html" },
+    { "source": "/unity/:path*", "destination": "/unity/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

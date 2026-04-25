@@ -1,0 +1,126 @@
+name: Unity Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/unity-game/**'
+      - 'packages/shared/src/**'
+      - '.github/workflows/unity-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/unity-game/**'
+      - 'packages/shared/src/**'
+      - '.github/workflows/unity-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skip-check:
+    name: Skip on [skip-unity-build]
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - id: check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$PR_TITLE" == *"[skip-unity-build]"* ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-webgl:
+    name: Build WebGL
+    needs: skip-check
+    if: needs.skip-check.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install repo deps
+        run: bun install
+
+      - name: Export shared TS data to JSON
+        run: bun run build:unity-json
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: packages/unity-game/Library
+          key: Library-WebGL-${{ hashFiles('packages/unity-game/Packages/manifest.json', 'packages/unity-game/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: Build with GameCI
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: packages/unity-game
+          targetPlatform: WebGL
+          buildMethod: GLD.BuildScripts.Editor.WebGLBuilder.Build
+          buildsPath: packages/unity-game/Build
+          # TODO(phase-0b): flip to false once ProjectSettings/ is committed.
+          allowDirtyBuild: true
+
+      - name: Report build size + emit build-size.json
+        if: always()
+        run: |
+          if [ ! -d packages/unity-game/Build/WebGL ]; then
+            echo "::warning::WebGL build dir missing — build likely failed"
+            exit 0
+          fi
+          total=$(du -sb packages/unity-game/Build/WebGL | cut -f1)
+          echo "WebGL total: $((total / 1024 / 1024)) MB"
+
+          {
+            echo "{"
+            echo "  \"total_bytes\": $total,"
+            echo "  \"breakdown\": {"
+            first=1
+            for d in packages/unity-game/Build/WebGL/*/; do
+              size=$(du -sb "$d" | cut -f1)
+              name=$(basename "$d")
+              if [ $first -eq 1 ]; then first=0; else echo ","; fi
+              printf "    \"%s\": %d" "$name" "$size"
+            done
+            echo
+            echo "  }"
+            echo "}"
+          } > build-size.json
+          cat build-size.json
+
+      - name: Upload build-size.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-size-${{ github.sha }}
+          path: build-size.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload WebGL artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-webgl-${{ github.sha }}
+          path: packages/unity-game/Build/WebGL
+          retention-days: 30
+          if-no-files-found: error

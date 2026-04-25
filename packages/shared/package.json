@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "biome check --write ."
+    "lint": "biome check --write .",
+    "build:unity-json": "bun run ../../scripts/export-shared-to-json.ts"
   },
   "devDependencies": {
     "vitest": "^3.0.0",

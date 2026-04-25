@@ -1,0 +1,12 @@
+{
+  "name": "Grid Line Defense (Unity)",
+  "short_name": "GLD Unity",
+  "description": "Unity 2D WebGL port of Grid Line Defense — Phase 0 bootstrap.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a140a",
+  "theme_color": "#2a2010",
+  "lang": "ko"
+}

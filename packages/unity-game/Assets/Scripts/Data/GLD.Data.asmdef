@@ -1,0 +1,16 @@
+{
+  "name": "GLD.Data",
+  "rootNamespace": "GLD.Data",
+  "references": [
+    "GLD.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,28 @@
+{
+  "name": "GLD.Tests.EditMode",
+  "rootNamespace": "GLD.Tests.EditMode",
+  "references": [
+    "GLD.Data",
+    "GLD.Data.Editor",
+    "Unity.Addressables.Editor",
+    "UnityEditor",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

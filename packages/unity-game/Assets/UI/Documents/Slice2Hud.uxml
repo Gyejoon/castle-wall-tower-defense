@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         editor="UnityEditor.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <!--
+    Phase 2 Task 5 HUD. Phase 1 lesson: UIDocument has no inspector "Style
+    Sheets" field on Unity 6 — USS imports happen here in the UXML via
+    ui:Style. tokens.uss exposes `:root` CSS variables; Slice2Hud.uss reads
+    them via var(--…). USS supports @import url() (project URI), but a top-
+    level <ui:Style> import on the same UIDocument is enough because USS
+    `:root` selectors apply to the document root.
+
+    HP label is a static "❤100" placeholder. Phase 2 has no castle-wall HP
+    system, so MinimalWaveSystem.OnPlayerDamaged does NOT exist (despite the
+    plan mentioning it). TODO Phase 3: bind to castle-wall HP source-of-truth
+    and update the text on damage events.
+  -->
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/Slice2Hud.uss" />
+  <ui:VisualElement name="slice2-hud-root" class="slice2-hud-root" picking-mode="Ignore">
+    <ui:VisualElement name="slice2-hud-top" class="slice2-hud-top" picking-mode="Ignore">
+      <ui:Label name="energy-label" text="⚡40" class="slice2-hud-stat slice2-hud-stat-energy" />
+      <ui:Label name="wave-label" text="Wave 1" class="slice2-hud-stat slice2-hud-stat-wave" />
+      <!-- TODO Phase 3: bind hp-label to castle-wall HP system once it lands. -->
+      <ui:Label name="hp-label" text="❤100" class="slice2-hud-stat slice2-hud-stat-hp" />
+    </ui:VisualElement>
+    <ui:VisualElement name="slice2-hud-bottom" class="slice2-hud-bottom">
+      <ui:Button name="place-archer-button" text="Place Archer (⚡20)" class="slice2-hud-button" />
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

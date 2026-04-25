@@ -1,0 +1,78 @@
+/* Slice2Hud.uss — Phase 2 Task 5 PoC HUD styles.
+ * Pulls colors, spacing, and radii from tokens.uss (`:root` CSS variables).
+ * Keep small: this is PoC-grade and will be replaced/extended in Phase 3.
+ */
+
+.slice2-hud-root {
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    /* No background fill on the root so the 2D scene renders behind. */
+    padding: var(--space-md);
+}
+
+.slice2-hud-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--surface-alpha-panel85);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    border-width: 1px;
+    border-color: var(--color-border);
+}
+
+.slice2-hud-stat {
+    color: var(--color-text);
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin: 0 var(--space-sm);
+}
+
+.slice2-hud-stat-energy {
+    color: var(--color-accent);
+}
+
+.slice2-hud-stat-wave {
+    color: var(--color-text);
+}
+
+.slice2-hud-stat-hp {
+    color: var(--color-danger);
+}
+
+.slice2-hud-bottom {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.slice2-hud-button {
+    color: var(--color-text);
+    background-color: var(--surface-alpha-panel90);
+    border-color: var(--color-accent);
+    border-width: 2px;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 16px;
+    -unity-font-style: bold;
+    min-width: 200px;
+}
+
+.slice2-hud-button:hover {
+    background-color: var(--surface-alpha-accent20);
+    border-color: var(--state-hover);
+}
+
+.slice2-hud-button:disabled {
+    color: var(--state-disabled-fg);
+    background-color: var(--state-disabled-bg);
+    border-color: var(--color-border);
+}
+
+/* Toggled by Slice2HudController when placement mode is armed. */
+.placement-mode-active {
+    background-color: var(--surface-alpha-accent20);
+    border-color: var(--state-focus);
+    color: var(--color-tier-bright);
+}

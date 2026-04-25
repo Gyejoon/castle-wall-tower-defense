@@ -82,6 +82,12 @@ namespace GLD.SceneRuntime.Slice2
         [Tooltip("Prefab with UnitView MB attached. Instantiated on OnUnitSpawned.")]
         [SerializeField] GameObject unitPrefab;
 
+        [Header("Slice2 input wiring (Task 5)")]
+        [Tooltip("PlacementController in the scene. Drained at the applyInputs " +
+                 "tick phase (between Energy.Tick and Wave.Tick). Optional: if " +
+                 "null, the scene runs without click-to-place (smoke test path).")]
+        [SerializeField] PlacementController placement;
+
         // ── System references (read-only, exposed for tests) ──────────────
 
         public MinimalGridManager Grid { get; private set; }
@@ -140,9 +146,11 @@ namespace GLD.SceneRuntime.Slice2
             //   Energy → applyInputs → Wave → Units → Towers → ResolveDamage → FlushPendingDamage
             Energy.Tick(dt, tickEnd);
 
-            // applyInputs() — Task 5 wires PlacementController here.
-            // (The smoke test calls Towers.TryPlace(...) directly, so it
-            //  lives in the same logical phase as the future input system.)
+            // applyInputs() — Task 5 drains the PlacementController's pointer
+            // buffer here so input ordering matches §1.4 (Energy → applyInputs
+            // → Wave → Units → Towers → ResolveDamage). The smoke test calls
+            // Towers.TryPlace directly so this null-check keeps it green.
+            if (placement != null) placement.ApplyPendingInputs(tickEnd);
 
             // Wave's internal prepEndSec gate keeps the spawn loop dormant
             // until tickEnd crosses prepDurationSec, then paces spawns at

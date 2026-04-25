@@ -10,18 +10,21 @@
 //   - §1.5 Anti-patterns:
 //          * No FindObjectOfType — all wiring is explicit.
 //          * Time.deltaTime is read ONCE here and threaded into systems.
-//          * No Coroutine / WaitForSeconds for the prep timer — plain float.
+//          * No Coroutine / WaitForSeconds — wave system's native prep gate
+//            (`prepEndSec`/`_nextSpawnDueSec`) handles prep timing.
 //   - §4 OQ-2/OQ-3/OQ-4/OQ-5: slice2_poc map (programmatic), archer at
 //     (3,14), cost ⚡20, unit `battle_robot`.
 //
 // Plan reference: docs/superpowers/plans/2026-04-24-unity-phase-2-poc-vertical-slice.md
-//   - Task 4 Step 5: scene controller wires systems, subscribes HUD/placement,
-//     calls StartWave1() after a 3-second prep countdown.
+//   - Task 4 Step 5: scene controller wires systems, subscribes HUD/placement.
+//     Prep timing is owned by MinimalWaveSystem itself (prepEndSec=prepDurationSec);
+//     StartWave1() is called once in Awake after subscriptions are wired, and
+//     the wave system's internal _nextSpawnDueSec gate paces spawns past prep.
 //
 // GameDatabase note: GameBootstrap is Phase 3 work (per task-brief). For
 // Phase 2 the scene controller takes a [SerializeField] GameDatabase
-// reference set in the inspector and assigns it to GameDatabase.Active
-// if not already activated.
+// reference set in the inspector and calls EnsureActive() on it (idempotent;
+// no-op once GameBootstrap takes over in Phase 3).
 
 using System.Collections.Generic;
 using GLD.Data;
@@ -35,7 +38,8 @@ namespace GLD.SceneRuntime.Slice2
     ///   * Constructs Minimal systems in correct order.
     ///   * Spawns/destroys views in response to POCO events.
     ///   * Threads Time.deltaTime into systems exactly once per frame.
-    ///   * Runs a 3-second prep timer before calling WaveSystem.StartWave1().
+    ///   * Calls WaveSystem.StartWave1() once at Awake; the wave system's
+    ///     own prepEndSec gate paces the first spawn 3 seconds in.
     /// Public access for tests via the read-only system properties.
     /// </summary>
     public sealed class Slice2SceneController : MonoBehaviour
@@ -44,7 +48,7 @@ namespace GLD.SceneRuntime.Slice2
 
         [Header("Data")]
         [Tooltip("GameDatabase asset providing TowerCatalog / UnitCatalog / EnergyConfig. " +
-                 "Set in the scene inspector; controller activates GameDatabase.Active if null.")]
+                 "Set in the scene inspector; controller calls EnsureActive() at Awake (idempotent).")]
         [SerializeField] GameDatabase database;
 
         [Tooltip("Tower id from TowerCatalog used for the slice2_poc archer (OQ-3).")]
@@ -54,7 +58,7 @@ namespace GLD.SceneRuntime.Slice2
         [SerializeField] string unitId = "battle_robot";
 
         [Header("PoC fixture")]
-        [Tooltip("Prep duration before WaveSystem.StartWave1() is called. Plan Step 5 = 3.0s.")]
+        [Tooltip("Prep duration: wave system's prepEndSec / first-spawn gate. Plan Step 5 = 3.0s.")]
         [SerializeField] float prepDurationSec = 3f;
 
         [Tooltip("Number of units to spawn in wave 1. PoC fixture = 5.")]
@@ -88,10 +92,6 @@ namespace GLD.SceneRuntime.Slice2
 
         // ── Internal state ────────────────────────────────────────────────
 
-        // Prep timer is a plain float decremented in Update() per §1.5 #6
-        // (no Coroutine, no WaitForSeconds — fixed-dt friendly).
-        float _prepRemainingSec;
-        bool _waveStartTriggered;
         bool _initialized;
 
         // Tick clock threaded into systems. Mirrors `tickEndTimeSec` argument
@@ -106,24 +106,24 @@ namespace GLD.SceneRuntime.Slice2
 
         void Awake()
         {
-            // Phase 2 GameDatabase activation: GameBootstrap doesn't exist yet
-            // (Phase 3 work). If the inspector reference is set and Active is
-            // null, activate it here so catalogs are reachable.
-            if (database != null && GameDatabase.Active == null)
-            {
-                // Activate is internal to GLD.Data; assembly is referenced so
-                // we route through a public surface — call the field directly.
-                // (GameDatabase exposes Active { get; private set; }; the
-                // internal Activate() method sets it. We mirror its behavior
-                // via reflection-free assignment by relying on the same
-                // assembly-level access in Phase 3 GameBootstrap. For Phase 2
-                // we assert the reference is set and let the catalogs lookup.)
-                ActivateDatabase(database);
-            }
+            // Phase 2 GameDatabase activation: calls EnsureActive (idempotent)
+            // so this scene runs standalone in PoC mode without GameBootstrap;
+            // Phase 3 GameBootstrap calls Activate first and EnsureActive
+            // becomes a no-op.
+            if (database != null) database.EnsureActive();
 
             BuildSystems();
             SubscribeViewEvents();
-            _prepRemainingSec = prepDurationSec;
+
+            // Prep timing is owned by MinimalWaveSystem (prepEndSec=prepDurationSec
+            // threaded into the constructor below). Calling StartWave1() here is
+            // safe because Tick won't spawn anything until tickEndTimeSec crosses
+            // _nextSpawnDueSec=prepEndSec. Doing this in Awake (vs. deferring via
+            // an external timer) avoids the burst-spawn-after-prep race where
+            // _nextSpawnDueSec=0 lets the first Tick spawn the entire wave in
+            // one frame.
+            Wave.StartWave1();
+
             _initialized = true;
         }
 
@@ -144,17 +144,9 @@ namespace GLD.SceneRuntime.Slice2
             // (The smoke test calls Towers.TryPlace(...) directly, so it
             //  lives in the same logical phase as the future input system.)
 
-            // Prep gate: wave does not start until prep timer elapses.
-            if (!_waveStartTriggered)
-            {
-                _prepRemainingSec -= dt;
-                if (_prepRemainingSec <= 0f)
-                {
-                    Wave.StartWave1();
-                    _waveStartTriggered = true;
-                }
-            }
-
+            // Wave's internal prepEndSec gate keeps the spawn loop dormant
+            // until tickEnd crosses prepDurationSec, then paces spawns at
+            // spawnIntervalSec. No external prep timer needed.
             Wave.Tick(dt, tickEnd);
             Units.Tick(dt);
             Towers.Tick(dt, tickEnd);
@@ -199,10 +191,10 @@ namespace GLD.SceneRuntime.Slice2
                 Units, unitDef,
                 count: waveCount,
                 spawnIntervalSec: spawnIntervalSec,
-                prepEndSec: 0f);
-            // prepEndSec=0 because the controller drives prep externally
-            // via _prepRemainingSec (the wave system's prep gate is not
-            // needed; the controller decides when to call StartWave1()).
+                prepEndSec: prepDurationSec);
+            // prepEndSec=prepDurationSec lets the wave system's own
+            // _nextSpawnDueSec gate pace spawns past prep. StartWave1() is
+            // called once at Awake; Tick stays dormant until tickEnd >= prepEndSec.
         }
 
         void SubscribeViewEvents()
@@ -211,6 +203,17 @@ namespace GLD.SceneRuntime.Slice2
             Units.OnUnitSpawned += HandleUnitSpawned;
             Units.OnUnitKilled += HandleUnitDespawned;
             Units.OnUnitReachedExit += HandleUnitDespawned;
+
+            // Mirror TS replay-runner.ts epilogue: drain in-flight projectiles
+            // (impact time > wave-end clock) so OnProjectileDropped fires for
+            // residue and parity holds with the runner's flushPendingDamage()
+            // at simulation-window end.
+            Wave.OnWaveCompleted += HandleWaveCompleted;
+        }
+
+        void HandleWaveCompleted()
+        {
+            Towers?.FlushPendingDamage();
         }
 
         // ── View lifecycle handlers ───────────────────────────────────────
@@ -276,19 +279,6 @@ namespace GLD.SceneRuntime.Slice2
             if (database != null && database.towers != null)
                 return database.towers.FindById(towerId);
             return null;
-        }
-
-        // GameDatabase.Activate() is internal; we replicate the assignment via
-        // a small reflection bridge so the controller can sit in
-        // GLD.SceneRuntime without requiring InternalsVisibleTo. Only invoked
-        // once at Awake; cost is negligible.
-        static void ActivateDatabase(GameDatabase db)
-        {
-            var t = typeof(GameDatabase);
-            var m = t.GetMethod("Activate",
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.NonPublic);
-            if (m != null) m.Invoke(db, null);
         }
     }
 }

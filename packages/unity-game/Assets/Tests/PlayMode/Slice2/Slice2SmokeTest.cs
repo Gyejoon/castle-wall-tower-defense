@@ -134,5 +134,48 @@ namespace GLD.Tests.PlayMode.Slice2
 
             yield break;
         }
+
+        // Regression guard for the burst-spawn-after-prep bug fixed alongside
+        // this test (see commit message). The original implementation passed
+        // prepEndSec=0 to MinimalWaveSystem and ran an external _prepRemainingSec
+        // timer; once prep elapsed, the very first Tick saw _nextSpawnDueSec=0
+        // < tickEnd (~3.017) and bursted through all 5 spawns in one frame.
+        // This test exercises the controller's actual Update tick path (NOT
+        // disabled like the canonical test above) and asserts that spawns are
+        // paced. Bound is generous (≤ 2) to absorb a frame of WaitForSeconds
+        // slop; the bug produces 5, so the gap is unambiguous.
+        [UnityTest]
+        public IEnumerator Slice2_ControllerDrivesPrepAndSpawnsPaced()
+        {
+            var loadOp = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);
+            Assert.IsNotNull(loadOp, $"Scene '{SceneName}' must be in build settings.");
+            while (!loadOp.isDone) yield return null;
+            yield return null; // Awake completed.
+
+#if UNITY_2023_1_OR_NEWER
+            var controller = Object.FindFirstObjectByType<Slice2SceneController>();
+#else
+            var controller = Object.FindObjectOfType<Slice2SceneController>();
+#endif
+            Assert.IsNotNull(controller, "Slice2SceneController must be in the scene.");
+            var units = controller.Units;
+            Assert.IsNotNull(units, "Unit system must be constructed in Awake.");
+
+            // Prep is 3s. After 3.1s of real game time, exactly one Tick past
+            // prep has run: tickEnd ≈ 3.1, _nextSpawnDueSec started at 3.0, so
+            // the spawn loop fires ONCE (next due becomes 3.3, which is > 3.1).
+            // With the burst-spawn bug, all 5 spawn in that single tick.
+            yield return new WaitForSeconds(3.1f);
+
+            // None of the wave-1 units can have died or reached the exit
+            // within ~100ms of spawn at PoC speeds, so Units.Count equals the
+            // number that have actually spawned by now.
+            Assert.That(units.Units.Count, Is.LessThanOrEqualTo(2),
+                "Spawns must be paced; burst-spawn-after-prep would yield 5 here.");
+            Assert.That(units.Units.Count, Is.GreaterThanOrEqualTo(1),
+                "At least one unit should have spawned shortly after prep ends.");
+
+            yield break;
+        }
     }
 }

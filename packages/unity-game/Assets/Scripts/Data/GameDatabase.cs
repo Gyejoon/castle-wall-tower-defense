@@ -45,7 +45,20 @@ namespace GLD.Data
         /// <summary>
         /// Called by GameBootstrap after loading. Sets the static Active reference.
         /// Must be called before any system tries to access game data.
+        /// Note: <see cref="EnsureActive"/> is the idempotent public variant for
+        /// scene controllers that boot in standalone (no GameBootstrap) mode.
         /// </summary>
         internal void Activate() => Active = this;
+
+        /// <summary>
+        /// Idempotent activation for standalone scene boots (no GameBootstrap).
+        /// Sets <see cref="Active"/> to this instance only when it's null, so
+        /// Phase 3 GameBootstrap can call <see cref="Activate"/> first and
+        /// any later <c>EnsureActive</c> call from a scene becomes a no-op.
+        /// </summary>
+        public void EnsureActive()
+        {
+            if (Active == null) Active = this;
+        }
     }
 }

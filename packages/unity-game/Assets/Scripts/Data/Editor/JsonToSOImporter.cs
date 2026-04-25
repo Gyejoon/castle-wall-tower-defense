@@ -113,6 +113,9 @@ namespace GLD.Data.Editor
 
             SOImportUtil.SaveAll();
 
+            // Task 8 hook: regenerate tokens.uss whenever SO data is refreshed.
+            TokensUssGenerator.Generate();
+
             Debug.Log(
                 $"[GLD] Import complete: " +
                 $"{towerCatalog.towers?.Length ?? 0} towers, " +

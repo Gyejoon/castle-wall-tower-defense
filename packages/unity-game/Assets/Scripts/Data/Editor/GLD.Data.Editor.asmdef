@@ -4,7 +4,8 @@
   "references": [
     "GLD.Core",
     "GLD.Data",
-    "Unity.Newtonsoft.Json"
+    "Unity.Newtonsoft.Json",
+    "Unity.Addressables.Editor"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

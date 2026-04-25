@@ -199,7 +199,7 @@ namespace GLD.SceneRuntime.Slice2
             _waveLabel.text = "Wave 1";
         }
 
-        void HandleTowerPlaceRejected(TowerDefSO def, GridCell cell, MinimalTowerSystem.PlacementRejection reason)
+        void HandleTowerPlaceRejected(TowerDefSO def, GridCell cell, PlacementRejection reason)
         {
             // Phase 2 PoC: log rejection so dev/test sees feedback. Gated
             // behind UNITY_EDITOR || DEVELOPMENT_BUILD so misclick warnings do

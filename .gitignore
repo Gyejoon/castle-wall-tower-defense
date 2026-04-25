@@ -54,3 +54,11 @@ packages/unity-game/Assets/Resources/GameData/*.json
 
 # Unity Burst compiler cache (생성물 — Editor 가 자동 생성/갱신)
 packages/unity-game/Data/
+
+# Unity UIElementsSchema (자동 생성 — UXML IntelliSense XSD)
+packages/unity-game/UIElementsSchema/
+
+# scripts/ TypeScript 빌드 산출물 (shared 의 tsc -b 가 cross-package 컴파일 시 생성)
+scripts/*.js
+scripts/*.d.ts
+scripts/*.js.map

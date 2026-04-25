@@ -4,6 +4,7 @@
   "references": [
     "GLD.Data",
     "GLD.Data.Editor",
+    "GLD.Systems",
     "Unity.Addressables.Editor",
     "UnityEditor",
     "UnityEngine.TestRunner",

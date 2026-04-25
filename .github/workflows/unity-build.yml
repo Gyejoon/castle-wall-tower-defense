@@ -47,6 +47,17 @@ jobs:
         with:
           lfs: true
 
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install repo deps
+        run: bun install
+
+      - name: Export shared TS data to JSON
+        run: bun run build:unity-json
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
@@ -69,16 +80,41 @@ jobs:
           # TODO(phase-0b): flip to false once ProjectSettings/ is committed.
           allowDirtyBuild: true
 
-      - name: Report build size
+      - name: Report build size + emit build-size.json
         if: always()
         run: |
-          if [ -d packages/unity-game/Build/WebGL ]; then
-            size=$(du -sb packages/unity-game/Build/WebGL | cut -f1)
-            echo "WebGL build size: $((size / 1024 / 1024)) MB"
-            echo "webgl_size_bytes=$size" >> "$GITHUB_OUTPUT"
-          else
+          if [ ! -d packages/unity-game/Build/WebGL ]; then
             echo "::warning::WebGL build dir missing — build likely failed"
+            exit 0
           fi
+          total=$(du -sb packages/unity-game/Build/WebGL | cut -f1)
+          echo "WebGL total: $((total / 1024 / 1024)) MB"
+
+          {
+            echo "{"
+            echo "  \"total_bytes\": $total,"
+            echo "  \"breakdown\": {"
+            first=1
+            for d in packages/unity-game/Build/WebGL/*/; do
+              size=$(du -sb "$d" | cut -f1)
+              name=$(basename "$d")
+              if [ $first -eq 1 ]; then first=0; else echo ","; fi
+              printf "    \"%s\": %d" "$name" "$size"
+            done
+            echo
+            echo "  }"
+            echo "}"
+          } > build-size.json
+          cat build-size.json
+
+      - name: Upload build-size.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-size-${{ github.sha }}
+          path: build-size.json
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: Upload WebGL artifact
         if: success()

@@ -22,7 +22,8 @@
     "gld-pipe": "bun run scripts/gld-pipe/index.ts",
     "test:visual": "bun run --filter web-shell playwright",
     "test:visual:update": "bun run --filter web-shell playwright:update",
-    "build:unity-json": "bun run --filter @gld/shared build:unity-json"
+    "build:unity-json": "bun run --filter @gld/shared build:unity-json",
+    "copy:assets-to-unity": "bun run scripts/copy-assets-to-unity.ts"
   },
   "engines": {
     "node": ">=22"

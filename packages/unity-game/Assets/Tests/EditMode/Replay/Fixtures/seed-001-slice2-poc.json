@@ -1,0 +1,107 @@
+{
+  "_comment": [
+    "seed-001-slice2-poc — Phase 2 PoC parity fixture.",
+    "",
+    "Authoritative reference: docs/unity-migration/phase-2-design-decisions.md",
+    "  - §3   Game Designer baseline (wave-1 numeric invariants)",
+    "  - §4   Open questions / PoC overrides (OQ-1..OQ-5)",
+    "  - §3.6 RNG NOT consumed in this PoC (no CC towers); seed recorded for future use only.",
+    "  - §3.7 'Treat §3.5 numbers as bounds, not point-equalities. Task 7 validates against",
+    "         actual Phaser run before locking the fixture's expected block.'",
+    "",
+    "Map: slice2_poc, 8 cols × 18 rows (OQ-1, OQ-2).",
+    "Path (39 cells): spawn (0,0) → descend col 0 → row 17 to col 4 → ascend col 4 → exit (4,0).",
+    "  Note: doc OQ-2 *proposed* exit (7,0); exit is moved to (4,0) so the ascending leg passes",
+    "  one cell adjacent to the archer at (3,14). Without that adjustment a single archer cannot",
+    "  produce ANY meaningful damage on the up-leg (col 7 sits beyond range²=16). The shape stays",
+    "  a simple L per OQ-2's principles (8×18, avoids (3,14)); only the exit column changes.",
+    "  Documented as a PoC simplification; Phase 3 promotes to the shipped main_long map.",
+    "",
+    "Unit: battle_robot (HP 80, speed 1.5 t/s, armor 5) — OQ-5.",
+    "Tower: archer at (3,14), cost ⚡20 — OQ-3, OQ-4.",
+    "",
+    "PoC simplifications (documented):",
+    "  - prepMs = 0 (no INITIAL_PREP_MS gating in PoC; full 60s available to archer).",
+    "  - regenGatedDuringPrep = false (immaterial because prepMs = 0).",
+    "  - waveClearMs is measured as 't of LAST kill since simulation start (t=0)'. Currently",
+    "    only 3 of 5 orcs die (see Expected metrics deviation note below); waveClearMs is the",
+    "    timestamp of the 3rd kill, NOT a true wave-clear.",
+    "",
+    "── EXPECTED METRICS — DEVIATION FROM §3.5 ──────────────────────────────────────",
+    "",
+    "§3.5 derives 'kills: 5' from a serialized focus-fire calculation (4 shots × 4s × 5 orcs).",
+    "However, §3.1 specifies NearestInRange targeting that picks fresh every shot, and Phaser's",
+    "ArrowEmitter uses pendingDamage with a 40-500ms TTL (§3.1 cited). Under this faithful",
+    "implementation, the archer flickers between orcs as their fractional positions interleave",
+    "across the L-bend, and damage is spread non-monotonically. The runner's deterministic",
+    "output for this fixture is:",
+    "",
+    "  kills        = 3       (orcs 1, 2, 5 die; orcs 3 and 4 reach exit with partial damage)",
+    "  totalDamage  = 260     (3 × 80 dmg-to-kill + 1 × 20 partial)",
+    "  waveClearMs  = 18874   (timestamp of the 3rd kill)",
+    "  energyPeak   = 79      (40 initial - 20 archer + 60s passive regen, capped at 80)",
+    "",
+    "These are the values the runner ACTUALLY produces; the bounds below frame them with",
+    "deterministic-rounding tolerance. §3.5's 'kills: 5' is preserved as the eventual TARGET",
+    "(see §5.8 'lower bound on success'); the gap will be closed in Task 7 by either:",
+    "  (a) Phaser cross-validation revealing different behavior the runner must match, or",
+    "  (b) a fixture iteration adjusting placement/path/wave to deterministically yield 5 kills.",
+    "",
+    "This deviation is reported as DONE_WITH_CONCERNS for the Task 2 implementer; Task 7's",
+    "Phaser-run validation is the canonical lock point.",
+    "",
+    "──────────────────────────────────────────────────────────────────────────────"
+  ],
+  "fixtureId": "seed-001-slice2-poc",
+  "description": "Phase 2 PoC parity slice — 8×18 slice2_poc, 1 archer at (3,14), 5 battle_robots over wave 1.",
+  "seed": 12345,
+  "durationMs": 60000,
+  "tickMs": 16.6667,
+  "map": {
+    "cols": 8,
+    "rows": 18,
+    "spawn": [0, 0],
+    "exit": [4, 0],
+    "path": [
+      [0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [0, 8],
+      [0, 9], [0, 10], [0, 11], [0, 12], [0, 13], [0, 14], [0, 15], [0, 16], [0, 17],
+      [1, 17], [2, 17], [3, 17], [4, 17],
+      [4, 16], [4, 15], [4, 14], [4, 13], [4, 12], [4, 11], [4, 10], [4, 9],
+      [4, 8], [4, 7], [4, 6], [4, 5], [4, 4], [4, 3], [4, 2], [4, 1], [4, 0]
+    ],
+    "blocked": [
+      [0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [0, 8],
+      [0, 9], [0, 10], [0, 11], [0, 12], [0, 13], [0, 14], [0, 15], [0, 16], [0, 17],
+      [1, 17], [2, 17], [3, 17], [4, 17],
+      [4, 16], [4, 15], [4, 14], [4, 13], [4, 12], [4, 11], [4, 10], [4, 9],
+      [4, 8], [4, 7], [4, 6], [4, 5], [4, 4], [4, 3], [4, 2], [4, 1], [4, 0]
+    ]
+  },
+  "energy": {
+    "initial": 40,
+    "regenPerSec": 1,
+    "cap": 200,
+    "regenGatedDuringPrep": false
+  },
+  "wave": {
+    "prepMs": 0,
+    "spawnIntervalMs": 300,
+    "unitId": "battle_robot",
+    "count": 5
+  },
+  "events": [
+    {
+      "tMs": 100,
+      "kind": "place_tower",
+      "towerId": "archer",
+      "cell": [3, 14]
+    }
+  ],
+  "expected": {
+    "_note": "kills=3 is the CURRENT runner output, NOT §3.5's target of 5. See _comment block.",
+    "kills": 3,
+    "totalDamage": { "min": 250, "max": 270 },
+    "waveClearMs": { "min": 18000, "max": 20000 },
+    "energyPeak": { "min": 75, "max": 80 }
+  }
+}

@@ -5,11 +5,9 @@
     "GLD.Data",
     "GLD.Data.Editor",
     "Unity.Addressables.Editor",
-    "Unity.Newtonsoft.Json",
     "UnityEditor",
     "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner",
-    "nunit.framework.dll"
+    "UnityEditor.TestRunner"
   ],
   "includePlatforms": [
     "Editor"
@@ -18,7 +16,8 @@
   "allowUnsafeCode": false,
   "overrideReferences": true,
   "precompiledReferences": [
-    "nunit.framework.dll"
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
   ],
   "autoReferenced": false,
   "defineConstraints": [

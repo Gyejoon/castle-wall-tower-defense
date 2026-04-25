@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f1efd4690f0043c7b2c5a68bf5d0eb0, type: 3}
+  m_Name: DesignTokens
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.DesignTokensSO
+  elevation:
+    e0: none
+    e1: 0 2px 0 rgba(10, 8, 4, 0.55)
+    e2: 0 3px 0 #7a5a10
+    e3: 0 4px 0 rgba(10, 8, 4, 0.65), 0 1px 0 rgba(255, 255, 255, 0.04) inset
+    e4: 0 6px 0 rgba(10, 8, 4, 0.75), 0 2px 0 rgba(255, 255, 255, 0.06) inset
+  fontFamily:
+    display: '''Press Start 2P'', ''Galmuri11'', cursive'
+    pixel: '''Galmuri11'', ''Press Start 2P'', cursive'
+  motion:
+    duration:
+      base_: 220
+      cinematic: 650
+      fast: 120
+      slow: 360
+    easing:
+      decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0)
+      emphatic: cubic-bezier(0.32, 1.4, 0.4, 1)
+      standard: cubic-bezier(0.2, 0.0, 0.2, 1)
+      stepwise: steps(6, end)
+    preset:
+      cinematic: 650ms cubic-bezier(0.05, 0.7, 0.1, 1.0)
+      interactive: 120ms cubic-bezier(0.2, 0.0, 0.2, 1)
+      overlay: 360ms cubic-bezier(0.05, 0.7, 0.1, 1.0)
+      punch: 360ms cubic-bezier(0.32, 1.4, 0.4, 1)
+      ui: 220ms cubic-bezier(0.2, 0.0, 0.2, 1)
+  overlayDim:
+    cinematic: rgba(10, 8, 4, 0.92)
+    default_: rgba(0, 0, 0, 0.6)
+    heavy: rgba(10, 8, 4, 0.82)
+    soft: rgba(0, 0, 0, 0.35)
+  palette:
+    core:
+      accent: '#c8a04a'
+      armorPierce: '#a0a8b0'
+      bg: '#1a1208'
+      border: '#4a3a20'
+      bossPhase1: '#c87020'
+      danger: '#c03020'
+      gold: '#f0d060'
+      gradeUnique: '#9060e0'
+      info: '#5bc8e8'
+      panel: '#2a2010'
+      success: '#7ab648'
+      text: '#f0e8d8'
+      textSecondary: '#a09070'
+      tierBright: '#ffe870'
+    element:
+      earth:
+        glow: '#b8956a'
+        primary: '#8b6a40'
+      fire:
+        glow: '#ff6b4a'
+        primary: '#e74c3c'
+      lightning:
+        glow: '#f7b731'
+        primary: '#f39c12'
+      neutral:
+        glow: '#f0d060'
+        primary: '#c8a04a'
+      water:
+        glow: '#5dade2'
+        primary: '#3498db'
+    state:
+      disabledBg: rgba(74, 58, 32, 0.5)
+      disabledFg: rgba(240, 232, 216, 0.4)
+      focus: '#ffcf66'
+      hover: '#e0b860'
+      pressed: '#7a5a10'
+      warning: '#c88c40'
+    surface:
+      alpha:
+        accent20: rgba(200, 160, 74, 0.2)
+        bg76: rgba(26, 18, 8, 0.76)
+        bg80: rgba(26, 18, 8, 0.8)
+        bg95: rgba(26, 18, 8, 0.95)
+        danger20: rgba(192, 48, 32, 0.2)
+        overlay60: rgba(0, 0, 0, 0.6)
+        overlay70: rgba(0, 0, 0, 0.7)
+        overlayDark: rgba(10, 8, 4, 0.82)
+        overlayHeavy: rgba(10, 8, 4, 0.92)
+        panel70: rgba(42, 32, 16, 0.7)
+        panel85: rgba(42, 32, 16, 0.85)
+        panel90: rgba(42, 32, 16, 0.9)
+        panel92: rgba(42, 32, 16, 0.92)
+        panel95: rgba(42, 32, 16, 0.95)
+        panel96: rgba(42, 32, 16, 0.96)
+      bg: '#1a1208'
+      panel: '#2a2010'
+      panelElevated: '#352818'
+      panelSunken: '#1f1608'
+    tier:
+    - bright: '#e0b860'
+      dark: '#8b6a2a'
+      primary: '#c8a04a'
+      tier: 1
+    - bright: '#80d8f0'
+      dark: '#3a90b0'
+      primary: '#5bc8e8'
+      tier: 2
+    - bright: '#d880e8'
+      dark: '#8020a0'
+      primary: '#c040d0'
+      tier: 3
+    - bright: '#f06060'
+      dark: '#a02020'
+      primary: '#e04040'
+      tier: 4
+    - bright: '#ffe89a'
+      dark: '#c0a030'
+      primary: '#f0d060'
+      tier: 5
+    - bright: '#ff9070'
+      dark: '#c04020'
+      primary: '#ff6b4a'
+      tier: 6
+  radius:
+    lg: 8
+    md: 6
+    none: 0
+    pill: 9999
+    sm: 4
+    xl: 12
+    xs: 2
+  spacing:
+    lg: 16
+    md: 12
+    sm: 8
+    xl: 24
+    xs: 4
+    xxl: 32
+    xxxl: 48
+  typography:
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.4
+    key: body14
+    size: 14px
+    weight: 400
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.4
+    key: body16
+    size: 16px
+    weight: 400
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.2
+    key: caption10
+    size: 10px
+    weight: 400
+  - family: '''Press Start 2P'', ''Galmuri11'', cursive'
+    lineHeight: 1.15
+    key: display32
+    size: 32px
+    weight: 700
+  - family: '''Press Start 2P'', ''Galmuri11'', cursive'
+    lineHeight: 1.1
+    key: display40
+    size: 40px
+    weight: 700
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.25
+    key: h1
+    size: 24px
+    weight: 700
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.3
+    key: h2
+    size: 20px
+    weight: 700
+  - family: '''Galmuri11'', ''Press Start 2P'', cursive'
+    lineHeight: 1.2
+    key: label12
+    size: 12px
+    weight: 700
+  zIndex:
+    board: 0
+    floating: 20
+    hud: 10
+    modal: 40
+    overlay: 30
+    toast: 50

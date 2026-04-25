@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c08a38347b0d44e5b98a3f1f8a03778, type: 3}
+  m_Name: MergeChain
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.MergeChainSO
+  rules:
+  - inputA: arcane_spire
+    inputB: celestial
+    output: hybrid_ab
+  - inputA: archer_1_same
+    inputB: 
+    output: wind_spire
+  - inputA: archer_2_same
+    inputB: 
+    output: flame_tower
+  - inputA: archer_3_same
+    inputB: 
+    output: arcane_spire
+  - inputA: celestial
+    inputB: arcane_spire
+    output: hybrid_ab
+  - inputA: divine_throne
+    inputB: world_tree
+    output: hybrid_cd
+  - inputA: frost_1_same
+    inputB: 
+    output: stasis_field
+  - inputA: frost_2_same
+    inputB: 
+    output: disruptor
+  - inputA: frost_3_same
+    inputB: 
+    output: world_tree
+  - inputA: hybrid_ab
+    inputB: hybrid_cd
+    output: ultimate
+  - inputA: hybrid_cd
+    inputB: hybrid_ab
+    output: ultimate
+  - inputA: siege_1_same
+    inputB: 
+    output: fortress
+  - inputA: siege_2_same
+    inputB: 
+    output: earth_golem
+  - inputA: siege_3_same
+    inputB: 
+    output: celestial
+  - inputA: stun_1_same
+    inputB: 
+    output: twin_archer
+  - inputA: stun_2_same
+    inputB: 
+    output: holy_shrine
+  - inputA: stun_3_same
+    inputB: 
+    output: divine_throne
+  - inputA: world_tree
+    inputB: divine_throne
+    output: hybrid_cd

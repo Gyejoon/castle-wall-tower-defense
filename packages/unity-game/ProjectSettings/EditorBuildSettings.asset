@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Root.unity
     guid: a785c4d202126472cb74752509cf4c8c
+  - enabled: 1
+    path: Assets/_Project/Scenes/Slice2_PoC.unity
+    guid: f64b96cd9a5d4b8a958de8aca3bfb81f
   m_configObjects: {}

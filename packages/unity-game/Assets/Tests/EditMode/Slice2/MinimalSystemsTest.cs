@@ -20,9 +20,8 @@
 //     simulate 60s in 16.67ms ticks, place archer at (3,14) at t≈100ms,
 //     assert kills == 3 and energyPeak ∈ [78, 81] (tight canonical bands).
 
-using System;
-using System.Collections.Generic;
 using GLD.Data;
+using GLD.SceneRuntime.Slice2;
 using GLD.Systems.Minimal;
 using NUnit.Framework;
 using UnityEngine;
@@ -35,39 +34,11 @@ namespace GLD.Tests.EditMode.Slice2
         // ── Programmatic fixture builders ──────────────────────────────────
 
         /// <summary>Build the slice2_poc map (8×18, L-path, exit at (4,0)).
-        /// Mirrors seed-001-slice2-poc.json. Programmatic so the test does
-        /// not need to load a JSON file or .asset (Task 6's job).</summary>
-        static MapDef BuildSlice2PocMap()
-        {
-            var path = new List<GridPoint>();
-            // Descend col 0 from y=0 to y=17.
-            for (int y = 0; y <= 17; y++) path.Add(new GridPoint { x = 0, y = y });
-            // Traverse row 17 from x=1 to x=4.
-            for (int x = 1; x <= 4; x++) path.Add(new GridPoint { x = x, y = 17 });
-            // Ascend col 4 from y=16 down to y=0.
-            for (int y = 16; y >= 0; y--) path.Add(new GridPoint { x = 4, y = y });
-            return new MapDef
-            {
-                id = "slice2_poc",
-                name = "Slice2 PoC",
-                width = 8,
-                height = 18,
-                tileSize = 64,
-                spawnPoint = new GridPoint { x = 0, y = 0 },
-                exitPoint = new GridPoint { x = 4, y = 0 },
-                path = path.ToArray(),
-                blockedPlacementPoints = path.ToArray(),
-                buildablePoints = new GridPoint[0],
-                obstacles = new GridPoint[0],
-                castleWallTiles = new GridPoint[0],
-                decorations = new MapDecoration[0],
-                difficultyHpMult = 1f,
-                recommendedPower = 0,
-                rewardMultiplier = 1f,
-                tilemapKey = "",
-                tilesetKey = "",
-            };
-        }
+        /// Delegates to <see cref="Slice2MapBuilder.BuildSlice2PocMap"/> so the
+        /// scene runtime, the smoke test, and this EditMode test all share
+        /// a single source of truth for the map definition (Phase 2 Task 4).
+        /// </summary>
+        static MapDef BuildSlice2PocMap() => Slice2MapBuilder.BuildSlice2PocMap();
 
         static UnitDefSO BuildBattleRobotDef()
         {

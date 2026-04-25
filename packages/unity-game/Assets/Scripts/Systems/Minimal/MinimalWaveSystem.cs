@@ -61,6 +61,10 @@ namespace GLD.Systems.Minimal
         public void StartWave1()
         {
             if (_started) return;
+            // Guard: count==0 is a degenerate fixture (Task-6/Phase-3 foot-gun).
+            // Refusing to flip _started here keeps Tick's `if (!_started) return;`
+            // gate intact so OnWaveCompleted never fires for an empty wave.
+            if (_count <= 0) return;
             _started = true;
             OnWaveStarted?.Invoke();
         }

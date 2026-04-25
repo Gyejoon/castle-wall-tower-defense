@@ -8,16 +8,17 @@
 //
 // This is a SYSTEM FUNCTIONALITY test, NOT the cross-runtime parity gate.
 // The parity gate is Task 6's ReplayParityTests.cs. The plan's "kills == 5"
-// assertion is replaced here with a loose `[2, 5]` bound, because the
-// faithful NearestInRange + projectile TTL implementation deterministically
-// produces kills=3 for the slice2_poc fixture (see seed-001-slice2-poc.json
-// _comment block for the full §3.5 deviation rationale).
+// target is replaced here with the canonical deterministic value kills=3
+// produced by the faithful NearestInRange + projectile TTL implementation
+// (see seed-001-slice2-poc.json _comment block for the full §3.5 deviation
+// rationale). Per Fix M3 of the f398583 review, the assertion is locked at
+// kills=3 (point-equality) so any silent drift to kills=2/4 fails immediately.
 //
 // Test layout:
 //   - Per-system unit tests (Test A): each Minimal system in isolation.
 //   - One integration test (Test B): construct everything programmatically,
 //     simulate 60s in 16.67ms ticks, place archer at (3,14) at t≈100ms,
-//     assert kills ∈ [2, 5] and energyPeak ∈ [70, 85] (loose bounds).
+//     assert kills == 3 and energyPeak ∈ [78, 81] (tight canonical bands).
 
 using System;
 using System.Collections.Generic;
@@ -358,6 +359,39 @@ namespace GLD.Tests.EditMode.Slice2
             }
         }
 
+        [Test]
+        public void Wave_ZeroCount_DoesNotFireCompletedOnTickZero()
+        {
+            // Regression guard for Fix C2: a degenerate count=0 fixture must NOT
+            // immediately fire OnWaveCompleted on tick 0 (which would otherwise
+            // happen because `_spawned >= _count && AllUnitsCleared()` is trivially
+            // true with no units in the system).
+            var grid = new MinimalGridManager(BuildSlice2PocMap());
+            var us = new MinimalUnitSystem(grid, new System.Random(0));
+            var unitDef = BuildBattleRobotDef();
+            try
+            {
+                var ws = new MinimalWaveSystem(us, unitDef,
+                    count: 0, spawnIntervalSec: 0.3f, prepEndSec: 0f);
+                int completedEvents = 0;
+                int startedEvents = 0;
+                ws.OnWaveCompleted += () => completedEvents++;
+                ws.OnWaveStarted += () => startedEvents++;
+                ws.StartWave1();
+                ws.Tick(0.1f, 0.1f);
+                Assert.AreEqual(0, completedEvents,
+                    "OnWaveCompleted must not fire when count=0 (foot-gun for Task 6 / Phase 3 fixtures).");
+                Assert.AreEqual(0, startedEvents,
+                    "OnWaveStarted must not fire for an empty wave either — _started stays false.");
+                Assert.IsFalse(ws.Started);
+                Assert.IsFalse(ws.Completed);
+            }
+            finally
+            {
+                ScriptableObject.DestroyImmediate(unitDef);
+            }
+        }
+
         // ── Test B: integration ────────────────────────────────────────────
 
         [Test]
@@ -417,16 +451,28 @@ namespace GLD.Tests.EditMode.Slice2
 
                 Assert.IsTrue(placedArcher);
 
-                // Loose bound (Task 3 functionality test, NOT parity gate).
-                // The TS replay-runner deterministically yields kills=3 for
-                // this fixture; allow [2, 5] tolerance for minor C# rounding
-                // differences before Task 6 wires the strict parity assertion.
-                Assert.That(kills, Is.InRange(2, 5),
-                    "kills should fall within the loose [2,5] band; tighter equality is locked by Task 6");
+                // Canonical deterministic value (Fix M3): the TS replay-runner
+                // produces kills=3 for the slice2_poc fixture under faithful
+                // NearestInRange + projectile TTL (see seed-001-slice2-poc.json
+                // expected.kills and design-decisions §3.5/§3.7 deviation note).
+                // A loose-band test would silently pass a regression to kills=2
+                // or kills=4; lock the canonical value here so any drift fails
+                // immediately and forces an investigation.
+                Assert.AreEqual(3, kills,
+                    "Canonical deterministic kill count for slice2_poc fixture under faithful " +
+                    "NearestInRange + projectile TTL. If this changes, either the runner logic " +
+                    "drifted (verify against TS replay-runner.ts) or the design-decisions doc " +
+                    "needs an erratum. See docs/unity-migration/phase-2-design-decisions.md §3.7 + §4.");
 
-                // §3.4 derives energyPeak ∈ [75, 80]. Allow [70, 85] tolerance.
-                Assert.That(energyPeak, Is.InRange(70, 85),
-                    "energyPeak should fall within the loose [70,85] band");
+                // Canonical deterministic value: TS runner yields energyPeak=79
+                // (40 initial - 20 archer + ~60s passive regen, floored at the
+                // peak frame). Tightened from the prior [70, 85] band to [78, 81]
+                // — narrow enough to catch real regression, wide enough to absorb
+                // 1-tick boundary jitter from the 1/60s tick subdivision.
+                Assert.That(energyPeak, Is.InRange(78, 81),
+                    "energyPeak canonical value is 79 from the TS replay-runner; tight band " +
+                    "[78,81] absorbs 1-tick floor() boundary jitter without hiding regression. " +
+                    "See seed-001-slice2-poc.json expected.energyPeak.");
 
                 // Sanity: 5 units were spawned.
                 Assert.AreEqual(5, us.Units.Count);

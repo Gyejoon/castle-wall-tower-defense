@@ -147,10 +147,16 @@ namespace GLD.Systems.Minimal
                 float bestDistSqr = float.PositiveInfinity;
                 UnitInstance bestUnit = null;
                 var unitList = _units.Units;
+                int pathLast = _grid.Path.Count - 1;
                 for (int j = 0; j < unitList.Count; j++)
                 {
                     var u = unitList[j];
                     if (!u.Alive) continue;
+                    // Belt-and-suspenders guard mirroring TS replay-runner.ts:415-417:
+                    // skip units already at the exit cell. Currently redundant with
+                    // the !u.Alive check (MinimalUnitSystem flips Alive=false on exit),
+                    // but kept explicit to match the TS structure exactly.
+                    if (u.PathIndex >= pathLast) continue;
                     if (!_units.TryGetPosition(u, out float ux, out float uy)) continue;
                     float dx = tower.Cell.Col - ux;
                     float dy = tower.Cell.Row - uy;

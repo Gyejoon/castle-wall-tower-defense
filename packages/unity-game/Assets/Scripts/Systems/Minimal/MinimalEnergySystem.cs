@@ -29,7 +29,13 @@ namespace GLD.Systems.Minimal
         /// <summary>End of prep window in seconds. 0 = no gating.</summary>
         public float PrepEndSec { get; set; }
 
-        /// <summary>Fired after every change to Energy (regen or spend).</summary>
+        /// <summary>
+        /// Fires when the integer projection of <see cref="Energy"/> changes (i.e., when
+        /// <c>Math.Floor(Energy)</c> moves to a new integer). Sub-integer regen ticks do
+        /// NOT raise the event — this prevents per-tick HUD spam. Use <see cref="OnEnergySpent"/>
+        /// for spend notifications, which always fire regardless of integer projection.
+        /// Payload is the new integer projection (<see cref="EnergyInt"/>).
+        /// </summary>
         public event Action<int> OnEnergyChanged;
 
         /// <summary>Fired only on a successful TrySpend (not on regen).</summary>

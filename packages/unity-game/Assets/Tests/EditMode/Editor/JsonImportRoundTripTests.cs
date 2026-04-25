@@ -72,6 +72,7 @@ namespace GLD.Tests.EditMode.Editor
                 ["id"]                      = t.id,
                 ["isPremium"]               = t.isPremium,
                 ["name"]                    = t.name,
+                ["sameFamilyMergeTargetId"] = t.sameFamilyMergeTargetId,
                 ["shape"]                   = t.shape.ToString().ToLower(),
                 ["stats"]                   = new JObject
                 {
@@ -79,6 +80,7 @@ namespace GLD.Tests.EditMode.Editor
                     ["damage"]          = t.stats.damage,
                     ["projectileSpeed"] = t.stats.projectileSpeed,
                     ["range"]           = t.stats.range,
+                    ["special"]         = t.stats.special,
                 },
                 ["tier"]                    = t.tier,
             }));
@@ -301,31 +303,107 @@ namespace GLD.Tests.EditMode.Editor
         // ── Helpers ───────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Asserts deep equality between two JTokens, with a friendly message on mismatch.
-        /// Only checks fields present in the original; extra fields in roundTripped are warnings.
+        /// Asserts semantic deep-equality between two JTokens (per file header: "deep-equality
+        /// of the parsed JSON object tree, not byte string"). Tolerates three legitimate
+        /// roundtrip-time deviations:
+        ///   - JSON Integer vs Float token-type mismatch (e.g. "1" in source vs "1.0" from a
+        ///     float field) — both unified to double via <see cref="Normalize"/>.
+        ///   - Default-valued keys present on one side but absent on the other (e.g. SO emits
+        ///     <c>"special": ""</c> for towers that omit the optional field in source JSON) —
+        ///     stripped on both sides via <see cref="IsDefaultValue"/>.
+        ///   - 32-bit float precision drift after the JSON-double → C#-float → JSON-double
+        ///     hop (e.g. "1.2" → 1.2f → 1.2000000476837158) — tolerance-compared in
+        ///     <see cref="DeepEqualsWithTolerance"/>.
         /// </summary>
         static void AssertDeepEqualIgnoringMissingDefaults(JToken original, JToken roundTripped, string context)
         {
-            // We compare the SORTED representations to avoid key-order issues.
-            string normalizedOriginal   = NormalizeToken(original).ToString(Formatting.Indented);
-            string normalizedRoundTrip  = NormalizeToken(roundTripped).ToString(Formatting.Indented);
-            Assert.AreEqual(normalizedOriginal, normalizedRoundTrip,
-                $"[{context}] JSON round-trip mismatch.");
+            JToken normA = Normalize(original);
+            JToken normB = Normalize(roundTripped);
+            if (!DeepEqualsWithTolerance(normA, normB))
+            {
+                Assert.Fail(
+                    $"[{context}] JSON round-trip mismatch (after normalize: keys sorted, " +
+                    $"default values stripped, numbers unified, float tolerance 1e-4).\n" +
+                    $"Expected:\n{normA.ToString(Formatting.Indented)}\n\n" +
+                    $"But was:\n{normB.ToString(Formatting.Indented)}");
+            }
         }
 
-        /// <summary>Returns a copy of the token with object keys sorted alphabetically.</summary>
-        static JToken NormalizeToken(JToken token)
+        /// <summary>
+        /// Returns a copy of the token with: (a) object keys sorted alphabetically,
+        /// (b) keys with default values stripped, (c) numeric tokens unified to <see cref="JTokenType.Float"/>.
+        /// Pure / non-mutating.
+        /// </summary>
+        static JToken Normalize(JToken token)
         {
             if (token is JObject obj)
             {
                 var sorted = new JObject();
                 foreach (var prop in obj.Properties().OrderBy(p => p.Name))
-                    sorted[prop.Name] = NormalizeToken(prop.Value);
+                {
+                    JToken normalizedValue = Normalize(prop.Value);
+                    if (!IsDefaultValue(normalizedValue))
+                        sorted[prop.Name] = normalizedValue;
+                }
                 return sorted;
             }
             if (token is JArray arr)
-                return new JArray(arr.Select(NormalizeToken));
+                return new JArray(arr.Select(Normalize));
+            if (token is JValue v && (v.Type == JTokenType.Integer || v.Type == JTokenType.Float))
+                return new JValue(v.Value<double>());
             return token.DeepClone();
+        }
+
+        static bool IsDefaultValue(JToken token)
+        {
+            if (token is JValue v)
+            {
+                switch (v.Type)
+                {
+                    case JTokenType.Null:    return true;
+                    case JTokenType.Integer: return v.Value<long>() == 0L;
+                    case JTokenType.Float:   return v.Value<double>() == 0.0;
+                    case JTokenType.String:  return string.IsNullOrEmpty((string)v.Value);
+                    case JTokenType.Boolean: return !(bool)v.Value;
+                    default:                 return false;
+                }
+            }
+            if (token is JObject o) return o.Count == 0;
+            if (token is JArray  a) return a.Count == 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Recursive deep-equality with float tolerance. Both inputs must already be passed
+        /// through <see cref="Normalize"/> (numbers unified to Float, defaults stripped).
+        /// </summary>
+        static bool DeepEqualsWithTolerance(JToken a, JToken b, double tolerance = 1e-4)
+        {
+            if (a is JValue va && b is JValue vb)
+            {
+                if (va.Type == JTokenType.Float && vb.Type == JTokenType.Float)
+                    return Math.Abs(va.Value<double>() - vb.Value<double>()) < tolerance;
+                return JToken.DeepEquals(va, vb);
+            }
+            if (a is JObject oa && b is JObject ob)
+            {
+                if (oa.Count != ob.Count) return false;
+                foreach (var prop in oa.Properties())
+                {
+                    if (!ob.TryGetValue(prop.Name, out JToken bVal)) return false;
+                    if (!DeepEqualsWithTolerance(prop.Value, bVal, tolerance)) return false;
+                }
+                return true;
+            }
+            if (a is JArray aa && b is JArray ab)
+            {
+                if (aa.Count != ab.Count) return false;
+                for (int i = 0; i < aa.Count; i++)
+                    if (!DeepEqualsWithTolerance(aa[i], ab[i], tolerance)) return false;
+                return true;
+            }
+            if (a == null && b == null) return true;
+            return false;
         }
     }
 }

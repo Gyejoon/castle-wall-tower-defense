@@ -1,0 +1,21 @@
+{
+  "name": "GLD.Replay",
+  "rootNamespace": "GLD.Replay",
+  "references": [
+    "GLD.Core",
+    "GLD.Data",
+    "GLD.Systems",
+    "GLD.SceneRuntime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

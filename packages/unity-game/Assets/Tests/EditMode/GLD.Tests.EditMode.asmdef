@@ -4,6 +4,7 @@
   "references": [
     "GLD.Data",
     "GLD.Data.Editor",
+    "GLD.Replay",
     "GLD.SceneRuntime",
     "GLD.Systems",
     "Unity.Addressables.Editor",

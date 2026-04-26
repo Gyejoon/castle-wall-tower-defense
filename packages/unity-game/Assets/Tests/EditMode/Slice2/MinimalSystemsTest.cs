@@ -40,46 +40,14 @@ namespace GLD.Tests.EditMode.Slice2
         /// </summary>
         static MapDef BuildSlice2PocMap() => Slice2MapBuilder.BuildSlice2PocMap();
 
-        static UnitDefSO BuildBattleRobotDef()
-        {
-            var def = ScriptableObject.CreateInstance<UnitDefSO>();
-            def.id = "battle_robot";
-            def.name = "오크 전사";
-            def.type = "ground";
-            def.element = Element.Neutral;
-            def.bounty = 12;
-            def.stats = new UnitStats { hp = 80, speed = 1.5f, armor = 5 };
-            def.flying = false;
-            def.specialBehavior = UnitSpecialBehavior.None;
-            def.specialParams = new SpecialParam[0];
-            def.bossBehaviorId = "";
-            def.bossCcResist = 0f;
-            return def;
-        }
+        /// <summary>Delegates to <see cref="Slice2DefBuilder.BuildBattleRobotDef"/>
+        /// so this test, MinimalReplayRunner (Task 6), and any future Phase 2
+        /// PoC consumer share one set of canonical PoC unit/tower stats.</summary>
+        static UnitDefSO BuildBattleRobotDef() => Slice2DefBuilder.BuildBattleRobotDef();
 
-        static TowerDefSO BuildArcherDef()
-        {
-            var def = ScriptableObject.CreateInstance<TowerDefSO>();
-            def.id = "archer";
-            def.name = "Archer";
-            def.color = "#777";
-            def.cost = 20;
-            def.element = Element.Neutral;
-            def.family = TowerFamily.Archer;
-            def.tier = 1;
-            def.shape = TowerShape.Circle;
-            def.isPremium = false;
-            def.stats = new TowerStats
-            {
-                attackSpeed = 1f,
-                damage = 20f,
-                projectileSpeed = 8f,
-                range = 4f,
-                special = "",
-            };
-            def.sameFamilyMergeTargetId = "";
-            return def;
-        }
+        /// <summary>Delegates to <see cref="Slice2DefBuilder.BuildArcherDef"/>;
+        /// see BuildBattleRobotDef for the dedup rationale.</summary>
+        static TowerDefSO BuildArcherDef() => Slice2DefBuilder.BuildArcherDef();
 
         // ── Test A: per-system unit tests ───────────────────────────────────
 

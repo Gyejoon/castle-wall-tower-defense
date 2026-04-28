@@ -8,6 +8,10 @@
 >
 > **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, **런타임 `setDisplaySize`가 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 다운스케일**해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
 >
+> **v3.2 변경 요약 (2026-04-28)**: `main_long` 필드 비주얼은 사용자가 제공한 레퍼런스 시트에서 추출한 `reference-field/*` grass/path/tree/rock/log 에셋을 우선 사용하고, 기존 vendored Tiny Swords 지형(`Tilemap_path`, `Tilemap_color1`)과 tree/bush/rock 스프라이트를 fallback으로 조합한다. 경로 셀은 `reference-field-path-tiles` 16-frame autotile spritesheet로 표시하고, 비경로 buildable 셀은 기존 `PLATFORM_LIFT`가 적용된 grass platform으로 표시해 타워/사거리 오버레이 좌표를 유지한다. 숲 장식은 `MapLayout.decorations`의 시각 전용 레이어로만 사용하며 pathfinding/buildable에는 영향을 주지 않는다.
+>
+> **v3.3 변경 요약 (2026-04-28)**: 19종 전체 타워 정적/공격 스프라이트에 Tiny Swords 지형 톤의 grass plinth, 1px dark outline, top-left rim light, 역할군별 소품(arrow bundle/rock pile/ice shard/candle/sigil)을 공통 적용한다. `hybrid_ab`, `hybrid_cd`, `ultimate`은 T4 alias placeholder를 종료하고 전용 정적/공격 스프라이트를 생성한다.
+>
 > **v3.4 변경 요약 (2026-04-28)**: 몬스터 스프라이트 방향을 `Dark Fairy Medieval`로 정리한다. 40×48 일반 유닛과 96×96 보스 규격, walk/idle/death 프레임 계약은 유지하되, 숲/모래 필드와 어울리도록 탁한 자연색, 낡은 중세 장비, 절제된 마법 포인트를 강화한다.
 
 ---
@@ -72,8 +76,8 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 | 카테고리 | 파일 수 | 생성기 | 상태 |
 |---------|--------|-------|------|
-| 타워 스태틱 | 18 PNG+WebP | `generate-towers.ts` | ✅ 완료 |
-| 타워 공격 애니 | 18 spritesheet | `generate-towers.ts` | ✅ 완료 |
+| 타워 스태틱 | 19 PNG+WebP | `generate-towers.ts` | ✅ 완료 |
+| 타워 공격 애니 | 19 spritesheet | `generate-towers.ts` | ✅ 완료 |
 | 유닛 walk | 5 spritesheet | `generate-units.ts` | ✅ 완료 |
 | 유닛 idle | 4 spritesheet (6f, 240×48) | `generate-units.ts` | ✅ 완료 |
 | 유닛 death | 4 spritesheet (6f, 유닛별 특화) | `generate-units.ts` | ✅ 완료 |
@@ -81,12 +85,12 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | VFX | 4 spritesheet | `generate-vfx.ts` | 부분 완료 |
 | UI (PVE) | ~34 PNG+WebP | `generate-ui.ts`, `generate-match-ui.ts` | PVP 혼재 |
 | UI 모바일 | ~44 PNG+WebP | `generate-ui-mobile.ts` | ✅ 완료 |
-| 타일 | tileset PNG | `generate-tiles.ts`, `generate-tileset.ts` | forest만 완료 |
-| 맵 | 1 JSON | `generate-map.ts` | forest_gate만 완료 |
+| 타일 | tileset PNG | `reference-field/*`, `generate-tiles.ts`, `generate-tileset.ts`, vendored Tiny Swords | 정식 모드 필드 런타임 조합 완료 |
+| 맵 | JSON + 런타임 절차 렌더 | `generate-map.ts` + `FieldRenderer` | `main_long` 모바일 세로형 비주얼 완료 |
 | 아이콘 | ~8 PNG+WebP | `generate-icons.ts` | ✅ 완료 |
 | vendor | tiny-swords 팩 | N/A | ✅ 완료 |
 
-**현재 총계: ~234 PNG+WebP**
+**현재 총계: ~282 PNG+WebP**
 
 ---
 
@@ -94,18 +98,19 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ### v3 타워 인벤토리
 
-**완성된 에셋 (16종, 기존 제작분 재활용)**
+**완성된 에셋 (19종)**
 - archer family: archer, wind_spire, flame_tower, arcane_spire
 - siege family: nova_cannon, fortress, earth_golem, celestial
 - frost family: emp, stasis_field, disruptor, world_tree
 - stun family: shield, twin_archer, holy_shrine, divine_throne
+- hybrid/ultimate: hybrid_ab, hybrid_cd, ultimate
 
-**Placeholder (3종 — 전용 아트 미제작)**
-| id | tier | 임시 스프라이트 alias | VFX 차별화 |
-|----|------|---------------------|----------|
-| `hybrid_ab` | 5 | `arcane_spire.png` alias | 금색 aura 파티클 (`tint: 0xffcc33`) |
-| `hybrid_cd` | 5 | `world_tree.png` alias | 보라 aura 파티클 (`tint: 0x9966ff`) |
-| `ultimate` | 6 | `divine_throne.png` alias | 무지개-gold aura + 강한 파티클 버스트 |
+**T5/T6 전용 아트**
+| id | tier | 스프라이트 방향성 | VFX 차별화 |
+|----|------|------------------|----------|
+| `hybrid_ab` | 5 | arcane siege platform + enchanted cannon | 금색/보라 muzzle pulse + aura 파티클 (`tint: 0xffcc33`) |
+| `hybrid_cd` | 5 | frozen world-tree shrine + holy sigil | 빙결 ring pulse + 보라 aura 파티클 (`tint: 0x9966ff`) |
+| `ultimate` | 6 | floating world prism + 4-family orbit gems | 무지개-gold ring burst + 강한 파티클 버스트 |
 
 합성 reveal 시 추가 연출: camera flash (300ms, white) + scale punch (0.8→1.0, Back.easeOut) + 파티클 burst (tier 5: 30 particles, tier 6: 2개 ring + 더 큰 burst).
 
@@ -157,10 +162,10 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ### 3.5 타워 HQ 스프라이트 규격 (2026-04-10~)
 
-- 대상: 전체 18종 (파일럿 8종 + 나머지 10종 모두 전환 완료)
-- 스타일: `drawIsoCube` 기반 중세 픽셀 아트 (하드 엣지, PALETTE 색상)
+- 대상: 전체 19종 (T1-T4 16종 + T5/T6 3종 모두 전환 완료)
+- 스타일: `drawIsoCube` 기반 중세 픽셀 아트 + Tiny Swords 지형 톤 grass plinth/outline/rim light
 - 해상도: 정적 스프라이트 128×160, fire spritesheet 64×80×8=512×80 (HQ base를 64×80으로 축소 + fire 이펙트 overlay)
-- Grade variant: normal/rare/unique/epic 4종 (18×4=72 정적 스프라이트)
+- Grade variant: normal/rare/unique/epic 4종 (19×4=76 정적 스프라이트)
   - 에셋 파일명: `assets/towers/{id}.png`, `assets/towers/{id}-rare.png`, `assets/towers/{id}-unique.png`, `assets/towers/{id}-epic.png`
   - 매니페스트 key: `tower-{id}`, `tower-{id}-rare`, `tower-{id}-unique`, `tower-{id}-epic`
   - Normal은 base 스프라이트, rare/unique/epic은 공통 decoration 헬퍼로 overlay
@@ -304,11 +309,14 @@ sin 기반 8프레임 워크 사이클:
 
 ---
 
-## 9. 맵 에셋 (3 스테이지)
+## 9. 맵 에셋
+
+정식 모드 런타임 맵은 `main_long` 하나다. Tiled JSON은 preload/장식 메타데이터 계약을 유지하고, 실제 필드 표현은 Phaser `FieldRenderer`가 제공 레퍼런스 시트에서 추출한 `reference-field` 타일을 48px 모바일 세로 좌표계에 맞춰 조합한다. `reference-field-path-tiles.png`는 NSEW bitmask(N=1,E=2,S=4,W=8)와 frame index를 1:1로 맞춘 16-frame spritesheet다.
 
 | stage_id | 테마 | 상태 |
 |---------|------|------|
-| forest_gate | 초록/갈색 자연 톤, 단일 경로 | ✅ 완료 |
+| main_long | 초록 숲 + 모래길, 9×18 모바일 세로형 U-turn 경로 | ✅ 완료 |
+| forest_gate | 초록/갈색 자연 톤, 단일 경로 (legacy asset) | ✅ 완료 |
 | lava_fortress | 붉은/주황 화산 톤, 2경로 | ⬜ 미구현 |
 | storm_citadel | 짙은 파랑/보라 전기 톤, 3경로 | ⬜ 미구현 |
 
@@ -362,4 +370,6 @@ icon-{category}-{id} # 아이콘
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
 | 2026-04-20 | §3, §11 (전반) | **v3 정식 모드 승격**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |
 | 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 소스 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 그대로, **런타임 `setDisplaySize`를 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 축소해 타일 폭에 맞춤** — 기존 64×80 타워는 타일 48의 1.33× 폭, 1.67× 높이로 과하게 overflow했음. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |
+| 2026-04-28 | 헤더, §2, §9 | **v3.2 모바일 세로형 필드 비주얼 리워크**. 제공된 레퍼런스 시트에서 `reference-field` grass/path/round-tree/rock/log 에셋을 추출하고, `main_long`을 grass underlay + path autotile spritesheet + lifted grass platform + 숲 가장자리 장식 조합으로 변경. |
+| 2026-04-28 | 헤더, §2, §3 | **v3.3 Tiny Swords풍 타워 스프라이트 폴리시**. 19종 전체 타워 정적/공격 스프라이트에 grass plinth, 1px dark outline, rim light, 역할군별 소품을 적용. `hybrid_ab`, `hybrid_cd`, `ultimate` 전용 T5/T6 스프라이트 추가 및 매니페스트 alias 제거. |
 | 2026-04-28 | 헤더, §5 | **v3.4 몬스터 스프라이트 다크 동화풍 리워크**. 일반 몬스터를 `Dark Fairy Medieval` 방향으로 정리하고, 탁한 자연색·낡은 중세 장비·절제된 마법 포인트를 기준으로 실루엣과 파생 유닛 틴트를 강화. |

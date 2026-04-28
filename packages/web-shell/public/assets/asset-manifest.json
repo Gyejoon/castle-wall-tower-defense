@@ -68,6 +68,57 @@
       "section": "preload"
     },
     {
+      "key": "reference-field-path-tiles",
+      "type": "spritesheet",
+      "path": "assets/vendor/reference-field/path-tiles.png",
+      "frameWidth": 104,
+      "frameHeight": 104,
+      "frameCount": 16,
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-grass-tile",
+      "type": "image",
+      "path": "assets/vendor/reference-field/grass-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-sand-tile",
+      "type": "image",
+      "path": "assets/vendor/reference-field/sand-tile.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-tree-1",
+      "type": "image",
+      "path": "assets/vendor/reference-field/tree-1.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-tree-2",
+      "type": "image",
+      "path": "assets/vendor/reference-field/tree-2.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-tree-3",
+      "type": "image",
+      "path": "assets/vendor/reference-field/tree-3.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-rock-1",
+      "type": "image",
+      "path": "assets/vendor/reference-field/rock-1.png",
+      "section": "preload"
+    },
+    {
+      "key": "reference-field-wood-logs",
+      "type": "image",
+      "path": "assets/vendor/reference-field/wood-logs.png",
+      "section": "preload"
+    },
+    {
       "key": "tiny-swords-rock-1",
       "type": "spritesheet",
       "path": "assets/vendor/tiny-swords/terrain/decorations/rocks/Rock1.png",

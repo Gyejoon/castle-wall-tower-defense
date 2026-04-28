@@ -5,6 +5,8 @@ import {
 	PHASE_A_LONG_V2_TILEMAP_PATH,
 } from '../../packages/shared/src/constants/maps';
 import {
+	REFERENCE_FIELD_IMAGE_ASSETS,
+	REFERENCE_FIELD_SPRITESHEET_ASSETS,
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_TILESET_ASSETS,
 } from '../../packages/phaser-game/src/fieldAssets';
@@ -28,9 +30,10 @@ import { generate as generateCheckBadge } from './generate-check-badge';
 import { generate as generateWorldmap } from './generate-worldmap';
 
 export function collectStaticFieldAssetEntries(): ManifestEntry[] {
-	const staticEntries = [
+	const staticSpritesheetEntries = [
 		...TINY_SWORDS_TILESET_ASSETS,
 		...TINY_SWORDS_DECORATION_ASSETS,
+		...REFERENCE_FIELD_SPRITESHEET_ASSETS,
 	].map(({ key, path, frameWidth, frameHeight, frameCount }) => ({
 		key,
 		type: 'spritesheet' as const,
@@ -39,6 +42,12 @@ export function collectStaticFieldAssetEntries(): ManifestEntry[] {
 		frameHeight,
 		frameCount,
 	}));
+	const staticImageEntries = REFERENCE_FIELD_IMAGE_ASSETS.map(({ key, path }) => ({
+		key,
+		type: 'image' as const,
+		path,
+	}));
+	const staticEntries = [...staticSpritesheetEntries, ...staticImageEntries];
 
 	const missing = staticEntries
 		.filter(

@@ -12,6 +12,8 @@ import {
 } from '../src/assets/assetManifest';
 import { PRELOAD_TOWER_IDS } from '../src/constants/preloadAssets';
 import {
+	REFERENCE_FIELD_IMAGE_ASSETS,
+	REFERENCE_FIELD_SPRITESHEET_ASSETS,
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_TILESET_ASSETS,
 } from '../src/fieldAssets';
@@ -73,10 +75,7 @@ describe('PRELOAD_TOWER_IDS', () => {
 		expect(PRELOAD_TOWER_IDS).toContain('divine_throne');
 	});
 
-	// Phase 1: full asset verification is deferred to Phase 11 once placeholder
-	// sprites for the new T2-T6 tower ids land. For now, only the four tier-1
-	// ids ('archer', 'nova_cannon', 'emp', 'shield') are guaranteed to exist.
-	it.skip('has either png manifest entries or generated webp files for every preloaded tower asset (Phase 11)', () => {
+	it('has either png manifest entries or generated webp files for every preloaded tower asset', () => {
 		for (const towerId of PRELOAD_TOWER_IDS) {
 			const hasPngManifestEntry = manifest.assets.some(
 				(asset) =>
@@ -117,6 +116,27 @@ describe('field asset preload alignment', () => {
 				frameWidth: asset.frameWidth,
 				frameHeight: asset.frameHeight,
 				frameCount: asset.frameCount,
+				section: 'preload',
+			});
+		}
+
+		for (const asset of REFERENCE_FIELD_SPRITESHEET_ASSETS) {
+			expect(manifest.assets).toContainEqual({
+				key: asset.key,
+				type: 'spritesheet',
+				path: asset.path,
+				frameWidth: asset.frameWidth,
+				frameHeight: asset.frameHeight,
+				frameCount: asset.frameCount,
+				section: 'preload',
+			});
+		}
+
+		for (const asset of REFERENCE_FIELD_IMAGE_ASSETS) {
+			expect(manifest.assets).toContainEqual({
+				key: asset.key,
+				type: 'image',
+				path: asset.path,
 				section: 'preload',
 			});
 		}

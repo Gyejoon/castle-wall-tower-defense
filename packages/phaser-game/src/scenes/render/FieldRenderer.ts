@@ -8,8 +8,16 @@ import type Phaser from 'phaser';
 import {
 	DIRT_SEAMLESS_KEY,
 	GRASS_PLATFORM_FRAMES,
+	GRASS_SEAMLESS_KEY,
 	PLATFORM_LIFT,
+	REFERENCE_FIELD_GRASS_KEY,
+	REFERENCE_FIELD_PATH_TILESET_KEY,
+	REFERENCE_FIELD_ROCK_KEY,
+	REFERENCE_FIELD_SAND_KEY,
+	REFERENCE_FIELD_TREE_KEYS,
+	REFERENCE_FIELD_WOOD_LOGS_KEY,
 	TINY_SWORDS_DECORATION_BY_KEY,
+	TINY_SWORDS_PATH_TILESET_KEY,
 	TINY_SWORDS_PRIMARY_TILESET,
 	type TinySwordsDecorationKind,
 } from '../../fieldAssets';
@@ -25,10 +33,10 @@ interface MapTheme {
 
 const MAP_THEMES: Record<string, MapTheme> = {
 	main_long: {
-		groundTint: 0xc8b89a,
-		decorTint: 0xc8b89a,
-		pathColor: 0x7a6040,
-		pathLineColor: 0xb8956a,
+		groundTint: 0xffffff,
+		decorTint: 0xffffff,
+		pathColor: 0xf2d17a,
+		pathLineColor: 0x7a6434,
 	},
 };
 
@@ -133,16 +141,21 @@ export class FieldRenderer {
 			typeof this.scene.add.tileSprite === 'function' &&
 			(!useTiledVisuals || visualLayerNames.has('ground_base'))
 		) {
-			const dirtBg = this.scene.add.tileSprite(
+			const grassKey = this.resolveTextureKey(
+				REFERENCE_FIELD_GRASS_KEY,
+				GRASS_SEAMLESS_KEY,
+			);
+			const grassBg = this.scene.add.tileSprite(
 				canvasW / 2,
 				canvasH / 2,
 				canvasW,
 				canvasH,
-				DIRT_SEAMLESS_KEY,
+				grassKey,
 			);
-			dirtBg.setDepth(0);
-			dirtBg.setScrollFactor(0);
-			if (dark) dirtBg.setTint(0x5c6585);
+			grassBg.setDepth(0);
+			grassBg.setScrollFactor(0);
+			if (dark) grassBg.setTint(0x5c6585);
+			else if (theme.groundTint !== 0xffffff) grassBg.setTint(theme.groundTint);
 		}
 
 		// 맵 밖과 path 셀은 low ground로 취급.
@@ -154,6 +167,10 @@ export class FieldRenderer {
 			x >= this.map.width ||
 			y < 0 ||
 			y >= this.map.height;
+
+		if (!useTiledVisuals || visualLayerNames.has('road_low')) {
+			this.renderPathTerrain(pathCells, pathSet, dark);
+		}
 
 		const lift = tile * PLATFORM_LIFT;
 		const extraTiles = 2;
@@ -243,6 +260,96 @@ export class FieldRenderer {
 		this.renderDecorations(dark);
 	}
 
+	private renderPathTerrain(
+		pathCells: Position[],
+		pathSet: Set<string>,
+		dark: boolean,
+	): void {
+		const tile = this.grid.orthoTile;
+		const theme = getMapTheme(this.map.id);
+		const seen = new Set<string>();
+		const usesReferencePathTiles = this.scene.textures.exists(
+			REFERENCE_FIELD_PATH_TILESET_KEY,
+		);
+		const sandKey = this.resolveTextureKey(
+			REFERENCE_FIELD_SAND_KEY,
+			DIRT_SEAMLESS_KEY,
+		);
+		const usesReferenceSand = sandKey === REFERENCE_FIELD_SAND_KEY;
+		const sandGraphics = usesReferencePathTiles
+			? undefined
+			: this.scene.add.graphics();
+		sandGraphics?.setDepth(1);
+		sandGraphics?.fillStyle(dark ? 0x5f667d : theme.pathColor, 0.92);
+
+		for (const p of pathCells) {
+			const key = `${p.x},${p.y}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+
+			const world = this.grid.gridToWorld(p.x, p.y);
+			const frame = this.resolvePathFrame(pathSet, p.x, p.y);
+			if (usesReferencePathTiles) {
+				const sprite = this.scene.add.sprite(
+					world.x,
+					world.y,
+					REFERENCE_FIELD_PATH_TILESET_KEY,
+					frame,
+				);
+				sprite.setDisplaySize(tile, tile);
+				sprite.setOrigin(0.5, 0.5);
+				sprite.setDepth(1.1);
+				if (dark) sprite.setTint(0x6d738a);
+				continue;
+			}
+
+			sandGraphics?.fillRect(
+				world.x - tile / 2,
+				world.y - tile / 2,
+				tile,
+				tile,
+			);
+			if (typeof this.scene.add.tileSprite === 'function') {
+				const sand = this.scene.add.tileSprite(
+					world.x,
+					world.y,
+					tile,
+					tile,
+					sandKey,
+				);
+				sand.setDepth(1);
+				sand.setAlpha?.(usesReferenceSand ? 0.95 : 0.18);
+				if (dark) sand.setTint(0x6d738a);
+			}
+
+			if (!this.scene.textures.exists(TINY_SWORDS_PATH_TILESET_KEY)) continue;
+			const sprite = this.scene.add.sprite(
+				world.x,
+				world.y,
+				TINY_SWORDS_PATH_TILESET_KEY,
+				frame,
+			);
+			sprite.setDisplaySize(tile, tile);
+			sprite.setOrigin(0.5, 0.5);
+			sprite.setDepth(1.1);
+			sprite.setAlpha(usesReferenceSand ? 0.18 : 0.34);
+			if (dark) sprite.setTint(0x6d738a);
+		}
+	}
+
+	private resolveTextureKey(preferred: string, fallback: string): string {
+		return this.scene.textures.exists(preferred) ? preferred : fallback;
+	}
+
+	private resolvePathFrame(pathSet: Set<string>, x: number, y: number): number {
+		let bitmask = 0;
+		if (pathSet.has(`${x},${y - 1}`)) bitmask |= 1;
+		if (pathSet.has(`${x + 1},${y}`)) bitmask |= 2;
+		if (pathSet.has(`${x},${y + 1}`)) bitmask |= 4;
+		if (pathSet.has(`${x - 1},${y}`)) bitmask |= 8;
+		return bitmask;
+	}
+
 	private renderDecorations(dark: boolean): void {
 		if (!this.decorationTiles) return;
 		const theme = getMapTheme(this.map.id);
@@ -268,6 +375,7 @@ export class FieldRenderer {
 		if (!this.pathGraphics) this.pathGraphics = this.scene.add.graphics();
 		const graphics = this.pathGraphics;
 		graphics.clear();
+		graphics.setDepth(5);
 
 		const theme = getMapTheme(this.map.id);
 		const lineColor = theme.pathLineColor;
@@ -311,20 +419,33 @@ export class FieldRenderer {
 	private renderObstacles(): void {
 		const obstacles = this.map.obstacles;
 		if (!obstacles || obstacles.length === 0) return;
-		const ASSET_KEYS = [
-			'tiny-swords-tree-1',
-			'tiny-swords-rock-1',
-			'tiny-swords-bush-1',
-		] as const;
+		const ASSET_KEYS = this.scene.textures.exists(REFERENCE_FIELD_ROCK_KEY)
+			? ([
+					REFERENCE_FIELD_ROCK_KEY,
+					REFERENCE_FIELD_WOOD_LOGS_KEY,
+					REFERENCE_FIELD_ROCK_KEY,
+					REFERENCE_FIELD_TREE_KEYS[2],
+				] as const)
+			: ([
+					'tiny-swords-rock-1',
+					'tiny-swords-bush-1',
+					'tiny-swords-rock-3',
+					'tiny-swords-tree-3',
+				] as const);
 		const tile = this.grid.orthoTile;
 		const lift = tile * PLATFORM_LIFT;
 		obstacles.forEach((pos, i) => {
 			const key = ASSET_KEYS[i % ASSET_KEYS.length];
 			if (!this.scene.textures.exists(key)) return;
+			const asset = TINY_SWORDS_DECORATION_BY_KEY[key];
 			const world = this.grid.gridToWorld(pos.x, pos.y);
 			const sprite = this.scene.add.sprite(world.x, world.y - lift, key, 0);
-			sprite.setDisplaySize(tile * 0.92, tile * 0.92);
-			sprite.setOrigin(0.5, 0.7);
+			const scale = key.includes('tree') ? 1.16 : 0.92;
+			sprite.setDisplaySize(
+				tile * scale,
+				key === REFERENCE_FIELD_WOOD_LOGS_KEY ? tile * 0.46 : tile * scale,
+			);
+			sprite.setOrigin(0.5, asset?.originY ?? 0.72);
 			sprite.setDepth(3 + pos.x + pos.y);
 		});
 	}
@@ -333,17 +454,33 @@ export class FieldRenderer {
 	private renderAmbientDecorations(): void {
 		const decorations = this.map.decorations;
 		if (!decorations || decorations.length === 0) return;
-		const tile = this.grid.orthoTile;
 		decorations.forEach((deco) => {
 			const variant = deco.variant ?? 1;
-			const key = `tiny-swords-${deco.kind}-${variant}`;
+			const key =
+				this.map.id === 'main_long' && deco.kind === 'tree'
+					? REFERENCE_FIELD_TREE_KEYS[
+							(variant - 1) % REFERENCE_FIELD_TREE_KEYS.length
+						]
+					: `tiny-swords-${deco.kind}-${variant}`;
 			if (!this.scene.textures.exists(key)) return;
+			const asset = TINY_SWORDS_DECORATION_BY_KEY[key];
 			const world = this.grid.gridToWorld(deco.x, deco.y);
 			const sprite = this.scene.add.sprite(world.x, world.y, key, 0);
-			const scale = deco.kind === 'tree' ? 1.1 : 0.85;
-			sprite.setDisplaySize(tile * scale, tile * scale);
-			sprite.setOrigin(0.5, 0.72);
-			sprite.setAlpha(0.85);
+			if (key.startsWith('reference-field-tree-')) {
+				sprite.setDisplaySize(
+					this.grid.orthoTile * 1.5,
+					this.grid.orthoTile * 1.6,
+				);
+				sprite.setOrigin(0.5, 0.82);
+			} else if (asset) {
+				const ambientScale = deco.kind === 'tree' ? 0.92 : 0.82;
+				sprite.setDisplaySize(
+					asset.renderWidth * ambientScale,
+					asset.renderHeight * ambientScale,
+				);
+				sprite.setOrigin(0.5, asset.originY);
+			}
+			sprite.setAlpha(deco.kind === 'tree' ? 0.9 : 0.82);
 			sprite.setDepth(2.5);
 		});
 	}

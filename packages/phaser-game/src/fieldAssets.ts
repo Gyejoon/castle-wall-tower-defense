@@ -28,7 +28,66 @@ export interface TinySwordsDecorationAssetEntry extends TinySwordsAssetEntry {
 	depthOffset: number;
 }
 
+export interface FieldImageAssetEntry {
+	key: string;
+	path: string;
+}
+
 export const TINY_SWORDS_TILE_SIZE = 64;
+
+export const REFERENCE_FIELD_GRASS_KEY = 'reference-field-grass-tile';
+export const REFERENCE_FIELD_SAND_KEY = 'reference-field-sand-tile';
+export const REFERENCE_FIELD_PATH_TILESET_KEY = 'reference-field-path-tiles';
+export const REFERENCE_FIELD_TREE_KEYS = [
+	'reference-field-tree-1',
+	'reference-field-tree-2',
+	'reference-field-tree-3',
+] as const;
+export const REFERENCE_FIELD_ROCK_KEY = 'reference-field-rock-1';
+export const REFERENCE_FIELD_WOOD_LOGS_KEY = 'reference-field-wood-logs';
+
+export const REFERENCE_FIELD_IMAGE_ASSETS: FieldImageAssetEntry[] = [
+	{
+		key: REFERENCE_FIELD_GRASS_KEY,
+		path: 'assets/vendor/reference-field/grass-tile.png',
+	},
+	{
+		key: REFERENCE_FIELD_SAND_KEY,
+		path: 'assets/vendor/reference-field/sand-tile.png',
+	},
+	{
+		key: REFERENCE_FIELD_TREE_KEYS[0],
+		path: 'assets/vendor/reference-field/tree-1.png',
+	},
+	{
+		key: REFERENCE_FIELD_TREE_KEYS[1],
+		path: 'assets/vendor/reference-field/tree-2.png',
+	},
+	{
+		key: REFERENCE_FIELD_TREE_KEYS[2],
+		path: 'assets/vendor/reference-field/tree-3.png',
+	},
+	{
+		key: REFERENCE_FIELD_ROCK_KEY,
+		path: 'assets/vendor/reference-field/rock-1.png',
+	},
+	{
+		key: REFERENCE_FIELD_WOOD_LOGS_KEY,
+		path: 'assets/vendor/reference-field/wood-logs.png',
+	},
+];
+
+export const REFERENCE_FIELD_SPRITESHEET_ASSETS: TinySwordsAssetEntry[] = [
+	{
+		key: REFERENCE_FIELD_PATH_TILESET_KEY,
+		path: 'assets/vendor/reference-field/path-tiles.png',
+		frameWidth: 104,
+		frameHeight: 104,
+		frameCount: 16,
+		pixelWidth: 1664,
+		pixelHeight: 104,
+	},
+];
 
 export const TINY_SWORDS_TILESET_ASSETS: TinySwordsAssetEntry[] = [
 	{

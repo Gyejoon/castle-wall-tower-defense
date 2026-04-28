@@ -5,6 +5,7 @@ vi.mock('phaser', () => ({
 	default: {},
 }));
 
+import { REFERENCE_FIELD_PATH_TILESET_KEY } from '../../src/fieldAssets';
 import { FieldRenderer } from '../../src/scenes/render/FieldRenderer';
 
 function createGraphics() {
@@ -159,6 +160,21 @@ describe('FieldRenderer', () => {
 		// Expect grass platform sprites + at least one decoration + one
 		// obstacle to be placed.
 		expect(addSprite.mock.calls.length).toBeGreaterThan(0);
+	});
+
+	it('uses the reference atlas path tiles when available', () => {
+		const { scene, addSprite } = buildScene();
+		const grid = buildGridManager();
+		const map = buildMap();
+
+		const renderer = new FieldRenderer(scene as never, grid as never, map);
+		renderer.renderAll();
+
+		const pathTileCalls = addSprite.mock.calls.filter(
+			(call) => call[2] === REFERENCE_FIELD_PATH_TILESET_KEY,
+		);
+		expect(pathTileCalls).toHaveLength(map.path.length);
+		expect(pathTileCalls.map((call) => call[3])).toEqual([2, 10, 8]);
 	});
 
 	it('refreshPath clears old path graphics before redrawing', () => {

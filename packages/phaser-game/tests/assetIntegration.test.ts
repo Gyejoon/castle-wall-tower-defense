@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import {
 	ALL_TOWERS,
+	MAIN_LONG_MAP,
 	PHASE_A_LONG_MAP,
 	PHASE_A_LONG_V2_TILEMAP_KEY,
 	PHASE_A_LONG_V2_TILEMAP_PATH,
@@ -83,6 +84,33 @@ const phaseALongV2Tilemap = JSON.parse(
 	>;
 };
 
+const mainLongTilemap = JSON.parse(
+	readFileSync(
+		new URL(
+			'../../web-shell/public/assets/maps/main-long.json',
+			import.meta.url,
+		),
+		'utf-8',
+	),
+) as {
+	width: number;
+	height: number;
+	tilewidth: number;
+	tileheight: number;
+	layers: Array<
+		| {
+				type: 'tilelayer';
+				name: string;
+				data: number[];
+		  }
+		| {
+				type: 'objectgroup';
+				name: string;
+				objects: Array<unknown>;
+		  }
+	>;
+};
+
 const decorationAssetKeys = new Set(
 	TINY_SWORDS_DECORATION_ASSETS.map((asset) => asset.key),
 );
@@ -135,6 +163,31 @@ describe('asset integration', () => {
 			expect(object.width).toBe(phaseALongV2Tilemap.tilewidth);
 			expect(object.height).toBe(phaseALongV2Tilemap.tileheight);
 		}
+	});
+
+	it('keeps the main_long mobile tilemap aligned with the runtime map contract', () => {
+		expect(mainLongTilemap.width).toBe(MAIN_LONG_MAP.width);
+		expect(mainLongTilemap.height).toBe(MAIN_LONG_MAP.height);
+		expect(mainLongTilemap.tilewidth).toBe(MAIN_LONG_MAP.tileSize);
+		expect(mainLongTilemap.tileheight).toBe(MAIN_LONG_MAP.tileSize);
+
+		expect(mainLongTilemap.layers.map((layer) => layer.name)).toEqual([
+			'ground_base',
+			'road_low',
+			'platform_high',
+			'cliff_faces',
+			'foliage_low',
+			'decorations',
+			'objects',
+		]);
+
+		const roadLayer = mainLongTilemap.layers.find(
+			(layer) => layer.type === 'tilelayer' && layer.name === 'road_low',
+		);
+		expect(roadLayer?.type).toBe('tilelayer');
+		expect((roadLayer as { data: number[] }).data.filter(Boolean)).toHaveLength(
+			MAIN_LONG_MAP.path.length,
+		);
 	});
 
 	// Phase 1: grade variant assets were removed alongside the grade system.

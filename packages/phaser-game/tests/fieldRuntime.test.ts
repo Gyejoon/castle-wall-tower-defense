@@ -241,7 +241,7 @@ describe('GameScene field runtime', () => {
 		]);
 	});
 
-	it('renders a single portrait field from raw Tiny Swords assets', async () => {
+	it('renders a single portrait field from raw field assets', async () => {
 		const addImage = vi.fn(() => createImage());
 		const addSprite = vi.fn(() => createImage());
 		const addGraphics = vi.fn(() => createGraphics());
@@ -545,6 +545,13 @@ describe('GameScene field runtime', () => {
 			480,
 			424,
 			960,
+			'grass-seamless',
+		);
+		expect(addTileSprite).toHaveBeenCalledWith(
+			expect.any(Number),
+			expect.any(Number),
+			expect.any(Number),
+			expect.any(Number),
 			'dirt-seamless',
 		);
 		expect(addSprite).toHaveBeenCalledWith(

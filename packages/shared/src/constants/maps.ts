@@ -326,34 +326,54 @@ const MAIN_LONG_BUILDABLE_POINTS = buildBuildablePoints({
 	obstacles: MAIN_LONG_OBSTACLES,
 });
 
-// Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional
-// allowed) so they read as background scenery and never compete with tower
-// placement tiles or block the U-turn path. Pure visual layer — no
+// Ambient decorations are placed mostly off the playfield (fractional
+// coordinates allowed) so they read as a forest frame and never compete with
+// tower placement tiles or block the U-turn path. Pure visual layer — no
 // pathfinding / buildable impact.
 const MAIN_LONG_DECORATIONS: MapLayout['decorations'] = [
-	// Left-edge tree line — clustered toward top + mid + bottom
-	{ x: -1.2, y: 0.5, kind: 'tree', variant: 1 },
-	{ x: -1.5, y: 3.5, kind: 'tree', variant: 2 },
-	{ x: -1.1, y: 7.2, kind: 'tree', variant: 3 },
-	{ x: -1.4, y: 11.1, kind: 'tree', variant: 4 },
-	// Right-edge tree line
-	{ x: 9.3, y: 2.3, kind: 'tree', variant: 2 },
-	{ x: 9.5, y: 6.8, kind: 'tree', variant: 3 },
-	{ x: 9.2, y: 10.9, kind: 'tree', variant: 1 },
-	{ x: 9.4, y: 15.2, kind: 'tree', variant: 4 },
-	// Corner bushes (just outside the four corners)
-	{ x: -0.7, y: -0.8, kind: 'bush', variant: 1 },
-	{ x: 9.1, y: -0.7, kind: 'bush', variant: 2 },
-	{ x: -0.6, y: 17.8, kind: 'bush', variant: 3 },
-	{ x: 9.0, y: 17.9, kind: 'bush', variant: 4 },
-	// Mid-edge bushes for rhythm
-	{ x: -0.8, y: 5.5, kind: 'bush', variant: 2 },
-	{ x: 9.1, y: 13.6, kind: 'bush', variant: 1 },
-	// Scattered small rocks along the edges
-	{ x: -1.0, y: 9.3, kind: 'rock', variant: 3 },
-	{ x: 9.2, y: 4.1, kind: 'rock', variant: 4 },
-	{ x: -0.9, y: 13.8, kind: 'rock', variant: 3 },
-	{ x: 9.1, y: 8.5, kind: 'rock', variant: 4 },
+	// Top canopy — leaves a readable hint around the spawn/exit row.
+	{ x: -0.3, y: -0.6, kind: 'tree', variant: 1 },
+	{ x: 1.4, y: -1.0, kind: 'tree', variant: 2 },
+	{ x: 3.3, y: -0.8, kind: 'tree', variant: 3 },
+	{ x: 6.3, y: -0.9, kind: 'tree', variant: 4 },
+	{ x: 8.8, y: -0.6, kind: 'tree', variant: 2 },
+	{ x: 0.8, y: -0.2, kind: 'rock', variant: 4 },
+	{ x: 7.6, y: -0.2, kind: 'bush', variant: 3 },
+
+	// Left forest wall, staggered so the U-turn strip still reads.
+	{ x: -0.4, y: 1.6, kind: 'tree', variant: 2 },
+	{ x: -0.8, y: 3.4, kind: 'tree', variant: 3 },
+	{ x: -0.2, y: 5.8, kind: 'bush', variant: 1 },
+	{ x: -0.7, y: 7.1, kind: 'tree', variant: 4 },
+	{ x: -0.5, y: 9.7, kind: 'rock', variant: 3 },
+	{ x: -0.9, y: 11.2, kind: 'tree', variant: 1 },
+	{ x: -0.3, y: 13.6, kind: 'bush', variant: 2 },
+	{ x: -0.7, y: 15.4, kind: 'tree', variant: 3 },
+
+	// Right forest wall.
+	{ x: 9.2, y: 1.7, kind: 'tree', variant: 4 },
+	{ x: 9.5, y: 3.8, kind: 'rock', variant: 2 },
+	{ x: 9.1, y: 5.6, kind: 'tree', variant: 1 },
+	{ x: 9.4, y: 7.9, kind: 'bush', variant: 4 },
+	{ x: 9.0, y: 9.8, kind: 'tree', variant: 2 },
+	{ x: 9.5, y: 12.0, kind: 'rock', variant: 3 },
+	{ x: 9.1, y: 14.1, kind: 'tree', variant: 4 },
+	{ x: 9.3, y: 16.0, kind: 'bush', variant: 1 },
+
+	// Bottom tree line frames the long crossing without changing gameplay.
+	{ x: -0.2, y: 18.0, kind: 'tree', variant: 1 },
+	{ x: 1.3, y: 18.4, kind: 'bush', variant: 3 },
+	{ x: 2.5, y: 18.2, kind: 'tree', variant: 2 },
+	{ x: 4.1, y: 18.6, kind: 'rock', variant: 4 },
+	{ x: 5.2, y: 18.2, kind: 'tree', variant: 3 },
+	{ x: 6.8, y: 18.5, kind: 'bush', variant: 2 },
+	{ x: 8.6, y: 18.1, kind: 'tree', variant: 4 },
+
+	// Small edge clutter for the composed-map feel from the reference.
+	{ x: -0.1, y: 2.3, kind: 'rock', variant: 3 },
+	{ x: 9.0, y: 3.2, kind: 'rock', variant: 4 },
+	{ x: -0.2, y: 16.8, kind: 'bush', variant: 4 },
+	{ x: 9.1, y: 15.1, kind: 'rock', variant: 2 },
 ];
 
 export const MAIN_MAP_ID = 'main_long' as const;

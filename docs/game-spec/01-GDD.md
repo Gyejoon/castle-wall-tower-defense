@@ -1,12 +1,14 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 4 버그 픽스)
+> **Last Updated:** 2026-04-28 (v3.2 — 모바일 세로형 필드 비주얼 리워크)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 >
 > **v3 노트 (2026-04-20)**: 2026-04-14 피벗으로 도입된 랜덤 소환 + 합성 루프를 **게임의 유일한 정식 모드**로 확정. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
 >
 > **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`, 생존 중 최소 1 clamp). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser `Scale.NONE`으로 내부 해상도 432×960 고정 + 모바일 세로형 표준 레이아웃 (React shell은 `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + `safe-area-inset-top`, 캔버스가 flex-1 슬롯을 채움). 기기별 타워/몬스터 비율은 캔버스 내부 좌표계에서 보존. PR #175.
+>
+> **v3.2 노트 (2026-04-28)**: 정식 모드 필드 비주얼을 제공된 레퍼런스 에셋 시트에 맞춰 모바일 세로형으로 재구성. 9×18, 48px, `main_long` 경로/배치/밸런스 계약은 유지하되, 런타임 렌더는 `reference-field` grass underlay + path autotile spritesheet + grass platform edge + 숲 가장자리 장식으로 변경한다. 경로 길이, 장애물 수, buildable 산출 로직은 변경하지 않는다.
 
 ---
 
@@ -159,7 +161,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchest
 | 소환 풀 타워 | 4종 T1 (archer, nova_cannon, emp, shield) | 4 family 각 1개, 균등 draw |
 | 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
 | **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
-| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
+| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14). 비주얼은 제공 레퍼런스 시트에서 추출한 `reference-field` grass/path/tree/rock/log 에셋으로 모바일 세로형 구성 |
 | 스테이지 | 단일 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
 | 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
 | 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |

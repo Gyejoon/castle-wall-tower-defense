@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 고정 논리 해상도)
+> **Last Updated:** 2026-04-28 (v3.2 — 모바일 세로형 필드 비주얼 리워크)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -255,9 +255,13 @@ Phase 4–6 리팩토링으로 `GameScene.ts`의 주요 책임이 다음 하위 
 
 | Depth | 레이어 | 대상 |
 |-------|--------|------|
-| 0 | Ground | TinySwords 배경 타일 |
+| 0 | Ground | `reference-field-grass-tile` underlay (`grass-seamless` fallback) |
 | 0.1-0.9 | Gimmick VFX | 용암 glow(0.1), 역병 안개(0.5), 마력 폭발(0.9) |
-| 3 + x + y + depthOffset | Decorations | 나무, 바위 등 장식 스프라이트 (`gridManager.getDepth()` 기반) |
+| 1.0-1.2 | Path terrain | `reference-field-path-tiles` 16-frame autotile (`Tilemap_path` fallback) |
+| 1.5 | Cliff faces | lifted grass platform cliff faces |
+| 2 | Platform | buildable grass platform tiles |
+| 2.5 | Ambient scenery | off-grid tree/bush/rock frame decorations |
+| 3 + x + y + depthOffset | Decorations | Tiled object-layer tree/bush/rock 스프라이트 |
 | 5 | Path | 경로 라인 오버레이 |
 | ~12 | Towers | 타워 스프라이트 |
 | 15 | Selection | selectionGraphics (배치 가능 하이라이트) |
@@ -268,6 +272,8 @@ Phase 4–6 리팩토링으로 `GameScene.ts`의 주요 책임이 다음 하위 
 | 150 | Tutorial | 튜토리얼 오버레이 |
 
 데코레이션은 `3 + x + y + asset.depthOffset`을 사용해 타일 위치에 따라 자연스러운 depth 정렬(앞에 있는 오브젝트가 뒤의 것을 가림)을 구현한다.
+
+`main_long`의 2026-04-28 비주얼 리워크는 렌더러 레이어만 바꾼다. `GridManager`, `PathfindingSystem`, `TowerSystem`, `RangeOverlayController`는 기존 `PLATFORM_LIFT`와 9×18 좌표계를 그대로 사용하므로 타워 배치/사거리/투사체 좌표 계약은 변하지 않는다.
 
 ---
 
@@ -359,3 +365,4 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 | 2026-04-14 | §2, §3, §4 | **v2 랜덤 소환 + 합성 피벗 (당시 "Phase A" 트랙) 시스템 추가**. `CoreOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === MAIN_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. 전용 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + GameHud 로컬 state 조합. DeckSystem은 main_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `orchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
 | 2026-04-20 | §2, §3 헤더 | **v3.1 정식 모드 안정화 (PR #175)**. 용어 정리 1차: "Phase A" prose → "정식 모드" 치환 (당시 코드 상수 `PhaseAOrchestrator`/`PHASE_A_MAP_ID`/`phase_a_long`/`phase-a-summon-ready`는 historical identifier로 유지 — v4에서 완전 제거됨). `CoreOrchestrator.handleGachaRequest` + `settlePendingSummon('cancelled' \| 'cancelled-no-refund')` 경로에 `cancelledGachaDraw` 캐시 추가 — 풀·가챠 양쪽 재소환 리롤 차단, 다른 tier 가챠는 캐시 폐기 + 새 roll. Phaser `scale.mode = Scale.NONE` + `autoCenter = NO_CENTER` 고정, React `GamePage` shell은 `100dvh + max-w-[430px] + flex-col` 모바일 세로형 표준 레이아웃 (TopHud safe-area-inset-top, GameHud safe-area-inset-bottom, 캔버스가 flex-1 슬롯 채움). `UnitSystem.applyDamage`의 `boss-hp-update` emit에 `Math.max(1, Math.floor(hp))` 가드 + `BossHpBar` 렌더 가드. `getWaveScaling` slots 11+ 공식 선형화 (`HP_SLOPE = 0.55`). |
 | 2026-04-21 | §2, §3, §8 | **v4 용어 정리 완결**. "Phase A" 식별자 전면 제거 (파일/클래스/상수/이벤트키/testid/에셋). 주요 코드 심볼 rename: `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, TowerSystem `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid prefix `phase-a-*` → `hud-*`. 에셋 `phase-a-long.json` → `main-long.json` + manifest key 동기화. SaveData 스키마 변화 없음 (v8 유지; `selectedMapId`는 in-memory only). |
+| 2026-04-28 | §5 | **모바일 세로형 필드 비주얼 리워크**. Ground를 `reference-field-grass-tile` underlay로 전환하고, path 셀은 제공 레퍼런스 시트에서 추출한 `reference-field-path-tiles` autotile spritesheet로 렌더. 기존 buildable platform lift/depth는 유지해 타워/투사체/사거리 오버레이 좌표 회귀를 방지. |

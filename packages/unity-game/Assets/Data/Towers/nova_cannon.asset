@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd0bbf3c90b2c4169a586b67ed83988e, type: 3}
+  m_Name: nova_cannon
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.TowerDefSO
+  color: '#8b4513'
+  cost: 20
+  element: 2
+  family: 3
+  id: nova_cannon
+  isPremium: 0
+  name: "\uD22C\uC11D\uAE30"
+  shape: 2
+  tier: 1
+  stats:
+    attackSpeed: 0.5
+    damage: 30
+    projectileSpeed: 3
+    range: 3.5
+    special: splash_1.2
+  sameFamilyMergeTargetId: 

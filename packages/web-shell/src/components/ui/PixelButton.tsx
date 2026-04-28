@@ -1,53 +1,14 @@
+// 하위 호환 어댑터. 신규 코드는 components/ds의 Button 직접 사용.
 import type { ButtonHTMLAttributes } from 'react';
-import { colors } from '../../styles/tokens';
-import { cn } from '../../utils/cn';
+import { Button, type ButtonVariant } from '../ds/Button';
 
 interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-	variant?: 'primary' | 'secondary' | 'danger' | 'gold';
+	variant?: ButtonVariant;
 }
-
-const variantColors = {
-	primary: colors.accent,
-	secondary: colors.textSecondary,
-	danger: colors.danger,
-	gold: colors.gold,
-} as const;
 
 export function PixelButton({
 	variant = 'primary',
-	className,
-	style,
-	children,
 	...props
 }: PixelButtonProps) {
-	const color = variantColors[variant];
-	const disabled = Boolean(props.disabled);
-
-	return (
-		<button
-			className={cn(
-				'font-pixel text-sm px-6 py-3 bg-panel text-text border-2 text-center transition-[transform,box-shadow] duration-100',
-				disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-				className,
-			)}
-			style={{
-				borderColor: color,
-				boxShadow: `4px 4px 0px ${color}`,
-				...style,
-			}}
-			onMouseEnter={(e) => {
-				if (disabled) return;
-				e.currentTarget.style.transform = 'translate(2px, 2px)';
-				e.currentTarget.style.boxShadow = `2px 2px 0px ${color}`;
-			}}
-			onMouseLeave={(e) => {
-				if (disabled) return;
-				e.currentTarget.style.transform = 'translate(0, 0)';
-				e.currentTarget.style.boxShadow = `4px 4px 0px ${color}`;
-			}}
-			{...props}
-		>
-			{children}
-		</button>
-	);
+	return <Button variant={variant} size="md" {...props} />;
 }

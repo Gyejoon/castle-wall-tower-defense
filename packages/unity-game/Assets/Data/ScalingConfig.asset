@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76251204b4bea4382b8e0990e502a9ef, type: 3}
+  m_Name: ScalingConfig
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.ScalingConfigSO
+  waveScaling:
+  - hp: 1
+    speed: 1
+  - hp: 1
+    speed: 1
+  - hp: 1.2
+    speed: 1
+  - hp: 1.4
+    speed: 1
+  - hp: 1.6
+    speed: 1.05
+  - hp: 1.9
+    speed: 1.05
+  - hp: 2.3
+    speed: 1.1
+  - hp: 2.7
+    speed: 1.1
+  - hp: 3.2
+    speed: 1.15
+  - hp: 3.8
+    speed: 1.15

@@ -25,7 +25,7 @@ interface GameOverScreenProps {
  * "다시 시작", and "로비로". Victory screens keep the existing two actions.
  *
  * Per Codex revision [F11] this screen **only emits** `request-continue-run`.
- * The actual scene restore lives in `PhaseAOrchestrator.handleContinueRequest`,
+ * The actual scene restore lives in `CoreOrchestrator.handleContinueRequest`,
  * which pauses/resumes the scene, restores lives, and finally causes React
  * to unmount this overlay. That separation keeps the revival pipeline testable
  * without dragging Phaser into the React layer.

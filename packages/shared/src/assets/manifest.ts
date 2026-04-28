@@ -12,6 +12,8 @@ export type AssetManifestSection =
 	| 'tutorial'
 	| 'gacha';
 
+export type AssetPolishLevel = 'canvas-only' | 'libresprite-polished';
+
 export interface AssetManifestEntry {
 	key: string;
 	type: AssetManifestType;
@@ -20,6 +22,8 @@ export interface AssetManifestEntry {
 	frameWidth?: number;
 	frameHeight?: number;
 	frameCount?: number;
+	// canvas-only: 생성기 원본 PNG. libresprite-polished: palette/rim-light/noise 후처리 적용본.
+	polish?: AssetPolishLevel;
 }
 
 export interface AssetManifest {

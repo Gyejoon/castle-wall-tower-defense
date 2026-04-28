@@ -1,10 +1,10 @@
 /**
- * v6 → v7 migration (Phase A family/tier model).
+ * v6 → v7 migration (정식 모드 family/tier model).
  *
  * - Bumps `version` to 7.
  * - Converts legacy `grade` (normal/rare/unique/epic) to `tier` (1-4).
  * - Removes towers whose ids are no longer in the catalog (plasma, dragon_nest).
- * - Purges scenario-mode keys that Phase A no longer uses.
+ * - Purges scenario-mode keys that 정식 모드 no longer uses.
  * - Preserves missions + achievements (they're reused for the meta loop).
  */
 

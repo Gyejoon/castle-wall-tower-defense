@@ -10,7 +10,7 @@ import {
 	INGAME_GACHA,
 } from '../src/constants/energy';
 
-describe('energy constants (Phase A)', () => {
+describe('energy constants (정식 모드)', () => {
 	it('baseline regen and caps match spec', () => {
 		expect(ENERGY_PER_SECOND).toBe(1);
 		expect(ENERGY_INITIAL).toBe(40);

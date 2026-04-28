@@ -8,7 +8,7 @@ import { uiMobileArt } from '../../../assets/uiMobileArt';
 import { useGameStore } from '../../../stores/gameStore';
 import { writeSave } from '../../../stores/meta/persistence';
 import { useMetaStore } from '../../../stores/metaStore';
-import { colors } from '../../../styles/tokens';
+import { cn } from '../../../utils/cn';
 import { TabBackground } from '../TabBackground';
 
 const COLORBLIND_OPTIONS = [
@@ -43,7 +43,7 @@ export function SettingsTab() {
 			/>
 
 			{/* Content */}
-			<div className="relative z-[1] flex-1 overflow-auto p-4 flex flex-col gap-4">
+			<div className="relative z-hud flex-1 overflow-auto p-4 flex flex-col gap-4">
 				<span className="font-pixel text-sm text-text">설정</span>
 
 				<SettingsSection title="사운드">
@@ -117,8 +117,10 @@ function ToggleRow({
 		>
 			<span className="font-pixel text-xs text-text">{label}</span>
 			<div
-				className="relative w-9 h-[18px] transition-[background] duration-150"
-				style={{ background: checked ? colors.success : colors.border }}
+				className={cn(
+					'relative w-9 h-[18px] transition-[background] duration-150',
+					checked ? 'bg-success' : 'bg-border',
+				)}
 			>
 				<div
 					className="absolute top-0.5 w-3.5 h-3.5 bg-text transition-[left] duration-150"

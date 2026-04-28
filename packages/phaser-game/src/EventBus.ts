@@ -132,12 +132,12 @@ export interface GameEventMap {
 	'request-deck-edit': undefined;
 
 	// Phase 6: furnace-cycle / arcane-burst events removed with
-	// world-gimmicks. Scenario-only; Phase A has no per-world effects.
+	// world-gimmicks. Scenario-only; 정식 모드에는 per-world effects가 없다.
 
 	// Internal
 	'current-scene-ready': Phaser.Scene;
 
-	// === Random Summon + Merge System (Phase A) ===
+	// === Random Summon + Merge System (정식 모드) ===
 	'request-summon-tower': undefined;
 	'request-merge-towers': {
 		fromCol: number;
@@ -152,7 +152,7 @@ export interface GameEventMap {
 		 *  stay type-safe; legacy string call-sites are still assignable. */
 		towerId: TowerId;
 		/** Instance id of the placed tower (new in Task 4.0 [F7]). Currently
-		 *  emitted by PhaseAOrchestrator as empty string if the placement
+		 *  emitted by CoreOrchestrator as empty string if the placement
 		 *  site did not return one; future placement APIs will populate. */
 		instanceId: string;
 		/** Family/tier model (Phase 1). `grade` is removed. */
@@ -190,14 +190,14 @@ export interface GameEventMap {
 			| 'blocked-path'
 			| 'out-of-bounds';
 	};
-	'phase-a-summon-ready': {
+	'summon-ready': {
 		towerId: TowerId;
 		/** Origin of the drawn tower — normal summon pool or gacha roll.
 		 *  Added in Task 4.0 [F7] ahead of Phase 5 gacha wiring. */
 		source: 'summon' | 'gacha';
 	};
 
-	// === Roguelike Upgrade System (Phase A) ===
+	// === Roguelike Upgrade System (정식 모드) ===
 	'upgrade-choice-ready': {
 		choices: Array<{
 			id: UpgradeId;
@@ -226,7 +226,7 @@ export interface GameEventMap {
 	/** Continue-run request after defeat; Phase 10 BM stub shows an ad and
 	 *  restores `livesRestored` HP on success. [F11] */
 	'request-continue-run': { livesRestored: number };
-	/** Emitted by `PhaseAOrchestrator` after a successful continue — the
+	/** Emitted by `CoreOrchestrator` after a successful continue — the
 	 *  orchestrator has validated the ad reward and decided to revive the
 	 *  run. Game.ts reverses its game-over state (lives, gameOver flag,
 	 *  lifecycle subscriptions) and the React layer drops the GameOverScreen

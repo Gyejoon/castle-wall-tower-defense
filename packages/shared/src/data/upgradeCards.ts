@@ -1,5 +1,5 @@
 /**
- * Phase A roguelike upgrade cards (Phase 4 redesign).
+ * 정식 모드 roguelike upgrade cards (Phase 4 redesign).
  *
  * The previous six cards (spd_up/range_up/summon_discount/kill_energy) were
  * rebuilt around the merge+gacha loop: damage, crit, energy-per-kill,

@@ -5,6 +5,7 @@ import {
 	getMapPaths,
 	getSpawnExitPairs,
 	isMapUnlocked,
+	MAIN_LONG_MAP,
 	MAP_REGISTRY,
 	PHASE_A_LONG_MAP,
 } from '../src/constants/maps';
@@ -26,9 +27,9 @@ function countTurns(path: Array<{ x: number; y: number }>): number {
 	return turns;
 }
 
-describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
-	it('map id is phase_a_long', () => {
-		expect(PHASE_A_LONG_MAP.id).toBe('phase_a_long');
+describe('정식 모드 메인 맵', () => {
+	it('map id is main_long', () => {
+		expect(MAIN_LONG_MAP.id).toBe('main_long');
 	});
 
 	it('Phase A v2 uses the widened portrait board contract', () => {
@@ -46,7 +47,7 @@ describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
 	});
 
 	it('path is continuous — each step is adjacent to the next', () => {
-		const { path } = PHASE_A_LONG_MAP;
+		const { path } = MAIN_LONG_MAP;
 		for (let i = 0; i < path.length - 1; i++) {
 			const cur = path[i];
 			const next = path[i + 1];
@@ -55,19 +56,19 @@ describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
 	});
 
 	it('spawnPoint and exitPoint align with path start/end', () => {
-		expect(PHASE_A_LONG_MAP.path[0]).toEqual(PHASE_A_LONG_MAP.spawnPoint);
-		expect(PHASE_A_LONG_MAP.path[PHASE_A_LONG_MAP.path.length - 1]).toEqual(
-			PHASE_A_LONG_MAP.exitPoint,
+		expect(MAIN_LONG_MAP.path[0]).toEqual(MAIN_LONG_MAP.spawnPoint);
+		expect(MAIN_LONG_MAP.path[MAIN_LONG_MAP.path.length - 1]).toEqual(
+			MAIN_LONG_MAP.exitPoint,
 		);
 	});
 
 	it('path zigzags with enough turns for merge-friendly tower placement', () => {
-		expect(countTurns(PHASE_A_LONG_MAP.path)).toBeGreaterThanOrEqual(14);
+		expect(countTurns(MAIN_LONG_MAP.path)).toBeGreaterThanOrEqual(14);
 	});
 
 	it('all path/blocked/buildable coords are within grid bounds', () => {
 		const { width, height, path, blockedPlacementPoints, buildablePoints } =
-			PHASE_A_LONG_MAP;
+			MAIN_LONG_MAP;
 		for (const p of [...path, ...blockedPlacementPoints, ...buildablePoints]) {
 			expect(p.x).toBeGreaterThanOrEqual(0);
 			expect(p.x).toBeLessThan(width);
@@ -77,58 +78,58 @@ describe('PHASE_A_LONG_MAP (sole mode since Phase 7)', () => {
 	});
 
 	it('buildable points never overlap path or blocked points', () => {
-		const pathSet = new Set(PHASE_A_LONG_MAP.path.map((p) => `${p.x},${p.y}`));
+		const pathSet = new Set(MAIN_LONG_MAP.path.map((p) => `${p.x},${p.y}`));
 		const blockedSet = new Set(
-			PHASE_A_LONG_MAP.blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
+			MAIN_LONG_MAP.blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
 		);
-		for (const p of PHASE_A_LONG_MAP.buildablePoints) {
+		for (const p of MAIN_LONG_MAP.buildablePoints) {
 			const key = `${p.x},${p.y}`;
 			expect(pathSet.has(key)).toBe(false);
 			expect(blockedSet.has(key)).toBe(false);
 		}
 	});
 
-	it('MAP_REGISTRY and getMapById both resolve phase_a_long', () => {
-		expect(MAP_REGISTRY.phase_a_long).toBe(PHASE_A_LONG_MAP);
-		expect(getMapById('phase_a_long')).toBe(PHASE_A_LONG_MAP);
+	it('MAP_REGISTRY and getMapById both resolve main_long', () => {
+		expect(MAP_REGISTRY.main_long).toBe(MAIN_LONG_MAP);
+		expect(getMapById('main_long')).toBe(MAIN_LONG_MAP);
 	});
 });
 
 describe('getMapPaths', () => {
 	it('single-lane map returns [map.path]', () => {
-		const paths = getMapPaths(PHASE_A_LONG_MAP);
+		const paths = getMapPaths(MAIN_LONG_MAP);
 		expect(paths).toHaveLength(1);
-		expect(paths[0]).toBe(PHASE_A_LONG_MAP.path);
+		expect(paths[0]).toBe(MAIN_LONG_MAP.path);
 	});
 });
 
 describe('getAllPathCells', () => {
 	it('returns the same array as path for single-lane maps', () => {
-		const cells = getAllPathCells(PHASE_A_LONG_MAP);
-		expect(cells).toBe(PHASE_A_LONG_MAP.path);
+		const cells = getAllPathCells(MAIN_LONG_MAP);
+		expect(cells).toBe(MAIN_LONG_MAP.path);
 	});
 });
 
 describe('getSpawnExitPairs', () => {
 	it('single-lane map returns 1 pair', () => {
-		const pairs = getSpawnExitPairs(PHASE_A_LONG_MAP);
+		const pairs = getSpawnExitPairs(MAIN_LONG_MAP);
 		expect(pairs).toHaveLength(1);
-		expect(pairs[0].spawn).toEqual(PHASE_A_LONG_MAP.path[0]);
+		expect(pairs[0].spawn).toEqual(MAIN_LONG_MAP.path[0]);
 		expect(pairs[0].exit).toEqual(
-			PHASE_A_LONG_MAP.path[PHASE_A_LONG_MAP.path.length - 1],
+			MAIN_LONG_MAP.path[MAIN_LONG_MAP.path.length - 1],
 		);
 	});
 });
 
 describe('isMapUnlocked', () => {
 	it('maps without unlockLevel are always unlocked', () => {
-		expect(isMapUnlocked(PHASE_A_LONG_MAP, 1)).toBe(true);
-		expect(isMapUnlocked(PHASE_A_LONG_MAP, 0)).toBe(true);
+		expect(isMapUnlocked(MAIN_LONG_MAP, 1)).toBe(true);
+		expect(isMapUnlocked(MAIN_LONG_MAP, 0)).toBe(true);
 	});
 });
 
 describe('MAP_REGISTRY', () => {
-	it('contains only phase_a_long since Phase 7', () => {
-		expect(Object.keys(MAP_REGISTRY)).toEqual(['phase_a_long']);
+	it('contains only main_long since Phase 7', () => {
+		expect(Object.keys(MAP_REGISTRY)).toEqual(['main_long']);
 	});
 });

@@ -95,12 +95,12 @@ describe('SummonRevealOverlay', () => {
 		expect(screen.queryByTestId('summon-reveal-overlay')).toBeNull();
 	});
 
-	it('renders tower name and source label when phase-a-summon-ready fires', () => {
+	it('renders tower name and source label when summon-ready fires', () => {
 		render(<SummonRevealOverlay />);
 		const { emitSpy } = getHarness();
 
 		act(() => {
-			emitSpy('phase-a-summon-ready', {
+			emitSpy('summon-ready', {
 				towerId: 'archer',
 				source: 'summon',
 			});
@@ -121,7 +121,7 @@ describe('SummonRevealOverlay', () => {
 		const { emitSpy } = getHarness();
 
 		act(() => {
-			emitSpy('phase-a-summon-ready', {
+			emitSpy('summon-ready', {
 				towerId: 'archer',
 				source: 'gacha',
 			});
@@ -138,7 +138,7 @@ describe('SummonRevealOverlay', () => {
 		const { emitSpy } = getHarness();
 
 		act(() => {
-			emitSpy('phase-a-summon-ready', {
+			emitSpy('summon-ready', {
 				towerId: 'archer',
 				source: 'summon',
 			});

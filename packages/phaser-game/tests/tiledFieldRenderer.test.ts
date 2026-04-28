@@ -35,7 +35,11 @@ const makeTilemap = (layers: MockLayerRecord[]) => {
 describe('tiledFieldRenderer helper', () => {
 	it('extracts only recognized visual layers in stable order', () => {
 		const mockTilemap = makeTilemap([
-			{ name: 'decorations', type: 'objectgroup', objects: [{ id: 1, name: 'tree' }] },
+			{
+				name: 'decorations',
+				type: 'objectgroup',
+				objects: [{ id: 1, name: 'tree' }],
+			},
 			{
 				name: 'wall_trim',
 				type: 'tilelayer',
@@ -164,14 +168,24 @@ describe('tiledFieldRenderer helper', () => {
 			visible: false,
 			alpha: 0.5,
 		});
-		expect(result.layers.every((layer) => layer.type === 'tilelayer')).toBe(true);
-		expect(result.layers.some((layer) => layer.name === 'decorations')).toBe(false);
-		expect(result.layers.some((layer) => layer.name === 'debug_overlay')).toBe(false);
+		expect(result.layers.every((layer) => layer.type === 'tilelayer')).toBe(
+			true,
+		);
+		expect(result.layers.some((layer) => layer.name === 'decorations')).toBe(
+			false,
+		);
+		expect(result.layers.some((layer) => layer.name === 'debug_overlay')).toBe(
+			false,
+		);
 	});
 
 	it('falls back when the tilemap does not expose recognized visual layers', () => {
 		const mockTilemapWithoutLayers = makeTilemap([
-			{ name: 'decorations', type: 'objectgroup', objects: [{ id: 1, name: 'tree' }] },
+			{
+				name: 'decorations',
+				type: 'objectgroup',
+				objects: [{ id: 1, name: 'tree' }],
+			},
 			{ name: 'spawn_points', type: 'objectgroup', objects: [] },
 			{
 				name: 'debug_overlay',

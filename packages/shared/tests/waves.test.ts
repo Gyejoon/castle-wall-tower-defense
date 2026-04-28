@@ -6,7 +6,7 @@ import {
 	getWavesForMap,
 	HP_SLOPE,
 } from '../src/constants/waves';
-import { generatePhaseAWaves } from '../src/data/phaseAWaves';
+import { generateWaves } from '../src/data/waves';
 
 const validUnitIds = new Set([
 	...UNITS.map((u) => u.id),
@@ -19,17 +19,17 @@ const validUnitIds = new Set([
 	'corrupted_archmage',
 ]);
 
-describe('getWavesForMap (Phase A only)', () => {
-	it('returns the Phase A endless wave set regardless of mapId', () => {
-		expect(getWavesForMap('phase_a_long')).toEqual(getWavesForMap('anything'));
+describe('getWavesForMap (정식 모드 wave set)', () => {
+	it('returns the wave set regardless of mapId', () => {
+		expect(getWavesForMap('main_long')).toEqual(getWavesForMap('anything'));
 	});
 
-	it('Phase A wave set is 50 waves long', () => {
-		expect(getTotalWavesForMap('phase_a_long')).toBe(50);
+	it('wave set is 50 waves long', () => {
+		expect(getTotalWavesForMap('main_long')).toBe(50);
 	});
 
 	it('every wave uses only known unit ids with positive counts', () => {
-		const waves = getWavesForMap('phase_a_long');
+		const waves = getWavesForMap('main_long');
 		const validKinds = new Set(['normal', 'boss']);
 		for (const wave of waves) {
 			expect(validKinds.has(wave.kind)).toBe(true);
@@ -42,21 +42,21 @@ describe('getWavesForMap (Phase A only)', () => {
 	});
 });
 
-describe('generatePhaseAWaves', () => {
-	const phaseA = generatePhaseAWaves(50);
+describe('generateWaves', () => {
+	const waveSet = generateWaves(50);
 
 	it('generates exactly the requested number of waves', () => {
-		expect(phaseA).toHaveLength(50);
+		expect(waveSet).toHaveLength(50);
 	});
 
 	it('slotIndex is sequential 1..n', () => {
-		phaseA.forEach((w, i) => {
+		waveSet.forEach((w, i) => {
 			expect(w.slotIndex).toBe(i + 1);
 		});
 	});
 
 	it('every 10th wave is a boss, others are normal', () => {
-		for (const w of phaseA) {
+		for (const w of waveSet) {
 			if (w.slotIndex % 10 === 0) {
 				expect(w.kind).toBe('boss');
 			} else {
@@ -66,7 +66,7 @@ describe('generatePhaseAWaves', () => {
 	});
 
 	it('5 고유 보스 라인업 (orc → forge → archmage → archmage+hp×2.5 → dragon)', () => {
-		const bossWaves = phaseA.filter((w) => w.kind === 'boss');
+		const bossWaves = waveSet.filter((w) => w.kind === 'boss');
 		expect(bossWaves).toHaveLength(5);
 		const expectedBosses = [
 			'orc_warlord',
@@ -82,21 +82,21 @@ describe('generatePhaseAWaves', () => {
 	});
 
 	it('wave 40 archmage에 hpMultiplier 2.5 붙어 wave 30 archmage보다 확실히 세다', () => {
-		const wave30 = phaseA.find((w) => w.slotIndex === 30);
-		const wave40 = phaseA.find((w) => w.slotIndex === 40);
+		const wave30 = waveSet.find((w) => w.slotIndex === 30);
+		const wave40 = waveSet.find((w) => w.slotIndex === 40);
 		expect(wave30?.groups[0].hpMultiplier).toBeUndefined();
 		expect(wave40?.groups[0].hpMultiplier).toBe(2.5);
 	});
 
 	it('wave 50 dragon은 기본 escort로 flame_imp 6마리 동반', () => {
-		const wave50 = phaseA.find((w) => w.slotIndex === 50);
+		const wave50 = waveSet.find((w) => w.slotIndex === 50);
 		expect(wave50?.groups[0].unitId).toBe('dragon');
 		const flameImps = wave50?.groups.find((g) => g.unitId === 'flame_imp');
 		expect(flameImps?.count).toBe(6);
 	});
 
 	it('normal waves carry 30 units', () => {
-		const normalWaves = phaseA.filter((w) => w.kind === 'normal');
+		const normalWaves = waveSet.filter((w) => w.kind === 'normal');
 		for (const w of normalWaves) {
 			const total = w.groups.reduce((s, g) => s + g.count, 0);
 			expect(total).toBe(30);
@@ -104,13 +104,13 @@ describe('generatePhaseAWaves', () => {
 	});
 
 	it('unit composition diversifies as slot index grows', () => {
-		const w1 = phaseA[0];
-		const w21 = phaseA[20];
+		const w1 = waveSet[0];
+		const w21 = waveSet[20];
 		expect(w21.groups.length).toBeGreaterThan(w1.groups.length);
 	});
 
 	it('stealth_drone starts appearing at slot 14+', () => {
-		const stealthWaves = phaseA.filter((w) =>
+		const stealthWaves = waveSet.filter((w) =>
 			w.groups.some((g) => g.unitId === 'stealth_drone'),
 		);
 		expect(stealthWaves.length).toBeGreaterThan(0);

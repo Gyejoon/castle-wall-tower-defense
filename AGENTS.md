@@ -42,7 +42,7 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 
 ## 프로젝트 스냅샷
 
-Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. (코드상 `PhaseAOrchestrator` / `PHASE_A_MAP_ID` 등 식별자는 이전 프로토타입 트랙명을 이어받은 historical identifier — 런타임 모드 구분이 아님.)
+Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 → 합성 → 보스 → 로그라이크 → 메타 강화의 단일 정식 모드. 시나리오 모드(월드/스테이지/미션/덱)는 제거됨. 코드 식별자는 `CoreOrchestrator` / `MAIN_MAP_ID` / `main_long` / `GameHud` 등 모드 중립 네이밍을 사용한다.
 
 **구현 완료 (정식 모드):**
 - **맵:** 9×18 세로 그리드, 중앙 레인 프리미엄 존 + 장애물 9개(tiny-swords 나무/바위/덤불). 50 wave endless.
@@ -64,6 +64,25 @@ Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 →
 - Claude Code용 수렴 리뷰 스킬: `.claude/skills/ralreview/SKILL.md`
 - Codex용 수렴 리뷰 스킬: `.agents/skills/ralreview/SKILL.md`
 - 런타임 안정성 체크 기준: `.claude/skills/phaser-best-practices/SKILL.md`
+
+## Local Subagents
+
+`.claude/agents/` 에 Claude Code 프로젝트 스코프 **subagent** 9종이 배치되어 있다
+(`msitarzewski/agency-agents` 원문 그대로 임포트, MIT).
+`/agents` 명령 또는 자동 라우팅으로 호출한다.
+
+- 일반 5종: Game Designer / Game Audio Engineer / Level Designer / Narrative Designer / Technical Artist — 엔진 중립 설계 상담에 사용.
+- Unity 4종: Unity Architect / Unity Editor Tool Developer / Unity Multiplayer Engineer / Unity Shader Graph Artist.
+
+### Unity 4종 이중 사용 규칙
+
+본 저장소는 **Phaser 3 + React 18 런타임(legacy)** 과 **Unity 2D WebGL 런타임(`packages/unity-game/`, 신규)** 을 병행 호스팅한다. 스코프에 따라 Unity 4종 subagent 사용 범위가 달라진다:
+
+- **`packages/unity-game/` 스코프 작업**: Unity 4종을 **실제 C#/ScriptableObject/URP/Editor 툴 코드 설계·리뷰에 직접 활용 가능**. Unity Architect의 anti-pattern watchlist를 기본 체크리스트로 사용.
+- **`packages/phaser-game/`, `packages/web-shell/` 스코프 작업**: Unity 4종은 **"아키텍처 패턴 레퍼런스"로만** 사용. Phaser 실제 구현은 기존 skill(`phaser-best-practices`, `game-ui-design`)을 우선.
+- **공용 `packages/shared/` 스코프 작업**: 엔진 중립 타입/상수 편집은 일반 5종 우선. Unity 4종은 "이 변경이 ScriptableObject/SO 카탈로그에 어떻게 매핑되는가" 자문에만 사용.
+
+출처/라이선스/세부 가이드: `.claude/agents/README.md`
 
 ## 자동 학습 룰
 
@@ -146,8 +165,30 @@ lobby → building → running → victory | defeat → lobby
 | `RandomSummonSystem.ts` | SummonPool 기반 랜덤 소환 |
 | `MergeSystem.ts` | `MERGE_CHAIN`/`resolveMerge` 기반 합성 (family/tier) |
 | `GachaSystem.ts` | 인게임 가챠 (T2/T3/T4, `tier_odds_up` 스택) |
-| `PhaseAOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`). 클래스명은 이전 프로토타입 트랙 명칭에서 유지 (historical identifier) |
+| `CoreOrchestrator.ts` | 정식 모드 코어 루프 조율 (소환/가챠/합성/강화/로그라이크/광고), 풀·가챠 양쪽 취소·배치실패 리롤 캐시 (`cancelledPoolDraw` + `cancelledGachaDraw`) |
 | `DamageNumberSystem.ts` | 부유 데미지 넘버 오브젝트 풀 |
+
+UnitSystem 서브매니저 (`packages/phaser-game/src/systems/units/`, Phase 3 분해):
+
+| 파일 | 역할 |
+|------|------|
+| `PathFollower.ts` | path index 진행 + world 좌표 보간 |
+| `CCStateManager.ts` | 슬로우/스턴/invulnerability 타이머 집계 |
+| `BossPhaseTracker.ts` | 보스 HP 구간 → phase 1/2 전이 + enrage 상태 관리 |
+
+Scene 서브패키지 (`packages/phaser-game/src/scenes/**`, Phase 4–6 분해):
+
+| 파일 | 역할 |
+|------|------|
+| `scenes/render/FieldRenderer.ts` | 타일/경로/장식 정적 렌더 |
+| `scenes/render/RangeOverlayController.ts` | 사거리/선택/배치 가능 오버레이 |
+| `scenes/input/InputController.ts` | 포인터 입력 → 타워 배치/선택/이동 모드 |
+| `scenes/input/PlacementCoordinator.ts` | 정식 모드 fast-path + 배치 가드 + 성공/실패 이벤트 |
+| `scenes/runtime/CombatMediator.ts` | 타워→유닛 데미지 디스패치, 보스 CC 면역 가드, 데미지 넘버, 킬 골드 |
+| `scenes/runtime/GameStateManager.ts` | playerHp / gameOver / goldEarned / speedMultiplier / scaledGameTime / currentWaveSlot + applyExits/endGame |
+| `scenes/runtime/BossContextBuilder.ts` | 보스 AI 틱당 `BossContext` 생성 |
+
+`Game.ts`는 scene 셋업, EventBus 구독/해제, 컨트롤러 오케스트레이션만 담당한다 (update() ~25줄).
 
 ## 커맨드
 

@@ -6,7 +6,7 @@ import {
 	type DeckCardDef,
 	INITIAL_ENERGY,
 	INITIAL_PLAYER_HP,
-	PHASE_A_MAP_ID,
+	MAIN_MAP_ID,
 	type PlacementFailureReason,
 	type WavePhase,
 } from '@gld/shared';
@@ -105,7 +105,7 @@ interface GameStoreState {
 	clearToast: () => void;
 	resetRun: () => void;
 	enterLobby: () => void;
-	startPhaseA: () => void;
+	startGame: () => void;
 	/** Phase 9 will wire this to a MetaForge page; today it's a stub toast. */
 	enterMetaForge: () => void;
 	setBgmVolume: (v: number) => void;
@@ -156,7 +156,7 @@ const createRunState = () => ({
 export const useGameStore = create<GameStoreState>()((set) => ({
 	runId: 0,
 	runStatus: 'lobby',
-	selectedMapId: PHASE_A_MAP_ID,
+	selectedMapId: MAIN_MAP_ID,
 	lobbyTab: 'home',
 	bgmVolume: useMetaStore.getState().settings?.bgmVolume ?? 0.7,
 	sfxVolume: useMetaStore.getState().settings?.sfxVolume ?? 0.8,
@@ -205,7 +205,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			runId: state.runId + 1,
 			runStatus: 'building',
 			lobbyTab: 'home',
-			selectedMapId: PHASE_A_MAP_ID,
+			selectedMapId: MAIN_MAP_ID,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -219,11 +219,11 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
 	},
-	startPhaseA: () => {
+	startGame: () => {
 		set((state) => ({
 			runId: state.runId + 1,
 			runStatus: 'building',
-			selectedMapId: PHASE_A_MAP_ID,
+			selectedMapId: MAIN_MAP_ID,
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
@@ -231,7 +231,7 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 	enterMetaForge: () => {
 		// Phase 9.3: navigate to the dedicated MetaForge page. Run state
 		// is reset so we don't carry a stale battle into a later
-		// `enterLobby()` → `startPhaseA()` sequence.
+		// `enterLobby()` → `startGame()` sequence.
 		set((state) => ({
 			runId: state.runId + 1,
 			runStatus: 'metaForge',

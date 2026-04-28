@@ -35,3 +35,30 @@ Thumbs.db
 .claude/.skip-gate
 .claude/quality-tracker.json
 .ralreview-state.json
+
+# Asset forge staging (HITL review buffer — not committed)
+staging/
+
+# Unity generated (under packages/unity-game/)
+packages/unity-game/Library/
+packages/unity-game/Temp/
+packages/unity-game/Logs/
+packages/unity-game/obj/
+packages/unity-game/Build/
+packages/unity-game/Builds/
+packages/unity-game/UserSettings/
+packages/unity-game/MemoryCaptures/
+
+# Unity data pipeline — generated JSON (do not commit, re-run build:unity-json)
+packages/unity-game/Assets/Resources/GameData/*.json
+
+# Unity Burst compiler cache (생성물 — Editor 가 자동 생성/갱신)
+packages/unity-game/Data/
+
+# Unity UIElementsSchema (자동 생성 — UXML IntelliSense XSD)
+packages/unity-game/UIElementsSchema/
+
+# scripts/ TypeScript 빌드 산출물 (shared 의 tsc -b 가 cross-package 컴파일 시 생성)
+scripts/*.js
+scripts/*.d.ts
+scripts/*.js.map

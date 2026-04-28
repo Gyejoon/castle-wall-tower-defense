@@ -8,7 +8,7 @@ const GachaScreen = lazy(() =>
 	import('../../GachaScreen').then((m) => ({ default: m.GachaScreen })),
 );
 
-import { PixelButton } from '../../ui/PixelButton';
+import { Button } from '../../ds';
 import { TabBackground } from '../TabBackground';
 import { EmptyState } from './collection/EmptyState';
 import { TowerBottomSheet } from './collection/TowerBottomSheet';
@@ -40,7 +40,7 @@ export function CollectionTab() {
 				overlayOpacity={0.3}
 			/>
 
-			<div className="relative z-[1] flex flex-1 flex-col gap-3 overflow-auto p-3">
+			<div className="relative z-hud flex flex-1 flex-col gap-3 overflow-auto p-3">
 				{/* 메타 강화 엔트리 — 전쟁탁자 탭의 첫 액션 */}
 				<button
 					type="button"
@@ -86,9 +86,9 @@ export function CollectionTab() {
 						<span className="font-pixel text-[11px] text-text-secondary">
 							{ownedTowers.length}/{ALL_TOWERS.length}
 						</span>
-						<PixelButton variant="gold" onClick={() => setShowGacha(true)}>
+						<Button variant="gold" size="sm" onClick={() => setShowGacha(true)}>
 							소환의 제단
-						</PixelButton>
+						</Button>
 					</div>
 				</div>
 

@@ -10,16 +10,24 @@ import type {
 } from '@gld/shared';
 import {
 	ALL_TOWERS,
-	CC_AURA_CONFIGS,
 	getEffectiveStats,
 	getElementMultiplier,
-	stunCooldownMultiplier,
-	stunDurationMultiplier,
+	TILE_SIZE,
 } from '@gld/shared';
-import Phaser from 'phaser';
-import { getOptionalAnimationKey } from '../assets/assetManifest';
+import type Phaser from 'phaser';
 import { soundGenerator } from '../audio/SoundGenerator';
 import { PLATFORM_LIFT } from '../fieldAssets';
+import {
+	type AttackContext,
+	createTower,
+	type DamageEvent,
+	hasTowerFactory,
+	type TowerBehavior,
+	TowerVfxController,
+	type UnitSnapshot,
+} from '../towers';
+import { parseHexColor } from '../towers/vfx/colors';
+import type { AttackLineEntry } from '../towers/vfx/TowerVfxController';
 import type { GridManager } from './GridManager';
 import type { TowerLocator } from './MergeSystem';
 import type { PathfindingSystem } from './PathfindingSystem';
@@ -38,8 +46,6 @@ export interface TowerInstance {
 	baseScaleX: number;
 	baseScaleY: number;
 	baseY: number;
-	lastAttackTime: number;
-	lastAuraTime: number;
 	disabledUntilMs?: number;
 }
 
@@ -51,7 +57,7 @@ export type TowerPlacementResult =
  * Phase 9: run-agnostic global modifiers applied on top of the per-run
  * roguelike upgrade stack. `atkPct` is fed in from the web-shell
  * `metaProgressStore` at Game.create() via the scene registry (see
- * PhaseA meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
+ * 정식 모드 meta wiring in PhaserGame.tsx / Game.ts). Kept minimal for
  * now — future modifiers (rangePct, critChance, etc.) will extend this.
  */
 export interface GlobalModifiers {
@@ -122,7 +128,6 @@ export class TowerSystem {
 	private towers: Map<string, TowerInstance> = new Map();
 	private lastSoundTime: Map<string, number> = new Map();
 	private static readonly SOUND_THROTTLE_MS = 200;
-	private static readonly SPLASH_RADIUS_SQ = 2.25; // 1.5^2
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
 	private pathfinding: PathfindingSystem;
@@ -136,31 +141,16 @@ export class TowerSystem {
 		| null = null;
 	private globalModifiers: GlobalModifiers = { atkPct: 0 };
 	private attackGraphics: Phaser.GameObjects.Graphics;
-	private attackLines: Array<{
-		x1: number;
-		y1: number;
-		x2: number;
-		y2: number;
-		color: number;
-		ttl: number;
-		maxTtl: number;
-		style: 'beam' | 'arc' | 'arrow';
-		towerType?: string;
-		arrowIndex?: number;
-		targetUnitId?: string;
-		impactPending?: boolean;
-		pendingDamage?: Array<{
-			unitId: string;
-			damage: number;
-			armorPierce?: boolean;
-			slow?: { factor: number; duration: number };
-			stun?: { duration: number };
-		}>;
-		impactVfxKey?: string;
-	}> = [];
+	private attackLines: AttackLineEntry[] = [];
 	private arrowPool: Phaser.GameObjects.Image[] = [];
 	private arrowPoolInitialized = false;
 	private static readonly ARROW_POOL_SIZE = 16;
+	private readonly towerVfxController: TowerVfxController;
+	private readonly newTowerInstances: Map<string, TowerBehavior> = new Map();
+	// 매 프레임 재할당 방지를 위해 construction 시점에 바인딩.
+	private readonly pushDamage = (evt: DamageEvent): void => {
+		this.damageEventsBuffer.push(evt);
+	};
 
 	constructor(
 		scene: Phaser.Scene,
@@ -176,6 +166,28 @@ export class TowerSystem {
 		this.spawnExitPairs = spawnExitPairs;
 		this.attackGraphics = scene.add.graphics();
 		this.attackGraphics.setDepth(10);
+		this.towerVfxController = new TowerVfxController({
+			scene,
+			gridManager,
+			attackLines: this.attackLines,
+			acquireArrow: () => this.acquireArrowIndex(),
+			playTowerAttack: (defId, time) => {
+				const last = this.lastSoundTime.get(defId) ?? 0;
+				if (time - last >= TowerSystem.SOUND_THROTTLE_MS) {
+					soundGenerator.playTowerAttack(defId);
+					this.lastSoundTime.set(defId, time);
+				}
+			},
+		});
+	}
+
+	// pool 고갈/텍스처 미로딩 시 undefined 반환 → 호출자는 Graphics로 fallback.
+	private acquireArrowIndex(): number | undefined {
+		this.ensureArrowPool();
+		const idx = this.arrowPool.findIndex((a) => !a.visible);
+		if (idx < 0) return undefined;
+		this.arrowPool[idx].setVisible(true);
+		return idx;
 	}
 
 	setModifierFn(fn: ((upgradeId: UpgradeId) => number) | null): void {
@@ -183,7 +195,7 @@ export class TowerSystem {
 	}
 
 	/** Inject the per-family damage multiplier lookup. Game.ts wires this to
-	 *  `PhaseAOrchestrator.getFamilyDamageMultiplier` so energy-purchased
+	 *  `CoreOrchestrator.getFamilyDamageMultiplier` so energy-purchased
 	 *  family upgrades compound on top of roguelike `dmg_up` and the meta
 	 *  `atkPct` buff. `towerId` lets the orchestrator distinguish hybrid_ab
 	 *  (archer+siege feeders) from hybrid_cd (frost+stun). */
@@ -227,7 +239,7 @@ export class TowerSystem {
 			const arrow = this.scene.add.image(0, 0, textureKey);
 			arrow.setVisible(false);
 			arrow.setDepth(25);
-			arrow.setDisplaySize(24, 6);
+			arrow.setDisplaySize(TILE_SIZE / 2, TILE_SIZE / 8);
 			this.arrowPool.push(arrow);
 		}
 	}
@@ -291,8 +303,8 @@ export class TowerSystem {
 			worldPos.y - lift,
 			textureKey,
 		);
-		sprite.setDisplaySize(48, 60);
-		sprite.setY(worldPos.y - lift - 20);
+		sprite.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
+		sprite.setY(worldPos.y - lift - (TILE_SIZE * 5) / 12);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
 		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
 		this.renderTowerBase(base, liftedPos, def);
@@ -319,7 +331,7 @@ export class TowerSystem {
 				sprite.y,
 				'tower-nova_cannon-barrel',
 			);
-			barrelSprite.setDisplaySize(16, 8);
+			barrelSprite.setDisplaySize(TILE_SIZE / 3, TILE_SIZE / 6);
 			barrelSprite.setDepth(sprite.depth + 1);
 		}
 
@@ -335,9 +347,23 @@ export class TowerSystem {
 			baseScaleX,
 			baseScaleY,
 			baseY,
-			lastAttackTime: 0,
-			lastAuraTime: 0,
 		});
+
+		if (hasTowerFactory(def.id)) {
+			const behavior = createTower(def.id, {
+				def,
+				data: towerData,
+				scene: this.scene,
+				gridManager: this.gridManager,
+				vfx: this.towerVfxController,
+				level: towerLevel,
+				sprite,
+				barrelSprite,
+			});
+			if (behavior) {
+				this.newTowerInstances.set(instanceId, behavior);
+			}
+		}
 
 		// Phase 11 [F23]: tier-5/6 placeholder differentiation. Until dedicated
 		// art ships, hybrid_ab/hybrid_cd/ultimate share T4 sprites; a tinted
@@ -428,16 +454,12 @@ export class TowerSystem {
 		});
 	}
 
-	private static parseHexColor(hex: string): number {
-		return parseInt(hex.replace('#', ''), 16);
-	}
-
 	private renderTowerBase(
 		graphics: Phaser.GameObjects.Graphics,
 		pos: Position,
 		def: TowerDef,
 	): void {
-		const color = TowerSystem.parseHexColor(def.color);
+		const color = parseHexColor(def.color);
 		graphics.clear();
 
 		const baseSize = this.gridManager.orthoTile * 0.45;
@@ -473,28 +495,55 @@ export class TowerSystem {
 		stun?: { duration: number };
 	}> = [];
 
-	private parseSlowFactor(special: string): number {
-		const match = special.match(/slow_(\d+)%/);
-		if (!match) return 0.7;
-		return 1 - parseInt(match[1], 10) / 100;
-	}
-
-	private hasSplash(special?: string): boolean {
-		// Phase 1 redesign uses `splash_<radius>` (e.g. `splash_1.5`) and
-		// hybrid keys can include `splash_<radius>_slow_..._stun_...`. Match
-		// the `splash` token anywhere in the special string so siege towers
-		// (nova_cannon/fortress/earth_golem/celestial) keep the rock-arc
-		// projectile VFX they had pre-Phase-1.
-		if (!special) return false;
-		return special === 'splash' || special.startsWith('splash_');
-	}
-
-	private isStunSpecial(special?: string): boolean {
-		return special?.startsWith('stun') ?? false;
-	}
-
-	private isSlowSpecial(special?: string): boolean {
-		return special?.startsWith('slow_') ?? false;
+	// effectiveDamage는 element·modifier 미적용 원시값. resolve* 클로저가 최종값 계산.
+	// primaryTarget은 BaseTower.update()가 targeting 후 재바인딩한다.
+	private buildAttackContext(
+		tower: TowerInstance,
+		time: number,
+		delta: number,
+		unitPositions: readonly UnitSnapshot[],
+	): AttackContext {
+		const { def } = tower;
+		const resolveDamage = (target: UnitSnapshot): number => {
+			const elementMult = getElementMultiplier(def.element, target.element);
+			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+			const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+			const familyMod = this.familyDamageFn
+				? this.familyDamageFn(def.family, def.id)
+				: 1;
+			return Math.round(
+				this.resolveFinalDamage(
+					tower.effectiveDamage *
+						elementMult *
+						dmgMod *
+						familyMod *
+						(1 + critBonus),
+				),
+			);
+		};
+		// Splash는 의도적으로 familyMod 미적용. 0.5 half-damage factor 포함.
+		const resolveSplashDamage = (target: UnitSnapshot): number => {
+			const elementMult = getElementMultiplier(def.element, target.element);
+			const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
+			const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
+			return Math.round(
+				this.resolveFinalDamage(
+					tower.effectiveDamage * elementMult * 0.5 * dmgMod * (1 + critBonus),
+				),
+			);
+		};
+		return {
+			time,
+			delta,
+			units: unitPositions,
+			gridManager: this.gridManager,
+			effectiveDamage: tower.effectiveDamage,
+			primaryTarget: null,
+			pushDamage: this.pushDamage,
+			vfx: this.towerVfxController,
+			resolveDamage,
+			resolveSplashDamage,
+		};
 	}
 
 	update(
@@ -516,33 +565,6 @@ export class TowerSystem {
 	}> {
 		this.damageEventsBuffer.length = 0;
 
-		// Nova cannon barrel tracking — rotate toward nearest enemy
-		for (const tower of this.towers.values()) {
-			if (tower.def.id !== 'nova_cannon' || !tower.barrelSprite) continue;
-			const towerWorld = this.gridManager.gridToWorld(
-				tower.data.position.x,
-				tower.data.position.y,
-			);
-			let nearestDist = Infinity;
-			let nearestUnit: { x: number; y: number } | null = null;
-			for (const unit of unitPositions) {
-				if (unit.hp <= 0) continue;
-				const dx = unit.x - towerWorld.x;
-				const dy = unit.y - towerWorld.y;
-				const dist = dx * dx + dy * dy;
-				if (dist < nearestDist) {
-					nearestDist = dist;
-					nearestUnit = unit;
-				}
-			}
-			if (nearestUnit) {
-				tower.barrelSprite.rotation = Math.atan2(
-					nearestUnit.y - towerWorld.y,
-					nearestUnit.x - towerWorld.x,
-				);
-			}
-		}
-
 		// Update disabled tint for all towers
 		for (const tower of this.towers.values()) {
 			const isDisabled =
@@ -554,380 +576,18 @@ export class TowerSystem {
 			}
 		}
 
+		// registry 미등록 defId는 silent no-op (크래시 대신).
 		for (const tower of this.towers.values()) {
-			const { def, data } = tower;
-			if (def.stats.attackSpeed <= 0) continue;
-
-			if (tower.disabledUntilMs !== undefined && time < tower.disabledUntilMs) {
-				continue; // tower is disabled by an enemy ranged attack
-			}
-
-			// Phase 4 redesign: spd_up / range_up cards were removed. Attack
-			// interval and range use the base def directly.
-			const attackInterval = 1000 / def.stats.attackSpeed;
-			if (time - tower.lastAttackTime < attackInterval) continue;
-
-			const towerWorld = this.gridManager.gridToWorld(
-				data.position.x,
-				data.position.y,
+			const behavior = this.newTowerInstances.get(tower.data.instanceId);
+			if (!behavior) continue;
+			behavior.update(
+				this.buildAttackContext(
+					tower,
+					time,
+					delta,
+					unitPositions as readonly UnitSnapshot[],
+				),
 			);
-			const rangeSq = def.stats.range ** 2;
-
-			let closestUnit: (typeof unitPositions)[0] | null = null;
-			let closestDistSq = Infinity;
-
-			for (const unit of unitPositions) {
-				if (unit.hp <= 0) continue;
-				const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-				const gdx = data.position.x - unitGrid.x;
-				const gdy = data.position.y - unitGrid.y;
-				const gridDistSq = gdx * gdx + gdy * gdy;
-				if (gridDistSq <= rangeSq && gridDistSq < closestDistSq) {
-					closestDistSq = gridDistSq;
-					closestUnit = unit;
-				}
-			}
-
-			if (closestUnit) {
-				tower.lastAttackTime = time;
-				const elementMult = getElementMultiplier(
-					def.element,
-					closestUnit.element,
-				);
-				// Phase 4 [F15]: dmg_up (multiply) + crit_dmg (add). No crit
-				// system yet — crit_dmg contributes as a flat damage boost on
-				// every hit. TODO(phase-12): migrate to a proper
-				// crit-chance+mult system that uses `crit_dmg` as the crit
-				// multiplier term only.
-				const dmgMod = this.modifierFn ? this.modifierFn('dmg_up') : 1;
-				const critBonus = this.modifierFn ? this.modifierFn('crit_dmg') : 0;
-				const familyMod = this.familyDamageFn
-					? this.familyDamageFn(def.family, def.id)
-					: 1;
-				const baseDamage = Math.round(
-					this.resolveFinalDamage(
-						tower.effectiveDamage *
-							elementMult *
-							dmgMod *
-							familyMod *
-							(1 + critBonus),
-					),
-				);
-				const special = def.stats.special;
-
-				const slowEffect =
-					this.isSlowSpecial(special) && special
-						? { factor: this.parseSlowFactor(special), duration: 2000 }
-						: undefined;
-				// 집중 공격형 (no special) → armor pierce
-				const armorPierce = !special;
-
-				// Collect damage events — delayed for projectile towers, instant for beams
-				const pendingBatch: Array<{
-					unitId: string;
-					damage: number;
-					armorPierce?: boolean;
-					slow?: { factor: number; duration: number };
-					stun?: { duration: number };
-				}> = [];
-				pendingBatch.push({
-					unitId: closestUnit.instanceId,
-					damage: baseDamage,
-					armorPierce,
-					slow: slowEffect,
-				});
-
-				// AoE slow: apply slow to all units in range (e.g. world_tree slow_40%_aoe)
-				if (slowEffect && special?.includes('_aoe')) {
-					for (const unit of unitPositions) {
-						if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0)
-							continue;
-						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-						const gdx = data.position.x - unitGrid.x;
-						const gdy = data.position.y - unitGrid.y;
-						if (gdx * gdx + gdy * gdy <= rangeSq) {
-							pendingBatch.push({
-								unitId: unit.instanceId,
-								damage: 0,
-								slow: slowEffect,
-							});
-						}
-					}
-				}
-
-				if (this.isStunSpecial(special) && special) {
-					const configKey = special.replace(/%/g, '');
-					const baseDuration = CC_AURA_CONFIGS[configKey]?.durationMs ?? 1000;
-					const level = tower.data.level ?? 1;
-					const stunDuration = baseDuration * stunDurationMultiplier(level);
-					if (special.includes('aoe')) {
-						for (const unit of unitPositions) {
-							if (unit.hp <= 0) continue;
-							const unitGrid = this.gridManager.worldToGridFloat(
-								unit.x,
-								unit.y,
-							);
-							const gdx = data.position.x - unitGrid.x;
-							const gdy = data.position.y - unitGrid.y;
-							if (gdx * gdx + gdy * gdy <= rangeSq) {
-								pendingBatch.push({
-									unitId: unit.instanceId,
-									damage: 0,
-									stun: { duration: stunDuration },
-								});
-							}
-						}
-					} else {
-						pendingBatch.push({
-							unitId: closestUnit.instanceId,
-							damage: 0,
-							stun: { duration: stunDuration },
-						});
-					}
-				}
-
-				if (this.hasSplash(special)) {
-					const closestGrid = this.gridManager.worldToGridFloat(
-						closestUnit.x,
-						closestUnit.y,
-					);
-					for (const unit of unitPositions) {
-						if (unit.instanceId === closestUnit.instanceId || unit.hp <= 0)
-							continue;
-						const sUnitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-						const sdx = closestGrid.x - sUnitGrid.x;
-						const sdy = closestGrid.y - sUnitGrid.y;
-						if (sdx * sdx + sdy * sdy <= TowerSystem.SPLASH_RADIUS_SQ) {
-							const splashElementMult = getElementMultiplier(
-								def.element,
-								unit.element,
-							);
-							// slow는 tower 사거리 내 splash unit에만 적용 (#98)
-							let splashSlow: typeof slowEffect;
-							if (slowEffect) {
-								const tdx = data.position.x - sUnitGrid.x;
-								const tdy = data.position.y - sUnitGrid.y;
-								if (tdx * tdx + tdy * tdy <= rangeSq) splashSlow = slowEffect;
-							}
-							const splashDamage = Math.round(
-								this.resolveFinalDamage(
-									tower.effectiveDamage *
-										splashElementMult *
-										0.5 *
-										dmgMod *
-										(1 + critBonus),
-								),
-							);
-							pendingBatch.push({
-								unitId: unit.instanceId,
-								damage: splashDamage,
-								slow: splashSlow,
-							});
-						}
-					}
-				}
-
-				const color = TowerSystem.parseHexColor(def.color);
-				const style =
-					this.hasSplash(special) || def.id === 'earth_golem'
-						? ('arc' as const)
-						: def.id === 'archer' || def.id === 'twin_archer'
-							? ('arrow' as const)
-							: ('beam' as const);
-				let arrowIndex: number | undefined;
-				if (style === 'arrow') {
-					this.ensureArrowPool();
-					const idx = this.arrowPool.findIndex((a) => !a.visible);
-					if (idx >= 0) {
-						arrowIndex = idx;
-						this.arrowPool[idx].setVisible(true);
-					}
-				}
-				// Calculate TTL from projectile speed (if defined) or use defaults
-				const projSpeed = def.stats.projectileSpeed;
-				let maxTtl: number;
-				if (projSpeed && projSpeed > 0) {
-					// Distance in grid tiles → travel time in ms
-					const dist = Math.sqrt(closestDistSq);
-					maxTtl = Math.round((dist / projSpeed) * 1000);
-					maxTtl = Math.max(40, Math.min(maxTtl, 500)); // clamp 40-500ms
-				} else {
-					maxTtl = style === 'arrow' ? 120 : 80;
-				}
-
-				const hasProjectile = style === 'arrow' || style === 'arc';
-
-				// For projectile towers, defer damage until impact.
-				// For beams, apply immediately.
-				if (!hasProjectile) {
-					for (const evt of pendingBatch) {
-						this.damageEventsBuffer.push(evt);
-					}
-				}
-
-				const impactVfxKey = this.hasSplash(special)
-					? 'vfx-explosion-sm'
-					: 'projectile-hit-flash';
-
-				// Nova cannon: fire from barrel tip, not tower center
-				const fireLift = this.gridManager.orthoTile * PLATFORM_LIFT;
-				const fireOriginX =
-					def.id === 'nova_cannon' && tower.barrelSprite
-						? tower.barrelSprite.x + Math.cos(tower.barrelSprite.rotation) * 10
-						: towerWorld.x;
-				const fireOriginY =
-					def.id === 'nova_cannon' && tower.barrelSprite
-						? tower.barrelSprite.y + Math.sin(tower.barrelSprite.rotation) * 10
-						: towerWorld.y - fireLift;
-
-				// Twin archer: fire 2 arrows, each with half damage
-				const shotCount = def.id === 'twin_archer' ? 2 : 1;
-				const shotBatch =
-					shotCount > 1
-						? pendingBatch.map((evt) => ({
-								...evt,
-								damage: Math.round(evt.damage / 2),
-							}))
-						: pendingBatch;
-
-				for (let shot = 0; shot < shotCount; shot++) {
-					let shotArrowIndex: number | undefined;
-					if (style === 'arrow' && shot > 0) {
-						const idx = this.arrowPool.findIndex(
-							(a, ai) => !a.visible && ai !== arrowIndex,
-						);
-						if (idx >= 0) {
-							shotArrowIndex = idx;
-							this.arrowPool[idx].setVisible(true);
-						}
-					} else {
-						shotArrowIndex = arrowIndex;
-					}
-					const offsetY = shotCount > 1 ? (shot === 0 ? -4 : 4) : 0;
-					// Stagger second arrow by 80ms so damage numbers appear separately
-					const shotTtl = shot > 0 ? maxTtl + 80 : maxTtl;
-					this.attackLines.push({
-						x1: fireOriginX,
-						y1: fireOriginY + offsetY,
-						x2: closestUnit.x,
-						y2: closestUnit.y + offsetY,
-						color,
-						ttl: shotTtl,
-						maxTtl: shotTtl,
-						style,
-						towerType: def.id,
-						arrowIndex: shotArrowIndex,
-						targetUnitId: hasProjectile ? closestUnit.instanceId : undefined,
-						impactPending: hasProjectile,
-						pendingDamage: hasProjectile ? shotBatch : undefined,
-						impactVfxKey: hasProjectile ? impactVfxKey : undefined,
-					});
-				}
-				if (def.id === 'nova_cannon') {
-					// Use the same hit-flash asset at barrel tip
-					this.spawnImpactVfx('projectile-hit-flash', fireOriginX, fireOriginY);
-				} else {
-					this.spawnMuzzleVfx(def.id, towerWorld, data.position, tower.sprite);
-				}
-
-				if (!hasProjectile) {
-					// Beam: instant impact VFX
-					this.spawnImpactVfx(
-						this.hasSplash(special)
-							? 'vfx-explosion-sm'
-							: 'projectile-hit-flash',
-						closestUnit.x,
-						closestUnit.y,
-					);
-				}
-
-				const lastSound = this.lastSoundTime.get(def.id) ?? 0;
-				if (time - lastSound >= TowerSystem.SOUND_THROTTLE_MS) {
-					soundGenerator.playTowerAttack(def.id);
-					this.lastSoundTime.set(def.id, time);
-				}
-			}
-		}
-
-		// Passive CC aura (attackSpeed=0 towers)
-		for (const tower of this.towers.values()) {
-			const { def, data } = tower;
-			if (def.stats.attackSpeed > 0) continue;
-			const special = def.stats.special;
-			if (!special) continue;
-
-			const configKey = special.replace(/%/g, '');
-			const config = CC_AURA_CONFIGS[configKey];
-			if (!config) continue;
-
-			const level = tower.data.level ?? 1;
-			const stunScaled = this.isStunSpecial(special);
-			const effectiveCooldown = stunScaled
-				? config.cooldownMs * stunCooldownMultiplier(level)
-				: config.cooldownMs;
-			const effectiveDuration = stunScaled
-				? config.durationMs * stunDurationMultiplier(level)
-				: config.durationMs;
-
-			if (time - tower.lastAuraTime < effectiveCooldown) continue;
-			tower.lastAuraTime = time;
-
-			// Phase 4 redesign: range_up card was removed.
-			const rangeSq = def.stats.range ** 2;
-
-			if (this.isStunSpecial(special)) {
-				if (config.aoe) {
-					for (const unit of unitPositions) {
-						if (unit.hp <= 0) continue;
-						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-						const gdx = data.position.x - unitGrid.x;
-						const gdy = data.position.y - unitGrid.y;
-						if (gdx * gdx + gdy * gdy <= rangeSq) {
-							this.damageEventsBuffer.push({
-								unitId: unit.instanceId,
-								damage: 0,
-								stun: { duration: effectiveDuration },
-							});
-						}
-					}
-				} else {
-					let closest: (typeof unitPositions)[0] | null = null;
-					let closestDist = Infinity;
-					for (const unit of unitPositions) {
-						if (unit.hp <= 0) continue;
-						const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-						const gdx = data.position.x - unitGrid.x;
-						const gdy = data.position.y - unitGrid.y;
-						const d = gdx * gdx + gdy * gdy;
-						if (d <= rangeSq && d < closestDist) {
-							closestDist = d;
-							closest = unit;
-						}
-					}
-					if (closest) {
-						this.damageEventsBuffer.push({
-							unitId: closest.instanceId,
-							damage: 0,
-							stun: { duration: effectiveDuration },
-						});
-					}
-				}
-			} else if (this.isSlowSpecial(special)) {
-				const factor = this.parseSlowFactor(special);
-				for (const unit of unitPositions) {
-					if (unit.hp <= 0) continue;
-					const unitGrid = this.gridManager.worldToGridFloat(unit.x, unit.y);
-					const gdx = data.position.x - unitGrid.x;
-					const gdy = data.position.y - unitGrid.y;
-					if (gdx * gdx + gdy * gdy <= rangeSq) {
-						this.damageEventsBuffer.push({
-							unitId: unit.instanceId,
-							damage: 0,
-							slow: { factor, duration: config.durationMs },
-						});
-					}
-				}
-			}
 		}
 
 		// Build unit lookup map for O(1) arrow tracking
@@ -961,7 +621,7 @@ export class TowerSystem {
 				}
 				// Spawn impact VFX + flush pending damage when projectile arrives
 				if (line.impactPending) {
-					this.spawnImpactVfx(
+					this.towerVfxController.spawnImpactVfx(
 						line.impactVfxKey ?? 'projectile-hit-flash',
 						line.x2,
 						line.y2,
@@ -1061,69 +721,6 @@ export class TowerSystem {
 		return this.damageEventsBuffer;
 	}
 
-	private spawnMuzzleVfx(
-		towerDefId: string,
-		towerWorld: Position,
-		gridPos: Position,
-		towerSprite: Phaser.GameObjects.Image,
-	): void {
-		// Phase 1: grade-aware fire spritesheet was removed alongside the
-		// grade system. Fire VFX uses the base id — Phase 11 will revisit
-		// tier-specific variants.
-		const textureKey = `tower-${towerDefId}-fire`;
-		const animationKey = getOptionalAnimationKey(textureKey);
-		if (
-			!this.scene.textures.exists(textureKey) ||
-			!this.scene.anims.exists(animationKey)
-		) {
-			return;
-		}
-
-		// Hide static tower during fire animation so animated frames are visible
-		towerSprite.setVisible(false);
-
-		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
-		const effect = this.scene.add.sprite(
-			towerWorld.x,
-			towerWorld.y - lift - 20,
-			textureKey,
-		);
-		// Fire spritesheets are authored in 64×80 source-frame coords (see
-		// drawFireFrame in generate-towers.ts), but we display at the current
-		// tower render size (48×60) so the animation sits exactly on top of
-		// the tower sprite instead of overflowing.
-		effect.setDisplaySize(48, 60);
-		effect.setDepth(this.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
-		effect.play(animationKey);
-		const restoreVisibility = () => {
-			if (towerSprite.active) towerSprite.setVisible(true);
-		};
-		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-			effect.destroy();
-			restoreVisibility();
-		});
-		effect.once(Phaser.GameObjects.Events.DESTROY, restoreVisibility);
-	}
-
-	private spawnImpactVfx(textureKey: string, x: number, y: number): void {
-		const animationKey = getOptionalAnimationKey(textureKey);
-		if (
-			!this.scene.textures.exists(textureKey) ||
-			!this.scene.anims.exists(animationKey)
-		) {
-			return;
-		}
-
-		const effect = this.scene.add.sprite(x, y, textureKey);
-		const size = textureKey === 'projectile-hit-flash' ? 16 : 32;
-		effect.setDisplaySize(size, size);
-		effect.setDepth(30);
-		effect.play(animationKey);
-		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () =>
-			effect.destroy(),
-		);
-	}
-
 	private findTowerEntry(
 		gridX: number,
 		gridY: number,
@@ -1149,6 +746,11 @@ export class TowerSystem {
 		targetInstance.barrelSprite?.destroy();
 		targetInstance.base.destroy();
 		targetInstance.sprite.destroy();
+		const soldBehavior = this.newTowerInstances.get(targetKey);
+		if (soldBehavior) {
+			soldBehavior.destroy();
+			this.newTowerInstances.delete(targetKey);
+		}
 		this.towers.delete(targetKey);
 		this.gridManager.removeTower(gridX, gridY);
 		this.pathfinding.invalidateCache();
@@ -1230,7 +832,7 @@ export class TowerSystem {
 	/**
 	 * Returns a merge-friendly locator for the tower at (col,row), or null if
 	 * the tile is empty. Shape matches `MergeSystem.TowerLocator`
-	 * (family+tier+instanceId) so the Phase A orchestrator can feed the value
+	 * (family+tier+instanceId) so the core orchestrator can feed the value
 	 * directly into `MergeSystem.tryMerge`. `x`/`y` carry the grid position
 	 * of the tower so the caller can re-spawn at the same tile after a merge.
 	 */
@@ -1261,6 +863,11 @@ export class TowerSystem {
 		instance.barrelSprite?.destroy();
 		instance.base.destroy();
 		instance.sprite.destroy();
+		const removedBehavior = this.newTowerInstances.get(key);
+		if (removedBehavior) {
+			removedBehavior.destroy();
+			this.newTowerInstances.delete(key);
+		}
 		this.towers.delete(key);
 		this.gridManager.removeTower(col, row);
 		this.pathfinding.invalidateCache();
@@ -1268,12 +875,12 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Phase A: pop-in scale punch on a freshly summoned tower. Kills the
+	 * Pop-in scale punch on a freshly summoned tower. Kills the
 	 * continuous idle tween for the punch, then restarts it on `onComplete`
 	 * so the tower keeps breathing afterwards (bug: previously the idle
 	 * tween never returned → towers went stiff after every summon).
 	 */
-	playPhaseASummonVfx(col: number, row: number): void {
+	playSummonVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const instance = entry.instance;
@@ -1301,13 +908,13 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Phase A: stronger scale punch + gold tint flash on the kept tower after
+	 * Stronger scale punch + gold tint flash on the kept tower after
 	 * a successful merge. Tint is cleared via a follow-up tween that targets
 	 * a counter and applies clearTint in onComplete, so cleanup is bound to
 	 * the scene's tween manager (no orphan setTimeout / setInterval). Restarts
 	 * the idle breathing tween after the punch so the tower doesn't go stiff.
 	 */
-	playPhaseAMergeVfx(col: number, row: number): void {
+	playMergeVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
 		if (!entry) return;
 		const instance = entry.instance;
@@ -1352,7 +959,7 @@ export class TowerSystem {
 	 * of expanding ring graphics (used in lieu of a particle emitter until
 	 * `gacha-reveal-*` is wired as a particle texture in phase-12).
 	 *
-	 * Tracked separately from the smaller `playPhaseAMergeVfx` (which already
+	 * Tracked separately from the smaller `playMergeVfx` (which already
 	 * handles the per-merge gold-tint flash for every tier). Defensive about
 	 * scene API surface so unit tests with stub scenes don't have to mock the
 	 * camera manager.
@@ -1438,6 +1045,11 @@ export class TowerSystem {
 			tower.base.destroy();
 			tower.sprite.destroy();
 		}
+		for (const behavior of this.newTowerInstances.values()) {
+			behavior.destroy();
+		}
+		this.newTowerInstances.clear();
+		this.towerVfxController.destroy();
 		this.towers.clear();
 		this.attackGraphics?.destroy();
 		this.attackLines.length = 0;

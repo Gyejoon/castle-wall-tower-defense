@@ -3,12 +3,11 @@ import {
 	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
-	MIN_MOVE_SPEED,
 	PHASER_COLORS,
 	type PlacedTower,
 	type Position,
-	STUN_IMMUNITY_WINDOW_MS,
 	scaleUnitStats,
+	TILE_SIZE,
 	UNITS,
 	type UnitDef,
 } from '@gld/shared';
@@ -17,6 +16,9 @@ import { getOptionalAnimationKey } from '../assets/assetManifest';
 import { EventBus } from '../EventBus';
 import type { GridManager } from './GridManager';
 import type { TowerSystem } from './TowerSystem';
+import { BossPhaseTracker } from './units/BossPhaseTracker';
+import { CCStateManager } from './units/CCStateManager';
+import { PathFollower } from './units/PathFollower';
 
 export type UnitSpawnSource = 'base';
 
@@ -44,40 +46,29 @@ interface UnitInstance {
 	hpBar: Phaser.GameObjects.Graphics;
 	worldX: number;
 	worldY: number;
-	slowFactor: number;
-	slowRemaining: number;
-	stunRemaining: number;
 	bounty: number;
 	countsTowardClear: boolean;
 	source: UnitSpawnSource;
-	laneIndex: number; // which lane this unit follows
+	laneIndex: number;
 	isBoss: boolean;
-	bossPhase: 1 | 2 | 3;
-	invulnerableMs: number;
 	maxHp: number;
 	baseSpeed: number;
 	baseArmor: number;
-	ccImmunityChance: number;
-	/**
-	 * Phase 11 [F16] — deterministic CC duration multiplier (0.0 = full
-	 * effect, 1.0 = immune). Distinct from `ccImmunityChance` which is a
-	 * probabilistic resist roll: ccResistance always shortens the applied
-	 * effect duration. Bosses inherit `bossCcResist` here so a 0.5-resist
-	 * boss takes a 1000ms slow as 500ms instead of dodging it entirely.
-	 */
-	ccResistance: number;
-	/**
-	 * Phase 11 [F16] — scene-time (ms) until which any new stun is rejected.
-	 * Set when a stun ends (current time + STUN_IMMUNITY_WINDOW_MS) so a
-	 * second stun tower can't lock the unit indefinitely.
-	 */
-	stunImmunityUntil: number;
 	waveSlot: number;
-	pathProgress: number; // continuous 1D position along lane path
 	shadow: Phaser.GameObjects.Ellipse | null;
 	lastRangedAttackMs?: number;
 	animationState: UnitAnimationState;
 	pendingDestroy: boolean;
+	// CC·boss·path 필드는 하위 매니저의 라이브 getter 프록시다.
+	readonly slowFactor: number;
+	readonly slowRemaining: number;
+	readonly stunRemaining: number;
+	readonly invulnerableMs: number;
+	readonly ccResistance: number;
+	readonly ccImmunityChance: number;
+	readonly stunImmunityUntil: number;
+	readonly pathProgress: number;
+	readonly bossPhase: 1 | 2 | 3;
 }
 
 interface QueueUnitsOptions {
@@ -98,10 +89,6 @@ export class UnitSystem {
 	private scene: Phaser.Scene;
 	private gridManager: GridManager;
 	private towerSystem: TowerSystem | null = null;
-	private currentPath: Position[] = [];
-	private currentPathWorld: Position[] = [];
-	private lanes: Position[][] = [];
-	private lanesWorld: Position[][] = [];
 	private nextId = 0;
 	private nextLane = 0;
 	private stageLevel = 1;
@@ -110,7 +97,9 @@ export class UnitSystem {
 	private spawnTimer = 0;
 	private spawnIntervalMs = 300;
 	private laneUnits: Map<number, UnitInstance[]> = new Map();
-	/** Called after any unit (wave-queue or additional) is physically spawned. */
+	private pathFollower: PathFollower;
+	private cc: CCStateManager;
+	private bossPhase: BossPhaseTracker;
 	private unitSpawnedCallback:
 		| ((instanceId: string, defId: string, isBoss: boolean) => void)
 		| null = null;
@@ -122,6 +111,9 @@ export class UnitSystem {
 	constructor(scene: Phaser.Scene, gridManager: GridManager) {
 		this.scene = scene;
 		this.gridManager = gridManager;
+		this.pathFollower = new PathFollower(gridManager);
+		this.cc = new CCStateManager(this.rng);
+		this.bossPhase = new BossPhaseTracker();
 	}
 
 	/** Inject TowerSystem for ranged_tower_attack behavior */
@@ -132,6 +124,7 @@ export class UnitSystem {
 	/** Inject RNG for testability (CC immunity) */
 	setRng(rng: () => number): void {
 		this.rng = rng;
+		this.cc.setRng(rng);
 	}
 
 	/** Register a callback to be notified whenever a unit is physically spawned. */
@@ -146,31 +139,18 @@ export class UnitSystem {
 	}
 
 	setPaths(paths: Position[][]): void {
-		this.lanes = paths;
-		this.lanesWorld = paths.map((lane) =>
-			lane.map((p) => this.gridManager.gridToWorld(p.x, p.y)),
-		);
-		this.currentPath = paths[0] ?? [];
-		this.currentPathWorld = this.lanesWorld[0] ?? [];
+		this.pathFollower.setPaths(paths);
 		this.nextLane = 0;
 
-		// Reassign existing units to their closest point on their lane
 		for (const unit of this.units.values()) {
-			const lane = this.lanes[unit.laneIndex] ?? this.currentPath;
-			const unitGrid = unit.data.position;
-			let bestIdx = 0;
-			let bestDist = Infinity;
-			for (let i = 0; i < lane.length; i++) {
-				const dx = lane[i].x - unitGrid.x;
-				const dy = lane[i].y - unitGrid.y;
-				const d = dx * dx + dy * dy;
-				if (d < bestDist) {
-					bestDist = d;
-					bestIdx = i;
-				}
+			this.pathFollower.reassignToClosest(
+				unit.data.instanceId,
+				unit.data.position,
+			);
+			const follower = this.pathFollower.get(unit.data.instanceId);
+			if (follower) {
+				unit.data.pathIndex = follower.pathIndex;
 			}
-			unit.data.pathIndex = Math.min(bestIdx, lane.length - 2);
-			unit.pathProgress = unit.data.pathIndex;
 		}
 
 		// Rebuild laneUnits from current units
@@ -210,13 +190,13 @@ export class UnitSystem {
 	}
 
 	private spawnUnit(entry: SpawnQueueEntry): void {
-		if (this.lanes.length === 0 && this.currentPath.length === 0) return;
+		if (this.pathFollower.getLaneCount() === 0) return;
 
 		// Round-robin lane assignment
-		const laneIndex =
-			this.lanes.length > 1 ? this.nextLane++ % this.lanes.length : 0;
-		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
-		const lanePathWorld = this.lanesWorld[laneIndex] ?? this.currentPathWorld;
+		const laneCount = this.pathFollower.getLaneCount();
+		const laneIndex = laneCount > 1 ? this.nextLane++ % laneCount : 0;
+		const lanePath = this.pathFollower.getLane(laneIndex);
+		const lanePathWorld = this.pathFollower.getLaneWorld(laneIndex);
 		if (lanePath.length === 0) return;
 
 		const instanceId = `unit_${this.nextId++}`;
@@ -249,7 +229,10 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(entry.isBoss ? 48 : 32, entry.isBoss ? 56 : 40);
+		sprite.setDisplaySize(
+			entry.isBoss ? TILE_SIZE : (TILE_SIZE * 2) / 3,
+			entry.isBoss ? (TILE_SIZE * 7) / 6 : (TILE_SIZE * 5) / 6,
+		);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -286,43 +269,38 @@ export class UnitSystem {
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
-		const instance: UnitInstance = {
+		// UnitInstance의 live accessor가 첫 읽기에 state를 풀 수 있도록 선등록.
+		this.pathFollower.register(instanceId, laneIndex, 0);
+		const ccImmunityChance = Math.min(
+			1,
+			scaled.ccImmunityChance + entry.ccResist + (entry.def.bossCcResist ?? 0),
+		);
+		const ccResistance = Math.min(1, entry.def.bossCcResist ?? 0);
+		this.cc.register(instanceId, ccResistance, ccImmunityChance);
+		if (entry.isBoss) {
+			this.bossPhase.register(instanceId);
+		}
+
+		const instance = this.buildUnitInstance({
+			instanceId,
 			data: unitData,
 			def: entry.def,
 			sprite,
 			hpBar,
 			worldX: startWorld.x,
 			worldY: startWorld.y,
-			slowFactor: 1.0,
-			slowRemaining: 0,
-			stunRemaining: 0,
 			bounty: Math.round(entry.bounty * scaled.bountyMultiplier),
 			countsTowardClear: entry.countsTowardClear,
 			source: entry.source,
 			laneIndex,
 			isBoss: entry.isBoss,
-			bossPhase: 1,
-			invulnerableMs: 0,
 			maxHp: finalHp,
 			baseSpeed: scaled.speed * entry.waveSpeedMult,
 			baseArmor: scaled.armor * entry.armorMult,
-			ccImmunityChance: Math.min(
-				1,
-				scaled.ccImmunityChance +
-					entry.ccResist +
-					(entry.def.bossCcResist ?? 0),
-			),
-			// Phase 11 [F16]: deterministic CC duration cut. Reuses the unit
-			// def's `bossCcResist` field — normal mobs default to 0 (no
-			// reduction) while bosses inherit 0.5–0.7 from `units.ts`.
-			ccResistance: Math.min(1, entry.def.bossCcResist ?? 0),
-			stunImmunityUntil: 0,
 			waveSlot: entry.waveSlot,
 			shadow,
-			pathProgress: 0,
-			animationState: 'walk',
-			pendingDestroy: false,
-		};
+		});
+
 		this.units.set(instanceId, instance);
 
 		// Add to lane-sorted array (end = lowest pathProgress)
@@ -336,6 +314,57 @@ export class UnitSystem {
 		}
 
 		this.unitSpawnedCallback?.(instanceId, entry.def.id, entry.isBoss);
+	}
+
+	// 호출 전에 해당 instanceId가 모든 하위 매니저에 등록되어 있어야 한다.
+	private buildUnitInstance(
+		init: Omit<
+			UnitInstance,
+			| 'slowFactor'
+			| 'slowRemaining'
+			| 'stunRemaining'
+			| 'invulnerableMs'
+			| 'ccResistance'
+			| 'ccImmunityChance'
+			| 'stunImmunityUntil'
+			| 'pathProgress'
+			| 'bossPhase'
+			| 'animationState'
+			| 'pendingDestroy'
+		> & { instanceId: string },
+	): UnitInstance {
+		const { instanceId: id, ...rest } = init;
+		const base: Record<string, unknown> = {
+			...rest,
+			animationState: 'walk',
+			pendingDestroy: false,
+		};
+		const ccGet = (k: keyof NonNullable<ReturnType<CCStateManager['get']>>) =>
+			(this.cc.get(id)?.[k] as number | undefined) ?? 0;
+		Object.defineProperties(base, {
+			slowFactor: {
+				enumerable: true,
+				get: () => this.cc.get(id)?.slowFactor ?? 1,
+			},
+			slowRemaining: { enumerable: true, get: () => ccGet('slowRemaining') },
+			stunRemaining: { enumerable: true, get: () => ccGet('stunRemaining') },
+			invulnerableMs: { enumerable: true, get: () => ccGet('invulnerableMs') },
+			ccResistance: { enumerable: true, get: () => ccGet('ccResistance') },
+			ccImmunityChance: {
+				enumerable: true,
+				get: () => ccGet('ccImmunityChance'),
+			},
+			stunImmunityUntil: {
+				enumerable: true,
+				get: () => ccGet('stunImmunityUntil'),
+			},
+			pathProgress: {
+				enumerable: true,
+				get: () => this.pathFollower.get(id)?.pathProgress ?? 0,
+			},
+			bossPhase: { enumerable: true, get: () => this.bossPhase.getPhase(id) },
+		});
+		return base as unknown as UnitInstance;
 	}
 
 	private renderHpBar(
@@ -368,7 +397,7 @@ export class UnitSystem {
 	}
 
 	private restoreUnitTint(unit: UnitInstance): void {
-		if (unit.isBoss && unit.bossPhase === 2) {
+		if (unit.isBoss && this.bossPhase.getPhase(unit.data.instanceId) === 2) {
 			unit.sprite.setTint(BOSS_CONFIG.phase2Tint);
 		} else {
 			unit.sprite.clearTint();
@@ -393,41 +422,23 @@ export class UnitSystem {
 		// pick up new tint/state changes that could preempt the death anim
 		// cleanup listener.
 		if (unit.pendingDestroy) return;
-		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
-			return; // CC resisted
+		const applied = this.cc.applySlow(unitId, factor, durationMs);
+		if (!applied) return;
+		// Stun tint가 slow tint보다 시각적으로 우선한다.
+		if (!this.cc.isStunned(unitId)) {
+			unit.sprite.setTint(0x88ccff);
 		}
-		// Phase 11 [F16]: ccResistance is a deterministic duration cut applied
-		// on top of the probabilistic ccImmunityChance dodge. Bosses with
-		// resistance 0.5 take half-duration slows; speed is floored at
-		// MIN_MOVE_SPEED so a fully-stacked frost setup can't pin units at 0.
-		const effectiveDuration = durationMs * (1 - unit.ccResistance);
-		const flooredFactor = Math.max(MIN_MOVE_SPEED, factor);
-		// Keep the stronger slow (lower factor = slower)
-		unit.slowFactor = Math.min(unit.slowFactor, flooredFactor);
-		unit.slowRemaining = Math.max(unit.slowRemaining, effectiveDuration);
-		if (unit.stunRemaining <= 0) unit.sprite.setTint(0x88ccff);
 	}
 
 	applyStun(unitId: string, durationMs: number): void {
 		const unit = this.units.get(unitId);
 		if (!unit) return;
-		// Bug guard: once a unit is flagged for destruction the death
-		// animation is already playing and its ANIMATION_COMPLETE listener
-		// owns sprite cleanup. Applying stun here would call
-		// `setUnitAnimationState(unit, 'idle')` which interrupts the death
-		// animation, so ANIMATION_COMPLETE never fires and the ghost sprite
-		// lingers on screen forever. Matches the same gate `applyDamage` has.
+		// pendingDestroy 상태에 stun을 적용하면 idle 애니메이션이 death 애니메이션을
+		// 가로채 ANIMATION_COMPLETE가 발화되지 않아 고스트 스프라이트가 남는다.
 		if (unit.pendingDestroy) return;
-		if (unit.ccImmunityChance > 0 && this.rng() < unit.ccImmunityChance) {
-			return; // CC resisted
-		}
-		// Phase 11 [F16]: refuse re-stuns that fall inside the post-stun
-		// immunity window. Window is set when a stun expires (see update()
-		// loop), so the first stun lands normally.
 		const now = this.scene.time?.now ?? 0;
-		if (now < unit.stunImmunityUntil) return;
-		const effectiveDuration = durationMs * (1 - unit.ccResistance);
-		unit.stunRemaining = Math.max(unit.stunRemaining, effectiveDuration);
+		const applied = this.cc.applyStun(unitId, durationMs, now);
+		if (!applied) return;
 		unit.sprite.setTint(0xffff44);
 		this.setUnitAnimationState(unit, 'idle');
 	}
@@ -456,7 +467,7 @@ export class UnitSystem {
 			isBoss: unit.isBoss,
 		} as const;
 
-		if (unit.invulnerableMs > 0) {
+		if (this.cc.isInvulnerable(unitId)) {
 			return {
 				outcome: 'invulnerable',
 				killed: false,
@@ -471,7 +482,6 @@ export class UnitSystem {
 		// are treated as MISS rather than silent 0-damage hits.
 		let damage = Math.floor(rawDamage - armor);
 		if (damage <= 0) {
-			// MISS: armor fully absorbed damage (including sub-integer surpluses) — no HP reduction
 			return {
 				outcome: 'miss',
 				killed: false,
@@ -504,44 +514,30 @@ export class UnitSystem {
 
 		unit.data.hp -= damage;
 
-		// Boss phase transition checks — only fire while still alive. Phase 2
-		// is the 50% HP rage spike; phase 3 is a 25% HP "last stretch" that
-		// stacks another speed bump so the back half isn't a plateau.
-		if (
-			unit.isBoss &&
-			unit.bossPhase === 1 &&
-			unit.data.hp > 0 &&
-			unit.data.hp <= unit.maxHp * BOSS_CONFIG.phaseTransitionRatio
-		) {
-			unit.bossPhase = 2;
-			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
-			// Switch to rage texture if available
-			const rageKey = `unit-${unit.def.id}-boss-rage`;
-			if (this.scene.textures.exists(rageKey)) {
-				unit.sprite.setTexture(rageKey);
-				const rageAnimKey = `anim-${rageKey}`;
-				if (this.scene.anims.exists(rageAnimKey)) {
-					unit.sprite.play(rageAnimKey);
+		if (unit.isBoss) {
+			const transition = this.bossPhase.onDamage(
+				unitId,
+				unit.data.hp,
+				unit.maxHp,
+			);
+			if (transition) {
+				this.cc.setInvulnerable(unitId, transition.invulnerabilityMs);
+				if (transition.swapTexture) {
+					const rageKey = `unit-${unit.def.id}-boss-rage`;
+					if (this.scene.textures.exists(rageKey)) {
+						unit.sprite.setTexture(rageKey);
+						const rageAnimKey = `anim-${rageKey}`;
+						if (this.scene.anims.exists(rageAnimKey)) {
+							unit.sprite.play(rageAnimKey);
+						}
+					}
 				}
+				unit.sprite?.setTint(transition.tint);
+				EventBus.emit('boss-phase-change', {
+					phase: transition.phase,
+					unitId: unit.data.instanceId,
+				});
 			}
-			unit.sprite?.setTint(BOSS_CONFIG.phase2Tint);
-			EventBus.emit('boss-phase-change', {
-				phase: 2,
-				unitId: unit.data.instanceId,
-			});
-		} else if (
-			unit.isBoss &&
-			unit.bossPhase === 2 &&
-			unit.data.hp > 0 &&
-			unit.data.hp <= unit.maxHp * BOSS_CONFIG.phase3TransitionRatio
-		) {
-			unit.bossPhase = 3;
-			unit.invulnerableMs = BOSS_CONFIG.invulnerabilityMs;
-			unit.sprite?.setTint(BOSS_CONFIG.phase3Tint);
-			EventBus.emit('boss-phase-change', {
-				phase: 3,
-				unitId: unit.data.instanceId,
-			});
 		}
 
 		if (unit.data.hp <= 0) {
@@ -564,12 +560,18 @@ export class UnitSystem {
 					unit.shadow?.destroy();
 					unit.hpBar.destroy();
 					this.units.delete(unitId);
+					this.pathFollower.unregister(unitId);
+					this.cc.unregister(unitId);
+					this.bossPhase.unregister(unitId);
 				});
 			} else {
 				unit.sprite.destroy();
 				unit.shadow?.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(unitId);
+				this.pathFollower.unregister(unitId);
+				this.cc.unregister(unitId);
+				this.bossPhase.unregister(unitId);
 			}
 			this.spawnOptionalVfx(
 				unit.def.id === 'dragon' ? 'vfx-explosion-lg' : 'vfx-explosion-sm',
@@ -596,7 +598,7 @@ export class UnitSystem {
 				defId: unit.def.id,
 				hp: Math.max(1, Math.floor(unit.data.hp)),
 				maxHp: unit.maxHp,
-				phase: unit.bossPhase,
+				phase: this.bossPhase.getPhase(unitId),
 			});
 		}
 
@@ -676,7 +678,6 @@ export class UnitSystem {
 		if (this.spawnTimer >= this.spawnIntervalMs && this.spawnQueue.length > 0) {
 			this.spawnTimer = 0;
 			const front = this.spawnQueue[0];
-
 			this.spawnUnit(front);
 			front.remaining--;
 			if (front.remaining <= 0) {
@@ -684,19 +685,15 @@ export class UnitSystem {
 			}
 		}
 
-		const dt = delta / 1000;
-
 		for (const [id, unit] of this.units) {
 			if (unit.pendingDestroy) {
 				continue;
 			}
-			if (unit.invulnerableMs > 0) {
-				unit.invulnerableMs -= delta;
-			}
 
-			const unitLane = this.lanes[unit.laneIndex] ?? this.currentPath;
-			const unitLaneWorld =
-				this.lanesWorld[unit.laneIndex] ?? this.currentPathWorld;
+			// stunJustEnded 시 CCStateManager 내부에서 stunImmunityUntil이 설정된다.
+			const ccTick = this.cc.tick(id, delta, time);
+
+			const unitLane = this.pathFollower.getLane(unit.laneIndex);
 			const pathIdx = unit.data.pathIndex;
 			if (pathIdx >= unitLane.length - 1) {
 				reachedExit.push({ id, isBoss: unit.isBoss });
@@ -704,37 +701,28 @@ export class UnitSystem {
 				unit.shadow?.destroy();
 				unit.hpBar.destroy();
 				this.units.delete(id);
+				this.pathFollower.unregister(id);
+				this.cc.unregister(id);
+				this.bossPhase.unregister(id);
 				this.removeFromLaneUnits(unit);
 				continue;
 			}
 
-			if (unit.slowRemaining > 0) {
-				unit.slowRemaining -= delta;
-				if (unit.slowRemaining <= 0) {
-					unit.slowFactor = 1.0;
-					unit.slowRemaining = 0;
-					if (unit.stunRemaining <= 0) {
-						this.restoreUnitTint(unit);
-					}
-				}
+			if (ccTick.slowJustEnded && !ccTick.isStunned) {
+				this.restoreUnitTint(unit);
 			}
 
-			if (unit.stunRemaining > 0) {
-				unit.stunRemaining -= delta;
-				if (unit.stunRemaining <= 0) {
-					unit.stunRemaining = 0;
-					// Phase 11 [F16]: post-stun immunity window so chained stun
-					// towers can't lock the unit. Slows are unaffected.
-					unit.stunImmunityUntil = time + STUN_IMMUNITY_WINDOW_MS;
-					if (unit.slowRemaining <= 0) {
-						this.restoreUnitTint(unit);
-					} else {
-						unit.sprite.setTint(0x88ccff);
-					}
-					this.setUnitAnimationState(unit, 'walk');
+			// stun 해제 시 slow가 남아있으면 slow tint 유지, 아니면 base tint 복원.
+			if (ccTick.stunJustEnded) {
+				if (this.cc.isSlowed(id)) {
+					unit.sprite.setTint(0x88ccff);
+				} else {
+					this.restoreUnitTint(unit);
 				}
-				continue; // skip movement while stunned
+				this.setUnitAnimationState(unit, 'walk');
 			}
+
+			if (ccTick.isStunned) continue;
 
 			// Enemies with ranged_tower_attack disable the nearest tower on cooldown
 			if (
@@ -769,52 +757,45 @@ export class UnitSystem {
 			}
 
 			this.setUnitAnimationState(unit, 'walk');
-			const nextGrid = unitLane[pathIdx + 1];
-			const targetWorld = unitLaneWorld[pathIdx + 1];
+
+			const bossPhaseNum = unit.isBoss ? this.bossPhase.getPhase(id) : 1;
 			const phaseMult = !unit.isBoss
 				? 1
-				: unit.bossPhase === 3
+				: bossPhaseNum === 3
 					? BOSS_CONFIG.phase3SpeedMultiplier
-					: unit.bossPhase === 2
+					: bossPhaseNum === 2
 						? BOSS_CONFIG.phase2SpeedMultiplier
 						: 1;
 			const speed =
 				unit.baseSpeed *
 				phaseMult *
 				this.gridManager.orthoTile *
-				unit.slowFactor;
+				ccTick.speedMultiplier;
 
-			const dx = targetWorld.x - unit.worldX;
-			const dy = targetWorld.y - unit.worldY;
-			const dist = Math.sqrt(dx * dx + dy * dy);
+			// flip/rotation은 advance 전 방향 벡터를 사용해야 한다. advance 후
+			// snap된 위치를 기준으로 하면 다음-다음 셀 방향을 바라보게 된다.
+			const unitLaneWorld = this.pathFollower.getLaneWorld(unit.laneIndex);
+			const preTarget = unitLaneWorld[unit.data.pathIndex + 1] ?? {
+				x: unit.worldX,
+				y: unit.worldY,
+			};
+			const dx = preTarget.x - unit.worldX;
+			const dy = preTarget.y - unit.worldY;
 
-			if (dist < speed * dt) {
-				unit.worldX = targetWorld.x;
-				unit.worldY = targetWorld.y;
-				unit.data.pathIndex++;
-				unit.data.position = { x: nextGrid.x, y: nextGrid.y };
-			} else {
-				unit.worldX += (dx / dist) * speed * dt;
-				unit.worldY += (dy / dist) * speed * dt;
-			}
+			const adv = this.pathFollower.advance(id, {
+				worldX: unit.worldX,
+				worldY: unit.worldY,
+				speed,
+				dtMs: delta,
+			});
+			if (!adv) continue;
 
-			// Compute pathProgress after movement
-			const curIdx = unit.data.pathIndex;
-			if (curIdx < unitLaneWorld.length - 1) {
-				const segStart = unitLaneWorld[curIdx];
-				const segEnd = unitLaneWorld[curIdx + 1];
-				const segDx = segEnd.x - segStart.x;
-				const segDy = segEnd.y - segStart.y;
-				const segLen = Math.sqrt(segDx * segDx + segDy * segDy);
-				if (segLen > 0) {
-					const unitDx = unit.worldX - segStart.x;
-					const unitDy = unit.worldY - segStart.y;
-					const proj = (unitDx * segDx + unitDy * segDy) / segLen;
-					const frac = Math.max(0, Math.min(1, proj / segLen));
-					unit.pathProgress = curIdx + frac;
-				} else {
-					unit.pathProgress = curIdx;
-				}
+			unit.worldX = adv.worldX;
+			unit.worldY = adv.worldY;
+			if (adv.advancedWaypoint) {
+				unit.data.pathIndex =
+					this.pathFollower.get(id)?.pathIndex ?? unit.data.pathIndex;
+				unit.data.position = adv.gridPosition;
 			}
 
 			// Boss flies above ground with bobbing; shadow stays on ground
@@ -827,8 +808,7 @@ export class UnitSystem {
 			} else {
 				unit.sprite.setPosition(unit.worldX, unit.worldY);
 			}
-			// Flying boss: rotate to face movement direction
-			// Ground boss/units: flip sprite horizontally based on movement
+			const dist = Math.sqrt(dx * dx + dy * dy);
 			if (unit.isBoss && dist > 0.01) {
 				if (unit.def.flying) {
 					const moveAngle = Math.atan2(dy, dx);
@@ -918,26 +898,11 @@ export class UnitSystem {
 	): void {
 		const def = UNITS.find((u) => u.id === unitDefId);
 		if (!def) return;
-		if (this.lanes.length === 0 && this.currentPath.length === 0) return;
+		if (this.pathFollower.getLaneCount() === 0) return;
 
 		// Pick the lane whose start is closest to the requested position
-		let laneIndex = 0;
-		if (this.lanes.length > 1) {
-			let bestDist = Infinity;
-			for (let i = 0; i < this.lanes.length; i++) {
-				const start = this.lanes[i][0];
-				if (!start) continue;
-				const dx = start.x - position.x;
-				const dy = start.y - position.y;
-				const d = dx * dx + dy * dy;
-				if (d < bestDist) {
-					bestDist = d;
-					laneIndex = i;
-				}
-			}
-		}
-
-		const lanePath = this.lanes[laneIndex] ?? this.currentPath;
+		const laneIndex = this.pathFollower.findClosestLane(position);
+		const lanePath = this.pathFollower.getLane(laneIndex);
 		if (lanePath.length === 0) return;
 
 		const instanceId = `unit_${this.nextId++}`;
@@ -945,17 +910,10 @@ export class UnitSystem {
 			x: Math.max(0, Math.min(position.x, this.gridManager.width - 1)),
 			y: Math.max(0, Math.min(position.y, this.gridManager.height - 1)),
 		};
-		let initialPathIndex = 0;
-		let bestDist = Infinity;
-		for (let i = 0; i < lanePath.length; i++) {
-			const dx = lanePath[i].x - clampedGrid.x;
-			const dy = lanePath[i].y - clampedGrid.y;
-			const d = dx * dx + dy * dy;
-			if (d < bestDist) {
-				bestDist = d;
-				initialPathIndex = i;
-			}
-		}
+		let initialPathIndex = this.pathFollower.findClosestWaypointIndex(
+			laneIndex,
+			clampedGrid,
+		);
 		initialPathIndex = Math.min(
 			initialPathIndex,
 			Math.max(0, lanePath.length - 2),
@@ -990,7 +948,7 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(32, 40);
+		sprite.setDisplaySize((TILE_SIZE * 2) / 3, (TILE_SIZE * 5) / 6);
 		sprite.play(`${def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (def.element !== 'neutral') {
@@ -1000,35 +958,35 @@ export class UnitSystem {
 		const hpBar = this.scene.add.graphics();
 		this.renderHpBar(hpBar, startWorld.x, startWorld.y, finalHp, finalHp);
 
-		const instance: UnitInstance = {
+		// UnitInstance의 live accessor가 첫 읽기에 state를 풀 수 있도록 선등록.
+		// 소환된 미니언은 보스가 아니므로 BossPhaseTracker는 건너뛴다.
+		this.pathFollower.register(instanceId, laneIndex, initialPathIndex);
+		this.cc.register(
+			instanceId,
+			Math.min(1, def.bossCcResist ?? 0),
+			scaled.ccImmunityChance,
+		);
+
+		const instance = this.buildUnitInstance({
+			instanceId,
 			data: unitData,
 			def,
 			sprite,
 			hpBar,
 			worldX: startWorld.x,
 			worldY: startWorld.y,
-			slowFactor: 1.0,
-			slowRemaining: 0,
-			stunRemaining: 0,
 			bounty: Math.round(def.bounty * scaled.bountyMultiplier),
 			countsTowardClear: false, // summoned units don't count toward wave clear
 			source: 'base',
 			laneIndex,
 			isBoss: false,
-			bossPhase: 1,
-			invulnerableMs: 0,
 			maxHp: finalHp,
 			baseSpeed: scaled.speed,
 			baseArmor: scaled.armor,
-			ccImmunityChance: scaled.ccImmunityChance,
-			ccResistance: Math.min(1, def.bossCcResist ?? 0),
-			stunImmunityUntil: 0,
 			waveSlot: 0,
 			shadow: null,
-			pathProgress: initialPathIndex,
-			animationState: 'walk',
-			pendingDestroy: false,
-		};
+		});
+
 		this.units.set(instanceId, instance);
 
 		if (!def.flying) {
@@ -1065,5 +1023,8 @@ export class UnitSystem {
 		this.units.clear();
 		this.laneUnits.clear();
 		this.spawnQueue.length = 0;
+		this.pathFollower.clear();
+		this.cc.clear();
+		this.bossPhase.clear();
 	}
 }

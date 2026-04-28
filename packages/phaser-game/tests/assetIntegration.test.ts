@@ -6,12 +6,12 @@ import {
 	PHASE_A_LONG_V2_TILEMAP_PATH,
 } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
+import { collectManualManifestEntries } from '../../../scripts/generate-assets/generate-all';
 import {
-	TinySwordsDecorationKind,
 	TINY_SWORDS_DECORATION_ASSETS,
 	TINY_SWORDS_TILESET_ASSETS,
+	type TinySwordsDecorationKind,
 } from '../src/fieldAssets';
-import { collectManualManifestEntries } from '../../../scripts/generate-assets/generate-all';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -125,9 +125,9 @@ describe('asset integration', () => {
 			expect(
 				decorationKinds.has(properties.get('kind') as TinySwordsDecorationKind),
 			).toBe(true);
-			expect(decorationAssetKeys.has(properties.get('assetKey') as string)).toBe(
-				true,
-			);
+			expect(
+				decorationAssetKeys.has(properties.get('assetKey') as string),
+			).toBe(true);
 			expect(typeof object.x).toBe('number');
 			expect(typeof object.y).toBe('number');
 			expect((object.x ?? -1) % phaseALongV2Tilemap.tilewidth).toBe(0);
@@ -185,7 +185,7 @@ describe('asset integration', () => {
 
 	// Phase 7: the forest-gate tilemap JSON integrity test was scenario-
 	// specific (asserts width/height/path counts from FOREST_GATE_MAP).
-	// Phase A uses an on-the-fly generated grid with no Tiled JSON source,
+	// 정식 모드 uses an on-the-fly generated grid with no Tiled JSON source,
 	// so the check no longer applies. Commit 7.4 adds obstacle placement
-	// tests that cover the Phase A spatial contract.
+	// tests that cover the 정식 모드 spatial contract.
 });

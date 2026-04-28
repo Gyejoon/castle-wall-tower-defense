@@ -5,15 +5,19 @@ import { GameScene } from './scenes/Game';
 import { Preloader } from './scenes/Preloader';
 
 // Phase 6: StageDetailScene was removed along with the scenario-mode
-// purge. Phase A routes directly into GameScene from the lobby.
+// purge. 정식 모드 routes directly into GameScene from the lobby.
 export const gameConfig: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
 	width: ORTHO_CANVAS_W,
 	height: GAME_CANVAS_H,
 	parent: 'game-container',
 	backgroundColor: '#1a1a2e',
+	pixelArt: true,
 	render: {
 		preserveDrawingBuffer: true,
+		pixelArt: true,
+		antialias: false,
+		roundPixels: true,
 	},
 	scale: {
 		// v3.1: Scale.FIT keeps the internal logical resolution fixed at

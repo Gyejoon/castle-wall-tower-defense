@@ -102,6 +102,11 @@ vi.mock('@gld/phaser-game', () => {
 			setMasterVolume: vi.fn(),
 			unlock: vi.fn().mockResolvedValue(undefined),
 		},
+		bgmPlayer: {
+			play: vi.fn(),
+			stop: vi.fn(),
+			setVolume: vi.fn(),
+		},
 	};
 });
 
@@ -153,7 +158,7 @@ describe('GamePage', () => {
 		expect(useGameStore.getState().placementFeedback).toBe('combat_phase');
 	});
 
-	it('shows Phase A HUD with HP, energy, and timer', () => {
+	it('shows the HUD with HP, energy, and timer', () => {
 		const { emitSpy } = getEventBusHarness();
 		const view = render(<GamePage />);
 
@@ -170,11 +175,11 @@ describe('GamePage', () => {
 		});
 
 		expect(view.getByText('HP 20')).toBeTruthy();
-		// Phase 8 [8.2]: energy 60 shows in both TopHud and the PhaseAHud
+		// Phase 8 [8.2]: energy 60 shows in both TopHud and the GameHud
 		// info badge, so getAllByText disambiguates the match.
 		expect(view.getAllByText('60').length).toBeGreaterThan(0);
 		expect(view.getByTestId('hud-timer').textContent).toContain('보스');
-		// Phase 6: scenario deck dock removed. Phase A HUD is always mounted.
+		// Phase 6: scenario deck dock removed. HUD is always mounted.
 		expect(view.queryByTestId('deck-dock')).toBeNull();
 		expect(view.queryByTestId('hud-pressure')).toBeNull();
 		expect(view.queryByTestId('hud-next-pressure')).toBeNull();
@@ -308,14 +313,14 @@ describe('GamePage', () => {
 		expect(state.profile.totalGoldEarned).toBeGreaterThanOrEqual(200);
 	});
 
-	it('Phase 6: 2x speed is always unlocked in Phase A', () => {
+	it('Phase 6: 2x speed is always unlocked', () => {
 		useGameStore.setState({ runStatus: 'running' });
 		const view = render(<GamePage />);
 
 		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();
 	});
 
-	it('portrait shell uses 100dvh + max-w-[430px] (mobile portrait standard)', () => {
+	it('portrait shell uses 100dvh + max-w-[540px] (mobile portrait standard)', () => {
 		const view = render(<GamePage />);
 		const shell = view.getByTestId('game-portrait-shell') as HTMLDivElement;
 		// Height follows viewport (100dvh) so URL bar collapse doesn't cut HUDs.
@@ -324,7 +329,7 @@ describe('GamePage', () => {
 		// which is required for safe-area-inset-top to reach the status bar
 		// correctly on devices like Galaxy S25.
 		expect(shell.style.transform).toBe('');
-		expect(shell.className).toContain('max-w-[520px]');
+		expect(shell.className).toContain('max-w-[540px]');
 		expect(shell.className).toContain('flex-col');
 	});
 

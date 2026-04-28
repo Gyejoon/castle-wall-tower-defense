@@ -1,7 +1,7 @@
 export type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
 
 /**
- * Tower family — Phase A family/tier model. Replaces the old TowerType /
+ * Tower family — 정식 모드 family/tier model. Replaces the old TowerType /
  * FusionTowerType string union. Each of the four base families (archer /
  * siege / frost / stun) has tiers 1→4; T4s from two different base families
  * merge into T5 hybrids (hybrid_ab, hybrid_cd); the two hybrids merge into

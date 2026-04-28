@@ -2,8 +2,13 @@ import { createCanvas, type Canvas, type SKRSContext2D } from '@napi-rs/canvas';
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import type { AssetManifestEntry } from '../../packages/shared/src/assets/manifest';
+import {
+  core as dsCore,
+  element as dsElement,
+  tier as dsTier,
+} from '../../packages/shared/src/design/palette';
 
-// === Color Palette (medieval nature theme) ===
+// UI 공용 색상 원본은 design/palette.ts. 여기는 자연/스테이지/에셋 전용 색만 정의.
 export const PALETTE = {
   // Grid tiles
   gridDark:      '#5a8a30',  // 어두운 잔디
@@ -21,15 +26,15 @@ export const PALETTE = {
   woodLight:     '#c8905a',  // 밝은 나무
   // Magic/Special
   ice:           '#a8def0',  // 얼음
-  iceGlow:       '#5bc8e8',  // 얼음 빛
+  iceGlow:       dsCore.info,  // 얼음 빛 (=core.info #5bc8e8)
   magicBlue:     '#4060e0',  // 마법 파란
   magicGold:     '#e0b020',  // 마법 금빛
   fireOrange:    '#e07020',  // 불꽃 오렌지
-  fireRed:       '#c03020',  // 불꽃 빨강
+  fireRed:       dsCore.danger,  // 불꽃 빨강 (=core.danger #c03020)
   // Tower colors
-  archer:        '#c8a04a',  // 궁수 탑 (황금 갈색)
+  archer:        dsCore.accent,  // 궁수 탑 (황금 갈색, =core.accent)
   plasma:        '#8b4513',  // 투석기 (진한 갈색)
-  emp:           '#5bc8e8',  // 서리 마탑 (아이스 블루)
+  emp:           dsCore.info,  // 서리 마탑 (아이스 블루, =core.info)
   shield:        '#f0e080',  // 성기사 제단 (황금빛)
   stasis:        '#a8def0',  // 빙하 제단 (옅은 파란)
   // Unit colors
@@ -39,7 +44,7 @@ export const PALETTE = {
   stealthDrone:  '#302040',  // 그림자 암살자 (검보라)
   dragon:         '#c04020',  // 고대 드래곤 (불꽃 빨강)
   // UI
-  gold:          '#f0d060',  // 황금 장식
+  gold:          dsCore.gold,  // 황금 장식 (=core.gold #f0d060)
   white:         '#fffffe',  // 흰색
   gray:          '#94a1b2',  // 회색
   shadow:        '#2a1f0a',  // 그림자
@@ -52,19 +57,19 @@ export const PALETTE = {
   bloodStain:    '#6a1a10',  // 핏자국
   outline:       '#1a0e14',  // 1px 다크 아웃라인
   // Legacy (일부 스크립트 호환용)
-  green:         '#7ab648',
-  pink:          '#c03020',
-  // Tier colors
-  tierCommon:    '#c8a04a',  // T1 Common (기존 색상)
-  tierRare:      '#5bc8e8',  // T2 Rare (파란 틴트)
-  tierRareDark:  '#3a90b0',  // T2 Rare 어두운
-  tierHeroic:    '#c040d0',  // T3 Heroic (보라 틴트)
-  tierHeroicDark:'#8020a0',  // T3 Heroic 어두운
-  tierLegendary: '#e04040',  // T4 Legendary (빨강/오렌지)
-  tierLegendaryDark: '#a02020', // T4 Legendary 어두운
-  tierGod:       '#f0d060',  // T5 God (황금)
-  tierGodBright: '#ffe89a',  // T5 God 밝은
-  tierGodDark:   '#c0a030',  // T5 God 어두운
+  green:         dsCore.success,  // =core.success
+  pink:          dsCore.danger,   // =core.danger
+  // Tier colors — derived from `design/palette.ts` tier[*]
+  tierCommon:        dsTier[1].primary,
+  tierRare:          dsTier[2].primary,
+  tierRareDark:      dsTier[2].dark,
+  tierHeroic:        dsTier[3].primary,
+  tierHeroicDark:    dsTier[3].dark,
+  tierLegendary:     dsTier[4].primary,
+  tierLegendaryDark: dsTier[4].dark,
+  tierGod:           dsTier[5].primary,
+  tierGodBright:     dsTier[5].bright,
+  tierGodDark:       dsTier[5].dark,
   // Nature background (Kingdom Rush style — vibrant, lush)
   moss:          '#3d7a20',  // 이끼 진녹
   sand:          '#d4b896',  // 모래
@@ -83,14 +88,14 @@ export const PALETTE = {
   grassHighlight:'#6ab840',  // 잔디 하이라이트
   // Utility
   towerBase:     '#2a1f0a',  // 타워 기단 (어두운 갈색)
-  // Element colors (속성 색상)
-  elementFire:      '#e74c3c',  // 화 속성
-  elementFireGlow:  '#ff6b4a',  // 화 속성 글로우
-  elementWater:     '#3498db',  // 수 속성
-  elementWaterGlow: '#5dade2',  // 수 속성 글로우
-  elementLightning: '#f39c12',  // 번개 속성
-  elementLightningGlow: '#f7b731', // 번개 속성 글로우
-  elementNeutral:   '#c8a04a',  // 무 속성 (기존 archer 색상)
+  // Element colors — derived from `design/palette.ts` element.*
+  elementFire:          dsElement.fire.primary,
+  elementFireGlow:      dsElement.fire.glow,
+  elementWater:         dsElement.water.primary,
+  elementWaterGlow:     dsElement.water.glow,
+  elementLightning:     dsElement.lightning.primary,
+  elementLightningGlow: dsElement.lightning.glow,
+  elementNeutral:       dsElement.neutral.primary,
   // Castle wall stone
   castleStone: {
     dark: '#626567', mid: '#717d7e', light: '#8a9698',

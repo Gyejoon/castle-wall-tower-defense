@@ -1,9 +1,9 @@
-import { EventBus, soundGenerator } from '@gld/phaser-game';
+import { bgmPlayer, EventBus, soundGenerator } from '@gld/phaser-game';
 import { useCallback, useEffect, useState } from 'react';
 import { BossHpBar } from '../components/game/BossHpBar';
 import { BossWarningOverlay } from '../components/game/BossWarningOverlay';
+import { GameHud } from '../components/game/GameHud';
 import { GameOverScreen } from '../components/game/GameOverScreen';
-import { PhaseAHud } from '../components/game/PhaseAHud';
 import { SummonRevealOverlay } from '../components/game/SummonRevealOverlay';
 import { ToastNotification } from '../components/game/ToastNotification';
 import { TopHud } from '../components/game/TopHud';
@@ -35,7 +35,7 @@ export function GamePage() {
 	const prepCountdown = useGameStore((s) => s.countdown);
 	const gameSpeed = useGameStore((s) => s.gameSpeed);
 	const setGameSpeed = useGameStore((s) => s.setGameSpeed);
-	// Phase 6: Phase A is the only mode, so 2x speed is always available.
+	// Phase 6: 정식 모드가 유일한 모드이므로 2x speed is always available.
 	const speed2xUnlocked = true;
 
 	const { waitCountdown } = useGameEvents();
@@ -55,6 +55,23 @@ export function GamePage() {
 	useEffect(() => {
 		const sfxVol = useGameStore.getState().sfxVolume;
 		soundGenerator.setMasterVolume(sfxVol);
+	}, []);
+
+	// BGM: play on game entry, loop, stop on exit. Subscribe to bgmVolume changes.
+	useEffect(() => {
+		let lastVolume = useGameStore.getState().bgmVolume;
+		bgmPlayer.setVolume(lastVolume);
+		bgmPlayer.play('/assets/audio/bgm/gates_of_the_waning_moon.mp3');
+		const unsubscribe = useGameStore.subscribe((state) => {
+			if (state.bgmVolume !== lastVolume) {
+				lastVolume = state.bgmVolume;
+				bgmPlayer.setVolume(lastVolume);
+			}
+		});
+		return () => {
+			unsubscribe();
+			bgmPlayer.stop();
+		};
 	}, []);
 
 	// iOS AudioContext unlock on first user gesture
@@ -263,14 +280,14 @@ export function GamePage() {
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div
 				data-testid="game-portrait-shell"
-				className="relative flex w-full max-w-[520px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+				className="relative flex w-full max-w-[540px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
 				style={{
 					// Dynamic viewport: 100dvh on modern mobile browsers shrinks
 					// when URL bar shows. Fallback to 100% for legacy. Both HUDs
 					// size naturally; the canvas absorbs the remaining height
-					// via the flex-1 game area below. max-w bumped 430→520 after
-					// sprite downsize so the 432-internal map uses more
-					// horizontal space on larger phones (Galaxy S25/Fold outer).
+					// via the flex-1 game area below. max-w bumped to 540 to
+					// match the 512-wide internal canvas at 64px tiles with
+					// minimal horizontal letterbox on large phones.
 					height: '100dvh',
 					minHeight: '100%',
 				}}
@@ -345,7 +362,7 @@ export function GamePage() {
 					{/* Phase 8 Task 8.3 — 2s summon/gacha result celebration. */}
 					<SummonRevealOverlay />
 					{/* Phase 8 Task 8.1 — floating action sheet replaces the old inline
-					    sell/move/merge buttons in PhaseAHud. Hidden while the merge
+					    sell/move/merge buttons in GameHud. Hidden while the merge
 					    target picker is active (Task 8.5 [F10]). */}
 					<TowerActionSheet
 						selectedTower={mergeSourceId ? null : selectedTower}
@@ -426,7 +443,7 @@ export function GamePage() {
 					)}
 				</div>
 
-				{runStatus !== 'victory' && runStatus !== 'defeat' && <PhaseAHud />}
+				{runStatus !== 'victory' && runStatus !== 'defeat' && <GameHud />}
 			</div>
 		</div>
 	);

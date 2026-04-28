@@ -1,4 +1,4 @@
-import { PHASE_A_LONG_MAP } from '@gld/shared';
+import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
@@ -82,17 +82,17 @@ function createScene() {
 describe('TowerSystem idle tween cleanup', () => {
 	it('stops and removes idle tween when selling a tower', () => {
 		const scene = createScene();
-		const gridManager = new GridManager(PHASE_A_LONG_MAP);
+		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
 			invalidateCache: vi.fn(),
-			findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+			findPath: vi.fn(() => MAIN_LONG_MAP.path),
 		};
 		const towerSystem = new TowerSystem(
 			scene as never,
 			gridManager,
 			pathfinding as never,
 		);
-		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildablePoint = MAIN_LONG_MAP.buildablePoints[0];
 
 		expect(
 			towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer')
@@ -106,17 +106,17 @@ describe('TowerSystem idle tween cleanup', () => {
 
 	it('stops and removes idle tweens when destroying the system', () => {
 		const scene = createScene();
-		const gridManager = new GridManager(PHASE_A_LONG_MAP);
+		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
 			invalidateCache: vi.fn(),
-			findPath: vi.fn(() => PHASE_A_LONG_MAP.path),
+			findPath: vi.fn(() => MAIN_LONG_MAP.path),
 		};
 		const towerSystem = new TowerSystem(
 			scene as never,
 			gridManager,
 			pathfinding as never,
 		);
-		const buildablePoint = PHASE_A_LONG_MAP.buildablePoints[0];
+		const buildablePoint = MAIN_LONG_MAP.buildablePoints[0];
 
 		expect(
 			towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer')

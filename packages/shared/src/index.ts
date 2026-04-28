@@ -77,11 +77,13 @@ export {
 	getMapPaths,
 	getSpawnExitPairs,
 	isMapUnlocked,
+	MAIN_LONG_MAP,
+	MAIN_MAP_ID,
 	MAP_REGISTRY,
 	PHASE_A_LONG_MAP,
-	PHASE_A_MAP_ID,
 	PHASE_A_LONG_V2_TILEMAP_KEY,
 	PHASE_A_LONG_V2_TILEMAP_PATH,
+	PHASE_A_MAP_ID,
 } from './constants/maps';
 export {
 	battleXp,
@@ -124,13 +126,12 @@ export {
 	getWavesForMap,
 	MAX_WAVE_DURATION_MS,
 } from './constants/waves';
-export { generatePhaseAWaves } from './data/phaseAWaves';
 export type { SummonPool, SummonResult } from './data/summonPool';
 export {
 	createSummonPool,
 	drawRandomSummon,
-	getPhaseARefund,
-	PHASE_A_SUMMON_COST,
+	getSummonRefund,
+	SUMMON_COST,
 } from './data/summonPool';
 export type {
 	UpgradeCard,
@@ -138,6 +139,42 @@ export type {
 	UpgradeId,
 } from './data/upgradeCards';
 export { pickRandomUpgrades, UPGRADE_CARDS } from './data/upgradeCards';
+export { generateWaves } from './data/waves';
+export type {
+	CoreColor,
+	DurationKey,
+	EasingKey,
+	ElementKey,
+	ElevationKey,
+	OverlayDimKey,
+	RadiusKey,
+	SpacingKey,
+	StateColor,
+	TierKey,
+	Tokens,
+	TypographyScale,
+	ZIndexKey,
+} from './design/tokens';
+export {
+	core,
+	duration,
+	easing,
+	element,
+	elevation,
+	fontFamily,
+	fontWeight,
+	motion,
+	overlayDim,
+	palette,
+	radius,
+	spacing,
+	state,
+	surface,
+	tier,
+	tokens,
+	typography,
+	zIndex,
+} from './design/tokens';
 export type { AdPlacement, AdResult, AdService } from './services/AdService';
 export { MockAdService } from './services/AdService';
 // Phase 7 (v8): scenario-mode constants (stages/worlds/missions/achievements

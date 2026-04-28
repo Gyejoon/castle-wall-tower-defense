@@ -1,4 +1,4 @@
-// Phase A (sole mode) energy constants.
+// 정식 모드 energy constants.
 // Wave-clear energy bonus is removed; energy now comes from passive regen,
 // kills, and boss-kill rewards. See docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md.
 

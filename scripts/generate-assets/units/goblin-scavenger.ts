@@ -15,7 +15,10 @@ function armSwing(frame: number): number { return Math.round(Math.sin(walkPhase(
 function bodyLean(frame: number): number { return Math.round(Math.sin(walkPhase(frame)) * 0.5); }
 
 // --- 3-tone shade sets ---
-const skinShade = shade3(PALETTE.scoutDrone);     // goblin green
+const GOBLIN_SKIN = '#526f2f';
+const HOOD_DARK = '#3c2814';
+const SACK_CLOTH = '#7a5424';
+const skinShade = shade3(GOBLIN_SKIN);            // muted goblin green
 const leatherShade = shade3(PALETTE.leatherWorn); // worn leather
 const ironShade = shade3(PALETTE.ironDark);        // dark iron
 const rustShade = shade3(PALETTE.rust);            // rust
@@ -56,9 +59,13 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   setPixel(ctx, tx + 2, 32 + by, ironShade.base);
 
   // --- Backpack (large junk pile — hermit-crab shell) ---
-  // Iron pot (dented) — main pack body
+  // Cloth sack behind the pot gives the goblin a clearer scavenger silhouette.
   const packX = tx + 3;
   const packY = 16 + by;
+  drawShadedRect(ctx, packX - 2, packY + 2, 7, 11, SACK_CLOTH);
+  setPixel(ctx, packX - 2, packY + 6, leatherShade.shadow);
+  setPixel(ctx, packX + 3, packY + 12, PALETTE.gold);
+  // Iron pot (dented) — main pack body
   drawShadedRect(ctx, packX, packY, 8, 10, PALETTE.ironDark);
   // Dent in pot
   setPixel(ctx, packX + 3, packY + 4, ironShade.shadow);
@@ -87,8 +94,9 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const hx = tx - 1;
   const hy = 11 + by;
   // Hood
-  drawShadedRect(ctx, hx - 4, hy, 8, 7, PALETTE.leatherWorn);
-  drawRect(ctx, hx - 3, hy + 1, 6, 5, leatherShade.shadow); // hood interior shadow
+  drawShadedRect(ctx, hx - 5, hy, 10, 7, HOOD_DARK);
+  drawRect(ctx, hx - 4, hy + 1, 8, 5, leatherShade.shadow); // hood interior shadow
+  drawRect(ctx, hx - 4, hy, 8, 1, leatherShade.highlight); // worn rim
 
   // Green face peeking from hood
   drawRect(ctx, hx - 3, hy + 2, 6, 4, skinShade.base);
@@ -119,6 +127,9 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   // Wooden stick (vertical, held in right hand)
   drawLine(ctx, tx - 8, 18 + by, tx - 8, 28 + by, leatherShade.base);
   setPixel(ctx, tx - 8, 17 + by, leatherShade.highlight); // tip
+  // Tiny lucky charm on the stick, readable at 2x scale but restrained in-game.
+  setPixel(ctx, tx - 9, 20 + by, PALETTE.gold);
+  setPixel(ctx, tx - 10, 21 + by, shade3(PALETTE.gold).shadow);
 }
 
 // ============================================================
@@ -129,11 +140,11 @@ function drawWalkFallback(ctx: SKRSContext2D, ox: number, frame: number): void {
   const bobOff = frame === 1 || frame === 5 ? -1 : frame === 3 || frame === 7 ? 1 : 0;
 
   // Head + hood
-  drawRect(ctx, cx - 4, 11 + bobOff, 8, 7, PALETTE.leatherWorn);
-  drawRect(ctx, cx - 3, 13 + bobOff, 6, 4, PALETTE.scoutDrone);
+  drawRect(ctx, cx - 5, 11 + bobOff, 10, 7, HOOD_DARK);
+  drawRect(ctx, cx - 3, 13 + bobOff, 6, 4, GOBLIN_SKIN);
   // Ears
-  setPixel(ctx, cx - 5, 13 + bobOff, PALETTE.scoutDrone);
-  setPixel(ctx, cx + 5, 13 + bobOff, PALETTE.scoutDrone);
+  setPixel(ctx, cx - 6, 13 + bobOff, GOBLIN_SKIN);
+  setPixel(ctx, cx + 6, 13 + bobOff, GOBLIN_SKIN);
   // Eyes
   setPixel(ctx, cx - 1, 14 + bobOff, PALETTE.gold);
   setPixel(ctx, cx + 1, 14 + bobOff, PALETTE.gold);
@@ -145,8 +156,8 @@ function drawWalkFallback(ctx: SKRSContext2D, ox: number, frame: number): void {
   drawRect(ctx, cx + 4, 17 + bobOff, 7, 9, PALETTE.ironDark);
 
   // Legs
-  drawRect(ctx, cx - 3, 31 + bobOff, 3, 7, PALETTE.scoutDrone);
-  drawRect(ctx, cx + 1, 31 + bobOff, 3, 7, PALETTE.scoutDrone);
+  drawRect(ctx, cx - 3, 31 + bobOff, 3, 7, GOBLIN_SKIN);
+  drawRect(ctx, cx + 1, 31 + bobOff, 3, 7, GOBLIN_SKIN);
 }
 
 // ============================================================
@@ -193,8 +204,9 @@ function drawIdle(ctx: SKRSContext2D, ox: number, frame: number): void {
   // --- Head with hood (sways) ---
   const hx = cx + sway;
   const hy = 12;
-  drawShadedRect(ctx, hx - 4, hy, 8, 7, PALETTE.leatherWorn);
-  drawRect(ctx, hx - 3, hy + 1, 6, 5, leatherShade.shadow);
+  drawShadedRect(ctx, hx - 5, hy, 10, 7, HOOD_DARK);
+  drawRect(ctx, hx - 4, hy + 1, 8, 5, leatherShade.shadow);
+  drawRect(ctx, hx - 4, hy, 8, 1, leatherShade.highlight);
   // Face
   drawRect(ctx, hx - 3, hy + 2, 6, 4, skinShade.base);
   drawRect(ctx, hx - 3, hy + 2, 6, 1, skinShade.highlight);

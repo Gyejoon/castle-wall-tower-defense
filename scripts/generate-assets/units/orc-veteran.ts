@@ -29,6 +29,8 @@ const ROPE     = '#8a7a50';                        // crude rope color
 const YELLOW   = '#e0d020';                        // yellow dot eyes
 const SCAR     = '#3a5018';                        // face scar (darker green)
 const CHAIN    = '#6a6a5a';                        // chain links
+const TABARD   = '#6a2418';                        // dark fairy crimson cloth
+const BRASS    = '#b08a38';                        // tarnished trim
 
 // ── Body drawing (shared core for all animations) ──────────────
 function drawBody(
@@ -91,6 +93,10 @@ function drawBody(
   drawRect(ctx, cx - splitX, torsoY + breath, 7, 14, LEATHER.base);
   drawRect(ctx, cx - splitX, torsoY + breath, 7, 1, LEATHER.highlight);
   drawRect(ctx, cx - splitX, torsoY + 13 + breath, 7, 1, LEATHER.shadow);
+  // Torn crimson tabard, a small faction mark that reads against the green skin.
+  drawRect(ctx, cx - 1 - splitX, torsoY + 3 + breath, 4, 9, TABARD);
+  setPixel(ctx, cx + 2 - splitX, torsoY + 4 + breath, BRASS);
+  setPixel(ctx, cx - 1 - splitX, torsoY + 11 + breath, BLOOD);
   // chain links running diagonally
   setPixel(ctx, cx + 1 - splitX, torsoY + 2 + breath, CHAIN);
   setPixel(ctx, cx + 2 - splitX, torsoY + 4 + breath, CHAIN);
@@ -180,6 +186,10 @@ function drawBody(
   // Small right tusk
   setPixel(ctx, cx + 2, headY + 8, BONE_C.base);
   setPixel(ctx, cx + 2, headY + 9, BONE_C.shadow);
+  // Dark fairy war paint across the jaw.
+  setPixel(ctx, cx - 1, headY + 8, TABARD);
+  setPixel(ctx, cx, headY + 9, TABARD);
+  setPixel(ctx, cx + 1, headY + 8, TABARD);
 
   // ── Battle axe (crude, heavy) ─
   const axeX = cx + 9 - splitX;
@@ -190,17 +200,22 @@ function drawBody(
   setPixel(ctx, axeX, axeY + 6, LEATHER.base);  // grip wrap
   setPixel(ctx, axeX + 1, axeY + 10, LEATHER.base);
   setPixel(ctx, axeX, axeY + 14, LEATHER.base);
-  // Axe head (wide iron blade on top)
-  drawRect(ctx, axeX - 3, axeY, 3, 7, IRON.base);      // blade left side
-  drawRect(ctx, axeX - 3, axeY, 3, 1, IRON.highlight);  // top edge highlight
-  drawRect(ctx, axeX - 3, axeY + 6, 3, 1, IRON.shadow); // bottom edge
+  // Axe head (wide double-bit iron blade on top)
+  drawRect(ctx, axeX - 4, axeY, 4, 7, IRON.base);      // blade left side
+  drawRect(ctx, axeX + 2, axeY + 1, 3, 5, IRON.base);  // blade right side
+  drawRect(ctx, axeX - 4, axeY, 4, 1, IRON.highlight);  // top edge highlight
+  drawRect(ctx, axeX + 2, axeY + 1, 3, 1, IRON.highlight);
+  drawRect(ctx, axeX - 4, axeY + 6, 4, 1, IRON.shadow); // bottom edge
+  drawRect(ctx, axeX + 2, axeY + 5, 3, 1, IRON.shadow);
   // Blade edge (sharp left side)
-  setPixel(ctx, axeX - 4, axeY + 1, STEEL.highlight);
-  setPixel(ctx, axeX - 4, axeY + 3, STEEL.base);
-  setPixel(ctx, axeX - 4, axeY + 5, STEEL.highlight);
+  setPixel(ctx, axeX - 5, axeY + 1, STEEL.highlight);
+  setPixel(ctx, axeX - 5, axeY + 3, STEEL.base);
+  setPixel(ctx, axeX - 5, axeY + 5, STEEL.highlight);
+  setPixel(ctx, axeX + 5, axeY + 2, STEEL.highlight);
+  setPixel(ctx, axeX + 5, axeY + 4, STEEL.base);
   // Blood stain on blade
   setPixel(ctx, axeX - 3, axeY + 3, BLOOD);
-  setPixel(ctx, axeX - 2, axeY + 4, BLOOD);
+  setPixel(ctx, axeX + 3, axeY + 4, BLOOD);
 }
 
 // ── drawWalk ───────────────────────────────────────────────────
@@ -243,8 +258,10 @@ function drawWalkFallback(ctx: SKRSContext2D, ox: number, frame: number): void {
   drawRect(ctx, cx - 4, baseY + 32 + bob + lLeg, 4, 8, STEEL.base);
   drawRect(ctx, cx, baseY + 32 + bob + rLeg, 4, 8, SKIN.base);
 
-  // Sword (simplified)
+  // Axe (simplified)
   drawRect(ctx, cx + 8, baseY + 10 + bob, 2, 18, IRON.base);
+  drawRect(ctx, cx + 5, baseY + 10 + bob, 7, 5, IRON.base);
+  setPixel(ctx, cx + 4, baseY + 12 + bob, STEEL.highlight);
 }
 
 // ── drawIdle ───────────────────────────────────────────────────

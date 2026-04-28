@@ -1,12 +1,14 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드, 고정 논리 해상도)
+> **Last Updated:** 2026-04-28 (v3.4 — 몬스터 스프라이트 다크 동화풍 리워크)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
 > **v3 변경 요약**: plasma, dragon_nest 타워 **완전 제거** (family/tier 모델 불일치). hybrid_ab / hybrid_cd / ultimate 3종 신규 placeholder 상태 명시. PR #173 포팅으로 Tilemap_dirt_seamless / grass_seamless / path seamless 타일셋 도입. Cinematic keyart 로비 에셋 (성 실루엣 CSS-only, 에셋 없음).
 >
 > **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, **런타임 `setDisplaySize`가 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 다운스케일**해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
+>
+> **v3.4 변경 요약 (2026-04-28)**: 몬스터 스프라이트 방향을 `Dark Fairy Medieval`로 정리한다. 40×48 일반 유닛과 96×96 보스 규격, walk/idle/death 프레임 계약은 유지하되, 숲/모래 필드와 어울리도록 탁한 자연색, 낡은 중세 장비, 절제된 마법 포인트를 강화한다.
 
 ---
 
@@ -208,7 +210,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 320×48 (8f) | `stealth_drone_idle.png` 240×48 (6f) | `stealth_drone_death.png` 240×48 (6f) |
 | dragon | 고대 드래곤 | 보스급 | `dragon.png` 320×48 (8f) | `dragon_idle.png` 240×48 (6f) | `dragon_death.png` 240×48 (6f) |
 
-공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트.
+공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트. v3.4부터 일반 몬스터는 `Dark Fairy Medieval` 방향을 따른다: 탁한 자연색을 기본으로, 낡은 갑주/가죽/이끼/뼈 장식을 쓰고, 노란 눈·보라 눈·균열 같은 마법색은 작은 읽기 포인트로 제한한다.
 일반 몬스터 4종은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
 ### 애니메이션 상태 시스템
@@ -228,10 +230,10 @@ sin 기반 8프레임 워크 사이클:
 
 | 유닛 | walk/idle/death 연출 |
 |------|----------------------|
-| 고블린 scavenger | 등짐과 잡동사니가 흔들리고, idle에서 하중 sway, death에서 잡동사니/금화가 흩어진다 |
-| orc veteran | 비대칭 갑옷과 배틀액스 실루엣, idle 호흡, death에서 갑주 분리와 붕괴를 표현한다 |
-| stone troll | 거대한 어깨와 곤봉, idle heavy breathing, death에서 rubble pile로 무너진다 |
-| shadow assassin | 하체 alpha gradient와 눈 glow, idle pulse, death에서 연기와 cape fragment로 소멸한다 |
+| 고블린 scavenger | 낡은 후드, 노란 눈, 약탈 보따리를 핵심 실루엣으로 삼는다. 등짐과 잡동사니가 흔들리고, idle에서 하중 sway, death에서 잡동사니/금화가 흩어진다 |
+| orc veteran | 반쪽 강탈 갑주, 큰 어깨, 배틀액스를 핵심 실루엣으로 삼는다. idle 호흡, death에서 갑주 분리와 붕괴를 표현한다 |
+| stone troll | 이끼 낀 돌 어깨, 균열, 철못 곤봉을 핵심 실루엣으로 삼는다. idle heavy breathing, death에서 rubble pile로 무너진다 |
+| shadow assassin | 후드 망령, 보라 눈 glow, 안개 하체를 핵심 실루엣으로 삼는다. idle pulse, death에서 연기와 cape fragment로 소멸한다 |
 | 고대 드래곤 | 날개 ±5px 펄럭, 꼬리 스윙, 화염 입김 |
 
 ---
@@ -360,3 +362,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
 | 2026-04-20 | §3, §11 (전반) | **v3 정식 모드 승격**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |
 | 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 소스 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 그대로, **런타임 `setDisplaySize`를 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 축소해 타일 폭에 맞춤** — 기존 64×80 타워는 타일 48의 1.33× 폭, 1.67× 높이로 과하게 overflow했음. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |
+| 2026-04-28 | 헤더, §5 | **v3.4 몬스터 스프라이트 다크 동화풍 리워크**. 일반 몬스터를 `Dark Fairy Medieval` 방향으로 정리하고, 탁한 자연색·낡은 중세 장비·절제된 마법 포인트를 기준으로 실루엣과 파생 유닛 틴트를 강화. |

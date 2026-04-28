@@ -31,6 +31,8 @@ const CLOAK_COLOR = PALETTE.stealthDrone; // '#302040'
 const CLOAK = shade3(CLOAK_COLOR);
 const INNER_CLOAK = '#403060';
 const EYE_COLOR = '#9040ff';
+const RIM_COLOR = '#5f4f8f';
+const SMOKE_BLUE = '#2f4858';
 const BLADE_COLOR = PALETTE.stoneLight;   // '#b0b0b0'
 const BLADE_DARK = PALETTE.ironDark;      // '#4a4438'
 
@@ -81,8 +83,8 @@ function drawFadingLine(
 function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   const cx = ox + 20;
   const by = floatY(frame);
-  const lean = 0; // no lateral drift
-  const capeBillow = 0; // no cape swing
+  const lean = driftX(frame);
+  const capeBillow = Math.round(Math.sin(walkPhase(frame) + Math.PI * 0.25) * 2);
 
   // --- Hood (top of head) ---
   const hoodTop = HEAD_TOP + by;
@@ -90,6 +92,8 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
   drawFadingRect(ctx, cx - 6 + lean, hoodTop + 2, 12, 4, CLOAK.base);
   drawFadingRect(ctx, cx - 7 + lean, hoodTop + 4, 14, 3, CLOAK.base);
   drawFadingRect(ctx, cx - 4 + lean, hoodTop, 8, 1, CLOAK.highlight);
+  setFadingPixel(ctx, cx - 6 + lean, hoodTop + 5, RIM_COLOR);
+  setFadingPixel(ctx, cx + 6 + lean, hoodTop + 5, RIM_COLOR);
 
   // --- Face (darkness + eyes) ---
   const faceY = hoodTop + 5;
@@ -111,14 +115,18 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
 
   // Inner cloak detail
   drawFadingRect(ctx, cx - 3 + lean, shoulderY + 2, 6, 4, INNER_CLOAK);
+  setFadingPixel(ctx, cx, shoulderY + 3, EYE_COLOR);
 
-  // --- Left hand: single dagger (fixed, no motion) ---
+  // --- Left hand: hooked dagger, fixed against the glide ---
   const daggerCY = shoulderY + 4;
   // Left arm (fixed position, tucked against body)
   drawFadingRect(ctx, cx - 8 + lean, daggerCY, 2, 5, CLOAK.shadow);
   // Dagger blade pointing down
   drawFadingLine(ctx, cx - 8 + lean, daggerCY + 5 + by, cx - 8 + lean, daggerCY + 10 + by, BLADE_COLOR);
   setFadingPixel(ctx, cx - 8 + lean, daggerCY + 10 + by, BLADE_DARK); // tip
+  setFadingPixel(ctx, cx - 9 + lean, daggerCY + 8 + by, BLADE_COLOR);
+  // Rear blade glints for a more dangerous silhouette.
+  drawFadingLine(ctx, cx + 7 + lean, daggerCY + 1, cx + 10 + lean, daggerCY + 7, BLADE_COLOR);
 
   // --- Cape / Cloak billowing sides ---
   // Left cape edge
@@ -147,7 +155,8 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
     const halfW = Math.round(6 - t * 3);
     const lateralSway = Math.round(smokeBaseShift * t);
     const smokeJitter = Math.round(Math.sin(walkPhase(frame) + dy * 0.5) * (t * 2));
-    drawFadingRect(ctx, cx - halfW + lean + smokeJitter + lateralSway, y, halfW * 2, 1, CLOAK.base);
+    const smokeColor = dy % 5 === 0 ? SMOKE_BLUE : CLOAK.base;
+    drawFadingRect(ctx, cx - halfW + lean + smokeJitter + lateralSway, y, halfW * 2, 1, smokeColor);
   }
 
   // --- Smoke wisps at feet ---
@@ -158,6 +167,7 @@ function drawWalk(ctx: SKRSContext2D, ox: number, frame: number): void {
     const a = 0.15 + Math.sin(angle) * 0.1;
     setPixel(ctx, wx, wy, hexToRgba(CLOAK.base, a));
     setPixel(ctx, wx + 1, wy, hexToRgba(CLOAK.shadow, a * 0.7));
+    if (i === 1) setPixel(ctx, wx - 1, wy + 1, hexToRgba(SMOKE_BLUE, a * 0.8));
   }
 }
 
@@ -203,6 +213,8 @@ function drawIdle(ctx: SKRSContext2D, ox: number, frame: number): void {
   drawFadingRect(ctx, cx - 6, hoodTop + 2, 12, 4, CLOAK.base);
   drawFadingRect(ctx, cx - 7, hoodTop + 4, 14, 3, CLOAK.base);
   drawFadingRect(ctx, cx - 4, hoodTop, 8, 1, CLOAK.highlight);
+  setFadingPixel(ctx, cx - 6, hoodTop + 5, RIM_COLOR);
+  setFadingPixel(ctx, cx + 6, hoodTop + 5, RIM_COLOR);
 
   // --- Face ---
   const faceY = hoodTop + 5;
@@ -222,6 +234,7 @@ function drawIdle(ctx: SKRSContext2D, ox: number, frame: number): void {
   drawFadingRect(ctx, cx - 7, shoulderY + 2, 14, 3, CLOAK.base);
   drawFadingRect(ctx, cx - 6, shoulderY + 5, 12, 3, CLOAK.shadow);
   drawFadingRect(ctx, cx - 3, shoulderY + 2, 6, 4, INNER_CLOAK);
+  setFadingPixel(ctx, cx, shoulderY + 3, EYE_COLOR);
 
   // --- Daggers at rest (crossed, no swing) ---
   const daggerCY = shoulderY + 5;
@@ -249,7 +262,8 @@ function drawIdle(ctx: SKRSContext2D, ox: number, frame: number): void {
     const t = dy / (BOTTOM_Y - waistTop);
     const halfW = Math.round(6 - t * 3);
     const smokeJitter = Math.round(Math.sin(phase + dy * 0.5) * (t * 1.5));
-    drawFadingRect(ctx, cx - halfW + smokeJitter + sway, y, halfW * 2, 1, CLOAK.base);
+    const smokeColor = dy % 4 === 0 ? SMOKE_BLUE : CLOAK.base;
+    drawFadingRect(ctx, cx - halfW + smokeJitter + sway, y, halfW * 2, 1, smokeColor);
   }
 
   // --- Smoke wisps ---

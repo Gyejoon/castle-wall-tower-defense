@@ -54,6 +54,27 @@ const UNIT_SHADOWS: Record<string, { rx: number; ry: number; alpha: number }> = 
   stealth_drone: { rx: 6,  ry: 3, alpha: 0.12 },  // faint, floating
 };
 
+const UNIT_VARIANT_TINTS: Partial<Record<string, { color: string; alpha: number }>> = {
+  flame_imp: { color: PALETTE.fireOrange, alpha: 0.16 },
+  lava_golem: { color: PALETTE.fireRed, alpha: 0.14 },
+  arcane_mage: { color: PALETTE.magicBlue, alpha: 0.16 },
+  mana_shield: { color: PALETTE.iceGlow, alpha: 0.13 },
+  orc_warlord: { color: PALETTE.gold, alpha: 0.10 },
+  forge_master: { color: PALETTE.fireOrange, alpha: 0.14 },
+  corrupted_archmage: { color: '#8f50ff', alpha: 0.16 },
+};
+
+function applyUnitVariantTint(
+  ctx: ReturnType<typeof makeCanvas>['ctx'],
+  width: number,
+  height: number,
+  unitId: string,
+): void {
+  const tint = UNIT_VARIANT_TINTS[unitId];
+  if (!tint) return;
+  applyColorTint(ctx, width, height, tint.color, tint.alpha);
+}
+
 function drawUnitShadow(ctx: ReturnType<typeof makeCanvas>['ctx'], ox: number, unitId: string): void {
   const cx = ox + 20;
   const s = UNIT_SHADOWS[unitId];
@@ -581,6 +602,7 @@ export async function generate(): Promise<ManifestEntry[]> {
           module.drawWalk(sheetCtx, f * FRAME_W, f);
         }
         applyOutlineToSheet(sheetCtx, FRAME_COUNT);
+        applyUnitVariantTint(sheetCtx, walkSheetW, FRAME_H, id);
       },
       (sheetCtx) => {
         for (let f = 0; f < FRAME_COUNT; f++) {
@@ -588,6 +610,7 @@ export async function generate(): Promise<ManifestEntry[]> {
           module.drawWalkFallback(sheetCtx, f * FRAME_W, f);
         }
         applyOutlineToSheet(sheetCtx, FRAME_COUNT);
+        applyUnitVariantTint(sheetCtx, walkSheetW, FRAME_H, id);
       },
       walkCanvas,
       walkCtx,
@@ -610,6 +633,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       module.drawIdle(idleCtx, f * FRAME_W, f);
     }
     applyOutlineToSheet(idleCtx, IDLE_FRAMES);
+    applyUnitVariantTint(idleCtx, idleSheetW, FRAME_H, id);
     saveCanvas(idleCanvas, `${OUTPUT_DIR}/${id}_idle.png`);
     entries.push({
       key: `unit-${id}-idle`,
@@ -626,6 +650,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       module.drawDeath(deathCtx, f * FRAME_W, f);
     }
     applyOutlineToSheet(deathCtx, DEATH_FRAMES);
+    applyUnitVariantTint(deathCtx, deathSheetW, FRAME_H, id);
     saveCanvas(deathCanvas, `${OUTPUT_DIR}/${id}_death.png`);
     entries.push({
       key: `unit-${id}-death`,

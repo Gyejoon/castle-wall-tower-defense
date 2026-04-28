@@ -34,6 +34,9 @@ const STONE_LIGHT = shade3(PALETTE.stoneLight);
 const LEATHER = shade3(PALETTE.leatherWorn);
 const IRON = shade3(PALETTE.ironDark);
 const BONE_SHADE = shade3(PALETTE.bone);
+const MOSS_GLOW = '#5f9a38';
+const RUNE_GLOW = '#79c6a0';
+const FUNGUS = '#b87a34';
 
 // ===================================================================
 //  BODY DRAWING HELPER — shared between walk, idle, death (standing)
@@ -88,6 +91,8 @@ function drawTrollBody(
   setPixel(ctx, cx - 11, 17 + by, PALETTE.moss);
   setPixel(ctx, cx - 10, 17 + by, PALETTE.moss);
   setPixel(ctx, cx - 11, 18 + by, PALETTE.moss);
+  setPixel(ctx, cx - 12, 19 + by, MOSS_GLOW);
+  setPixel(ctx, cx - 10, 20 + by, MOSS_GLOW);
   // Patch 2: mid-torso right
   setPixel(ctx, cx + 4, 25 + by, PALETTE.moss);
   setPixel(ctx, cx + 5, 25 + by, PALETTE.moss);
@@ -95,6 +100,15 @@ function drawTrollBody(
   // Patch 3: lower back
   setPixel(ctx, cx - 6, 31 + by, PALETTE.moss);
   setPixel(ctx, cx - 5, 31 + by, PALETTE.moss);
+
+  // Tiny fairy-forest fungus on the shoulder; warm but less dominant than tower VFX.
+  setPixel(ctx, cx - 13, 13 + by + shoulderOff, FUNGUS);
+  setPixel(ctx, cx - 14, 14 + by + shoulderOff, FUNGUS);
+  setPixel(ctx, cx - 13, 14 + by + shoulderOff, PALETTE.bone);
+  // A restrained rune crack connects this monster to the game's magic fantasy.
+  setPixel(ctx, cx + 2, 23 + by, RUNE_GLOW);
+  setPixel(ctx, cx + 3, 24 + by, hexToRgba(RUNE_GLOW, 0.75));
+  setPixel(ctx, cx + 4, 24 + by, hexToRgba(RUNE_GLOW, 0.55));
 
   // --- Chest: bone pendant on rope ---
   // Rope (thin line from neck down)
@@ -132,6 +146,7 @@ function drawTrollBody(
   drawLine(ctx, clubBaseX - 2, clubTop + 5, clubBaseX - 3, clubTop + 4, IRON.highlight);
   drawLine(ctx, clubBaseX + 4, clubTop + 2, clubBaseX + 5, clubTop + 1, IRON.highlight);
   drawLine(ctx, clubBaseX + 4, clubTop + 5, clubBaseX + 5, clubTop + 4, IRON.highlight);
+  setPixel(ctx, clubBaseX + 1, clubTop + 3, MOSS_GLOW);
 }
 
 // ===================================================================

@@ -69,10 +69,7 @@ describe('PRELOAD_TOWER_IDS', () => {
 		expect(PRELOAD_TOWER_IDS).toContain('divine_throne');
 	});
 
-	// Phase 1: full asset verification is deferred to Phase 11 once placeholder
-	// sprites for the new T2-T6 tower ids land. For now, only the four tier-1
-	// ids ('archer', 'nova_cannon', 'emp', 'shield') are guaranteed to exist.
-	it.skip('has either png manifest entries or generated webp files for every preloaded tower asset (Phase 11)', () => {
+	it('has either png manifest entries or generated webp files for every preloaded tower asset', () => {
 		for (const towerId of PRELOAD_TOWER_IDS) {
 			const hasPngManifestEntry = manifest.assets.some(
 				(asset) =>

@@ -1,12 +1,14 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드, 고정 논리 해상도)
+> **Last Updated:** 2026-04-28 (v3.2 — Tiny Swords풍 타워 스프라이트 폴리시)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
 > **v3 변경 요약**: plasma, dragon_nest 타워 **완전 제거** (family/tier 모델 불일치). hybrid_ab / hybrid_cd / ultimate 3종 신규 placeholder 상태 명시. PR #173 포팅으로 Tilemap_dirt_seamless / grass_seamless / path seamless 타일셋 도입. Cinematic keyart 로비 에셋 (성 실루엣 CSS-only, 에셋 없음).
 >
 > **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, **런타임 `setDisplaySize`가 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 다운스케일**해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
+>
+> **v3.2 변경 요약 (2026-04-28)**: 19종 전체 타워 정적/공격 스프라이트를 Tiny Swords 지형 톤에 맞춰 재생성했다. 공통 grass plinth, 1px dark outline, top-left rim light, 역할군별 소품을 추가하고 `hybrid_ab`, `hybrid_cd`, `ultimate`는 T4 alias placeholder가 아닌 전용 T5/T6 스프라이트와 공격 애니메이션을 사용한다.
 
 ---
 
@@ -70,8 +72,8 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 | 카테고리 | 파일 수 | 생성기 | 상태 |
 |---------|--------|-------|------|
-| 타워 스태틱 | 18 PNG+WebP | `generate-towers.ts` | ✅ 완료 |
-| 타워 공격 애니 | 18 spritesheet | `generate-towers.ts` | ✅ 완료 |
+| 타워 스태틱 | 19종 PNG+WebP (+ nova barrel) | `generate-towers.ts` | ✅ 완료 |
+| 타워 공격 애니 | 19종 spritesheet PNG+WebP | `generate-towers.ts` | ✅ 완료 |
 | 유닛 walk | 5 spritesheet | `generate-units.ts` | ✅ 완료 |
 | 유닛 idle | 4 spritesheet (6f, 240×48) | `generate-units.ts` | ✅ 완료 |
 | 유닛 death | 4 spritesheet (6f, 유닛별 특화) | `generate-units.ts` | ✅ 완료 |
@@ -84,7 +86,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | 아이콘 | ~8 PNG+WebP | `generate-icons.ts` | ✅ 완료 |
 | vendor | tiny-swords 팩 | N/A | ✅ 완료 |
 
-**현재 총계: ~234 PNG+WebP**
+**현재 총계: 매니페스트 332 entries / 파일 기준 ~779 assets**
 
 ---
 
@@ -92,18 +94,19 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ### v3 타워 인벤토리
 
-**완성된 에셋 (16종, 기존 제작분 재활용)**
+**완성된 에셋 (19종, 전용 제작분)**
 - archer family: archer, wind_spire, flame_tower, arcane_spire
 - siege family: nova_cannon, fortress, earth_golem, celestial
 - frost family: emp, stasis_field, disruptor, world_tree
 - stun family: shield, twin_archer, holy_shrine, divine_throne
+- hybrid/ultimate: hybrid_ab, hybrid_cd, ultimate
 
-**Placeholder (3종 — 전용 아트 미제작)**
-| id | tier | 임시 스프라이트 alias | VFX 차별화 |
-|----|------|---------------------|----------|
-| `hybrid_ab` | 5 | `arcane_spire.png` alias | 금색 aura 파티클 (`tint: 0xffcc33`) |
-| `hybrid_cd` | 5 | `world_tree.png` alias | 보라 aura 파티클 (`tint: 0x9966ff`) |
-| `ultimate` | 6 | `divine_throne.png` alias | 무지개-gold aura + 강한 파티클 버스트 |
+**T5/T6 전용 스프라이트**
+| id | tier | 스프라이트 | VFX 차별화 |
+|----|------|----------|----------|
+| `hybrid_ab` | 5 | `hybrid_ab.png` | 금색 aura 파티클 (`tint: 0xffcc33`) |
+| `hybrid_cd` | 5 | `hybrid_cd.png` | 보라 aura 파티클 (`tint: 0x9966ff`) |
+| `ultimate` | 6 | `ultimate.png` | 무지개-gold aura + 강한 파티클 버스트 |
 
 합성 reveal 시 추가 연출: camera flash (300ms, white) + scale punch (0.8→1.0, Back.easeOut) + 파티클 burst (tier 5: 30 particles, tier 6: 2개 ring + 더 큰 burst).
 
@@ -155,10 +158,11 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ### 3.5 타워 HQ 스프라이트 규격 (2026-04-10~)
 
-- 대상: 전체 18종 (파일럿 8종 + 나머지 10종 모두 전환 완료)
+- 대상: 정식 카탈로그 전체 19종 (`ALL_TOWERS`)
 - 스타일: `drawIsoCube` 기반 중세 픽셀 아트 (하드 엣지, PALETTE 색상)
+- v3.2 스타일 보정: Tiny Swords 지형 톤 grass plinth, 1px dark outline, top-left rim light, 역할군별 소품(화살/깃발, 자갈/목재, 얼음 파편, 제단 촛불/문양)
 - 해상도: 정적 스프라이트 128×160, fire spritesheet 64×80×8=512×80 (HQ base를 64×80으로 축소 + fire 이펙트 overlay)
-- Grade variant: normal/rare/unique/epic 4종 (18×4=72 정적 스프라이트)
+- Grade variant: normal/rare/unique/epic 4종 (19×4=76 정적 스프라이트)
   - 에셋 파일명: `assets/towers/{id}.png`, `assets/towers/{id}-rare.png`, `assets/towers/{id}-unique.png`, `assets/towers/{id}-epic.png`
   - 매니페스트 key: `tower-{id}`, `tower-{id}-rare`, `tower-{id}-unique`, `tower-{id}-epic`
   - Normal은 base 스프라이트, rare/unique/epic은 공통 decoration 헬퍼로 overlay
@@ -360,3 +364,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
 | 2026-04-20 | §3, §11 (전반) | **v3 정식 모드 승격**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |
 | 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 소스 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 그대로, **런타임 `setDisplaySize`를 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 축소해 타일 폭에 맞춤** — 기존 64×80 타워는 타일 48의 1.33× 폭, 1.67× 높이로 과하게 overflow했음. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |
+| 2026-04-28 | 헤더, §2, §3, §3.5 | **v3.2 타워 스프라이트 폴리시**. Tiny Swords 지형 톤에 맞춰 19종 전체 타워 정적/공격 스프라이트를 재생성. `hybrid_ab`, `hybrid_cd`, `ultimate`는 alias placeholder를 종료하고 전용 T5/T6 PNG/WebP 및 fire spritesheet를 매니페스트에 등록. |

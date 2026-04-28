@@ -27,7 +27,8 @@ import {
   drawEarthGolemHQ, drawEarthGolemBody, drawEarthGolemArms,
   drawNovaCannonBody, drawNovaCannonBarrel,
   drawHolyShrineHQ, drawDragonNestHQ, drawArcaneSpireHQ, drawWorldTreeHQ,
-  drawCelestialHQ, drawDivineThroneHQ,
+  drawCelestialHQ, drawHybridAbHQ, drawHybridCdHQ, drawUltimateHQ,
+  drawDivineThroneHQ,
 } from './towers/pilot-draw';
 import { drawGradeDecoration, type GradeVariant } from './towers/grade-decoration';
 
@@ -52,6 +53,9 @@ export const PILOT_IDS = [
   'world_tree',
   'celestial',
   'divine_throne',
+  'hybrid_ab',
+  'hybrid_cd',
+  'ultimate',
 ] as const;
 export type PilotId = (typeof PILOT_IDS)[number];
 export const HQ_WIDTH = 128;
@@ -76,6 +80,9 @@ const PILOT_DRAW: Record<PilotId, (ctx: SKRSContext2D, ox: number, oy: number) =
   world_tree: drawWorldTreeHQ,
   celestial: drawCelestialHQ,
   divine_throne: drawDivineThroneHQ,
+  hybrid_ab: drawHybridAbHQ,
+  hybrid_cd: drawHybridCdHQ,
+  ultimate: drawUltimateHQ,
 };
 
 function isPilot(id: string): id is PilotId {
@@ -86,6 +93,9 @@ type GeneratedTowerShape = 'archer' | 'catapult' | 'frost' | 'paladin' | 'star';
 
 interface TowerAssetDef {
   id: string;
+  family: SharedTowerDef['family'];
+  tier: SharedTowerDef['tier'];
+  element: SharedTowerDef['element'];
   color: string;
   shape: GeneratedTowerShape;
 }
@@ -105,8 +115,11 @@ function mapTowerShape(shape: SharedTowerDef['shape']): GeneratedTowerShape {
   }
 }
 
-const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, color, shape }) => ({
+const TOWERS: TowerAssetDef[] = ALL_TOWERS.map(({ id, family, tier, element, color, shape }) => ({
   id,
+  family,
+  tier,
+  element,
   color,
   shape: mapTowerShape(shape),
 }));
@@ -147,6 +160,254 @@ function assertRequiredOutputs(): void {
   const missing = REQUIRED_FILES.filter((file) => !existsSync(`${OUTPUT_DIR}/${file}`));
   if (missing.length > 0) {
     throw new Error(`[towers] missing required outputs: ${missing.join(', ')}`);
+  }
+}
+
+type GeneratedCanvas = ReturnType<typeof makeCanvas>['canvas'];
+type GeneratedContext = ReturnType<typeof makeCanvas>['ctx'];
+
+const TINY_SWORDS_TONE = {
+  outline: '#1d1309',
+  outlineSoft: '#2f2110',
+  grassDark: '#315f22',
+  grassMid: '#4f8f32',
+  grassLight: '#79bd4b',
+  dirt: '#9b7141',
+  dirtDark: '#5b3b21',
+  stoneDark: '#4b4f46',
+  stoneMid: '#7b816f',
+  stoneLight: '#a9b092',
+  frost: '#a8def0',
+  gold: '#f0d060',
+  purple: '#a855f7',
+} as const;
+
+function parseHexColor(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function applySolidPixelOutline(
+  canvas: GeneratedCanvas,
+  ctx: GeneratedContext,
+  outlineColor = TINY_SWORDS_TONE.outline,
+): void {
+  const width = canvas.width;
+  const height = canvas.height;
+  const image = ctx.getImageData(0, 0, width, height);
+  const source = new Uint8ClampedArray(image.data);
+  const [r, g, b] = parseHexColor(outlineColor);
+
+  const isSolid = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return false;
+    return source[(y * width + x) * 4 + 3] >= 176;
+  };
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      if (source[idx + 3] > 12) continue;
+      const touchesSolid =
+        isSolid(x - 1, y) ||
+        isSolid(x + 1, y) ||
+        isSolid(x, y - 1) ||
+        isSolid(x, y + 1) ||
+        isSolid(x - 1, y - 1) ||
+        isSolid(x + 1, y - 1) ||
+        isSolid(x - 1, y + 1) ||
+        isSolid(x + 1, y + 1);
+      if (!touchesSolid) continue;
+      image.data[idx] = r;
+      image.data[idx + 1] = g;
+      image.data[idx + 2] = b;
+      image.data[idx + 3] = 220;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+  applySubtleRimLighting(canvas, ctx);
+}
+
+function blendToward(value: number, target: number, amount: number): number {
+  return Math.round(value + (target - value) * amount);
+}
+
+function applySubtleRimLighting(canvas: GeneratedCanvas, ctx: GeneratedContext): void {
+  const width = canvas.width;
+  const height = canvas.height;
+  const image = ctx.getImageData(0, 0, width, height);
+  const source = new Uint8ClampedArray(image.data);
+  const light = parseHexColor('#fff2b8');
+  const shadow = parseHexColor('#24160a');
+
+  const alphaAt = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return 0;
+    return source[(y * width + x) * 4 + 3];
+  };
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      if (source[idx + 3] < 176) continue;
+
+      const topLeftAir = alphaAt(x - 1, y - 1) < 24 || alphaAt(x, y - 1) < 24;
+      const bottomRightAir = alphaAt(x + 1, y + 1) < 24 || alphaAt(x + 1, y) < 24;
+      const amount = topLeftAir ? 0.22 : bottomRightAir ? 0.16 : 0;
+      if (amount === 0) continue;
+      const target = topLeftAir ? light : shadow;
+
+      image.data[idx] = blendToward(source[idx], target[0], amount);
+      image.data[idx + 1] = blendToward(source[idx + 1], target[1], amount);
+      image.data[idx + 2] = blendToward(source[idx + 2], target[2], amount);
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+}
+
+function drawPixelGrassDiamond(
+  ctx: GeneratedContext,
+  cx: number,
+  cy: number,
+  hw: number,
+  hh: number,
+): void {
+  for (let dy = -hh; dy <= hh; dy++) {
+    const ratio = 1 - Math.abs(dy) / hh;
+    const w = Math.round(hw * ratio);
+    for (let dx = -w; dx <= w; dx++) {
+      const edge = Math.abs(dx) >= w - 1 || Math.abs(dy) >= hh - 1;
+      const checker = (dx + dy + 128) % 7 === 0;
+      const color = edge
+        ? TINY_SWORDS_TONE.outlineSoft
+        : checker
+          ? TINY_SWORDS_TONE.grassLight
+          : dy > hh * 0.32
+            ? TINY_SWORDS_TONE.grassDark
+            : TINY_SWORDS_TONE.grassMid;
+      setPixel(ctx, cx + dx, cy + dy, color);
+    }
+  }
+
+  for (let d = 1; d <= 5; d++) {
+    for (let row = 0; row <= hh; row++) {
+      const ratio = 1 - row / hh;
+      const w = Math.round(hw * ratio);
+      for (let dx = -w; dx < 0; dx++) setPixel(ctx, cx + dx, cy + row + d, TINY_SWORDS_TONE.dirtDark);
+      for (let dx = 0; dx <= w; dx++) setPixel(ctx, cx + dx, cy + row + d, TINY_SWORDS_TONE.dirt);
+    }
+  }
+}
+
+function drawGrassTuft(ctx: GeneratedContext, x: number, y: number): void {
+  drawLine(ctx, x, y, x - 2, y - 4, TINY_SWORDS_TONE.grassLight);
+  drawLine(ctx, x + 1, y, x + 1, y - 5, TINY_SWORDS_TONE.grassLight);
+  drawLine(ctx, x + 2, y, x + 4, y - 3, TINY_SWORDS_TONE.grassDark);
+}
+
+function drawPebble(ctx: GeneratedContext, x: number, y: number, color = TINY_SWORDS_TONE.stoneMid): void {
+  drawRect(ctx, x - 2, y - 1, 4, 3, TINY_SWORDS_TONE.outlineSoft);
+  drawRect(ctx, x - 1, y - 2, 3, 1, color);
+  drawRect(ctx, x - 1, y, 3, 2, TINY_SWORDS_TONE.stoneDark);
+  setPixel(ctx, x, y - 1, TINY_SWORDS_TONE.stoneLight);
+}
+
+function drawTowerGroundDressing(ctx: GeneratedContext, tower: TowerAssetDef): void {
+  const cx = HQ_WIDTH / 2;
+  const cy = 136;
+  const lift = tower.tier >= 5 ? -3 : 0;
+  drawIsoShadow(ctx, cx, cy + 9 + lift, 34, 10, 0.28);
+  drawPixelGrassDiamond(ctx, cx, cy + lift, tower.tier >= 5 ? 34 : 30, tower.tier >= 5 ? 12 : 10);
+
+  drawGrassTuft(ctx, cx - 30, cy + 6 + lift);
+  drawGrassTuft(ctx, cx + 26, cy + 5 + lift);
+  drawPebble(ctx, cx - 22, cy + 12 + lift);
+  drawPebble(ctx, cx + 22, cy + 10 + lift, TINY_SWORDS_TONE.stoneLight);
+
+  if (tower.family === 'siege') {
+    drawPebble(ctx, cx - 34, cy + lift, TINY_SWORDS_TONE.stoneDark);
+    drawPebble(ctx, cx + 33, cy + 1 + lift, TINY_SWORDS_TONE.stoneMid);
+  } else if (tower.family === 'frost') {
+    drawLine(ctx, cx - 31, cy + 4 + lift, cx - 35, cy - 5 + lift, TINY_SWORDS_TONE.frost);
+    drawLine(ctx, cx + 31, cy + 4 + lift, cx + 35, cy - 4 + lift, TINY_SWORDS_TONE.frost);
+    setPixel(ctx, cx - 34, cy - 3 + lift, '#ffffff');
+  } else if (tower.family === 'stun') {
+    setPixel(ctx, cx - 30, cy + lift, TINY_SWORDS_TONE.gold);
+    setPixel(ctx, cx + 30, cy + 1 + lift, TINY_SWORDS_TONE.gold);
+    addGlow(ctx, cx, cy - 2 + lift, 7, TINY_SWORDS_TONE.gold, 0.08);
+  } else if (tower.family === 'hybrid') {
+    drawStar(ctx, cx - 32, cy - 2 + lift, 4, 2, 4, TINY_SWORDS_TONE.purple);
+    drawStar(ctx, cx + 32, cy - 1 + lift, 4, 2, 4, tower.color);
+  } else if (tower.family === 'ultimate') {
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      setPixel(ctx, Math.round(cx + 32 * Math.cos(a)), Math.round(cy + lift + 8 * Math.sin(a)), '#ffffff');
+    }
+    addGlow(ctx, cx, cy - 4 + lift, 10, TINY_SWORDS_TONE.gold, 0.12);
+  }
+}
+
+function drawTowerBaseLayer(ctx: GeneratedContext, tower: TowerAssetDef): void {
+  drawTowerGroundDressing(ctx, tower);
+}
+
+function drawFamilyAccentProps(ctx: GeneratedContext, tower: TowerAssetDef): void {
+  const cx = HQ_WIDTH / 2;
+  const baseY = 132;
+  switch (tower.family) {
+    case 'archer': {
+      // Arrow bundle and a tiny red pennant echo the Tiny Swords encampment tone.
+      for (let i = 0; i < 3; i++) {
+        drawLine(ctx, cx - 30 + i * 3, baseY - 2, cx - 24 + i * 3, baseY - 20, PALETTE.woodDark);
+        setPixel(ctx, cx - 24 + i * 3, baseY - 21, PALETTE.stoneLight);
+      }
+      drawLine(ctx, cx + 28, baseY + 1, cx + 28, baseY - 20, PALETTE.woodDark);
+      drawRect(ctx, cx + 29, baseY - 19, 8, 3, PALETTE.fireRed);
+      drawRect(ctx, cx + 29, baseY - 16, 5, 2, PALETTE.fireRed);
+      break;
+    }
+    case 'siege': {
+      drawPebble(ctx, cx - 32, baseY - 5, TINY_SWORDS_TONE.stoneDark);
+      drawPebble(ctx, cx + 31, baseY - 4, TINY_SWORDS_TONE.stoneMid);
+      drawLine(ctx, cx - 26, baseY + 1, cx - 12, baseY - 10, PALETTE.woodDark);
+      drawLine(ctx, cx - 25, baseY + 2, cx - 11, baseY - 9, PALETTE.woodLight);
+      drawRect(ctx, cx + 24, baseY - 9, 10, 3, PALETTE.wood);
+      drawRect(ctx, cx + 27, baseY - 12, 4, 8, PALETTE.woodDark);
+      break;
+    }
+    case 'frost': {
+      drawLine(ctx, cx - 28, baseY, cx - 34, baseY - 18, PALETTE.ice);
+      drawLine(ctx, cx - 28, baseY, cx - 22, baseY - 14, PALETTE.iceGlow);
+      drawLine(ctx, cx + 28, baseY - 1, cx + 34, baseY - 16, PALETTE.ice);
+      drawLine(ctx, cx + 28, baseY - 1, cx + 22, baseY - 12, PALETTE.iceGlow);
+      setPixel(ctx, cx - 31, baseY - 15, '#ffffff');
+      setPixel(ctx, cx + 31, baseY - 13, '#ffffff');
+      break;
+    }
+    case 'stun': {
+      for (const x of [cx - 31, cx + 31]) {
+        drawRect(ctx, x, baseY - 10, 2, 8, PALETTE.woodLight);
+        setPixel(ctx, x, baseY - 11, '#f5b23b');
+        setPixel(ctx, x + 1, baseY - 12, '#ffe27a');
+      }
+      drawCircle(ctx, cx, baseY - 7, 18, hexToRgba(PALETTE.gold, 0.32));
+      break;
+    }
+    case 'hybrid': {
+      drawStar(ctx, cx - 32, baseY - 14, 5, 2, 5, '#a855f7');
+      drawStar(ctx, cx + 32, baseY - 12, 5, 2, 5, tower.color);
+      addGlow(ctx, cx, baseY - 20, 8, tower.color, 0.08);
+      break;
+    }
+    case 'ultimate': {
+      drawCircle(ctx, cx, baseY - 18, 28, hexToRgba('#f0d060', 0.4));
+      drawCircle(ctx, cx, baseY - 18, 20, hexToRgba('#a855f7', 0.25));
+      addGlow(ctx, cx, baseY - 18, 12, '#f0d060', 0.12);
+      break;
+    }
   }
 }
 
@@ -705,7 +966,10 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
 
     // Draw body (no arm) scaled to 64×80
     const { canvas: bodyTmp, ctx: bodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawTowerBaseLayer(bodyCtx, tower);
     drawPlasmaBody(bodyCtx, 0, 0);
+    drawFamilyAccentProps(bodyCtx, tower);
+    applySolidPixelOutline(bodyTmp, bodyCtx);
     ctx.drawImage(bodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
 
     // Arm swing timeline (same as legacy catapult)
@@ -729,7 +993,10 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
 
     // Draw body (no arms) scaled to 64×80
     const { canvas: gBodyTmp, ctx: gBodyCtx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+    drawTowerBaseLayer(gBodyCtx, tower);
     drawEarthGolemBody(gBodyCtx, 0, 0);
+    drawFamilyAccentProps(gBodyCtx, tower);
+    applySolidPixelOutline(gBodyTmp, gBodyCtx);
     ctx.drawImage(gBodyTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
 
     // Arms pose per frame
@@ -746,6 +1013,47 @@ function drawPilotFireEffect(ctx: SKRSContext2D, ox: number, tower: TowerAssetDe
     ctx.drawImage(gArmTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, ox, 0, 64, 80);
 
     // No projectile in spritesheet — runtime arc system handles it
+    return;
+  }
+
+  if (tower.id === 'hybrid_ab') {
+    if (frame === 1) addGlow(ctx, cx + 8, 36, 6, '#a855f7', 0.25);
+    if (frame === 2 || frame === 3) {
+      addGlow(ctx, cx + 18, 36, 8, '#f0d060', 0.38);
+      fillCircle(ctx, cx + 18, 36, 2, '#ffffff');
+      setPixel(ctx, cx + 22, 35, '#a855f7');
+      setPixel(ctx, cx + 23, 37, '#f0d060');
+    }
+    if (frame === 4) drawLine(ctx, cx + 12, 36, cx + 28, 32, hexToRgba('#a855f7', 0.55));
+    return;
+  }
+
+  if (tower.id === 'hybrid_cd') {
+    if (frame >= 1 && frame <= 4) {
+      const r = 5 + frame * 2;
+      addGlow(ctx, cx, 39, r, '#5bc8e8', 0.18 + frame * 0.04);
+      drawCircle(ctx, cx, 39, r, hexToRgba('#f0d060', 0.32));
+    }
+    if (frame === 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        setPixel(ctx, Math.round(cx + 14 * Math.cos(a)), Math.round(39 + 6 * Math.sin(a)), '#ffffff');
+      }
+    }
+    return;
+  }
+
+  if (tower.id === 'ultimate') {
+    if (frame >= 1 && frame <= 5) {
+      const radius = 6 + frame * 3;
+      addGlow(ctx, cx, 38, radius, '#f0d060', 0.18);
+      drawCircle(ctx, cx, 38, radius, hexToRgba(frame % 2 === 0 ? '#a855f7' : '#5bc8e8', 0.42));
+    }
+    if (frame === 3) {
+      drawLine(ctx, cx, 24, cx, 52, hexToRgba('#ffffff', 0.7));
+      drawLine(ctx, cx - 14, 38, cx + 14, 38, hexToRgba('#f0d060', 0.6));
+      fillCircle(ctx, cx, 38, 3, '#ffffff');
+    }
     return;
   }
 
@@ -771,12 +1079,15 @@ export async function generate(): Promise<ManifestEntry[]> {
       // Normal (base HQ sprite)
       {
         const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawTowerBaseLayer(ctx, tower);
         if (tower.id === 'nova_cannon') {
           // Body only — barrel is a separate rotating sprite
           drawNovaCannonBody(ctx, 0, 0);
         } else {
           drawFn(ctx, 0, 0);
         }
+        drawFamilyAccentProps(ctx, tower);
+        applySolidPixelOutline(canvas, ctx);
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}.png`);
         entries.push({ key: `tower-${tower.id}`, type: 'image', path: `assets/towers/${tower.id}.png` });
       }
@@ -785,6 +1096,7 @@ export async function generate(): Promise<ManifestEntry[]> {
       if (tower.id === 'nova_cannon') {
         const { canvas, ctx } = makeCanvas(32, 16);
         drawNovaCannonBarrel(ctx, 0, 0);
+        applySolidPixelOutline(canvas, ctx);
         saveCanvas(canvas, `${OUTPUT_DIR}/nova_cannon-barrel.png`);
         entries.push({ key: 'tower-nova_cannon-barrel', type: 'image', path: 'assets/towers/nova_cannon-barrel.png' });
       }
@@ -795,7 +1107,10 @@ export async function generate(): Promise<ManifestEntry[]> {
       const drawBody = tower.id === 'nova_cannon' ? drawNovaCannonBody : drawFn;
       for (const grade of ['rare', 'unique', 'epic'] as GradeVariant[]) {
         const { canvas, ctx } = makeCanvas(HQ_WIDTH, HQ_HEIGHT);
+        drawTowerBaseLayer(ctx, tower);
         drawBody(ctx, 0, 0);
+        drawFamilyAccentProps(ctx, tower);
+        applySolidPixelOutline(canvas, ctx);
         drawGradeDecoration(ctx, grade, gradeCtx);
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}-${grade}.png`);
         entries.push({
@@ -830,7 +1145,10 @@ export async function generate(): Promise<ManifestEntry[]> {
           tower.id === 'nova_cannon' && fireGrade !== 'normal'
             ? drawNovaCannonBody
             : drawFn;
+        drawTowerBaseLayer(hqCtx, tower);
         hqDraw(hqCtx, 0, 0);
+        drawFamilyAccentProps(hqCtx, tower);
+        applySolidPixelOutline(hqTmp, hqCtx);
         for (let f = 0; f < FIRE_FRAME_COUNT; f++) {
           // Draw HQ tower scaled down to 64×80
           ctx.drawImage(hqTmp, 0, 0, HQ_WIDTH, HQ_HEIGHT, f * 64, 0, 64, 80);
@@ -847,6 +1165,7 @@ export async function generate(): Promise<ManifestEntry[]> {
             drawGradeDecoration(ctx, fireGrade, frameGradeCtx);
           }
         }
+        applySolidPixelOutline(canvas, ctx);
         const suffix = fireGrade === 'normal' ? '' : `-${fireGrade}`;
         saveCanvas(canvas, `${OUTPUT_DIR}/${tower.id}${suffix}-fire.png`);
         entries.push({

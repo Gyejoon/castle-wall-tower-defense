@@ -7,6 +7,8 @@ import {
   fillCircle,
   setPixel,
   drawLine,
+  drawCircle,
+  drawStar,
   addGlow,
   hexToRgba,
 } from '../shared';
@@ -431,6 +433,164 @@ export function drawCelestialHQ(ctx: SKRSContext2D, ox: number, oy: number): voi
       setPixel(ctx, sx, sy - d, hexToRgba('#fde68a', a));
     }
   }
+}
+
+export function drawHybridAbHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 136;
+
+  drawIsoShadow(ctx, cx, baseY + 8, 34, 11, 0.48);
+  drawBase(ctx, cx, baseY, 28);
+
+  // Arcane siege platform: heavy stone carriage with a violet reactor.
+  drawIsoCube(ctx, cx, oy + 106, 26, 10, '#5d5348', '#2f2a25', '#766858');
+  drawIsoCube(ctx, cx - 18, oy + 108, 7, 10, '#4a3a2a', '#2a1a10', '#6a5030');
+  drawIsoCube(ctx, cx + 18, oy + 108, 7, 10, '#6a5030', '#2a1a10', '#4a3a2a');
+  fillCircle(ctx, cx - 20, oy + 122, 6, '#2f2a25');
+  fillCircle(ctx, cx + 20, oy + 122, 6, '#2f2a25');
+  fillCircle(ctx, cx - 20, oy + 122, 3, '#8a6a40');
+  fillCircle(ctx, cx + 20, oy + 122, 3, '#8a6a40');
+
+  // Reactor mount.
+  drawIsoCube(ctx, cx, oy + 84, 17, 20, '#4a3068', '#231331', '#6d4a92');
+  drawIsoCube(ctx, cx, oy + 72, 13, 8, '#8b5cf6', '#4c1d95', '#a78bfa');
+  fillCircle(ctx, cx, oy + 72, 6, '#a855f7');
+  fillCircle(ctx, cx, oy + 72, 3, '#fef3c7');
+  addGlow(ctx, cx, oy + 72, 8, '#a855f7', 0.2);
+
+  // Enchanted cannon barrel.
+  drawRect(ctx, cx + 8, oy + 70, 30, 10, '#4a4a4a');
+  drawRect(ctx, cx + 8, oy + 70, 30, 2, '#7a7a6a');
+  drawRect(ctx, cx + 8, oy + 78, 30, 2, '#2a2a2a');
+  drawRect(ctx, cx + 34, oy + 68, 6, 14, '#2a2a2a');
+  drawRect(ctx, cx + 36, oy + 72, 3, 6, '#0a0a0a');
+  setPixel(ctx, cx + 39, oy + 73, '#fde68a');
+  setPixel(ctx, cx + 39, oy + 76, '#a855f7');
+
+  // Lightning fins and arcane bolts.
+  drawLine(ctx, cx - 18, oy + 84, cx - 30, oy + 68, '#f0d060');
+  drawLine(ctx, cx - 17, oy + 84, cx - 29, oy + 68, '#a855f7');
+  drawLine(ctx, cx + 10, oy + 84, cx + 20, oy + 62, '#f0d060');
+  drawLine(ctx, cx + 11, oy + 84, cx + 21, oy + 62, '#a855f7');
+  drawStar(ctx, cx - 24, oy + 60, 6, 3, 5, '#f0d060');
+  setPixel(ctx, cx - 24, oy + 60, '#ffffff');
+
+  // Brass rivets.
+  for (const dx of [-18, -8, 8, 18]) {
+    setPixel(ctx, cx + dx, oy + 103, '#f0d060');
+    setPixel(ctx, cx + dx + 1, oy + 104, '#8a6a20');
+  }
+}
+
+export function drawHybridCdHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const baseY = oy + 140;
+
+  drawIsoShadow(ctx, cx, baseY + 6, 34, 11, 0.42);
+
+  // Rooted frozen throne base.
+  drawLine(ctx, cx - 8, baseY - 4, cx - 30, baseY + 5, '#3a2410');
+  drawLine(ctx, cx - 8, baseY - 3, cx - 30, baseY + 6, '#7a5828');
+  drawLine(ctx, cx + 8, baseY - 6, cx + 30, baseY + 3, '#3a2410');
+  drawLine(ctx, cx + 8, baseY - 5, cx + 30, baseY + 4, '#7a5828');
+  drawBase(ctx, cx, baseY, 28);
+
+  drawIsoCube(ctx, cx, oy + 108, 23, 10, '#dbeafe', '#7aa4b8', '#f8fafc');
+  drawIsoCube(ctx, cx, oy + 94, 17, 16, '#8fbf9a', '#355e3b', '#b7e0bd');
+
+  // Sacred trunk fused with ice.
+  drawRect(ctx, cx - 13, oy + 82, 26, 30, '#5a4020');
+  drawRect(ctx, cx - 11, oy + 82, 8, 30, '#3a2410');
+  drawRect(ctx, cx + 4, oy + 82, 8, 30, '#7a5828');
+  drawRect(ctx, cx - 8, oy + 88, 16, 22, hexToRgba('#a8def0', 0.34));
+  drawLine(ctx, cx - 10, oy + 91, cx - 4, oy + 108, hexToRgba('#ffffff', 0.4));
+  drawLine(ctx, cx + 8, oy + 86, cx + 2, oy + 106, hexToRgba('#5bc8e8', 0.5));
+
+  // Ice crown.
+  drawLine(ctx, cx, oy + 46, cx - 11, oy + 72, '#a8def0');
+  drawLine(ctx, cx, oy + 46, cx + 11, oy + 72, '#a8def0');
+  drawLine(ctx, cx - 11, oy + 72, cx + 11, oy + 72, '#5bc8e8');
+  drawLine(ctx, cx - 9, oy + 56, cx - 18, oy + 76, hexToRgba('#a8def0', 0.75));
+  drawLine(ctx, cx + 9, oy + 56, cx + 18, oy + 76, hexToRgba('#a8def0', 0.75));
+  setPixel(ctx, cx, oy + 49, '#ffffff');
+  setPixel(ctx, cx - 2, oy + 55, '#ffffff');
+
+  // Golden stun sigil nested in the frost.
+  drawCircle(ctx, cx, oy + 78, 12, '#f0d060');
+  drawRect(ctx, cx - 1, oy + 69, 2, 18, '#f0d060');
+  drawRect(ctx, cx - 8, oy + 76, 16, 2, '#f0d060');
+  addGlow(ctx, cx, oy + 78, 9, '#5bc8e8', 0.18);
+  addGlow(ctx, cx, oy + 78, 5, '#f0d060', 0.18);
+
+  // Tiny life sparks.
+  for (const [dx, dy] of [[-23, 82], [23, 86], [-16, 104], [18, 112]] as const) {
+    setPixel(ctx, cx + dx, oy + dy, '#ffffff');
+    setPixel(ctx, cx + dx + 1, oy + dy, '#8fe08f');
+  }
+}
+
+export function drawUltimateHQ(ctx: SKRSContext2D, ox: number, oy: number): void {
+  const cx = ox + 64;
+  const cy = oy + 78;
+  const baseY = oy + 148;
+
+  drawIsoShadow(ctx, cx, baseY + 4, 38, 12, 0.55);
+
+  // Three-tier royal platform.
+  drawIsoCube(ctx, cx, baseY - 2, 32, 6, '#f6e7a6', '#b98224', '#ffe8a3');
+  drawIsoCube(ctx, cx, baseY - 10, 26, 5, '#fff1b8', '#b98224', '#f0c35a');
+  drawIsoCube(ctx, cx, baseY - 17, 20, 4, '#f6e7a6', '#b98224', '#fff1b8');
+
+  // Halo rings behind the prism.
+  for (const [r, color, alpha] of [
+    [34, '#fde68a', 0.85],
+    [25, '#a855f7', 0.5],
+    [18, '#5bc8e8', 0.45],
+  ] as const) {
+    for (let a = 0; a < 40; a++) {
+      const angle = (a / 40) * Math.PI * 2;
+      setPixel(
+        ctx,
+        Math.round(cx + r * Math.cos(angle)),
+        Math.round(cy + r * Math.sin(angle) * 0.68),
+        hexToRgba(color, alpha),
+      );
+    }
+  }
+  addGlow(ctx, cx, cy, 20, '#fde68a', 0.16);
+
+  // Central world prism.
+  drawLine(ctx, cx, oy + 34, cx - 16, oy + 72, '#f8fafc');
+  drawLine(ctx, cx, oy + 34, cx + 16, oy + 72, '#f8fafc');
+  drawLine(ctx, cx - 16, oy + 72, cx, oy + 106, '#f0d060');
+  drawLine(ctx, cx + 16, oy + 72, cx, oy + 106, '#a855f7');
+  drawLine(ctx, cx, oy + 34, cx, oy + 106, '#ffffff');
+  for (let y = oy + 47; y <= oy + 96; y += 3) {
+    const span = Math.max(2, 16 - Math.abs(y - (oy + 70)) / 2);
+    drawRect(ctx, cx - span, y, span * 2, 1, y % 2 === 0 ? '#fef3c7' : '#a855f7');
+    setPixel(ctx, cx + Math.round(span / 2), y, '#5bc8e8');
+  }
+  setPixel(ctx, cx - 2, oy + 42, '#ffffff');
+  setPixel(ctx, cx - 1, oy + 43, '#ffffff');
+
+  // Four family gems orbiting the prism.
+  const gems: Array<[number, number, string]> = [
+    [-30, -12, '#c8a04a'],
+    [30, -8, '#8b4513'],
+    [-24, 26, '#5bc8e8'],
+    [24, 24, '#f0d060'],
+  ];
+  for (const [dx, dy, color] of gems) {
+    drawStar(ctx, cx + dx, cy + dy, 6, 3, 4, color);
+    setPixel(ctx, cx + dx, cy + dy, '#ffffff');
+    addGlow(ctx, cx + dx, cy + dy, 4, color, 0.2);
+  }
+
+  // Ascending divine rays.
+  drawLine(ctx, cx - 5, oy + 32, cx - 11, oy + 18, hexToRgba('#fde68a', 0.6));
+  drawLine(ctx, cx + 5, oy + 32, cx + 13, oy + 18, hexToRgba('#fde68a', 0.6));
+  drawLine(ctx, cx, oy + 28, cx, oy + 12, hexToRgba('#ffffff', 0.55));
+  setPixel(ctx, cx, oy + 10, '#ffffff');
 }
 
 export function drawDivineThroneHQ(ctx: SKRSContext2D, ox: number, oy: number): void {

@@ -1,18 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, statSync } from 'node:fs';
+import { ALL_TOWERS } from '../../../packages/shared/src/constants/towers';
 
 const TOWER_DIR = 'packages/web-shell/public/assets/towers';
 
-const PILOT_IDS = [
-  'archer',
-  'flame_tower',
-  'dragon_nest',
-  'wind_spire',
-  'arcane_spire',
-  'world_tree',
-  'celestial',
-  'divine_throne',
-] as const;
+const PILOT_IDS = ALL_TOWERS.map((tower) => tower.id);
 
 const GRADES = ['rare', 'unique', 'epic'] as const;
 
@@ -43,7 +35,7 @@ describe('tower pilot assets', () => {
     expect(existsSync(`${TOWER_DIR}/plasma.png`)).toBe(true);
   });
 
-  it('legacy tower emp.png still exists (regression)', () => {
-    expect(existsSync(`${TOWER_DIR}/emp.png`)).toBe(true);
+  it('legacy tower dragon_nest.png still exists (regression)', () => {
+    expect(existsSync(`${TOWER_DIR}/dragon_nest.png`)).toBe(true);
   });
 });

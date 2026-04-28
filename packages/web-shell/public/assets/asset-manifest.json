@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-12T10:19:18.510Z",
+  "generated": "2026-04-28T10:12:13.534Z",
   "assets": [
     {
       "key": "tiny-swords-tileset-color-1",
@@ -236,300 +236,180 @@
       "section": "vfx"
     },
     {
-      "key": "tower-plasma",
+      "key": "tower-wind_spire",
       "type": "image",
-      "path": "assets/towers/plasma.png",
+      "path": "assets/towers/wind_spire.png",
       "section": "preload"
     },
     {
-      "key": "tower-plasma-rare",
+      "key": "tower-wind_spire-rare",
       "type": "image",
-      "path": "assets/towers/plasma-rare.png",
+      "path": "assets/towers/wind_spire-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-plasma-unique",
+      "key": "tower-wind_spire-unique",
       "type": "image",
-      "path": "assets/towers/plasma-unique.png",
+      "path": "assets/towers/wind_spire-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-plasma-epic",
+      "key": "tower-wind_spire-epic",
       "type": "image",
-      "path": "assets/towers/plasma-epic.png",
+      "path": "assets/towers/wind_spire-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-plasma-fire",
+      "key": "tower-wind_spire-fire",
       "type": "spritesheet",
-      "path": "assets/towers/plasma-fire.png",
+      "path": "assets/towers/wind_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-plasma-rare-fire",
+      "key": "tower-wind_spire-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/plasma-rare-fire.png",
+      "path": "assets/towers/wind_spire-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-plasma-unique-fire",
+      "key": "tower-wind_spire-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/plasma-unique-fire.png",
+      "path": "assets/towers/wind_spire-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-plasma-epic-fire",
+      "key": "tower-wind_spire-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/plasma-epic-fire.png",
+      "path": "assets/towers/wind_spire-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-emp",
+      "key": "tower-flame_tower",
       "type": "image",
-      "path": "assets/towers/emp.png",
+      "path": "assets/towers/flame_tower.png",
       "section": "preload"
     },
     {
-      "key": "tower-emp-rare",
+      "key": "tower-flame_tower-rare",
       "type": "image",
-      "path": "assets/towers/emp-rare.png",
+      "path": "assets/towers/flame_tower-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-emp-unique",
+      "key": "tower-flame_tower-unique",
       "type": "image",
-      "path": "assets/towers/emp-unique.png",
+      "path": "assets/towers/flame_tower-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-emp-epic",
+      "key": "tower-flame_tower-epic",
       "type": "image",
-      "path": "assets/towers/emp-epic.png",
+      "path": "assets/towers/flame_tower-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-emp-fire",
+      "key": "tower-flame_tower-fire",
       "type": "spritesheet",
-      "path": "assets/towers/emp-fire.png",
+      "path": "assets/towers/flame_tower-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-emp-rare-fire",
+      "key": "tower-flame_tower-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/emp-rare-fire.png",
+      "path": "assets/towers/flame_tower-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-emp-unique-fire",
+      "key": "tower-flame_tower-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/emp-unique-fire.png",
+      "path": "assets/towers/flame_tower-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-emp-epic-fire",
+      "key": "tower-flame_tower-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/emp-epic-fire.png",
+      "path": "assets/towers/flame_tower-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-shield",
+      "key": "tower-arcane_spire",
       "type": "image",
-      "path": "assets/towers/shield.png",
+      "path": "assets/towers/arcane_spire.png",
       "section": "preload"
     },
     {
-      "key": "tower-shield-rare",
+      "key": "tower-arcane_spire-rare",
       "type": "image",
-      "path": "assets/towers/shield-rare.png",
+      "path": "assets/towers/arcane_spire-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-shield-unique",
+      "key": "tower-arcane_spire-unique",
       "type": "image",
-      "path": "assets/towers/shield-unique.png",
+      "path": "assets/towers/arcane_spire-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-shield-epic",
+      "key": "tower-arcane_spire-epic",
       "type": "image",
-      "path": "assets/towers/shield-epic.png",
+      "path": "assets/towers/arcane_spire-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-shield-fire",
+      "key": "tower-arcane_spire-fire",
       "type": "spritesheet",
-      "path": "assets/towers/shield-fire.png",
+      "path": "assets/towers/arcane_spire-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-shield-rare-fire",
+      "key": "tower-arcane_spire-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/shield-rare-fire.png",
+      "path": "assets/towers/arcane_spire-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-shield-unique-fire",
+      "key": "tower-arcane_spire-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/shield-unique-fire.png",
+      "path": "assets/towers/arcane_spire-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-shield-epic-fire",
+      "key": "tower-arcane_spire-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/shield-epic-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-twin_archer",
-      "type": "image",
-      "path": "assets/towers/twin_archer.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-twin_archer-rare",
-      "type": "image",
-      "path": "assets/towers/twin_archer-rare.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-twin_archer-unique",
-      "type": "image",
-      "path": "assets/towers/twin_archer-unique.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-twin_archer-epic",
-      "type": "image",
-      "path": "assets/towers/twin_archer-epic.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-twin_archer-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/twin_archer-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-twin_archer-rare-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/twin_archer-rare-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-twin_archer-unique-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/twin_archer-unique-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-twin_archer-epic-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/twin_archer-epic-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-disruptor",
-      "type": "image",
-      "path": "assets/towers/disruptor.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-disruptor-rare",
-      "type": "image",
-      "path": "assets/towers/disruptor-rare.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-disruptor-unique",
-      "type": "image",
-      "path": "assets/towers/disruptor-unique.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-disruptor-epic",
-      "type": "image",
-      "path": "assets/towers/disruptor-epic.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-disruptor-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/disruptor-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-disruptor-rare-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/disruptor-rare-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-disruptor-unique-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/disruptor-unique-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-disruptor-epic-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/disruptor-epic-fire.png",
+      "path": "assets/towers/arcane_spire-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
@@ -662,186 +542,6 @@
       "section": "vfx"
     },
     {
-      "key": "tower-stasis_field",
-      "type": "image",
-      "path": "assets/towers/stasis_field.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-stasis_field-rare",
-      "type": "image",
-      "path": "assets/towers/stasis_field-rare.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-stasis_field-unique",
-      "type": "image",
-      "path": "assets/towers/stasis_field-unique.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-stasis_field-epic",
-      "type": "image",
-      "path": "assets/towers/stasis_field-epic.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-stasis_field-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/stasis_field-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-stasis_field-rare-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/stasis_field-rare-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-stasis_field-unique-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/stasis_field-unique-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-stasis_field-epic-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/stasis_field-epic-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-flame_tower",
-      "type": "image",
-      "path": "assets/towers/flame_tower.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-flame_tower-rare",
-      "type": "image",
-      "path": "assets/towers/flame_tower-rare.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-flame_tower-unique",
-      "type": "image",
-      "path": "assets/towers/flame_tower-unique.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-flame_tower-epic",
-      "type": "image",
-      "path": "assets/towers/flame_tower-epic.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-flame_tower-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/flame_tower-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-flame_tower-rare-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/flame_tower-rare-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-flame_tower-unique-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/flame_tower-unique-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-flame_tower-epic-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/flame_tower-epic-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-wind_spire",
-      "type": "image",
-      "path": "assets/towers/wind_spire.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-wind_spire-rare",
-      "type": "image",
-      "path": "assets/towers/wind_spire-rare.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-wind_spire-unique",
-      "type": "image",
-      "path": "assets/towers/wind_spire-unique.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-wind_spire-epic",
-      "type": "image",
-      "path": "assets/towers/wind_spire-epic.png",
-      "section": "preload"
-    },
-    {
-      "key": "tower-wind_spire-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/wind_spire-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-wind_spire-rare-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/wind_spire-rare-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-wind_spire-unique-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/wind_spire-unique-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
-      "key": "tower-wind_spire-epic-fire",
-      "type": "spritesheet",
-      "path": "assets/towers/wind_spire-epic-fire.png",
-      "frameWidth": 64,
-      "frameHeight": 80,
-      "frameCount": 8,
-      "section": "vfx"
-    },
-    {
       "key": "tower-earth_golem",
       "type": "image",
       "path": "assets/towers/earth_golem.png",
@@ -902,180 +602,240 @@
       "section": "vfx"
     },
     {
-      "key": "tower-holy_shrine",
+      "key": "tower-celestial",
       "type": "image",
-      "path": "assets/towers/holy_shrine.png",
+      "path": "assets/towers/celestial.png",
       "section": "preload"
     },
     {
-      "key": "tower-holy_shrine-rare",
+      "key": "tower-celestial-rare",
       "type": "image",
-      "path": "assets/towers/holy_shrine-rare.png",
+      "path": "assets/towers/celestial-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-holy_shrine-unique",
+      "key": "tower-celestial-unique",
       "type": "image",
-      "path": "assets/towers/holy_shrine-unique.png",
+      "path": "assets/towers/celestial-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-holy_shrine-epic",
+      "key": "tower-celestial-epic",
       "type": "image",
-      "path": "assets/towers/holy_shrine-epic.png",
+      "path": "assets/towers/celestial-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-holy_shrine-fire",
+      "key": "tower-celestial-fire",
       "type": "spritesheet",
-      "path": "assets/towers/holy_shrine-fire.png",
+      "path": "assets/towers/celestial-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-holy_shrine-rare-fire",
+      "key": "tower-celestial-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/holy_shrine-rare-fire.png",
+      "path": "assets/towers/celestial-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-holy_shrine-unique-fire",
+      "key": "tower-celestial-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/holy_shrine-unique-fire.png",
+      "path": "assets/towers/celestial-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-holy_shrine-epic-fire",
+      "key": "tower-celestial-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/holy_shrine-epic-fire.png",
+      "path": "assets/towers/celestial-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-dragon_nest",
+      "key": "tower-emp",
       "type": "image",
-      "path": "assets/towers/dragon_nest.png",
+      "path": "assets/towers/emp.png",
       "section": "preload"
     },
     {
-      "key": "tower-dragon_nest-rare",
+      "key": "tower-emp-rare",
       "type": "image",
-      "path": "assets/towers/dragon_nest-rare.png",
+      "path": "assets/towers/emp-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-dragon_nest-unique",
+      "key": "tower-emp-unique",
       "type": "image",
-      "path": "assets/towers/dragon_nest-unique.png",
+      "path": "assets/towers/emp-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-dragon_nest-epic",
+      "key": "tower-emp-epic",
       "type": "image",
-      "path": "assets/towers/dragon_nest-epic.png",
+      "path": "assets/towers/emp-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-dragon_nest-fire",
+      "key": "tower-emp-fire",
       "type": "spritesheet",
-      "path": "assets/towers/dragon_nest-fire.png",
+      "path": "assets/towers/emp-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-dragon_nest-rare-fire",
+      "key": "tower-emp-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/dragon_nest-rare-fire.png",
+      "path": "assets/towers/emp-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-dragon_nest-unique-fire",
+      "key": "tower-emp-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/dragon_nest-unique-fire.png",
+      "path": "assets/towers/emp-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-dragon_nest-epic-fire",
+      "key": "tower-emp-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/dragon_nest-epic-fire.png",
+      "path": "assets/towers/emp-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-arcane_spire",
+      "key": "tower-stasis_field",
       "type": "image",
-      "path": "assets/towers/arcane_spire.png",
+      "path": "assets/towers/stasis_field.png",
       "section": "preload"
     },
     {
-      "key": "tower-arcane_spire-rare",
+      "key": "tower-stasis_field-rare",
       "type": "image",
-      "path": "assets/towers/arcane_spire-rare.png",
+      "path": "assets/towers/stasis_field-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-arcane_spire-unique",
+      "key": "tower-stasis_field-unique",
       "type": "image",
-      "path": "assets/towers/arcane_spire-unique.png",
+      "path": "assets/towers/stasis_field-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-arcane_spire-epic",
+      "key": "tower-stasis_field-epic",
       "type": "image",
-      "path": "assets/towers/arcane_spire-epic.png",
+      "path": "assets/towers/stasis_field-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-arcane_spire-fire",
+      "key": "tower-stasis_field-fire",
       "type": "spritesheet",
-      "path": "assets/towers/arcane_spire-fire.png",
+      "path": "assets/towers/stasis_field-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-arcane_spire-rare-fire",
+      "key": "tower-stasis_field-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/arcane_spire-rare-fire.png",
+      "path": "assets/towers/stasis_field-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-arcane_spire-unique-fire",
+      "key": "tower-stasis_field-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/arcane_spire-unique-fire.png",
+      "path": "assets/towers/stasis_field-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-arcane_spire-epic-fire",
+      "key": "tower-stasis_field-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/arcane_spire-epic-fire.png",
+      "path": "assets/towers/stasis_field-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-disruptor",
+      "type": "image",
+      "path": "assets/towers/disruptor.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-rare",
+      "type": "image",
+      "path": "assets/towers/disruptor-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-unique",
+      "type": "image",
+      "path": "assets/towers/disruptor-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-epic",
+      "type": "image",
+      "path": "assets/towers/disruptor-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-disruptor-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/disruptor-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-disruptor-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/disruptor-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-disruptor-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/disruptor-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-disruptor-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/disruptor-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
@@ -1142,60 +902,180 @@
       "section": "vfx"
     },
     {
-      "key": "tower-celestial",
+      "key": "tower-shield",
       "type": "image",
-      "path": "assets/towers/celestial.png",
+      "path": "assets/towers/shield.png",
       "section": "preload"
     },
     {
-      "key": "tower-celestial-rare",
+      "key": "tower-shield-rare",
       "type": "image",
-      "path": "assets/towers/celestial-rare.png",
+      "path": "assets/towers/shield-rare.png",
       "section": "preload"
     },
     {
-      "key": "tower-celestial-unique",
+      "key": "tower-shield-unique",
       "type": "image",
-      "path": "assets/towers/celestial-unique.png",
+      "path": "assets/towers/shield-unique.png",
       "section": "preload"
     },
     {
-      "key": "tower-celestial-epic",
+      "key": "tower-shield-epic",
       "type": "image",
-      "path": "assets/towers/celestial-epic.png",
+      "path": "assets/towers/shield-epic.png",
       "section": "preload"
     },
     {
-      "key": "tower-celestial-fire",
+      "key": "tower-shield-fire",
       "type": "spritesheet",
-      "path": "assets/towers/celestial-fire.png",
+      "path": "assets/towers/shield-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-celestial-rare-fire",
+      "key": "tower-shield-rare-fire",
       "type": "spritesheet",
-      "path": "assets/towers/celestial-rare-fire.png",
+      "path": "assets/towers/shield-rare-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-celestial-unique-fire",
+      "key": "tower-shield-unique-fire",
       "type": "spritesheet",
-      "path": "assets/towers/celestial-unique-fire.png",
+      "path": "assets/towers/shield-unique-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
       "section": "vfx"
     },
     {
-      "key": "tower-celestial-epic-fire",
+      "key": "tower-shield-epic-fire",
       "type": "spritesheet",
-      "path": "assets/towers/celestial-epic-fire.png",
+      "path": "assets/towers/shield-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-twin_archer",
+      "type": "image",
+      "path": "assets/towers/twin_archer.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-rare",
+      "type": "image",
+      "path": "assets/towers/twin_archer-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-unique",
+      "type": "image",
+      "path": "assets/towers/twin_archer-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-epic",
+      "type": "image",
+      "path": "assets/towers/twin_archer-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-twin_archer-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/twin_archer-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-twin_archer-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/twin_archer-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-twin_archer-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/twin_archer-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-twin_archer-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/twin_archer-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-holy_shrine",
+      "type": "image",
+      "path": "assets/towers/holy_shrine.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-rare",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-unique",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-epic",
+      "type": "image",
+      "path": "assets/towers/holy_shrine-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-holy_shrine-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/holy_shrine-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-holy_shrine-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/holy_shrine-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-holy_shrine-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/holy_shrine-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-holy_shrine-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/holy_shrine-epic-fire.png",
       "frameWidth": 64,
       "frameHeight": 80,
       "frameCount": 8,
@@ -1264,20 +1144,182 @@
     {
       "key": "tower-hybrid_ab",
       "type": "image",
-      "path": "assets/towers/arcane_spire.png",
+      "path": "assets/towers/hybrid_ab.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_ab-rare",
+      "type": "image",
+      "path": "assets/towers/hybrid_ab-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_ab-unique",
+      "type": "image",
+      "path": "assets/towers/hybrid_ab-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_ab-epic",
+      "type": "image",
+      "path": "assets/towers/hybrid_ab-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_ab-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_ab-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_ab-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_ab-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_ab-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_ab-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_ab-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_ab-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "tower-hybrid_cd",
       "type": "image",
-      "path": "assets/towers/world_tree.png",
+      "path": "assets/towers/hybrid_cd.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd-rare",
+      "type": "image",
+      "path": "assets/towers/hybrid_cd-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd-unique",
+      "type": "image",
+      "path": "assets/towers/hybrid_cd-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd-epic",
+      "type": "image",
+      "path": "assets/towers/hybrid_cd-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_cd-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_cd-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_cd-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_cd-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_cd-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-hybrid_cd-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_cd-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "tower-ultimate",
       "type": "image",
-      "path": "assets/towers/divine_throne.png",
+      "path": "assets/towers/ultimate.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-ultimate-rare",
+      "type": "image",
+      "path": "assets/towers/ultimate-rare.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-ultimate-unique",
+      "type": "image",
+      "path": "assets/towers/ultimate-unique.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-ultimate-epic",
+      "type": "image",
+      "path": "assets/towers/ultimate-epic.png",
+      "section": "preload"
+    },
+    {
+      "key": "tower-ultimate-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/ultimate-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-ultimate-rare-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/ultimate-rare-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-ultimate-unique-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/ultimate-unique-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
+    },
+    {
+      "key": "tower-ultimate-epic-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/ultimate-epic-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "unit-scout_drone",

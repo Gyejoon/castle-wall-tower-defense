@@ -31,12 +31,15 @@ describe('정식 모드 메인 맵', () => {
 		expect(MAIN_LONG_MAP.id).toBe('main_long');
 	});
 
-	it('path is continuous — each step is adjacent to the next', () => {
-		const { path } = MAIN_LONG_MAP;
-		for (let i = 0; i < path.length - 1; i++) {
-			const cur = path[i];
-			const next = path[i + 1];
-			expect(Math.abs(next.x - cur.x) + Math.abs(next.y - cur.y)).toBe(1);
+	it('all lanes are visually continuous', () => {
+		for (const path of getMapPaths(MAIN_LONG_MAP)) {
+			for (let i = 0; i < path.length - 1; i++) {
+				const cur = path[i];
+				const next = path[i + 1];
+				const dx = next.x - cur.x;
+				const dy = next.y - cur.y;
+				expect(Math.hypot(dx, dy)).toBeLessThanOrEqual(2);
+			}
 		}
 	});
 
@@ -48,7 +51,9 @@ describe('정식 모드 메인 맵', () => {
 	});
 
 	it('path zigzags with enough turns for merge-friendly tower placement', () => {
-		expect(countTurns(MAIN_LONG_MAP.path)).toBeGreaterThanOrEqual(14);
+		for (const path of getMapPaths(MAIN_LONG_MAP)) {
+			expect(countTurns(path)).toBeGreaterThanOrEqual(8);
+		}
 	});
 
 	it('all path/blocked/buildable coords are within grid bounds', () => {
@@ -81,28 +86,39 @@ describe('정식 모드 메인 맵', () => {
 });
 
 describe('getMapPaths', () => {
-	it('single-lane map returns [map.path]', () => {
+	it('main_long returns all illustrated lanes', () => {
 		const paths = getMapPaths(MAIN_LONG_MAP);
-		expect(paths).toHaveLength(1);
+		expect(paths).toHaveLength(4);
 		expect(paths[0]).toBe(MAIN_LONG_MAP.path);
 	});
 });
 
 describe('getAllPathCells', () => {
-	it('returns the same array as path for single-lane maps', () => {
+	it('deduplicates path cells across all lanes', () => {
 		const cells = getAllPathCells(MAIN_LONG_MAP);
-		expect(cells).toBe(MAIN_LONG_MAP.path);
+		const uniqueKeys = new Set(cells.map((point) => `${point.x},${point.y}`));
+
+		expect(cells).toHaveLength(uniqueKeys.size);
+		expect(cells.length).toBeGreaterThan(MAIN_LONG_MAP.path.length);
+		for (const path of getMapPaths(MAIN_LONG_MAP)) {
+			for (const point of path) {
+				expect(uniqueKeys.has(`${point.x},${point.y}`)).toBe(true);
+			}
+		}
 	});
 });
 
 describe('getSpawnExitPairs', () => {
-	it('single-lane map returns 1 pair', () => {
+	it('returns a spawn/exit pair per illustrated lane', () => {
 		const pairs = getSpawnExitPairs(MAIN_LONG_MAP);
-		expect(pairs).toHaveLength(1);
-		expect(pairs[0].spawn).toEqual(MAIN_LONG_MAP.path[0]);
-		expect(pairs[0].exit).toEqual(
-			MAIN_LONG_MAP.path[MAIN_LONG_MAP.path.length - 1],
-		);
+		const paths = getMapPaths(MAIN_LONG_MAP);
+
+		expect(pairs).toHaveLength(paths.length);
+		for (const [index, pair] of pairs.entries()) {
+			const path = paths[index];
+			expect(pair.spawn).toEqual(path[0]);
+			expect(pair.exit).toEqual(path[path.length - 1]);
+		}
 	});
 });
 

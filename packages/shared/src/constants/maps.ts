@@ -1,189 +1,133 @@
 import type { Position } from '../types/grid';
 import type { MapLayout } from '../types/map';
 
-function buildBuildablePoints({
-	width,
-	height,
-	path,
-	blockedPlacementPoints,
-	obstacles = [],
-}: {
-	width: number;
-	height: number;
-	path: Position[];
-	blockedPlacementPoints: Position[];
-	obstacles?: Position[];
-}): Position[] {
-	const blockedSet = new Set<string>([
-		...path.map((p) => `${p.x},${p.y}`),
-		...blockedPlacementPoints.map((p) => `${p.x},${p.y}`),
-		...obstacles.map((p) => `${p.x},${p.y}`),
-	]);
-	const buildablePoints: Position[] = [];
-
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			const key = `${x},${y}`;
-			if (blockedSet.has(key)) continue;
-			buildablePoints.push({ x, y });
-		}
-	}
-
-	return buildablePoints;
-}
-
-// === 정식 모드 Main Long Map (9×18, U-turn double-back, random-summon + merge) ===
+// === 정식 모드 Main Long Map (9×18, illustrated central-castle field) ===
 //
-// 9 cols × 18 rows × 48px = 432×864 canvas (mobile viewport-friendly).
-// Spawn at top-left corner (0,0). Path zigzags DOWN the LEFT strip
-// (cols 0-3), crosses the BOTTOM row (all the way across), then zigzags
-// back UP the RIGHT strip (cols 5-8), finally turning left along row 0 to
-// reach the castle wall exit at (4,0). Every non-obstacle row is visited
-// twice (once each direction) so towers placed anywhere stay useful for
-// the full run.
-//
-// Obstacles sit on the center column (col 4 at rows 2/5/8/11/14) — they
-// block the middle so the eye reads the U-turn shape cleanly. Commit 7.4
-// renders them as tree/rock/bush sprites.
+// Visible terrain is a single portrait background image. These paths are the
+// invisible gameplay rails: enemies enter from the top and bottom road ends,
+// split around the side loops, and damage HP when they reach the central
+// castle wall tile at (4,8).
+const MAIN_LONG_TILE_SIZE = 48;
+const MAIN_LONG_WORLD_ORIGIN_X = 24;
+const MAIN_LONG_WORLD_ORIGIN_Y = 72;
 
-function generateLeftDescent(): Position[] {
-	const path: Position[] = [];
-	// Helper to generate a horizontal sweep starting at given column.
-	// Row 0: (0,0) → (3,0)
-	for (let x = 0; x <= 3; x++) path.push({ x, y: 0 });
-	// col 3: (3,1), (3,2)
-	path.push({ x: 3, y: 1 });
-	path.push({ x: 3, y: 2 });
-	// Row 2 (continuing): (2,2) → (0,2)
-	for (let x = 2; x >= 0; x--) path.push({ x, y: 2 });
-	// col 0: (0,3), (0,4)
-	path.push({ x: 0, y: 3 });
-	path.push({ x: 0, y: 4 });
-	// Row 4: (1,4) → (3,4)
-	for (let x = 1; x <= 3; x++) path.push({ x, y: 4 });
-	// col 3: (3,5), (3,6)
-	path.push({ x: 3, y: 5 });
-	path.push({ x: 3, y: 6 });
-	// Row 6: (2,6) → (0,6)
-	for (let x = 2; x >= 0; x--) path.push({ x, y: 6 });
-	// col 0: (0,7), (0,8)
-	path.push({ x: 0, y: 7 });
-	path.push({ x: 0, y: 8 });
-	// Row 8: (1,8) → (3,8)
-	for (let x = 1; x <= 3; x++) path.push({ x, y: 8 });
-	// col 3: (3,9), (3,10)
-	path.push({ x: 3, y: 9 });
-	path.push({ x: 3, y: 10 });
-	// Row 10: (2,10) → (0,10)
-	for (let x = 2; x >= 0; x--) path.push({ x, y: 10 });
-	// col 0: (0,11), (0,12)
-	path.push({ x: 0, y: 11 });
-	path.push({ x: 0, y: 12 });
-	// Row 12: (1,12) → (3,12)
-	for (let x = 1; x <= 3; x++) path.push({ x, y: 12 });
-	// col 3: (3,13), (3,14)
-	path.push({ x: 3, y: 13 });
-	path.push({ x: 3, y: 14 });
-	// Row 14: (2,14) → (0,14)
-	for (let x = 2; x >= 0; x--) path.push({ x, y: 14 });
-	// col 0: (0,15), (0,16), (0,17)
-	path.push({ x: 0, y: 15 });
-	path.push({ x: 0, y: 16 });
-	return path;
+function worldToMainLongGridPoint(worldX: number, worldY: number): Position {
+	return {
+		x: (worldX - MAIN_LONG_WORLD_ORIGIN_X) / MAIN_LONG_TILE_SIZE,
+		y: (worldY - MAIN_LONG_WORLD_ORIGIN_Y) / MAIN_LONG_TILE_SIZE,
+	};
 }
 
-function generateBottomTraverse(): Position[] {
-	// Row 17: (0,17) → (8,17) — full width crossing
-	const path: Position[] = [];
-	path.push({ x: 0, y: 17 });
-	for (let x = 1; x <= 8; x++) path.push({ x, y: 17 });
-	return path;
-}
-
-function generateRightAscent(): Position[] {
-	const path: Position[] = [];
-	// (8,16), (8,15), (8,14)
-	path.push({ x: 8, y: 16 });
-	path.push({ x: 8, y: 15 });
-	path.push({ x: 8, y: 14 });
-	// Row 14: (7,14) → (5,14)
-	for (let x = 7; x >= 5; x--) path.push({ x, y: 14 });
-	// col 5: (5,13), (5,12)
-	path.push({ x: 5, y: 13 });
-	path.push({ x: 5, y: 12 });
-	// Row 12: (6,12) → (8,12)
-	for (let x = 6; x <= 8; x++) path.push({ x, y: 12 });
-	// col 8: (8,11), (8,10)
-	path.push({ x: 8, y: 11 });
-	path.push({ x: 8, y: 10 });
-	// Row 10: (7,10) → (5,10)
-	for (let x = 7; x >= 5; x--) path.push({ x, y: 10 });
-	// col 5: (5,9), (5,8)
-	path.push({ x: 5, y: 9 });
-	path.push({ x: 5, y: 8 });
-	// Row 8: (6,8) → (8,8)
-	for (let x = 6; x <= 8; x++) path.push({ x, y: 8 });
-	// col 8: (8,7), (8,6)
-	path.push({ x: 8, y: 7 });
-	path.push({ x: 8, y: 6 });
-	// Row 6: (7,6) → (5,6)
-	for (let x = 7; x >= 5; x--) path.push({ x, y: 6 });
-	// col 5: (5,5), (5,4)
-	path.push({ x: 5, y: 5 });
-	path.push({ x: 5, y: 4 });
-	// Row 4: (6,4) → (8,4)
-	for (let x = 6; x <= 8; x++) path.push({ x, y: 4 });
-	// col 8: (8,3), (8,2)
-	path.push({ x: 8, y: 3 });
-	path.push({ x: 8, y: 2 });
-	// Row 2: (7,2) → (5,2)
-	for (let x = 7; x >= 5; x--) path.push({ x, y: 2 });
-	// col 5: (5,1), (5,0)
-	path.push({ x: 5, y: 1 });
-	path.push({ x: 5, y: 0 });
-	// Row 0 traverse back to exit
-	path.push({ x: 4, y: 0 });
-	return path;
-}
-
-// Descent from (0,0) at row 0 down to row 16 on col 0.
-// Then bottom crossing: path continues from (0,16) → (0,17) → (8,17) → (8,16).
-// But descent ends at (0,16). We need to join to (0,17) first.
-const MAIN_LEFT = generateLeftDescent();
-const MAIN_BOTTOM = generateBottomTraverse();
-const MAIN_RIGHT = generateRightAscent();
-
-const MAIN_LONG_PATH: Position[] = [
-	...MAIN_LEFT,
-	...MAIN_BOTTOM,
-	...MAIN_RIGHT,
-];
-
-// Only the corners that are neither path nor obstacle are explicitly blocked
-// so no tower can sit on the spawn/exit tile itself.
-const MAIN_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
-	{ x: 0, y: 0 }, // spawn
-	{ x: 4, y: 0 }, // exit
-	{ x: 8, y: 0 },
-];
-
-// Fixed obstacles. Col 4 punctuations block the middle lane visually and
-// give the 9×18 grid a clear "two strips + crossing" read.
-const MAIN_LONG_OBSTACLES: Position[] = [
-	{ x: 4, y: 2 },
-	{ x: 4, y: 5 },
+const MAIN_TOP_LEFT_PATH: Position[] = [
+	{ x: 4, y: 0 },
+	worldToMainLongGridPoint(216, 150),
+	worldToMainLongGridPoint(213, 175),
+	worldToMainLongGridPoint(182, 184),
+	worldToMainLongGridPoint(132, 190),
+	worldToMainLongGridPoint(96, 220),
+	worldToMainLongGridPoint(83, 275),
+	worldToMainLongGridPoint(62, 314),
+	worldToMainLongGridPoint(40, 360),
+	worldToMainLongGridPoint(55, 390),
+	worldToMainLongGridPoint(90, 405),
+	worldToMainLongGridPoint(125, 405),
+	worldToMainLongGridPoint(150, 420),
+	worldToMainLongGridPoint(158, 455),
+	worldToMainLongGridPoint(180, 485),
 	{ x: 4, y: 8 },
-	{ x: 4, y: 11 },
-	{ x: 4, y: 14 },
 ];
 
-const MAIN_LONG_BUILDABLE_POINTS = buildBuildablePoints({
-	width: 9,
-	height: 18,
-	path: MAIN_LONG_PATH,
-	blockedPlacementPoints: MAIN_LONG_BLOCKED_PLACEMENT_POINTS,
-	obstacles: MAIN_LONG_OBSTACLES,
-});
+const MAIN_TOP_RIGHT_PATH: Position[] = [
+	{ x: 4, y: 0 },
+	worldToMainLongGridPoint(216, 150),
+	worldToMainLongGridPoint(219, 175),
+	worldToMainLongGridPoint(250, 184),
+	worldToMainLongGridPoint(300, 190),
+	worldToMainLongGridPoint(336, 220),
+	worldToMainLongGridPoint(349, 275),
+	worldToMainLongGridPoint(370, 314),
+	worldToMainLongGridPoint(392, 360),
+	worldToMainLongGridPoint(377, 390),
+	worldToMainLongGridPoint(342, 405),
+	worldToMainLongGridPoint(307, 405),
+	worldToMainLongGridPoint(282, 420),
+	worldToMainLongGridPoint(274, 455),
+	worldToMainLongGridPoint(252, 485),
+	{ x: 4, y: 8 },
+];
+
+const MAIN_BOTTOM_LEFT_PATH: Position[] = [
+	{ x: 4, y: 17 },
+	worldToMainLongGridPoint(216, 826),
+	worldToMainLongGridPoint(216, 760),
+	worldToMainLongGridPoint(215, 705),
+	worldToMainLongGridPoint(185, 690),
+	worldToMainLongGridPoint(145, 678),
+	worldToMainLongGridPoint(105, 662),
+	worldToMainLongGridPoint(78, 620),
+	worldToMainLongGridPoint(45, 600),
+	worldToMainLongGridPoint(40, 558),
+	worldToMainLongGridPoint(65, 526),
+	worldToMainLongGridPoint(108, 512),
+	worldToMainLongGridPoint(155, 522),
+	worldToMainLongGridPoint(190, 545),
+	worldToMainLongGridPoint(216, 545),
+	{ x: 4, y: 8 },
+];
+
+const MAIN_BOTTOM_RIGHT_PATH: Position[] = [
+	{ x: 4, y: 17 },
+	worldToMainLongGridPoint(216, 826),
+	worldToMainLongGridPoint(216, 760),
+	worldToMainLongGridPoint(217, 705),
+	worldToMainLongGridPoint(247, 690),
+	worldToMainLongGridPoint(287, 678),
+	worldToMainLongGridPoint(327, 662),
+	worldToMainLongGridPoint(354, 620),
+	worldToMainLongGridPoint(387, 600),
+	worldToMainLongGridPoint(392, 558),
+	worldToMainLongGridPoint(367, 526),
+	worldToMainLongGridPoint(324, 512),
+	worldToMainLongGridPoint(277, 522),
+	worldToMainLongGridPoint(242, 545),
+	worldToMainLongGridPoint(216, 545),
+	{ x: 4, y: 8 },
+];
+
+const MAIN_LONG_PATHS: Position[][] = [
+	MAIN_TOP_LEFT_PATH,
+	MAIN_TOP_RIGHT_PATH,
+	MAIN_BOTTOM_LEFT_PATH,
+	MAIN_BOTTOM_RIGHT_PATH,
+];
+
+const MAIN_LONG_PATH = MAIN_TOP_LEFT_PATH;
+
+const MAIN_LONG_BLOCKED_PLACEMENT_POINTS: Position[] = [
+	{ x: 4, y: 0 },
+	{ x: 4, y: 17 },
+	{ x: 4, y: 8 },
+];
+
+const MAIN_LONG_OBSTACLES: Position[] = [];
+
+const MAIN_LONG_BUILDABLE_POINTS: MapLayout['buildablePoints'] = [
+	{ x: 3, y: 3 },
+	{ x: 5, y: 3 },
+	{ x: 2, y: 6 },
+	{ x: 6, y: 6 },
+	{ x: 2, y: 11 },
+	{ x: 6, y: 11 },
+];
+
+const MAIN_LONG_PLACEMENT_ANCHORS: MapLayout['placementAnchors'] = [
+	{ x: 3, y: 3, worldX: 148, worldY: 204 },
+	{ x: 5, y: 3, worldX: 284, worldY: 204 },
+	{ x: 2, y: 6, worldX: 98, worldY: 366 },
+	{ x: 6, y: 6, worldX: 334, worldY: 366 },
+	{ x: 2, y: 11, worldX: 98, worldY: 607 },
+	{ x: 6, y: 11, worldX: 334, worldY: 607 },
+];
 
 // Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional
 // allowed) so they read as background scenery and never compete with tower
@@ -219,22 +163,24 @@ export const MAIN_MAP_ID = 'main_long' as const;
 
 export const MAIN_LONG_MAP: MapLayout = {
 	id: MAIN_MAP_ID,
-	name: '왕복 회랑',
+	name: '중앙 성채 회랑',
 	width: 9,
 	height: 18,
 	tileSize: 48,
 	path: MAIN_LONG_PATH,
+	paths: [...MAIN_LONG_PATHS],
 	blockedPlacementPoints: MAIN_LONG_BLOCKED_PLACEMENT_POINTS,
 	buildablePoints: MAIN_LONG_BUILDABLE_POINTS,
-	spawnPoint: { x: 0, y: 0 },
-	exitPoint: { x: 4, y: 0 },
+	placementAnchors: MAIN_LONG_PLACEMENT_ANCHORS,
+	spawnPoint: { x: 4, y: 0 },
+	exitPoint: { x: 4, y: 8 },
 	tilemapKey: 'tilemap-main-long',
 	tilesetKey: 'tileset',
 	rewardMultiplier: 1,
 	difficultyHpMult: 1,
 	recommendedPower: 55,
 	obstacles: MAIN_LONG_OBSTACLES,
-	castleWallTiles: [{ x: 4, y: 0 }],
+	castleWallTiles: [{ x: 4, y: 8 }],
 	decorations: MAIN_LONG_DECORATIONS,
 };
 

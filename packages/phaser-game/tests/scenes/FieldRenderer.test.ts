@@ -5,7 +5,10 @@ vi.mock('phaser', () => ({
 	default: {},
 }));
 
-import { FieldRenderer } from '../../src/scenes/render/FieldRenderer';
+import {
+	FieldRenderer,
+	MAIN_LONG_BACKGROUND_KEY,
+} from '../../src/scenes/render/FieldRenderer';
 
 function createGraphics() {
 	return {
@@ -42,6 +45,8 @@ function createSprite() {
 function buildScene() {
 	const graphicsList: ReturnType<typeof createGraphics>[] = [];
 	const spriteList: ReturnType<typeof createSprite>[] = [];
+	const imageList: ReturnType<typeof createSprite>[] = [];
+	const backgroundTexture = { setFilter: vi.fn() };
 	const addGraphics = vi.fn(() => {
 		const g = createGraphics();
 		graphicsList.push(g);
@@ -50,6 +55,11 @@ function buildScene() {
 	const addSprite = vi.fn(() => {
 		const s = createSprite();
 		spriteList.push(s);
+		return s;
+	});
+	const addImage = vi.fn(() => {
+		const s = createSprite();
+		imageList.push(s);
 		return s;
 	});
 	const addTileSprite = vi.fn(() => createSprite());
@@ -74,6 +84,7 @@ function buildScene() {
 		scene: {
 			add: {
 				graphics: addGraphics,
+				image: addImage,
 				sprite: addSprite,
 				tileSprite: addTileSprite,
 			},
@@ -82,17 +93,21 @@ function buildScene() {
 				height: 900,
 			},
 			textures: {
-				exists: vi.fn(() => true),
+				exists: vi.fn((key: string) => key !== MAIN_LONG_BACKGROUND_KEY),
+				get: vi.fn(() => backgroundTexture),
 			},
 			make: {
 				tilemap: vi.fn(() => tilemap),
 			},
 		},
 		addGraphics,
+		addImage,
 		addSprite,
 		addTileSprite,
 		graphicsList,
+		imageList,
 		spriteList,
+		backgroundTexture,
 	};
 }
 
@@ -159,6 +174,27 @@ describe('FieldRenderer', () => {
 		// Expect grass platform sprites + at least one decoration + one
 		// obstacle to be placed.
 		expect(addSprite.mock.calls.length).toBeGreaterThan(0);
+	});
+
+	it('uses the illustrated main_long background when the texture exists', () => {
+		const { scene, addGraphics, addImage, addSprite, backgroundTexture } =
+			buildScene();
+		scene.textures.exists = vi.fn(
+			(key: string) => key === MAIN_LONG_BACKGROUND_KEY,
+		);
+		const grid = buildGridManager();
+		const map = buildMap();
+
+		const renderer = new FieldRenderer(scene as never, grid as never, map);
+		renderer.renderAll();
+
+		expect(addImage).toHaveBeenCalledWith(300, 450, MAIN_LONG_BACKGROUND_KEY);
+		expect(backgroundTexture.setFilter).toHaveBeenCalledWith(0);
+		expect(addGraphics).not.toHaveBeenCalled();
+		expect(addSprite).not.toHaveBeenCalled();
+
+		renderer.refreshPath();
+		expect(addGraphics).not.toHaveBeenCalled();
 	});
 
 	it('refreshPath clears old path graphics before redrawing', () => {

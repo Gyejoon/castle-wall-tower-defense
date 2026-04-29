@@ -14,6 +14,7 @@ export interface GridManagerOptions {
 }
 
 export class GridManager {
+	readonly mapId?: string;
 	readonly width: number;
 	readonly height: number;
 	readonly tileSize: number;
@@ -23,14 +24,23 @@ export class GridManager {
 	private grid: Grid;
 	private readonly offsetX: number;
 	private readonly offsetY: number;
+	private readonly buildablePoints: Position[];
 	private readonly buildablePointKeys: Set<string>;
 	private readonly blockedPlacementPointKeys: Set<string>;
 	private readonly pathPointKeys: Set<string>;
+	private readonly placementAnchors: Array<
+		Position & { worldX: number; worldY: number }
+	>;
+	private readonly placementAnchorByKey: Map<
+		string,
+		Position & { worldX: number; worldY: number }
+	>;
 
 	constructor(
 		config: GridConfig = DEFAULT_GRID_CONFIG,
 		options?: GridManagerOptions,
 	) {
+		this.mapId = (config as Partial<MapLayout>).id;
 		this.width = config.width;
 		this.height = config.height;
 
@@ -46,8 +56,16 @@ export class GridManager {
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
 		const mapConfig = config as GridConfig & Partial<MapLayout>;
+		this.buildablePoints = [...(mapConfig.buildablePoints ?? [])];
 		this.buildablePointKeys = new Set(
-			(mapConfig.buildablePoints ?? []).map((point) => `${point.x},${point.y}`),
+			this.buildablePoints.map((point) => `${point.x},${point.y}`),
+		);
+		this.placementAnchors = [...(mapConfig.placementAnchors ?? [])];
+		this.placementAnchorByKey = new Map(
+			this.placementAnchors.map((anchor) => [
+				`${anchor.x},${anchor.y}`,
+				anchor,
+			]),
 		);
 		this.blockedPlacementPointKeys = new Set(
 			(mapConfig.blockedPlacementPoints ?? []).map(
@@ -139,11 +157,39 @@ export class GridManager {
 
 	/** Convert grid coords to orthogonal world pixel coords (center of tile) */
 	gridToWorld(gridX: number, gridY: number): Position {
+		const anchor = this.placementAnchorByKey.get(`${gridX},${gridY}`);
+		if (anchor) {
+			return { x: anchor.worldX, y: anchor.worldY };
+		}
+
 		const t = this.orthoTile;
 		return {
 			x: gridX * t + t / 2 + this.offsetX,
 			y: gridY * t + t / 2 + this.offsetY,
 		};
+	}
+
+	/** Snap a world point to the nearest buildable visual anchor. */
+	snapWorldToBuildable(
+		worldX: number,
+		worldY: number,
+		maxDistancePx = this.orthoTile * 0.85,
+	): Position | null {
+		if (this.buildablePoints.length === 0) return null;
+
+		let best: { point: Position; distSq: number } | null = null;
+		for (const point of this.buildablePoints) {
+			const world = this.gridToWorld(point.x, point.y);
+			const dx = world.x - worldX;
+			const dy = world.y - worldY;
+			const distSq = dx * dx + dy * dy;
+			if (!best || distSq < best.distSq) {
+				best = { point, distSq };
+			}
+		}
+
+		if (!best || best.distSq > maxDistancePx * maxDistancePx) return null;
+		return { x: best.point.x, y: best.point.y };
 	}
 
 	/** Convert orthogonal world pixel coords to grid coords */

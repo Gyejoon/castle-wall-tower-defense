@@ -6,7 +6,9 @@
 >
 > **v3 변경 요약**: plasma, dragon_nest 타워 **완전 제거** (family/tier 모델 불일치). hybrid_ab / hybrid_cd / ultimate 3종 신규 placeholder 상태 명시. PR #173 포팅으로 Tilemap_dirt_seamless / grass_seamless / path seamless 타일셋 도입. Cinematic keyart 로비 에셋 (성 실루엣 CSS-only, 에셋 없음).
 >
-> **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, **런타임 `setDisplaySize`가 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 다운스케일**해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
+> **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, 런타임 `setDisplaySize`로 축소해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
+>
+> **v3.2 변경 요약 (2026-04-29)**: `main_long`은 제공 이미지 기반 일러스트 배경을 사용한다. 일반 몬스터 런타임 크기는 **20×26**, 보스는 **30×36**으로 줄여 432×960 일러스트 경로 폭에 맞춘다. 몬스터 이동은 0.55x 표시 속도 배율을 적용하고, 경로는 이미지 흙길 중심 픽셀을 waypoint로 역변환한다. 타워 배치는 이미지에 그려진 6개 빈 네모칸 중심에 `placementAnchors`로 스냅한다.
 
 ---
 
@@ -80,7 +82,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | UI (PVE) | ~34 PNG+WebP | `generate-ui.ts`, `generate-match-ui.ts` | PVP 혼재 |
 | UI 모바일 | ~44 PNG+WebP | `generate-ui-mobile.ts` | ✅ 완료 |
 | 타일 | tileset PNG | `generate-tiles.ts`, `generate-tileset.ts` | forest만 완료 |
-| 맵 | 1 JSON | `generate-map.ts` | forest_gate만 완료 |
+| 맵 | 1 JSON + 1 배경 PNG/WebP | `generate-map.ts`, `generate-main-long-background.ts` | `main_long` 일러스트 배경 완료 |
 | 아이콘 | ~8 PNG+WebP | `generate-icons.ts` | ✅ 완료 |
 | vendor | tiny-swords 팩 | N/A | ✅ 완료 |
 
@@ -302,13 +304,17 @@ sin 기반 8프레임 워크 사이클:
 
 ---
 
-## 9. 맵 에셋 (3 스테이지)
+## 9. 맵 에셋
 
-| stage_id | 테마 | 상태 |
-|---------|------|------|
-| forest_gate | 초록/갈색 자연 톤, 단일 경로 | ✅ 완료 |
-| lava_fortress | 붉은/주황 화산 톤, 2경로 | ⬜ 미구현 |
-| storm_citadel | 짙은 파랑/보라 전기 톤, 3경로 | ⬜ 미구현 |
+정식 모드는 `main_long` 단일 맵을 사용한다. 게임 로직은 9×18 논리 그리드, path, placement data를 유지하고, 시각 지형은 사용 권리가 확인된 제공 원본 이미지를 한 장짜리 일러스트 배경으로 렌더링한다.
+
+| asset | 파일 | 해상도 | 설명 |
+|------|------|--------|------|
+| field-main-long-bg | maps/main-long-bg.png / .webp | 432×960 | 제공 원본 이미지를 portrait canvas에 맞춘 `main_long` 배경 |
+| main-long-central-castle | maps/main-long-central-castle.png / .webp | 340×410 | 원본 이미지에서 중앙 성채를 별도 에셋으로 보관 |
+| tilemap-main-long | maps/main-long.json | 8×24 legacy JSON | fallback/호환용 tilemap data |
+
+원본 소스는 `scripts/generate-assets/sources/main-long-reference.png`에 보관한다. 배경은 원본 비율을 유지한 cover-crop으로 432×960에 맞춘다. 게임 판정은 별도의 보이지 않는 논리 그리드가 담당한다. 적 이동 경로는 이미지의 흙길 중심 픽셀을 `worldToMainLongGridPoint()`로 역변환한 소수점 waypoint를 사용한다. 타워 배치는 6개 `buildablePoints`만 허용하고, 각 칸은 `placementAnchors`의 이미지 좌표 중심으로 스냅한다. 중앙 성채와 스폰 문은 별도 런타임 에셋이 있더라도 배경과 중복되므로 `main_long`에서는 렌더링하지 않는다.
 
 ---
 

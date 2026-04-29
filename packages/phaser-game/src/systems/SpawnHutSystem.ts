@@ -1,4 +1,9 @@
-import { getMapPaths, type MapLayout, TILE_SIZE } from '@gld/shared';
+import {
+	getMapPaths,
+	MAIN_MAP_ID,
+	type MapLayout,
+	TILE_SIZE,
+} from '@gld/shared';
 import type Phaser from 'phaser';
 
 import type { GridManager } from './GridManager';
@@ -21,6 +26,8 @@ export class SpawnHutSystem {
 	}
 
 	create(): void {
+		if (this.map.id === MAIN_MAP_ID) return;
+
 		// Register animation if not already registered
 		if (!this.scene.anims.exists('spawn-smoke')) {
 			this.scene.anims.create({
@@ -35,9 +42,13 @@ export class SpawnHutSystem {
 		}
 
 		const paths = getMapPaths(this.map);
+		const renderedStarts = new Set<string>();
 		for (const lane of paths) {
 			if (lane.length === 0) continue;
 			const sp = lane[0];
+			const startKey = `${sp.x},${sp.y}`;
+			if (renderedStarts.has(startKey)) continue;
+			renderedStarts.add(startKey);
 			const world = this.grid.gridToWorld(sp.x, sp.y);
 			const hutY = world.y - TILE_SIZE / 2; // align hut top to tile top edge
 			const baseDepth = sp.x + sp.y;

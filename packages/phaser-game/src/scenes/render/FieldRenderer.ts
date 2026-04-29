@@ -22,6 +22,9 @@ interface MapTheme {
 	pathLineColor: number;
 }
 
+export const MAIN_LONG_BACKGROUND_KEY = 'field-main-long-bg';
+export const MAIN_LONG_CENTRAL_CASTLE_KEY = 'main-long-central-castle';
+
 const MAP_THEMES: Record<string, MapTheme> = {
 	main_long: {
 		groundTint: 0xc8b89a,
@@ -46,6 +49,7 @@ type DecorationTile = {
 export class FieldRenderer {
 	private pathGraphics?: Phaser.GameObjects.Graphics;
 	private decorationTiles: DecorationTile[] | null = null;
+	private usesIllustratedBackground = false;
 
 	constructor(
 		private readonly scene: Phaser.Scene,
@@ -58,6 +62,9 @@ export class FieldRenderer {
 		if (this.decorationTiles === null) {
 			this.cacheDecorationData();
 		}
+		this.usesIllustratedBackground = this.renderIllustratedBackground(dark);
+		if (this.usesIllustratedBackground) return;
+
 		this.renderField(dark);
 		this.renderPath();
 		this.renderObstacles();
@@ -65,6 +72,7 @@ export class FieldRenderer {
 	}
 
 	refreshPath(_path?: Position[]): void {
+		if (this.usesIllustratedBackground) return;
 		this.renderPath();
 	}
 
@@ -72,6 +80,25 @@ export class FieldRenderer {
 		this.pathGraphics?.destroy();
 		this.pathGraphics = undefined;
 		this.decorationTiles = null;
+		this.usesIllustratedBackground = false;
+	}
+
+	private renderIllustratedBackground(dark: boolean): boolean {
+		if (this.map.id !== 'main_long') return false;
+		if (!this.scene.textures.exists(MAIN_LONG_BACKGROUND_KEY)) return false;
+		if (typeof this.scene.add.image !== 'function') return false;
+
+		const background = this.scene.add.image(
+			this.scene.scale.width / 2,
+			this.scene.scale.height / 2,
+			MAIN_LONG_BACKGROUND_KEY,
+		);
+		background.setDisplaySize(this.scene.scale.width, this.scene.scale.height);
+		background.setOrigin(0.5, 0.5);
+		background.setDepth(0);
+		background.setScrollFactor(0);
+		if (dark) background.setTint(0x66758f);
+		return true;
 	}
 
 	private cacheDecorationData(): void {

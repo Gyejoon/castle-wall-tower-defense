@@ -24,7 +24,7 @@
 | Genre | 픽셀 중세 Random Tower Defense + Merge |
 | Platform | Mobile Web (App In Toss) |
 | Player Count | Single |
-| Camera/View | Top-down / Portrait Long Field (**9×18 grid, 48px 타일**, U-turn path + 중앙 프리미엄 배치 지대) |
+| Camera/View | Top-down / Portrait Long Field (**9×18 grid, 48px 타일**, 위/아래 진입 경로 + 중앙 성채 HP 목표 + 6개 고정 배치칸) |
 | Input | Touch — 소환·가챠 버튼 + 타워 2회 탭으로 합성 |
 | Session Length | 5~10분 |
 | Core Fantasy | 랜덤으로 뽑은 4 가문 타워를 합성해 tier 6 "세계의 끝"까지 키우는 지휘관 |
@@ -159,7 +159,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchest
 | 소환 풀 타워 | 4종 T1 (archer, nova_cannon, emp, shield) | 4 family 각 1개, 균등 draw |
 | 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
 | **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
-| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | U-turn path + 중앙 col 4 프리미엄 배치 지대, 5개 장애물 (col 4 row 2/5/8/11/14) |
+| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | 위/아래 road-end spawn, 이미지 흙길 중심선에 맞춘 소수점 waypoint 경로, 중앙 성채 입구 `(4,8)` 도달 시 HP 감소. 타워 배치는 6개 고정 네모칸만 허용 |
 | 스테이지 | 단일 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
 | 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
 | 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |

@@ -8,7 +8,7 @@
 >
 > **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser `Scale.NONE`으로 **게임 캔버스 내부 bitmap은 모든 기기에서 고정 432×960**. 소스 스프라이트시트(타워 64×80, 유닛 40×48, 보스 60×72, 타일 48×48)는 픽셀 아트 원본 해상도를 유지하되, 런타임 `setDisplaySize`로 축소해 타일 크기(48×48)와 조화시킨다. 디바이스별 스케일링은 canvas를 flex-1 슬롯에 `width/height: 100%`로 스트레치하는 CSS만으로 처리된다 (uniform-within-canvas).
 >
-> **v3.2 변경 요약 (2026-04-29)**: `main_long`은 제공 이미지 기반 일러스트 배경을 사용한다. 일반 몬스터 런타임 크기는 **20×26**, 보스는 **30×36**으로 줄여 432×960 일러스트 경로 폭에 맞춘다. 몬스터 이동은 0.55x 표시 속도 배율을 적용하고, 경로는 이미지 흙길 중심 픽셀을 waypoint로 역변환한다. 타워 배치는 이미지에 그려진 6개 빈 네모칸 중심에 `placementAnchors`로 스냅한다.
+> **v3.2 변경 요약 (2026-04-29)**: `main_long`은 제공 이미지 기반 일러스트 배경을 사용한다. 런타임은 **864×1920 @2x WebP** 배경을 `field-main-long-bg` texture key로 로드해 큰 모바일 캔버스에서 432×960 원본이 확대되는 흐림을 줄인다. WebP 미지원 환경은 432×960 PNG fallback을 사용한다. 일반 몬스터 런타임 크기는 **20×26**, 보스는 **30×36**으로 줄여 432×960 일러스트 경로 폭에 맞춘다. 몬스터 이동은 0.55x 표시 속도 배율을 적용하고, 경로는 이미지 흙길 중심 픽셀을 waypoint로 역변환한다. 타워 배치는 이미지에 그려진 6개 빈 네모칸 중심에 `placementAnchors`로 스냅한다.
 
 ---
 
@@ -310,7 +310,8 @@ sin 기반 8프레임 워크 사이클:
 
 | asset | 파일 | 해상도 | 설명 |
 |------|------|--------|------|
-| field-main-long-bg | maps/main-long-bg.png / .webp | 432×960 | 제공 원본 이미지를 portrait canvas에 맞춘 `main_long` 배경 |
+| field-main-long-bg | maps/main-long-bg@2x.webp | 864×1920 | 런타임 로드용 고해상도 `main_long` 배경 |
+| field-main-long-bg-preview | maps/main-long-bg.png / .webp | 432×960 | 고정 게임 논리 해상도 기준 preview/fallback 배경 |
 | main-long-central-castle | maps/main-long-central-castle.png / .webp | 340×410 | 원본 이미지에서 중앙 성채를 별도 에셋으로 보관 |
 | tilemap-main-long | maps/main-long.json | 8×24 legacy JSON | fallback/호환용 tilemap data |
 

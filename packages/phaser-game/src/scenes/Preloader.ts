@@ -22,7 +22,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.image(
 			MAIN_LONG_BACKGROUND_KEY,
 			supportsWebP
-				? 'assets/maps/main-long-bg.webp'
+				? 'assets/maps/main-long-bg@2x.webp'
 				: 'assets/maps/main-long-bg.png',
 		);
 		this.load.image(

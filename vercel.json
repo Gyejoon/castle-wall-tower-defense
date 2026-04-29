@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && bun run build:all",
+  "buildCommand": "cd ../.. && cd packages/web-shell && bun --bun vite build && cd ../.. && bun run merge-build",
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && bun install",
   "framework": null,

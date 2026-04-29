@@ -40,7 +40,7 @@ export class InputController {
 		const { hoverGraphics } = this.deps;
 
 		this.pointerMove = (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.grid.worldToGrid(pointer.worldX, pointer.worldY);
+			const gridPos = this.pointerToGrid(pointer);
 			hoverGraphics.clear();
 
 			if (this.grid.isInBounds(gridPos.x, gridPos.y)) {
@@ -56,7 +56,7 @@ export class InputController {
 		};
 
 		this.pointerDown = (pointer: Phaser.Input.Pointer) => {
-			const gridPos = this.grid.worldToGrid(pointer.worldX, pointer.worldY);
+			const gridPos = this.pointerToGrid(pointer);
 
 			if (this.deps.isGameOver()) return;
 			if (!this.grid.isInBounds(gridPos.x, gridPos.y)) return;
@@ -86,6 +86,16 @@ export class InputController {
 
 		this.scene.input.on('pointermove', this.pointerMove);
 		this.scene.input.on('pointerdown', this.pointerDown);
+	}
+
+	private pointerToGrid(pointer: Phaser.Input.Pointer): {
+		x: number;
+		y: number;
+	} {
+		return (
+			this.grid.snapWorldToBuildable(pointer.worldX, pointer.worldY) ??
+			this.grid.worldToGrid(pointer.worldX, pointer.worldY)
+		);
 	}
 
 	setSelectedTowerId(id: string | null): void {

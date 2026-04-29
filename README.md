@@ -25,11 +25,13 @@ React 18 · Phaser 3 · Zustand · Vite · TypeScript · Bun workspaces · Vites
 ```
 packages/
   shared/           @gld/shared — TypeScript 타입, 상수, 이벤트 계약
-  phaser-game/      @gld/phaser-game — Phaser 3 게임 엔진 (그리드, 타워, 유닛, 웨이브)
+  phaser-game/      @gld/phaser-game — Phaser 3 게임 엔진 (legacy 런타임)
   web-shell/        React SPA. Phaser 게임 임베드, 로비, 설정, 상태 관리
+  unity-game/       Unity 2D WebGL 포트 (Phase 0 스캐폴드). /unity/ 경로로 병행 서빙
 
 scripts/
   generate-assets/  @napi-rs/canvas 기반 절차적 픽셀 아트 생성 파이프라인
+  merge-build.ts    web-shell dist + unity-game Build/WebGL 병합 → /unity/
 ```
 
 ## 시작하기
@@ -48,11 +50,14 @@ bun dev:web                                        # 개발 서버 (port 3000)
 | 커맨드 | 설명 |
 |--------|------|
 | `bun dev:web` | Vite 개발 서버 (port 3000) |
+| `bun dev:unity-preview` | Unity 병합 빌드를 port 8080에서 미리보기 (Unity 미설치 환경도 placeholder로 동작) |
 | `bun build:web` | TypeScript + Vite 프로덕션 빌드 |
+| `bun build:all` | build:web + scripts/merge-build.ts 체인 (Vercel이 호출) |
 | `bun test` | 전체 테스트 실행 |
 | `bun test:shared` | @gld/shared 테스트 |
 | `bun test:phaser` | @gld/phaser-game 테스트 |
 | `bun test:web` | web-shell 테스트 |
+| `bun test:scripts` | scripts/*.test.ts 테스트 (merge-build 등) |
 | `bun lint` | 전체 lint |
 | `bun lint:check` | Biome check |
 | `bun generate:assets` | 픽셀 아트 에셋 전체 재생성 (생성 스크립트 변경 시에만 필요, 산출물은 git에 함께 커밋) |
@@ -71,15 +76,16 @@ bun dev:web                                        # 개발 서버 (port 3000)
 
 | 트랙 | 설명 | 상태 |
 |------|------|------|
-| R1 | 정식 모드 확정 — 소환/합성/가챠/보스/로그라이크/메타 shell + 4 안정화 픽스 (B1-B4) | **완료** |
+| R1 | 정식 모드 확정 — 소환/합성/가챠/보스/로그라이크/메타 shell + 4 안정화 픽스 | **완료** |
 | R1 | 메타 루프 본 구현 — `metaProgressStore` 영속화, `globalAtkPct` 주입 | **shell 완료** |
 | R1 | BM stub — `AdService` + `MockAdService`, 이어서 하기 (1회/런) | **완료** |
 | R2 | 타워 강화 UX 확장 / 메타 퍽 선택 UI / 맵 2~3종 / FTUE 튜토리얼 | 계획 |
+| Unity migration | Phase 0 스캐폴드 (unity-game 패키지 + CI + /unity/ 라우트) | **진행 중** |
+| Unity migration | Phase 1~7 (데이터/에셋 → PoC → 코어 루프 → 합성/보스 → UI → 저장/오디오 → parity gate) | 계획 |
+| Unity migration | Phase 8 (Unity default 승격, phaser freeze) | 계획 |
 | R3 | 실광고 SDK 연결, LiveOps, 서버 동기화, BM 본격화 | 계획 |
 
-자세한 트랙 정의는 `docs/game-spec/06-milestone.md` 참조.
-
-활성 스펙과 플랜은 `docs/superpowers/` 아래에서 관리된다.
+자세한 트랙 정의는 `docs/game-spec/06-milestone.md` 참조. Unity 마이그레이션 플랜/런북은 `docs/unity-migration/` 참조.
 
 ## License
 

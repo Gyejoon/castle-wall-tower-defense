@@ -1,0 +1,20 @@
+.phase0-root {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: #2a2010;
+}
+
+.phase0-label {
+    color: #c8a04a;
+    font-size: 32px;
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+    -unity-text-align: middle-center;
+}
+
+.phase0-subtitle {
+    color: #b0a080;
+    font-size: 14px;
+    -unity-text-align: middle-center;
+}

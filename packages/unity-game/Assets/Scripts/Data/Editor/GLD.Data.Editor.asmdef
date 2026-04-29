@@ -1,0 +1,20 @@
+{
+  "name": "GLD.Data.Editor",
+  "rootNamespace": "GLD.Data.Editor",
+  "references": [
+    "GLD.Core",
+    "GLD.Data",
+    "Unity.Addressables.Editor"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -92,13 +92,13 @@ describe('GridManager', () => {
 
 	it('MAIN_LONG_MAP path 타일에는 타워를 배치할 수 없어야 한다', () => {
 		const gm = new GridManager(MAIN_LONG_MAP);
-		const pathPoint = MAIN_LONG_MAP.path[1];
+		const pathPoint = MAIN_LONG_MAP.path[0];
 		expect(gm.placeTower(pathPoint.x, pathPoint.y, 'tower-1')).toBe(false);
 	});
 
 	it('MAIN_LONG_MAP blocked-placement 타일에는 타워를 배치할 수 없어야 한다', () => {
 		const gm = new GridManager(MAIN_LONG_MAP);
-		const blockedPoint = { x: 0, y: 0 };
+		const blockedPoint = MAIN_LONG_MAP.blockedPlacementPoints[0];
 		expect(gm.placeTower(blockedPoint.x, blockedPoint.y, 'tower-1')).toBe(
 			false,
 		);
@@ -110,6 +110,27 @@ describe('GridManager', () => {
 		expect(gm.placeTower(buildablePoint.x, buildablePoint.y, 'tower-1')).toBe(
 			true,
 		);
+	});
+
+	it('MAIN_LONG_MAP buildable 타일은 이미지 배치 앵커 좌표로 변환되어야 한다', () => {
+		const gm = new GridManager(MAIN_LONG_MAP);
+		const anchor = MAIN_LONG_MAP.placementAnchors?.[0];
+		expect(anchor).toBeDefined();
+
+		const world = gm.gridToWorld(anchor?.x ?? 0, anchor?.y ?? 0);
+		expect(world).toEqual({ x: anchor?.worldX, y: anchor?.worldY });
+	});
+
+	it('MAIN_LONG_MAP 이미지 배치 앵커 근처 터치는 buildable 타일로 스냅되어야 한다', () => {
+		const gm = new GridManager(MAIN_LONG_MAP);
+		const anchor = MAIN_LONG_MAP.placementAnchors?.[0];
+		expect(anchor).toBeDefined();
+
+		const snapped = gm.snapWorldToBuildable(
+			(anchor?.worldX ?? 0) + 12,
+			(anchor?.worldY ?? 0) - 8,
+		);
+		expect(snapped).toEqual({ x: anchor?.x, y: anchor?.y });
 	});
 
 	it('removeTower가 타워를 제거하고 true를 반환해야 한다', () => {

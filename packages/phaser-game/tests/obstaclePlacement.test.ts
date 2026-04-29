@@ -1,4 +1,4 @@
-import { MAIN_LONG_MAP } from '@gld/shared';
+import { getMapPaths, MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 
@@ -50,5 +50,28 @@ describe('MAIN_LONG_MAP obstacle placement', () => {
 		);
 		const exitKey = `${MAIN_LONG_MAP.exitPoint.x},${MAIN_LONG_MAP.exitPoint.y}`;
 		expect(wallSet.has(exitKey)).toBe(true);
+	});
+
+	it('main_long uses top and bottom lanes that end at the central castle', () => {
+		const lanes = getMapPaths(MAIN_LONG_MAP);
+		expect(lanes).toHaveLength(4);
+		expect(new Set(lanes.map((lane) => `${lane[0].x},${lane[0].y}`))).toEqual(
+			new Set(['4,0', '4,17']),
+		);
+		expect(
+			lanes.every((lane) => {
+				const end = lane[lane.length - 1];
+				return end.x === 4 && end.y === 8;
+			}),
+		).toBe(true);
+	});
+
+	it('main_long exposes exactly six tower placement pads', () => {
+		expect(MAIN_LONG_MAP.buildablePoints).toHaveLength(6);
+		expect(MAIN_LONG_MAP.placementAnchors).toHaveLength(6);
+		const gm = new GridManager(MAIN_LONG_MAP);
+		for (const point of MAIN_LONG_MAP.buildablePoints) {
+			expect(gm.canPlaceTower(point.x, point.y)).toBe(true);
+		}
 	});
 });

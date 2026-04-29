@@ -1,0 +1,33 @@
+name: Unity Parity Gate
+
+# Placeholder workflow. Phase 3 wires the deterministic TS↔C# replay harness
+# (packages/shared/src/testing/replay-runner.ts + Unity EditMode ReplayParityTests)
+# and this workflow becomes required. Until then, this job is informational and
+# always passes so PR status checks do not block Phase 0–2 work.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity-gate-stub:
+    name: Parity Gate (stub until Phase 3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Announce placeholder status
+        run: |
+          cat <<'EOF'
+          Unity Parity Gate is a Phase 0 placeholder.
+          It will become required when Phase 3 adds the TS↔C# replay harness under
+          packages/shared/src/testing/ and EditMode tests under
+          packages/unity-game/Assets/Tests/EditMode/ParityAcceptance/.
+          EOF
+          echo "Stub status: PASS"

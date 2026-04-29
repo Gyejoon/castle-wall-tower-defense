@@ -7,6 +7,7 @@ import {
 } from '@gld/shared';
 import type Phaser from 'phaser';
 
+import { MAIN_LONG_CENTRAL_CASTLE_KEY } from '../scenes/render/FieldRenderer';
 import type { GridManager } from './GridManager';
 
 interface WallSet {
@@ -64,6 +65,9 @@ export class CastleWallSystem {
 						.map((lane) => lane[lane.length - 1]);
 		for (const ep of wallTiles) {
 			const world = this.grid.gridToWorld(ep.x, ep.y);
+			const usesIllustratedCastle =
+				this.map.id === 'main_long' &&
+				this.scene.textures.exists(MAIN_LONG_CENTRAL_CASTLE_KEY);
 			const wallY = world.y + TILE_SIZE / 2; // align wall bottom to tile bottom edge
 			const baseDepth = ep.x + ep.y;
 
@@ -72,8 +76,22 @@ export class CastleWallSystem {
 			// above the flat depth=2 grass platform layer (see Game.ts
 			// Layer 2 loop); 100+ stays clear of every grid-relative depth
 			// layer below.
-			const wall = this.scene.add.sprite(world.x, wallY, 'castle-wall-hp3');
-			wall.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
+			const wall = this.scene.add.sprite(
+				world.x,
+				wallY,
+				usesIllustratedCastle
+					? MAIN_LONG_CENTRAL_CASTLE_KEY
+					: 'castle-wall-hp3',
+			);
+			if (usesIllustratedCastle) {
+				// The illustrated map background already contains the central
+				// castle. Keep this sprite as an invisible HP/VFX anchor so we do
+				// not double-render a blurry oversized castle on top of the art.
+				wall.setDisplaySize(1, 1);
+				wall.setVisible(false);
+			} else {
+				wall.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
+			}
 			wall.setOrigin(0.5, 1.0);
 			wall.setDepth(100 + baseDepth);
 
@@ -116,8 +134,12 @@ export class CastleWallSystem {
 
 	update(hp: number): void {
 		for (const { wall, smoke, fires } of this.walls) {
+			const textureKey = wall.texture?.key;
 			if (hp > HP_WALL_STAGE_2) {
-				wall.setTexture('castle-wall-hp3');
+				if (textureKey !== MAIN_LONG_CENTRAL_CASTLE_KEY) {
+					wall.setTexture('castle-wall-hp3');
+				}
+				wall.clearTint();
 				smoke.setVisible(false);
 				smoke.anims.pause();
 				for (const fire of fires) {
@@ -125,7 +147,11 @@ export class CastleWallSystem {
 					fire.anims.pause();
 				}
 			} else if (hp > HP_WALL_STAGE_1) {
-				wall.setTexture('castle-wall-hp2');
+				if (textureKey === MAIN_LONG_CENTRAL_CASTLE_KEY) {
+					wall.setTint(0xd8c8a8);
+				} else {
+					wall.setTexture('castle-wall-hp2');
+				}
 				smoke.setVisible(true);
 				if (!smoke.anims.isPlaying) {
 					smoke.anims.resume();
@@ -135,7 +161,11 @@ export class CastleWallSystem {
 					fire.anims.pause();
 				}
 			} else {
-				wall.setTexture('castle-wall-hp1');
+				if (textureKey === MAIN_LONG_CENTRAL_CASTLE_KEY) {
+					wall.setTint(0xb88a80);
+				} else {
+					wall.setTexture('castle-wall-hp1');
+				}
 				smoke.setVisible(true);
 				if (!smoke.anims.isPlaying) {
 					smoke.anims.resume();

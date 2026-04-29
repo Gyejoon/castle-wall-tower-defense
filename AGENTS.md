@@ -34,6 +34,7 @@ Claude Code, Codex, 그 외 `AGENTS.md`/`CLAUDE.md`를 읽는 에이전트 모�
 - 설명은 짧고 직접적으로 작성할 것. 요청하지 않은 대안 제시는 하지 말 것.
 - 코드, 명령, 로그, 식별자는 복사 가능한 평문 형식을 유지할 것.
 - 한국어 응답은 유지하되, 코드와 기계가 읽는 텍스트는 ASCII-safe 표기를 우선할 것.
+- PR 제목과 본문은 한국어로 작성할 것.
 
 ### 우선순위
 
@@ -72,9 +73,17 @@ Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 →
 `/agents` 명령 또는 자동 라우팅으로 호출한다.
 
 - 일반 5종: Game Designer / Game Audio Engineer / Level Designer / Narrative Designer / Technical Artist — 엔진 중립 설계 상담에 사용.
-- Unity 4종: Unity Architect / Unity Editor Tool Developer / Unity Multiplayer Engineer / Unity Shader Graph Artist — **C#/MonoBehaviour/URP 전제의 프롬프트이므로 코드 생성용이 아니라 "아키텍처 패턴 레퍼런스"로만 사용**. 본 프로젝트는 Phaser 3 런타임임을 명심할 것.
-- Phaser 관련 실제 구현은 기존 skill(`phaser-best-practices`, `game-ui-design`)을 우선 사용.
-- 출처/라이선스/세부 가이드: `.claude/agents/README.md`
+- Unity 4종: Unity Architect / Unity Editor Tool Developer / Unity Multiplayer Engineer / Unity Shader Graph Artist.
+
+### Unity 4종 이중 사용 규칙
+
+본 저장소는 **Phaser 3 + React 18 런타임(legacy)** 과 **Unity 2D WebGL 런타임(`packages/unity-game/`, 신규)** 을 병행 호스팅한다. 스코프에 따라 Unity 4종 subagent 사용 범위가 달라진다:
+
+- **`packages/unity-game/` 스코프 작업**: Unity 4종을 **실제 C#/ScriptableObject/URP/Editor 툴 코드 설계·리뷰에 직접 활용 가능**. Unity Architect의 anti-pattern watchlist를 기본 체크리스트로 사용.
+- **`packages/phaser-game/`, `packages/web-shell/` 스코프 작업**: Unity 4종은 **"아키텍처 패턴 레퍼런스"로만** 사용. Phaser 실제 구현은 기존 skill(`phaser-best-practices`, `game-ui-design`)을 우선.
+- **공용 `packages/shared/` 스코프 작업**: 엔진 중립 타입/상수 편집은 일반 5종 우선. Unity 4종은 "이 변경이 ScriptableObject/SO 카탈로그에 어떻게 매핑되는가" 자문에만 사용.
+
+출처/라이선스/세부 가이드: `.claude/agents/README.md`
 
 ## 자동 학습 룰
 

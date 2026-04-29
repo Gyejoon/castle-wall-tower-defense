@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 185ac7cced60f4c408b23c89ad4843e5, type: 3}
+  m_Name: GameDatabase
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.GameDatabase
+  towers: {fileID: 11400000, guid: 307a2057b68224d4c83ac85875832693, type: 2}
+  units: {fileID: 11400000, guid: f342f27d2d7fb4bd59d4c2d4530cc0f1, type: 2}
+  waves: {fileID: 11400000, guid: f9d2a65101ab142a3a1b33f87c7a5ac6, type: 2}
+  upgrades: {fileID: 11400000, guid: 730135be597f54010b4b6a7cece03de4, type: 2}
+  summonPool: {fileID: 11400000, guid: 0a9ad02a2e722454faae522c925ce884, type: 2}
+  gacha: {fileID: 11400000, guid: aa6216db49eef400c997ec8231bee6c7, type: 2}
+  energy: {fileID: 11400000, guid: 05fd800d2db7d49388eb0a1b3f201d46, type: 2}
+  scaling: {fileID: 11400000, guid: eeabc010f7c4146109fc4dc000d1ef87, type: 2}
+  familyUpgrade: {fileID: 11400000, guid: 3e72fd70fb95342ad9f629f5805fa1d9, type: 2}
+  elementMatchup: {fileID: 11400000, guid: 9f149d6a04a80455b9fd7fb2bfd0687d, type: 2}
+  boss: {fileID: 11400000, guid: 582643aae604b4f5780097664590dc60, type: 2}
+  map: {fileID: 11400000, guid: 7173136c34e444d678b60a9a923e0608, type: 2}
+  designTokens: {fileID: 11400000, guid: e1e724cd2ff5947748a5d5f04b375738, type: 2}
+  mergeChain: {fileID: 11400000, guid: 33d212b6c199d4e95bbf7871c2798807, type: 2}

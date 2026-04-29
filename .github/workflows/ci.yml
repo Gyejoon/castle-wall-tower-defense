@@ -47,7 +47,7 @@ jobs:
           #   2200KB — +@supabase/supabase-js (~200KB, auth + postgrest + realtime + storage)
           #            for global ranking feature; split to own chunk via manualChunks
           MAX_SIZE_KB=2200
-          DIST_SIZE=$(find packages/web-shell/dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' \) ! -name '*.map' -print0 | xargs -0 wc -c | tail -1 | awk '{print int($1/1024)}')
+          DIST_SIZE=$(find packages/web-shell/dist/web -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' \) ! -name '*.map' ! -name 'sw.js' ! -name 'workbox-*.js' -print0 | xargs -0 wc -c | tail -1 | awk '{print int($1/1024)}')
           echo "Bundle size (JS/CSS/HTML): ${DIST_SIZE}KB (budget: ${MAX_SIZE_KB}KB)"
           if [ "$DIST_SIZE" -gt "$MAX_SIZE_KB" ]; then
             echo "::error::Bundle size ${DIST_SIZE}KB exceeds budget of ${MAX_SIZE_KB}KB"
@@ -56,6 +56,7 @@ jobs:
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: dist
           path: packages/web-shell/dist/

@@ -6,13 +6,13 @@ const SOURCE_IMAGE = 'scripts/generate-assets/sources/main-long-reference.png';
 const OUTPUT_DIR = 'packages/web-shell/public/assets/maps';
 const OUTPUT_PNG = `${OUTPUT_DIR}/main-long-bg.png`;
 const OUTPUT_WEBP = `${OUTPUT_DIR}/main-long-bg.webp`;
-const OUTPUT_2X_WEBP = `${OUTPUT_DIR}/main-long-bg@2x.webp`;
+const OUTPUT_HQ_WEBP = `${OUTPUT_DIR}/main-long-bg-hq.webp`;
 const CASTLE_PNG = `${OUTPUT_DIR}/main-long-central-castle.png`;
 const CASTLE_WEBP = `${OUTPUT_DIR}/main-long-central-castle.webp`;
 
 const CANVAS_W = 432;
 const CANVAS_H = 960;
-const CANVAS_SCALE_2X = 2;
+const WEBP_QUALITY = 98;
 const CASTLE_CROP = {
 	x: 300,
 	y: 590,
@@ -31,14 +31,20 @@ export async function generate(): Promise<ManifestEntry[]> {
 	const canvas = renderCoveredBackground(source, CANVAS_W, CANVAS_H);
 
 	saveCanvas(canvas, OUTPUT_PNG);
-	writeFileSync(OUTPUT_WEBP, canvas.toBuffer('image/webp'));
+	writeFileSync(OUTPUT_WEBP, canvas.toBuffer('image/webp', WEBP_QUALITY));
 
-	const canvas2x = renderCoveredBackground(
+	const hqScale = Math.min(source.width / CANVAS_W, source.height / CANVAS_H);
+	const hqWidth = Math.floor(CANVAS_W * hqScale);
+	const hqHeight = Math.floor(CANVAS_H * hqScale);
+	const canvasHq = renderCoveredBackground(
 		source,
-		CANVAS_W * CANVAS_SCALE_2X,
-		CANVAS_H * CANVAS_SCALE_2X,
+		hqWidth,
+		hqHeight,
 	);
-	writeFileSync(OUTPUT_2X_WEBP, canvas2x.toBuffer('image/webp'));
+	writeFileSync(
+		OUTPUT_HQ_WEBP,
+		canvasHq.toBuffer('image/webp', WEBP_QUALITY),
+	);
 
 	const { canvas: castleCanvas, ctx: castleCtx } = makeCanvas(
 		CASTLE_CROP.w,
@@ -58,18 +64,23 @@ export async function generate(): Promise<ManifestEntry[]> {
 		CASTLE_CROP.h,
 	);
 	saveCanvas(castleCanvas, CASTLE_PNG);
-	writeFileSync(CASTLE_WEBP, castleCanvas.toBuffer('image/webp'));
+	writeFileSync(
+		CASTLE_WEBP,
+		castleCanvas.toBuffer('image/webp', WEBP_QUALITY),
+	);
 
 	const pngSize = statSync(OUTPUT_PNG).size;
 	const webpSize = statSync(OUTPUT_WEBP).size;
-	const webp2xSize = statSync(OUTPUT_2X_WEBP).size;
+	const webpHqSize = statSync(OUTPUT_HQ_WEBP).size;
 	console.log(
 		`  wrote ${OUTPUT_WEBP} (${(webpSize / 1024).toFixed(1)}KB, png ${(
 			pngSize / 1024
 		).toFixed(1)}KB)`,
 	);
 	console.log(
-		`  wrote ${OUTPUT_2X_WEBP} (${(webp2xSize / 1024).toFixed(1)}KB)`,
+		`  wrote ${OUTPUT_HQ_WEBP} (${hqWidth}x${hqHeight}, ${(
+			webpHqSize / 1024
+		).toFixed(1)}KB)`,
 	);
 
 	return [

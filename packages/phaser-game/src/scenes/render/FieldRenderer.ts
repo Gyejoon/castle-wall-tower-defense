@@ -24,6 +24,7 @@ interface MapTheme {
 
 export const MAIN_LONG_BACKGROUND_KEY = 'field-main-long-bg';
 export const MAIN_LONG_CENTRAL_CASTLE_KEY = 'main-long-central-castle';
+const LINEAR_FILTER_MODE = 0;
 
 const MAP_THEMES: Record<string, MapTheme> = {
 	main_long: {
@@ -88,6 +89,7 @@ export class FieldRenderer {
 		if (!this.scene.textures.exists(MAIN_LONG_BACKGROUND_KEY)) return false;
 		if (typeof this.scene.add.image !== 'function') return false;
 
+		this.setIllustratedBackgroundFilter();
 		const background = this.scene.add.image(
 			this.scene.scale.width / 2,
 			this.scene.scale.height / 2,
@@ -99,6 +101,11 @@ export class FieldRenderer {
 		background.setScrollFactor(0);
 		if (dark) background.setTint(0x66758f);
 		return true;
+	}
+
+	private setIllustratedBackgroundFilter(): void {
+		const texture = this.scene.textures.get?.(MAIN_LONG_BACKGROUND_KEY);
+		texture?.setFilter?.(LINEAR_FILTER_MODE);
 	}
 
 	private cacheDecorationData(): void {

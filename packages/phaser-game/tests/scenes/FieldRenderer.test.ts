@@ -46,6 +46,7 @@ function buildScene() {
 	const graphicsList: ReturnType<typeof createGraphics>[] = [];
 	const spriteList: ReturnType<typeof createSprite>[] = [];
 	const imageList: ReturnType<typeof createSprite>[] = [];
+	const backgroundTexture = { setFilter: vi.fn() };
 	const addGraphics = vi.fn(() => {
 		const g = createGraphics();
 		graphicsList.push(g);
@@ -93,6 +94,7 @@ function buildScene() {
 			},
 			textures: {
 				exists: vi.fn((key: string) => key !== MAIN_LONG_BACKGROUND_KEY),
+				get: vi.fn(() => backgroundTexture),
 			},
 			make: {
 				tilemap: vi.fn(() => tilemap),
@@ -105,6 +107,7 @@ function buildScene() {
 		graphicsList,
 		imageList,
 		spriteList,
+		backgroundTexture,
 	};
 }
 
@@ -174,7 +177,8 @@ describe('FieldRenderer', () => {
 	});
 
 	it('uses the illustrated main_long background when the texture exists', () => {
-		const { scene, addGraphics, addImage, addSprite } = buildScene();
+		const { scene, addGraphics, addImage, addSprite, backgroundTexture } =
+			buildScene();
 		scene.textures.exists = vi.fn(
 			(key: string) => key === MAIN_LONG_BACKGROUND_KEY,
 		);
@@ -185,6 +189,7 @@ describe('FieldRenderer', () => {
 		renderer.renderAll();
 
 		expect(addImage).toHaveBeenCalledWith(300, 450, MAIN_LONG_BACKGROUND_KEY);
+		expect(backgroundTexture.setFilter).toHaveBeenCalledWith(0);
 		expect(addGraphics).not.toHaveBeenCalled();
 		expect(addSprite).not.toHaveBeenCalled();
 

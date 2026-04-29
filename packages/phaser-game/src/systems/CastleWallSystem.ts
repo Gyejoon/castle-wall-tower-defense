@@ -134,8 +134,9 @@ export class CastleWallSystem {
 
 	update(hp: number): void {
 		for (const { wall, smoke, fires } of this.walls) {
+			const textureKey = wall.texture?.key;
 			if (hp > HP_WALL_STAGE_2) {
-				if (wall.texture.key !== MAIN_LONG_CENTRAL_CASTLE_KEY) {
+				if (textureKey !== MAIN_LONG_CENTRAL_CASTLE_KEY) {
 					wall.setTexture('castle-wall-hp3');
 				}
 				wall.clearTint();
@@ -146,7 +147,7 @@ export class CastleWallSystem {
 					fire.anims.pause();
 				}
 			} else if (hp > HP_WALL_STAGE_1) {
-				if (wall.texture.key === MAIN_LONG_CENTRAL_CASTLE_KEY) {
+				if (textureKey === MAIN_LONG_CENTRAL_CASTLE_KEY) {
 					wall.setTint(0xd8c8a8);
 				} else {
 					wall.setTexture('castle-wall-hp2');
@@ -160,7 +161,7 @@ export class CastleWallSystem {
 					fire.anims.pause();
 				}
 			} else {
-				if (wall.texture.key === MAIN_LONG_CENTRAL_CASTLE_KEY) {
+				if (textureKey === MAIN_LONG_CENTRAL_CASTLE_KEY) {
 					wall.setTint(0xb88a80);
 				} else {
 					wall.setTexture('castle-wall-hp1');

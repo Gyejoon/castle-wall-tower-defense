@@ -113,7 +113,14 @@ export class GridManager {
 	}
 
 	isInBounds(x: number, y: number): boolean {
-		return x >= 0 && x < this.width && y >= 0 && y < this.height;
+		return (
+			Number.isInteger(x) &&
+			Number.isInteger(y) &&
+			x >= 0 &&
+			x < this.width &&
+			y >= 0 &&
+			y < this.height
+		);
 	}
 
 	isWalkable(x: number, y: number): boolean {

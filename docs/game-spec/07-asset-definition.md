@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-30 (v3.6 — reference-style 64×64 몬스터 스프라이트)
+> **Last Updated:** 2026-04-30 (v3.7 — detailed 64×64 몬스터 스프라이트 + death motion)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
@@ -17,6 +17,8 @@
 > **v3.5 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 `imagegen` 원화 기반 **64×64 픽셀아트 프레임**으로 재패킹했다. `scripts/imagegen-monsters/build-unit-sheets.py`는 imagegen 원화의 실루엣을 유지하면서 chroma-key 제거, 저색상 팔레트 정리, 1px outline, 전용 8프레임 walk/6프레임 idle/death를 생성한다. 런타임 표시 크기는 일반 **32×32**, 보스 **42×42**로 정사각형 비율을 유지한다.
 >
 > **v3.6 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 첨부 참고 이미지풍 **clean cartoon sprite**로 다시 교체했다. 고해상도 원화 컷아웃을 축소하지 않고, 64×64 프레임 안에서 굵은 dark outline, 단순 면 색상, 고정 feet baseline, 전용 8프레임 walk를 직접 생성한다. 기존 `imagegen` 원화 파일은 레퍼런스/아카이브로만 보관하며 런타임 시트의 직접 입력으로 사용하지 않는다.
+>
+> **v3.7 변경 요약 (2026-04-30)**: 64×64 전용 스프라이트에 2~3단계 내부 명암, 장비/벨트/금속 하이라이트, 개체별 소품 디테일을 추가했다. death 시트는 정지 잔해가 아니라 피격 스파크 → 기울어짐 → 쓰러짐 → 잔해/먼지로 이어지는 6프레임 전용 모션으로 교체했다.
 
 ---
 
@@ -226,7 +228,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | corrupted_archmage | 타락한 대마법사 | 보스 | `corrupted_archmage.png` 512×64 (8f) | `corrupted_archmage_idle.png` 384×64 (6f) | `corrupted_archmage_death.png` 384×64 (6f) |
 | dragon | 고대 드래곤 | 보스급 | `dragon.png` 512×64 (8f) | `dragon_idle.png` 384×64 (6f) | `dragon_death.png` 384×64 (6f) |
 
-공통 스타일: 참고 이미지풍 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 굵은 dark outline, 단순 면 색상, 고정 feet baseline, TinySwords 톤 팔레트.
+공통 스타일: 참고 이미지풍 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 굵은 dark outline, 단순 면 색상, 2~3단계 내부 명암, 고정 feet baseline, TinySwords 톤 팔레트.
 모든 런타임 유닛은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
 ### 애니메이션 상태 시스템
@@ -234,7 +236,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 런타임 유닛은 `walk → idle → death` 상태를 사용한다.
 - `walk`: feet baseline 고정 + body bob/limb contact 기반 8프레임 워크 사이클
 - `idle`: 6프레임 대기 루프
-- `death`: 6프레임 전용 사망 애니메이션 후 sprite destroy
+- `death`: 피격 스파크 → 기울어짐 → 쓰러짐 → 잔해/먼지 6프레임 전용 사망 애니메이션 후 sprite destroy
 - stun 중에는 `idle`, 이동 중에는 `walk`, 사망 시에는 공용 death FX 대신 유닛 본체 `death`를 재생한다.
 
 ### walk 모션 공통 규칙
@@ -390,3 +392,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-30 | 헤더, §2, §5, §6 | 몬스터 프레임을 80×96으로 확대하고 런타임 표시 크기를 32×40으로 복구. `quick/heavy/robe/shield/flame/dragon` 전용 gait walk sheet와 connected-component cleanup으로 재생 자연스러움을 개선한다. |
 | 2026-04-30 | 헤더, §1, §2, §5, §6 | 몬스터/보스를 imagegen 원화 기반 64×64 픽셀아트 시트로 재패킹. 실루엣 디테일을 유지하면서 일반 32×32, 보스 42×42 정사각형 표시 크기로 변경한다. |
 | 2026-04-30 | 헤더, §1, §5, §6 | 몬스터/보스를 첨부 참고 이미지풍 clean cartoon sprite로 재교체. 고해상도 원화 컷아웃 축소 대신 64×64 프레임 안에서 굵은 외곽선, 단순 면 색상, 고정 feet baseline, 전용 walk 시트를 직접 생성한다. |
+| 2026-04-30 | 헤더, §5 | 몬스터/보스 64×64 시트에 내부 명암과 장비 디테일을 추가하고, death 시트를 피격/쓰러짐/잔해 6프레임 전용 모션으로 교체한다. |

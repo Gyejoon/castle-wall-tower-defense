@@ -1,331 +1,437 @@
 from __future__ import annotations
 
-from collections import deque
-from math import pi, sin
 from pathlib import Path
-from typing import Any
+from typing import Callable, Literal
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIR = ROOT / "assets-source" / "monsters"
 UNIT_DIR = ROOT / "packages" / "web-shell" / "public" / "assets" / "units"
 PREVIEW_DIR = SOURCE_DIR / "previews"
 
-MONSTER_SOURCE = SOURCE_DIR / "imagegen-monster-lineup-v20260430.png"
-DRAGON_SOURCE = SOURCE_DIR / "imagegen-dragon-lineup-v20260430.png"
-
-FRAME = (64, 64)
+FRAME = 64
+SCALE = 4
 WALK_FRAMES = 8
 IDLE_FRAMES = 6
 DEATH_FRAMES = 6
+GROUND_Y = 56
+WALK_STEP = [-2, -1, 0, 1, 2, 1, 0, -1]
+SOLDIER_STEP = [-1, 0, 1, 0, -1, 0, 1, 0]
+WALK_BOB = [0, -1, -1, 0, 0, -1, -1, 0]
 
-MONSTER_SPECS: list[dict[str, Any]] = [
-    {"id": "scout_drone", "row": 0, "col": 0, "max_w": 34, "max_h": 42, "feet": 55, "gait": "quick"},
-    {"id": "battle_robot", "row": 0, "col": 1, "max_w": 42, "max_h": 47, "feet": 56, "gait": "soldier"},
-    {"id": "heavy_walker", "row": 0, "col": 2, "max_w": 48, "max_h": 48, "feet": 56, "gait": "heavy"},
-    {
-        "id": "stealth_drone",
-        "row": 0,
-        "col": 3,
-        "max_w": 40,
-        "max_h": 47,
-        "feet": 56,
-        "gait": "quick",
-        "aggressive_key": True,
-    },
-    {
-        "id": "flame_imp",
-        "row": 1,
-        "col": 0,
-        "max_w": 36,
-        "max_h": 42,
-        "feet": 55,
-        "gait": "flame",
-        "aggressive_key": True,
-    },
-    {
-        "id": "lava_golem",
-        "row": 1,
-        "col": 1,
-        "max_w": 47,
-        "max_h": 48,
-        "feet": 56,
-        "gait": "heavy",
-        "aggressive_key": True,
-    },
-    {
-        "id": "arcane_mage",
-        "row": 1,
-        "col": 2,
-        "max_w": 38,
-        "max_h": 47,
-        "feet": 56,
-        "gait": "robe",
-        "aggressive_key": True,
-    },
-    {
-        "id": "mana_shield",
-        "row": 1,
-        "col": 3,
-        "max_w": 45,
-        "max_h": 48,
-        "feet": 56,
-        "gait": "shield",
-        "aggressive_key": True,
-    },
-    {"id": "orc_warlord", "row": 2, "col": 0, "max_w": 50, "max_h": 51, "feet": 57, "gait": "heavy"},
-    {
-        "id": "forge_master",
-        "row": 2,
-        "col": 1,
-        "max_w": 44,
-        "max_h": 48,
-        "feet": 56,
-        "gait": "soldier",
-        "trim_left": 0.24,
-        "aggressive_key": True,
-    },
-    {
-        "id": "corrupted_archmage",
-        "row": 2,
-        "col": 2,
-        "max_w": 45,
-        "max_h": 50,
-        "feet": 57,
-        "gait": "robe",
-        "trim_left": 0.22,
-        "trim_right": 0.1,
-        "aggressive_key": True,
-    },
-]
+Color = tuple[int, int, int, int]
+State = Literal["walk", "idle", "death", "boss"]
 
-DRAGON_SPECS: list[dict[str, Any]] = [
-    {"id": "dragon", "col": 0, "max_w": 48, "max_h": 43, "feet": 55, "gait": "dragon"},
-    {"id": "dragon-boss", "col": 0, "max_w": 56, "max_h": 51, "feet": 56, "boss_only": True},
-    {"id": "dragon-boss-rage", "col": 1, "max_w": 56, "max_h": 51, "feet": 56, "boss_only": True},
-]
+OUTLINE: Color = (41, 35, 32, 255)
+SHADOW: Color = (0, 0, 0, 70)
+WHITE: Color = (245, 236, 203, 255)
+GOLD: Color = (211, 168, 72, 255)
+STEEL: Color = (154, 166, 169, 255)
+STEEL_HI: Color = (214, 220, 211, 255)
+WOOD: Color = (126, 82, 48, 255)
 
 
-def is_key_pixel(r: int, g: int, b: int, aggressive: bool) -> bool:
-    strong_green = g > 105 and g > r * 1.35 and g > b * 1.35
-    neon_green = g > 145 and (g - max(r, b)) > 45
-    soft_green = aggressive and g > 80 and (g - max(r, b)) > 22
-    return strong_green or neon_green or soft_green
+def rgba(hex_color: str) -> Color:
+    h = hex_color.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
 
 
-def alpha_bbox(image: Image.Image) -> tuple[int, int, int, int]:
-    bbox = image.getchannel("A").getbbox()
-    return bbox if bbox else (0, 0, image.width, image.height)
+def sc(value: int | float) -> int:
+    return round(value * SCALE)
 
 
-def crop_alpha(image: Image.Image, pad: int = 0) -> Image.Image:
-    left, top, right, bottom = alpha_bbox(image)
-    return image.crop(
+def pt(point: tuple[int | float, int | float]) -> tuple[int, int]:
+    return (sc(point[0]), sc(point[1]))
+
+
+def box(
+    x1: int | float,
+    y1: int | float,
+    x2: int | float,
+    y2: int | float,
+) -> tuple[int, int, int, int]:
+    return (sc(x1), sc(y1), sc(x2), sc(y2))
+
+
+def canvas() -> Image.Image:
+    return Image.new("RGBA", (FRAME * SCALE, FRAME * SCALE), (0, 0, 0, 0))
+
+
+def finish(image: Image.Image) -> Image.Image:
+    return image.resize((FRAME, FRAME), Image.Resampling.LANCZOS)
+
+
+def ellipse(
+    draw: ImageDraw.ImageDraw,
+    bounds: tuple[int, int, int, int],
+    fill: Color,
+    outline: Color = OUTLINE,
+    width: int = 2,
+) -> None:
+    draw.ellipse(bounds, fill=outline)
+    inset = sc(width)
+    draw.ellipse(
         (
-            max(0, left - pad),
-            max(0, top - pad),
-            min(image.width, right + pad),
-            min(image.height, bottom + pad),
+            bounds[0] + inset,
+            bounds[1] + inset,
+            bounds[2] - inset,
+            bounds[3] - inset,
         ),
+        fill=fill,
     )
 
 
-def chroma_cutout(source: Image.Image, box: tuple[int, int, int, int], aggressive_key: bool = False) -> Image.Image:
-    image = source.crop(box).convert("RGBA")
-    pixels = image.load()
-    for y in range(image.height):
-        for x in range(image.width):
-            r, g, b, a = pixels[x, y]
-            if is_key_pixel(r, g, b, aggressive_key):
-                pixels[x, y] = (r, g, b, 0)
-            elif a > 0 and g > r * 1.15 and g > b * 1.15 and g > 85:
-                pixels[x, y] = (r, min(g, max(r, b)), b, a)
-    return keep_components(crop_alpha(image, 4))
+def rect(
+    draw: ImageDraw.ImageDraw,
+    bounds: tuple[int, int, int, int],
+    fill: Color,
+    outline: Color = OUTLINE,
+    width: int = 2,
+    radius: int = 0,
+) -> None:
+    inset = sc(width)
+    if radius:
+        draw.rounded_rectangle(bounds, radius=sc(radius), fill=outline)
+        draw.rounded_rectangle(
+            (
+                bounds[0] + inset,
+                bounds[1] + inset,
+                bounds[2] - inset,
+                bounds[3] - inset,
+            ),
+            radius=max(0, sc(radius - width)),
+            fill=fill,
+        )
+        return
+    draw.rectangle(bounds, fill=outline)
+    draw.rectangle(
+        (
+            bounds[0] + inset,
+            bounds[1] + inset,
+            bounds[2] - inset,
+            bounds[3] - inset,
+        ),
+        fill=fill,
+    )
 
 
-def keep_components(image: Image.Image) -> Image.Image:
-    pixels = image.load()
-    visited: set[tuple[int, int]] = set()
-    parts: list[tuple[int, tuple[int, int, int, int], list[tuple[int, int]]]] = []
-    for y in range(image.height):
-        for x in range(image.width):
-            if (x, y) in visited or pixels[x, y][3] == 0:
-                continue
-            queue = deque([(x, y)])
-            visited.add((x, y))
-            points: list[tuple[int, int]] = []
-            min_x = max_x = x
-            min_y = max_y = y
-            while queue:
-                px, py = queue.popleft()
-                points.append((px, py))
-                min_x, max_x = min(min_x, px), max(max_x, px)
-                min_y, max_y = min(min_y, py), max(max_y, py)
-                for nx, ny in ((px + 1, py), (px - 1, py), (px, py + 1), (px, py - 1)):
-                    if nx < 0 or ny < 0 or nx >= image.width or ny >= image.height:
-                        continue
-                    if (nx, ny) in visited or pixels[nx, ny][3] == 0:
-                        continue
-                    visited.add((nx, ny))
-                    queue.append((nx, ny))
-            parts.append((len(points), (min_x, min_y, max_x, max_y), points))
-    if not parts:
-        return image
-
-    largest = max(parts, key=lambda part: part[0])
-    largest_area, (left, top, right, bottom), _ = largest
-    center_x, center_y = (left + right) / 2, (top + bottom) / 2
-    keep: set[tuple[int, int]] = set()
-    for area, (part_left, part_top, part_right, part_bottom), points in parts:
-        part_center_x = (part_left + part_right) / 2
-        part_center_y = (part_top + part_bottom) / 2
-        close = abs(part_center_x - center_x) < max(28, (right - left) * 0.55) and abs(part_center_y - center_y) < max(28, (bottom - top) * 0.55)
-        if area == largest_area or (area > max(16, largest_area * 0.004) and close):
-            keep.update(points)
-
-    result = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    out = result.load()
-    for x, y in keep:
-        out[x, y] = pixels[x, y]
-    return crop_alpha(result, 3)
+def poly(
+    draw: ImageDraw.ImageDraw,
+    points: list[tuple[int | float, int | float]],
+    fill: Color,
+    outline: Color = OUTLINE,
+    width: int = 2,
+) -> None:
+    scaled = [pt(point) for point in points]
+    draw.polygon(scaled, fill=fill)
+    draw.line(scaled + [scaled[0]], fill=outline, width=sc(width), joint="curve")
 
 
-def trim_cutout(cutout: Image.Image, trim_left: float = 0, trim_right: float = 0) -> Image.Image:
-    if trim_left <= 0 and trim_right <= 0:
-        return cutout
-    left = round(cutout.width * trim_left)
-    right = round(cutout.width * (1 - trim_right))
-    return keep_components(cutout.crop((left, 0, right, cutout.height)))
+def line(
+    draw: ImageDraw.ImageDraw,
+    points: list[tuple[int | float, int | float]],
+    fill: Color,
+    width: int = 2,
+    outline: Color = OUTLINE,
+) -> None:
+    scaled = [pt(point) for point in points]
+    draw.line(scaled, fill=outline, width=sc(width + 2), joint="curve")
+    draw.line(scaled, fill=fill, width=sc(width), joint="curve")
 
 
-def pixel_finish(image: Image.Image, colors: int = 22) -> Image.Image:
-    alpha = image.getchannel("A")
-    rgb = ImageOps.autocontrast(image.convert("RGB"), cutoff=1)
-    paletted = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert("RGBA")
-    paletted.putalpha(alpha.point(lambda value: 255 if value > 74 else 0))
-    return paletted
+def dot(draw: ImageDraw.ImageDraw, x: int, y: int, fill: Color, size: int = 2) -> None:
+    draw.rectangle(box(x, y, x + size, y + size), fill=fill)
 
 
-def add_outline(image: Image.Image) -> Image.Image:
-    alpha = image.getchannel("A")
-    expanded = alpha.filter(ImageFilter.MaxFilter(3))
-    border = ImageChops.subtract(expanded, alpha)
-    outline = Image.new("RGBA", image.size, (27, 20, 22, 255))
-    outline.putalpha(border.point(lambda value: 230 if value > 0 else 0))
-    result = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    result.alpha_composite(outline)
-    result.alpha_composite(image)
-    return result
+def shadow(draw: ImageDraw.ImageDraw, cx: int = 32, width: int = 26, y: int = GROUND_Y + 2) -> None:
+    draw.ellipse(box(cx - width / 2, y - 2, cx + width / 2, y + 3), fill=SHADOW)
 
 
-def fit_to_frame(cutout: Image.Image, max_w: int, max_h: int, feet: int) -> Image.Image:
-    scale = min(max_w / cutout.width, max_h / cutout.height)
-    size = (max(1, round(cutout.width * scale)), max(1, round(cutout.height * scale)))
-    source = cutout.convert("RGBA").resize(size, Image.Resampling.LANCZOS)
-    source = add_outline(crop_alpha(pixel_finish(source), 2))
-    frame = Image.new("RGBA", FRAME, (0, 0, 0, 0))
-    frame.alpha_composite(source, ((FRAME[0] - source.width) // 2, feet - source.height))
-    return frame
+def draw_sword(draw: ImageDraw.ImageDraw, x: int, y: int, flip: int = 1) -> None:
+    line(draw, [(x, y), (x + 8 * flip, y - 12)], STEEL_HI, 2)
+    rect(draw, box(x - 3, y - 1, x + 3, y + 2), GOLD, width=1)
 
 
-def split_layer(base: Image.Image, top_ratio: float) -> tuple[Image.Image, Image.Image]:
-    _, top, _, bottom = alpha_bbox(base)
-    split_y = round(top + (bottom - top) * top_ratio)
-    upper = Image.new("RGBA", FRAME, (0, 0, 0, 0))
-    lower = Image.new("RGBA", FRAME, (0, 0, 0, 0))
-    upper.alpha_composite(base.crop((0, 0, FRAME[0], split_y)), (0, 0))
-    lower.alpha_composite(base.crop((0, split_y, FRAME[0], FRAME[1])), (0, split_y))
-    return upper, lower
+def draw_axe(draw: ImageDraw.ImageDraw, x: int, y: int, flip: int = 1) -> None:
+    line(draw, [(x, y + 12), (x + 4 * flip, y - 9)], WOOD, 3)
+    poly(
+        draw,
+        [
+            (x + 2 * flip, y - 13),
+            (x + 13 * flip, y - 9),
+            (x + 9 * flip, y),
+            (x + 1 * flip, y - 4),
+        ],
+        STEEL_HI,
+    )
 
 
-def offset_image(image: Image.Image, dx: int, dy: int) -> Image.Image:
-    result = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    result.alpha_composite(image, (dx, dy))
-    return result
+def draw_staff(draw: ImageDraw.ImageDraw, x: int, y: int, orb: Color) -> None:
+    line(draw, [(x, y + 16), (x + 2, y - 14)], WOOD, 3)
+    ellipse(draw, box(x - 4, y - 18, x + 8, y - 6), orb, width=1)
+    dot(draw, x + 1, y - 15, WHITE, 1)
 
 
-def shadow_frame(base: Image.Image, scale: float = 1.0) -> Image.Image:
-    frame = Image.new("RGBA", FRAME, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(frame)
-    left, _, right, _ = alpha_bbox(base)
-    center_x = (left + right) // 2
-    width = max(15, round((right - left) * 0.65 * scale))
-    draw.ellipse((center_x - width // 2, 55, center_x + width // 2, 60), fill=(0, 0, 0, 75))
-    return frame
+def draw_feet(draw: ImageDraw.ImageDraw, cx: int, y: int, step: int, color: Color, wide: int = 6) -> None:
+    rect(draw, box(cx - wide - step, y - 2, cx - 2 - step, y + 2), color, width=1, radius=1)
+    rect(draw, box(cx + 2 + step, y - 2, cx + wide + step, y + 2), color, width=1, radius=1)
 
 
-def make_motion_frame(base: Image.Image, index: int, mode: str, count: int) -> Image.Image:
-	phase = (index / count) * pi * 2
-	if mode == "idle":
-		bob = [0, -1, -1, 0, 1, 0][index % IDLE_FRAMES]
-		frame = shadow_frame(base, 0.95)
-		frame.alpha_composite(offset_image(base, 0, bob))
-		return frame
-
-	# Keep the imagegen silhouette intact. Splitting the cutout into body parts
-	# reads as tearing once the 64px sheet is displayed at 32px in Phaser.
-	bob_cycles = {
-		"quick": [0, -1, -1, 0, 0, -1, -1, 0],
-		"soldier": [0, 0, -1, 0, 0, 0, -1, 0],
-		"heavy": [0, 0, -1, 0, 0, 0, -1, 0],
-		"shield": [0, 0, -1, 0, 0, 0, -1, 0],
-		"robe": [0, -1, -1, 0, 0, -1, -1, 0],
-		"flame": [-1, -2, -1, 0, -1, -2, -1, 0],
-		"dragon": [0, -1, -2, -1, 0, 1, 0, -1],
-	}
-	sway_cycles = {
-		"quick": [0, 0, 1, 0, 0, 0, -1, 0],
-		"soldier": [0, 0, 1, 0, 0, 0, -1, 0],
-		"heavy": [0, 0, 0, 0, 0, 0, 0, 0],
-		"shield": [0, 0, 0, 0, 0, 0, 0, 0],
-		"robe": [0, 0, 1, 0, 0, 0, -1, 0],
-		"flame": [0, 1, 0, -1, 0, 1, 0, -1],
-		"dragon": [0, 1, 1, 0, 0, -1, -1, 0],
-	}
-	bob = bob_cycles.get(mode, bob_cycles["soldier"])[index % WALK_FRAMES]
-	sway = sway_cycles.get(mode, sway_cycles["soldier"])[index % WALK_FRAMES]
-
-	frame = shadow_frame(base, 1.05 if mode == "heavy" else 0.98)
-	if mode != "dragon":
-		draw = ImageDraw.Draw(frame)
-		left, _, right, bottom = alpha_bbox(base)
-		center_x = (left + right) // 2
-		foot_y = min(59, bottom + 1)
-		stride = 3 if mode in {"quick", "flame"} else 2
-		left_foot = center_x - max(4, (right - left) // 5)
-		right_foot = center_x + max(4, (right - left) // 5)
-		if index % 4 in (0, 1):
-			draw.rectangle((left_foot - stride, foot_y, left_foot + 2, foot_y + 1), fill=(20, 14, 12, 120))
-		else:
-			draw.rectangle((right_foot - 2, foot_y, right_foot + stride, foot_y + 1), fill=(20, 14, 12, 120))
-	frame.alpha_composite(offset_image(base, sway, bob))
-	return frame
+def draw_humanoid(
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    y: int,
+    step: int,
+    skin: Color,
+    cloth: Color,
+    accent: Color,
+    *,
+    head: tuple[int, int] = (15, 13),
+    body: tuple[int, int] = (18, 20),
+    hood: bool = False,
+    helmet: bool = False,
+    feet_y: int | None = None,
+) -> None:
+    draw_feet(draw, cx, feet_y if feet_y is not None else y + 39, step, accent)
+    rect(draw, box(cx - body[0] / 2, y + 17, cx + body[0] / 2, y + 36), cloth, radius=4)
+    rect(draw, box(cx - body[0] / 2 + 2, y + 23, cx + body[0] / 2 - 2, y + 29), accent, width=1)
+    ellipse(draw, box(cx - 13, y + 20, cx - 5, y + 33), cloth)
+    ellipse(draw, box(cx + 5, y + 20, cx + 13, y + 33), cloth)
+    if hood:
+        poly(draw, [(cx - 12, y + 18), (cx, y + 3), (cx + 12, y + 18), (cx + 8, y + 26), (cx - 8, y + 26)], cloth)
+        rect(draw, box(cx - 6, y + 15, cx + 6, y + 23), rgba("#221d26"), width=1, radius=2)
+    else:
+        ellipse(draw, box(cx - head[0] / 2, y + 5, cx + head[0] / 2, y + 5 + head[1]), skin)
+        if helmet:
+            rect(draw, box(cx - head[0] / 2 - 1, y + 5, cx + head[0] / 2 + 1, y + 11), STEEL, width=1, radius=2)
+    dot(draw, cx - 4, y + 12 if not hood else y + 17, WHITE, 1)
+    dot(draw, cx + 3, y + 12 if not hood else y + 17, WHITE, 1)
 
 
-def make_death_frames(base: Image.Image) -> list[Image.Image]:
-    frames: list[Image.Image] = []
-    for index in range(DEATH_FRAMES):
-        progress = index / (DEATH_FRAMES - 1)
-        frame = Image.new("RGBA", FRAME, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(frame)
-        if index < 3:
-            squashed = base.resize((FRAME[0], max(1, round(FRAME[1] * (1 - progress * 0.42)))), Image.Resampling.NEAREST)
-            frame.alpha_composite(squashed, (round(progress * 2), round(progress * 22)))
+def goblin(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = WALK_STEP[frame % WALK_FRAMES]
+    cx, y = 31, 12
+    shadow(draw, cx, 21)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#78a34b"), rgba("#8b673a"), rgba("#4f6d35"), head=(13, 11), body=(15, 17), feet_y=y + 39)
+    poly(draw, [(cx - 7, body_y + 14), (cx - 16, body_y + 10), (cx - 8, body_y + 19)], rgba("#78a34b"))
+    poly(draw, [(cx + 7, body_y + 14), (cx + 16, body_y + 10), (cx + 8, body_y + 19)], rgba("#78a34b"))
+    poly(draw, [(cx - 8, body_y + 9), (cx - 1, body_y), (cx + 8, body_y + 9)], rgba("#a98245"))
+    draw_sword(draw, cx + 12, body_y + 31)
+
+
+def orc(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = SOLDIER_STEP[frame % WALK_FRAMES]
+    cx, y = 31, 8
+    shadow(draw, cx, 27)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#6f8f3e"), rgba("#89513b"), rgba("#3f4a32"), head=(17, 14), body=(22, 22), helmet=True, feet_y=y + 39)
+    rect(draw, box(cx - 12, body_y + 18, cx + 12, body_y + 23), rgba("#6f6b5d"), width=1, radius=2)
+    draw_axe(draw, cx + 14, body_y + 27)
+
+
+def troll(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    cx, y = 32, 8
+    shadow(draw, cx, 31)
+    draw_feet(draw, cx, y + 42, 0, rgba("#626d68"), 8)
+    rect(draw, box(cx - 18, y + 19, cx + 18, y + 40), rgba("#78867f"), radius=6)
+    ellipse(draw, box(cx - 15, y + 6, cx + 15, y + 24), rgba("#8f9b92"))
+    ellipse(draw, box(cx - 25, y + 22, cx - 13, y + 36), rgba("#6b7770"))
+    ellipse(draw, box(cx + 13, y + 22, cx + 25, y + 36), rgba("#6b7770"))
+    line(draw, [(cx + 14, y + 37), (cx + 24, y + 24)], WOOD, 5)
+    dot(draw, cx - 5, y + 14, rgba("#f3d36c"), 1)
+    dot(draw, cx + 4, y + 14, rgba("#f3d36c"), 1)
+    dot(draw, cx - 9, y + 25, rgba("#a7b0aa"), 3)
+
+
+def assassin(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = WALK_STEP[frame % WALK_FRAMES]
+    cx, y = 32, 9
+    shadow(draw, cx, 21)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#41364d"), rgba("#332743"), rgba("#6f4c8d"), head=(13, 12), body=(16, 21), hood=True, feet_y=y + 39)
+    dot(draw, cx - 4, body_y + 17, rgba("#d284ff"), 1)
+    dot(draw, cx + 4, body_y + 17, rgba("#d284ff"), 1)
+    draw_sword(draw, cx - 12, body_y + 31, -1)
+    draw_sword(draw, cx + 12, body_y + 31, 1)
+
+
+def imp(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    cx, y = 32, 11
+    flicker = [0, -1, -2, -1, 0, -1, -2, -1][frame % WALK_FRAMES]
+    shadow(draw, cx, 20)
+    draw_feet(draw, cx, y + 38, frame % 3 - 1, rgba("#8f2c20"), 5)
+    poly(
+        draw,
+        [
+            (cx - 14, y + 31),
+            (cx - 8, y + 12 + flicker),
+            (cx, y + 2 + flicker),
+            (cx + 9, y + 12 + flicker),
+            (cx + 14, y + 31),
+            (cx + 6, y + 40),
+            (cx - 7, y + 40),
+        ],
+        rgba("#d74e22"),
+    )
+    poly(draw, [(cx - 7, y + 22), (cx, y + 8 + flicker), (cx + 7, y + 22), (cx + 4, y + 34), (cx - 4, y + 34)], rgba("#ffbd49"))
+    dot(draw, cx - 4, y + 20, rgba("#fff088"), 1)
+    dot(draw, cx + 3, y + 20, rgba("#fff088"), 1)
+
+
+def lava_golem(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    cx, y = 32, 7
+    shadow(draw, cx, 31)
+    draw_feet(draw, cx, y + 43, 0, rgba("#443934"), 8)
+    rect(draw, box(cx - 18, y + 20, cx + 18, y + 42), rgba("#58463e"), radius=5)
+    ellipse(draw, box(cx - 14, y + 7, cx + 14, y + 25), rgba("#66524a"))
+    ellipse(draw, box(cx - 26, y + 23, cx - 14, y + 38), rgba("#503f39"))
+    ellipse(draw, box(cx + 14, y + 23, cx + 26, y + 38), rgba("#503f39"))
+    for x, yy, size in ((cx - 5, y + 15, 2), (cx + 5, y + 15, 2), (cx - 8, y + 29, 2), (cx + 7, y + 34, 3)):
+        dot(draw, x, yy, rgba("#ff8a2d"), size)
+    line(draw, [(cx - 10, y + 25), (cx - 1, y + 31), (cx + 10, y + 26)], rgba("#d94a24"), 1)
+
+
+def mage(draw: ImageDraw.ImageDraw, frame: int, state: State, corrupt: bool = False) -> None:
+    cx, y = 31, 8
+    robe = rgba("#5b438e") if not corrupt else rgba("#30233f")
+    accent = rgba("#35c8d0") if not corrupt else rgba("#9f4bd0")
+    shadow(draw, cx, 24)
+    draw_feet(draw, cx, y + 42, 0, accent, 5)
+    poly(draw, [(cx - 15, y + 20), (cx + 15, y + 20), (cx + 12, y + 43), (cx - 12, y + 43)], robe)
+    poly(draw, [(cx - 11, y + 18), (cx, y + 4), (cx + 11, y + 18), (cx + 7, y + 26), (cx - 7, y + 26)], robe)
+    rect(draw, box(cx - 5, y + 16, cx + 5, y + 23), rgba("#d6b178") if not corrupt else rgba("#8f70a4"), width=1, radius=2)
+    dot(draw, cx - 4, y + 18, WHITE, 1)
+    dot(draw, cx + 3, y + 18, WHITE, 1)
+    rect(draw, box(cx - 2, y + 28, cx + 2, y + 42), accent, width=1)
+    draw_staff(draw, cx + 16, y + 31, accent)
+    if corrupt:
+        poly(draw, [(cx - 8, y + 12), (cx - 16, y + 2), (cx - 6, y + 8)], rgba("#5f3271"))
+        poly(draw, [(cx + 8, y + 12), (cx + 16, y + 2), (cx + 6, y + 8)], rgba("#5f3271"))
+
+
+def shield_guard(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = SOLDIER_STEP[frame % WALK_FRAMES]
+    cx, y = 31, 8
+    shadow(draw, cx, 28)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#c79b67"), rgba("#2e5d72"), rgba("#5fd0db"), head=(14, 12), body=(19, 21), helmet=True, feet_y=y + 39)
+    poly(draw, [(cx - 23, body_y + 23), (cx - 11, body_y + 19), (cx - 8, body_y + 32), (cx - 17, body_y + 43), (cx - 25, body_y + 33)], rgba("#536775"))
+    dot(draw, cx - 18, body_y + 28, rgba("#83e9f3"), 3)
+    draw_sword(draw, cx + 14, body_y + 30)
+
+
+def warlord(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = SOLDIER_STEP[frame % WALK_FRAMES]
+    cx, y = 31, 5
+    shadow(draw, cx, 32)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#66883b"), rgba("#8b3f32"), rgba("#40352c"), head=(19, 15), body=(25, 25), helmet=True, feet_y=y + 39)
+    rect(draw, box(cx - 10, body_y + 6, cx + 10, body_y + 10), GOLD, width=1, radius=2)
+    dot(draw, cx - 5, body_y + 1, GOLD, 2)
+    dot(draw, cx + 4, body_y + 1, GOLD, 2)
+    draw_axe(draw, cx + 16, body_y + 29)
+    poly(draw, [(cx - 19, body_y + 22), (cx - 28, body_y + 27), (cx - 23, body_y + 39), (cx - 15, body_y + 35)], rgba("#734040"))
+
+
+def forge_master(draw: ImageDraw.ImageDraw, frame: int, state: State) -> None:
+    step = SOLDIER_STEP[frame % WALK_FRAMES]
+    cx, y = 31, 10
+    shadow(draw, cx, 27)
+    body_y = y + WALK_BOB[frame % WALK_FRAMES]
+    draw_humanoid(draw, cx, body_y, step, rgba("#b9784b"), rgba("#65422e"), rgba("#c75c2e"), head=(15, 12), body=(21, 20), helmet=True, feet_y=y + 39)
+    rect(draw, box(cx - 10, body_y + 25, cx + 10, body_y + 38), rgba("#7e4a2d"), width=1, radius=2)
+    line(draw, [(cx + 14, body_y + 42), (cx + 20, body_y + 21)], WOOD, 3)
+    rect(draw, box(cx + 14, body_y + 15, cx + 28, body_y + 23), STEEL_HI, width=1, radius=2)
+    dot(draw, cx - 3, body_y + 33, rgba("#ff9a3d"), 2)
+
+
+def dragon(draw: ImageDraw.ImageDraw, frame: int, state: State, boss: bool = False, rage: bool = False) -> None:
+    cx, y = 31, 12 if not boss else 8
+    bob = [0, -1, -2, -1, 0, 1, 0, -1][frame % WALK_FRAMES]
+    body = rgba("#9f352d") if not rage else rgba("#c64228")
+    belly = rgba("#d79048") if not rage else rgba("#ffb23d")
+    wing = rgba("#6f3032") if not rage else rgba("#923431")
+    shadow(draw, cx, 31 if boss else 26)
+    poly(draw, [(cx - 22, y + 25 + bob), (cx - 7, y + 15 + bob), (cx - 3, y + 34 + bob), (cx - 18, y + 37 + bob)], wing)
+    poly(draw, [(cx + 1, y + 23 + bob), (cx + 16, y + 12 + bob), (cx + 13, y + 35 + bob), (cx + 2, y + 34 + bob)], wing)
+    ellipse(draw, box(cx - 13, y + 22 + bob, cx + 13, y + 43 + bob), body)
+    ellipse(draw, box(cx + 8, y + 14 + bob, cx + 25, y + 29 + bob), body)
+    poly(draw, [(cx + 21, y + 18 + bob), (cx + 31, y + 15 + bob), (cx + 24, y + 24 + bob)], body)
+    line(draw, [(cx - 10, y + 36 + bob), (cx - 25, y + 43 + bob), (cx - 30, y + 38 + bob)], body, 4)
+    draw_feet(draw, cx, y + 48 + bob, 0, body, 6)
+    rect(draw, box(cx - 4, y + 29 + bob, cx + 7, y + 39 + bob), belly, width=1, radius=3)
+    poly(draw, [(cx + 15, y + 14 + bob), (cx + 16, y + 6 + bob), (cx + 19, y + 14 + bob)], rgba("#e8d58b"))
+    dot(draw, cx + 17, y + 20 + bob, rgba("#ffe17a"), 1)
+
+
+DRAWERS: dict[str, Callable[[ImageDraw.ImageDraw, int, State], None]] = {
+    "goblin": goblin,
+    "orc": orc,
+    "troll": troll,
+    "assassin": assassin,
+    "imp": imp,
+    "lava_golem": lava_golem,
+    "mage": mage,
+    "shield_guard": shield_guard,
+    "warlord": warlord,
+    "forge_master": forge_master,
+    "corrupt_mage": lambda draw, frame, state: mage(draw, frame, state, True),
+    "dragon": dragon,
+}
+
+UNIT_SPECS = [
+    ("scout_drone", "goblin"),
+    ("battle_robot", "orc"),
+    ("heavy_walker", "troll"),
+    ("stealth_drone", "assassin"),
+    ("flame_imp", "imp"),
+    ("lava_golem", "lava_golem"),
+    ("arcane_mage", "mage"),
+    ("mana_shield", "shield_guard"),
+    ("orc_warlord", "warlord"),
+    ("forge_master", "forge_master"),
+    ("corrupted_archmage", "corrupt_mage"),
+    ("dragon", "dragon"),
+]
+
+BOSS_SPECS = [("dragon-boss", False), ("dragon-boss-rage", True)]
+
+
+def draw_frame(kind: str, frame: int, state: State, *, rage: bool = False) -> Image.Image:
+    image = canvas()
+    draw = ImageDraw.Draw(image)
+    if state == "death":
+        draw_death(draw, kind, frame, rage)
+    elif kind == "dragon_boss":
+        dragon(draw, frame, state, boss=True, rage=rage)
+    else:
+        DRAWERS[kind](draw, frame, state)
+    return finish(image)
+
+
+def draw_death(draw: ImageDraw.ImageDraw, kind: str, frame: int, rage: bool = False) -> None:
+    progress = frame / max(1, DEATH_FRAMES - 1)
+    shadow(draw, 32, max(10, round(28 - progress * 9)))
+    ground = round(GROUND_Y - 6 + progress * 6)
+    if frame < 3:
+        if kind == "dragon_boss":
+            dragon(draw, frame, "walk", boss=True, rage=rage)
         else:
-            left, _, right, _ = alpha_bbox(base)
-            center_x = (left + right) // 2
-            for n, dx in enumerate((-14, -7, 0, 9, 16)):
-                color = (96 + n * 18, 70 + n * 10, 48 + n * 6, 180)
-                draw.rectangle((center_x + dx, 50 - n % 3, center_x + dx + 4, 54), fill=color)
-        frames.append(frame)
-    return frames
+            DRAWERS.get(kind, goblin)(draw, frame, "walk")
+        return
+    colors = [rgba("#6b5140"), rgba("#8c6a45"), rgba("#b89558"), rgba("#4f4137")]
+    for index, dx in enumerate((-15, -8, 0, 8, 15)):
+        rect(draw, box(32 + dx, ground - (index % 3), 36 + dx, ground + 4), colors[index % len(colors)], width=1, radius=1)
+    if kind in {"imp", "lava_golem"}:
+        dot(draw, 32, ground - 3, rgba("#ff8a2d"), 2)
 
 
-def pack_frames(frames: list[Image.Image]) -> Image.Image:
-    sheet = Image.new("RGBA", (FRAME[0] * len(frames), FRAME[1]), (0, 0, 0, 0))
+def pack(frames: list[Image.Image]) -> Image.Image:
+    sheet = Image.new("RGBA", (FRAME * len(frames), FRAME), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        sheet.alpha_composite(frame, (index * FRAME[0], 0))
+        sheet.alpha_composite(frame, (index * FRAME, 0))
     return sheet
 
 
@@ -335,57 +441,30 @@ def write_png_and_webp(path: Path, image: Image.Image) -> None:
     image.save(path.with_suffix(".webp"), "WEBP", lossless=True, method=6)
 
 
-def build_unit(unit_id: str, base: Image.Image, gait: str) -> Image.Image:
-    walk = [make_motion_frame(base, index, gait, WALK_FRAMES) for index in range(WALK_FRAMES)]
-    idle = [make_motion_frame(base, index, "idle", IDLE_FRAMES) for index in range(IDLE_FRAMES)]
-    death = make_death_frames(base)
-    write_png_and_webp(UNIT_DIR / f"{unit_id}.png", pack_frames(walk))
-    write_png_and_webp(UNIT_DIR / f"{unit_id}_idle.png", pack_frames(idle))
-    write_png_and_webp(UNIT_DIR / f"{unit_id}_death.png", pack_frames(death))
+def build_unit(unit_id: str, kind: str) -> Image.Image:
+    walk = [draw_frame(kind, index, "walk") for index in range(WALK_FRAMES)]
+    idle = [draw_frame(kind, index, "idle") for index in range(IDLE_FRAMES)]
+    death = [draw_frame(kind, index, "death") for index in range(DEATH_FRAMES)]
+    write_png_and_webp(UNIT_DIR / f"{unit_id}.png", pack(walk))
+    write_png_and_webp(UNIT_DIR / f"{unit_id}_idle.png", pack(idle))
+    write_png_and_webp(UNIT_DIR / f"{unit_id}_death.png", pack(death))
     return idle[0]
 
 
-def build_boss(boss_id: str, base: Image.Image) -> Image.Image:
-    frames = [make_motion_frame(base, index, "dragon", WALK_FRAMES) for index in range(WALK_FRAMES)]
-    write_png_and_webp(UNIT_DIR / f"{boss_id}.png", pack_frames(frames))
+def build_boss(unit_id: str, rage: bool) -> Image.Image:
+    frames = [draw_frame("dragon_boss", index, "boss", rage=rage) for index in range(WALK_FRAMES)]
+    write_png_and_webp(UNIT_DIR / f"{unit_id}.png", pack(frames))
     return frames[0]
 
 
 def main() -> None:
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
-    monster_source = Image.open(MONSTER_SOURCE)
-    cell_w = monster_source.width // 4
-    cell_h = monster_source.height // 3
-    preview: list[Image.Image] = []
-
-    for spec in MONSTER_SPECS:
-        left = spec["col"] * cell_w
-        top = spec["row"] * cell_h
-        right = monster_source.width if spec["col"] == 3 else left + cell_w
-        bottom = monster_source.height if spec["row"] == 2 else top + cell_h
-        cutout = chroma_cutout(monster_source, (left, top, right, bottom), bool(spec.get("aggressive_key")))
-        cutout = trim_cutout(cutout, float(spec.get("trim_left", 0)), float(spec.get("trim_right", 0)))
-        base = fit_to_frame(cutout, spec["max_w"], spec["max_h"], spec["feet"])
-        preview.append(build_unit(spec["id"], base, spec["gait"]))
-
-    dragon_source = Image.open(DRAGON_SOURCE)
-    dragon_cell_w = dragon_source.width // 2
-    boss_preview: list[Image.Image] = []
-    for spec in DRAGON_SPECS:
-        left = spec["col"] * dragon_cell_w
-        right = dragon_source.width if spec["col"] == 1 else left + dragon_cell_w
-        cutout = chroma_cutout(dragon_source, (left, 0, right, dragon_source.height), True)
-        base = fit_to_frame(cutout, spec["max_w"], spec["max_h"], spec["feet"])
-        if spec.get("boss_only"):
-            boss_preview.append(build_boss(spec["id"], base))
-        else:
-            preview.append(build_unit(spec["id"], base, spec["gait"]))
-
-    write_png_and_webp(PREVIEW_DIR / "unit-lineup-preview.png", pack_frames(preview))
-    write_png_and_webp(PREVIEW_DIR / "boss-lineup-preview.png", pack_frames(boss_preview))
-    walk_preview = [make_motion_frame(preview[0], index, "quick", WALK_FRAMES) for index in range(WALK_FRAMES)]
-    write_png_and_webp(PREVIEW_DIR / "walk-cycle-preview.png", pack_frames(walk_preview))
-    print("Wrote imagegen-sourced 64x64 unit sheets")
+    preview = [build_unit(unit_id, kind) for unit_id, kind in UNIT_SPECS]
+    boss_preview = [build_boss(unit_id, rage) for unit_id, rage in BOSS_SPECS]
+    write_png_and_webp(PREVIEW_DIR / "unit-lineup-preview.png", pack(preview))
+    write_png_and_webp(PREVIEW_DIR / "boss-lineup-preview.png", pack(boss_preview))
+    write_png_and_webp(PREVIEW_DIR / "walk-cycle-preview.png", pack([draw_frame("goblin", index, "walk") for index in range(WALK_FRAMES)]))
+    print("Wrote reference-style 64x64 sprite sheets")
 
 
 if __name__ == "__main__":

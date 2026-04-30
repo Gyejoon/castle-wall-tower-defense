@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-30 (v3.5 — native 64×64 몬스터 픽셀아트)
+> **Last Updated:** 2026-04-30 (v3.6 — reference-style 64×64 몬스터 스프라이트)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
@@ -15,6 +15,8 @@
 > **v3.4 변경 요약 (2026-04-30)**: 일반 몬스터 소스 프레임을 **80×96**으로 확대하고 런타임 표시 크기를 **32×40**으로 복구했다. walk는 공용 bobbing이 아니라 unit별 `quick/heavy/robe/shield/flame/dragon` gait를 사용한다. chroma-key 잔여 픽셀과 이웃 셀 조각은 connected-component cleanup으로 제거한다. 보스 dragon sheet는 **128×128** 프레임으로 재패킹하고 표시 크기는 **48×56**이다.
 >
 > **v3.5 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 `imagegen` 원화 기반 **64×64 픽셀아트 프레임**으로 재패킹했다. `scripts/imagegen-monsters/build-unit-sheets.py`는 imagegen 원화의 실루엣을 유지하면서 chroma-key 제거, 저색상 팔레트 정리, 1px outline, 전용 8프레임 walk/6프레임 idle/death를 생성한다. 런타임 표시 크기는 일반 **32×32**, 보스 **42×42**로 정사각형 비율을 유지한다.
+>
+> **v3.6 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 첨부 참고 이미지풍 **clean cartoon sprite**로 다시 교체했다. 고해상도 원화 컷아웃을 축소하지 않고, 64×64 프레임 안에서 굵은 dark outline, 단순 면 색상, 고정 feet baseline, 전용 8프레임 walk를 직접 생성한다. 기존 `imagegen` 원화 파일은 레퍼런스/아카이브로만 보관하며 런타임 시트의 직접 입력으로 사용하지 않는다.
 
 ---
 
@@ -24,7 +26,7 @@
 
 | 항목 | 사양 |
 |------|------|
-| 도구 | 기본 에셋: `@napi-rs/canvas` (TypeScript). 몬스터/보스: `imagegen` 원화 + `imagegen-monsters` Pillow 64×64 픽셀 후처리 |
+| 도구 | 기본 에셋: `@napi-rs/canvas` (TypeScript). 몬스터/보스: 참고 이미지풍 64×64 스프라이트를 `imagegen-monsters` Pillow 렌더러로 생성 |
 | 생성 스크립트 | 기본 에셋: `scripts/generate-assets/`. `main_long` 배경: `scripts/generate-assets/generate-main-long-background.ts`. 몬스터/보스: `scripts/imagegen-monsters/build-unit-sheets.py` |
 | 출력 경로 | `packages/web-shell/public/assets/` |
 | 포맷 | PNG (원본) + WebP (런타임, `convert-webp.ts` 자동 변환) |
@@ -224,13 +226,13 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | corrupted_archmage | 타락한 대마법사 | 보스 | `corrupted_archmage.png` 512×64 (8f) | `corrupted_archmage_idle.png` 384×64 (6f) | `corrupted_archmage_death.png` 384×64 (6f) |
 | dragon | 고대 드래곤 | 보스급 | `dragon.png` 512×64 (8f) | `dragon_idle.png` 384×64 (6f) | `dragon_death.png` 384×64 (6f) |
 
-공통 스타일: imagegen 기반 중세 판타지 픽셀 아트, 64×64 프레임, 1px dark outline, 저색상 팔레트 정리, TinySwords 톤 팔레트.
+공통 스타일: 참고 이미지풍 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 굵은 dark outline, 단순 면 색상, 고정 feet baseline, TinySwords 톤 팔레트.
 모든 런타임 유닛은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
 ### 애니메이션 상태 시스템
 
 런타임 유닛은 `walk → idle → death` 상태를 사용한다.
-- `walk`: unit별 gait 기반 8프레임 워크 사이클
+- `walk`: feet baseline 고정 + body bob/limb contact 기반 8프레임 워크 사이클
 - `idle`: 6프레임 대기 루프
 - `death`: 6프레임 전용 사망 애니메이션 후 sprite destroy
 - stun 중에는 `idle`, 이동 중에는 `walk`, 사망 시에는 공용 death FX 대신 유닛 본체 `death`를 재생한다.
@@ -238,9 +240,9 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 ### walk 모션 공통 규칙
 
 unit별 8프레임 워크 사이클:
-- humanoid: 좌우 다리 contact 교차 + 1~2px body bob
-- heavy: 낮은 bob, 넓은 contact shadow, 무거운 디딤
-- robe: 하체보다 망토/로브 sway 중심
+- humanoid: 고정 feet baseline, 좌우 다리 contact 교차, 1px body bob
+- heavy: 넓은 contact shadow, 낮은 중심, 무거운 실루엣
+- robe: 로브/스태프/오브 실루엣 중심의 단순 sway
 - flame: 보폭 + 프레임별 화염 flicker
 - dragon: 날개/꼬리 sway + 낮은 비행 bob
 
@@ -387,3 +389,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-30 | 헤더, §1, §2, §5, §6 | 몬스터/보스 에셋 전면 교체. `imagegen` 원화를 `assets-source/monsters/`에 보관하고 `scripts/imagegen-monsters/build-unit-sheets.py`로 chroma-key 제거, 하체 스텝/바운스 walk 프레임 패킹, PNG/WebP 출력을 생성한다. |
 | 2026-04-30 | 헤더, §2, §5, §6 | 몬스터 프레임을 80×96으로 확대하고 런타임 표시 크기를 32×40으로 복구. `quick/heavy/robe/shield/flame/dragon` 전용 gait walk sheet와 connected-component cleanup으로 재생 자연스러움을 개선한다. |
 | 2026-04-30 | 헤더, §1, §2, §5, §6 | 몬스터/보스를 imagegen 원화 기반 64×64 픽셀아트 시트로 재패킹. 실루엣 디테일을 유지하면서 일반 32×32, 보스 42×42 정사각형 표시 크기로 변경한다. |
+| 2026-04-30 | 헤더, §1, §5, §6 | 몬스터/보스를 첨부 참고 이미지풍 clean cartoon sprite로 재교체. 고해상도 원화 컷아웃 축소 대신 64×64 프레임 안에서 굵은 외곽선, 단순 면 색상, 고정 feet baseline, 전용 walk 시트를 직접 생성한다. |

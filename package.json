@@ -6,18 +6,25 @@
   ],
   "scripts": {
     "dev:web": "bun run --filter web-shell dev",
+    "dev:unity-preview": "bun run build:all && bun run --filter web-shell preview -- --port 8080",
     "build:web": "bun run --filter web-shell build",
+    "build:unity": "cd packages/unity-game && \"${UNITY_PATH:-/Applications/Unity/Hub/Editor/$(ls /Applications/Unity/Hub/Editor 2>/dev/null | sort | tail -1)/Unity.app/Contents/MacOS/Unity}\" -batchmode -nographics -projectPath . -executeMethod GLD.BuildScripts.Editor.WebGLBuilder.Build -logFile -",
+    "merge-build": "bun run scripts/merge-build.ts",
+    "build:all": "bun run build:web && bun run merge-build",
     "test": "bun run --filter '*' test",
     "test:shared": "bun run --filter @gld/shared test",
     "test:phaser": "bun run --filter @gld/phaser-game test",
     "test:web": "bun run --filter web-shell test",
+    "test:scripts": "bunx vitest run scripts",
     "lint": "bun run --filter '*' lint",
     "lint:check": "bunx biome check .",
     "imagegen:monsters": "node scripts/imagegen-monsters/run-build-unit-sheets.mjs",
     "generate:assets": "bun run scripts/generate-assets/generate-all.ts",
     "gld-pipe": "bun run scripts/gld-pipe/index.ts",
     "test:visual": "bun run --filter web-shell playwright",
-    "test:visual:update": "bun run --filter web-shell playwright:update"
+    "test:visual:update": "bun run --filter web-shell playwright:update",
+    "build:unity-json": "bun run --filter @gld/shared build:unity-json",
+    "copy:assets-to-unity": "bun run scripts/copy-assets-to-unity.ts"
   },
   "engines": {
     "node": ">=22"

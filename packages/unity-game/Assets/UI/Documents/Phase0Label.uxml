@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         editor="UnityEditor.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/phase0.uss" />
+  <ui:VisualElement name="phase0-root" class="phase0-root">
+    <ui:Label name="phase0-label" text="Unity Phase 0" class="phase0-label" />
+    <ui:Label name="phase0-subtitle" text="Bootstrap scaffold loaded." class="phase0-subtitle" />
+  </ui:VisualElement>
+</ui:UXML>

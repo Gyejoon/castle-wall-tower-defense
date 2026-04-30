@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7eef9ca2f126423bb0654f4ad6a9ac7, type: 3}
+  m_Name: tier_odds_up
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.UpgradeCardSO
+  amount: 0
+  description: "\uAC00\uCC60 \uC131\uACF5\uB960 +5%p"
+  icon: "\U0001F340"
+  id: 5
+  interval: 0
+  name: "\uC6B4\uC758 \uAC00\uD638"
+  stackType: 0
+  value: 0.05

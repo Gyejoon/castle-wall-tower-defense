@@ -26,18 +26,11 @@ const webShellPackageJson = JSON.parse(originalWebShellPackageJson) as {
 
 const args = [
 	'install',
-	'--production',
 	'--no-progress',
 	'--concurrent-scripts',
 	'1',
 	'--network-concurrency',
 	'8',
-	'--filter',
-	'web-shell',
-	'--filter',
-	'@gld/phaser-game',
-	'--filter',
-	'@gld/shared',
 ];
 
 if (isDryRun) {
@@ -67,15 +60,17 @@ try {
 	console.log(`[vercel-install] cwd=${repoRoot}`);
 	console.log(`[vercel-install] bun ${args.join(' ')}`);
 
+	const childEnv = { ...process.env };
+	delete childEnv.CI;
+	delete childEnv.CODEX_CI;
+	childEnv.BUN_CONFIG_CONCURRENT_SCRIPTS =
+		process.env.BUN_CONFIG_CONCURRENT_SCRIPTS ?? '1';
+
 	const install = spawnSync('bun', args, {
 		cwd: repoRoot,
-		env: {
-			...process.env,
-			// Keep install-time child processes tame in Vercel's smaller build
-			// containers. The build itself can still use the normal Vite command.
-			BUN_CONFIG_CONCURRENT_SCRIPTS:
-				process.env.BUN_CONFIG_CONCURRENT_SCRIPTS ?? '1',
-		},
+		// Keep install-time child processes tame in Vercel's smaller build
+		// containers. The build itself can still use the normal Vite command.
+		env: childEnv,
 		stdio: 'inherit',
 	});
 

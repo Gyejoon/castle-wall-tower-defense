@@ -1,6 +1,6 @@
 import type { OwnedTower, TowerDef } from '@gld/shared';
-import { towerAssetSrc } from '../../../common/TowerIcon';
 import { cn } from '../../../../utils/cn';
+import { towerAssetSrc } from '../../../common/TowerIcon';
 
 /**
  * Phase 1: grade borders were dropped alongside the grade system. Collection

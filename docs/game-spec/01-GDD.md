@@ -277,7 +277,8 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchest
 
 | wave | kind | 역할 |
 |------|------|------|
-| 1~9 | normal | 일반 적 조합, 난이도 점진 상승 |
+| 1 | normal | 기본 scout_drone 입문 wave (30마리) |
+| 2~9 | normal | 일반 적 조합, 난이도 점진 상승 |
 | **10** | **boss** | 최종 보스 (boss-warning 이벤트 emit 후 스폰) |
 
 비보스 스테이지(s1~s7)는 5~9웨이브 구성이며 보스 없이 normal 웨이브만 포함한다.
@@ -365,8 +366,10 @@ Phaser **캔버스 내부** 해상도는 `Scale.FIT`으로 576×1152 고정 좌�
 | 종류 | 소스 프레임 | 렌더 크기 | vs 타일 |
 |------|-------------|-----------|---------|
 | 타워 | 64×80 runtime / 128×160 source | **64×80** | 1.0W × 1.25H (사전 리샘플된 런타임 텍스처를 1:1 표시) |
-| 몬스터 (일반) | 40×48 | **43×53** | 0.67W × 0.83H (타일 안에 수렴) |
-| 몬스터 (보스) | 60×72 | **64×75** | 1.0W × 1.17H (타일 폭 + 존재감) |
+| 몬스터 (일반) | 64×64 | **32×32** | 0.5W × 0.5H (초기 lineup 시트의 실루엣 보존 + 타일 안 수렴) |
+| 몬스터 (보스) | 64×64 | **42×42** | 0.66W × 0.66H (타일 안 존재감) |
+
+소스 스프라이트시트 프레임은 native 64×64 픽셀아트 기준을 유지한다. Phaser `setDisplaySize`는 정사각형 표시 비율을 유지해 몬스터 실루엣이 세로로 늘어나지 않도록 한다.
 
 타워 static은 `tower-{id}-runtime.png/webp` 64×80 사전 리샘플 텍스처를 사용해 Phaser 내부에서 1:1 표시한다. `-fire` spritesheet도 `getTowerDisplayMetrics(tileSize)`를 공유하므로 `main_long`에서는 `64×80`, y offset `0`으로 배치·이동·공격 앵커가 동일하다. 새 일러스트 맵은 예전 플랫폼 lift를 적용하지 않고, buildable 네모칸의 visual anchor를 배치·공격 range·VFX 원점의 공통 기준으로 사용한다. 현재 visual anchor는 좌측 패드 -10px, 우측 패드 +10px, 하단 패드 -10px y 보정으로 네모칸 안쪽에 맞춘다. 타워 본체에는 상시 idle bob/scale tween을 적용하지 않고, 공격 시에도 풀바디 fire 스프라이트를 재생하지 않으며 projectile/impact VFX만 재생한다.
 
@@ -586,3 +589,4 @@ screenShake 동기화:
 | 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 CoreOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" prose → "정식 모드" 치환 (이후 v4에서 코드 상수까지 전면 제거). |
 | 2026-04-21 | §1, §3, §4, §8 | **v4 용어 정리 완료**. "Phase A" 프로토타입 트랙명 전면 제거. 코드 식별자 `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid `phase-a-*` → `hud-*`. 에셋 파일 `phase-a-long.json` → `main-long.json` + manifest key `tilemap-phase-a-long` → `tilemap-main-long`. SaveData 스키마 변화 없음 (v8 유지). |
 | 2026-04-30 | §1, §5, §8 | **v3.3 맵/타워 렌더 정렬**. `main_long` 기준을 9×18×64px로 잠그고 내부 bitmap을 576×1152로 확장. 타워 static/fire 렌더 크기를 `getTowerDisplayMetrics`로 통일해 배치·이동·공격 애니메이션 앵커를 동일하게 유지. PR #193 imagegen 타워 에셋 중 Phaser/Web 런타임 산출물과 dedicated hybrid/ultimate 에셋을 반영. |
+| 2026-05-01 | §6 | QA용 showcase wave를 제거하고 1웨이브를 scout_drone 30마리 입문 wave로 복구한다. 보스/후반 몬스터는 각 진행 구간에서만 노출한다. |

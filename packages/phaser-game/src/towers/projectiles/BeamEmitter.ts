@@ -22,9 +22,10 @@ export class BeamEmitter implements ProjectileEmitter {
 		);
 
 		const color = parseHexColor(tower.def.color);
-		const fireLift = ctx.gridManager.hasPlacementAnchors()
-			? 0
-			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift =
+			(ctx.gridManager.hasPlacementAnchors?.() ?? false)
+				? 0
+				: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 		const maxTtl = 80;
 

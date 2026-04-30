@@ -38,6 +38,7 @@ export default defineConfig({
 		assetReviewPlugin(),
 		createNonPhaserChunkBudgetWarning(),
 		VitePWA({
+			disable: isVercelBuild,
 			registerType: 'prompt',
 			includeAssets: [
 				'assets/**/*.png',
@@ -69,6 +70,7 @@ export default defineConfig({
 	build: {
 		outDir: 'dist',
 		sourcemap: !isVercelBuild,
+		minify: isVercelBuild ? false : 'esbuild',
 		chunkSizeWarningLimit: PHASER_CHUNK_WARNING_LIMIT_KB,
 		rollupOptions: {
 			output: {

@@ -41,9 +41,10 @@ export class ArrowEmitter implements ProjectileEmitter {
 
 		const arrowIndex = ctx.vfx.acquireArrow();
 		const color = parseHexColor(tower.def.color);
-		const fireLift = ctx.gridManager.hasPlacementAnchors()
-			? 0
-			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift =
+			(ctx.gridManager.hasPlacementAnchors?.() ?? false)
+				? 0
+				: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 
 		const damage = ctx.resolveDamage(target);

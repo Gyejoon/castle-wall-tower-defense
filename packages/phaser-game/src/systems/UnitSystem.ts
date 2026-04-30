@@ -84,8 +84,8 @@ interface QueueUnitsOptions {
 	ccResist?: number;
 }
 
-const NORMAL_UNIT_DISPLAY_SIZE = { width: 20, height: 26 };
-const BOSS_UNIT_DISPLAY_SIZE = { width: 30, height: 36 };
+const NORMAL_UNIT_DISPLAY_SIZE = { width: 32, height: 32 };
+const BOSS_UNIT_DISPLAY_SIZE = { width: 42, height: 42 };
 const FLYING_BOSS_Y_OFFSET = 12;
 const FLYING_BOSS_SHADOW_SIZE = { width: 26, height: 10 };
 const MAIN_LONG_UNIT_SPEED_MULTIPLIER = 0.55;

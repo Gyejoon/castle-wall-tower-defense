@@ -18,6 +18,7 @@
     "test:scripts": "bunx vitest run scripts",
     "lint": "bun run --filter '*' lint",
     "lint:check": "bunx biome check .",
+    "imagegen:monsters": "node scripts/imagegen-monsters/run-build-unit-sheets.mjs",
     "generate:assets": "bun run scripts/generate-assets/generate-all.ts",
     "gld-pipe": "bun run scripts/gld-pipe/index.ts",
     "test:visual": "bun run --filter web-shell playwright",

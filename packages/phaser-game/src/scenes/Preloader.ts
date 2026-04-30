@@ -72,7 +72,7 @@ export class Preloader extends Phaser.Scene {
 					start: 0,
 					end: walkEndFrame,
 				}),
-				frameRate: 10,
+				frameRate: 7,
 				repeat: -1,
 			});
 
@@ -91,7 +91,7 @@ export class Preloader extends Phaser.Scene {
 					start: 0,
 					end: endFrame,
 				}),
-				frameRate: 10,
+				frameRate: 7,
 				repeat: -1,
 			});
 		}

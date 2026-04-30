@@ -106,15 +106,21 @@ describe('generateWaves', () => {
 	it('unit composition diversifies as slot index grows', () => {
 		const w1 = waveSet[0];
 		const w21 = waveSet[20];
-		expect(w21.groups.length).toBeGreaterThan(w1.groups.length);
+		expect(w1.groups).toEqual([{ unitId: 'scout_drone', count: 30 }]);
+		expect(w21.groups.length).toBeGreaterThan(1);
 	});
 
-	it('stealth_drone starts appearing at slot 14+', () => {
+	it('wave 1 starts with the basic scout pack', () => {
+		const w1 = waveSet[0];
+		expect(w1.groups).toEqual([{ unitId: 'scout_drone', count: 30 }]);
+	});
+
+	it('stealth_drone appears in regular late waves', () => {
 		const stealthWaves = waveSet.filter((w) =>
 			w.groups.some((g) => g.unitId === 'stealth_drone'),
 		);
 		expect(stealthWaves.length).toBeGreaterThan(0);
-		expect(stealthWaves[0].slotIndex).toBeGreaterThanOrEqual(14);
+		expect(stealthWaves[0].slotIndex).toBeGreaterThanOrEqual(20);
 	});
 });
 

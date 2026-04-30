@@ -26,6 +26,19 @@ interface LayerNoise {
 }
 
 type Layer = LayerOsc | LayerNoise;
+type AudioContextConstructor = new () => AudioContext;
+
+function resolveAudioContextConstructor(): AudioContextConstructor | null {
+	if (typeof globalThis.AudioContext === 'function') {
+		return globalThis.AudioContext;
+	}
+	const webkitGlobal = globalThis as typeof globalThis & {
+		webkitAudioContext?: AudioContextConstructor;
+	};
+	return typeof webkitGlobal.webkitAudioContext === 'function'
+		? webkitGlobal.webkitAudioContext
+		: null;
+}
 
 export class SoundGenerator {
 	private audioContext: AudioContext | null = null;
@@ -37,14 +50,17 @@ export class SoundGenerator {
 
 	async unlock(): Promise<void> {
 		const ctx = this.getContext();
+		if (!ctx) return;
 		if (ctx.state === 'suspended') {
 			await ctx.resume();
 		}
 	}
 
-	private getContext(): AudioContext {
+	private getContext(): AudioContext | null {
 		if (!this.audioContext) {
-			this.audioContext = new AudioContext();
+			const AudioContextCtor = resolveAudioContextConstructor();
+			if (!AudioContextCtor) return null;
+			this.audioContext = new AudioContextCtor();
 		}
 		if (!this.masterGainNode) {
 			const ctx = this.audioContext;
@@ -82,6 +98,7 @@ export class SoundGenerator {
 
 	play(recipe: SoundRecipe): void {
 		const ctx = this.getContext();
+		if (!ctx) return;
 		const oscillator = ctx.createOscillator();
 		const gainNode = ctx.createGain();
 
@@ -148,10 +165,10 @@ export class SoundGenerator {
 	// ── Private synthesis helpers ──
 
 	private createNoiseBuffer(
+		ctx: AudioContext,
 		type: 'white' | 'pink' | 'brown',
 		duration: number,
 	): AudioBuffer {
-		const ctx = this.getContext();
 		const sampleRate = ctx.sampleRate;
 		const length = Math.ceil((sampleRate * duration) / 1000);
 		const buffer = ctx.createBuffer(1, length, sampleRate);
@@ -195,7 +212,12 @@ export class SoundGenerator {
 
 	private playNoise(config: NoiseConfig): void {
 		const ctx = this.getContext();
-		const buffer = this.createNoiseBuffer(config.noiseType, config.duration);
+		if (!ctx) return;
+		const buffer = this.createNoiseBuffer(
+			ctx,
+			config.noiseType,
+			config.duration,
+		);
 		const source = ctx.createBufferSource();
 		source.buffer = buffer;
 
@@ -246,6 +268,7 @@ export class SoundGenerator {
 		modDepthEnd?: number,
 	): void {
 		const ctx = this.getContext();
+		if (!ctx) return;
 		const carrier = ctx.createOscillator();
 		const modulator = ctx.createOscillator();
 		const modGain = ctx.createGain();
@@ -828,6 +851,7 @@ export class SoundGenerator {
 	playPressureGhostApplied(): void {
 		// Beat frequency: 200Hz + 205Hz sine, 250ms
 		const ctx = this.getContext();
+		if (!ctx) return;
 
 		const osc1 = ctx.createOscillator();
 		const osc2 = ctx.createOscillator();

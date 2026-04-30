@@ -270,7 +270,7 @@ export class WaveSystem {
 		const isLastWaveSlot = this.currentWaveIndex >= this.maxWaves - 1;
 		for (const group of wave.groups) {
 			const unitDef = UNITS.find((u) => u.id === group.unitId);
-			const isBoss = !!unitDef?.bossBehaviorId;
+			const isBoss = !!unitDef?.bossBehaviorId && group.asBoss !== false;
 			const hpMultiplier =
 				(isBoss && isLastWaveSlot ? FINAL_BOSS_HP_MULTIPLIER : 1) *
 				this.difficultyHpMult *

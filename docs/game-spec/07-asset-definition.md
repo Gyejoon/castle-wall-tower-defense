@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-30 (v3.3 — 9×64 맵 해상도 + 타워 렌더 정렬)
+> **Last Updated:** 2026-05-01 (v3.10 — 초기 imagegen lineup 기반 몬스터 시트 복구)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
@@ -8,9 +8,23 @@
 >
 > **v3.1 변경 요약 (2026-04-20, PR #175)**: Phaser 논리 해상도를 고정해 기기별 스프라이트 상대 비율을 보존한다.
 >
-> **v3.2 변경 요약 (2026-04-29)**: `main_long`은 제공 이미지 기반 일러스트 배경을 사용한다. 런타임은 원본을 확대하지 않는 최대 cover 해상도인 **752×1672 HQ WebP** 배경을 `field-main-long-bg` texture key로 로드한다. WebP 미지원 환경은 432×960 PNG fallback을 사용한다. 게임 전체는 픽셀 스프라이트를 위해 nearest 필터를 유지하되, 일러스트 배경 texture만 `LINEAR` 필터로 전환해 축소 렌더링 계단 현상을 줄인다. 몬스터 이동은 0.55x 표시 속도 배율을 적용하고, 경로는 이미지 흙길 중심 픽셀을 waypoint로 역변환한다. 타워 배치는 이미지에 그려진 6개 빈 네모칸 중심에 `placementAnchors`로 스냅한다.
+> **v3.2 변경 요약 (2026-04-29)**: `main_long`은 제공 이미지 기반 일러스트 배경을 사용한다. 런타임은 원본을 확대하지 않는 최대 cover 해상도인 **752×1672 HQ WebP** 배경을 `field-main-long-bg` texture key로 로드해 큰 모바일 캔버스에서 432×960 원본이 확대되는 흐림을 줄인다. WebP 미지원 환경은 432×960 PNG fallback을 사용한다. 게임 전체는 픽셀 스프라이트를 위해 nearest 필터를 유지하되, 일러스트 배경 texture만 `LINEAR` 필터로 전환해 축소 렌더링 계단 현상을 줄인다. 당시 일반 몬스터 런타임 크기는 **20×26**, 보스는 **30×36**으로 줄여 432×960 일러스트 경로 폭에 맞췄다. 몬스터 이동은 0.55x 표시 속도 배율을 적용하고, 경로는 이미지 흙길 중심 픽셀을 waypoint로 역변환한다. 타워 배치는 이미지에 그려진 6개 빈 네모칸 중심에 `placementAnchors`로 스냅한다.
 >
 > **v3.3 변경 요약 (2026-04-30)**: `main_long`은 **9×18×64px = 576×1152** 내부 bitmap을 기준으로 한다. 432×960 원본 아트 좌표는 576×1152 런타임 좌표로 변환해 path와 6개 buildable 네모칸을 맞춘다. 타워 아트는 PR #193의 dedicated sprite를 사용하며, static/fire는 `getTowerDisplayMetrics(64)` 결과인 **64×80**으로 표시하고 y anchor를 `0`으로 둬 발이 buildable 네모칸 바닥에 붙도록 한다.
+>
+> **v3.4 변경 요약 (2026-04-30)**: 몬스터/보스 에셋은 `imagegen` 원화(`assets-source/monsters/`)를 기반으로 전면 교체했다. 런타임 출력은 `scripts/imagegen-monsters/build-unit-sheets.py`가 chroma-key 제거, 하체 스텝/바운스 프레임 패킹, WebP 변환을 수행한다. 기존 `scripts/generate-assets` 유닛 생성기는 이번 몬스터 교체의 소스로 사용하지 않는다.
+>
+> **v3.5 변경 요약 (2026-04-30)**: 일반 몬스터 소스 프레임을 **80×96**으로 확대하고 런타임 표시 크기를 **32×40**으로 복구했다. walk는 공용 bobbing이 아니라 unit별 `quick/heavy/robe/shield/flame/dragon` gait를 사용한다. chroma-key 잔여 픽셀과 이웃 셀 조각은 connected-component cleanup으로 제거한다. 보스 dragon sheet는 **128×128** 프레임으로 재패킹하고 표시 크기는 **48×56**이다.
+>
+> **v3.6 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 `imagegen` 원화 기반 **64×64 픽셀아트 프레임**으로 재패킹했다. `scripts/imagegen-monsters/build-unit-sheets.py`는 imagegen 원화의 실루엣을 유지하면서 chroma-key 제거, 저색상 팔레트 정리, 1px outline, 전용 8프레임 walk/6프레임 idle/death를 생성한다. 런타임 표시 크기는 일반 **32×32**, 보스 **42×42**로 정사각형 비율을 유지한다.
+>
+> **v3.7 변경 요약 (2026-04-30)**: 몬스터/보스 런타임 에셋을 첨부 참고 이미지풍 **clean cartoon sprite**로 다시 교체했다. 고해상도 원화 컷아웃을 축소하지 않고, 64×64 프레임 안에서 굵은 dark outline, 단순 면 색상, 고정 feet baseline, 전용 8프레임 walk를 직접 생성한다. 기존 `imagegen` 원화 파일은 레퍼런스/아카이브로만 보관하며 런타임 시트의 직접 입력으로 사용하지 않는다.
+>
+> **v3.8 변경 요약 (2026-04-30)**: 64×64 전용 스프라이트에 2~3단계 내부 명암, 장비/벨트/금속 하이라이트, 개체별 소품 디테일을 추가했다. death 시트는 정지 잔해가 아니라 피격 스파크 → 기울어짐 → 쓰러짐 → 잔해/먼지로 이어지는 6프레임 전용 모션으로 교체했다.
+>
+> **v3.9 변경 요약 (2026-04-30)**: 신규 `imagegen` 4×3 고퀄 몬스터 아틀라스(`imagegen-monster-atlas-v20260430-detail.png`)를 source로 사용한다. `imagegen-monsters`는 chroma-key 제거, connected-component cleanup, 64×64 리터칭/outline, layer split 기반 walk/idle, 피격/쓰러짐 death 시트를 생성한다. 런타임 표시 크기는 일반 **36×36**, 보스 **46×46**로 올려 디테일이 과도하게 죽지 않도록 한다.
+>
+> **v3.10 변경 요약 (2026-05-01)**: v3.9 아틀라스 기반 시트가 실제 게임 렌더에서 과도하게 어둡고 노이즈처럼 깨져 보여, 더 밝고 실루엣이 명확했던 초기 `imagegen` lineup 소스(`imagegen-monster-lineup-v20260430.png`, `imagegen-dragon-lineup-v20260430.png`) 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고, 런타임 표시 크기는 초기값인 일반 **32×32**, 보스 **42×42**로 되돌린다.
 
 ---
 
@@ -20,8 +34,8 @@
 
 | 항목 | 사양 |
 |------|------|
-| 도구 | 타워: `imagegen` 원본 + Web PNG/WebP 후처리 / 기타: 기존 파이프라인 유지 |
-| 생성 스크립트 | 타워 후처리: `scripts/art-tools/harmonize-tower-assets.mjs`, 런타임 텍스처: `scripts/art-tools/generate-runtime-tower-assets.mjs` / 기타: `scripts/generate-assets/` |
+| 도구 | 타워: `imagegen` 원본 + Web PNG/WebP 후처리 / 몬스터·보스: 초기 `imagegen` lineup + `imagegen-monsters` Pillow 리터칭 / 기타: 기존 파이프라인 유지 |
+| 생성 스크립트 | 타워 후처리: `scripts/art-tools/harmonize-tower-assets.mjs`, 런타임 텍스처: `scripts/art-tools/generate-runtime-tower-assets.mjs` / `main_long` 배경: `scripts/generate-assets/generate-main-long-background.ts` / 몬스터·보스: `scripts/imagegen-monsters/build-unit-sheets.py` / 기타: `scripts/generate-assets/` |
 | 출력 경로 | `packages/web-shell/public/assets/` |
 | 포맷 | PNG (원본) + WebP (런타임, `convert-webp.ts` 자동 변환) |
 | 매니페스트 | `asset-manifest.json` (자동 생성, **수동 편집 금지**) |
@@ -30,9 +44,9 @@
 
 | 항목 | 값 |
 |------|---|
-| Base Resolution | 64×80px runtime texture/display / 128×160px source (타워), 40×48px (유닛), 64×64px (타일) |
-| 보스 해상도 | 96×96px |
-| Spritesheet | walk/fire: 8프레임, idle: 6프레임, death: 6프레임, 가로 연결 (예: 유닛 walk 320×48, idle 240×48) |
+| Base Resolution | 64×80px runtime texture/display / 128×160px source (타워), 64×64px (유닛/보스/타일) |
+| 보스 해상도 | 64×64px |
+| Spritesheet | walk/fire: 8프레임, idle: 6프레임, death: 6프레임, 가로 연결 (예: 유닛 walk 512×64, idle 384×64) |
 | Pivot/Origin | center (0.5, 0.5) |
 | Trim | 불허 — 고정 프레임 크기 유지 |
 | 색상 팔레트 | 타워: 중세 석재·목재·금속 기반, 속성색 포인트 / 기타: 기존 팔레트 |
@@ -76,9 +90,10 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 |---------|--------|-------|------|
 | 타워 스태틱 | 19 PNG+WebP | `imagegen` + `harmonize-tower-assets.mjs` | ✅ v3.3 리프레시 |
 | 타워 공격 애니 | 19 spritesheet | `imagegen` + `harmonize-tower-assets.mjs` | ✅ v3.3 리프레시 |
-| 유닛 walk | 5 spritesheet | `generate-units.ts` | ✅ 완료 |
-| 유닛 idle | 4 spritesheet (6f, 240×48) | `generate-units.ts` | ✅ 완료 |
-| 유닛 death | 4 spritesheet (6f, 유닛별 특화) | `generate-units.ts` | ✅ 완료 |
+| 유닛 walk | 12 spritesheet (8f, 512×64) | `imagegen-monsters` | ✅ 교체 완료 |
+| 유닛 idle | 12 spritesheet (6f, 384×64) | `imagegen-monsters` | ✅ 교체 완료 |
+| 유닛 death | 12 spritesheet (6f, 384×64) | `imagegen-monsters` | ✅ 교체 완료 |
+| 보스 전용 | 2 spritesheet (8f, 512×64) | `imagegen-monsters` | ✅ 교체 완료 |
 | 투사체 | 4 spritesheet | `generate-projectiles.ts` | 부분 완료 |
 | VFX | 4 spritesheet | `generate-vfx.ts` | 부분 완료 |
 | UI (PVE) | ~34 PNG+WebP | `generate-ui.ts`, `generate-match-ui.ts` | PVP 혼재 |
@@ -199,33 +214,42 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 ---
 
-## 5. 적 유닛 에셋 (5종)
+## 5. 적 유닛 에셋 (12종)
 
 | id | name | 크기 | walk 파일 | idle 파일 | death 파일 |
 |----|------|------|-----------|-----------|------------|
-| scout_drone | 고블린 scavenger | 작음 | `scout_drone.png` 320×48 (8f) | `scout_drone_idle.png` 240×48 (6f) | `scout_drone_death.png` 240×48 (6f) |
-| battle_robot | orc veteran | 중간 | `battle_robot.png` 320×48 (8f) | `battle_robot_idle.png` 240×48 (6f) | `battle_robot_death.png` 240×48 (6f) |
-| heavy_walker | stone troll | 큼 | `heavy_walker.png` 320×48 (8f) | `heavy_walker_idle.png` 240×48 (6f) | `heavy_walker_death.png` 240×48 (6f) |
-| stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 320×48 (8f) | `stealth_drone_idle.png` 240×48 (6f) | `stealth_drone_death.png` 240×48 (6f) |
-| dragon | 고대 드래곤 | 보스급 | `dragon.png` 320×48 (8f) | `dragon_idle.png` 240×48 (6f) | `dragon_death.png` 240×48 (6f) |
+| scout_drone | 고블린 scavenger | 작음 | `scout_drone.png` 512×64 (8f) | `scout_drone_idle.png` 384×64 (6f) | `scout_drone_death.png` 384×64 (6f) |
+| battle_robot | orc veteran | 중간 | `battle_robot.png` 512×64 (8f) | `battle_robot_idle.png` 384×64 (6f) | `battle_robot_death.png` 384×64 (6f) |
+| heavy_walker | stone troll | 큼 | `heavy_walker.png` 512×64 (8f) | `heavy_walker_idle.png` 384×64 (6f) | `heavy_walker_death.png` 384×64 (6f) |
+| stealth_drone | shadow assassin | 가늘음 | `stealth_drone.png` 512×64 (8f) | `stealth_drone_idle.png` 384×64 (6f) | `stealth_drone_death.png` 384×64 (6f) |
+| flame_imp | 화염 임프 | 작음 | `flame_imp.png` 512×64 (8f) | `flame_imp_idle.png` 384×64 (6f) | `flame_imp_death.png` 384×64 (6f) |
+| lava_golem | 용암 골렘 | 큼 | `lava_golem.png` 512×64 (8f) | `lava_golem_idle.png` 384×64 (6f) | `lava_golem_death.png` 384×64 (6f) |
+| arcane_mage | 마법사 유닛 | 중간 | `arcane_mage.png` 512×64 (8f) | `arcane_mage_idle.png` 384×64 (6f) | `arcane_mage_death.png` 384×64 (6f) |
+| mana_shield | 마력 방패병 | 중간 | `mana_shield.png` 512×64 (8f) | `mana_shield_idle.png` 384×64 (6f) | `mana_shield_death.png` 384×64 (6f) |
+| orc_warlord | 오크 전쟁 대장 | 보스 | `orc_warlord.png` 512×64 (8f) | `orc_warlord_idle.png` 384×64 (6f) | `orc_warlord_death.png` 384×64 (6f) |
+| forge_master | 단조장의 군주 | 보스 | `forge_master.png` 512×64 (8f) | `forge_master_idle.png` 384×64 (6f) | `forge_master_death.png` 384×64 (6f) |
+| corrupted_archmage | 타락한 대마법사 | 보스 | `corrupted_archmage.png` 512×64 (8f) | `corrupted_archmage_idle.png` 384×64 (6f) | `corrupted_archmage_death.png` 384×64 (6f) |
+| dragon | 고대 드래곤 | 보스급 | `dragon.png` 512×64 (8f) | `dragon_idle.png` 384×64 (6f) | `dragon_death.png` 384×64 (6f) |
 
-공통 스타일: 1px dark outline, 3-tone shading, tiny-swords 톤 팔레트.
-일반 몬스터 4종은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
+공통 스타일: imagegen 기반 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 밝고 읽히는 실루엣, 고정 feet baseline, TinySwords 톤 팔레트.
+모든 런타임 유닛은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
 ### 애니메이션 상태 시스템
 
-일반 몬스터 4종은 `walk → idle → death` 상태를 사용한다.
-- `walk`: sin 기반 8프레임 워크 사이클
+런타임 유닛은 `walk → idle → death` 상태를 사용한다.
+- `walk`: feet baseline 고정 + body bob/limb contact 기반 8프레임 워크 사이클
 - `idle`: 6프레임 대기 루프
-- `death`: 6프레임 전용 사망 애니메이션 후 sprite destroy
+- `death`: 피격 스파크 → 기울어짐 → 쓰러짐 → 잔해/먼지 6프레임 전용 사망 애니메이션 후 sprite destroy
 - stun 중에는 `idle`, 이동 중에는 `walk`, 사망 시에는 공용 death FX 대신 유닛 본체 `death`를 재생한다.
 
 ### walk 모션 공통 규칙
 
-sin 기반 8프레임 워크 사이클:
-- `bobY`: 상하 바운스 (±1.5px)
-- `legStep`: 다리 교대 길이 변화 (±3px) — 한쪽 디딤/다른쪽 들림
-- `armSwing`: 팔 수직 스윙 (±3px, 다리 반대 방향)
+unit별 8프레임 워크 사이클:
+- humanoid: 고정 feet baseline, 좌우 다리 contact 교차, 1px body bob
+- heavy: 넓은 contact shadow, 낮은 중심, 무거운 실루엣
+- robe: 로브/스태프/오브 실루엣 중심의 단순 sway
+- flame: 보폭 + 프레임별 화염 flicker
+- dragon: 날개/꼬리 sway + 낮은 비행 bob
 
 | 유닛 | walk/idle/death 연출 |
 |------|----------------------|
@@ -241,7 +265,7 @@ sin 기반 8프레임 워크 사이클:
 
 | 상태 | 설명 | 특이사항 |
 |------|------|---------|
-| Phase 1 idle | 768×96 (8프레임 spritesheet), 호흡+날개+화염 | `dragon-boss.png` |
+| Phase 1 idle | 512×64 (8프레임 spritesheet), 호흡+날개+화염 | `dragon-boss.png` |
 | Phase 2 rage | 동일 + fireRed 틴트 (0.25), 프레임별 절대좌표 적용 | `dragon-boss-rage.png` |
 | Weak point | 수 속성 집중 화력에 취약 — 하이라이트 영역 | |
 | Death | 소멸 이펙트 | 보스 전용 (미구현) |
@@ -365,6 +389,14 @@ icon-{category}-{id} # 아이콘
 | 2026-04-10 | §1, §2, §5, §6 | 일반 몬스터 4종 에셋 강화: 3-tone+1px 아웃라인, walk 8f + idle 6f + death 6f, 유닛별 실루엣 훅, stealth_drone 추상형→캐릭터형, 공용 unit-death 폐기, §1 spritesheet 규격 idle/death 추가, 보스 §6 후속 이슈 주석 |
 | 2026-04-10 | §3, §3.5 | 전체 18종 HQ iso-cube 중세 픽셀 스프라이트 + projectileSpeed + 사거리 밸런스 + barrel 트래킹 + 쌍궁탑 이중 화살 + 눈보라탑 눈덩이 + grade variant + idle tween + 승급 연출 |
 | 2026-04-20 | §3, §11 (전반) | **v3 정식 모드 승격**. plasma / dragon_nest 완전 제거. hybrid_ab / hybrid_cd / ultimate 3종 placeholder 상태 (T4 스프라이트 alias + aura VFX 차별화). Siege projectile arc 회귀 수정 (`hasSplash()` startsWith 교정). PR #173 포팅으로 Tilemap_dirt_seamless / Tilemap_grass_seamless / Tilemap_path seamless 타일셋 도입 (grass platform 9-slice + cliff wall graphics + dirt tileSprite base). Cinematic keyart 로비 (성 실루엣·달·횃불·안개, CSS-only, 에셋 파일 없음). Grade variant 세트 (rare/unique/epic PNG)는 v3에서 불필요 — tier가 별개 타워 id이므로. |
+| 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 소스 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 그대로, 런타임 `setDisplaySize`로 타일 폭에 맞춤. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |
+| 2026-04-29 | 헤더, §1, §2, §9 | `main_long`을 제공 이미지 기반 일러스트 배경 맵으로 교체. HQ WebP 배경, 이미지 좌표 기반 waypoint, 6개 `placementAnchors`, 축소된 몬스터 표시 크기/속도 배율을 적용한다. |
 | 2026-04-29 | §1, §2, §3 | `imagegen` 기반으로 타워 19종을 중세 판타지 + TinySwords 호환 픽셀아트 방향으로 전면 리프레시. hybrid_ab / hybrid_cd / ultimate는 전용 정적 스프라이트와 fire spritesheet를 보유한다. |
-| 2026-04-20 | 헤더, §1 | **v3.1 정식 모드 안정화 (PR #175)**. 고정 논리 해상도 432×960 확정 — Phaser `Scale.NONE`으로 모든 디바이스에서 캔버스 내부 bitmap 기준을 동일하게 유지. 소스 에셋 크기(타워 64×80, 유닛 40×48 / 60×72, 타일 48×48)는 그대로, **런타임 `setDisplaySize`를 타워 48×60 / 일반 유닛 32×40 / 보스 48×56로 축소해 타일 폭에 맞춤** — 기존 64×80 타워는 타일 48의 1.33× 폭, 1.67× 높이로 과하게 overflow했음. 디바이스 스케일링은 canvas CSS `width/height: 100%`로 flex-1 슬롯에 맞춤 (전체 DOM을 스케일하는 CSS transform wrapper는 모바일 세로형 표준과 충돌해 미사용). |
 | 2026-04-30 | 헤더, §3 | **v3.3 맵/타워 렌더 정렬**. `main_long` 내부 bitmap을 576×1152(9×18×64px)로 확장. 타워 static/fire 표시 크기를 `64×80`, y anchor를 `0`으로 통일해 buildable 네모칸 안쪽에 발을 고정하고 공격 애니메이션 정렬을 맞춤. 새 일러스트 맵에서는 플랫폼 lift를 제거하고 visual anchor 기준으로 배치·공격 판정을 통일. visual anchor는 좌측 -10px, 우측 +10px, 하단 -10px y 보정. 타워 본체 idle bob과 발밑 그림자는 제거하고 공격은 projectile/impact VFX만 재생. `harmonize-tower-assets.mjs`는 Web PNG/WebP만 갱신하고 Unity 복사는 수행하지 않음. |
+| 2026-04-30 | 헤더, §1, §2, §5, §6 | 몬스터/보스 에셋 전면 교체. `imagegen` 원화를 `assets-source/monsters/`에 보관하고 `scripts/imagegen-monsters/build-unit-sheets.py`로 chroma-key 제거, 하체 스텝/바운스 walk 프레임 패킹, PNG/WebP 출력을 생성한다. |
+| 2026-04-30 | 헤더, §2, §5, §6 | 몬스터 프레임을 80×96으로 확대하고 런타임 표시 크기를 32×40으로 복구. `quick/heavy/robe/shield/flame/dragon` 전용 gait walk sheet와 connected-component cleanup으로 재생 자연스러움을 개선한다. |
+| 2026-04-30 | 헤더, §1, §2, §5, §6 | 몬스터/보스를 imagegen 원화 기반 64×64 픽셀아트 시트로 재패킹. 실루엣 디테일을 유지하면서 일반 32×32, 보스 42×42 정사각형 표시 크기로 변경한다. |
+| 2026-04-30 | 헤더, §1, §5, §6 | 몬스터/보스를 첨부 참고 이미지풍 clean cartoon sprite로 재교체. 고해상도 원화 컷아웃 축소 대신 64×64 프레임 안에서 굵은 외곽선, 단순 면 색상, 고정 feet baseline, 전용 walk 시트를 직접 생성한다. |
+| 2026-04-30 | 헤더, §5 | 몬스터/보스 64×64 시트에 내부 명암과 장비 디테일을 추가하고, death 시트를 피격/쓰러짐/잔해 6프레임 전용 모션으로 교체한다. |
+| 2026-04-30 | 헤더, §1, §5 | 신규 imagegen 4×3 몬스터 아틀라스를 source로 삼아 64×64 리터칭/outline/layer split walk/death 시트를 생성한다. 런타임 표시 크기를 일반 36×36, 보스 46×46으로 조정한다. |
+| 2026-05-01 | 헤더, §1, §5 | v3.9 아틀라스 기반 몬스터가 실제 게임 크기에서 어둡고 노이즈처럼 깨져 보여, 초기 `imagegen` lineup 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고 런타임 표시 크기는 일반 32×32, 보스 42×42로 되돌린다. |

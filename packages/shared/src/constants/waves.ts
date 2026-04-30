@@ -8,6 +8,9 @@ export interface WaveGroup {
 	 *  to make specific boss slots (e.g. wave 40) noticeably tougher than
 	 *  the previous boss even when base stats are identical. Default 1. */
 	hpMultiplier?: number;
+	/** When false, boss-capable units are spawned as regular showcase units:
+	 *  no boss AI, no boss leak defeat, and normal display sizing. */
+	asBoss?: boolean;
 }
 
 export type WaveSlotKind = 'normal' | 'boss';

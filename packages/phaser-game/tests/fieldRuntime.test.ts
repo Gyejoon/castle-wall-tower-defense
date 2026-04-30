@@ -228,17 +228,34 @@ describe('GameScene field runtime', () => {
 
 		scene.create();
 
-		const waveDefs = waveSystemCtorSpy.mock.calls[0]?.[1] as Array<{
-			slotIndex: number;
-			kind: string;
-			groups: Array<{ unitId: string; count: number }>;
-		}>;
-		// 정식 모드 endless set: 50 waves total, first wave is 30 scout_drone
+		const spyWaveDefs = waveSystemCtorSpy.mock.calls
+			.flat()
+			.find(Array.isArray) as
+			| Array<{
+					slotIndex: number;
+					kind: string;
+					groups: Array<{ unitId: string; count: number }>;
+			  }>
+			| undefined;
+		const waveDefs =
+			spyWaveDefs ??
+			(
+				scene as unknown as {
+					playerWaves?: {
+						waves?: Array<{
+							slotIndex: number;
+							kind: string;
+							groups: Array<{ unitId: string; count: number }>;
+						}>;
+					};
+				}
+			).playerWaves?.waves;
+		// 정식 모드 endless set: 50 waves total, first wave starts simple.
 		expect(waveDefs).toHaveLength(50);
 		expect(waveDefs?.[0]?.slotIndex).toBe(1);
-		expect(waveDefs?.[0]?.groups).toEqual([
-			{ unitId: 'scout_drone', count: 30 },
-		]);
+		expect(
+			waveDefs?.[0]?.groups.map(({ unitId, count }) => ({ unitId, count })),
+		).toEqual([{ unitId: 'scout_drone', count: 30 }]);
 	});
 
 	it('renders a single portrait field from raw Tiny Swords assets', async () => {

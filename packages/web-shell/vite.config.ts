@@ -8,8 +8,6 @@ import { assetReviewPlugin } from './plugins/asset-review-plugin';
 const NON_PHASER_CHUNK_BUDGET_KB = 500;
 const PHASER_CHUNK_WARNING_LIMIT_KB = 1600;
 const isVercelBuild = process.env.VERCEL === '1';
-const isVercelPreviewBuild =
-	isVercelBuild && process.env.VERCEL_ENV !== 'production';
 
 const createNonPhaserChunkBudgetWarning = (): RollupPlugin => ({
 	name: 'non-phaser-chunk-budget-warning',
@@ -40,7 +38,7 @@ export default defineConfig({
 		assetReviewPlugin(),
 		createNonPhaserChunkBudgetWarning(),
 		VitePWA({
-			disable: isVercelPreviewBuild,
+			disable: isVercelBuild,
 			registerType: 'prompt',
 			includeAssets: [
 				'assets/**/*.png',

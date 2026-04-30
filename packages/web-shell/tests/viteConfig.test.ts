@@ -10,7 +10,7 @@ const viteConfigSource = readFileSync(
 describe('vite PWA asset coverage', () => {
 	it('precache includes webp assets for runtime-preferred art', () => {
 		expect(viteConfigSource).toContain('includeAssets:');
-		expect(viteConfigSource).toContain('disable: isVercelPreviewBuild');
+		expect(viteConfigSource).toContain('disable: isVercelBuild');
 		expect(viteConfigSource).toContain("'assets/**/*.png'");
 		expect(viteConfigSource).toContain("'assets/**/*.webp'");
 		expect(viteConfigSource).toContain("'assets/**/*.json'");

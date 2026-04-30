@@ -1,12 +1,14 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 4 버그 픽스)
+> **Last Updated:** 2026-04-30 (v3.3 — 9×64 맵 해상도 + 타워 에셋 정렬)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 >
-> **v3 노트 (2026-04-20)**: 2026-04-14 피벗으로 도입된 랜덤 소환 + 합성 루프를 **게임의 유일한 정식 모드**로 확정. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×48px 맵 (모바일 세로 최적화), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
+> **v3 노트 (2026-04-20)**: 2026-04-14 피벗으로 도입된 랜덤 소환 + 합성 루프를 **게임의 유일한 정식 모드**로 확정. 기존 시나리오 모드 (W1~W3 24 스테이지, 덱 편성, 월드맵, 임무/업적)는 모두 제거됨. 타워 시스템은 `grade` 기반에서 `family`+`tier(1~6)` 모델로 전환. 4 계열(archer/siege/frost/stun) × 4 tier + hybrid tier-5×2 + ultimate tier-6 = 총 19 타워. 인게임 가챠 (T2/T3/T4), 로그라이크 6 카드, 메타 루프 스텁, BM 스텁 (AdService + 이어서 하기), 9×18×64px 맵 (TinySwords 네이티브 타일 기준), HUD 전면 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay + PauseModal), CC 가드레일 (ccResistance / MIN_MOVE_SPEED / stun immunity) 포함. Save schema v6→v7→v8 (grade→tier 변환 + 시나리오 필드 purge).
 >
-> **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`, 생존 중 최소 1 clamp). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser `Scale.NONE`으로 내부 해상도 432×960 고정 + 모바일 세로형 표준 레이아웃 (React shell은 `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + `safe-area-inset-top`, 캔버스가 flex-1 슬롯을 채움). 기기별 타워/몬스터 비율은 캔버스 내부 좌표계에서 보존. PR #175.
+> **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`, 생존 중 최소 1 clamp). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser 논리 해상도 고정 + 모바일 세로형 표준 레이아웃. 기기별 타워/몬스터 비율은 캔버스 내부 좌표계에서 보존. PR #175.
+>
+> **v3.3 노트 (2026-04-30)**: 현재 `main_long` 맵 기준을 **9×18×64px = 576×1152**로 정렬. 타워 정적/공격 스프라이트는 동일 display metric (`64×80`, y offset `0`)을 사용해 buildable 네모칸 안에 발을 고정한다. `hybrid_ab`, `hybrid_cd`, `ultimate`는 placeholder alias가 아니라 PR #193의 dedicated sprite를 사용한다.
 
 ---
 
@@ -24,7 +26,7 @@
 | Genre | 픽셀 중세 Random Tower Defense + Merge |
 | Platform | Mobile Web (App In Toss) |
 | Player Count | Single |
-| Camera/View | Top-down / Portrait Long Field (**9×18 grid, 48px 타일**, 위/아래 진입 경로 + 중앙 성채 HP 목표 + 6개 고정 배치칸) |
+| Camera/View | Top-down / Portrait Long Field (**9×18 grid, 64px 타일**, 위/아래 진입 경로 + 중앙 성채 HP 목표 + 6개 고정 배치칸) |
 | Input | Touch — 소환·가챠 버튼 + 타워 2회 탭으로 합성 |
 | Session Length | 5~10분 |
 | Core Fantasy | 랜덤으로 뽑은 4 가문 타워를 합성해 tier 6 "세계의 끝"까지 키우는 지휘관 |
@@ -159,7 +161,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchest
 | 소환 풀 타워 | 4종 T1 (archer, nova_cannon, emp, shield) | 4 family 각 1개, 균등 draw |
 | 합성 가능 타워 | 15종 (T2~T6) | T1 4×3 base promo + T5 hybrid×2 + T6 ultimate |
 | **총 타워 수** | **19** | 4 family × 4 tier + 2 hybrid (T5) + 1 ultimate (T6) |
-| 맵 | 1종 (`main_long`, **9×18 grid, 48px 타일**) | 위/아래 road-end spawn, 이미지 흙길 중심선에 맞춘 소수점 waypoint 경로, 중앙 성채 입구 `(4,8)` 도달 시 HP 감소. 타워 배치는 6개 고정 네모칸만 허용 |
+| 맵 | 1종 (`main_long`, **9×18 grid, 64px 타일**) | 위/아래 road-end spawn, 이미지 흙길 중심선에 맞춘 소수점 waypoint 경로, 중앙 성채 입구 `(4,8)` 도달 시 HP 감소. 타워 배치는 6개 고정 네모칸만 허용 |
 | 스테이지 | 단일 (선택 UI 없음) | 로비 "전투 시작" 버튼 → 바로 진입 |
 | 웨이브 | 50 endless (보스 10 wave마다) | 30마리/wave, 보스 wave clear 시 로그라이크 3카드 선택 |
 | 적 유형 | 3종 + 보스 (기존 유닛 재사용) | CC 가드레일 반영 (boss ccResistance 0.5~0.7) |
@@ -354,26 +356,26 @@ speed = min(WAVE_SCALING[10].speed + (slot - 10) × 0.03, 2.2)
 
 ## 8. UI / UX (v3)
 
-### 논리 해상도 & 레이아웃 (v3.1 B4 픽스, mobile portrait standard)
+### 논리 해상도 & 레이아웃 (v3.3, mobile portrait standard)
 
-Phaser **캔버스 내부** 해상도는 `Scale.NONE`으로 432×960 고정 — 어떤 기기에서 렌더되든 스프라이트의 상대 크기가 동일하다. 이전 `Scale.FIT` + `h-dvh` 조합은 기기별 부모 CSS 크기에 따라 canvas CSS 크기를 비례 재조정해 시각적 비율이 드리프트했다.
+Phaser **캔버스 내부** 해상도는 `Scale.FIT`으로 576×1152 고정 좌표계를 유지한 채 부모 슬롯에 균일 스케일된다. 내부 좌표계는 9×18×64px이며, 타워·몬스터·타일 비율은 기기별 CSS 크기와 무관하게 보존된다.
 
-**스프라이트 렌더 크기 (setDisplaySize)** — 타일 48×48 기준으로 타워·몬스터가 타일을 과도하게 오버플로우하지 않도록 조정:
+**스프라이트 렌더 크기 (setDisplaySize)** — 타일 64×64 기준으로 타워·몬스터가 배치칸과 조화되도록 조정:
 
 | 종류 | 소스 프레임 | 렌더 크기 | vs 타일 |
 |------|-------------|-----------|---------|
-| 타워 | 64×80 | **48×60** | 1.0W × 1.25H (타일 폭 정확, 머리 peek) |
-| 몬스터 (일반) | 40×48 | **32×40** | 0.67W × 0.83H (타일 안에 수렴) |
-| 몬스터 (보스) | 60×72 | **48×56** | 1.0W × 1.17H (타일 폭 + 존재감) |
+| 타워 | 64×80 runtime / 128×160 source | **64×80** | 1.0W × 1.25H (사전 리샘플된 런타임 텍스처를 1:1 표시) |
+| 몬스터 (일반) | 40×48 | **43×53** | 0.67W × 0.83H (타일 안에 수렴) |
+| 몬스터 (보스) | 60×72 | **64×75** | 1.0W × 1.17H (타일 폭 + 존재감) |
 
-소스 스프라이트시트 프레임은 원본 해상도 유지(에셋 regenerate 불필요); Phaser `setDisplaySize`가 픽셀 보간 없이 정확한 정수 비율로 다운스케일한다.
+타워 static은 `tower-{id}-runtime.png/webp` 64×80 사전 리샘플 텍스처를 사용해 Phaser 내부에서 1:1 표시한다. `-fire` spritesheet도 `getTowerDisplayMetrics(tileSize)`를 공유하므로 `main_long`에서는 `64×80`, y offset `0`으로 배치·이동·공격 앵커가 동일하다. 새 일러스트 맵은 예전 플랫폼 lift를 적용하지 않고, buildable 네모칸의 visual anchor를 배치·공격 range·VFX 원점의 공통 기준으로 사용한다. 현재 visual anchor는 좌측 패드 -10px, 우측 패드 +10px, 하단 패드 -10px y 보정으로 네모칸 안쪽에 맞춘다. 타워 본체에는 상시 idle bob/scale tween을 적용하지 않고, 공격 시에도 풀바디 fire 스프라이트를 재생하지 않으며 projectile/impact VFX만 재생한다.
 
 레이아웃은 **모바일 2D 세로형 표준**을 따른다 — HUD는 자연 DOM 크기 / flex-1 canvas 영역 / 안전영역 패딩. CSS transform 스케일 wrapper는 사용하지 않는다(초기 구현 시 전체 레이아웃을 스케일하는 접근이 Galaxy S25 등 중간 뷰포트에서 헤더 HUD를 상태바와 충돌시켜 폐기).
 
-- **Phaser**: `scale.mode = Phaser.Scale.NONE`, `autoCenter = NO_CENTER` — 내부 bitmap 432×960 고정
-- **React shell (`GamePage`)**: `data-testid="game-portrait-shell"`, `width: 100% max-w-[430px]`, `height: 100dvh`, `flex-col`
+- **Phaser**: `scale.mode = Phaser.Scale.FIT`, `autoCenter = CENTER_BOTH` — 내부 bitmap 576×1152 고정
+- **React shell (`GamePage`)**: `data-testid="game-portrait-shell"`, `width: 100% max-w-[576px]`, `height: 100dvh`, `flex-col`
 - **TopHud**: `shrink-0`, `paddingTop: max(0, env(safe-area-inset-top))` — 펀치홀 / 상태바 회피
-- **게임 영역 (flex-1)**: `#game-container`가 남은 공간을 채우고, 내부 canvas는 `width/height: 100%`로 슬롯에 스트레치. 캔버스 내부는 uniform 스케일(좌표계 보존)
+- **게임 영역 (flex-1)**: `#game-container`가 남은 공간을 채우고, Phaser가 내부 canvas를 uniform 스케일한다.
 - **GameHud**: `shrink-0`, `paddingBottom: max(8px, env(safe-area-inset-bottom))` — 홈 인디케이터 회피
 - **터치 이벤트**: 네이티브 DOM 크기 유지라 별도 보정 불필요
 
@@ -583,3 +585,4 @@ screenShake 동기화:
 | 2026-04-20 | §1, §3, §4, §5, §6, §8, §10 | **v3 정식 모드 승격**. 시나리오(W1~W3) / 덱 / 월드 / 임무 / 업적 완전 제거. Title "Grid Line Defense" 확정. 타워 grade → family+tier (4×4 + 2 hybrid T5 + 1 ultimate T6 = 19종). plasma/dragon_nest purge. 인게임 가챠 (T2/T3/T4). 로그라이크 6 카드 (dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up) 보스 웨이브 트리거. 메타 루프 shell (globalAtkPct + family perks, localStorage). BM 스텁 (MockAdService + 이어서 하기 1회). 9×18×48px 맵 + 5 obstacles + cinematic keyart lobby. HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal). CC 가드레일 (ccResistance 0.5~0.7, MIN_MOVE_SPEED=0.15, 2s stun immunity). 인게임 타워 enhance (GoldSystem + BASE_ENHANCE_COST=50, MAX_LV=10). Save v6→v7→v8 (grade→tier + 시나리오 필드 purge). Plan: `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md`. |
 | 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 CoreOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" prose → "정식 모드" 치환 (이후 v4에서 코드 상수까지 전면 제거). |
 | 2026-04-21 | §1, §3, §4, §8 | **v4 용어 정리 완료**. "Phase A" 프로토타입 트랙명 전면 제거. 코드 식별자 `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid `phase-a-*` → `hud-*`. 에셋 파일 `phase-a-long.json` → `main-long.json` + manifest key `tilemap-phase-a-long` → `tilemap-main-long`. SaveData 스키마 변화 없음 (v8 유지). |
+| 2026-04-30 | §1, §5, §8 | **v3.3 맵/타워 렌더 정렬**. `main_long` 기준을 9×18×64px로 잠그고 내부 bitmap을 576×1152로 확장. 타워 static/fire 렌더 크기를 `getTowerDisplayMetrics`로 통일해 배치·이동·공격 애니메이션 앵커를 동일하게 유지. PR #193 imagegen 타워 에셋 중 Phaser/Web 런타임 산출물과 dedicated hybrid/ultimate 에셋을 반영. |

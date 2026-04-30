@@ -24,6 +24,8 @@ export class GridManager {
 	private grid: Grid;
 	private readonly offsetX: number;
 	private readonly offsetY: number;
+	private readonly illustratedScaleX: number;
+	private readonly illustratedScaleY: number;
 	private readonly buildablePoints: Position[];
 	private readonly buildablePointKeys: Set<string>;
 	private readonly blockedPlacementPointKeys: Set<string>;
@@ -43,11 +45,16 @@ export class GridManager {
 		this.mapId = (config as Partial<MapLayout>).id;
 		this.width = config.width;
 		this.height = config.height;
+		const mapConfig = config as GridConfig & Partial<MapLayout>;
+		const hasPlacementAnchors = (mapConfig.placementAnchors?.length ?? 0) > 0;
 
 		if (options?.canvasWidth && options?.canvasHeight) {
 			const tileByW = Math.floor(options.canvasWidth / this.width);
 			const tileByH = Math.floor(options.canvasHeight / this.height);
-			this.orthoTile = Math.max(1, Math.min(tileByW, tileByH));
+			this.orthoTile = Math.max(
+				1,
+				hasPlacementAnchors ? tileByW : Math.min(tileByW, tileByH),
+			);
 		} else {
 			this.orthoTile = options?.tileSize ?? ORTHO_TILE;
 		}
@@ -55,12 +62,27 @@ export class GridManager {
 
 		this.spawnPoint = config.spawnPoint;
 		this.exitPoint = config.exitPoint;
-		const mapConfig = config as GridConfig & Partial<MapLayout>;
 		this.buildablePoints = [...(mapConfig.buildablePoints ?? [])];
 		this.buildablePointKeys = new Set(
 			this.buildablePoints.map((point) => `${point.x},${point.y}`),
 		);
-		this.placementAnchors = [...(mapConfig.placementAnchors ?? [])];
+		const gridPixelW = this.orthoTile * this.width;
+		const gridPixelH = this.orthoTile * this.height;
+		const cw = options?.canvasWidth ?? gridPixelW;
+		const ch = options?.canvasHeight ?? gridPixelH;
+		this.illustratedScaleX = hasPlacementAnchors
+			? cw / (this.width * ORTHO_TILE)
+			: 1;
+		this.illustratedScaleY = hasPlacementAnchors
+			? ch / (this.height * ORTHO_TILE)
+			: 1;
+		this.placementAnchors = (mapConfig.placementAnchors ?? []).map(
+			(anchor) => ({
+				...anchor,
+				worldX: Math.round(anchor.worldX * this.illustratedScaleX),
+				worldY: Math.round(anchor.worldY * this.illustratedScaleY),
+			}),
+		);
 		this.placementAnchorByKey = new Map(
 			this.placementAnchors.map((anchor) => [
 				`${anchor.x},${anchor.y}`,
@@ -80,10 +102,6 @@ export class GridManager {
 			allPathCells.map((point) => `${point.x},${point.y}`),
 		);
 
-		const gridPixelW = this.orthoTile * this.width;
-		const gridPixelH = this.orthoTile * this.height;
-		const cw = options?.canvasWidth ?? gridPixelW;
-		const ch = options?.canvasHeight ?? gridPixelH;
 		this.offsetX = Math.floor((cw - gridPixelW) / 2);
 		this.offsetY = Math.floor((ch - gridPixelH) / 2);
 
@@ -143,6 +161,10 @@ export class GridManager {
 		return true;
 	}
 
+	hasPlacementAnchors(): boolean {
+		return this.placementAnchors.length > 0;
+	}
+
 	placeTower(x: number, y: number, towerId: string): boolean {
 		if (!this.canPlaceTower(x, y)) return false;
 		const tile = this.getTile(x, y);
@@ -169,6 +191,13 @@ export class GridManager {
 			return { x: anchor.worldX, y: anchor.worldY };
 		}
 
+		if (this.hasPlacementAnchors()) {
+			return {
+				x: (gridX * ORTHO_TILE + ORTHO_TILE / 2) * this.illustratedScaleX,
+				y: (gridY * ORTHO_TILE + ORTHO_TILE / 2) * this.illustratedScaleY,
+			};
+		}
+
 		const t = this.orthoTile;
 		return {
 			x: gridX * t + t / 2 + this.offsetX,
@@ -180,9 +209,25 @@ export class GridManager {
 	snapWorldToBuildable(
 		worldX: number,
 		worldY: number,
-		maxDistancePx = this.orthoTile * 0.85,
+		maxDistancePx = this.placementAnchors.length > 0
+			? this.orthoTile * 1.25
+			: this.orthoTile * 0.85,
 	): Position | null {
 		if (this.buildablePoints.length === 0) return null;
+
+		if (this.placementAnchors.length > 0) {
+			const halfW = this.orthoTile * 1.1;
+			const halfH = this.orthoTile * 1.05;
+			for (const point of this.buildablePoints) {
+				const world = this.gridToWorld(point.x, point.y);
+				if (
+					Math.abs(world.x - worldX) <= halfW &&
+					Math.abs(world.y - worldY) <= halfH
+				) {
+					return { x: point.x, y: point.y };
+				}
+			}
+		}
 
 		let best: { point: Position; distSq: number } | null = null;
 		for (const point of this.buildablePoints) {
@@ -201,6 +246,14 @@ export class GridManager {
 
 	/** Convert orthogonal world pixel coords to grid coords */
 	worldToGrid(worldX: number, worldY: number): Position {
+		if (this.hasPlacementAnchors()) {
+			const point = this.worldToGridFloat(worldX, worldY);
+			return {
+				x: Math.floor(point.x),
+				y: Math.floor(point.y),
+			};
+		}
+
 		const t = this.orthoTile;
 		return {
 			x: Math.floor((worldX - this.offsetX) / t),
@@ -225,6 +278,19 @@ export class GridManager {
 
 	/** Convert world coords to continuous (non-floored) grid coords for distance calculations */
 	worldToGridFloat(worldX: number, worldY: number): { x: number; y: number } {
+		if (this.hasPlacementAnchors()) {
+			return {
+				x:
+					worldX /
+					Math.max(this.illustratedScaleX, Number.EPSILON) /
+					ORTHO_TILE,
+				y:
+					worldY /
+					Math.max(this.illustratedScaleY, Number.EPSILON) /
+					ORTHO_TILE,
+			};
+		}
+
 		const t = this.orthoTile;
 		return {
 			x: (worldX - this.offsetX) / t,

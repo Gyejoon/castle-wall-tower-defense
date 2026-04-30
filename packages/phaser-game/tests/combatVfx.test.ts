@@ -2,10 +2,26 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('phaser', () => ({
+	Events: {
+		EventEmitter: class {
+			emit = vi.fn();
+			on = vi.fn();
+			off = vi.fn();
+			removeAllListeners = vi.fn();
+		},
+	},
 	default: {
 		Animations: {
 			Events: {
 				ANIMATION_COMPLETE: 'animationcomplete',
+			},
+		},
+		Events: {
+			EventEmitter: class {
+				emit = vi.fn();
+				on = vi.fn();
+				off = vi.fn();
+				removeAllListeners = vi.fn();
 			},
 		},
 		GameObjects: {
@@ -35,6 +51,75 @@ import {
 } from '../src/assets/assetManifest';
 import { TowerSystem } from '../src/systems/TowerSystem';
 import { UnitSystem } from '../src/systems/UnitSystem';
+
+class MockAudioContext {
+	state = 'running';
+	currentTime = 0;
+	sampleRate = 44100;
+	destination = {};
+	createBuffer(_channels: number, length: number) {
+		return {
+			getChannelData: vi.fn(() => new Float32Array(length)),
+		};
+	}
+	createBufferSource() {
+		return {
+			buffer: null,
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+			start: vi.fn(),
+			stop: vi.fn(),
+			onended: null,
+		};
+	}
+	createBiquadFilter() {
+		return {
+			type: 'lowpass',
+			frequency: {
+				setValueAtTime: vi.fn(),
+			},
+			Q: {
+				setValueAtTime: vi.fn(),
+			},
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+		};
+	}
+	createGain() {
+		return {
+			gain: {
+				setValueAtTime: vi.fn(),
+				linearRampToValueAtTime: vi.fn(),
+			},
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+		};
+	}
+	createDynamicsCompressor() {
+		return {
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+		};
+	}
+	createOscillator() {
+		return {
+			type: 'sine',
+			frequency: {
+				setValueAtTime: vi.fn(),
+				linearRampToValueAtTime: vi.fn(),
+			},
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+			start: vi.fn(),
+			stop: vi.fn(),
+			onended: null,
+		};
+	}
+	resume = vi.fn();
+	close = vi.fn();
+}
+
+vi.stubGlobal('AudioContext', MockAudioContext);
 
 const manifest = JSON.parse(
 	readFileSync(
@@ -154,7 +239,7 @@ describe('optional combat vfx', () => {
 		);
 	});
 
-	it('spawns optional muzzle and impact vfx when matching animations are available', () => {
+	it('keeps tower fixed during attack and spawns impact vfx on hit', () => {
 		const addGraphics = vi.fn(() => createGraphics());
 		const addImage = vi.fn(() => createImage());
 		const addSprite = vi.fn(() => createSprite());
@@ -196,6 +281,7 @@ describe('optional combat vfx', () => {
 			gridToWorld: vi.fn(() => ({ x: 100, y: 120 })),
 			getDepth: vi.fn(() => 10),
 			worldToGridFloat: vi.fn(() => ({ x: 1, y: 0 })),
+			hasPlacementAnchors: vi.fn(() => false),
 		};
 
 		const pathfinding = {
@@ -213,23 +299,19 @@ describe('optional combat vfx', () => {
 		);
 		const result = towerSystem.placeTower(0, 0, 'archer');
 		expect(result.success).toBe(true);
+		const towerSprite = scene.add.image.mock.results[0]?.value;
 
-		// First update: fires the attack, spawns muzzle VFX, queues arrow in flight
+		// First update: fires the attack and queues arrow in flight. The tower
+		// itself stays visible and no full-body fire spritesheet is overlaid.
 		towerSystem.update(1000, 16, [
 			{ instanceId: 'unit_1', x: 132, y: 120, hp: 10 },
 		]);
-
-		// y = towerWorld.y(120) - lift(64*0.4=25.6) - TILE_SIZE*5/12(26.67) ≈ 67.73
-		expect(addSprite).toHaveBeenCalledWith(
-			100,
-			expect.closeTo(67.73, 1),
+		expect(towerSprite.setVisible).not.toHaveBeenCalled();
+		expect(addSprite).not.toHaveBeenCalledWith(
+			expect.any(Number),
+			expect.any(Number),
 			'tower-archer-fire',
 		);
-		const fireSprite = addSprite.mock.results[0]?.value;
-		// Fire spritesheet source frames render at the current tower size
-		// (TILE_SIZE × TILE_SIZE*5/4 = 64×80) so the animation lines up
-		// with the base tower sprite.
-		expect(fireSprite.setDisplaySize).toHaveBeenCalledWith(64, 80);
 
 		// Arrow-style impact VFX is deferred until the arrow TTL expires (maxTtl=120).
 		// Drive the TTL to zero with a second update.

@@ -1,7 +1,7 @@
 {
   "buildCommand": "cd ../.. && cd packages/web-shell && bun --bun vite build && cd ../.. && bun run merge-build",
   "outputDirectory": "dist",
-  "installCommand": "cd ../.. && bun install",
+  "installCommand": "cd ../.. && bun run scripts/vercel-install.ts",
   "framework": null,
   "rewrites": [
     { "source": "/unity", "destination": "/unity/index.html" },

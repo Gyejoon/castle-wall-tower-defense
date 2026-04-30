@@ -14,7 +14,7 @@
 
 **현재 위치: 정식 모드 안정화(v3.1) ✅ — 5분 플레이 Go/No-Go 검증 대기**
 
-2026-04-17부터 이전 프로토타입 트랙을 **게임의 유일한 정식 모드**로 승격. 시나리오 모드(W1~W3), 덱 편성, 월드맵, 임무/업적을 완전 제거하고 타워를 grade → family+tier 모델로 재설계. 인게임 가챠, 로그라이크 6 카드, 메타 루프 shell, BM 스텁(AdService + 이어서 하기), 9×18×48px 맵, HUD 전면 재설계, CC 가드레일까지 R1으로 포함. 2026-04-20 PR #175에서 4종 안정화 픽스 반영 (B1 리롤 차단 / B2 HP 정수 / B3 선형 스케일 / B4 고정 해상도). 2026-04-21 v4에서 코드 전반의 "Phase A" 식별자를 Core/Main/Game 네이밍으로 전면 치환.
+2026-04-17부터 이전 프로토타입 트랙을 **게임의 유일한 정식 모드**로 승격. 시나리오 모드(W1~W3), 덱 편성, 월드맵, 임무/업적을 완전 제거하고 타워를 grade → family+tier 모델로 재설계. 인게임 가챠, 로그라이크 6 카드, 메타 루프 shell, BM 스텁(AdService + 이어서 하기), 9×18×64px 맵, HUD 전면 재설계, CC 가드레일까지 R1으로 포함. 2026-04-20 PR #175에서 4종 안정화 픽스 반영 (B1 리롤 차단 / B2 HP 정수 / B3 선형 스케일 / B4 고정 해상도). 2026-04-21 v4에서 코드 전반의 "Phase A" 식별자를 Core/Main/Game 네이밍으로 전면 치환.
 
 #### 정식 모드 R1 트랙 (2026-04-17~)
 
@@ -29,7 +29,7 @@
 | R1 | 에너지 v3 (kill/boss/fast-clear, ENERGY_MAX=200) + GameEventMap 확장 | ✅ | 계획 Phase 3 + 4.0 |
 | R1 | 로그라이크 6 카드 + 보스 웨이브 트리거 + 광고 리롤 | ✅ | 계획 Phase 4 — dmg_up/crit_dmg/energy_harvest/energy_regen/effect_amp/tier_odds_up |
 | R1 | 인게임 가챠 (T2/T3/T4) + 소환 큐 + cancel-no-reroll | ✅ | 계획 Phase 5 |
-| R1 | 9×18×48px 맵 + 5 obstacles + dirt/grass platform 렌더링 + 톤다운 | ✅ | 계획 Phase 7 + PR #173 포팅 (Save v7→v8) |
+| R1 | 9×18×64px 맵 + 5 obstacles + dirt/grass platform 렌더링 + 톤다운 | ✅ | 계획 Phase 7 + PR #173 포팅 (Save v7→v8), v3.3에서 576×1152 정렬 |
 | R1 | HUD 재설계 (하단 액션바 + TowerActionSheet + SummonRevealOverlay 코너 토스트 + PauseModal + @theme 토큰) | ✅ | 계획 Phase 8 + UX 개선 |
 | R1 | **메타 루프 shell** — metaProgressStore (Zustand persist), TowerSystem.setGlobalModifiers, MetaForgePage | ✅ | 계획 Phase 9 — 사용자 결정으로 R1 포함 |
 | R1 | **BM 스텁** — AdService interface + MockAdService + "이어서 하기" 1회 한정 + continue-run 파이프라인 | ✅ | 계획 Phase 10 — 사용자 결정으로 R1 포함 |

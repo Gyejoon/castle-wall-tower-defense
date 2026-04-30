@@ -1,4 +1,5 @@
 import type { OwnedTower, TowerDef } from '@gld/shared';
+import { towerAssetSrc } from '../../../common/TowerIcon';
 import { cn } from '../../../../utils/cn';
 
 /**
@@ -34,7 +35,7 @@ export function TowerGridCard({
 				</span>
 			</div>
 			<img
-				src={`assets/towers/${def.id}.webp`}
+				src={towerAssetSrc(def.id)}
 				alt={def.name}
 				width={40}
 				height={40}

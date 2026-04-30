@@ -26,7 +26,13 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 			data.position.x,
 			data.position.y,
 		);
-		const fireLift = ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const towerGrid = ctx.gridManager.worldToGridFloat(
+			towerWorld.x,
+			towerWorld.y,
+		);
+		const fireLift = ctx.gridManager.hasPlacementAnchors()
+			? 0
+			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 
 		// TTL은 그리드 셀 거리 기준.
@@ -34,8 +40,8 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 		let baseMaxTtl: number;
 		if (projSpeed && projSpeed > 0) {
 			const targetGrid = ctx.gridManager.worldToGridFloat(target.x, target.y);
-			const gdx = data.position.x - targetGrid.x;
-			const gdy = data.position.y - targetGrid.y;
+			const gdx = towerGrid.x - targetGrid.x;
+			const gdy = towerGrid.y - targetGrid.y;
 			const dist = Math.sqrt(gdx * gdx + gdy * gdy);
 			baseMaxTtl = Math.round((dist / projSpeed) * 1000);
 			baseMaxTtl = Math.max(40, Math.min(baseMaxTtl, 500));

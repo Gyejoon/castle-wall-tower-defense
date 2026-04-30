@@ -49,30 +49,9 @@ const BOSS_SLOTS: Record<number, BossSlot> = {
 	},
 };
 
-const WAVE_1_SHOWCASE_GROUPS: WaveGroup[] = [
-	{ unitId: 'scout_drone', count: 1 },
-	{ unitId: 'battle_robot', count: 1 },
-	{ unitId: 'heavy_walker', count: 1 },
-	{ unitId: 'stealth_drone', count: 1 },
-	{ unitId: 'flame_imp', count: 1 },
-	{ unitId: 'lava_golem', count: 1, hpMultiplier: 0.2 },
-	{ unitId: 'arcane_mage', count: 1 },
-	{ unitId: 'mana_shield', count: 1, hpMultiplier: 0.5 },
-	{ unitId: 'orc_warlord', count: 1, hpMultiplier: 0.02, asBoss: false },
-	{ unitId: 'forge_master', count: 1, hpMultiplier: 0.02, asBoss: false },
-	{
-		unitId: 'corrupted_archmage',
-		count: 1,
-		hpMultiplier: 0.01,
-		asBoss: false,
-	},
-	{ unitId: 'dragon', count: 1, hpMultiplier: 0.01, asBoss: false },
-];
-
 /**
  * 정식 모드 무한 Wave 생성기. 10 wave마다 보스(고유 5종; `BOSS_SLOTS` 참조).
- * Wave 1은 에셋/모션 QA를 위해 전체 몬스터 실루엣을 한 번에 보여준다.
- * 이후 일반 wave는 슬롯 인덱스에 따라 구성이 다양해진다: scout_drone은 슬롯 4까지,
+ * 일반 wave는 슬롯 인덱스에 따라 구성이 다양해진다: scout_drone은 슬롯 4까지,
  * battle_robot은 슬롯 5부터, heavy_walker는 슬롯 10부터, stealth_drone은
  * 슬롯 20부터 등장.
  *
@@ -109,15 +88,6 @@ export function generateWaves(count: number): WaveDef[] {
 				kind: 'boss',
 				delayAfterClearSec: 5,
 				groups,
-			});
-			continue;
-		}
-		if (i === 1) {
-			waves.push({
-				slotIndex: i,
-				kind: 'normal',
-				delayAfterClearSec: 3,
-				groups: WAVE_1_SHOWCASE_GROUPS,
 			});
 			continue;
 		}

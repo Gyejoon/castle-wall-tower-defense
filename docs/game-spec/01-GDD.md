@@ -277,7 +277,7 @@ TowerActionSheet에서 "강화" 버튼 → request-enhance-tower → CoreOrchest
 
 | wave | kind | 역할 |
 |------|------|------|
-| 1 | normal | 전체 몬스터 실루엣/모션 확인용 showcase wave (12마리, 12종 1마리씩) |
+| 1 | normal | 기본 scout_drone 입문 wave (30마리) |
 | 2~9 | normal | 일반 적 조합, 난이도 점진 상승 |
 | **10** | **boss** | 최종 보스 (boss-warning 이벤트 emit 후 스폰) |
 
@@ -589,3 +589,4 @@ screenShake 동기화:
 | 2026-04-20 | §1 헤더, §4, §6, §8, §10 | **v3.1 정식 모드 안정화 4 버그 픽스** (PR #175). (B1) 풀·가챠 양쪽 재소환 리롤 차단 — `cancelledGachaDraw` 캐시 추가, 배치 실패도 동일 캐시 경로 보존, 다른 tier 가챠는 캐시 폐기 + 새 roll. §4 CoreOrchestrator 행 + §4 "메커니즘 주요 변경" 2 항목 업데이트. (B2) 보스 HP HUD 소수점 제거 — UnitSystem `Math.floor` + BossHpBar `Math.floor` 이중 가드. 생존 보스는 `Math.max(1, floor(hp))`로 최소 1 clamp (cubic 리뷰 P2). §8 "보스 HP HUD" 소섹션 신설. (B3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(HP_SLOPE=0.55)으로 전환 — W10→W50 배율 354× → 6.8×, 계단식 보스 HP 점프 제거. §6 WAVE_SCALING에 slots 11+ 선형 공식 블록 추가. (B4) Phaser `Scale.NONE` + 내부 해상도 432×960 고정. **레이아웃은 모바일 세로형 표준**: React shell `100dvh + max-w-[430px] + flex-col`, HUD는 네이티브 DOM 크기 + safe-area-inset-top, 캔버스가 flex-1 슬롯을 채움. CSS transform scale wrapper + `useViewportScale` 훅 접근은 초기 시도 후 Galaxy S25 등 중간 뷰포트에서 헤더 HUD가 상태바와 충돌해 폐기. §8 "논리 해상도 & 레이아웃" 소섹션 신설. 용어 정리: "Phase A" prose → "정식 모드" 치환 (이후 v4에서 코드 상수까지 전면 제거). |
 | 2026-04-21 | §1, §3, §4, §8 | **v4 용어 정리 완료**. "Phase A" 프로토타입 트랙명 전면 제거. 코드 식별자 `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid `phase-a-*` → `hud-*`. 에셋 파일 `phase-a-long.json` → `main-long.json` + manifest key `tilemap-phase-a-long` → `tilemap-main-long`. SaveData 스키마 변화 없음 (v8 유지). |
 | 2026-04-30 | §1, §5, §8 | **v3.3 맵/타워 렌더 정렬**. `main_long` 기준을 9×18×64px로 잠그고 내부 bitmap을 576×1152로 확장. 타워 static/fire 렌더 크기를 `getTowerDisplayMetrics`로 통일해 배치·이동·공격 애니메이션 앵커를 동일하게 유지. PR #193 imagegen 타워 에셋 중 Phaser/Web 런타임 산출물과 dedicated hybrid/ultimate 에셋을 반영. |
+| 2026-05-01 | §6 | QA용 showcase wave를 제거하고 1웨이브를 scout_drone 30마리 입문 wave로 복구한다. 보스/후반 몬스터는 각 진행 구간에서만 노출한다. |

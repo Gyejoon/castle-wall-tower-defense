@@ -1,7 +1,5 @@
-import { TILE_SIZE } from '@gld/shared';
 import Phaser from 'phaser';
 import { getOptionalAnimationKey } from '../../assets/assetManifest';
-import { PLATFORM_LIFT } from '../../fieldAssets';
 import type { GridManager } from '../../systems/GridManager';
 
 export interface AttackLineEntry {
@@ -52,40 +50,13 @@ export class TowerVfxController {
 	}
 
 	spawnMuzzleVfx(
-		towerDefId: string,
-		towerWorld: { x: number; y: number },
-		gridPos: { x: number; y: number },
-		towerSprite: Phaser.GameObjects.Image,
+		_towerDefId: string,
+		_towerWorld: { x: number; y: number },
+		_gridPos: { x: number; y: number },
+		_towerSprite: Phaser.GameObjects.Image,
 	): void {
-		const textureKey = `tower-${towerDefId}-fire`;
-		const animationKey = getOptionalAnimationKey(textureKey);
-		if (
-			!this.deps.scene.textures.exists(textureKey) ||
-			!this.deps.scene.anims.exists(animationKey)
-		) {
-			return;
-		}
-
-		towerSprite.setVisible(false);
-
-		const lift = this.deps.gridManager.orthoTile * PLATFORM_LIFT;
-		const effect = this.deps.scene.add.sprite(
-			towerWorld.x,
-			towerWorld.y - lift - (TILE_SIZE * 5) / 12,
-			textureKey,
-		);
-		effect.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
-		effect.setDepth(this.deps.gridManager.getDepth(gridPos.x, gridPos.y) + 5);
-		effect.play(animationKey);
-
-		const restoreVisibility = () => {
-			if (towerSprite.active) towerSprite.setVisible(true);
-		};
-		effect.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-			effect.destroy();
-			restoreVisibility();
-		});
-		effect.once(Phaser.GameObjects.Events.DESTROY, restoreVisibility);
+		// Full-body `tower-*-fire` sheets move vertically between frames.
+		// Keep the base tower fixed and let projectile / impact VFX carry the attack.
 	}
 
 	spawnImpactVfx(textureKey: string, x: number, y: number): void {

@@ -21,10 +21,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
 	},
 	scale: {
 		// v3.1: Scale.FIT keeps the internal logical resolution fixed at
-		// 432×960 (so tower/monster/tile ratios never drift) while uniformly
+		// 576×1152 (so tower/monster/tile ratios never drift) while uniformly
 		// scaling the canvas CSS size to fit `#game-container`. Letterbox
 		// bars appear only when the slot aspect ratio doesn't match the
-		// game's 9:20 portrait — we size the shell max-width close to the
+		// game's 1:2 portrait — we size the shell max-width close to the
 		// canvas aspect to keep those bars minimal on typical phones.
 		//
 		// Earlier we tried Scale.NONE + `width/height: 100% !important` on

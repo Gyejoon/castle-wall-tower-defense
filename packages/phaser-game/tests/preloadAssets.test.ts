@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	prefetchAssetSections,
 	preloadAssetSection,
+	TOWER_ASSET_VERSION,
 	unloadAssetSections,
 } from '../src/assets/assetManifest';
 import { PRELOAD_TOWER_IDS } from '../src/constants/preloadAssets';
@@ -140,7 +141,7 @@ describe('field asset preload alignment', () => {
 
 		expect(json).toHaveBeenCalledWith(
 			'asset-manifest',
-			'assets/asset-manifest.json',
+			`assets/asset-manifest.json?v=${TOWER_ASSET_VERSION}`,
 		);
 	});
 
@@ -190,7 +191,7 @@ describe('field asset preload alignment', () => {
 		);
 		expect(image).toHaveBeenCalledWith(
 			'tower-archer',
-			manifestByKey.get('tower-archer')?.path,
+			`${manifestByKey.get('tower-archer')?.path}?v=${TOWER_ASSET_VERSION}`,
 		);
 		expect(spritesheet).toHaveBeenCalledWith(
 			'unit-scout_drone',

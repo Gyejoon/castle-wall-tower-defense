@@ -12,6 +12,7 @@ import {
 } from '@gld/shared';
 import { useGameStore } from '../../../../stores/gameStore';
 import { useMetaStore } from '../../../../stores/metaStore';
+import { towerAssetSrc } from '../../../common/TowerIcon';
 import { Button, Sheet } from '../../../ds';
 import { ELEMENT_COLORS, ELEMENT_NAMES, translateSpecial } from './constants';
 import { StatDisplay } from './StatDisplay';
@@ -74,7 +75,7 @@ export function TowerBottomSheet({
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<img
-						src={`assets/towers/${def.id}.webp`}
+						src={towerAssetSrc(def.id)}
 						alt={def.name}
 						width={32}
 						height={32}

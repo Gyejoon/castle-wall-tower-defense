@@ -1,5 +1,11 @@
 import { useState } from 'react';
 
+const TOWER_ASSET_VERSION = 'pr193-towers-runtime-v2';
+
+export function towerAssetSrc(towerId: string): string {
+	return `assets/towers/${towerId}-runtime.webp?v=${TOWER_ASSET_VERSION}`;
+}
+
 interface TowerIconProps {
 	towerId: string;
 	size?: number;
@@ -7,7 +13,7 @@ interface TowerIconProps {
 }
 
 /**
- * Minimal tower sprite resolver — looks up `assets/towers/{towerId}.webp`.
+ * Minimal tower sprite resolver — looks up runtime-sized tower WebP assets.
  * Phase 11 will redesign placeholder sprites; for now we fall back to a
  * subtle empty box if the asset is missing so consumers don't render
  * broken image icons.
@@ -31,7 +37,7 @@ export function TowerIcon({ towerId, size = 40, className }: TowerIconProps) {
 
 	return (
 		<img
-			src={`assets/towers/${towerId}.webp`}
+			src={towerAssetSrc(towerId)}
 			alt=""
 			width={size}
 			height={size}

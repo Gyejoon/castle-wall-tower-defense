@@ -3,6 +3,10 @@ import type Phaser from 'phaser';
 import { PLATFORM_LIFT } from '../../fieldAssets';
 import type { GridManager } from '../../systems/GridManager';
 
+function getPlacementVisualLift(grid: GridManager): number {
+	return grid.hasPlacementAnchors() ? 0 : grid.orthoTile * PLATFORM_LIFT;
+}
+
 export class RangeOverlayController {
 	private hoverGraphics: Phaser.GameObjects.Graphics;
 	private selectionGraphics: Phaser.GameObjects.Graphics;
@@ -82,7 +86,7 @@ export class RangeOverlayController {
 		if (!selectedTowerId) return;
 
 		const tile = this.grid.orthoTile;
-		const lift = tile * PLATFORM_LIFT;
+		const lift = getPlacementVisualLift(this.grid);
 		for (const point of this.map.buildablePoints) {
 			if (!this.grid.canPlaceTower(point.x, point.y)) continue;
 			const world = this.grid.gridToWorld(point.x, point.y);

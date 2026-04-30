@@ -178,7 +178,7 @@
     {
       "key": "tower-archer",
       "type": "image",
-      "path": "assets/towers/archer.png",
+      "path": "assets/towers/archer-runtime.png",
       "section": "preload"
     },
     {
@@ -298,7 +298,7 @@
     {
       "key": "tower-emp",
       "type": "image",
-      "path": "assets/towers/emp.png",
+      "path": "assets/towers/emp-runtime.png",
       "section": "preload"
     },
     {
@@ -358,7 +358,7 @@
     {
       "key": "tower-shield",
       "type": "image",
-      "path": "assets/towers/shield.png",
+      "path": "assets/towers/shield-runtime.png",
       "section": "preload"
     },
     {
@@ -418,7 +418,7 @@
     {
       "key": "tower-twin_archer",
       "type": "image",
-      "path": "assets/towers/twin_archer.png",
+      "path": "assets/towers/twin_archer-runtime.png",
       "section": "preload"
     },
     {
@@ -478,7 +478,7 @@
     {
       "key": "tower-disruptor",
       "type": "image",
-      "path": "assets/towers/disruptor.png",
+      "path": "assets/towers/disruptor-runtime.png",
       "section": "preload"
     },
     {
@@ -538,7 +538,7 @@
     {
       "key": "tower-nova_cannon",
       "type": "image",
-      "path": "assets/towers/nova_cannon.png",
+      "path": "assets/towers/nova_cannon-runtime.png",
       "section": "preload"
     },
     {
@@ -604,7 +604,7 @@
     {
       "key": "tower-fortress",
       "type": "image",
-      "path": "assets/towers/fortress.png",
+      "path": "assets/towers/fortress-runtime.png",
       "section": "preload"
     },
     {
@@ -664,7 +664,7 @@
     {
       "key": "tower-stasis_field",
       "type": "image",
-      "path": "assets/towers/stasis_field.png",
+      "path": "assets/towers/stasis_field-runtime.png",
       "section": "preload"
     },
     {
@@ -724,7 +724,7 @@
     {
       "key": "tower-flame_tower",
       "type": "image",
-      "path": "assets/towers/flame_tower.png",
+      "path": "assets/towers/flame_tower-runtime.png",
       "section": "preload"
     },
     {
@@ -784,7 +784,7 @@
     {
       "key": "tower-wind_spire",
       "type": "image",
-      "path": "assets/towers/wind_spire.png",
+      "path": "assets/towers/wind_spire-runtime.png",
       "section": "preload"
     },
     {
@@ -844,7 +844,7 @@
     {
       "key": "tower-earth_golem",
       "type": "image",
-      "path": "assets/towers/earth_golem.png",
+      "path": "assets/towers/earth_golem-runtime.png",
       "section": "preload"
     },
     {
@@ -904,7 +904,7 @@
     {
       "key": "tower-holy_shrine",
       "type": "image",
-      "path": "assets/towers/holy_shrine.png",
+      "path": "assets/towers/holy_shrine-runtime.png",
       "section": "preload"
     },
     {
@@ -1024,7 +1024,7 @@
     {
       "key": "tower-arcane_spire",
       "type": "image",
-      "path": "assets/towers/arcane_spire.png",
+      "path": "assets/towers/arcane_spire-runtime.png",
       "section": "preload"
     },
     {
@@ -1084,7 +1084,7 @@
     {
       "key": "tower-world_tree",
       "type": "image",
-      "path": "assets/towers/world_tree.png",
+      "path": "assets/towers/world_tree-runtime.png",
       "section": "preload"
     },
     {
@@ -1144,7 +1144,7 @@
     {
       "key": "tower-celestial",
       "type": "image",
-      "path": "assets/towers/celestial.png",
+      "path": "assets/towers/celestial-runtime.png",
       "section": "preload"
     },
     {
@@ -1204,7 +1204,7 @@
     {
       "key": "tower-divine_throne",
       "type": "image",
-      "path": "assets/towers/divine_throne.png",
+      "path": "assets/towers/divine_throne-runtime.png",
       "section": "preload"
     },
     {
@@ -1264,20 +1264,47 @@
     {
       "key": "tower-hybrid_ab",
       "type": "image",
-      "path": "assets/towers/arcane_spire.png",
+      "path": "assets/towers/hybrid_ab-runtime.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_ab-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_ab-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "tower-hybrid_cd",
       "type": "image",
-      "path": "assets/towers/world_tree.png",
+      "path": "assets/towers/hybrid_cd-runtime.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-hybrid_cd-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/hybrid_cd-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "tower-ultimate",
       "type": "image",
-      "path": "assets/towers/divine_throne.png",
+      "path": "assets/towers/ultimate-runtime.png",
       "section": "preload"
+    },
+    {
+      "key": "tower-ultimate-fire",
+      "type": "spritesheet",
+      "path": "assets/towers/ultimate-fire.png",
+      "frameWidth": 64,
+      "frameHeight": 80,
+      "frameCount": 8,
+      "section": "vfx"
     },
     {
       "key": "unit-scout_drone",

@@ -116,14 +116,17 @@ function createTowerSystem(textureExists?: (key: string) => boolean) {
 	return { scene, gridManager, towerSystem, pathfinding };
 }
 
-describe('Phase 11 — hybrid/ultimate placeholder assets', () => {
-	it('manifest registers placeholder entries for hybrid_ab, hybrid_cd, ultimate', () => {
+describe('hybrid/ultimate dedicated assets', () => {
+	it('manifest registers dedicated entries for hybrid_ab, hybrid_cd, ultimate', () => {
 		expect(manifestByKey.has('tower-hybrid_ab')).toBe(true);
 		expect(manifestByKey.has('tower-hybrid_cd')).toBe(true);
 		expect(manifestByKey.has('tower-ultimate')).toBe(true);
+		expect(manifestByKey.has('tower-hybrid_ab-fire')).toBe(true);
+		expect(manifestByKey.has('tower-hybrid_cd-fire')).toBe(true);
+		expect(manifestByKey.has('tower-ultimate-fire')).toBe(true);
 	});
 
-	it('placeholder paths point to existing T4 sprite files', () => {
+	it('dedicated paths point to existing sprite files', () => {
 		const repoPublic = new URL('../../web-shell/public/', import.meta.url);
 		const checkExists = (relPath: string) =>
 			existsSync(new URL(relPath, repoPublic));
@@ -132,9 +135,9 @@ describe('Phase 11 — hybrid/ultimate placeholder assets', () => {
 		const hybridCd = manifestByKey.get('tower-hybrid_cd');
 		const ultimate = manifestByKey.get('tower-ultimate');
 
-		expect(hybridAb?.path).toBe('assets/towers/arcane_spire.png');
-		expect(hybridCd?.path).toBe('assets/towers/world_tree.png');
-		expect(ultimate?.path).toBe('assets/towers/divine_throne.png');
+		expect(hybridAb?.path).toBe('assets/towers/hybrid_ab-runtime.png');
+		expect(hybridCd?.path).toBe('assets/towers/hybrid_cd-runtime.png');
+		expect(ultimate?.path).toBe('assets/towers/ultimate-runtime.png');
 
 		expect(hybridAb && checkExists(hybridAb.path)).toBe(true);
 		expect(hybridCd && checkExists(hybridCd.path)).toBe(true);
@@ -156,9 +159,9 @@ describe('Phase 11 — placement tolerates hybrid/ultimate towers without crashi
 		});
 	}
 
-	it('falls back to placeholder texture when primary key is missing', () => {
+	it('falls back to ancestor texture when primary key is missing', () => {
 		// Pretend the manifest never produced a `tower-hybrid_ab` texture but
-		// the placeholder ancestor `tower-arcane_spire` is present.
+		// the older ancestor `tower-arcane_spire` is present.
 		const exists = vi.fn((key: string) => key === 'tower-arcane_spire');
 		const { towerSystem, scene } = createTowerSystem(exists);
 		const buildable = MAIN_LONG_MAP.buildablePoints[1];

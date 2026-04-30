@@ -38,7 +38,13 @@ export class ArcEmitter implements ProjectileEmitter {
 			data.position.x,
 			data.position.y,
 		);
-		const fireLift = ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const towerGrid = ctx.gridManager.worldToGridFloat(
+			towerWorld.x,
+			towerWorld.y,
+		);
+		const fireLift = ctx.gridManager.hasPlacementAnchors()
+			? 0
+			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOrigin = this.opts.fireOrigin
 			? this.opts.fireOrigin(tower, ctx)
 			: { x: towerWorld.x, y: towerWorld.y - fireLift };
@@ -71,8 +77,8 @@ export class ArcEmitter implements ProjectileEmitter {
 		const projSpeed = tower.def.stats.projectileSpeed;
 		let maxTtl: number;
 		if (projSpeed && projSpeed > 0) {
-			const gdx = data.position.x - targetGrid.x;
-			const gdy = data.position.y - targetGrid.y;
+			const gdx = towerGrid.x - targetGrid.x;
+			const gdy = towerGrid.y - targetGrid.y;
 			const dist = Math.sqrt(gdx * gdx + gdy * gdy);
 			maxTtl = Math.round((dist / projSpeed) * 1000);
 			maxTtl = Math.max(40, Math.min(maxTtl, 500));

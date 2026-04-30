@@ -16,14 +16,15 @@ export class BeamEmitter implements ProjectileEmitter {
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
 	): void {
-		// sprite.x/y에는 lift 오프셋이 있어 그리드 좌표 기준으로 재계산한다.
 		const towerWorld = ctx.gridManager.gridToWorld(
 			tower.data.position.x,
 			tower.data.position.y,
 		);
 
 		const color = parseHexColor(tower.def.color);
-		const fireLift = ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift = ctx.gridManager.hasPlacementAnchors()
+			? 0
+			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 		const maxTtl = 80;
 

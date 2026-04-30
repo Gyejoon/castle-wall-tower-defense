@@ -1,5 +1,11 @@
 import type { GridConfig } from '@gld/shared';
-import { BOARD_TOP_PADDING, MAIN_LONG_MAP, ORTHO_TILE } from '@gld/shared';
+import {
+	BOARD_TOP_PADDING,
+	GAME_CANVAS_H,
+	MAIN_LONG_MAP,
+	ORTHO_CANVAS_W,
+	ORTHO_TILE,
+} from '@gld/shared';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // Mock Phaser entirely — GridManager only uses Phaser.Geom.Point and Phaser.GameObjects.Graphics
@@ -131,6 +137,51 @@ describe('GridManager', () => {
 			(anchor?.worldY ?? 0) - 8,
 		);
 		expect(snapped).toEqual({ x: anchor?.x, y: anchor?.y });
+	});
+
+	it('MAIN_LONG_MAP 이미지 배치 앵커는 모바일 스케일 오차에도 스냅되어야 한다', () => {
+		const gm = new GridManager(MAIN_LONG_MAP);
+		const anchor = MAIN_LONG_MAP.placementAnchors?.[2];
+		expect(anchor).toBeDefined();
+
+		const snapped = gm.snapWorldToBuildable(
+			anchor?.worldX ?? 0,
+			(anchor?.worldY ?? 0) + gm.orthoTile,
+		);
+		expect(snapped).toEqual({ x: anchor?.x, y: anchor?.y });
+	});
+
+	it('MAIN_LONG_MAP 이미지 앵커는 실제 캔버스 크기에 맞게 스케일되어야 한다', () => {
+		const gm = new GridManager(MAIN_LONG_MAP, {
+			canvasWidth: 432,
+			canvasHeight: 600,
+		});
+		const anchor = MAIN_LONG_MAP.placementAnchors?.[4];
+		expect(anchor).toBeDefined();
+
+		const world = gm.gridToWorld(anchor?.x ?? 0, anchor?.y ?? 0);
+		expect(world).toEqual({
+			x: Math.round((anchor?.worldX ?? 0) * (432 / 576)),
+			y: Math.round((anchor?.worldY ?? 0) * (600 / 1152)),
+		});
+		expect(gm.snapWorldToBuildable(world.x, world.y)).toEqual({
+			x: anchor?.x,
+			y: anchor?.y,
+		});
+	});
+
+	it('MAIN_LONG_MAP uses 64px tiles in the 9×18 logical canvas', () => {
+		const gm = new GridManager(MAIN_LONG_MAP, {
+			canvasWidth: ORTHO_CANVAS_W,
+			canvasHeight: GAME_CANVAS_H,
+		});
+
+		expect(MAIN_LONG_MAP.width).toBe(9);
+		expect(MAIN_LONG_MAP.height).toBe(18);
+		expect(MAIN_LONG_MAP.tileSize).toBe(64);
+		expect(ORTHO_CANVAS_W).toBe(576);
+		expect(GAME_CANVAS_H).toBe(1152);
+		expect(gm.orthoTile).toBe(64);
 	});
 
 	it('removeTower가 타워를 제거하고 true를 반환해야 한다', () => {

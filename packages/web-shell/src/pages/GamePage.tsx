@@ -280,14 +280,13 @@ export function GamePage() {
 		<div className="flex h-full w-full justify-center bg-bg">
 			<div
 				data-testid="game-portrait-shell"
-				className="relative flex w-full max-w-[540px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+				className="relative flex w-full max-w-[576px] flex-col overflow-hidden bg-bg shadow-[0_0_40px_rgba(0,0,0,0.5)]"
 				style={{
 					// Dynamic viewport: 100dvh on modern mobile browsers shrinks
 					// when URL bar shows. Fallback to 100% for legacy. Both HUDs
 					// size naturally; the canvas absorbs the remaining height
-					// via the flex-1 game area below. max-w bumped to 540 to
-					// match the 512-wide internal canvas at 64px tiles with
-					// minimal horizontal letterbox on large phones.
+					// via the flex-1 game area below. max-w matches the
+					// 576-wide internal canvas at 9×64px tiles.
 					height: '100dvh',
 					minHeight: '100%',
 				}}

@@ -2,6 +2,7 @@ import { MAIN_LONG_MAP } from '@gld/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { GridManager } from '../src/systems/GridManager';
 import { TowerSystem } from '../src/systems/TowerSystem';
+import { getTowerDisplayMetrics } from '../src/towers/displayMetrics';
 
 vi.mock('phaser', () => ({
 	default: {
@@ -27,8 +28,49 @@ vi.mock('phaser', () => ({
 vi.mock('../src/audio/SoundGenerator', () => ({
 	soundGenerator: {
 		playTowerAttack: vi.fn(),
+		playArrowImpact: vi.fn(),
 	},
 }));
+
+class MockAudioContext {
+	state = 'running';
+	currentTime = 0;
+	destination = {};
+	createGain() {
+		return {
+			gain: {
+				setValueAtTime: vi.fn(),
+				linearRampToValueAtTime: vi.fn(),
+			},
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+		};
+	}
+	createDynamicsCompressor() {
+		return {
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+		};
+	}
+	createOscillator() {
+		return {
+			type: 'sine',
+			frequency: {
+				setValueAtTime: vi.fn(),
+				linearRampToValueAtTime: vi.fn(),
+			},
+			connect: vi.fn(),
+			disconnect: vi.fn(),
+			start: vi.fn(),
+			stop: vi.fn(),
+			onended: null,
+		};
+	}
+	resume = vi.fn();
+	close = vi.fn();
+}
+
+vi.stubGlobal('AudioContext', MockAudioContext);
 
 function createGraphics() {
 	return {
@@ -52,6 +94,7 @@ function createGraphics() {
 function createImage() {
 	return {
 		setDisplaySize: vi.fn().mockReturnThis(),
+		setPosition: vi.fn().mockReturnThis(),
 		setY: vi.fn().mockReturnThis(),
 		setDepth: vi.fn().mockReturnThis(),
 		setTexture: vi.fn().mockReturnThis(),
@@ -138,6 +181,40 @@ describe('TowerSystem placement contract', () => {
 		expect(
 			gridManager.getTile(buildablePoint.x, buildablePoint.y)?.occupied,
 		).toBe(true);
+	});
+
+	it('renders placed towers with the visual pad display metrics', () => {
+		const { scene, towerSystem } = createTowerSystem();
+		const buildablePoint = MAIN_LONG_MAP.buildablePoints[0];
+		const metrics = getTowerDisplayMetrics(64);
+
+		const result = towerSystem.placeTower(
+			buildablePoint.x,
+			buildablePoint.y,
+			'archer',
+		);
+
+		expect(result.success).toBe(true);
+		const sprite = scene.add.image.mock.results[0]?.value;
+		expect(metrics.width).toBe(64);
+		expect(metrics.height).toBe(80);
+		expect(metrics.yOffset).toBe(0);
+		expect(sprite.setDisplaySize).toHaveBeenCalledWith(64, 80);
+	});
+
+	it('moveTower preserves the same sprite anchor as placement', () => {
+		const { scene, towerSystem, gridManager } = createTowerSystem();
+		const from = MAIN_LONG_MAP.buildablePoints[0];
+		const to = MAIN_LONG_MAP.buildablePoints[1];
+		const metrics = getTowerDisplayMetrics(gridManager.orthoTile);
+
+		towerSystem.placeTower(from.x, from.y, 'archer');
+		const sprite = scene.add.image.mock.results[0]?.value;
+		const toWorld = gridManager.gridToWorld(to.x, to.y);
+		const expectedY = toWorld.y - metrics.yOffset;
+
+		expect(towerSystem.moveTower(from.x, from.y, to.x, to.y)).toBe(true);
+		expect(sprite.setPosition).toHaveBeenCalledWith(toWorld.x, expectedY);
 	});
 
 	it('sellTower returns 50% refund and frees tile', () => {
@@ -235,6 +312,31 @@ describe('TowerSystem Phase 9 global modifiers (meta atk%)', () => {
 		const hit = events.find((e) => e.damage > 0);
 		// 8 * 1.10 = 8.8 → round → 9
 		expect(hit?.damage).toBe(9);
+	});
+
+	it('bottom-side anchored towers attack lower-lane monsters by visual position', () => {
+		const { towerSystem, gridManager } = createTowerSystem();
+		const lowerPad = MAIN_LONG_MAP.buildablePoints[4];
+		const lowerLanePoint = MAIN_LONG_MAP.paths[2][8];
+		const unitWorld = gridManager.gridToWorld(
+			lowerLanePoint.x,
+			lowerLanePoint.y,
+		);
+
+		towerSystem.placeTower(lowerPad.x, lowerPad.y, 'emp');
+		const events = towerSystem.update(2000, 16, [
+			{
+				instanceId: 'lower-lane-unit',
+				x: unitWorld.x,
+				y: unitWorld.y,
+				hp: 1000,
+				element: 'neutral',
+			},
+		]);
+
+		expect(events.some((event) => event.unitId === 'lower-lane-unit')).toBe(
+			true,
+		);
 	});
 });
 

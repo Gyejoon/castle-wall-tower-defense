@@ -42,6 +42,7 @@ function buildCtx(overrides: Partial<AttackContext> = {}): AttackContext {
 			}),
 			orthoTile: 48,
 			getDepth: () => 10,
+			hasPlacementAnchors: () => false,
 		} as never,
 		effectiveDamage: 30,
 		primaryTarget: null,

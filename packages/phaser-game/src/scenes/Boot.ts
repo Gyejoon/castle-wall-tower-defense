@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TOWER_ASSET_VERSION } from '../assets/assetManifest';
 
 export class Boot extends Phaser.Scene {
 	constructor() {
@@ -6,7 +7,10 @@ export class Boot extends Phaser.Scene {
 	}
 
 	preload() {
-		this.load.json('asset-manifest', 'assets/asset-manifest.json');
+		this.load.json(
+			'asset-manifest',
+			`assets/asset-manifest.json?v=${TOWER_ASSET_VERSION}`,
+		);
 	}
 
 	create() {

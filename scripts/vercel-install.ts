@@ -10,11 +10,18 @@ const webShellPackageJsonPath = resolve(
 	repoRoot,
 	'packages/web-shell/package.json',
 );
+const phaserPackageJsonPath = resolve(
+	repoRoot,
+	'packages/phaser-game/package.json',
+);
+const sharedPackageJsonPath = resolve(repoRoot, 'packages/shared/package.json');
 const lockfilePath = resolve(repoRoot, 'bun.lock');
 const isDryRun = process.env.VERCEL_INSTALL_DRY_RUN === '1';
 
 const originalPackageJson = readFileSync(packageJsonPath, 'utf8');
 const originalWebShellPackageJson = readFileSync(webShellPackageJsonPath, 'utf8');
+const originalPhaserPackageJson = readFileSync(phaserPackageJsonPath, 'utf8');
+const originalSharedPackageJson = readFileSync(sharedPackageJsonPath, 'utf8');
 const originalLockfile = readFileSync(lockfilePath, 'utf8');
 
 const packageJson = JSON.parse(originalPackageJson) as {
@@ -22,6 +29,13 @@ const packageJson = JSON.parse(originalPackageJson) as {
 };
 const webShellPackageJson = JSON.parse(originalWebShellPackageJson) as {
 	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+};
+const phaserPackageJson = JSON.parse(originalPhaserPackageJson) as {
+	devDependencies?: Record<string, string>;
+};
+const sharedPackageJson = JSON.parse(originalSharedPackageJson) as {
+	devDependencies?: Record<string, string>;
 };
 
 const args = [
@@ -47,11 +61,22 @@ try {
 		'web-shell': 'workspace:*',
 	};
 	delete webShellPackageJson.dependencies?.['@apps-in-toss/web-framework'];
+	webShellPackageJson.devDependencies = {};
+	phaserPackageJson.devDependencies = {};
+	sharedPackageJson.devDependencies = {};
 
 	writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 	writeFileSync(
 		webShellPackageJsonPath,
 		`${JSON.stringify(webShellPackageJson, null, 2)}\n`,
+	);
+	writeFileSync(
+		phaserPackageJsonPath,
+		`${JSON.stringify(phaserPackageJson, null, 2)}\n`,
+	);
+	writeFileSync(
+		sharedPackageJsonPath,
+		`${JSON.stringify(sharedPackageJson, null, 2)}\n`,
 	);
 
 	console.log(
@@ -87,6 +112,8 @@ try {
 } finally {
 	writeFileSync(packageJsonPath, originalPackageJson);
 	writeFileSync(webShellPackageJsonPath, originalWebShellPackageJson);
+	writeFileSync(phaserPackageJsonPath, originalPhaserPackageJson);
+	writeFileSync(sharedPackageJsonPath, originalSharedPackageJson);
 	writeFileSync(lockfilePath, originalLockfile);
 }
 

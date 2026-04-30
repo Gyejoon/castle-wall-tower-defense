@@ -30,9 +30,10 @@ export class MultiShotArrowEmitter implements ProjectileEmitter {
 			towerWorld.x,
 			towerWorld.y,
 		);
-		const fireLift = ctx.gridManager.hasPlacementAnchors()
-			? 0
-			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift =
+			(ctx.gridManager.hasPlacementAnchors?.() ?? false)
+				? 0
+				: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 
 		// TTL은 그리드 셀 거리 기준.

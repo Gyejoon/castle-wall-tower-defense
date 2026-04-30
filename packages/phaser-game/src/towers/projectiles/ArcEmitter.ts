@@ -42,9 +42,10 @@ export class ArcEmitter implements ProjectileEmitter {
 			towerWorld.x,
 			towerWorld.y,
 		);
-		const fireLift = ctx.gridManager.hasPlacementAnchors()
-			? 0
-			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift =
+			(ctx.gridManager.hasPlacementAnchors?.() ?? false)
+				? 0
+				: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOrigin = this.opts.fireOrigin
 			? this.opts.fireOrigin(tower, ctx)
 			: { x: towerWorld.x, y: towerWorld.y - fireLift };

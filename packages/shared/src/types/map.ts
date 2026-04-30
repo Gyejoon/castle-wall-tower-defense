@@ -10,6 +10,12 @@ export interface MapLayout {
 	paths?: Position[][]; // all lanes including primary — if omitted, [path] is used
 	blockedPlacementPoints: Position[]; // non-buildable terrain blocked from tower placement
 	buildablePoints: Position[]; // valid tower placement tiles derived from board contract
+	/**
+	 * Optional visual anchors for buildable cells whose art-space center differs
+	 * from the regular grid center. Used by illustrated maps so towers snap to
+	 * painted pads while placement logic still uses stable grid ids.
+	 */
+	placementAnchors?: Array<Position & { worldX: number; worldY: number }>;
 	spawnPoint: Position;
 	exitPoint: Position;
 	tilemapKey: string;

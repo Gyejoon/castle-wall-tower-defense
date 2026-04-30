@@ -440,6 +440,7 @@ dragon_nest(T4), celestial(T5)는 splash → 방어 무시 없음 (웨이브 클
 | 2026-04-12 | 타워 승급 시스템 개선 (#52) | 등급별 최대 레벨 (normal=20/rare=30/unique=50/epic=50), GRADE_BONUS (0/+70%/+250%/+800% — 이후 #81 에서 재조정됨, 아래 행 참고), GRADE_COST_MULT (1x/2x/4x/8x). 승급 확률 20/10/5% → 80/50/25% | 승급 후 Lv.1이 이전 등급 만렙보다 강하도록 재밸런스, 승급 성공률 현실화 |
 | 2026-04-12 | 밸런스 대수정 (#81, #111) | (1) 전투력: 피어싱 분기 + REFERENCE_ARMOR=6 도입, UTILITY_BASE 확장. (2) 강화: 비용 `(100+40L+3L²)`, 효율 4%/lv. (3) GRADE_BONUS: rare 0.7→0.8, unique 2.5→3.5, epic 8.0→13.0 (승급 게이트 유지). (4) 적 스케일 band2 ×8/×5/×1.2 → ×6/×4/×1.15, band3 ×50/×20/×1.5 → ×30/×12/×1.35. (5) FINAL_BOSS_HP_MULTIPLIER 2→1.5. (6) corrupted_archmage bossCcResist 1.0→0.7. | 전투력 표시-in game 괴리 해소, pure PVE 생존 커브 확보, 승급 체감 상향 |
 | 2026-04-20 | 웨이브 스케일링 공식 선형화 (#175) | slots 11+의 `getWaveScaling.hp` 공식을 `lastEntry.hp × 1.12^over` → `lastEntry.hp + over × HP_SLOPE (0.55)`. W20 11.8× → 9.3×, W30 36.7× → 14.8×, W50 354× → 25.8×. speed 공식은 기존 유지 (`+0.03/wave`, cap 2.2). | 이전 지수 공식은 W20→W30 구간에서 ×15.5 점프, W30→W40에서 ×3, W50 폭증 등 계단식 난이도가 생겨 Pure PVE 생존 커브와 충돌. 선형으로 보스 슬롯 간 배율을 평탄화. |
+| 2026-04-30 | Wave 1 showcase 구성 | Wave 1을 12종 몬스터 전체가 1마리씩 등장하는 12마리 구성으로 변경. 고HP 보스형 유닛은 `hpMultiplier`와 `asBoss:false`로 초반 HP/보스 AI/보스 leak 패널티를 낮춘다. | 에셋/모션 QA 및 초반 실루엣 확인 목적 |
 
 ---
 

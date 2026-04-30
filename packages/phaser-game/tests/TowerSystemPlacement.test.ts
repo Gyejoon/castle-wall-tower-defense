@@ -102,7 +102,7 @@ function createTowerSystem() {
 describe('TowerSystem placement contract', () => {
 	it('rejects placement on a path tile', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const pathPoint = MAIN_LONG_MAP.path[1];
+		const pathPoint = MAIN_LONG_MAP.path[0];
 
 		expect(towerSystem.placeTower(pathPoint.x, pathPoint.y, 'archer')).toEqual({
 			success: false,
@@ -113,7 +113,7 @@ describe('TowerSystem placement contract', () => {
 
 	it('rejects placement on a blocked-placement tile', () => {
 		const { scene, towerSystem } = createTowerSystem();
-		const blockedPoint = { x: 0, y: 0 };
+		const blockedPoint = MAIN_LONG_MAP.blockedPlacementPoints[2];
 
 		expect(
 			towerSystem.placeTower(blockedPoint.x, blockedPoint.y, 'archer'),

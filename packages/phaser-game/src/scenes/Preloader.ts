@@ -5,6 +5,10 @@ import {
 	preloadAssetSection,
 	shouldUseWebPTextures,
 } from '../assets/assetManifest';
+import {
+	MAIN_LONG_BACKGROUND_KEY,
+	MAIN_LONG_CENTRAL_CASTLE_KEY,
+} from './render/FieldRenderer';
 
 const supportsWebP = shouldUseWebPTextures();
 
@@ -15,6 +19,18 @@ export class Preloader extends Phaser.Scene {
 
 	preload() {
 		const manifest = getCachedAssetManifest(this);
+		this.load.image(
+			MAIN_LONG_BACKGROUND_KEY,
+			supportsWebP
+				? 'assets/maps/main-long-bg-hq.webp'
+				: 'assets/maps/main-long-bg.png',
+		);
+		this.load.image(
+			MAIN_LONG_CENTRAL_CASTLE_KEY,
+			supportsWebP
+				? 'assets/maps/main-long-central-castle.webp'
+				: 'assets/maps/main-long-central-castle.png',
+		);
 		preloadAssetSection(this, manifest, 'preload', supportsWebP);
 	}
 
@@ -56,7 +72,7 @@ export class Preloader extends Phaser.Scene {
 					start: 0,
 					end: walkEndFrame,
 				}),
-				frameRate: 10,
+				frameRate: 7,
 				repeat: -1,
 			});
 
@@ -75,7 +91,7 @@ export class Preloader extends Phaser.Scene {
 					start: 0,
 					end: endFrame,
 				}),
-				frameRate: 10,
+				frameRate: 7,
 				repeat: -1,
 			});
 		}

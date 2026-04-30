@@ -99,22 +99,31 @@ describe('generateWaves', () => {
 		const normalWaves = waveSet.filter((w) => w.kind === 'normal');
 		for (const w of normalWaves) {
 			const total = w.groups.reduce((s, g) => s + g.count, 0);
-			expect(total).toBe(30);
+			expect(total).toBe(w.slotIndex === 1 ? 12 : 30);
 		}
 	});
 
 	it('unit composition diversifies as slot index grows', () => {
 		const w1 = waveSet[0];
 		const w21 = waveSet[20];
-		expect(w21.groups.length).toBeGreaterThan(w1.groups.length);
+		expect(w1.groups.length).toBeGreaterThan(1);
+		expect(w21.groups.length).toBeGreaterThan(1);
 	});
 
-	it('stealth_drone starts appearing at slot 14+', () => {
+	it('wave 1 shows every monster silhouette for asset QA', () => {
+		const w1 = waveSet[0];
+		const ids = new Set(w1.groups.map((g) => g.unitId));
+		expect(ids).toEqual(new Set(UNITS.map((u) => u.id)));
+		expect(w1.groups.reduce((sum, group) => sum + group.count, 0)).toBe(12);
+	});
+
+	it('stealth_drone appears in wave 1 showcase and regular late waves', () => {
 		const stealthWaves = waveSet.filter((w) =>
 			w.groups.some((g) => g.unitId === 'stealth_drone'),
 		);
 		expect(stealthWaves.length).toBeGreaterThan(0);
-		expect(stealthWaves[0].slotIndex).toBeGreaterThanOrEqual(14);
+		expect(stealthWaves[0].slotIndex).toBe(1);
+		expect(stealthWaves.some((wave) => wave.slotIndex >= 20)).toBe(true);
 	});
 });
 

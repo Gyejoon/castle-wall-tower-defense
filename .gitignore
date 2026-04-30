@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+__pycache__/
+*.pyc
 
 # AI temp
 scripts/generate-assets/.ai-temp/

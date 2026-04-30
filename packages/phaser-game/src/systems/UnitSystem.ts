@@ -3,11 +3,11 @@ import {
 	BOSS_CONFIG,
 	ELEMENT_TINT_COLORS,
 	type ElementType,
+	MAIN_MAP_ID,
 	PHASER_COLORS,
 	type PlacedTower,
 	type Position,
 	scaleUnitStats,
-	TILE_SIZE,
 	UNITS,
 	type UnitDef,
 } from '@gld/shared';
@@ -83,6 +83,12 @@ interface QueueUnitsOptions {
 	armorMult?: number;
 	ccResist?: number;
 }
+
+const NORMAL_UNIT_DISPLAY_SIZE = { width: 32, height: 32 };
+const BOSS_UNIT_DISPLAY_SIZE = { width: 42, height: 42 };
+const FLYING_BOSS_Y_OFFSET = 12;
+const FLYING_BOSS_SHADOW_SIZE = { width: 26, height: 10 };
+const MAIN_LONG_UNIT_SPEED_MULTIPLIER = 0.55;
 
 export class UnitSystem {
 	private units: Map<string, UnitInstance> = new Map();
@@ -229,10 +235,10 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize(
-			entry.isBoss ? TILE_SIZE : (TILE_SIZE * 2) / 3,
-			entry.isBoss ? (TILE_SIZE * 7) / 6 : (TILE_SIZE * 5) / 6,
-		);
+		const displaySize = entry.isBoss
+			? BOSS_UNIT_DISPLAY_SIZE
+			: NORMAL_UNIT_DISPLAY_SIZE;
+		sprite.setDisplaySize(displaySize.width, displaySize.height);
 		const bossAnimKey = `anim-${bossTextureKey}`;
 		if (bossTextureReady && this.scene.anims.exists(bossAnimKey)) {
 			sprite.play(bossAnimKey);
@@ -257,13 +263,13 @@ export class UnitSystem {
 			shadow = this.scene.add.ellipse(
 				startWorld.x,
 				startWorld.y,
-				40,
-				16,
+				FLYING_BOSS_SHADOW_SIZE.width,
+				FLYING_BOSS_SHADOW_SIZE.height,
 				0x000000,
 				0.3,
 			);
 			shadow.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y) - 1);
-			sprite.setPosition(startWorld.x, startWorld.y - 20);
+			sprite.setPosition(startWorld.x, startWorld.y - FLYING_BOSS_Y_OFFSET);
 		}
 
 		const hpBar = this.scene.add.graphics();
@@ -770,7 +776,8 @@ export class UnitSystem {
 				unit.baseSpeed *
 				phaseMult *
 				this.gridManager.orthoTile *
-				ccTick.speedMultiplier;
+				ccTick.speedMultiplier *
+				this.getMapSpeedMultiplier();
 
 			// flip/rotation은 advance 전 방향 벡터를 사용해야 한다. advance 후
 			// snap된 위치를 기준으로 하면 다음-다음 셀 방향을 바라보게 된다.
@@ -801,7 +808,10 @@ export class UnitSystem {
 			// Boss flies above ground with bobbing; shadow stays on ground
 			if (unit.isBoss && unit.def.flying) {
 				const flyBob = Math.sin(time * 0.003) * 3;
-				unit.sprite.setPosition(unit.worldX, unit.worldY - 20 + flyBob);
+				unit.sprite.setPosition(
+					unit.worldX,
+					unit.worldY - FLYING_BOSS_Y_OFFSET + flyBob,
+				);
 				if (unit.shadow) {
 					unit.shadow.setPosition(unit.worldX, unit.worldY);
 				}
@@ -948,7 +958,10 @@ export class UnitSystem {
 			startWorld.y,
 			textureKey,
 		);
-		sprite.setDisplaySize((TILE_SIZE * 2) / 3, (TILE_SIZE * 5) / 6);
+		sprite.setDisplaySize(
+			NORMAL_UNIT_DISPLAY_SIZE.width,
+			NORMAL_UNIT_DISPLAY_SIZE.height,
+		);
 		sprite.play(`${def.id}-walk`);
 		sprite.setDepth(this.gridManager.getDepth(startGrid.x, startGrid.y));
 		if (def.element !== 'neutral') {
@@ -1012,6 +1025,12 @@ export class UnitSystem {
 	private sweepCollisions(): void {
 		// Collision disabled — monsters pass through each other
 		return;
+	}
+
+	private getMapSpeedMultiplier(): number {
+		return this.gridManager.mapId === MAIN_MAP_ID
+			? MAIN_LONG_UNIT_SPEED_MULTIPLIER
+			: 1;
 	}
 
 	destroy(): void {

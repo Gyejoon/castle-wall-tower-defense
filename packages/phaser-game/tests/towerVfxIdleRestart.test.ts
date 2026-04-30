@@ -72,10 +72,9 @@ function createImage() {
 }
 
 /**
- * Scene fake that captures every `tweens.add` call so tests can interrogate
- * whether an idle (repeat: -1) tween is present after the punch animation.
- * The punch tween's onComplete fires synchronously at construction so we
- * don't need a real Phaser tween manager.
+ * Scene fake that captures every `tweens.add` call. The punch tween's
+ * onComplete fires synchronously so tests can verify the tower returns to its
+ * fixed pose without reintroducing continuous idle movement.
  */
 function createScene() {
 	const addedTweens: Array<Record<string, unknown>> = [];
@@ -101,8 +100,8 @@ function createScene() {
 	};
 }
 
-describe('TowerSystem VFX idle-tween restart', () => {
-	it('playSummonVfx restarts the idle breathing tween after punch', () => {
+describe('TowerSystem fixed-pose VFX', () => {
+	it('playSummonVfx does not restart idle movement after punch', () => {
 		const scene = createScene();
 		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
@@ -117,24 +116,21 @@ describe('TowerSystem VFX idle-tween restart', () => {
 		const p = MAIN_LONG_MAP.buildablePoints[0];
 		expect(towerSystem.placeTower(p.x, p.y, 'archer').success).toBe(true);
 
-		// Baseline: initial placement created exactly one idle tween
-		// (repeat: -1, yoyo: true).
+		// Baseline: placement should not create a continuous idle tween.
 		const idleBefore = scene.addedTweens.filter(
 			(t) => t.repeat === -1 && t.yoyo === true,
 		);
-		expect(idleBefore.length).toBe(1);
+		expect(idleBefore.length).toBe(0);
 
 		towerSystem.playSummonVfx(p.x, p.y);
 
-		// After the punch tween's onComplete fires synchronously, the idle
-		// tween should have been re-added — so we now have 2 repeat:-1 tweens.
 		const idleAfter = scene.addedTweens.filter(
 			(t) => t.repeat === -1 && t.yoyo === true,
 		);
-		expect(idleAfter.length).toBe(2);
+		expect(idleAfter.length).toBe(0);
 	});
 
-	it('playMergeVfx restarts the idle breathing tween after punch', () => {
+	it('playMergeVfx does not restart idle movement after punch', () => {
 		const scene = createScene();
 		const gridManager = new GridManager(MAIN_LONG_MAP);
 		const pathfinding = {
@@ -152,13 +148,13 @@ describe('TowerSystem VFX idle-tween restart', () => {
 		const idleBefore = scene.addedTweens.filter(
 			(t) => t.repeat === -1 && t.yoyo === true,
 		);
-		expect(idleBefore.length).toBe(1);
+		expect(idleBefore.length).toBe(0);
 
 		towerSystem.playMergeVfx(p.x, p.y);
 
 		const idleAfter = scene.addedTweens.filter(
 			(t) => t.repeat === -1 && t.yoyo === true,
 		);
-		expect(idleAfter.length).toBe(2);
+		expect(idleAfter.length).toBe(0);
 	});
 });

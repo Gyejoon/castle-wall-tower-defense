@@ -51,9 +51,11 @@ export abstract class BaseTower implements TowerBehavior {
 		}
 		const interval = 1000 / speed;
 		if (ctx.time - this.lastAttackMs < interval) return;
-		// sprite 위치는 PLATFORM_LIFT+y-20 오프셋이 있고 gridToWorld 왕복이 비대칭이라
-		// 타겟팅 기준으로 쓰면 셀이 어긋난다. data.position이 단일 진실의 원천.
-		const grid = this.runtime.data.position;
+		const towerWorld = ctx.gridManager.gridToWorld(
+			this.runtime.data.position.x,
+			this.runtime.data.position.y,
+		);
+		const grid = ctx.gridManager.worldToGridFloat(towerWorld.x, towerWorld.y);
 		const rangeCells = this.runtime.def.stats.range;
 		const target = this.targeting.pick(
 			grid,

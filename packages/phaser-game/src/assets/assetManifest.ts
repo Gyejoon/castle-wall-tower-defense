@@ -11,6 +11,7 @@ export const OPTIONAL_ASSET_SECTIONS: AssetManifestSection[] = [
 	'vfx',
 	'projectiles',
 ];
+export const TOWER_ASSET_VERSION = 'pr193-towers-runtime-v2';
 
 const CORE_UNIT_IDS = [
 	'scout_drone',
@@ -229,6 +230,7 @@ function dedupeAssets(assets: AssetManifestEntry[]): AssetManifestEntry[] {
 }
 
 function resolveTexturePath(path: string, useWebP: boolean): string {
-	if (!useWebP) return path;
-	return path.replace(/\.png$/, '.webp');
+	const texturePath = useWebP ? path.replace(/\.png$/, '.webp') : path;
+	if (!texturePath.startsWith('assets/towers/')) return texturePath;
+	return `${texturePath}?v=${TOWER_ASSET_VERSION}`;
 }

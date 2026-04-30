@@ -320,7 +320,7 @@ describe('GamePage', () => {
 		expect(view.getByRole('button', { name: /배속 1x/i })).toBeTruthy();
 	});
 
-	it('portrait shell uses 100dvh + max-w-[540px] (mobile portrait standard)', () => {
+	it('portrait shell uses 100dvh + max-w-[576px] (9×64 canvas standard)', () => {
 		const view = render(<GamePage />);
 		const shell = view.getByTestId('game-portrait-shell') as HTMLDivElement;
 		// Height follows viewport (100dvh) so URL bar collapse doesn't cut HUDs.
@@ -329,7 +329,7 @@ describe('GamePage', () => {
 		// which is required for safe-area-inset-top to reach the status bar
 		// correctly on devices like Galaxy S25.
 		expect(shell.style.transform).toBe('');
-		expect(shell.className).toContain('max-w-[540px]');
+		expect(shell.className).toContain('max-w-[576px]');
 		expect(shell.className).toContain('flex-col');
 	});
 

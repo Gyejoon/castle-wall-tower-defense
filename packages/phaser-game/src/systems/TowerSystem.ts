@@ -26,6 +26,7 @@ import {
 	TowerVfxController,
 	type UnitSnapshot,
 } from '../towers';
+import { getTowerDisplayMetrics } from '../towers/displayMetrics';
 import { parseHexColor } from '../towers/vfx/colors';
 import type { AttackLineEntry } from '../towers/vfx/TowerVfxController';
 import type { GridManager } from './GridManager';
@@ -65,16 +66,10 @@ export interface GlobalModifiers {
 }
 
 /**
- * Phase 1: grade is gone — texture is identified purely by tower id. We
- * keep the helper so call sites don't scatter template literals, but it's
- * a pass-through for now. Phase 11 may add tier-specific variants.
- *
- * Phase 11 [F23]: hybrid_ab / hybrid_cd / ultimate share placeholder
- * sprites with their highest-tier ancestor. The asset manifest registers
- * `tower-hybrid_ab` etc. with the placeholder paths so most lookups
- * succeed via the texture cache; this map is the deterministic fallback
- * used by call sites that need a guaranteed-existing texture key without
- * touching the Phaser scene.
+ * Phase 1: grade is gone — texture is identified purely by tower id. We keep
+ * the helper so call sites don't scatter template literals. The fallback map
+ * remains only as a defensive path for older caches or failed hybrid asset
+ * loads; current art ships dedicated hybrid/ultimate textures.
  */
 const PLACEHOLDER_TEXTURE_FALLBACK: Record<string, string> = {
 	hybrid_ab: 'tower-arcane_spire',
@@ -84,13 +79,19 @@ const PLACEHOLDER_TEXTURE_FALLBACK: Record<string, string> = {
 
 const warnedMissingTextures = new Set<string>();
 
+function getTowerVisualLift(gridManager: GridManager): number {
+	return gridManager.hasPlacementAnchors()
+		? 0
+		: gridManager.orthoTile * PLATFORM_LIFT;
+}
+
 export function resolveTowerTextureKey(defId: string): string {
 	return `tower-${defId}`;
 }
 
 /**
  * Resolve the runtime texture key for a tower id, falling back to a known-good
- * placeholder when the manifest entry is missing or its texture failed to
+ * ancestor texture when the manifest entry is missing or its texture failed to
  * load. Logs a single console.warn per missing key so noisy boots stay quiet.
  *
  * Centralised here so both placement and merge-spawn paths share the same
@@ -107,7 +108,7 @@ export function resolveTowerTextureKeySafe(
 		if (!warnedMissingTextures.has(primary)) {
 			warnedMissingTextures.add(primary);
 			console.warn(
-				`[TowerSystem] missing texture "${primary}", using placeholder "${fallback}"`,
+				`[TowerSystem] missing texture "${primary}", using fallback "${fallback}"`,
 			);
 		}
 		return fallback;
@@ -297,14 +298,15 @@ export class TowerSystem {
 
 		const textureKey = resolveTowerTextureKeySafe(this.scene, towerDefId);
 		const base = this.scene.add.graphics();
-		const lift = this.gridManager.orthoTile * PLATFORM_LIFT;
+		const lift = getTowerVisualLift(this.gridManager);
 		const sprite = this.scene.add.image(
 			worldPos.x,
 			worldPos.y - lift,
 			textureKey,
 		);
-		sprite.setDisplaySize(TILE_SIZE, (TILE_SIZE * 5) / 4);
-		sprite.setY(worldPos.y - lift - (TILE_SIZE * 5) / 12);
+		const towerDisplay = getTowerDisplayMetrics(this.gridManager.orthoTile);
+		sprite.setDisplaySize(towerDisplay.width, towerDisplay.height);
+		sprite.setY(worldPos.y - lift - towerDisplay.yOffset);
 		sprite.setDepth(this.gridManager.getDepth(gridX, gridY) + 5);
 		const liftedPos = { x: worldPos.x, y: worldPos.y - lift };
 		this.renderTowerBase(base, liftedPos, def);
@@ -312,13 +314,6 @@ export class TowerSystem {
 		const baseScaleX = sprite.scaleX;
 		const baseScaleY = sprite.scaleY;
 		const baseY = sprite.y;
-		const idleTween = this.createIdleTween(
-			sprite,
-			baseScaleX,
-			baseScaleY,
-			baseY,
-			(this.nextId * 137) % 1800,
-		);
 
 		// Nova cannon: add separate rotating barrel sprite
 		let barrelSprite: Phaser.GameObjects.Image | undefined;
@@ -331,7 +326,10 @@ export class TowerSystem {
 				sprite.y,
 				'tower-nova_cannon-barrel',
 			);
-			barrelSprite.setDisplaySize(TILE_SIZE / 3, TILE_SIZE / 6);
+			barrelSprite.setDisplaySize(
+				towerDisplay.width / 3,
+				towerDisplay.height / 8,
+			);
 			barrelSprite.setDepth(sprite.depth + 1);
 		}
 
@@ -343,7 +341,7 @@ export class TowerSystem {
 			base,
 			sprite,
 			barrelSprite,
-			idleTween,
+			idleTween: undefined,
 			baseScaleX,
 			baseScaleY,
 			baseY,
@@ -365,33 +363,19 @@ export class TowerSystem {
 			}
 		}
 
-		// Phase 11 [F23]: tier-5/6 placeholder differentiation. Until dedicated
-		// art ships, hybrid_ab/hybrid_cd/ultimate share T4 sprites; a tinted
-		// pulsing aura under the sprite makes them visually distinct without
-		// touching the placeholder texture itself. TODO(phase-12): replace with
-		// a proper particle emitter once `upgrade-success-fx` is wired up as a
-		// particle texture.
+		// Tier-5/6 merge results keep an aura even though dedicated sprites now
+		// ship, so the merge payoff stays obvious in dense combat.
 		this.spawnPlaceholderAura(towerDefId, base, liftedPos);
 
 		return { success: true, tower: towerData };
 	}
 
-	/**
-	 * Build the continuous yoyo breathing tween for a tower sprite. Extracted
-	 * so placement, moveTower, and post-VFX restart paths share an identical
-	 * config and reset precisely to the sprite's baseline scale/y instead of
-	 * drifting after each punch animation.
-	 */
-	private createIdleTween(
+	private resetTowerSprite(
 		sprite: Phaser.GameObjects.Image,
 		baseScaleX: number,
 		baseScaleY: number,
 		baseY: number,
-		delay = 0,
-	): Phaser.Tweens.Tween {
-		// Reset sprite to baseline before spinning up the new tween — keeps
-		// post-VFX restart visually seamless. Defensive calls so partial
-		// test fakes (no setScale/setY) keep working.
+	): void {
 		if (typeof sprite.setScale === 'function') {
 			sprite.setScale(baseScaleX, baseScaleY);
 		} else {
@@ -403,17 +387,6 @@ export class TowerSystem {
 		} else {
 			sprite.y = baseY;
 		}
-		return this.scene.tweens.add({
-			targets: sprite,
-			scaleX: { from: baseScaleX, to: baseScaleX * 1.03 },
-			scaleY: { from: baseScaleY, to: baseScaleY * 1.03 },
-			y: { from: baseY, to: baseY - 1 },
-			duration: 1800,
-			yoyo: true,
-			repeat: -1,
-			ease: 'Sine.InOut',
-			delay,
-		});
 	}
 
 	private spawnPlaceholderAura(
@@ -462,14 +435,16 @@ export class TowerSystem {
 		const color = parseHexColor(def.color);
 		graphics.clear();
 
-		const baseSize = this.gridManager.orthoTile * 0.45;
-		graphics.fillStyle(0x0a0a14, 0.8);
-		graphics.fillCircle(pos.x, pos.y + 4, baseSize / 2);
-		graphics.lineStyle(1, color, 0.3);
-		graphics.strokeCircle(pos.x, pos.y + 4, baseSize / 2);
+		if (!this.gridManager.hasPlacementAnchors()) {
+			const baseSize = this.gridManager.orthoTile * 0.45;
+			graphics.fillStyle(0x0a0a14, 0.8);
+			graphics.fillCircle(pos.x, pos.y + 4, baseSize / 2);
+			graphics.lineStyle(1, color, 0.3);
+			graphics.strokeCircle(pos.x, pos.y + 4, baseSize / 2);
 
-		graphics.fillStyle(color, 0.08);
-		graphics.fillCircle(pos.x, pos.y + 4, this.gridManager.orthoTile * 0.3);
+			graphics.fillStyle(color, 0.08);
+			graphics.fillCircle(pos.x, pos.y + 4, this.gridManager.orthoTile * 0.3);
+		}
 
 		const rangeGrid = def.stats.range;
 		if (rangeGrid > 0) {
@@ -774,15 +749,11 @@ export class TowerSystem {
 
 		instance.data.position = { x: toX, y: toY };
 		const worldPos = this.gridManager.gridToWorld(toX, toY);
-		const moveLift = this.gridManager.orthoTile * PLATFORM_LIFT;
-		// Base/barrel sit at platform height; sprite has an extra 20px lift
-		// that matches placement (sprite.setY(worldPos.y - lift - 20)). Without
-		// this offset the sprite snaps down by 20px post-move while fire VFX
-		// still draws at the -20 baseline, producing a visual "bob" on attack.
+		const moveLift = getTowerVisualLift(this.gridManager);
+		const towerDisplay = getTowerDisplayMetrics(this.gridManager.orthoTile);
 		const baseLiftedY = worldPos.y - moveLift;
-		const spriteLiftedY = baseLiftedY - 20;
+		const spriteLiftedY = baseLiftedY - towerDisplay.yOffset;
 		instance.sprite.setPosition(worldPos.x, spriteLiftedY);
-		instance.base.setPosition(worldPos.x, baseLiftedY);
 		if (instance.barrelSprite) {
 			instance.barrelSprite.setPosition(worldPos.x, spriteLiftedY);
 		}
@@ -792,7 +763,6 @@ export class TowerSystem {
 			instance.def,
 		);
 
-		// Recreate idle tween at new position (old tween remembers old y)
 		instance.idleTween?.stop();
 		instance.idleTween?.remove();
 		const baseScaleX = instance.sprite.scaleX;
@@ -800,12 +770,7 @@ export class TowerSystem {
 		instance.baseScaleX = baseScaleX;
 		instance.baseScaleY = baseScaleY;
 		instance.baseY = spriteLiftedY;
-		instance.idleTween = this.createIdleTween(
-			instance.sprite,
-			baseScaleX,
-			baseScaleY,
-			spriteLiftedY,
-		);
+		instance.idleTween = undefined;
 
 		this.pathfinding.invalidateCache();
 		return true;
@@ -875,10 +840,8 @@ export class TowerSystem {
 	}
 
 	/**
-	 * Pop-in scale punch on a freshly summoned tower. Kills the
-	 * continuous idle tween for the punch, then restarts it on `onComplete`
-	 * so the tower keeps breathing afterwards (bug: previously the idle
-	 * tween never returned → towers went stiff after every summon).
+	 * Pop-in scale punch on a freshly summoned tower. The tower returns to its
+	 * fixed base pose afterwards; combat motion is handled by fire/VFX sprites.
 	 */
 	playSummonVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
@@ -897,12 +860,8 @@ export class TowerSystem {
 			ease: 'Cubic.Out',
 			onComplete: () => {
 				if (!sprite.active) return;
-				instance.idleTween = this.createIdleTween(
-					sprite,
-					baseScaleX,
-					baseScaleY,
-					baseY,
-				);
+				this.resetTowerSprite(sprite, baseScaleX, baseScaleY, baseY);
+				instance.idleTween = undefined;
 			},
 		});
 	}
@@ -911,8 +870,7 @@ export class TowerSystem {
 	 * Stronger scale punch + gold tint flash on the kept tower after
 	 * a successful merge. Tint is cleared via a follow-up tween that targets
 	 * a counter and applies clearTint in onComplete, so cleanup is bound to
-	 * the scene's tween manager (no orphan setTimeout / setInterval). Restarts
-	 * the idle breathing tween after the punch so the tower doesn't go stiff.
+	 * the scene's tween manager (no orphan setTimeout / setInterval).
 	 */
 	playMergeVfx(col: number, row: number): void {
 		const entry = this.findTowerEntry(col, row);
@@ -931,12 +889,8 @@ export class TowerSystem {
 			ease: 'Cubic.Out',
 			onComplete: () => {
 				if (!sprite.active) return;
-				instance.idleTween = this.createIdleTween(
-					sprite,
-					baseScaleX,
-					baseScaleY,
-					baseY,
-				);
+				this.resetTowerSprite(sprite, baseScaleX, baseScaleY, baseY);
+				instance.idleTween = undefined;
 			},
 		});
 		if (typeof sprite.setTint === 'function') {

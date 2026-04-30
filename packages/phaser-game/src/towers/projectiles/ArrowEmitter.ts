@@ -16,10 +16,13 @@ export class ArrowEmitter implements ProjectileEmitter {
 		tower: TowerRuntimeRef,
 		ctx: AttackContext,
 	): void {
-		// sprite.x/y는 PLATFORM_LIFT 오프셋이 섞여있어 그리드 셀 기준으로 재계산한다.
 		const towerWorld = ctx.gridManager.gridToWorld(
 			tower.data.position.x,
 			tower.data.position.y,
+		);
+		const towerGrid = ctx.gridManager.worldToGridFloat(
+			towerWorld.x,
+			towerWorld.y,
 		);
 
 		// TTL은 그리드 셀 거리 기준 (픽셀 아님).
@@ -27,8 +30,8 @@ export class ArrowEmitter implements ProjectileEmitter {
 		let maxTtl: number;
 		if (projSpeed && projSpeed > 0) {
 			const targetGrid = ctx.gridManager.worldToGridFloat(target.x, target.y);
-			const gdx = tower.data.position.x - targetGrid.x;
-			const gdy = tower.data.position.y - targetGrid.y;
+			const gdx = towerGrid.x - targetGrid.x;
+			const gdy = towerGrid.y - targetGrid.y;
 			const dist = Math.sqrt(gdx * gdx + gdy * gdy);
 			maxTtl = Math.round((dist / projSpeed) * 1000);
 			maxTtl = Math.max(40, Math.min(maxTtl, 500));
@@ -38,7 +41,9 @@ export class ArrowEmitter implements ProjectileEmitter {
 
 		const arrowIndex = ctx.vfx.acquireArrow();
 		const color = parseHexColor(tower.def.color);
-		const fireLift = ctx.gridManager.orthoTile * PLATFORM_LIFT;
+		const fireLift = ctx.gridManager.hasPlacementAnchors()
+			? 0
+			: ctx.gridManager.orthoTile * PLATFORM_LIFT;
 		const fireOriginY = towerWorld.y - fireLift;
 
 		const damage = ctx.resolveDamage(target);

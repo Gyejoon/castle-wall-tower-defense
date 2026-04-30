@@ -43,7 +43,7 @@ void (0 as _CombatHudStateMatchesPveContract | 0);
 
 describe('Grid constants', () => {
 	it('has valid portrait grid dimensions', () => {
-		expect(GRID_WIDTH).toBe(8);
+		expect(GRID_WIDTH).toBe(9);
 		expect(GRID_HEIGHT).toBe(18);
 	});
 

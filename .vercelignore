@@ -1,0 +1,9 @@
+packages/unity-game/**
+docs/**
+.github/**
+.claude/**
+.agents/**
+assets-source/**
+coverage/**
+playwright-report/**
+test-results/**

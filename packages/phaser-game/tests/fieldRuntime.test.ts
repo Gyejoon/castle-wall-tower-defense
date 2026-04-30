@@ -9,6 +9,21 @@ const { waveSystemCtorSpy } = vi.hoisted(() => ({
 	waveSystemCtorSpy: vi.fn(),
 }));
 
+const EXPECTED_SHOWCASE_UNIT_IDS = [
+	'scout_drone',
+	'battle_robot',
+	'heavy_walker',
+	'stealth_drone',
+	'flame_imp',
+	'lava_golem',
+	'arcane_mage',
+	'mana_shield',
+	'orc_warlord',
+	'forge_master',
+	'corrupted_archmage',
+	'dragon',
+];
+
 vi.mock('../src/systems/WaveSystem', () => ({
 	WaveSystem: class {
 		constructor(...args: unknown[]) {
@@ -228,17 +243,36 @@ describe('GameScene field runtime', () => {
 
 		scene.create();
 
-		const waveDefs = waveSystemCtorSpy.mock.calls[0]?.[1] as Array<{
-			slotIndex: number;
-			kind: string;
-			groups: Array<{ unitId: string; count: number }>;
-		}>;
-		// 정식 모드 endless set: 50 waves total, first wave is 30 scout_drone
+		const spyWaveDefs = waveSystemCtorSpy.mock.calls
+			.flat()
+			.find(Array.isArray) as
+			| Array<{
+					slotIndex: number;
+					kind: string;
+					groups: Array<{ unitId: string; count: number }>;
+			  }>
+			| undefined;
+		const waveDefs =
+			spyWaveDefs ??
+			(
+				scene as unknown as {
+					playerWaves?: {
+						waves?: Array<{
+							slotIndex: number;
+							kind: string;
+							groups: Array<{ unitId: string; count: number }>;
+						}>;
+					};
+				}
+			).playerWaves?.waves;
+		// 정식 모드 endless set: 50 waves total, first wave is the asset-QA showcase.
 		expect(waveDefs).toHaveLength(50);
 		expect(waveDefs?.[0]?.slotIndex).toBe(1);
-		expect(waveDefs?.[0]?.groups).toEqual([
-			{ unitId: 'scout_drone', count: 30 },
-		]);
+		expect(
+			waveDefs?.[0]?.groups.map(({ unitId, count }) => ({ unitId, count })),
+		).toEqual(
+			EXPECTED_SHOWCASE_UNIT_IDS.map((unitId) => ({ unitId, count: 1 })),
+		);
 	});
 
 	it('renders a single portrait field from raw Tiny Swords assets', async () => {

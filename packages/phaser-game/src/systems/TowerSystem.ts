@@ -80,7 +80,7 @@ const PLACEHOLDER_TEXTURE_FALLBACK: Record<string, string> = {
 const warnedMissingTextures = new Set<string>();
 
 function getTowerVisualLift(gridManager: GridManager): number {
-	return gridManager.hasPlacementAnchors()
+	return (gridManager.hasPlacementAnchors?.() ?? false)
 		? 0
 		: gridManager.orthoTile * PLATFORM_LIFT;
 }
@@ -435,7 +435,7 @@ export class TowerSystem {
 		const color = parseHexColor(def.color);
 		graphics.clear();
 
-		if (!this.gridManager.hasPlacementAnchors()) {
+		if (!(this.gridManager.hasPlacementAnchors?.() ?? false)) {
 			const baseSize = this.gridManager.orthoTile * 0.45;
 			graphics.fillStyle(0x0a0a14, 0.8);
 			graphics.fillCircle(pos.x, pos.y + 4, baseSize / 2);

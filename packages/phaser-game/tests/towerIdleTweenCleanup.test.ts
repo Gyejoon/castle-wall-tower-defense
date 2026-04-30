@@ -79,6 +79,18 @@ function createScene() {
 	};
 }
 
+function attachIdleTween(
+	towerSystem: TowerSystem,
+	tween: { stop: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> },
+) {
+	const internals = towerSystem as unknown as {
+		towers: Map<string, { idleTween?: typeof tween }>;
+	};
+	const instance = Array.from(internals.towers.values())[0];
+	expect(instance).toBeDefined();
+	instance.idleTween = tween;
+}
+
 describe('TowerSystem idle tween cleanup', () => {
 	it('stops and removes idle tween when selling a tower', () => {
 		const scene = createScene();
@@ -98,6 +110,7 @@ describe('TowerSystem idle tween cleanup', () => {
 			towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer')
 				.success,
 		).toBe(true);
+		attachIdleTween(towerSystem, scene.tween);
 		towerSystem.sellTower(buildablePoint.x, buildablePoint.y);
 
 		expect(scene.tween.stop).toHaveBeenCalledTimes(1);
@@ -122,6 +135,7 @@ describe('TowerSystem idle tween cleanup', () => {
 			towerSystem.placeTower(buildablePoint.x, buildablePoint.y, 'archer')
 				.success,
 		).toBe(true);
+		attachIdleTween(towerSystem, scene.tween);
 		towerSystem.destroy();
 
 		expect(scene.tween.stop).toHaveBeenCalledTimes(1);

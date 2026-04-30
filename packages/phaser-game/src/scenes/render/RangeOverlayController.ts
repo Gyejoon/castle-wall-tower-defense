@@ -4,7 +4,9 @@ import { PLATFORM_LIFT } from '../../fieldAssets';
 import type { GridManager } from '../../systems/GridManager';
 
 function getPlacementVisualLift(grid: GridManager): number {
-	return grid.hasPlacementAnchors() ? 0 : grid.orthoTile * PLATFORM_LIFT;
+	return (grid.hasPlacementAnchors?.() ?? false)
+		? 0
+		: grid.orthoTile * PLATFORM_LIFT;
 }
 
 export class RangeOverlayController {

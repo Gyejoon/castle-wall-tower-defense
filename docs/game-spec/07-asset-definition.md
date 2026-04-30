@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-04-30 (v3.8 — imagegen 원화 기반 64×64 몬스터 시트 + 9×64 맵/타워 렌더 정렬)
+> **Last Updated:** 2026-05-01 (v3.10 — 초기 imagegen lineup 기반 몬스터 시트 복구)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
@@ -23,6 +23,8 @@
 > **v3.8 변경 요약 (2026-04-30)**: 64×64 전용 스프라이트에 2~3단계 내부 명암, 장비/벨트/금속 하이라이트, 개체별 소품 디테일을 추가했다. death 시트는 정지 잔해가 아니라 피격 스파크 → 기울어짐 → 쓰러짐 → 잔해/먼지로 이어지는 6프레임 전용 모션으로 교체했다.
 >
 > **v3.9 변경 요약 (2026-04-30)**: 신규 `imagegen` 4×3 고퀄 몬스터 아틀라스(`imagegen-monster-atlas-v20260430-detail.png`)를 source로 사용한다. `imagegen-monsters`는 chroma-key 제거, connected-component cleanup, 64×64 리터칭/outline, layer split 기반 walk/idle, 피격/쓰러짐 death 시트를 생성한다. 런타임 표시 크기는 일반 **36×36**, 보스 **46×46**로 올려 디테일이 과도하게 죽지 않도록 한다.
+>
+> **v3.10 변경 요약 (2026-05-01)**: v3.9 아틀라스 기반 시트가 실제 게임 렌더에서 과도하게 어둡고 노이즈처럼 깨져 보여, 더 밝고 실루엣이 명확했던 초기 `imagegen` lineup 소스(`imagegen-monster-lineup-v20260430.png`, `imagegen-dragon-lineup-v20260430.png`) 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고, 런타임 표시 크기는 초기값인 일반 **32×32**, 보스 **42×42**로 되돌린다.
 
 ---
 
@@ -32,7 +34,7 @@
 
 | 항목 | 사양 |
 |------|------|
-| 도구 | 타워: `imagegen` 원본 + Web PNG/WebP 후처리 / 몬스터·보스: `imagegen` 원화 아틀라스 + `imagegen-monsters` Pillow 리터칭 / 기타: 기존 파이프라인 유지 |
+| 도구 | 타워: `imagegen` 원본 + Web PNG/WebP 후처리 / 몬스터·보스: 초기 `imagegen` lineup + `imagegen-monsters` Pillow 리터칭 / 기타: 기존 파이프라인 유지 |
 | 생성 스크립트 | 타워 후처리: `scripts/art-tools/harmonize-tower-assets.mjs`, 런타임 텍스처: `scripts/art-tools/generate-runtime-tower-assets.mjs` / `main_long` 배경: `scripts/generate-assets/generate-main-long-background.ts` / 몬스터·보스: `scripts/imagegen-monsters/build-unit-sheets.py` / 기타: `scripts/generate-assets/` |
 | 출력 경로 | `packages/web-shell/public/assets/` |
 | 포맷 | PNG (원본) + WebP (런타임, `convert-webp.ts` 자동 변환) |
@@ -229,7 +231,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 | corrupted_archmage | 타락한 대마법사 | 보스 | `corrupted_archmage.png` 512×64 (8f) | `corrupted_archmage_idle.png` 384×64 (6f) | `corrupted_archmage_death.png` 384×64 (6f) |
 | dragon | 고대 드래곤 | 보스급 | `dragon.png` 512×64 (8f) | `dragon_idle.png` 384×64 (6f) | `dragon_death.png` 384×64 (6f) |
 
-공통 스타일: imagegen 기반 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 굵은 dark outline, 원화 기반 내부 명암/장비 디테일, 고정 feet baseline, TinySwords 톤 팔레트.
+공통 스타일: imagegen 기반 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 밝고 읽히는 실루엣, 고정 feet baseline, TinySwords 톤 팔레트.
 모든 런타임 유닛은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
 
 ### 애니메이션 상태 시스템
@@ -397,3 +399,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-30 | 헤더, §1, §5, §6 | 몬스터/보스를 첨부 참고 이미지풍 clean cartoon sprite로 재교체. 고해상도 원화 컷아웃 축소 대신 64×64 프레임 안에서 굵은 외곽선, 단순 면 색상, 고정 feet baseline, 전용 walk 시트를 직접 생성한다. |
 | 2026-04-30 | 헤더, §5 | 몬스터/보스 64×64 시트에 내부 명암과 장비 디테일을 추가하고, death 시트를 피격/쓰러짐/잔해 6프레임 전용 모션으로 교체한다. |
 | 2026-04-30 | 헤더, §1, §5 | 신규 imagegen 4×3 몬스터 아틀라스를 source로 삼아 64×64 리터칭/outline/layer split walk/death 시트를 생성한다. 런타임 표시 크기를 일반 36×36, 보스 46×46으로 조정한다. |
+| 2026-05-01 | 헤더, §1, §5 | v3.9 아틀라스 기반 몬스터가 실제 게임 크기에서 어둡고 노이즈처럼 깨져 보여, 초기 `imagegen` lineup 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고 런타임 표시 크기는 일반 32×32, 보스 42×42로 되돌린다. |

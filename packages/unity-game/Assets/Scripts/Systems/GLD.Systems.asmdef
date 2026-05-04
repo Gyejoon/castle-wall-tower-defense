@@ -2,7 +2,8 @@
   "name": "GLD.Systems",
   "rootNamespace": "GLD.Systems",
   "references": [
-    "GLD.Core"
+    "GLD.Core",
+    "GLD.Data"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

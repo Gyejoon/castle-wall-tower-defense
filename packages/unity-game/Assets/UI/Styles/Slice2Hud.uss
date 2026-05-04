@@ -1,0 +1,36 @@
+.slice2-hud {
+  flex-grow: 1;
+  justify-content: space-between;
+  padding: 18px 16px 24px 16px;
+}
+
+.top-row {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.hud-pill {
+  min-width: 92px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  background-color: rgba(42, 32, 16, 0.88);
+  border-width: 1px;
+  border-color: rgb(74, 58, 32);
+  color: rgb(224, 208, 160);
+  unity-font-style: bold;
+  font-size: 15px;
+  -unity-text-align: middle-center;
+}
+
+.place-button {
+  align-self: center;
+  width: 220px;
+  height: 48px;
+  border-radius: 4px;
+  background-color: rgb(200, 160, 74);
+  color: rgb(26, 20, 10);
+  border-width: 2px;
+  border-color: rgb(80, 56, 24);
+  unity-font-style: bold;
+  font-size: 16px;
+}

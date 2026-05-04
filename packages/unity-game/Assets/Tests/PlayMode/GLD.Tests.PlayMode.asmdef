@@ -1,25 +1,19 @@
 {
-  "name": "GLD.Tests.EditMode",
-  "rootNamespace": "GLD.Tests.EditMode",
+  "name": "GLD.Tests.PlayMode",
+  "rootNamespace": "GLD.Tests.PlayMode",
   "references": [
     "GLD.Data",
-    "GLD.Data.Editor",
     "GLD.SceneRuntime",
     "GLD.Systems",
-    "Unity.Addressables.Editor",
-    "UnityEditor",
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "Unity.InputSystem",
+    "UnityEngine.TestRunner"
   ],
-  "includePlatforms": [
-    "Editor"
-  ],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": true,
   "precompiledReferences": [
-    "nunit.framework.dll",
-    "Newtonsoft.Json.dll"
+    "nunit.framework.dll"
   ],
   "autoReferenced": false,
   "defineConstraints": [

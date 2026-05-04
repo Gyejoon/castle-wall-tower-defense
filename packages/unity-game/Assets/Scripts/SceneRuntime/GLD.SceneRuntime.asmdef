@@ -3,6 +3,7 @@
   "rootNamespace": "GLD.SceneRuntime",
   "references": [
     "GLD.Core",
+    "GLD.Data",
     "GLD.Systems",
     "GLD.UI",
     "Unity.InputSystem"

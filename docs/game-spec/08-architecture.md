@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-04-20 (v3.1 — 정식 모드 안정화 + 고정 논리 해상도)
+> **Last Updated:** 2026-05-04 (v3.2 — 개발용 tools-app 분리)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -9,10 +9,12 @@
 
 ## §1 패키지 구조
 
-모노레포 3패키지. 의존 방향은 단방향이다.
+모노레포 4패키지. 게임 런타임 의존 방향은 단방향이고, `tools-app`은 개발 전용 sidecar다.
 
 ```
 @gld/shared  ──►  @gld/phaser-game  ──►  web-shell
+      ▲                                      ▲
+      └────────────── tools-app ─────────────┘
 ```
 
 | 패키지 | 역할 | 주요 의존성 |
@@ -20,8 +22,11 @@
 | `@gld/shared` | 게임 규칙, 타입, 상수, 수치 데이터 | 없음 (pure TS) |
 | `@gld/phaser-game` | Phaser 씬, 9개 시스템, EventBus | `@gld/shared`, `phaser` |
 | `web-shell` | React UI, Zustand 스토어, PWA 진입점 | `@gld/phaser-game`, `@gld/shared`, `zustand` |
+| `tools-app` | 개발용 에셋/타일맵/씬/밸런스 관리 UI와 로컬 Vite middleware | `@gld/shared`, `react`, `vite` |
 
 `web-shell`은 `@gld/phaser-game`을 import하지만, 런타임 통신은 EventBus를 통해서만 한다. 직접 시스템 인스턴스를 참조하지 않는다.
+
+`tools-app`은 public game shell이 아니다. `bun run dev:tools`로만 띄우는 로컬 개발 도구이며, asset catalog/ACR, Tiled JSON draft/apply, Phaser scene registry, balance sheet read/apply API를 Vite middleware로 제공한다. `web-shell`의 `/asset-review` 공개 라우트와 plugin은 제거되어 배포 surface에 개발 도구가 섞이지 않는다.
 
 ---
 
@@ -359,3 +364,4 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 | 2026-04-14 | §2, §3, §4 | **v2 랜덤 소환 + 합성 피벗 (당시 "Phase A" 트랙) 시스템 추가**. `CoreOrchestrator`를 `Game.ts create()` 초기화 시퀀스에 추가(`currentMap.id === MAIN_MAP_ID` 게이팅). SummonPoolSystem / RandomSummonSystem / MergeSystem 을 orchestrator가 owning. EventBus 리스너는 idempotent off→on 등록. `request-summon-tower`, `request-merge-towers`, `tower-summoned`, `towers-merged`, `merge-failed`, `summon-failed` 6개 신규 이벤트. 전용 gameStore 슬라이스 없이 기존 `energy` 셀렉터 + GameHud 로컬 state 조합. DeckSystem은 main_long에서 빈 덱으로 생성되어 4타워 흐름을 skip. cleanup()은 `orchestrator?.destroy()` 를 EventBus.off 직후에 호출. PR #170. |
 | 2026-04-20 | §2, §3 헤더 | **v3.1 정식 모드 안정화 (PR #175)**. 용어 정리 1차: "Phase A" prose → "정식 모드" 치환 (당시 코드 상수 `PhaseAOrchestrator`/`PHASE_A_MAP_ID`/`phase_a_long`/`phase-a-summon-ready`는 historical identifier로 유지 — v4에서 완전 제거됨). `CoreOrchestrator.handleGachaRequest` + `settlePendingSummon('cancelled' \| 'cancelled-no-refund')` 경로에 `cancelledGachaDraw` 캐시 추가 — 풀·가챠 양쪽 재소환 리롤 차단, 다른 tier 가챠는 캐시 폐기 + 새 roll. Phaser `scale.mode = Scale.NONE` + `autoCenter = NO_CENTER` 고정, React `GamePage` shell은 `100dvh + max-w-[430px] + flex-col` 모바일 세로형 표준 레이아웃 (TopHud safe-area-inset-top, GameHud safe-area-inset-bottom, 캔버스가 flex-1 슬롯 채움). `UnitSystem.applyDamage`의 `boss-hp-update` emit에 `Math.max(1, Math.floor(hp))` 가드 + `BossHpBar` 렌더 가드. `getWaveScaling` slots 11+ 공식 선형화 (`HP_SLOPE = 0.55`). |
 | 2026-04-21 | §2, §3, §8 | **v4 용어 정리 완결**. "Phase A" 식별자 전면 제거 (파일/클래스/상수/이벤트키/testid/에셋). 주요 코드 심볼 rename: `PhaseAOrchestrator` → `CoreOrchestrator`, `PhaseAHud` → `GameHud`, `PHASE_A_MAP_ID='phase_a_long'` → `MAIN_MAP_ID='main_long'`, `PHASE_A_SUMMON_COST` → `SUMMON_COST`, `generatePhaseAWaves` → `generateWaves`, `PhaseA{Energy,AdService}Api` → `Core{Energy,AdService}Api`, EventBus `'phase-a-summon-ready'` → `'summon-ready'`, TowerSystem `playPhaseA{Summon,Merge}Vfx` → `play{Summon,Merge}Vfx`, `startPhaseA` store action → `startGame`, data-testid prefix `phase-a-*` → `hud-*`. 에셋 `phase-a-long.json` → `main-long.json` + manifest key 동기화. SaveData 스키마 변화 없음 (v8 유지; `selectedMapId`는 in-memory only). |
+| 2026-05-04 | §1 | **개발용 tools-app 분리**. asset-review 공개 라우트/플러그인을 `web-shell`에서 제거하고, 에셋/타일맵/씬/밸런스 관리를 `packages/tools-app` 로컬 Vite 앱으로 이동. |

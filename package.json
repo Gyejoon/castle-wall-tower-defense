@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "dev:web": "bun run --filter web-shell dev",
+    "dev:tools": "bun run --filter tools-app dev",
     "dev:unity-preview": "bun run build:all && bun run --filter web-shell preview -- --port 8080",
     "build:web": "bun run --filter web-shell build",
     "build:unity": "cd packages/unity-game && \"${UNITY_PATH:-/Applications/Unity/Hub/Editor/$(ls /Applications/Unity/Hub/Editor 2>/dev/null | sort | tail -1)/Unity.app/Contents/MacOS/Unity}\" -batchmode -nographics -projectPath . -executeMethod GLD.BuildScripts.Editor.WebGLBuilder.Build -logFile -",

@@ -325,6 +325,48 @@ function findCodeReferences(
 	return refs;
 }
 
+interface UiComponent {
+	key: string;
+	file: string;
+	exports: string[];
+	sectionId: string;
+	codeReferences: string[];
+}
+
+function readUiComponents(repoRoot: string): UiComponent[] {
+	const dsRoot = join(repoRoot, 'packages/web-shell/src/components/ds');
+	if (!existsSync(dsRoot)) return [];
+	const files = readdirSync(dsRoot).filter(
+		(name) => name.endsWith('.tsx') && !name.startsWith('__'),
+	);
+	const sources = loadSourceIndex(repoRoot);
+	const dsRelative = relative(repoRoot, dsRoot);
+	const exportRegex =
+		/export\s+(?:function|const|class|type|interface)\s+([A-Za-z0-9_]+)/g;
+
+	return files
+		.map((name) => {
+			const fullPath = join(dsRoot, name);
+			const text = readFileSync(fullPath, 'utf8');
+			const exports = Array.from(text.matchAll(exportRegex), (m) => m[1]);
+			const key = name.replace(/\.tsx$/, '');
+			const refs: string[] = [];
+			for (const source of sources) {
+				if (source.path.startsWith(`${dsRelative}/`)) continue;
+				if (source.text.includes(key)) refs.push(source.path);
+				if (refs.length >= 8) break;
+			}
+			return {
+				key,
+				file: relative(repoRoot, fullPath),
+				exports,
+				sectionId: `ds-${key.toLowerCase()}`,
+				codeReferences: refs,
+			};
+		})
+		.sort((a, b) => a.key.localeCompare(b.key));
+}
+
 function readCatalog(repoRoot: string): CatalogEntry[] {
 	const assetsRoot = join(repoRoot, 'packages/web-shell/public/assets');
 	const manifest = readJson<AssetManifest>(
@@ -1368,6 +1410,12 @@ export function toolsPlugin(opts: ToolsPluginOptions = {}): Plugin {
 						return sendJson(res, 200, {
 							ok: true,
 							sheet: readBalanceSheet(repoRoot),
+						});
+					}
+
+					if (method === 'GET' && path === '/api/tools/ui/components') {
+						return sendJson(res, 200, {
+							components: readUiComponents(repoRoot),
 						});
 					}
 

@@ -305,6 +305,53 @@ h2 {
 	gap: 12px;
 }
 
+.ui-tool-layout {
+	display: grid;
+	flex: 1;
+	min-height: 0;
+	grid-template-columns: 280px minmax(0, 1fr);
+	gap: 12px;
+}
+
+.ui-component-list {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.ui-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+}
+
+.ui-detail .preview-frame-host.ui-gallery-frame {
+	flex: 1;
+	min-height: 360px;
+}
+
+.ui-references {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 8px 10px;
+	background: var(--panel-2);
+}
+
+.ui-references strong {
+	font-size: 12px;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.ui-references small code {
+	font-size: 11px;
+}
+
 .panel {
   min-width: 0;
   padding: 12px;
@@ -774,7 +821,8 @@ textarea {
 	}
 
 	.tool-two-col,
-	.balance-layout {
+	.balance-layout,
+	.ui-tool-layout {
 		grid-template-columns: 1fr;
 	}
 

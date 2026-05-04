@@ -96,7 +96,15 @@ export const CHECK_LABELS: Record<CheckId, string> = {
 	'web-build': 'Web build',
 };
 
-export type ToolSection = 'Assets' | 'Tilemap' | 'Scenes' | 'Balance';
+export type ToolSection = 'Assets' | 'Tilemap' | 'Scenes' | 'Balance' | 'UI';
+
+export interface UiComponent {
+	key: string;
+	file: string;
+	exports: string[];
+	sectionId: string;
+	codeReferences: string[];
+}
 
 export type Busy =
 	| 'idle'

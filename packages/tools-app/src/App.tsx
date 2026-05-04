@@ -12,6 +12,7 @@ import {
 	listCatalog,
 	listStaging,
 	listTilemaps,
+	listUiComponents,
 	regenerateAsset,
 	rejectAsset,
 	runAcrCheck,
@@ -23,6 +24,7 @@ import { AssetsTool } from './tools/AssetsTool';
 import { BalanceTool } from './tools/BalanceTool';
 import { ScenesTool } from './tools/ScenesTool';
 import { TilemapTool } from './tools/TilemapTool';
+import { UiTool } from './tools/UiTool';
 import {
 	type AcrChecklistItem,
 	type AssetChangeRequest,
@@ -40,9 +42,16 @@ import {
 	type TilemapCell,
 	type TilemapDocument,
 	type ToolSection,
+	type UiComponent,
 } from './types';
 
-const NAV_ITEMS: ToolSection[] = ['Assets', 'Tilemap', 'Scenes', 'Balance'];
+const NAV_ITEMS: ToolSection[] = [
+	'Assets',
+	'Tilemap',
+	'Scenes',
+	'Balance',
+	'UI',
+];
 
 export function App() {
 	const [activeTool, setActiveTool] = useState<ToolSection>('Assets');
@@ -54,6 +63,7 @@ export function App() {
 		null,
 	);
 	const [balance, setBalance] = useState<BalanceSheet | null>(null);
+	const [uiComponents, setUiComponents] = useState<UiComponent[]>([]);
 	const [selectedAssetKey, setSelectedAssetKey] = useState<string | null>(null);
 	const [selectedAcrId, setSelectedAcrId] = useState<string | null>(null);
 	const [selectedTilemapId, setSelectedTilemapId] = useState<string | null>(
@@ -114,6 +124,7 @@ export function App() {
 				nextTilemaps,
 				nextScenes,
 				nextBalance,
+				nextUiComponents,
 			] = await Promise.all([
 				listCatalog(),
 				listAcrs(),
@@ -121,6 +132,7 @@ export function App() {
 				listTilemaps(),
 				getScenes(),
 				getBalance(),
+				listUiComponents(),
 			]);
 			setCatalog(nextCatalog);
 			setAcrs(nextAcrs);
@@ -128,6 +140,7 @@ export function App() {
 			setTilemaps(nextTilemaps);
 			setSceneSettings(nextScenes);
 			setBalance(nextBalance);
+			setUiComponents(nextUiComponents);
 			setSelectedAssetKey((prev) => prev ?? nextCatalog[0]?.key ?? null);
 			setSelectedAcrId((prev) => prev ?? nextAcrs[0]?.id ?? null);
 			setSelectedTilemapId((prev) => prev ?? nextTilemaps[0]?.id ?? null);
@@ -473,8 +486,12 @@ export function App() {
 								onChange={setBalance}
 							/>
 						)}
+
+						{activeTool === 'UI' && (
+							<UiTool busy={busy} components={uiComponents} />
+						)}
 					</div>
-					<PreviewPanel version={previewVersion} />
+					{activeTool !== 'UI' && <PreviewPanel version={previewVersion} />}
 				</div>
 			</main>
 

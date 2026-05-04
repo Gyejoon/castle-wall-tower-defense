@@ -7,6 +7,7 @@ import type {
 	StagingEntry,
 	TilemapCell,
 	TilemapDocument,
+	UiComponent,
 } from './types';
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -157,6 +158,14 @@ export async function applyBalance(
 		body: JSON.stringify({ sheet }),
 	});
 	return readJson(response);
+}
+
+export async function listUiComponents(): Promise<UiComponent[]> {
+	const response = await fetch('/api/tools/ui/components', {
+		cache: 'no-store',
+	});
+	const body = await readJson<{ components: UiComponent[] }>(response);
+	return body.components;
 }
 
 export async function listStaging(): Promise<StagingEntry[]> {

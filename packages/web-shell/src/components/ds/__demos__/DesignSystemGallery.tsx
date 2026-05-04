@@ -30,7 +30,7 @@ export function DesignSystemGallery() {
 				모든 프리미티브 variant·intent·state를 한 화면에 나열합니다. 개발 전용.
 			</p>
 
-			<Section title="Button">
+			<Section id="ds-button" title="Button">
 				<Row label="variant">
 					<Button variant="primary">Primary</Button>
 					<Button variant="secondary">Secondary</Button>
@@ -52,7 +52,7 @@ export function DesignSystemGallery() {
 				</Row>
 			</Section>
 
-			<Section title="Card">
+			<Section id="ds-card" title="Card">
 				<Row label="variant">
 					<Card variant="panel">panel variant</Card>
 					<Card variant="framed">framed variant</Card>
@@ -82,7 +82,7 @@ export function DesignSystemGallery() {
 				</Row>
 			</Section>
 
-			<Section title="Badge">
+			<Section id="ds-badge" title="Badge">
 				<Row label="variant">
 					<Badge variant="pill">pill</Badge>
 					<Badge variant="tag">tag</Badge>
@@ -133,7 +133,7 @@ export function DesignSystemGallery() {
 				</Row>
 			</Section>
 
-			<Section title="Panel (title + actions)">
+			<Section id="ds-panel" title="Panel (title + actions)">
 				<Panel
 					title="에너지 부족"
 					actions={
@@ -153,7 +153,7 @@ export function DesignSystemGallery() {
 				</Panel>
 			</Section>
 
-			<Section title="Overlay / Sheet triggers">
+			<Section id="ds-overlay" title="Overlay / Sheet triggers">
 				<Row>
 					<Button onClick={() => setShowOverlay('pause')}>pause overlay</Button>
 					<Button onClick={() => setShowOverlay('result')}>
@@ -274,9 +274,17 @@ export function DesignSystemGallery() {
 	);
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+	id,
+	title,
+	children,
+}: {
+	id?: string;
+	title: string;
+	children: ReactNode;
+}) {
 	return (
-		<section className="mb-xl">
+		<section id={id} className="mb-xl" style={{ scrollMarginTop: 16 }}>
 			<h2
 				className="font-pixel font-bold text-h2 mb-md"
 				style={{ color: core.gold }}

@@ -156,8 +156,92 @@ pre {
   min-width: 0;
   flex-direction: column;
   gap: 12px;
-  overflow: auto;
+  overflow: hidden;
   padding: 16px;
+}
+
+.workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+.tool-area {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+}
+
+.preview-panel {
+  display: flex;
+  flex: 0 0 400px;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.preview-panel.collapsed {
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 4px;
+}
+
+.preview-collapse {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.preview-url-row {
+  display: flex;
+  gap: 6px;
+}
+
+.preview-url-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-frame-host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #000;
+  overflow: hidden;
+}
+
+.preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+.preview-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.preview-hint code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--panel-2);
+  font-size: 11px;
 }
 
 .topbar,
@@ -692,5 +776,13 @@ textarea {
 	.tool-two-col,
 	.balance-layout {
 		grid-template-columns: 1fr;
+	}
+
+	.workspace-body {
+		flex-direction: column;
+	}
+
+	.preview-panel {
+		flex: 0 0 360px;
 	}
 }

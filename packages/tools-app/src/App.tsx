@@ -18,6 +18,7 @@ import {
 	saveScenes,
 	updateAcr,
 } from './api';
+import { PreviewPanel } from './PreviewPanel';
 import { AssetsTool } from './tools/AssetsTool';
 import { BalanceTool } from './tools/BalanceTool';
 import { ScenesTool } from './tools/ScenesTool';
@@ -65,6 +66,11 @@ export function App() {
 	const [busy, setBusy] = useState<Busy>('idle');
 	const [error, setError] = useState<string | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
+	const [previewVersion, setPreviewVersion] = useState(0);
+
+	const bumpPreview = useCallback(() => {
+		setPreviewVersion((value) => value + 1);
+	}, []);
 
 	const selectedAsset = useMemo(
 		() => catalog.find((asset) => asset.key === selectedAssetKey) ?? catalog[0],
@@ -260,12 +266,13 @@ export function App() {
 			showNotice(
 				result.changed ? 'Applied manifest updates' : 'ACR marked applied',
 			);
+			if (result.changed) bumpPreview();
 		} catch (err) {
 			setError(String(err));
 		} finally {
 			setBusy('idle');
 		}
-	}, [replaceAcr, selectedAcr, showNotice]);
+	}, [bumpPreview, replaceAcr, selectedAcr, showNotice]);
 
 	const handleStagingAction = useCallback(
 		async (entry: StagingEntry, action: 'accept' | 'reject' | 'regenerate') => {
@@ -282,13 +289,14 @@ export function App() {
 				showNotice(`${action} ${entry.id}`);
 				setStaging(await listStaging());
 				setCatalog(await listCatalog());
+				if (action !== 'reject') bumpPreview();
 			} catch (err) {
 				setError(String(err));
 			} finally {
 				setBusy('idle');
 			}
 		},
-		[showNotice],
+		[bumpPreview, showNotice],
 	);
 
 	const paintTile = useCallback(
@@ -329,12 +337,13 @@ export function App() {
 			const result = await applyTilemap(tileDraft);
 			setTilemaps(await listTilemaps());
 			showNotice(`Applied ${result.path}`);
+			bumpPreview();
 		} catch (err) {
 			setError(String(err));
 		} finally {
 			setBusy('idle');
 		}
-	}, [showNotice, tileDraft]);
+	}, [bumpPreview, showNotice, tileDraft]);
 
 	const handleSaveScenes = useCallback(async () => {
 		if (!sceneSettings) return;
@@ -358,12 +367,13 @@ export function App() {
 			const result = await applyBalance(balance);
 			setBalance(result.sheet);
 			showNotice('Balance sheet applied to shared constants');
+			bumpPreview();
 		} catch (err) {
 			setError(String(err));
 		} finally {
 			setBusy('idle');
 		}
-	}, [balance, showNotice]);
+	}, [balance, bumpPreview, showNotice]);
 
 	return (
 		<div className="app-shell">
@@ -404,63 +414,68 @@ export function App() {
 					</div>
 				</header>
 
-				{activeTool === 'Assets' && (
-					<AssetsTool
-						acrs={acrs}
-						busy={busy}
-						catalog={catalog}
-						filteredCatalog={filteredCatalog}
-						onApply={handleApplyAcr}
-						onChecklistChange={handleChecklistChange}
-						onCreateAcr={handleCreateAcr}
-						onManifestPatch={handleManifestPatch}
-						onRunCheck={handleRunCheck}
-						onSectionChange={setSection}
-						onSelectAcr={setSelectedAcrId}
-						onSelectAsset={setSelectedAssetKey}
-						onStagingAction={handleStagingAction}
-						query={query}
-						section={section}
-						sections={sections}
-						selectedAcr={selectedAcr ?? null}
-						selectedAsset={selectedAsset ?? null}
-						setQuery={setQuery}
-						staging={staging}
-					/>
-				)}
+				<div className="workspace-body">
+					<div className="tool-area">
+						{activeTool === 'Assets' && (
+							<AssetsTool
+								acrs={acrs}
+								busy={busy}
+								catalog={catalog}
+								filteredCatalog={filteredCatalog}
+								onApply={handleApplyAcr}
+								onChecklistChange={handleChecklistChange}
+								onCreateAcr={handleCreateAcr}
+								onManifestPatch={handleManifestPatch}
+								onRunCheck={handleRunCheck}
+								onSectionChange={setSection}
+								onSelectAcr={setSelectedAcrId}
+								onSelectAsset={setSelectedAssetKey}
+								onStagingAction={handleStagingAction}
+								query={query}
+								section={section}
+								sections={sections}
+								selectedAcr={selectedAcr ?? null}
+								selectedAsset={selectedAsset ?? null}
+								setQuery={setQuery}
+								staging={staging}
+							/>
+						)}
 
-				{activeTool === 'Tilemap' && (
-					<TilemapTool
-						brush={tileBrush}
-						busy={busy}
-						draft={tileDraft}
-						onApply={handleApplyTilemap}
-						onBrushChange={setTileBrush}
-						onGenerate={handleGenerateTilemap}
-						onPaint={paintTile}
-						onSelect={(id) => setSelectedTilemapId(id)}
-						selectedId={selectedTilemapId}
-						tilemaps={tilemaps}
-					/>
-				)}
+						{activeTool === 'Tilemap' && (
+							<TilemapTool
+								brush={tileBrush}
+								busy={busy}
+								draft={tileDraft}
+								onApply={handleApplyTilemap}
+								onBrushChange={setTileBrush}
+								onGenerate={handleGenerateTilemap}
+								onPaint={paintTile}
+								onSelect={(id) => setSelectedTilemapId(id)}
+								selectedId={selectedTilemapId}
+								tilemaps={tilemaps}
+							/>
+						)}
 
-				{activeTool === 'Scenes' && sceneSettings && (
-					<ScenesTool
-						busy={busy}
-						onChange={setSceneSettings}
-						onSave={handleSaveScenes}
-						settings={sceneSettings}
-					/>
-				)}
+						{activeTool === 'Scenes' && sceneSettings && (
+							<ScenesTool
+								busy={busy}
+								onChange={setSceneSettings}
+								onSave={handleSaveScenes}
+								settings={sceneSettings}
+							/>
+						)}
 
-				{activeTool === 'Balance' && balance && (
-					<BalanceTool
-						balance={balance}
-						busy={busy}
-						onApply={handleApplyBalance}
-						onChange={setBalance}
-					/>
-				)}
+						{activeTool === 'Balance' && balance && (
+							<BalanceTool
+								balance={balance}
+								busy={busy}
+								onApply={handleApplyBalance}
+								onChange={setBalance}
+							/>
+						)}
+					</div>
+					<PreviewPanel version={previewVersion} />
+				</div>
 			</main>
 
 			{notice && <div className="toast success">{notice}</div>}

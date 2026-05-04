@@ -334,6 +334,16 @@ interface UiComponent {
 	codeReferences: string[];
 }
 
+const GALLERY_DEMOED_KEYS = new Set([
+	'BossHpBar',
+	'BossWarningOverlay',
+	'GameOverScreen',
+	'ToastNotification',
+	'TopHud',
+	'TowerActionSheet',
+	'UpgradePickOverlay',
+]);
+
 function readUiComponents(repoRoot: string): UiComponent[] {
 	const componentsRoot = join(repoRoot, 'packages/web-shell/src/components');
 	if (!existsSync(componentsRoot)) return [];
@@ -360,12 +370,13 @@ function readUiComponents(repoRoot: string): UiComponent[] {
 				if (source.text.includes(key)) refs.push(source.path);
 				if (refs.length >= 8) break;
 			}
+			const hasGalleryDemo = category === 'ds' || GALLERY_DEMOED_KEYS.has(key);
 			result.push({
 				key,
 				category,
 				file: fileRel,
 				exports,
-				sectionId: category === 'ds' ? `ds-${key.toLowerCase()}` : null,
+				sectionId: hasGalleryDemo ? `ds-${key.toLowerCase()}` : null,
 				codeReferences: refs,
 			});
 		}

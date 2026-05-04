@@ -1,6 +1,13 @@
 // 개발 전용 갤러리. ?ds=1 쿼리로만 접근.
 import { core } from '@gld/shared';
 import { type ReactNode, useState } from 'react';
+import { BossHpBar } from '../../game/BossHpBar';
+import { BossWarningOverlay } from '../../game/BossWarningOverlay';
+import { GameOverScreen } from '../../game/GameOverScreen';
+import { ToastNotification } from '../../game/ToastNotification';
+import { TopHud } from '../../game/TopHud';
+import { TowerActionSheet } from '../../game/TowerActionSheet';
+import { UpgradePickOverlay } from '../../game/UpgradePickOverlay';
 import { CoinIcon, DiamondIcon } from '../../ui/CurrencyIcon';
 import {
 	Badge,
@@ -166,6 +173,146 @@ export function DesignSystemGallery() {
 				</Row>
 			</Section>
 
+			<Section id="ds-tophud" title="TopHud (in-game HUD bar)">
+				<HudFrame height={140}>
+					<TopHud
+						lives={3}
+						energy={120}
+						isBossPhase={false}
+						combatHud={{
+							bossWarning: false,
+							phase: 'wave 3',
+							timerLabel: '00:42',
+						}}
+						waitCountdown={0}
+						gameSpeed={1}
+						speed2xUnlocked
+						runStatus="playing"
+						onToggleSpeed={() => {}}
+					/>
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-bosshpbar" title="BossHpBar">
+				<HudFrame height={120}>
+					<BossHpBar
+						entry={{
+							unitId: 'b1',
+							defId: 'boss-flame-tier3',
+							hp: 4200,
+							maxHp: 6000,
+							phase: 2,
+						}}
+					/>
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-toastnotification" title="ToastNotification (4 tones)">
+				<HudFrame height={80}>
+					<ToastNotification
+						toast={{ message: 'Wave cleared!', tone: 'success' }}
+					/>
+				</HudFrame>
+				<HudFrame height={80}>
+					<ToastNotification
+						toast={{ message: '에너지 부족', tone: 'warning' }}
+					/>
+				</HudFrame>
+				<HudFrame height={80}>
+					<ToastNotification
+						toast={{ message: '연결이 끊겼어요', tone: 'error' }}
+					/>
+				</HudFrame>
+				<HudFrame height={80}>
+					<ToastNotification
+						toast={{ message: '튜토리얼 진행 중', tone: 'info' }}
+					/>
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-bosswarningoverlay" title="BossWarningOverlay">
+				<HudFrame height={280}>
+					<BossWarningOverlay visible />
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-upgradepickoverlay" title="UpgradePickOverlay">
+				<HudFrame height={420}>
+					<UpgradePickOverlay
+						choices={[
+							{
+								id: 'u1',
+								name: '관통 강화',
+								description: '투사체 1회 추가 관통',
+								icon: '🎯',
+							},
+							{
+								id: 'u2',
+								name: '치명타',
+								description: '치명타 확률 +15%',
+								icon: '💥',
+							},
+							{
+								id: 'u3',
+								name: '재충전',
+								description: '에너지 회복 +20%',
+								icon: '⚡',
+							},
+						]}
+					/>
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-toweractionsheet" title="TowerActionSheet">
+				<HudFrame height={320}>
+					<TowerActionSheet
+						selectedTower={{
+							instanceId: '0,0',
+							col: 0,
+							row: 0,
+							towerId: 'archer',
+							towerName: '궁수',
+							tier: 1,
+							sellValue: 30,
+						}}
+						onDeselect={() => {}}
+					/>
+				</HudFrame>
+			</Section>
+
+			<Section id="ds-gameoverscreen" title="GameOverScreen">
+				<HudFrame height={460}>
+					<GameOverScreen
+						runStatus="victory"
+						gameOverStats={{
+							wavesCleared: 12,
+							totalWaves: 15,
+							towersPlaced: 8,
+							timeSurvivedSec: 240,
+							goldEarned: 1850,
+							xpEarned: 320,
+						}}
+						onRestart={() => {}}
+						onLobby={() => {}}
+					/>
+				</HudFrame>
+				<HudFrame height={460}>
+					<GameOverScreen
+						runStatus="defeat"
+						gameOverStats={{
+							wavesCleared: 7,
+							totalWaves: 15,
+							towersPlaced: 5,
+							timeSurvivedSec: 132,
+							goldEarned: 540,
+							xpEarned: 95,
+						}}
+						onRestart={() => {}}
+						onLobby={() => {}}
+					/>
+				</HudFrame>
+			</Section>
+
 			{showOverlay === 'pause' && (
 				<Overlay
 					intent="pause"
@@ -293,6 +440,23 @@ function Section({
 			</h2>
 			<div className="flex flex-col gap-md">{children}</div>
 		</section>
+	);
+}
+
+function HudFrame({
+	height,
+	children,
+}: {
+	height: number;
+	children: ReactNode;
+}) {
+	return (
+		<div
+			className="relative mx-auto w-full max-w-[430px] overflow-hidden border border-border bg-bg"
+			style={{ height }}
+		>
+			{children}
+		</div>
 	);
 }
 

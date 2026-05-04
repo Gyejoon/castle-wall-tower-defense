@@ -98,6 +98,15 @@ export const CHECK_LABELS: Record<CheckId, string> = {
 
 export type ToolSection = 'Assets' | 'Tilemap' | 'Scenes' | 'Balance';
 
+export type Busy =
+	| 'idle'
+	| 'loading'
+	| 'creating'
+	| 'saving'
+	| 'checking'
+	| 'applying'
+	| 'staging';
+
 export type TileKind = 'ground' | 'path' | 'platform' | 'wall' | 'foliage';
 
 export interface TilemapCell {

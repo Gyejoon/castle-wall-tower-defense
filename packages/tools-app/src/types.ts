@@ -100,9 +100,10 @@ export type ToolSection = 'Assets' | 'Tilemap' | 'Scenes' | 'Balance' | 'UI';
 
 export interface UiComponent {
 	key: string;
+	category: string;
 	file: string;
 	exports: string[];
-	sectionId: string;
+	sectionId: string | null;
 	codeReferences: string[];
 }
 

@@ -327,44 +327,63 @@ function findCodeReferences(
 
 interface UiComponent {
 	key: string;
+	category: string;
 	file: string;
 	exports: string[];
-	sectionId: string;
+	sectionId: string | null;
 	codeReferences: string[];
 }
 
 function readUiComponents(repoRoot: string): UiComponent[] {
-	const dsRoot = join(repoRoot, 'packages/web-shell/src/components/ds');
-	if (!existsSync(dsRoot)) return [];
-	const files = readdirSync(dsRoot).filter(
-		(name) => name.endsWith('.tsx') && !name.startsWith('__'),
-	);
+	const componentsRoot = join(repoRoot, 'packages/web-shell/src/components');
+	if (!existsSync(componentsRoot)) return [];
 	const sources = loadSourceIndex(repoRoot);
-	const dsRelative = relative(repoRoot, dsRoot);
 	const exportRegex =
 		/export\s+(?:function|const|class|type|interface)\s+([A-Za-z0-9_]+)/g;
+	const result: UiComponent[] = [];
 
-	return files
-		.map((name) => {
-			const fullPath = join(dsRoot, name);
+	const collect = (dir: string, category: string) => {
+		if (!existsSync(dir)) return;
+		for (const entry of readdirSync(dir)) {
+			if (entry.startsWith('__') || entry.startsWith('.')) continue;
+			if (!entry.endsWith('.tsx')) continue;
+			if (entry.endsWith('.test.tsx')) continue;
+			const fullPath = join(dir, entry);
+			if (!statSync(fullPath).isFile()) continue;
+			const fileRel = relative(repoRoot, fullPath);
 			const text = readFileSync(fullPath, 'utf8');
 			const exports = Array.from(text.matchAll(exportRegex), (m) => m[1]);
-			const key = name.replace(/\.tsx$/, '');
+			const key = entry.replace(/\.tsx$/, '');
 			const refs: string[] = [];
 			for (const source of sources) {
-				if (source.path.startsWith(`${dsRelative}/`)) continue;
+				if (source.path === fileRel) continue;
 				if (source.text.includes(key)) refs.push(source.path);
 				if (refs.length >= 8) break;
 			}
-			return {
+			result.push({
 				key,
-				file: relative(repoRoot, fullPath),
+				category,
+				file: fileRel,
 				exports,
-				sectionId: `ds-${key.toLowerCase()}`,
+				sectionId: category === 'ds' ? `ds-${key.toLowerCase()}` : null,
 				codeReferences: refs,
-			};
-		})
-		.sort((a, b) => a.key.localeCompare(b.key));
+			});
+		}
+	};
+
+	for (const entry of readdirSync(componentsRoot)) {
+		if (entry.startsWith('__') || entry.startsWith('.')) continue;
+		const full = join(componentsRoot, entry);
+		if (statSync(full).isDirectory()) {
+			collect(full, entry);
+		}
+	}
+	collect(componentsRoot, 'root');
+
+	return result.sort((a, b) => {
+		if (a.category !== b.category) return a.category.localeCompare(b.category);
+		return a.key.localeCompare(b.key);
+	});
 }
 
 function readCatalog(repoRoot: string): CatalogEntry[] {

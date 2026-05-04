@@ -1,7 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Busy, UiComponent } from '../types';
 
 const DEFAULT_GALLERY_BASE = 'http://localhost:3000/?ds=1';
+const DEFAULT_LIVE_BASE = 'http://localhost:3000/';
+
+const CATEGORY_LABELS: Record<string, string> = {
+	ds: 'Design System',
+	ui: 'Pixel UI',
+	game: 'Game / HUD',
+	lobby: 'Lobby',
+	auth: 'Auth',
+	gacha: 'Gacha',
+	common: 'Common',
+	root: 'Root',
+};
+
+function categoryLabel(category: string): string {
+	return CATEGORY_LABELS[category] ?? category;
+}
 
 export function UiTool({
 	components,
@@ -11,18 +27,37 @@ export function UiTool({
 	busy: Busy;
 }) {
 	const [galleryBase, setGalleryBase] = useState(DEFAULT_GALLERY_BASE);
-	const [draftBase, setDraftBase] = useState(DEFAULT_GALLERY_BASE);
+	const [liveBase, setLiveBase] = useState(DEFAULT_LIVE_BASE);
+	const [draftGallery, setDraftGallery] = useState(DEFAULT_GALLERY_BASE);
+	const [draftLive, setDraftLive] = useState(DEFAULT_LIVE_BASE);
 	const [selectedKey, setSelectedKey] = useState<string | null>(
 		components[0]?.key ?? null,
 	);
 	const [reloadCounter, setReloadCounter] = useState(0);
 
+	const grouped = useMemo(() => {
+		const map = new Map<string, UiComponent[]>();
+		for (const component of components) {
+			const list = map.get(component.category) ?? [];
+			list.push(component);
+			map.set(component.category, list);
+		}
+		return Array.from(map.entries()).sort(([a], [b]) => {
+			if (a === 'ds') return -1;
+			if (b === 'ds') return 1;
+			return a.localeCompare(b);
+		});
+	}, [components]);
+
 	const selected =
 		components.find((entry) => entry.key === selectedKey) ?? components[0];
-	const galleryUrl = selected
-		? `${galleryBase}#${selected.sectionId}`
+	const previewUrl = selected
+		? selected.sectionId
+			? `${galleryBase}#${selected.sectionId}`
+			: liveBase
 		: galleryBase;
-	const reloadKey = `${galleryUrl}:${reloadCounter}`;
+	const previewMode = selected?.sectionId ? 'gallery' : 'live';
+	const reloadKey = `${previewUrl}:${reloadCounter}`;
 
 	return (
 		<section className="ui-tool-layout">
@@ -36,35 +71,43 @@ export function UiTool({
 				<div className="stack">
 					{components.length === 0 && (
 						<p className="empty">
-							Run the dev server in this workspace; no components were found
-							under <code>web-shell/src/components/ds</code>.
+							No components found under <code>web-shell/src/components</code>.
 						</p>
 					)}
-					{components.map((component) => (
-						<button
-							key={component.key}
-							type="button"
-							className={`acr-card ${
-								component.key === selected?.key ? 'active' : ''
-							}`}
-							disabled={busy !== 'idle'}
-							onClick={() => setSelectedKey(component.key)}
-						>
-							<span className="status-dot ready" />
-							<span>
-								<strong>{component.key}</strong>
-								<small>{component.exports.join(', ') || '—'}</small>
-								<small>refs {component.codeReferences.length}</small>
-							</span>
-						</button>
+					{grouped.map(([category, list]) => (
+						<div key={category} className="ui-component-group">
+							<p className="ui-group-label">{categoryLabel(category)}</p>
+							{list.map((component) => (
+								<button
+									key={component.key}
+									type="button"
+									className={`acr-card ${
+										component.key === selected?.key ? 'active' : ''
+									}`}
+									disabled={busy !== 'idle'}
+									onClick={() => setSelectedKey(component.key)}
+								>
+									<span
+										className={`status-dot ${
+											component.sectionId ? 'ready' : 'draft'
+										}`}
+									/>
+									<span>
+										<strong>{component.key}</strong>
+										<small>{component.exports.join(', ') || '—'}</small>
+										<small>refs {component.codeReferences.length}</small>
+									</span>
+								</button>
+							))}
+						</div>
 					))}
 				</div>
 				<div className="sidebar-card">
-					<p className="eyebrow">Source</p>
+					<p className="eyebrow">Preview source</p>
 					<p>
-						Components live under{' '}
-						<code>packages/web-shell/src/components/ds</code>. The DS gallery is
-						the live preview for variants and intents.
+						DS components use the <code>?ds=1</code> gallery anchors. Other
+						components fall back to the live game; navigate in-game to bring HUD
+						overlays into view.
 					</p>
 				</div>
 			</aside>
@@ -72,23 +115,26 @@ export function UiTool({
 			<section className="panel ui-detail">
 				<div className="panel-header">
 					<div>
-						<p className="eyebrow">Inspector</p>
+						<p className="eyebrow">
+							Inspector{' '}
+							<span className={`badge ${previewMode}`}>{previewMode}</span>
+						</p>
 						<h2>{selected?.key ?? 'No component selected'}</h2>
 					</div>
 					<div className="toolbar">
 						<button
 							type="button"
 							onClick={() => setReloadCounter((value) => value + 1)}
-							title="Reload gallery"
+							title="Reload preview"
 						>
 							↻
 						</button>
 						{selected && (
 							<a
-								href={galleryUrl}
+								href={previewUrl}
 								target="_blank"
 								rel="noreferrer noopener"
-								title="Open gallery in new tab"
+								title="Open in new tab"
 							>
 								↗
 							</a>
@@ -100,6 +146,10 @@ export function UiTool({
 					<>
 						<dl className="meta-list">
 							<div>
+								<dt>Category</dt>
+								<dd>{categoryLabel(selected.category)}</dd>
+							</div>
+							<div>
 								<dt>File</dt>
 								<dd>
 									<code>{selected.file}</code>
@@ -110,9 +160,15 @@ export function UiTool({
 								<dd>{selected.exports.join(', ') || '—'}</dd>
 							</div>
 							<div>
-								<dt>Section ID</dt>
+								<dt>Anchor</dt>
 								<dd>
-									<code>#{selected.sectionId}</code>
+									{selected.sectionId ? (
+										<code>#{selected.sectionId}</code>
+									) : (
+										<span className="muted">
+											live game (no gallery section)
+										</span>
+									)}
 								</dd>
 							</div>
 						</dl>
@@ -135,14 +191,23 @@ export function UiTool({
 					className="preview-url-row"
 					onSubmit={(event) => {
 						event.preventDefault();
-						setGalleryBase(draftBase.trim() || DEFAULT_GALLERY_BASE);
+						setGalleryBase(draftGallery.trim() || DEFAULT_GALLERY_BASE);
+						setLiveBase(draftLive.trim() || DEFAULT_LIVE_BASE);
 					}}
 				>
 					<input
 						type="url"
-						value={draftBase}
-						onChange={(event) => setDraftBase(event.target.value)}
+						value={draftGallery}
+						onChange={(event) => setDraftGallery(event.target.value)}
 						placeholder={DEFAULT_GALLERY_BASE}
+						title="Gallery URL (used for DS components)"
+					/>
+					<input
+						type="url"
+						value={draftLive}
+						onChange={(event) => setDraftLive(event.target.value)}
+						placeholder={DEFAULT_LIVE_BASE}
+						title="Live game URL (used for HUD components)"
 					/>
 					<button type="submit">Go</button>
 				</form>
@@ -150,17 +215,18 @@ export function UiTool({
 				<div className="preview-frame-host ui-gallery-frame">
 					<iframe
 						key={reloadKey}
-						title="DS gallery preview"
-						src={galleryUrl}
+						title="UI preview"
+						src={previewUrl}
 						className="preview-frame"
 						sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms"
 					/>
 				</div>
 
 				<p className="preview-hint">
-					Run <code>bun run dev:web</code> to mount the gallery on{' '}
-					<code>{DEFAULT_GALLERY_BASE}</code>. Selecting a component navigates
-					the iframe to that section anchor.
+					Run <code>bun run dev:web</code> to mount{' '}
+					<code>{DEFAULT_LIVE_BASE}</code>. DS components scroll the gallery to
+					their anchor; HUD/Game components show the live app for in-context
+					inspection.
 				</p>
 			</section>
 		</section>

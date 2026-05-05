@@ -183,3 +183,38 @@
   -unity-text-align: middle-center;
   margin-top: 6px;
 }
+
+.game-over-overlay {
+  padding: 24px;
+}
+
+.game-over-panel {
+  width: 280px;
+  align-items: center;
+}
+
+#game-over-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-body14-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+#game-over-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--type-body12-size);
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+#game-over-stats {
+  color: var(--color-text-primary);
+  font-size: var(--type-caption10-size);
+  -unity-text-align: middle-center;
+  margin-bottom: 12px;
+}
+
+.game-over-panel > .gld-btn {
+  align-self: stretch;
+}

@@ -56,6 +56,9 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var bossWarning = controller.GetComponent<BossWarningOverlayController>();
             Assert.That(bossWarning, Is.Not.Null);
             Assert.That(bossWarning.IsBound, Is.True);
+            var gameOver = controller.GetComponent<GameOverOverlayController>();
+            Assert.That(gameOver, Is.Not.Null);
+            Assert.That(gameOver.IsBound, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
@@ -171,6 +174,10 @@ namespace GLD.Tests.PlayMode.CoreLoop
             GameEvents.RaiseBossDefeated("boss-1", 10);
             Assert.That(bossHpBar.IsVisible, Is.False);
             Assert.That(hud.LastMessage, Does.Contain("Boss defeated"));
+            GameEvents.RaiseGameOver(false);
+            var gameOver = controller.GetComponent<GameOverOverlayController>();
+            Assert.That(gameOver, Is.Not.Null);
+            Assert.That(gameOver.IsVisible, Is.True);
         }
     }
 }

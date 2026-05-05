@@ -32,6 +32,13 @@ namespace GLD.Tests.EditMode.UI
                 controller.Bind(new RunState("tutorial-test"), root);
 
                 Assert.That(controller.IsBound, Is.True);
+                Assert.That(controller.IsVisible, Is.False);
+                Assert.That(controller.CurrentTitle, Is.EqualTo("Summon"));
+
+                var runState = new RunState("tutorial-running");
+                controller.Bind(runState, root);
+                runState.SetRunStatus(RunStatus.Running);
+
                 Assert.That(controller.IsVisible, Is.True);
                 Assert.That(controller.CurrentTitle, Is.EqualTo("Summon"));
 
@@ -61,10 +68,13 @@ namespace GLD.Tests.EditMode.UI
             try
             {
                 var controller = host.AddComponent<TutorialOverlayController>();
-                controller.Bind(new RunState("tutorial-test"), root);
+                var runState = new RunState("tutorial-test");
+                controller.Bind(runState, root);
+                runState.SetRunStatus(RunStatus.Running);
 
                 Assert.That(root.Q<Button>("tutorial-next"), Is.Not.Null);
                 Assert.That(root.Q<Button>("tutorial-skip"), Is.Not.Null);
+                Assert.That(controller.IsVisible, Is.True);
                 controller.Dismiss();
 
                 Assert.That(controller.IsVisible, Is.False);

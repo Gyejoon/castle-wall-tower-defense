@@ -58,8 +58,14 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             RegisterButtons();
             BindEvents();
             if (_runState != null)
+            {
                 _runState.OnChanged += HandleRunStateChanged;
-            Refresh();
+                HandleRunStateChanged(_runState);
+            }
+            else
+            {
+                Hide();
+            }
             IsBound = true;
         }
 
@@ -138,8 +144,19 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void HandleRunStateChanged(RunState state)
         {
-            if (state != null && (state.RunStatus == RunStatus.Victory || state.RunStatus == RunStatus.Defeat))
+            if (state == null || state.RunStatus == RunStatus.Building || state.RunStatus == RunStatus.Lobby)
+            {
+                Hide();
+                return;
+            }
+
+            if (state.RunStatus == RunStatus.Victory || state.RunStatus == RunStatus.Defeat)
+            {
                 Dismiss();
+                return;
+            }
+
+            Refresh();
         }
 
         void HandleSummonOffered(string towerId) => SetStep(TutorialStep.Place);

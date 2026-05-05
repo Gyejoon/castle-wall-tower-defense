@@ -1,3 +1,4 @@
+using GLD.Core;
 using GLD.Data;
 using GLD.Systems.Grid;
 using GLD.Systems.Units;
@@ -43,6 +44,8 @@ namespace GLD.Systems.Towers
 
             var damage = Def.stats.damage * (1f + Mathf.Max(0f, GlobalAtkPct));
             var applied = units.ApplyDamage(target, damage);
+            GameEvents.RaiseUnitDamaged(target.Def.id, applied);
+            GameEvents.RaiseTowerAttacked(Def.id, applied);
             CooldownSeconds += 1f / Mathf.Max(0.01f, Def.stats.attackSpeed);
             return applied;
         }

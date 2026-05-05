@@ -1,11 +1,15 @@
 using GLD.Core;
 using GLD.Data;
+using GLD.SceneRuntime.CoreLoop.Input;
 using GLD.Systems.Energy;
+using GLD.Systems.DamageNumbers;
 using GLD.Systems.Grid;
+using GLD.Systems.Orchestrator;
 using GLD.Systems.Towers;
 using GLD.Systems.Units;
 using GLD.Systems.Waves;
 using GLD.SceneRuntime.CoreLoop.Render;
+using GLD.SceneRuntime.CoreLoop.Runtime;
 using UnityEngine;
 
 namespace GLD.SceneRuntime.CoreLoop
@@ -27,6 +31,14 @@ namespace GLD.SceneRuntime.CoreLoop
         public UnitSystem Units { get; private set; }
         public TowerSystem Towers { get; private set; }
         public WaveSystem Waves { get; private set; }
+        public GameStateManager State { get; private set; }
+        public DamageNumberSystem DamageNumbers { get; private set; }
+        public CoreOrchestrator Orchestrator { get; private set; }
+        public PlacementCoordinator Placement { get; private set; }
+
+        CombatMediator _combatMediator;
+        BossContextBuilder _bossContextBuilder;
+        InputController _inputController;
 
         void Awake()
         {
@@ -44,6 +56,13 @@ namespace GLD.SceneRuntime.CoreLoop
             Units = new UnitSystem(Grid, Energy, database.units);
             Towers = new TowerSystem(Grid, Energy, Units);
             Waves = new WaveSystem(database.waves, database.units, Units);
+            State = new GameStateManager();
+            State.SetSpeedMultiplier(speedMultiplier);
+            DamageNumbers = new DamageNumberSystem(transform);
+            Orchestrator = new CoreOrchestrator(database, Towers, Waves);
+            Orchestrator.Enable();
+            _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers);
+            _bossContextBuilder = new BossContextBuilder();
 
             if (fieldRenderer == null)
                 fieldRenderer = GetComponent<CoreLoopFieldRenderer>();
@@ -57,20 +76,39 @@ namespace GLD.SceneRuntime.CoreLoop
                 hudController = gameObject.AddComponent<CoreLoopHudController>();
             hudController.Bind(this, fieldRenderer);
 
+            Placement = new PlacementCoordinator(this);
+            _inputController = new InputController(this, fieldRenderer, Placement);
+
             if (autostart)
                 Waves.Start(1);
         }
 
+        void Update()
+        {
+            _inputController?.Tick();
+            DamageNumbers?.TickUnscaled(Time.unscaledDeltaTime);
+        }
+
         void OnDestroy()
         {
+            _inputController?.Dispose();
+            _combatMediator?.Dispose();
+            Orchestrator?.Dispose();
+            DamageNumbers?.Dispose();
+            _inputController = null;
+            _combatMediator = null;
+            Orchestrator = null;
+            DamageNumbers = null;
             GameEvents.ClearRuntimeListeners();
+            Time.timeScale = 1f;
         }
 
         void FixedUpdate()
         {
-            if (Waves == null) return;
+            if (Waves == null || State == null) return;
 
-            var scaledDelta = Time.fixedDeltaTime * Mathf.Max(0f, speedMultiplier);
+            var scaledDelta = State.Tick(Time.fixedDeltaTime);
+            if (scaledDelta <= 0f) return;
             Energy.Tick(scaledDelta);
             Waves.Tick(scaledDelta);
             Units.Tick(scaledDelta);
@@ -79,12 +117,21 @@ namespace GLD.SceneRuntime.CoreLoop
 
         public bool StartRun() => Waves != null && Waves.Start(1);
 
+        public void SetSpeedMultiplier(float value)
+        {
+            speedMultiplier = value;
+            State?.SetSpeedMultiplier(value);
+        }
+
         public bool PlaceTower(string towerId, int col, int row, bool spendEnergy = true)
         {
             if (database == null || database.towers == null || Towers == null)
                 return false;
             var def = database.towers.FindById(towerId);
-            return def != null && Towers.Place(def, new GridCell(col, row), spendEnergy);
+            var placed = def != null && Towers.Place(def, new GridCell(col, row), spendEnergy);
+            if (!placed)
+                GameEvents.RaiseTowerPlacementFailed(towerId, col, row, def == null ? "unknown_tower" : "placement_rejected");
+            return placed;
         }
 
         public TowerDefSO FindTowerDef(string towerId)

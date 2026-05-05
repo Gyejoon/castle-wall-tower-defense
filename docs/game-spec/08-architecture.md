@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-05-05 (v3.6 — Unity Phase 3 visible core loop HUD/placement)
+> **Last Updated:** 2026-05-05 (v3.7 — Unity Phase 3 replay parity fixture expansion)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -30,7 +30,7 @@
 
 `tools-app`은 public game shell이 아니다. `bun run dev:tools`로만 띄우는 로컬 개발 도구이며, asset catalog/ACR, Tiled JSON draft/apply, Phaser scene registry, balance sheet read/apply API를 Vite middleware로 제공한다. `web-shell`의 `/asset-review` 공개 라우트와 plugin은 제거되어 배포 surface에 개발 도구가 섞이지 않는다.
 
-`unity-game` Phase 2 PoC는 계속 보존한다. `Assets/Scripts/Systems/Minimal/`의 pure C# systems가 1 archer + 5 wave-1 scout units + placement + energy/HUD만 처리하며, `Assets/Scripts/SceneRuntime/Slice2/`가 scene glue와 `/unity/?slice=poc` additive routing을 담당한다. Phase 3 코어는 별도 `Assets/Scripts/Systems/{Grid,Pathfinding,Energy,Units,Waves,Towers}`와 `Assets/Scripts/SceneRuntime/CoreLoop/`에 병렬 추가되어, RNG/Grid/Pathfinding/Energy/기본 Unit-Wave-Tower loop를 검증한다. `CoreLoopFieldRenderer`가 9×18 grid/path/buildable/tower/unit 상태를 SpriteRenderer 기반으로 표시하고, `CoreLoopHudController`가 IMGUI 기반 energy/wave/status HUD와 최소 타워 선택 → 타일 탭 배치를 제공한다. `/unity/?autostart=1` smoke path에서 WebGL ready + visible field/HUD/placement를 확인한다. Merge/Gacha/Roguelike/Boss phase AI/full HUD는 후속 tranche 또는 Phase 4 범위다.
+`unity-game` Phase 2 PoC는 계속 보존한다. `Assets/Scripts/Systems/Minimal/`의 pure C# systems가 1 archer + 5 wave-1 scout units + placement + energy/HUD만 처리하며, `Assets/Scripts/SceneRuntime/Slice2/`가 scene glue와 `/unity/?slice=poc` additive routing을 담당한다. Phase 3 코어는 별도 `Assets/Scripts/Systems/{Grid,Pathfinding,Energy,Units,Waves,Towers,DamageNumbers,Orchestrator}`와 `Assets/Scripts/SceneRuntime/CoreLoop/`에 병렬 추가되어, RNG/Grid/Pathfinding/Energy/기본 Unit-Wave-Tower loop를 검증한다. `CoreLoopFieldRenderer`가 9×18 grid/path/buildable/tower/unit 상태를 SpriteRenderer 기반으로 표시하고, `CoreLoopHudController`가 IMGUI 기반 energy/wave/status HUD와 최소 타워 선택 → 타일 탭 배치를 제공한다. `GameEvents`는 Phase 3 request/state 이벤트 표면을 제공하고, `CoreOrchestrator`는 summon/placement/sell/move 및 cancelled pool draw cache를 처리한다. `packages/shared/src/testing/replay-fixtures/seed-001..010`과 `replay-runner.ts`가 TS reference CSV를 생성하며, `.github/workflows/unity-parity-gate.yml`이 Unity EditMode parity test를 실행한다. `/unity/?autostart=1` smoke path에서 WebGL ready + visible field/HUD/placement를 확인한다. Merge/Gacha/Roguelike/Boss phase AI/full HUD는 후속 tranche 또는 Phase 4 범위다.
 
 ---
 

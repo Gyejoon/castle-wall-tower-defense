@@ -4,8 +4,8 @@
 // Phase 1 Task 8.
 //
 // Graceful degradation:
-//   - SO not found     → Assert.Inconclusive (run GLD/Import Shared Data first)
-//   - USS not found    → Assert.Inconclusive (run GLD/Generate tokens.uss first)
+//   - SO not found     → Assert.Ignore (run GLD/Import Shared Data first)
+//   - USS not found    → Assert.Ignore (run GLD/Generate tokens.uss first)
 //   - Mismatch         → Assert.Fail with full diff
 
 using System;
@@ -30,7 +30,7 @@ namespace GLD.Tests.EditMode
         {
             var so = AssetDatabase.LoadAssetAtPath<GLD.Data.DesignTokensSO>(SOPath);
             if (so == null)
-                Assert.Inconclusive(
+                Assert.Ignore(
                     $"DesignTokensSO not found at '{SOPath}'. " +
                     "Run GLD/Import Shared Data first.");
             Assert.IsNotNull(so);
@@ -40,7 +40,7 @@ namespace GLD.Tests.EditMode
         public void TokensUss_Exists()
         {
             if (!File.Exists(UssPath))
-                Assert.Inconclusive(
+                Assert.Ignore(
                     $"tokens.uss not found at '{UssPath}'. " +
                     "Run GLD/Generate tokens.uss first.");
             Assert.IsTrue(File.Exists(UssPath));
@@ -50,7 +50,7 @@ namespace GLD.Tests.EditMode
         public void TokensUss_StartsWithRootBlock()
         {
             if (!File.Exists(UssPath))
-                Assert.Inconclusive($"tokens.uss not found at '{UssPath}'.");
+                Assert.Ignore($"tokens.uss not found at '{UssPath}'.");
 
             string content = File.ReadAllText(UssPath);
             StringAssert.Contains(":root {", content,
@@ -173,13 +173,13 @@ namespace GLD.Tests.EditMode
             var so = AssetDatabase.LoadAssetAtPath<GLD.Data.DesignTokensSO>(SOPath);
             if (so == null)
             {
-                Assert.Inconclusive($"DesignTokensSO not found at '{SOPath}'. Run GLD/Import Shared Data.");
+                Assert.Ignore($"DesignTokensSO not found at '{SOPath}'. Run GLD/Import Shared Data.");
                 return (null, null);
             }
 
             if (!File.Exists(UssPath))
             {
-                Assert.Inconclusive($"tokens.uss not found at '{UssPath}'. Run GLD/Generate tokens.uss.");
+                Assert.Ignore($"tokens.uss not found at '{UssPath}'. Run GLD/Generate tokens.uss.");
                 return (null, null);
             }
 

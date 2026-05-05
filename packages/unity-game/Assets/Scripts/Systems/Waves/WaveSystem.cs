@@ -59,6 +59,8 @@ namespace GLD.Systems.Waves
             Phase = WavePhase.Running;
             WaveStarted?.Invoke(CurrentWaveSlot);
             GameEvents.RaiseWaveStarted(CurrentWaveSlot);
+            if (_currentWave.kind == WaveKind.Boss)
+                GameEvents.RaiseBossWaveStarted(CurrentWaveSlot);
             return true;
         }
 
@@ -69,6 +71,7 @@ namespace GLD.Systems.Waves
             if (Phase == WavePhase.Interwave)
             {
                 _interwaveTimer -= deltaSeconds;
+                GameEvents.RaiseWavePrepTick(CurrentWaveSlot + 1, Mathf.Max(0f, _interwaveTimer));
                 if (_interwaveTimer <= 0f)
                     Start(CurrentWaveSlot + 1);
                 return;
@@ -122,6 +125,7 @@ namespace GLD.Systems.Waves
 
             Phase = WavePhase.Interwave;
             _interwaveTimer = Mathf.Max(0f, _currentWave.delayAfterClearSec);
+            GameEvents.RaiseWavePrepStarted(CurrentWaveSlot + 1, _interwaveTimer);
         }
     }
 }

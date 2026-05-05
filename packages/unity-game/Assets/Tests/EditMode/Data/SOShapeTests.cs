@@ -1,7 +1,7 @@
 // SOShapeTests.cs — EditMode tests for ScriptableObject schemas (Phase 1 Task 3).
 // These tests verify that SO asset instances exist and have valid field values once
 // Task 4's JsonToSOImporter has run. Before that, tests gracefully fall back to
-// Assert.Inconclusive so the test run does not fail pre-import.
+// Assert.Ignore so the test run does not fail pre-import.
 
 using System;
 using GLD.Data;
@@ -21,7 +21,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:TowerCatalogSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No TowerCatalogSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No TowerCatalogSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:UnitCatalogSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No UnitCatalogSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No UnitCatalogSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:WaveCatalogSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No WaveCatalogSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No WaveCatalogSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -108,7 +108,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:UpgradeCardCatalogSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No UpgradeCardCatalogSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No UpgradeCardCatalogSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:GachaConfigSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No GachaConfigSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No GachaConfigSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -155,7 +155,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:EnergyConfigSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No EnergyConfigSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No EnergyConfigSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:BossConfigSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No BossConfigSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No BossConfigSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -192,7 +192,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:ScalingConfigSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No ScalingConfigSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No ScalingConfigSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -210,7 +210,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:FamilyUpgradeConfigSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No FamilyUpgradeConfigSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No FamilyUpgradeConfigSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -229,7 +229,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:ElementMatchupSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No ElementMatchupSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No ElementMatchupSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -251,7 +251,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:MapLayoutSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No MapLayoutSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No MapLayoutSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -273,7 +273,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:SummonPoolSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No SummonPoolSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No SummonPoolSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -292,7 +292,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:DesignTokensSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No DesignTokensSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No DesignTokensSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -312,7 +312,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:MergeChainSO");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No MergeChainSO assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No MergeChainSO assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 
@@ -336,7 +336,7 @@ namespace GLD.Tests.EditMode
             var guids = AssetDatabase.FindAssets("t:GameDatabase");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive("No GameDatabase assets found. Run GLD/Import Shared Data first.");
+                Assert.Ignore("No GameDatabase assets found. Run GLD/Import Shared Data first.");
                 return;
             }
 

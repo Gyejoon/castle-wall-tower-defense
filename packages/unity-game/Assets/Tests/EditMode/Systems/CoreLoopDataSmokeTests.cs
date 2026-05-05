@@ -53,5 +53,38 @@ namespace GLD.Tests.EditMode.Systems
             Assert.That(units.TotalDamage, Is.GreaterThan(0f));
             Assert.That(energy.Current, Is.InRange(0, energy.Max));
         }
+
+        [Test]
+        public void ImportedDatabaseAdvancesToWave50VictoryWithoutEnergyOverflow()
+        {
+            JsonToSOImporter.ImportAllBatch();
+            AssetDatabase.Refresh();
+
+            var database = AssetDatabase.LoadAssetAtPath<GameDatabase>(DatabasePath);
+            Assert.That(database, Is.Not.Null);
+
+            var grid = new GridManager(database.map);
+            var energy = new EnergySystem(database.energy);
+            var units = new UnitSystem(grid, energy, database.units);
+            var waves = new WaveSystem(database.waves, database.units, units);
+            var completed = 0;
+            waves.WaveCompleted += _ => completed++;
+
+            Assert.That(waves.Start(1), Is.True);
+
+            for (var i = 0; i < 20000 && waves.Phase != WavePhase.Victory; i++)
+            {
+                const float dt = 1f;
+                energy.Tick(dt);
+                waves.Tick(dt);
+                units.Tick(dt);
+                Assert.That(energy.Current, Is.InRange(0, energy.Max));
+            }
+
+            Assert.That(waves.Phase, Is.EqualTo(WavePhase.Victory));
+            Assert.That(waves.CurrentWaveSlot, Is.EqualTo(50));
+            Assert.That(completed, Is.EqualTo(50));
+            Assert.That(energy.Current, Is.InRange(0, 200));
+        }
     }
 }

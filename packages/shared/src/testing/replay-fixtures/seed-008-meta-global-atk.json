@@ -1,0 +1,20 @@
+{
+  "durationMs": 60000,
+  "expected": {
+    "energyPeak": 44.1,
+    "kills": 5,
+    "totalDamage": 150,
+    "waveClearMs": 9083
+  },
+  "fixtureId": "seed-008-meta-global-atk",
+  "placements": [
+    {
+      "col": 3,
+      "row": 14,
+      "tMs": 100,
+      "towerId": "archer"
+    }
+  ],
+  "seed": 55555,
+  "tickMs": 16.6667
+}

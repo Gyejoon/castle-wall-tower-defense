@@ -1,0 +1,20 @@
+{
+  "durationMs": 60000,
+  "expected": {
+    "energyPeak": 44.1,
+    "kills": 5,
+    "totalDamage": 150,
+    "waveClearMs": 9083
+  },
+  "fixtureId": "seed-001-slice2-poc",
+  "placements": [
+    {
+      "col": 3,
+      "row": 14,
+      "tMs": 100,
+      "towerId": "archer"
+    }
+  ],
+  "seed": 12345,
+  "tickMs": 16.6667
+}

@@ -115,10 +115,10 @@
 - Create: `docs/unity-migration/phase-3-design-decisions.md`
 - Create: `docs/unity-migration/phase-3-parity-acceptance.md`
 
-- [ ] **Step 1**: Unity Architect consultation — `TowerSystem` shape (pure C# container vs MB), `FindObjectOfType` prohibited patterns, CoreOrchestrator idempotent lifecycle, cancelled-cache (`cancelledPoolDraw` + `cancelledGachaDraw` — gacha is Phase 4 but pool-draw happens in Phase 3).
-- [ ] **Step 2**: Game Designer consultation — write `phase-3-parity-acceptance.md` defining the exact pass/fail math. E.g., "For each of 10 fixtures × 10 waves: mean TS vs C# damage delta ≤5%, p95 ≤10%; kill count exact; boss phase timing ±500ms (Phase 4 enforced); wave clear time ±2%."
-- [ ] **Step 3**: Technical Artist consultation — drawcall target, atlas packing adjustments if needed.
-- [ ] **Step 4**: Reconcile findings. If any contradicts subsequent tasks, revise.
+- [x] **Step 1**: Unity Architect consultation — `TowerSystem` shape (pure C# container vs MB), `FindObjectOfType` prohibited patterns, CoreOrchestrator idempotent lifecycle, cancelled-cache (`cancelledPoolDraw` + `cancelledGachaDraw` — gacha is Phase 4 but pool-draw happens in Phase 3).
+- [x] **Step 2**: Game Designer consultation — write `phase-3-parity-acceptance.md` defining the exact pass/fail math. E.g., "For each of 10 fixtures × 10 waves: mean TS vs C# damage delta ≤5%, p95 ≤10%; kill count exact; boss phase timing ±500ms (Phase 4 enforced); wave clear time ±2%."
+- [x] **Step 3**: Technical Artist consultation — drawcall target, atlas packing adjustments if needed.
+- [x] **Step 4**: Reconcile findings. If any contradicts subsequent tasks, revise.
 - [ ] **Step 5**: Commit `docs(phase-3): design decisions + parity acceptance math`.
 
 ### Task 2: `DeterministicRng` TS + C# byte-identical
@@ -203,10 +203,10 @@
 - `Assets/Scripts/Core/Events/GameEvents.cs` (replace stub)
 - `Tests/EditMode/Orchestrator/CoreOrchestratorLifecycleTests.cs`
 
-- [ ] **Step 1**: Write `DamageNumberSystem.cs` — pool of 24 TMP World instances. `Show(worldPos, value)` unscaled-delta 800ms rise + fade.
-- [ ] **Step 2**: Write `GameEvents.cs` full surface. ~30 typed static events (list from spec). Unit test: reflection check that spec-listed names exist.
-- [ ] **Step 3**: Write `CoreOrchestrator.cs`. Idempotent `OnEnable/OnDisable`. Subscribes to summon/placement/merge request flow — Phase 3 wires summon + placement only (merge/gacha/upgrade are Phase 4 stubs that log and return).
-- [ ] **Step 4**: Port cancelled-cache (`cancelledPoolDraw`) — when a summon is offered but UX cancels, cache it for the next summon.
+- [x] **Step 1**: Write `DamageNumberSystem.cs` — pool of 24 world text instances. `Show(worldPos, value)` unscaled-delta 800ms rise + fade.
+- [x] **Step 2**: Write `GameEvents.cs` full surface. ~30 typed static events (list from spec). Unit test: reflection check that spec-listed names exist.
+- [x] **Step 3**: Write `CoreOrchestrator.cs`. Idempotent `OnEnable/OnDisable`. Subscribes to summon/placement/merge request flow — Phase 3 wires summon + placement only (merge/gacha/upgrade are Phase 4 stubs that log and return).
+- [x] **Step 4**: Port cancelled-cache (`cancelledPoolDraw`) — when a summon is offered but UX cancels, cache it for the next summon.
 - [ ] **Step 5**: PlayMode lifecycle test — scene enter/exit 10× confirms no duplicate event subscriptions, no leaked listeners.
 - [ ] **Step 6**: Commit `feat(unity-game): DamageNumberSystem + GameEvents + CoreOrchestrator (summon/placement only)`.
 
@@ -219,10 +219,10 @@
 - `Assets/Scripts/SceneRuntime/Runtime/*.cs`
 
 - [ ] **Step 1**: Port `Game.ts.create()` → `GameSceneController.Awake` in exact init order (Grid → Pathfinding → Energy → Units → Towers → Waves → Orchestrator → DamageNumbers → UI). Port `shutdown` → `OnDestroy` in reverse (Bus → input → runtime → systems → renderers).
-- [ ] **Step 2**: Write `InputController.cs` + `PlacementCoordinator.cs` (full, replacing Phase 2 `PlacementController`). Handle tap-to-place, drag-to-move, long-press-to-sell.
+- [x] **Step 2**: Write `InputController.cs` + `PlacementCoordinator.cs` (full, replacing Phase 2 `PlacementController`). Handle tap-to-place, drag-to-move, long-press-to-sell.
 - [ ] **Step 3**: Write `FieldRenderer.cs` (static field + obstacles on Tilemap, 2 layers: base + highlight).
-- [ ] **Step 4**: Write `RangeOverlayController.cs` using a shader-graph ring sprite placeholder (full shader in Phase 4 or 5).
-- [ ] **Step 5**: Write `CombatMediator.cs` (dispatches tower → unit damage, guards boss CC resistance), `GameStateManager.cs` (playerHp, scaledGameTime, speedMultiplier, endGame), `BossContextBuilder.cs` (stub in Phase 3).
+- [x] **Step 4**: Write `RangeOverlayController.cs` using a shader-graph ring sprite placeholder (full shader in Phase 4 or 5).
+- [x] **Step 5**: Write `CombatMediator.cs` (dispatches tower → unit damage, guards boss CC resistance), `GameStateManager.cs` (playerHp, scaledGameTime, speedMultiplier, endGame), `BossContextBuilder.cs` (stub in Phase 3).
 - [ ] **Step 6**: PlayMode smoke test: enter scene, autostart, run 30s, assert wave progression events fire correctly.
 - [ ] **Step 7**: Commit `feat(unity-game): scene runtime — GameSceneController + input/render/runtime mediators`.
 
@@ -231,10 +231,10 @@
 **Files:**
 - Modify: `GameStateManager.cs`, `UnitSystem.cs`, `TowerSystem.cs`, `WaveSystem.cs`, `DamageNumberSystem.cs`
 
-- [ ] **Step 1**: Implement `GameStateManager.Tick(dt * 1000 * speedMultiplier)` pattern. Every pure-C# system consumes `scaledDelta` from GameStateManager, NOT `Time.deltaTime` directly.
+- [x] **Step 1**: Implement `GameStateManager.Tick(dt * 1000 * speedMultiplier)` pattern. Every pure-C# system consumes `scaledDelta` from GameStateManager, NOT `Time.deltaTime` directly.
 - [ ] **Step 2**: `DOTween.timeScale = speedMultiplier` (tower idle pulses).
-- [ ] **Step 3**: `DamageNumberSystem` uses `Time.unscaledDeltaTime` for animation (spec).
-- [ ] **Step 4**: Pause uses `Time.timeScale = 0` (only for pause), separate from speedMultiplier.
+- [x] **Step 3**: `DamageNumberSystem` uses `Time.unscaledDeltaTime` for animation (spec).
+- [x] **Step 4**: Pause uses `Time.timeScale = 0` (only for pause), separate from speedMultiplier.
 - [ ] **Step 5**: Determinism test: fixed seed, run same replay at 1× and 3× speeds, assert identical event sequence (modulo timestamps), metrics within ±2%.
 - [ ] **Step 6**: Commit `feat(unity-game): 3× speed via scaledDelta (FixedUpdate 50Hz preserved)`.
 
@@ -246,10 +246,10 @@
 - `packages/unity-game/Assets/Tests/EditMode/Replay/ReplayParityTests.cs` (expand)
 - `.github/workflows/unity-parity-gate.yml` (replace stub)
 
-- [ ] **Step 1**: Create 9 new fixtures per spec: seed-002 (gacha stack — skip for Phase 3, placeholder), seed-003 (boss wave 10 HP-bag), seed-004 (merge chain — skip Phase 3), seed-005 (fast-clear bonus), seed-006 (energy CAP), seed-007 (continue-run — placeholder), seed-008 (meta globalAtkPct injection), seed-009 (3× speed), seed-010 (tutorial completion — placeholder). Mark Phase-4-dependent fixtures with `"phase4_dependent": true`, skipped in Phase 3.
-- [ ] **Step 2**: Expand `replay-runner.ts` to emit per-wave metrics CSV (seed, wave, TS_damage, TS_kills, TS_clearMs).
-- [ ] **Step 3**: Expand `ReplayParityTests.cs` to load each fixture, run via `ReplayRunner`, compare to expected metrics file. Respect per-fixture drift thresholds from Task 1 Step 2.
-- [ ] **Step 4**: Write `unity-parity-gate.yml` — replaces placeholder. Runs:
+- [x] **Step 1**: Create 9 new fixtures per spec: seed-002 (gacha stack — skip for Phase 3, placeholder), seed-003 (boss wave 10 HP-bag), seed-004 (merge chain — skip Phase 3), seed-005 (fast-clear bonus), seed-006 (energy CAP), seed-007 (continue-run — placeholder), seed-008 (meta globalAtkPct injection), seed-009 (3× speed), seed-010 (tutorial completion — placeholder). Mark Phase-4-dependent fixtures with `"phase4_dependent": true`, skipped in Phase 3.
+- [x] **Step 2**: Expand `replay-runner.ts` to emit per-wave metrics CSV (seed, wave, TS_damage, TS_kills, TS_clearMs).
+- [x] **Step 3**: Expand `ReplayParityTests.cs` to load each fixture, run via `ReplayRunner`, compare to expected metrics file. Respect per-fixture drift thresholds from Task 1 Step 2.
+- [x] **Step 4**: Write `unity-parity-gate.yml` — replaces placeholder. Runs:
   ```
   bun run replay:record  # generates TS reference ledger
   Unity -batchmode -executeMethod ReplayParityTests.RunAll  # compares

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2a2010">
+  <title>unity-game</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+    <div id="unity-loading-bar" aria-hidden="true">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+    <div id="unity-warning"></div>
+  </div>
+  <script src="bridge.js"></script>
+  <script>
+    (function () {
+      const buildUrl = "Build";
+      const config = {
+        dataUrl: buildUrl + "/WebGL.data.br",
+        frameworkUrl: buildUrl + "/WebGL.framework.js.br",
+        codeUrl: buildUrl + "/WebGL.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "unity-game",
+        productVersion: "1.0",
+        showBanner: (msg, type) => {
+          const warn = document.getElementById("unity-warning");
+          if (!warn) return;
+          warn.textContent = msg;
+          warn.className = "unity-warning unity-warning--" + (type || "info");
+        }
+      };
+
+      const canvas = document.getElementById("unity-canvas");
+      const loadingBar = document.getElementById("unity-loading-bar");
+      const progressBarFull = document.getElementById("unity-progress-bar-full");
+
+      canvas.style.width = "100vw";
+      canvas.style.height = "100vh";
+
+      const script = document.createElement("script");
+      script.src = buildUrl + "/WebGL.loader.js";
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = (100 * progress) + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          window.__gld = window.__gld || {};
+          window.__gld.unityInstance = unityInstance;
+          if (window.__gldBridge && typeof window.__gldBridge.onReady === "function") {
+            window.__gldBridge.onReady(unityInstance);
+          }
+        }).catch((message) => {
+          config.showBanner(message, "error");
+        });
+      };
+      document.body.appendChild(script);
+    })();
+  </script>
+</body>
+</html>

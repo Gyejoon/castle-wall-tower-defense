@@ -27,7 +27,7 @@ packages/
   shared/           @gld/shared — TypeScript 타입, 상수, 이벤트 계약
   phaser-game/      @gld/phaser-game — Phaser 3 게임 엔진 (legacy 런타임)
   web-shell/        React SPA. Phaser 게임 임베드, 로비, 설정, 상태 관리
-  unity-game/       Unity 2D WebGL 포트 (Phase 0 스캐폴드). /unity/ 경로로 병행 서빙
+  unity-game/       Unity 2D WebGL 포트. /unity/ 경로로 병행 서빙
 
 scripts/
   generate-assets/  @napi-rs/canvas 기반 절차적 픽셀 아트 생성 파이프라인
@@ -80,7 +80,7 @@ bun dev:web                                        # 개발 서버 (port 3000)
 | R1 | 메타 루프 본 구현 — `metaProgressStore` 영속화, `globalAtkPct` 주입 | **shell 완료** |
 | R1 | BM stub — `AdService` + `MockAdService`, 이어서 하기 (1회/런) | **완료** |
 | R2 | 타워 강화 UX 확장 / 메타 퍽 선택 UI / 맵 2~3종 / FTUE 튜토리얼 | 계획 |
-| Unity migration | Phase 0 스캐폴드 (unity-game 패키지 + CI + /unity/ 라우트) | **진행 중** |
+| Unity migration | Unity WebGL preview 병행 서빙 (`/unity`) | **진행 중** |
 | Unity migration | Phase 1~7 (데이터/에셋 → PoC → 코어 루프 → 합성/보스 → UI → 저장/오디오 → parity gate) | 계획 |
 | Unity migration | Phase 8 (Unity default 승격, phaser freeze) | 계획 |
 | R3 | 실광고 SDK 연결, LiveOps, 서버 동기화, BM 본격화 | 계획 |

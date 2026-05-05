@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+  <Style src="../Styles/Slice2Hud.uss" />
+  <ui:VisualElement name="slice2-hud" class="slice2-hud">
+    <ui:VisualElement class="top-row">
+      <ui:Label name="energy-label" class="hud-pill" text="E 40/200" />
+      <ui:Label name="wave-label" class="hud-pill" text="W 0/50" />
+      <ui:Label name="hp-label" class="hud-pill" text="HP 20" />
+    </ui:VisualElement>
+    <ui:Button name="place-archer-button" class="place-button" text="Place Archer (E10)" />
+  </ui:VisualElement>
+</ui:UXML>

@@ -1045,6 +1045,8 @@ namespace GLD.Data.Editor
             public GridPointDTO   spawnPoint;
             public GridPointDTO   exitPoint;
             public GridPointDTO[] path;
+            public JArray         paths;
+            public JArray         placementAnchors;
             public GridPointDTO[] buildablePoints;
             public GridPointDTO[] blockedPlacementPoints;
             public GridPointDTO[] obstacles;

@@ -1,0 +1,109 @@
+using System;
+using System.Collections.Generic;
+using GLD.Data;
+using UnityEngine;
+
+namespace GLD.Systems.Grid
+{
+    public sealed class GridManager
+    {
+        const string DefaultMapId = "main_long";
+
+        readonly MapDef _map;
+        readonly HashSet<GridCell> _blockedPlacement = new HashSet<GridCell>();
+        readonly HashSet<GridCell> _pathBlocked = new HashSet<GridCell>();
+        readonly HashSet<GridCell> _buildable = new HashSet<GridCell>();
+        readonly HashSet<GridCell> _pathCells = new HashSet<GridCell>();
+        readonly List<Vector2> _path = new List<Vector2>();
+
+        public int Width => _map.width;
+        public int Height => _map.height;
+        public float CellSize { get; }
+        public GridCell SpawnCell => new GridCell(_map.spawnPoint.x, _map.spawnPoint.y);
+        public GridCell ExitCell => new GridCell(_map.exitPoint.x, _map.exitPoint.y);
+        public IReadOnlyList<Vector2> Path => _path;
+
+        public GridManager(MapLayoutSO layout, string mapId = DefaultMapId, float cellSize = 1f)
+            : this(ResolveMap(layout, mapId), cellSize)
+        {
+        }
+
+        public GridManager(MapDef map, float cellSize = 1f)
+        {
+            if (string.IsNullOrEmpty(map.id))
+                throw new ArgumentException("MapDef must have an id.", nameof(map));
+
+            _map = map;
+            CellSize = Mathf.Max(0.01f, cellSize);
+
+            AddPoints(_blockedPlacement, map.blockedPlacementPoints);
+            AddPoints(_pathBlocked, map.obstacles);
+            AddPoints(_buildable, map.buildablePoints);
+
+            if (map.path == null) return;
+            foreach (var point in map.path)
+            {
+                _path.Add(GridToWorld(point.x, point.y));
+                _pathCells.Add(new GridCell(Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y)));
+            }
+        }
+
+        public Vector2 GridToWorld(float col, float row)
+        {
+            var x = (col - (Width - 1) * 0.5f) * CellSize;
+            var y = ((Height - 1) * 0.5f - row) * CellSize;
+            return new Vector2(x, y);
+        }
+
+        public Vector2 GridToWorld(GridCell cell) => GridToWorld(cell.Col, cell.Row);
+
+        public Vector3 GridToWorld3(GridCell cell, float z = 0f)
+        {
+            var p = GridToWorld(cell);
+            return new Vector3(p.x, p.y, z);
+        }
+
+        public GridCell WorldToGrid(Vector2 world)
+        {
+            var col = Mathf.RoundToInt(world.x / CellSize + (Width - 1) * 0.5f);
+            var row = Mathf.RoundToInt((Height - 1) * 0.5f - world.y / CellSize);
+            return new GridCell(col, row);
+        }
+
+        public bool IsInBounds(GridCell cell) =>
+            cell.Col >= 0 && cell.Col < Width && cell.Row >= 0 && cell.Row < Height;
+
+        public bool IsBlocked(GridCell cell) => !IsInBounds(cell) || _pathBlocked.Contains(cell);
+
+        public bool IsBuildable(GridCell cell)
+        {
+            if (IsBlocked(cell) || _blockedPlacement.Contains(cell)) return false;
+            if (cell.Equals(SpawnCell) || cell.Equals(ExitCell)) return false;
+            if (_buildable.Count > 0) return _buildable.Contains(cell);
+            return !IsPathCell(cell);
+        }
+
+        public bool IsPathCell(GridCell cell) => _pathCells.Contains(cell);
+
+        public IReadOnlyCollection<GridCell> GetBuildableCells() => _buildable;
+        public IReadOnlyCollection<GridCell> GetBlockedCells() => _pathBlocked;
+
+        static MapDef ResolveMap(MapLayoutSO layout, string mapId)
+        {
+            if (layout == null)
+                throw new ArgumentNullException(nameof(layout));
+
+            var map = layout.FindById(mapId);
+            if (string.IsNullOrEmpty(map.id))
+                throw new InvalidOperationException($"MapLayoutSO does not contain map id '{mapId}'.");
+            return map;
+        }
+
+        static void AddPoints(HashSet<GridCell> target, GridPoint[] points)
+        {
+            if (points == null) return;
+            foreach (var point in points)
+                target.Add(new GridCell(point.x, point.y));
+        }
+    }
+}

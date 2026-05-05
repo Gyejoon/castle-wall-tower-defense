@@ -2,8 +2,11 @@
   "name": "GLD.Tests.EditMode",
   "rootNamespace": "GLD.Tests.EditMode",
   "references": [
+    "GLD.Core",
     "GLD.Data",
     "GLD.Data.Editor",
+    "GLD.SceneRuntime",
+    "GLD.Systems",
     "Unity.Addressables.Editor",
     "UnityEditor",
     "UnityEngine.TestRunner",

@@ -1,6 +1,6 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-05-04 (v3.2 — 개발용 tools-app 분리)
+> **Last Updated:** 2026-05-05 (v3.6 — Unity Phase 3 visible core loop HUD/placement)
 >
 > AGENTS.md = "무엇이 어디 있는가" (파일 맵, 편집 가이드)
 > 이 문서 = "왜 이렇게 연결되는가" (구조적 이유, 상태머신, 시퀀스)
@@ -9,12 +9,13 @@
 
 ## §1 패키지 구조
 
-모노레포 4패키지. 게임 런타임 의존 방향은 단방향이고, `tools-app`은 개발 전용 sidecar다.
+모노레포 5패키지. Phaser 런타임은 계속 기본 경로(`/`)를 담당하고, Unity WebGL 런타임은 migration 기간 동안 `/unity/` 아래에 병행 호스팅한다.
 
 ```
 @gld/shared  ──►  @gld/phaser-game  ──►  web-shell
       ▲                                      ▲
       └────────────── tools-app ─────────────┘
+      └────────────── unity-game ────────────┘
 ```
 
 | 패키지 | 역할 | 주요 의존성 |
@@ -22,11 +23,14 @@
 | `@gld/shared` | 게임 규칙, 타입, 상수, 수치 데이터 | 없음 (pure TS) |
 | `@gld/phaser-game` | Phaser 씬, 9개 시스템, EventBus | `@gld/shared`, `phaser` |
 | `web-shell` | React UI, Zustand 스토어, PWA 진입점 | `@gld/phaser-game`, `@gld/shared`, `zustand` |
+| `unity-game` | Unity 6 WebGL 포트. Phase 2 PoC를 유지하면서 Phase 3 1차 코어 시스템 포트 진행 중 | Unity 6, `@gld/shared` JSON export |
 | `tools-app` | 개발용 에셋/타일맵/씬/밸런스 관리 UI와 로컬 Vite middleware | `@gld/shared`, `react`, `vite` |
 
 `web-shell`은 `@gld/phaser-game`을 import하지만, 런타임 통신은 EventBus를 통해서만 한다. 직접 시스템 인스턴스를 참조하지 않는다.
 
 `tools-app`은 public game shell이 아니다. `bun run dev:tools`로만 띄우는 로컬 개발 도구이며, asset catalog/ACR, Tiled JSON draft/apply, Phaser scene registry, balance sheet read/apply API를 Vite middleware로 제공한다. `web-shell`의 `/asset-review` 공개 라우트와 plugin은 제거되어 배포 surface에 개발 도구가 섞이지 않는다.
+
+`unity-game` Phase 2 PoC는 계속 보존한다. `Assets/Scripts/Systems/Minimal/`의 pure C# systems가 1 archer + 5 wave-1 scout units + placement + energy/HUD만 처리하며, `Assets/Scripts/SceneRuntime/Slice2/`가 scene glue와 `/unity/?slice=poc` additive routing을 담당한다. Phase 3 코어는 별도 `Assets/Scripts/Systems/{Grid,Pathfinding,Energy,Units,Waves,Towers}`와 `Assets/Scripts/SceneRuntime/CoreLoop/`에 병렬 추가되어, RNG/Grid/Pathfinding/Energy/기본 Unit-Wave-Tower loop를 검증한다. `CoreLoopFieldRenderer`가 9×18 grid/path/buildable/tower/unit 상태를 SpriteRenderer 기반으로 표시하고, `CoreLoopHudController`가 IMGUI 기반 energy/wave/status HUD와 최소 타워 선택 → 타일 탭 배치를 제공한다. `/unity/?autostart=1` smoke path에서 WebGL ready + visible field/HUD/placement를 확인한다. Merge/Gacha/Roguelike/Boss phase AI/full HUD는 후속 tranche 또는 Phase 4 범위다.
 
 ---
 

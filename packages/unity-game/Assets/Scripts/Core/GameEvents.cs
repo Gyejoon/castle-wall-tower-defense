@@ -32,6 +32,48 @@ namespace GLD.Core
         }
     }
 
+    public readonly struct TowerMergeRequest
+    {
+        public readonly int FromCol;
+        public readonly int FromRow;
+        public readonly int ToCol;
+        public readonly int ToRow;
+
+        public TowerMergeRequest(int fromCol, int fromRow, int toCol, int toRow)
+        {
+            FromCol = fromCol;
+            FromRow = fromRow;
+            ToCol = toCol;
+            ToRow = toRow;
+        }
+    }
+
+    public readonly struct GachaRequest
+    {
+        public readonly int TargetTier;
+
+        public GachaRequest(int targetTier)
+        {
+            TargetTier = targetTier;
+        }
+    }
+
+    public readonly struct UpgradeChoice
+    {
+        public readonly string Id;
+        public readonly string Name;
+        public readonly string Description;
+        public readonly string Icon;
+
+        public UpgradeChoice(string id, string name, string description, string icon)
+        {
+            Id = id;
+            Name = name;
+            Description = description;
+            Icon = icon;
+        }
+    }
+
     public static class GameEvents
     {
         public static event Action OnBootComplete;
@@ -45,8 +87,8 @@ namespace GLD.Core
         public static event Action<TowerMoveRequest> OnRequestMoveTower;
         public static event Action<string> OnRequestSelectTower;
         public static event Action<float> OnRequestSetSpeed;
-        public static event Action<string> OnRequestMerge;
-        public static event Action<string> OnRequestGacha;
+        public static event Action<TowerMergeRequest> OnRequestMerge;
+        public static event Action<GachaRequest> OnRequestGacha;
         public static event Action<string> OnRequestUpgradePick;
         public static event Action OnRequestUpgradeReroll;
         public static event Action<int, int> OnEnergyChanged;
@@ -56,6 +98,8 @@ namespace GLD.Core
         public static event Action<string> OnRequestRejected;
         public static event Action<string, int, int> OnTowerPlaced;
         public static event Action<string, int, int, string> OnTowerPlacementFailed;
+        public static event Action<int, int, string, int> OnTowersMerged;
+        public static event Action<int, int, int, int, string> OnMergeFailed;
         public static event Action<string> OnTowerSold;
         public static event Action<string, int, int, int, int> OnTowerMoved;
         public static event Action<string, int, int> OnTowerSelected;
@@ -71,6 +115,10 @@ namespace GLD.Core
         public static event Action<float> OnTimerTick;
         public static event Action<int> OnBossWaveStarted;
         public static event Action<string, int> OnBossPhaseChanged;
+        public static event Action<string, string, int, int, int> OnBossHpUpdated;
+        public static event Action<string, int> OnBossDefeated;
+        public static event Action<UpgradeChoice[]> OnUpgradeChoiceReady;
+        public static event Action<string, int> OnUpgradeApplied;
         public static event Action<int> OnPlayerHpChanged;
         public static event Action<float> OnSpeedChanged;
         public static event Action<bool> OnPauseChanged;
@@ -89,8 +137,8 @@ namespace GLD.Core
         public static void RaiseRequestMoveTower(TowerMoveRequest request) => OnRequestMoveTower?.Invoke(request);
         public static void RaiseRequestSelectTower(string instanceId) => OnRequestSelectTower?.Invoke(instanceId);
         public static void RaiseRequestSetSpeed(float speedMultiplier) => OnRequestSetSpeed?.Invoke(speedMultiplier);
-        public static void RaiseRequestMerge(string instanceId) => OnRequestMerge?.Invoke(instanceId);
-        public static void RaiseRequestGacha(string tierKey) => OnRequestGacha?.Invoke(tierKey);
+        public static void RaiseRequestMerge(TowerMergeRequest request) => OnRequestMerge?.Invoke(request);
+        public static void RaiseRequestGacha(GachaRequest request) => OnRequestGacha?.Invoke(request);
         public static void RaiseRequestUpgradePick(string upgradeId) => OnRequestUpgradePick?.Invoke(upgradeId);
         public static void RaiseRequestUpgradeReroll() => OnRequestUpgradeReroll?.Invoke();
         public static void RaiseEnergyChanged(int current, int max) => OnEnergyChanged?.Invoke(current, max);
@@ -101,6 +149,10 @@ namespace GLD.Core
         public static void RaiseTowerPlaced(string towerId, int col, int row) => OnTowerPlaced?.Invoke(towerId, col, row);
         public static void RaiseTowerPlacementFailed(string towerId, int col, int row, string reason) =>
             OnTowerPlacementFailed?.Invoke(towerId, col, row, reason);
+        public static void RaiseTowersMerged(int col, int row, string towerId, int toTier) =>
+            OnTowersMerged?.Invoke(col, row, towerId, toTier);
+        public static void RaiseMergeFailed(int fromCol, int fromRow, int toCol, int toRow, string reason) =>
+            OnMergeFailed?.Invoke(fromCol, fromRow, toCol, toRow, reason);
         public static void RaiseTowerSold(string towerId) => OnTowerSold?.Invoke(towerId);
         public static void RaiseTowerMoved(string towerId, int fromCol, int fromRow, int toCol, int toRow) =>
             OnTowerMoved?.Invoke(towerId, fromCol, fromRow, toCol, toRow);
@@ -117,6 +169,11 @@ namespace GLD.Core
         public static void RaiseTimerTick(float elapsedSeconds) => OnTimerTick?.Invoke(elapsedSeconds);
         public static void RaiseBossWaveStarted(int waveSlot) => OnBossWaveStarted?.Invoke(waveSlot);
         public static void RaiseBossPhaseChanged(string unitId, int phase) => OnBossPhaseChanged?.Invoke(unitId, phase);
+        public static void RaiseBossHpUpdated(string unitId, string defId, int hp, int maxHp, int phase) =>
+            OnBossHpUpdated?.Invoke(unitId, defId, hp, maxHp, phase);
+        public static void RaiseBossDefeated(string unitId, int waveSlot) => OnBossDefeated?.Invoke(unitId, waveSlot);
+        public static void RaiseUpgradeChoiceReady(UpgradeChoice[] choices) => OnUpgradeChoiceReady?.Invoke(choices);
+        public static void RaiseUpgradeApplied(string upgradeId, int totalStacks) => OnUpgradeApplied?.Invoke(upgradeId, totalStacks);
         public static void RaisePlayerHpChanged(int playerHp) => OnPlayerHpChanged?.Invoke(playerHp);
         public static void RaiseSpeedChanged(float speedMultiplier) => OnSpeedChanged?.Invoke(speedMultiplier);
         public static void RaisePauseChanged(bool paused) => OnPauseChanged?.Invoke(paused);
@@ -147,6 +204,8 @@ namespace GLD.Core
             OnRequestRejected = null;
             OnTowerPlaced = null;
             OnTowerPlacementFailed = null;
+            OnTowersMerged = null;
+            OnMergeFailed = null;
             OnTowerSold = null;
             OnTowerMoved = null;
             OnTowerSelected = null;
@@ -162,6 +221,10 @@ namespace GLD.Core
             OnTimerTick = null;
             OnBossWaveStarted = null;
             OnBossPhaseChanged = null;
+            OnBossHpUpdated = null;
+            OnBossDefeated = null;
+            OnUpgradeChoiceReady = null;
+            OnUpgradeApplied = null;
             OnPlayerHpChanged = null;
             OnSpeedChanged = null;
             OnPauseChanged = null;

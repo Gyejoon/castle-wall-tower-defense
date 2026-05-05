@@ -2,6 +2,7 @@ using System.Collections;
 using GLD.Core;
 using GLD.SceneRuntime.CoreLoop;
 using GLD.SceneRuntime.CoreLoop.Render;
+using GLD.Systems.Grid;
 using GLD.Systems.Waves;
 using NUnit.Framework;
 using UnityEngine;
@@ -77,6 +78,48 @@ namespace GLD.Tests.PlayMode.CoreLoop
 
                 GameEvents.ClearRuntimeListeners();
             }
+        }
+
+        [UnityTest]
+        public IEnumerator HudRoutesPhase4Requests()
+        {
+            yield return SceneManager.LoadSceneAsync("Root", LoadSceneMode.Single);
+            var controller = Object.FindFirstObjectByType<GameSceneController>(FindObjectsInactive.Include);
+            Assert.That(controller, Is.Not.Null);
+            controller.gameObject.SetActive(true);
+
+            var hud = controller.GetComponent<CoreLoopHudController>();
+            Assert.That(hud, Is.Not.Null);
+
+            var from = new GridCell(3, 3);
+            var to = new GridCell(5, 3);
+            hud.BeginPlacement("archer");
+            Assert.That(hud.TryPlaceAtCell(from), Is.True);
+            hud.BeginPlacement("archer");
+            Assert.That(hud.TryPlaceAtCell(to), Is.True);
+
+            hud.BeginMergeMode();
+            Assert.That(hud.TryInteractAtCell(from), Is.True);
+            Assert.That(hud.TryInteractAtCell(to), Is.True);
+            Assert.That(controller.Towers.GetAt(to).Def.id, Is.EqualTo("wind_spire"));
+            Assert.That(hud.IsMergeMode, Is.False);
+
+            controller.Energy.Add(200);
+            hud.RequestGacha(2);
+            Assert.That(hud.IsPlacementMode, Is.True);
+            Assert.That(hud.SelectedTowerId, Is.Not.Empty);
+            Assert.That(hud.TryPlaceAtCell(new GridCell(2, 6)), Is.True);
+
+            GameEvents.RaiseRequestUpgradeReroll();
+            Assert.That(hud.UpgradeChoiceCount, Is.EqualTo(3));
+            Assert.That(hud.ChooseUpgrade(0), Is.True);
+            Assert.That(hud.UpgradeChoiceCount, Is.EqualTo(0));
+
+            GameEvents.RaiseBossHpUpdated("boss-1", "orc_warlord", 500, 1000, 2);
+            GameEvents.RaiseBossPhaseChanged("boss-1", 2);
+            Assert.That(hud.LastMessage, Does.Contain("Boss phase 2"));
+            GameEvents.RaiseBossDefeated("boss-1", 10);
+            Assert.That(hud.LastMessage, Does.Contain("Boss defeated"));
         }
     }
 }

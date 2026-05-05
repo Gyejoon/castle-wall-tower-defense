@@ -47,14 +47,12 @@ describe('slice2 replay runner', () => {
 		}
 	});
 
-	it('marks deferred fixtures as Phase 4 dependent', () => {
+	it('keeps post-Phase-4 fixtures deferred', () => {
 		const deferred = fixtures
 			.filter((item) => item.phase4_dependent === true)
 			.map((item) => item.fixtureId);
 
 		expect(deferred).toEqual([
-			'seed-002-gacha-stack',
-			'seed-004-merge-chain',
 			'seed-007-continue-run',
 			'seed-010-tutorial-completion',
 		]);

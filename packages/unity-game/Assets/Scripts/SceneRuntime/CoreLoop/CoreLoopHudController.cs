@@ -1,3 +1,4 @@
+using GLD.Core;
 using GLD.Data;
 using GLD.SceneRuntime.CoreLoop.Render;
 using GLD.Systems.Grid;
@@ -9,22 +10,40 @@ namespace GLD.SceneRuntime.CoreLoop
 {
     public sealed class CoreLoopHudController : MonoBehaviour
     {
+        enum InteractionMode
+        {
+            None,
+            Placement,
+            Merge
+        }
+
         const string DefaultTowerId = "archer";
         const float TopHudHeight = 76f;
-        const float BottomHudHeight = 132f;
+        const float BottomHudHeight = 212f;
 
         [SerializeField] CoreLoopFieldRenderer fieldRenderer;
 
         GameSceneController _controller;
         string _selectedTowerId;
+        GridCell? _mergeFrom;
+        InteractionMode _mode;
         string _lastMessage = "Archer button, then tap a green tile.";
+        UpgradeChoice[] _upgradeChoices;
+        string _bossLabel;
+        int _bossHp;
+        int _bossMaxHp;
+        int _bossPhase;
         GUIStyle _panelStyle;
         GUIStyle _labelStyle;
         GUIStyle _buttonStyle;
         GUIStyle _messageStyle;
+        bool _eventsBound;
 
         public string SelectedTowerId => _selectedTowerId;
-        public bool IsPlacementMode => !string.IsNullOrEmpty(_selectedTowerId);
+        public string LastMessage => _lastMessage;
+        public bool IsPlacementMode => _mode == InteractionMode.Placement && !string.IsNullOrEmpty(_selectedTowerId);
+        public bool IsMergeMode => _mode == InteractionMode.Merge;
+        public int UpgradeChoiceCount => _upgradeChoices != null ? _upgradeChoices.Length : 0;
 
         public void Bind(GameSceneController controller, CoreLoopFieldRenderer renderer)
         {
@@ -32,34 +51,63 @@ namespace GLD.SceneRuntime.CoreLoop
             fieldRenderer = renderer;
         }
 
+        void OnEnable()
+        {
+            BindEvents();
+        }
+
+        void OnDisable()
+        {
+            UnbindEvents();
+        }
+
+        void OnDestroy()
+        {
+            UnbindEvents();
+        }
+
         void Update()
         {
-            if (_controller == null || !IsPlacementMode)
+            if (_controller == null || _mode == InteractionMode.None)
                 return;
 
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-                TryPlaceAtScreenPosition(Mouse.current.position.ReadValue());
+                TryInteractAtScreenPosition(Mouse.current.position.ReadValue());
 
             if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
-                TryPlaceAtScreenPosition(Touchscreen.current.primaryTouch.position.ReadValue());
+                TryInteractAtScreenPosition(Touchscreen.current.primaryTouch.position.ReadValue());
         }
 
         public void BeginPlacement(string towerId)
         {
             _selectedTowerId = towerId;
+            _mergeFrom = null;
+            _mode = InteractionMode.Placement;
             var def = _controller != null ? _controller.FindTowerDef(towerId) : null;
             _lastMessage = $"{ResolveTowerLabel(def, towerId)} selected. Tap a green tile.";
         }
 
         public void CancelPlacement()
         {
+            if (!string.IsNullOrEmpty(_selectedTowerId))
+                GameEvents.RaiseRequestCancelSummon();
             _selectedTowerId = null;
+            _mergeFrom = null;
+            _mode = InteractionMode.None;
             _lastMessage = "Placement cancelled.";
         }
 
-        public bool TryPlaceAtScreenPosition(Vector2 screenPosition)
+        public void BeginMergeMode()
         {
-            if (_controller == null || !IsPlacementMode || IsHudScreenPosition(screenPosition))
+            _selectedTowerId = null;
+            _mergeFrom = null;
+            _mode = InteractionMode.Merge;
+            _lastMessage = "Merge: tap source tower, then target tower.";
+        }
+
+        public bool TryInteractAtScreenPosition(Vector2 screenPosition)
+        {
+            if (_controller == null || _mode == InteractionMode.None || IsHudScreenPosition(screenPosition))
                 return false;
 
             var camera = ResolveCamera();
@@ -71,6 +119,15 @@ namespace GLD.SceneRuntime.CoreLoop
 
             var world3 = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -camera.transform.position.z));
             var cell = _controller.Grid.WorldToGrid(new Vector2(world3.x, world3.y));
+            return TryInteractAtCell(cell);
+        }
+
+        public bool TryPlaceAtScreenPosition(Vector2 screenPosition) => TryInteractAtScreenPosition(screenPosition);
+
+        public bool TryInteractAtCell(GridCell cell)
+        {
+            if (_mode == InteractionMode.Merge)
+                return TryMergeAtCell(cell);
             return TryPlaceAtCell(cell);
         }
 
@@ -82,16 +139,57 @@ namespace GLD.SceneRuntime.CoreLoop
             var towerId = _selectedTowerId;
             var def = _controller.FindTowerDef(towerId);
             var label = ResolveTowerLabel(def, towerId);
-            var placed = _controller.PlaceTower(towerId, cell.Col, cell.Row);
+            GameEvents.RaiseRequestPlaceTower(new TowerPlacementRequest(towerId, cell.Col, cell.Row));
+            var placed = _controller.Towers.GetAt(cell) != null;
             if (placed)
             {
                 _lastMessage = $"{label} placed at {cell.Col},{cell.Row}.";
                 _selectedTowerId = null;
+                _mode = InteractionMode.None;
                 return true;
             }
 
             _lastMessage = $"Cannot place {label} at {cell.Col},{cell.Row}.";
             return false;
+        }
+
+        public bool ChooseUpgrade(int index)
+        {
+            if (_upgradeChoices == null || index < 0 || index >= _upgradeChoices.Length)
+                return false;
+
+            var choice = _upgradeChoices[index];
+            GameEvents.RaiseRequestUpgradePick(choice.Id);
+            _upgradeChoices = null;
+            return true;
+        }
+
+        bool TryMergeAtCell(GridCell cell)
+        {
+            if (_controller == null || _controller.Towers.GetAt(cell) == null)
+            {
+                _lastMessage = "Merge needs a tower tile.";
+                return false;
+            }
+
+            if (_mergeFrom == null)
+            {
+                _mergeFrom = cell;
+                _lastMessage = $"Merge source {cell.Col},{cell.Row}. Tap target tower.";
+                return true;
+            }
+
+            var from = _mergeFrom.Value;
+            if (from.Equals(cell))
+            {
+                _lastMessage = "Merge target must be a different tower.";
+                return false;
+            }
+
+            GameEvents.RaiseRequestMerge(new TowerMergeRequest(from.Col, from.Row, cell.Col, cell.Row));
+            _mergeFrom = null;
+            _mode = InteractionMode.None;
+            return true;
         }
 
         void OnGUI()
@@ -115,7 +213,10 @@ namespace GLD.SceneRuntime.CoreLoop
             var topLine = $"Energy {_controller.Energy.Current}/{_controller.Energy.Max}   Wave {wave}   {phase}";
             GUI.Label(new Rect(panel.x + 14f, panel.y + 10f, panel.width - 28f, 24f), topLine, _labelStyle);
 
-            var counts = $"Towers {_controller.Towers.Towers.Count}   Units {_controller.Units.ActiveCount}";
+            var boss = !string.IsNullOrEmpty(_bossLabel) && _bossMaxHp > 0
+                ? $"   Boss {_bossLabel} P{_bossPhase} {_bossHp}/{_bossMaxHp}"
+                : string.Empty;
+            var counts = $"Towers {_controller.Towers.Towers.Count}   Units {_controller.Units.ActiveCount}{boss}";
             GUI.Label(new Rect(panel.x + 14f, panel.y + 38f, panel.width - 28f, 24f), counts, _labelStyle);
         }
 
@@ -129,27 +230,78 @@ namespace GLD.SceneRuntime.CoreLoop
 
             var buttonY = panel.y + 46f;
             var gap = 8f;
-            var buttonWidth = (panel.width - 28f - gap * 2f) / 3f;
-            if (GUI.Button(new Rect(panel.x + 14f, buttonY, buttonWidth, 42f), BuildTowerButtonLabel(DefaultTowerId), _buttonStyle))
+            var buttonWidth = (panel.width - 28f - gap * 3f) / 4f;
+            if (GUI.Button(new Rect(panel.x + 14f, buttonY, buttonWidth, 38f), "Summon", _buttonStyle))
+            {
+                GameEvents.RaiseRequestSummon();
+                _lastMessage = "Summon requested.";
+            }
+
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap), buttonY, buttonWidth, 38f), "Gacha T2", _buttonStyle))
+                RequestGacha(2);
+
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap) * 2f, buttonY, buttonWidth, 38f), "Gacha T3", _buttonStyle))
+                RequestGacha(3);
+
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap) * 3f, buttonY, buttonWidth, 38f), "Gacha T4", _buttonStyle))
+                RequestGacha(4);
+
+            var row2Y = buttonY + 46f;
+            if (GUI.Button(new Rect(panel.x + 14f, row2Y, buttonWidth, 38f), BuildTowerButtonLabel(DefaultTowerId), _buttonStyle))
                 BeginPlacement(DefaultTowerId);
 
-            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap), buttonY, buttonWidth, 42f), BuildTowerButtonLabel("flame_tower"), _buttonStyle))
-                BeginPlacement("flame_tower");
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap), row2Y, buttonWidth, 38f), "Merge", _buttonStyle))
+                BeginMergeMode();
 
-            var cancelLabel = IsPlacementMode ? "Cancel" : "Start";
-            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap) * 2f, buttonY, buttonWidth, 42f), cancelLabel, _buttonStyle))
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap) * 2f, row2Y, buttonWidth, 38f), "Cards", _buttonStyle))
             {
-                if (IsPlacementMode)
+                GameEvents.RaiseRequestUpgradeReroll();
+                _lastMessage = "Upgrade cards requested.";
+            }
+
+            var startLabel = _mode != InteractionMode.None ? "Cancel" : "Start";
+            if (GUI.Button(new Rect(panel.x + 14f + (buttonWidth + gap) * 3f, row2Y, buttonWidth, 38f), startLabel, _buttonStyle))
+            {
+                if (_mode != InteractionMode.None)
                     CancelPlacement();
                 else
-                    _controller.StartRun();
+                    GameEvents.RaiseRequestStartRun();
             }
 
-            if (IsPlacementMode)
+            var row3Y = row2Y + 46f;
+            if (_upgradeChoices != null && _upgradeChoices.Length > 0)
+                DrawUpgradeChoices(panel, row3Y, gap);
+            else if (IsPlacementMode)
             {
                 var selected = _controller.FindTowerDef(_selectedTowerId);
-                GUI.Label(new Rect(panel.x + 14f, panel.y + 94f, panel.width - 28f, 24f), $"Placement: {ResolveTowerLabel(selected, _selectedTowerId)}", _messageStyle);
+                GUI.Label(new Rect(panel.x + 14f, row3Y + 8f, panel.width - 28f, 24f), $"Placement: {ResolveTowerLabel(selected, _selectedTowerId)}", _messageStyle);
             }
+            else if (IsMergeMode)
+            {
+                var mergeText = _mergeFrom.HasValue
+                    ? $"Merge source: {_mergeFrom.Value.Col},{_mergeFrom.Value.Row}"
+                    : "Merge mode";
+                GUI.Label(new Rect(panel.x + 14f, row3Y + 8f, panel.width - 28f, 24f), mergeText, _messageStyle);
+            }
+        }
+
+        void DrawUpgradeChoices(Rect panel, float y, float gap)
+        {
+            var count = Mathf.Min(3, _upgradeChoices.Length);
+            var cardWidth = (panel.width - 28f - gap * (count - 1)) / count;
+            for (var i = 0; i < count; i++)
+            {
+                var choice = _upgradeChoices[i];
+                var label = string.IsNullOrEmpty(choice.Name) ? choice.Id : choice.Name;
+                if (GUI.Button(new Rect(panel.x + 14f + (cardWidth + gap) * i, y, cardWidth, 42f), label, _buttonStyle))
+                    ChooseUpgrade(i);
+            }
+        }
+
+        public void RequestGacha(int tier)
+        {
+            GameEvents.RaiseRequestGacha(new GachaRequest(tier));
+            _lastMessage = $"Gacha T{tier} requested.";
         }
 
         string BuildTowerButtonLabel(string towerId)
@@ -179,6 +331,122 @@ namespace GLD.SceneRuntime.CoreLoop
         static bool IsHudScreenPosition(Vector2 screenPosition)
         {
             return screenPosition.y <= BottomHudHeight + 24f || screenPosition.y >= Screen.height - TopHudHeight - 24f;
+        }
+
+        void BindEvents()
+        {
+            if (_eventsBound) return;
+            GameEvents.OnSummonOffered += HandleSummonOffered;
+            GameEvents.OnSummonCancelled += HandleSummonCancelled;
+            GameEvents.OnSummonConfirmed += HandleSummonConfirmed;
+            GameEvents.OnRequestRejected += HandleRequestRejected;
+            GameEvents.OnTowerPlacementFailed += HandleTowerPlacementFailed;
+            GameEvents.OnTowersMerged += HandleTowersMerged;
+            GameEvents.OnMergeFailed += HandleMergeFailed;
+            GameEvents.OnUpgradeChoiceReady += HandleUpgradeChoiceReady;
+            GameEvents.OnUpgradeApplied += HandleUpgradeApplied;
+            GameEvents.OnBossHpUpdated += HandleBossHpUpdated;
+            GameEvents.OnBossPhaseChanged += HandleBossPhaseChanged;
+            GameEvents.OnBossDefeated += HandleBossDefeated;
+            _eventsBound = true;
+        }
+
+        void UnbindEvents()
+        {
+            if (!_eventsBound) return;
+            GameEvents.OnSummonOffered -= HandleSummonOffered;
+            GameEvents.OnSummonCancelled -= HandleSummonCancelled;
+            GameEvents.OnSummonConfirmed -= HandleSummonConfirmed;
+            GameEvents.OnRequestRejected -= HandleRequestRejected;
+            GameEvents.OnTowerPlacementFailed -= HandleTowerPlacementFailed;
+            GameEvents.OnTowersMerged -= HandleTowersMerged;
+            GameEvents.OnMergeFailed -= HandleMergeFailed;
+            GameEvents.OnUpgradeChoiceReady -= HandleUpgradeChoiceReady;
+            GameEvents.OnUpgradeApplied -= HandleUpgradeApplied;
+            GameEvents.OnBossHpUpdated -= HandleBossHpUpdated;
+            GameEvents.OnBossPhaseChanged -= HandleBossPhaseChanged;
+            GameEvents.OnBossDefeated -= HandleBossDefeated;
+            _eventsBound = false;
+        }
+
+        void HandleSummonOffered(string towerId)
+        {
+            BeginPlacement(towerId);
+            _lastMessage = $"Draw: {ResolveTowerLabel(_controller?.FindTowerDef(towerId), towerId)}. Tap a green tile.";
+        }
+
+        void HandleSummonCancelled(string towerId)
+        {
+            _selectedTowerId = null;
+            _mode = InteractionMode.None;
+            _lastMessage = $"Cancelled {towerId}.";
+        }
+
+        void HandleSummonConfirmed(string towerId)
+        {
+            _selectedTowerId = null;
+            _mode = InteractionMode.None;
+            _lastMessage = $"Placed {towerId}.";
+        }
+
+        void HandleRequestRejected(string reason)
+        {
+            _lastMessage = $"Rejected: {reason}.";
+        }
+
+        void HandleTowerPlacementFailed(string towerId, int col, int row, string reason)
+        {
+            _lastMessage = $"Cannot place {towerId} at {col},{row}: {reason}.";
+        }
+
+        void HandleTowersMerged(int col, int row, string towerId, int tier)
+        {
+            _mode = InteractionMode.None;
+            _mergeFrom = null;
+            _lastMessage = $"Merged T{tier} {towerId} at {col},{row}.";
+        }
+
+        void HandleMergeFailed(int fromCol, int fromRow, int toCol, int toRow, string reason)
+        {
+            _mode = InteractionMode.None;
+            _mergeFrom = null;
+            _lastMessage = $"Merge failed {fromCol},{fromRow}->{toCol},{toRow}: {reason}.";
+        }
+
+        void HandleUpgradeChoiceReady(UpgradeChoice[] choices)
+        {
+            _upgradeChoices = choices;
+            _lastMessage = "Pick an upgrade card.";
+        }
+
+        void HandleUpgradeApplied(string upgradeId, int stacks)
+        {
+            _upgradeChoices = null;
+            _lastMessage = $"{upgradeId} stack {stacks}.";
+        }
+
+        void HandleBossHpUpdated(string unitId, string defId, int hp, int maxHp, int phase)
+        {
+            _bossLabel = string.IsNullOrEmpty(defId) ? unitId : defId;
+            _bossHp = hp;
+            _bossMaxHp = maxHp;
+            _bossPhase = phase;
+        }
+
+        void HandleBossPhaseChanged(string unitId, int phase)
+        {
+            _bossLabel = string.IsNullOrEmpty(_bossLabel) ? unitId : _bossLabel;
+            _bossPhase = phase;
+            _lastMessage = $"Boss phase {phase}.";
+        }
+
+        void HandleBossDefeated(string unitId, int waveSlot)
+        {
+            _bossLabel = null;
+            _bossHp = 0;
+            _bossMaxHp = 0;
+            _bossPhase = 0;
+            _lastMessage = $"Boss defeated on wave {waveSlot}.";
         }
 
         void EnsureStyles()

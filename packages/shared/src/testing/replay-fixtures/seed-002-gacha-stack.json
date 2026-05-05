@@ -7,7 +7,6 @@
     "waveClearMs": 9083
   },
   "fixtureId": "seed-002-gacha-stack",
-  "phase4_dependent": true,
   "placements": [
     {
       "col": 3,

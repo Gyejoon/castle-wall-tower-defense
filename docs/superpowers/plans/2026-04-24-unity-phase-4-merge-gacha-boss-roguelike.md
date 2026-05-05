@@ -4,9 +4,9 @@
 
 > **Plan quality caveat:** Builds on Phase 3's full system set. Phase 4 closes the **in-run loop**: every stochastic subsystem (gacha draws, merge resolution, boss phase transitions, roguelike card selection + reroll) must be deterministic under seed, and the replay harness fixtures that were phase4_dependent in Phase 3 go live here. Task 1 agent consultations drive boss AI state-machine design.
 
-**Goal:** Unity completes a **full end-to-end run** including every stochastic in-run subsystem at parity with Phaser: gacha T2/T3/T4 distribution within ±0.5%p over 10⁵ rolls, merge chain all-paths correct, 4 boss types with phase transitions + invuln windows + enrage, roguelike card pick with reroll + cancelled-cache, all ten replay fixtures green on CI.
+**Goal:** Unity completes the Phase-4 parity slice for Phaser's current in-run systems: gacha T2/T3/T4 distribution within ±0.5%p over 10⁵ rolls, merge chain all-paths correct, shared boss phase transitions + the 4 current Phaser boss behaviors, roguelike card pick with reroll + cancelled-cache, and Phase-4-supported replay fixtures green on CI.
 
-**Architecture:** Three new pure-C# systems (`MergeSystem` static, `GachaSystem` static, `UpgradeCardSystem`). `BossPhaseTracker` (stubbed in Phase 3) becomes a proper state machine driven by `BossAI` MB per boss type — 4 concrete boss AIs (`OrcWarlordAI`, `ForgeMasterAI`, `CorruptedArchmageAI`, `DragonAI`) inheriting `BossAIBase`. `CoreOrchestrator.cs` (stubbed in Phase 3) fills merge/gacha/upgrade branches including cancelled-pool-draw and cancelled-gacha-draw caches. Boss visual effects (invuln tint, phase transition shader) by Unity Shader Graph Artist.
+**Architecture:** Three pure-C# systems (`MergeSystem`, `GachaSystem`, `UpgradeCardSystem`) plus pure-C# boss behavior registry. `BossPhaseTracker` (stubbed in Phase 3) becomes a shared phase state machine matching Phaser's 50%/25% transitions, while 4 concrete behaviors mirror Phaser's current behavior modules (`orc_warlord`, `forge_master`, `corrupted_archmage`, `dragon`). `CoreOrchestrator.cs` (stubbed in Phase 3) fills merge/gacha/upgrade branches including cancelled-pool-draw and cancelled-gacha-draw caches. Shader Graph/VFX polish remains Phase 5+ unless explicitly requested.
 
 **Tech Stack:** Unity 6 LTS · URP 2D · Shader Graph · DOTween (boss phase transitions) · NUnit · Vitest (shared distribution tests).
 
@@ -18,13 +18,12 @@
 - `MergeSystem.cs` — static resolver matching Phaser `resolveMerge` against `MERGE_CHAIN`
 - `GachaSystem.cs` — static draw with tier weights, `tier_odds_up` stacking
 - `UpgradeCardSystem.cs` + overlay event flow — 3 card offer on boss clear, reroll via AdService (stubbed — Phase 6 wires WebGLBridgeAdService)
-- `BossAIBase.cs` + 4 concrete bosses with HP 50%/25% phase transitions + 500ms invuln + speed enrage per spec
+- shared boss phase transitions (50%/25% HP, 500ms invuln, speed/tint config) + 4 current Phaser boss behaviors
 - Cancelled-cache port (`cancelledPoolDraw` + `cancelledGachaDraw`) in `CoreOrchestrator`
 - Gacha distribution EditMode test 10⁵ rolls ±0.5%p
 - Merge chain all-paths EditMode test (4 family × 4 tier + hybrid 2 + ultimate 1)
 - Boss phase transition EditMode test (10 seed × 4 boss)
 - Replay fixtures seed-002 (gacha stack), seed-003 (boss wave 10 full AI), seed-004 (merge chain full) — promoted from phase4_dependent
-- Shader Graph boss tint + invuln ring
 
 **Out:**
 - Meta forge / roguelike persistence (Phase 5 / Phase 6)
@@ -32,6 +31,8 @@
 - AdService real wiring (Phase 6 — Phase 4 uses `MockAdService` direct)
 - UI Toolkit overlays full polish (Phase 5; Phase 4 uses minimally styled overlays sufficient for PlayMode tests)
 - Lobby / MetaForge screens (Phase 5)
+- Shader Graph boss tint / invuln ring polish (Phase 5+ visual pass)
+- seed-007 continue-run and seed-010 tutorial fixture ungating
 
 ## Dependencies
 
@@ -188,10 +189,10 @@
 ## Exit gate verification
 
 From spec Phase 4 row:
-- [ ] Full run reproducible (Task 7 full integration)
+- [ ] Phase-4-supported replay fixtures reproducible (Task 7 integration)
 - [ ] Gacha ±0.5%p over 10⁵ rolls (Task 3)
 - [ ] Boss phase transitions verified (Task 5 EditMode + Task 7 PlayMode)
-- [ ] All 10 replay fixtures green on CI (Task 7 Step 4)
+- [ ] Phase-4-supported replay fixtures green on CI; continue/tutorial fixtures remain skipped (Task 7 Step 4)
 
 ## Self-review
 

@@ -7,7 +7,6 @@
     "waveClearMs": 9083
   },
   "fixtureId": "seed-004-merge-chain",
-  "phase4_dependent": true,
   "placements": [
     {
       "col": 3,

@@ -1,6 +1,6 @@
 # MileStone
 
-> **Last Updated:** 2026-05-05 (v3.7 — Unity Phase 3 replay parity fixture expansion)
+> **Last Updated:** 2026-05-05 (v3.8 — Unity Phase 4 HUD/WebGL smoke)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 스프린트 완료 또는 계획 변경 시 이 문서를 업데이트한다.
 
@@ -91,7 +91,8 @@
 | 항목 | 내용 | 상태 |
 |------|------|------|
 | Unity Phase 2 PoC | `/unity/?slice=poc`에서 1 archer + 5 wave-1 units + placement + HUD vertical slice | ✅ |
-| Unity Phase 3 1차 코어 | RNG/Grid/Pathfinding/Energy/Unit/Wave/Tower pure C# 포트, CoreLoopFieldRenderer, CoreLoopHudController, PlayMode/WebGL visible + placement smoke, 10개 replay fixture + parity gate 골격 | 🔄 |
+| Unity Phase 3 1차 코어 | RNG/Grid/Pathfinding/Energy/Unit/Wave/Tower pure C# 포트, CoreLoopFieldRenderer, CoreLoopHudController, PlayMode/WebGL visible + placement smoke, 10개 replay fixture + parity gate 골격 | ✅ |
+| Unity Phase 4 인런 parity | Merge/Gacha/Roguelike upgrade/Boss behavior C# 포트, seed-002/003/004 fixture ungate, CoreLoop HUD summon/gacha/merge/cards/boss surface + WebGL smoke. continue/tutorial fixture는 후속 Phase 유지 | 🔄 |
 | 텔레메트리 구현 | GDD §12-3 이벤트 맵 전체 | ⬜ |
 | 게임 프리즈/메모리 누수 해결 | 실기기 프로파일링 | ⬜ |
 | 에셋 전체 개선 (Batch 3~5) | 멀티 스테이지 타일셋, 가챠 UI | ⬜ |

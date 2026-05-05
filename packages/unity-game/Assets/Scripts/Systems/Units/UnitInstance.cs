@@ -1,4 +1,5 @@
 using GLD.Data;
+using GLD.Systems.Boss;
 using UnityEngine;
 
 namespace GLD.Systems.Units
@@ -16,9 +17,18 @@ namespace GLD.Systems.Units
         public PathFollower PathFollower { get; }
         public CCStateManager Cc { get; }
         public BossPhaseTracker Boss { get; }
+        public IBossBehavior BossBehavior { get; }
+        public bool IsClone { get; }
         public Vector2 Position => PathFollower.Position;
 
-        public UnitInstance(string instanceId, UnitDefSO def, PathFollower pathFollower, CCStateManager cc, float hpMultiplier = 1f)
+        public UnitInstance(
+            string instanceId,
+            UnitDefSO def,
+            PathFollower pathFollower,
+            CCStateManager cc,
+            float hpMultiplier = 1f,
+            BossConfigSO bossConfig = null,
+            bool isClone = false)
         {
             InstanceId = instanceId;
             Def = def;
@@ -28,21 +38,32 @@ namespace GLD.Systems.Units
             BaseSpeed = Mathf.Max(0f, def.stats.speed);
             PathFollower = pathFollower;
             Cc = cc;
-            Boss = new BossPhaseTracker(!string.IsNullOrEmpty(def.bossBehaviorId), def.bossCcResist);
+            IsClone = isClone;
+            var isBoss = !string.IsNullOrEmpty(def.bossBehaviorId);
+            Boss = new BossPhaseTracker(
+                isBoss,
+                def.bossCcResist,
+                bossConfig != null && bossConfig.phaseTransitionRatio > 0f ? bossConfig.phaseTransitionRatio : 0.5f,
+                bossConfig != null && bossConfig.phase3TransitionRatio > 0f ? bossConfig.phase3TransitionRatio : 0.25f,
+                bossConfig != null && bossConfig.invulnerabilityMs > 0 ? bossConfig.invulnerabilityMs / 1000f : 0.5f,
+                bossConfig != null && bossConfig.phase2SpeedMultiplier > 0f ? bossConfig.phase2SpeedMultiplier : 1.15f,
+                bossConfig != null && bossConfig.phase3SpeedMultiplier > 0f ? bossConfig.phase3SpeedMultiplier : 1.35f);
+            BossBehavior = isBoss ? BossBehaviorRegistry.Create(def.bossBehaviorId) : null;
         }
 
         public void Tick(float deltaSeconds)
         {
             if (!IsAlive || Escaped) return;
             Cc.Tick(deltaSeconds);
-            PathFollower.Tick(deltaSeconds, Cc.ResolveSpeed(BaseSpeed));
+            Boss.Tick(deltaSeconds);
+            PathFollower.Tick(deltaSeconds, Cc.ResolveSpeed(BaseSpeed * Boss.SpeedMultiplier));
             if (PathFollower.ReachedExit)
                 Escaped = true;
         }
 
         public float ApplyDamage(float rawDamage)
         {
-            if (!IsAlive || Escaped || rawDamage <= 0f) return 0f;
+            if (!IsAlive || Escaped || Boss.IsInvulnerable || rawDamage <= 0f) return 0f;
 
             var applied = Mathf.Min(Hp, Mathf.Max(1f, rawDamage - Armor));
             Hp -= applied;

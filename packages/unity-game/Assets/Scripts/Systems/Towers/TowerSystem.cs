@@ -16,8 +16,11 @@ namespace GLD.Systems.Towers
         readonly Dictionary<GridCell, TowerInstance> _byCell = new Dictionary<GridCell, TowerInstance>();
         readonly List<TowerInstance> _towers = new List<TowerInstance>();
         int _nextTowerId;
+        float _elapsedSeconds;
 
         public float GlobalAtkPct { get; set; }
+        public float RuntimeDamageMultiplier { get; set; } = 1f;
+        public float RuntimeCritDamageBonus { get; set; }
         public IReadOnlyList<TowerInstance> Towers => _towers;
 
         public event Action<TowerInstance> TowerPlaced;
@@ -30,6 +33,7 @@ namespace GLD.Systems.Towers
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _energy = energy;
             _units = units ?? throw new ArgumentNullException(nameof(units));
+            _units.SetTowerSystem(this);
         }
 
         public TowerInstance GetAt(GridCell cell)
@@ -88,14 +92,28 @@ namespace GLD.Systems.Towers
         public void Tick(float deltaSeconds)
         {
             if (deltaSeconds <= 0f) return;
+            _elapsedSeconds += deltaSeconds;
 
             foreach (var tower in _towers)
             {
                 tower.GlobalAtkPct = GlobalAtkPct;
-                var applied = tower.Tick(deltaSeconds, _units);
+                tower.RuntimeDamageMultiplier = RuntimeDamageMultiplier;
+                tower.RuntimeCritDamageBonus = RuntimeCritDamageBonus;
+                var applied = tower.Tick(deltaSeconds, _units, _elapsedSeconds);
                 if (applied > 0f)
                     TowerAttacked?.Invoke(tower, applied);
             }
+        }
+
+        public bool DisableRandomTower(float untilSeconds)
+        {
+            foreach (var tower in _towers)
+            {
+                tower.DisableUntil(untilSeconds);
+                return true;
+            }
+
+            return false;
         }
 
         TowerInstance FindByInstanceId(string instanceId)

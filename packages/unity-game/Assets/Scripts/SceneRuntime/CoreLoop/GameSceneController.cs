@@ -53,13 +53,13 @@ namespace GLD.SceneRuntime.CoreLoop
 
             Grid = new GridManager(database.map, mapId);
             Energy = new EnergySystem(database.energy);
-            Units = new UnitSystem(Grid, Energy, database.units);
+            Units = new UnitSystem(Grid, Energy, database.units, database.boss);
             Towers = new TowerSystem(Grid, Energy, Units);
             Waves = new WaveSystem(database.waves, database.units, Units);
             State = new GameStateManager();
             State.SetSpeedMultiplier(speedMultiplier);
             DamageNumbers = new DamageNumberSystem(transform);
-            Orchestrator = new CoreOrchestrator(database, Towers, Waves);
+            Orchestrator = new CoreOrchestrator(database, Towers, Waves, energy: Energy);
             Orchestrator.Enable();
             GameEvents.OnRequestSetSpeed += SetSpeedMultiplier;
             _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers);

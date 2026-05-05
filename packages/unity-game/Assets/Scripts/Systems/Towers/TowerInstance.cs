@@ -14,6 +14,9 @@ namespace GLD.Systems.Towers
         public Vector2 Position { get; private set; }
         public float CooldownSeconds { get; private set; }
         public float GlobalAtkPct { get; set; }
+        public float RuntimeDamageMultiplier { get; set; } = 1f;
+        public float RuntimeCritDamageBonus { get; set; }
+        public float DisabledUntilSeconds { get; private set; }
 
         public TowerInstance(string instanceId, TowerDefSO def, GridCell cell, Vector2 position)
         {
@@ -29,9 +32,16 @@ namespace GLD.Systems.Towers
             Position = position;
         }
 
-        public float Tick(float deltaSeconds, UnitSystem units)
+        public void DisableUntil(float untilSeconds)
+        {
+            DisabledUntilSeconds = Mathf.Max(DisabledUntilSeconds, untilSeconds);
+        }
+
+        public float Tick(float deltaSeconds, UnitSystem units, float elapsedSeconds = 0f)
         {
             if (deltaSeconds <= 0f || units == null)
+                return 0f;
+            if (elapsedSeconds < DisabledUntilSeconds)
                 return 0f;
 
             CooldownSeconds -= deltaSeconds;
@@ -42,7 +52,10 @@ namespace GLD.Systems.Towers
             if (target == null)
                 return 0f;
 
-            var damage = Def.stats.damage * (1f + Mathf.Max(0f, GlobalAtkPct));
+            var runtimeMultiplier = Mathf.Max(0f, RuntimeDamageMultiplier) + Mathf.Max(0f, RuntimeCritDamageBonus);
+            if (runtimeMultiplier <= 0f)
+                runtimeMultiplier = 1f;
+            var damage = Def.stats.damage * (1f + Mathf.Max(0f, GlobalAtkPct)) * runtimeMultiplier;
             var applied = units.ApplyDamage(target, damage);
             GameEvents.RaiseUnitDamaged(target.Def.id, applied);
             GameEvents.RaiseTowerAttacked(Def.id, applied);

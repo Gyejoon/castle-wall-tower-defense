@@ -44,6 +44,12 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var summonReveal = controller.GetComponent<SummonRevealController>();
             Assert.That(summonReveal, Is.Not.Null);
             Assert.That(summonReveal.IsBound, Is.True);
+            var upgradePick = controller.GetComponent<UpgradePickOverlayController>();
+            Assert.That(upgradePick, Is.Not.Null);
+            Assert.That(upgradePick.IsBound, Is.True);
+            var pauseModal = controller.GetComponent<PauseModalController>();
+            Assert.That(pauseModal, Is.Not.Null);
+            Assert.That(pauseModal.IsBound, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
@@ -67,7 +73,7 @@ namespace GLD.Tests.PlayMode.CoreLoop
             while (Time.time < timeout && controller.Waves.SpawnedCount == 0)
                 yield return null;
 
-            Assert.That(renderer.RenderedUnitCount, Is.GreaterThan(0));
+            Assert.That(renderer.RenderedUnitCount, Is.EqualTo(controller.Units.ActiveCount));
             Assert.That(controller.Waves.CurrentWaveSlot, Is.EqualTo(1));
             Assert.That(controller.Waves.Phase, Is.EqualTo(WavePhase.Running).Or.EqualTo(WavePhase.Interwave).Or.EqualTo(WavePhase.Victory));
             Assert.That(controller.Waves.SpawnedCount, Is.GreaterThan(0));
@@ -128,8 +134,22 @@ namespace GLD.Tests.PlayMode.CoreLoop
 
             GameEvents.RaiseRequestUpgradeReroll();
             Assert.That(hud.UpgradeChoiceCount, Is.EqualTo(3));
+            var upgradePick = controller.GetComponent<UpgradePickOverlayController>();
+            Assert.That(upgradePick, Is.Not.Null);
+            Assert.That(upgradePick.IsVisible, Is.True);
+            Assert.That(upgradePick.ChoiceCount, Is.EqualTo(3));
             Assert.That(hud.ChooseUpgrade(0), Is.True);
             Assert.That(hud.UpgradeChoiceCount, Is.EqualTo(0));
+            Assert.That(upgradePick.IsVisible, Is.False);
+
+            var pauseModal = controller.GetComponent<PauseModalController>();
+            Assert.That(pauseModal, Is.Not.Null);
+            GameEvents.RaiseRequestPause();
+            yield return null;
+            Assert.That(pauseModal.IsVisible, Is.True);
+            GameEvents.RaiseRequestResume();
+            yield return null;
+            Assert.That(pauseModal.IsVisible, Is.False);
 
             GameEvents.RaiseBossHpUpdated("boss-1", "orc_warlord", 500, 1000, 2);
             GameEvents.RaiseBossPhaseChanged("boss-1", 2);

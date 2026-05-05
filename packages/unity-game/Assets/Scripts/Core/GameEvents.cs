@@ -80,6 +80,7 @@ namespace GLD.Core
         public static event Action OnRequestStartRun;
         public static event Action OnRequestPause;
         public static event Action OnRequestResume;
+        public static event Action OnRequestQuitToLobby;
         public static event Action OnRequestSummon;
         public static event Action OnRequestCancelSummon;
         public static event Action<TowerPlacementRequest> OnRequestPlaceTower;
@@ -131,6 +132,7 @@ namespace GLD.Core
         public static void RaiseRequestStartRun() => OnRequestStartRun?.Invoke();
         public static void RaiseRequestPause() => OnRequestPause?.Invoke();
         public static void RaiseRequestResume() => OnRequestResume?.Invoke();
+        public static void RaiseRequestQuitToLobby() => OnRequestQuitToLobby?.Invoke();
         public static void RaiseRequestSummon() => OnRequestSummon?.Invoke();
         public static void RaiseRequestCancelSummon() => OnRequestCancelSummon?.Invoke();
         public static void RaiseRequestPlaceTower(TowerPlacementRequest request) => OnRequestPlaceTower?.Invoke(request);
@@ -188,6 +190,7 @@ namespace GLD.Core
             OnRequestStartRun = null;
             OnRequestPause = null;
             OnRequestResume = null;
+            OnRequestQuitToLobby = null;
             OnRequestSummon = null;
             OnRequestCancelSummon = null;
             OnRequestPlaceTower = null;

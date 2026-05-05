@@ -269,9 +269,7 @@ namespace GLD.SceneRuntime.CoreLoop
             }
 
             var row3Y = row2Y + 46f;
-            if (_upgradeChoices != null && _upgradeChoices.Length > 0)
-                DrawUpgradeChoices(panel, row3Y, gap);
-            else if (IsPlacementMode)
+            if (IsPlacementMode)
             {
                 var selected = _controller.FindTowerDef(_selectedTowerId);
                 GUI.Label(new Rect(panel.x + 14f, row3Y + 8f, panel.width - 28f, 24f), $"Placement: {ResolveTowerLabel(selected, _selectedTowerId)}", _messageStyle);

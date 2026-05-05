@@ -192,6 +192,12 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         void CreateOrSyncUnit(UnitInstance unit)
         {
             if (unit == null) return;
+            if (!unit.IsAlive || unit.Escaped)
+            {
+                RemoveUnitView(unit.InstanceId);
+                return;
+            }
+
             if (!_unitViews.TryGetValue(unit.InstanceId, out var view))
             {
                 view = CreateSquareView(unit.InstanceId, _unitRoot, new Color(0.82f, 0.24f, 0.18f, 1f), 0.5f, 10);
@@ -199,7 +205,14 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             }
 
             view.transform.position = new Vector3(unit.Position.x, unit.Position.y, -0.1f);
-            view.SetActive(unit.IsAlive && !unit.Escaped);
+            view.SetActive(true);
+        }
+
+        void RemoveUnitView(string instanceId)
+        {
+            if (!_unitViews.TryGetValue(instanceId, out var view)) return;
+            _unitViews.Remove(instanceId);
+            Destroy(view);
         }
 
         void CreateOrSyncTower(TowerInstance tower)

@@ -31,6 +31,8 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] GameHudController gameHudController;
         [SerializeField] TowerActionSheetController towerActionSheetController;
         [SerializeField] SummonRevealController summonRevealController;
+        [SerializeField] UpgradePickOverlayController upgradePickOverlayController;
+        [SerializeField] PauseModalController pauseModalController;
         [SerializeField] UIDocument gameHudDocument;
 
         public GridManager Grid { get; private set; }
@@ -166,6 +168,20 @@ namespace GLD.SceneRuntime.CoreLoop
                 summonRevealController = gameObject.AddComponent<SummonRevealController>();
 
             summonRevealController.Bind(this, gameHudDocument);
+
+            if (upgradePickOverlayController == null)
+                upgradePickOverlayController = GetComponent<UpgradePickOverlayController>();
+            if (upgradePickOverlayController == null)
+                upgradePickOverlayController = gameObject.AddComponent<UpgradePickOverlayController>();
+
+            upgradePickOverlayController.Bind(gameHudDocument);
+
+            if (pauseModalController == null)
+                pauseModalController = GetComponent<PauseModalController>();
+            if (pauseModalController == null)
+                pauseModalController = gameObject.AddComponent<PauseModalController>();
+
+            pauseModalController.Bind(RunState, gameHudDocument);
         }
 
         public void SetSpeedMultiplier(float value)

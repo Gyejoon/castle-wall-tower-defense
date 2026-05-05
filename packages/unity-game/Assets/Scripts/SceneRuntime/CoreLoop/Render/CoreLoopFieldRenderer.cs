@@ -82,13 +82,20 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         void UnbindEvents()
         {
             if (_controller == null) return;
-            _controller.Units.UnitSpawned -= HandleUnitSpawned;
-            _controller.Units.UnitKilled -= HandleUnitChanged;
-            _controller.Units.UnitEscaped -= HandleUnitChanged;
-            _controller.Towers.TowerPlaced -= HandleTowerPlaced;
-            _controller.Towers.TowerMoved -= HandleTowerMoved;
-            _controller.Towers.TowerSold -= HandleTowerSold;
-            _controller.Towers.TowerAttacked -= HandleTowerAttacked;
+            if (_controller.Units != null)
+            {
+                _controller.Units.UnitSpawned -= HandleUnitSpawned;
+                _controller.Units.UnitKilled -= HandleUnitChanged;
+                _controller.Units.UnitEscaped -= HandleUnitChanged;
+            }
+
+            if (_controller.Towers != null)
+            {
+                _controller.Towers.TowerPlaced -= HandleTowerPlaced;
+                _controller.Towers.TowerMoved -= HandleTowerMoved;
+                _controller.Towers.TowerSold -= HandleTowerSold;
+                _controller.Towers.TowerAttacked -= HandleTowerAttacked;
+            }
         }
 
         void EnsureRoots()

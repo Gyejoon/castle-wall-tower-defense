@@ -33,6 +33,8 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] SummonRevealController summonRevealController;
         [SerializeField] UpgradePickOverlayController upgradePickOverlayController;
         [SerializeField] PauseModalController pauseModalController;
+        [SerializeField] BossHpBarController bossHpBarController;
+        [SerializeField] BossWarningOverlayController bossWarningOverlayController;
         [SerializeField] UIDocument gameHudDocument;
 
         public GridManager Grid { get; private set; }
@@ -182,6 +184,20 @@ namespace GLD.SceneRuntime.CoreLoop
                 pauseModalController = gameObject.AddComponent<PauseModalController>();
 
             pauseModalController.Bind(RunState, gameHudDocument);
+
+            if (bossHpBarController == null)
+                bossHpBarController = GetComponent<BossHpBarController>();
+            if (bossHpBarController == null)
+                bossHpBarController = gameObject.AddComponent<BossHpBarController>();
+
+            bossHpBarController.Bind(RunState, gameHudDocument);
+
+            if (bossWarningOverlayController == null)
+                bossWarningOverlayController = GetComponent<BossWarningOverlayController>();
+            if (bossWarningOverlayController == null)
+                bossWarningOverlayController = gameObject.AddComponent<BossWarningOverlayController>();
+
+            bossWarningOverlayController.Bind(gameHudDocument);
         }
 
         public void SetSpeedMultiplier(float value)

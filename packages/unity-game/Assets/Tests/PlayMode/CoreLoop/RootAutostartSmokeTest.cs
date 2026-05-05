@@ -50,6 +50,12 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var pauseModal = controller.GetComponent<PauseModalController>();
             Assert.That(pauseModal, Is.Not.Null);
             Assert.That(pauseModal.IsBound, Is.True);
+            var bossHpBar = controller.GetComponent<BossHpBarController>();
+            Assert.That(bossHpBar, Is.Not.Null);
+            Assert.That(bossHpBar.IsBound, Is.True);
+            var bossWarning = controller.GetComponent<BossWarningOverlayController>();
+            Assert.That(bossWarning, Is.Not.Null);
+            Assert.That(bossWarning.IsBound, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
@@ -152,9 +158,18 @@ namespace GLD.Tests.PlayMode.CoreLoop
             Assert.That(pauseModal.IsVisible, Is.False);
 
             GameEvents.RaiseBossHpUpdated("boss-1", "orc_warlord", 500, 1000, 2);
+            var bossHpBar = controller.GetComponent<BossHpBarController>();
+            Assert.That(bossHpBar, Is.Not.Null);
+            Assert.That(bossHpBar.IsVisible, Is.True);
+            GameEvents.RaiseBossWaveStarted(10);
+            var bossWarning = controller.GetComponent<BossWarningOverlayController>();
+            Assert.That(bossWarning, Is.Not.Null);
+            Assert.That(bossWarning.IsVisible, Is.True);
+            Assert.That(bossWarning.WaveSlot, Is.EqualTo(10));
             GameEvents.RaiseBossPhaseChanged("boss-1", 2);
             Assert.That(hud.LastMessage, Does.Contain("Boss phase 2"));
             GameEvents.RaiseBossDefeated("boss-1", 10);
+            Assert.That(bossHpBar.IsVisible, Is.False);
             Assert.That(hud.LastMessage, Does.Contain("Boss defeated"));
         }
     }

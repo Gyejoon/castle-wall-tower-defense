@@ -95,6 +95,31 @@ namespace GLD.Tests.EditMode.Systems
         }
 
         [Test]
+        public void WaveSystemForceStartsNextNormalWaveAfterTimer()
+        {
+            var grid = new GridManager(CreateMapLayout());
+            var energy = new EnergySystem();
+            var unitCatalog = CreateUnitCatalog(CreateUnit("scout", hp: 999, speed: 0.1f));
+            var units = new UnitSystem(grid, energy, unitCatalog);
+            var waves = CreateWaveCatalog(new[] { 1, 2 }, "scout", count: 1);
+            var waveSystem = new WaveSystem(waves, unitCatalog, units);
+
+            Assert.That(waveSystem.Start(1), Is.True);
+            waveSystem.Tick(0.1f);
+
+            Assert.That(units.ActiveCount, Is.EqualTo(1));
+            Assert.That(waveSystem.CurrentWaveSlot, Is.EqualTo(1));
+
+            waveSystem.Tick(30f);
+            waveSystem.Tick(0.1f);
+
+            Assert.That(waveSystem.CurrentWaveSlot, Is.EqualTo(2));
+            Assert.That(waveSystem.Phase, Is.EqualTo(WavePhase.Running));
+            Assert.That(waveSystem.SpawnedCount, Is.EqualTo(1));
+            Assert.That(units.ActiveCount, Is.EqualTo(2));
+        }
+
+        [Test]
         public void TowerSystemPlacesMovesSellsAndAttacks()
         {
             var grid = new GridManager(CreateMapLayout());
@@ -166,15 +191,27 @@ namespace GLD.Tests.EditMode.Systems
 
         static WaveCatalogSO CreateWaveCatalog(string unitId, int count)
         {
-            var wave = ScriptableObject.CreateInstance<WaveDefSO>();
-            wave.slotIndex = 1;
-            wave.groups = new[]
+            return CreateWaveCatalog(new[] { 1 }, unitId, count);
+        }
+
+        static WaveCatalogSO CreateWaveCatalog(int[] slots, string unitId, int count)
+        {
+            var waveDefs = new WaveDefSO[slots.Length];
+            for (var i = 0; i < slots.Length; i++)
             {
-                new WaveGroup { unitId = unitId, count = count, hpMultiplier = 1f }
-            };
+                var wave = ScriptableObject.CreateInstance<WaveDefSO>();
+                wave.slotIndex = slots[i];
+                wave.kind = WaveKind.Normal;
+                wave.delayAfterClearSec = 3f;
+                wave.groups = new[]
+                {
+                    new WaveGroup { unitId = unitId, count = count, hpMultiplier = 1f }
+                };
+                waveDefs[i] = wave;
+            }
 
             var catalog = ScriptableObject.CreateInstance<WaveCatalogSO>();
-            catalog.waves = new[] { wave };
+            catalog.waves = waveDefs;
             return catalog;
         }
 

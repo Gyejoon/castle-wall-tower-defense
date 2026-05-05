@@ -120,3 +120,66 @@
 .pause-panel > .gld-btn {
   margin-top: 8px;
 }
+
+.boss-hp-bar {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  translate: -50% 0;
+  width: 260px;
+}
+
+.boss-hp-header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.boss-hp-header > Label {
+  color: var(--color-text-primary);
+  font-size: var(--type-caption10-size);
+  -unity-font-style: bold;
+}
+
+#boss-hp-value {
+  color: var(--color-text-secondary);
+}
+
+.boss-hp-track {
+  height: 8px;
+  border-width: 1px;
+  border-radius: var(--radius-xs);
+  border-color: var(--color-border);
+  background-color: var(--surface-panel-sunken);
+}
+
+.boss-hp-fill {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-danger);
+  border-radius: var(--radius-xs);
+}
+
+.boss-warning-overlay {
+  background-color: var(--overlay-dim-soft);
+}
+
+.boss-warning-panel {
+  width: 240px;
+  align-items: center;
+}
+
+#boss-warning-title {
+  color: var(--color-danger);
+  font-size: var(--type-body14-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+#boss-warning-subtitle {
+  color: var(--color-text-primary);
+  font-size: var(--type-body12-size);
+  -unity-text-align: middle-center;
+  margin-top: 6px;
+}

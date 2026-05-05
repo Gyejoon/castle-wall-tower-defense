@@ -17,6 +17,7 @@ namespace GLD.Systems.Waves
     public sealed class WaveSystem
     {
         const float SpawnIntervalSeconds = 0.75f;
+        const float MaxNormalWaveDurationSeconds = 30f;
 
         readonly WaveCatalogSO _waves;
         readonly UnitCatalogSO _unitsCatalog;
@@ -26,6 +27,7 @@ namespace GLD.Systems.Waves
         int _spawnedInGroup;
         float _spawnTimer;
         float _interwaveTimer;
+        float _waveElapsedSeconds;
 
         public int CurrentWaveSlot { get; private set; }
         public WavePhase Phase { get; private set; } = WavePhase.Idle;
@@ -46,6 +48,11 @@ namespace GLD.Systems.Waves
             if (Phase == WavePhase.Running)
                 return false;
 
+            return BeginWave(slot);
+        }
+
+        bool BeginWave(int slot)
+        {
             var wave = _waves.FindBySlot(slot);
             if (wave == null)
                 return false;
@@ -55,6 +62,7 @@ namespace GLD.Systems.Waves
             _groupIndex = 0;
             _spawnedInGroup = 0;
             _spawnTimer = 0f;
+            _waveElapsedSeconds = 0f;
             SpawnedCount = 0;
             Phase = WavePhase.Running;
             WaveStarted?.Invoke(CurrentWaveSlot);
@@ -80,10 +88,17 @@ namespace GLD.Systems.Waves
             if (Phase != WavePhase.Running || _currentWave == null)
                 return;
 
+            _waveElapsedSeconds += deltaSeconds;
             TickSpawns(deltaSeconds);
 
             if (AllGroupsSpawned() && _units.ActiveCount == 0)
-                CompleteCurrentWave();
+            {
+                CompleteCurrentWave(skipDelay: false);
+                return;
+            }
+
+            if (ShouldForceAdvanceNormalWave())
+                CompleteCurrentWave(skipDelay: true);
         }
 
         void TickSpawns(float deltaSeconds)
@@ -111,7 +126,16 @@ namespace GLD.Systems.Waves
 
         bool AllGroupsSpawned() => _currentWave.groups == null || _groupIndex >= _currentWave.groups.Length;
 
-        void CompleteCurrentWave()
+        bool ShouldForceAdvanceNormalWave()
+        {
+            if (_currentWave == null || _currentWave.kind == WaveKind.Boss)
+                return false;
+            if (CurrentWaveSlot >= 50 || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
+                return false;
+            return _waveElapsedSeconds >= MaxNormalWaveDurationSeconds;
+        }
+
+        void CompleteCurrentWave(bool skipDelay)
         {
             WaveCompleted?.Invoke(CurrentWaveSlot);
             GameEvents.RaiseWaveCompleted(CurrentWaveSlot);
@@ -120,6 +144,12 @@ namespace GLD.Systems.Waves
             {
                 Phase = WavePhase.Victory;
                 GameEvents.RaiseGameOver(true);
+                return;
+            }
+
+            if (skipDelay)
+            {
+                BeginWave(CurrentWaveSlot + 1);
                 return;
             }
 

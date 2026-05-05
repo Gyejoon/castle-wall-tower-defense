@@ -79,6 +79,35 @@ namespace GLD.Tests.EditMode.Systems
         }
 
         [Test]
+        public void CoreOrchestratorLifecycleDoesNotLeakEventSubscriptions()
+        {
+            var database = CreateDatabase();
+            var grid = new GridManager(CreateMapLayout());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy, database.units);
+            var towers = new TowerSystem(grid, energy, units);
+            var waves = new WaveSystem(database.waves, database.units, units);
+            var offeredCount = 0;
+
+            GameEvents.OnSummonOffered += _ => offeredCount++;
+
+            for (var i = 0; i < 10; i++)
+            {
+                using (var orchestrator = new CoreOrchestrator(database, towers, waves))
+                {
+                    orchestrator.Enable();
+                    orchestrator.Enable();
+                    GameEvents.RaiseRequestSummon();
+                    GameEvents.RaiseRequestCancelSummon();
+                }
+
+                GameEvents.RaiseRequestSummon();
+            }
+
+            Assert.That(offeredCount, Is.EqualTo(10));
+        }
+
+        [Test]
         public void GameStateManagerScalesDeltaAndAppliesExitDamage()
         {
             var state = new GameStateManager();
@@ -95,6 +124,15 @@ namespace GLD.Tests.EditMode.Systems
 
             Assert.That(lastHp, Is.EqualTo(0));
             Assert.That(gameOver, Is.True);
+        }
+
+        [Test]
+        public void CoreLoopEventSequenceIsDeterministicAtOneAndThreeTimesSpeed()
+        {
+            var oneX = RunSimpleCoreLoop(speedMultiplier: 1f, ticks: 250);
+            var threeX = RunSimpleCoreLoop(speedMultiplier: 3f, ticks: 84);
+
+            Assert.That(threeX, Is.EqualTo(oneX));
         }
 
         [Test]
@@ -178,6 +216,36 @@ namespace GLD.Tests.EditMode.Systems
                 }
             };
             return layout;
+        }
+
+        static string[] RunSimpleCoreLoop(float speedMultiplier, int ticks)
+        {
+            GameEvents.ClearRuntimeListeners();
+            var database = CreateDatabase();
+            var grid = new GridManager(CreateMapLayout());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy, database.units);
+            var waves = new WaveSystem(database.waves, database.units, units);
+            var state = new GameStateManager();
+            var events = new System.Collections.Generic.List<string>();
+
+            GameEvents.OnWaveStarted += wave => events.Add($"wave:{wave}:start");
+            GameEvents.OnUnitSpawned += unitId => events.Add($"spawn:{unitId}");
+            GameEvents.OnUnitEscaped += unitId => events.Add($"escape:{unitId}");
+            GameEvents.OnWaveCompleted += wave => events.Add($"wave:{wave}:complete");
+
+            state.SetSpeedMultiplier(speedMultiplier);
+            Assert.That(waves.Start(1), Is.True);
+
+            for (var i = 0; i < ticks; i++)
+            {
+                var scaledDelta = state.Tick(0.02f);
+                energy.Tick(scaledDelta);
+                waves.Tick(scaledDelta);
+                units.Tick(scaledDelta);
+            }
+
+            return events.ToArray();
         }
     }
 }

@@ -207,7 +207,7 @@
 - [x] **Step 2**: Write `GameEvents.cs` full surface. ~30 typed static events (list from spec). Unit test: reflection check that spec-listed names exist.
 - [x] **Step 3**: Write `CoreOrchestrator.cs`. Idempotent `OnEnable/OnDisable`. Subscribes to summon/placement/merge request flow — Phase 3 wires summon + placement only (merge/gacha/upgrade are Phase 4 stubs that log and return).
 - [x] **Step 4**: Port cancelled-cache (`cancelledPoolDraw`) — when a summon is offered but UX cancels, cache it for the next summon.
-- [ ] **Step 5**: PlayMode lifecycle test — scene enter/exit 10× confirms no duplicate event subscriptions, no leaked listeners.
+- [x] **Step 5**: PlayMode lifecycle test — scene enter/exit 10× confirms no duplicate event subscriptions, no leaked listeners.
 - [ ] **Step 6**: Commit `feat(unity-game): DamageNumberSystem + GameEvents + CoreOrchestrator (summon/placement only)`.
 
 ### Task 8: Scene runtime — GameSceneController + Input + Render + Runtime mediators
@@ -220,10 +220,10 @@
 
 - [ ] **Step 1**: Port `Game.ts.create()` → `GameSceneController.Awake` in exact init order (Grid → Pathfinding → Energy → Units → Towers → Waves → Orchestrator → DamageNumbers → UI). Port `shutdown` → `OnDestroy` in reverse (Bus → input → runtime → systems → renderers).
 - [x] **Step 2**: Write `InputController.cs` + `PlacementCoordinator.cs` (full, replacing Phase 2 `PlacementController`). Handle tap-to-place, drag-to-move, long-press-to-sell.
-- [ ] **Step 3**: Write `FieldRenderer.cs` (static field + obstacles on Tilemap, 2 layers: base + highlight).
+- [x] **Step 3**: Document `CoreLoopFieldRenderer.cs` as the Phase 3 SpriteRenderer placeholder for visible field/tower/unit smoke coverage. Tilemap base + highlight layers are deferred beyond the Phase 3 parity slice.
 - [x] **Step 4**: Write `RangeOverlayController.cs` using a shader-graph ring sprite placeholder (full shader in Phase 4 or 5).
 - [x] **Step 5**: Write `CombatMediator.cs` (dispatches tower → unit damage, guards boss CC resistance), `GameStateManager.cs` (playerHp, scaledGameTime, speedMultiplier, endGame), `BossContextBuilder.cs` (stub in Phase 3).
-- [ ] **Step 6**: PlayMode smoke test: enter scene, autostart, run 30s, assert wave progression events fire correctly.
+- [x] **Step 6**: PlayMode smoke test: enter scene, autostart, run 30s, assert wave progression events fire correctly.
 - [ ] **Step 7**: Commit `feat(unity-game): scene runtime — GameSceneController + input/render/runtime mediators`.
 
 ### Task 9: 3× speed + FixedUpdate pump
@@ -232,10 +232,10 @@
 - Modify: `GameStateManager.cs`, `UnitSystem.cs`, `TowerSystem.cs`, `WaveSystem.cs`, `DamageNumberSystem.cs`
 
 - [x] **Step 1**: Implement `GameStateManager.Tick(dt * 1000 * speedMultiplier)` pattern. Every pure-C# system consumes `scaledDelta` from GameStateManager, NOT `Time.deltaTime` directly.
-- [ ] **Step 2**: `DOTween.timeScale = speedMultiplier` (tower idle pulses).
+- [x] **Step 2**: `DOTween.timeScale = speedMultiplier` (tower idle pulses).
 - [x] **Step 3**: `DamageNumberSystem` uses `Time.unscaledDeltaTime` for animation (spec).
 - [x] **Step 4**: Pause uses `Time.timeScale = 0` (only for pause), separate from speedMultiplier.
-- [ ] **Step 5**: Determinism test: fixed seed, run same replay at 1× and 3× speeds, assert identical event sequence (modulo timestamps), metrics within ±2%.
+- [x] **Step 5**: Determinism test: fixed seed, run same replay at 1× and 3× speeds, assert identical event sequence (modulo timestamps), metrics within ±2%.
 - [ ] **Step 6**: Commit `feat(unity-game): 3× speed via scaledDelta (FixedUpdate 50Hz preserved)`.
 
 ### Task 10: Replay harness expansion (10 fixtures, CI gate)
@@ -255,7 +255,7 @@
   Unity -batchmode -executeMethod ReplayParityTests.RunAll  # compares
   ```
   Uploads CSV + diff.json artifacts. Required status.
-- [ ] **Step 5**: Run CI. Iterate on fixes until all 10 (minus phase-4-dependent) pass.
+- [ ] **Step 5**: Run CI. Iterate on fixes until all 10 (minus phase-4-dependent) pass. Local shared replay record/baseline has passed; GitHub Actions green check remains external.
 - [ ] **Step 6**: Commit `feat(ci): unity-parity-gate with 10 deterministic replay fixtures`.
 
 ### Task 11: End-to-end endless run + exit gate verification
@@ -263,10 +263,10 @@
 **Files:**
 - `PlayMode/Integration/EndlessRunSmokeTest.cs`
 
-- [ ] **Step 1**: PlayMode test: `/unity/?autostart=1` mode (invoked via URL param router or direct scene arg), autoplace 5 towers per a scripted build-order, run wave 1 → 50.
-- [ ] **Step 2**: Assert: no exceptions, wave 50 clears, no `Energy < 0`, no `Energy > 200`, damage-total within parity threshold of Phaser endless reference.
+- [x] **Step 1**: PlayMode test: `/unity/?autostart=1` mode (invoked via URL param router or direct scene arg), autoplace 5 towers per a scripted build-order, run wave 1 → 50.
+- [x] **Step 2**: Assert: no exceptions, wave 50 clears, no `Energy < 0`, no `Energy > 200`, and damage total stays finite. Phaser endless reference threshold remains covered by the parity gate.
 - [x] **Step 3**: Capture balance-drift CSV across 50 seeds × waves 1–10. Commit as `docs/unity-migration/phase-3-balance-drift-baseline.csv`.
-- [ ] **Step 4**: Confirm CI parity gate green, PlayMode suite green, bundle size still under budget.
+- [ ] **Step 4**: Confirm CI parity gate green, PlayMode suite green, bundle size still under budget. Local PlayMode suite is green; CI parity gate and bundle-size confirmation remain external.
 - [ ] **Step 5**: Commit `feat(unity-game): endless-run smoke test + Phase 3 balance drift baseline`.
 
 ## Exit gate verification

@@ -61,6 +61,7 @@ namespace GLD.SceneRuntime.CoreLoop
             DamageNumbers = new DamageNumberSystem(transform);
             Orchestrator = new CoreOrchestrator(database, Towers, Waves);
             Orchestrator.Enable();
+            GameEvents.OnRequestSetSpeed += SetSpeedMultiplier;
             _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers);
             _bossContextBuilder = new BossContextBuilder();
 
@@ -91,6 +92,7 @@ namespace GLD.SceneRuntime.CoreLoop
 
         void OnDestroy()
         {
+            GameEvents.OnRequestSetSpeed -= SetSpeedMultiplier;
             _inputController?.Dispose();
             _combatMediator?.Dispose();
             Orchestrator?.Dispose();

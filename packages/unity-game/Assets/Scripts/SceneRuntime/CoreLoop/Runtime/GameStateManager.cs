@@ -1,4 +1,6 @@
 using GLD.Core;
+using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace GLD.SceneRuntime.CoreLoop.Runtime
@@ -29,6 +31,7 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
         public void SetSpeedMultiplier(float value)
         {
             _speedMultiplier = Mathf.Clamp(value, 0.25f, 3f);
+            TweenTimeScaleBridge.TrySetTimeScale(_speedMultiplier);
             GameEvents.RaiseSpeedChanged(_speedMultiplier);
         }
 
@@ -57,6 +60,55 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
 
             IsGameOver = true;
             GameEvents.RaiseGameOver(victory);
+        }
+
+        static class TweenTimeScaleBridge
+        {
+            static Type _dotweenType;
+            static PropertyInfo _timeScaleProperty;
+            static FieldInfo _timeScaleField;
+            static bool _resolved;
+
+            public static void TrySetTimeScale(float value)
+            {
+                if (!Resolve())
+                    return;
+
+                if (_timeScaleProperty != null)
+                    _timeScaleProperty.SetValue(null, value);
+                else
+                    _timeScaleField.SetValue(null, value);
+            }
+
+            static bool Resolve()
+            {
+                if (_resolved)
+                    return _timeScaleProperty != null || _timeScaleField != null;
+
+                _resolved = true;
+                _dotweenType = ResolveDotweenType();
+                _timeScaleProperty = _dotweenType?.GetProperty("timeScale", BindingFlags.Public | BindingFlags.Static);
+                _timeScaleField = _dotweenType?.GetField("timeScale", BindingFlags.Public | BindingFlags.Static);
+                if (_timeScaleProperty != null && !_timeScaleProperty.CanWrite)
+                    _timeScaleProperty = null;
+                return _timeScaleProperty != null || _timeScaleField != null;
+            }
+
+            static Type ResolveDotweenType()
+            {
+                var type = Type.GetType("DG.Tweening.DOTween, DOTween");
+                if (type != null)
+                    return type;
+
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    type = assembly.GetType("DG.Tweening.DOTween");
+                    if (type != null)
+                        return type;
+                }
+
+                return null;
+            }
         }
     }
 }

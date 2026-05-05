@@ -60,6 +60,8 @@ scaledDelta = fixedDeltaSeconds * speedMultiplier
 ```
 
 Pure systems consume the returned scaled delta. Pause is separate and uses `Time.timeScale = 0`.
+When DOTween is present, `GameStateManager` mirrors the speed multiplier to `DG.Tweening.DOTween.timeScale`
+through a reflection bridge so Phase 3 does not add a hard DOTween package dependency.
 
 ### Boss handling
 
@@ -68,7 +70,10 @@ Phase transitions, invulnerability windows, warning overlays, and boss actions r
 
 ### Rendering and input
 
-The current Phase 3 visible loop uses SpriteRenderer/IMGUI placeholders:
+The current Phase 3 visible loop uses SpriteRenderer/IMGUI placeholders. This intentionally closes
+Task 8 Step 3 without adding Tilemap base/highlight layers: Phase 3 needs deterministic visible
+field/tower/unit smoke coverage, while the production Tilemap/art layering work remains outside this
+parity slice.
 
 - `CoreLoopFieldRenderer` renders grid, towers, and units.
 - `CoreLoopHudController` provides start and placement controls.

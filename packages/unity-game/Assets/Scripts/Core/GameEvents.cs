@@ -125,6 +125,7 @@ namespace GLD.Core
 
         public static void ClearRuntimeListeners()
         {
+            OnBootComplete = null;
             OnRequestStartRun = null;
             OnRequestPause = null;
             OnRequestResume = null;

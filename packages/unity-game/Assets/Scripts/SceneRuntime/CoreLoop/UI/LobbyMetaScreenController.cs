@@ -23,10 +23,23 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         TowerSpriteCatalogSO _towerSprites;
         RunState _runState;
         bool _showingMeta;
+        [SerializeField] bool shellEnabled;
 
         public bool IsBound { get; private set; }
         public bool IsVisible => _root != null && _root.style.display.value != DisplayStyle.None;
         public bool IsMetaVisible => _metaPanel != null && _metaPanel.style.display.value != DisplayStyle.None;
+        public bool ShellEnabled
+        {
+            get => shellEnabled;
+            set
+            {
+                shellEnabled = value;
+                if (!shellEnabled)
+                    Hide();
+                else if (_runState != null)
+                    HandleRunStateChanged(_runState);
+            }
+        }
 
         public void Bind(RunState runState, UIDocument document)
         {
@@ -125,7 +138,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void HandleRunStateChanged(RunState state)
         {
-            if (state != null && state.RunStatus == RunStatus.Building && state.Wave == 0)
+            if (shellEnabled && state != null && state.RunStatus == RunStatus.Building && state.Wave == 0)
                 Show();
             else
                 Hide();

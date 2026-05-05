@@ -8,6 +8,7 @@ using GLD.Systems.Waves;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 using UnityEngine.TestTools;
 
 namespace GLD.Tests.PlayMode.CoreLoop
@@ -32,6 +33,7 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var renderer = controller.GetComponent<CoreLoopFieldRenderer>();
             Assert.That(renderer, Is.Not.Null);
             Assert.That(renderer.RenderedCellCount, Is.EqualTo(controller.Grid.Width * controller.Grid.Height));
+            Assert.That(controller.GetComponentsInChildren<Tilemap>(true).Length, Is.GreaterThanOrEqualTo(2));
 
             var hud = controller.GetComponent<CoreLoopHudController>();
             Assert.That(hud, Is.Not.Null);
@@ -69,13 +71,15 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var lobbyMeta = controller.GetComponent<LobbyMetaScreenController>();
             Assert.That(lobbyMeta, Is.Not.Null);
             Assert.That(lobbyMeta.IsBound, Is.True);
-            Assert.That(lobbyMeta.IsVisible, Is.True);
+            Assert.That(lobbyMeta.IsVisible, Is.False);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
+            Assert.That(controller.Placement.IsPlacementMode, Is.True);
             GameEvents.RaiseSummonCancelled("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.False);
+            Assert.That(controller.Placement.IsPlacementMode, Is.False);
             Assert.That(controller.StartRun(), Is.True);
             Assert.That(lobbyMeta.IsVisible, Is.False);
             Assert.That(tutorial.IsVisible, Is.True);

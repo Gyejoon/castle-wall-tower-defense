@@ -31,6 +31,7 @@ namespace GLD.Tests.EditMode.UI
             {
                 var runState = new RunState("lobby-test");
                 var controller = host.AddComponent<LobbyMetaScreenController>();
+                controller.ShellEnabled = true;
                 controller.Bind(runState, root);
 
                 Assert.That(controller.IsBound, Is.True);
@@ -65,6 +66,7 @@ namespace GLD.Tests.EditMode.UI
                 GameEvents.OnRequestStartRun += () => start++;
 
                 var controller = host.AddComponent<LobbyMetaScreenController>();
+                controller.ShellEnabled = true;
                 controller.Bind(new RunState("lobby-test"), root);
 
                 Assert.That(root.Q<Button>("lobby-start"), Is.Not.Null);

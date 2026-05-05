@@ -26,6 +26,8 @@ namespace GLD.SceneRuntime.CoreLoop
 
         [Header("Runtime")]
         [SerializeField] float speedMultiplier = 1f;
+        [SerializeField] bool autoStartAfterDelay = true;
+        [SerializeField] float autoStartDelaySeconds = 5f;
         [SerializeField] CoreLoopFieldRenderer fieldRenderer;
         [SerializeField] CoreLoopHudController hudController;
         [SerializeField] GameHudController gameHudController;
@@ -55,6 +57,7 @@ namespace GLD.SceneRuntime.CoreLoop
         CombatMediator _combatMediator;
         BossContextBuilder _bossContextBuilder;
         InputController _inputController;
+        float _autoStartRemainingSeconds;
 
         void Awake()
         {
@@ -76,6 +79,8 @@ namespace GLD.SceneRuntime.CoreLoop
             State = new GameStateManager(RunState);
             RunState.SetEnergy(Energy.Current, Energy.Max);
             RunState.SetWave(Waves.CurrentWaveSlot, Waves.Phase);
+            _autoStartRemainingSeconds = autoStartAfterDelay ? Mathf.Max(0f, autoStartDelaySeconds) : 0f;
+            RunState.SetCountdown(_autoStartRemainingSeconds);
             State.SetSpeedMultiplier(speedMultiplier);
             DamageNumbers = new DamageNumberSystem(transform);
             Orchestrator = new CoreOrchestrator(database, Towers, Waves, energy: Energy);
@@ -121,10 +126,12 @@ namespace GLD.SceneRuntime.CoreLoop
             GameEvents.OnRequestPause -= HandleRequestPause;
             GameEvents.OnRequestResume -= HandleRequestResume;
             _inputController?.Dispose();
+            Placement?.Dispose();
             _combatMediator?.Dispose();
             Orchestrator?.Dispose();
             DamageNumbers?.Dispose();
             _inputController = null;
+            Placement = null;
             _combatMediator = null;
             Orchestrator = null;
             DamageNumbers = null;
@@ -137,6 +144,10 @@ namespace GLD.SceneRuntime.CoreLoop
         {
             if (Waves == null || State == null) return;
 
+            TickAutoStartCountdown(Time.fixedDeltaTime);
+            if (Waves.Phase == WavePhase.Idle)
+                return;
+
             var scaledDelta = State.Tick(Time.fixedDeltaTime);
             if (scaledDelta <= 0f) return;
             Energy.Tick(scaledDelta);
@@ -145,7 +156,27 @@ namespace GLD.SceneRuntime.CoreLoop
             Towers.Tick(scaledDelta);
         }
 
-        public bool StartRun() => Waves != null && Waves.Start(1);
+        public bool StartRun()
+        {
+            if (Waves == null)
+                return false;
+            _autoStartRemainingSeconds = 0f;
+            RunState?.SetCountdown(0f);
+            return Waves.Start(1);
+        }
+
+        void TickAutoStartCountdown(float deltaSeconds)
+        {
+            if (!autoStartAfterDelay || Waves == null || Waves.Phase != WavePhase.Idle || RunState == null)
+                return;
+            if (RunState.RunStatus != RunStatus.Building || deltaSeconds <= 0f)
+                return;
+
+            _autoStartRemainingSeconds = Mathf.Max(0f, _autoStartRemainingSeconds - deltaSeconds);
+            RunState.SetCountdown(_autoStartRemainingSeconds);
+            if (_autoStartRemainingSeconds <= 0f)
+                StartRun();
+        }
 
         void WireGameHud()
         {

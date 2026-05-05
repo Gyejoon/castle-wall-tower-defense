@@ -93,6 +93,8 @@ namespace GLD.Systems.Orchestrator
 
         void HandleStartRun()
         {
+            if (_waves.Phase != WavePhase.Idle)
+                return;
             _waves.Start(1);
         }
 

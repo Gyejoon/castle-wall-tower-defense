@@ -8,6 +8,9 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 {
     public sealed class InputController : IDisposable
     {
+        const float TopHudHitHeight = 96f;
+        const float BottomHudHitHeight = 104f;
+
         readonly GameSceneController _controller;
         readonly CoreLoopFieldRenderer _renderer;
         readonly PlacementCoordinator _placement;
@@ -37,6 +40,9 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 
         bool TryInteractAtScreenPosition(Vector2 screenPosition)
         {
+            if (IsUiScreenPosition(screenPosition))
+                return false;
+
             var camera = _renderer != null && _renderer.GameplayCamera != null ? _renderer.GameplayCamera : Camera.main;
             if (camera == null)
                 return false;
@@ -58,5 +64,9 @@ namespace GLD.SceneRuntime.CoreLoop.Input
             return true;
         }
 
+        static bool IsUiScreenPosition(Vector2 screenPosition)
+        {
+            return screenPosition.y <= BottomHudHitHeight || screenPosition.y >= Screen.height - TopHudHitHeight;
+        }
     }
 }

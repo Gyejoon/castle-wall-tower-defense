@@ -20,8 +20,13 @@ namespace GLD.SceneRuntime.CoreLoop
         const string DefaultTowerId = "archer";
         const float TopHudHeight = 76f;
         const float BottomHudHeight = 212f;
+        const float RuntimeTopHudHitHeight = 88f;
+        const float RuntimeBottomHudHitHeight = 92f;
+        const float CompactActionBarHeight = 68f;
 
         [SerializeField] CoreLoopFieldRenderer fieldRenderer;
+        [SerializeField] bool showDebugHud;
+        [SerializeField] bool showCompactFallbackBar;
 
         GameSceneController _controller;
         string _selectedTowerId;
@@ -109,7 +114,7 @@ namespace GLD.SceneRuntime.CoreLoop
 
         public bool TryInteractAtScreenPosition(Vector2 screenPosition)
         {
-            if (_controller == null || _mode == InteractionMode.None || IsHudScreenPosition(screenPosition))
+            if (_controller == null || _mode == InteractionMode.None || IsHudScreenPosition(screenPosition, showDebugHud))
                 return false;
 
             var camera = ResolveCamera();
@@ -197,12 +202,19 @@ namespace GLD.SceneRuntime.CoreLoop
 
         void OnGUI()
         {
-            if (_controller == null || _controller.Energy == null)
+            if (_controller == null)
                 return;
 
             EnsureStyles();
-            DrawTopHud();
-            DrawBottomHud();
+            if (showDebugHud)
+            {
+                DrawTopHud();
+                DrawBottomHud();
+                return;
+            }
+
+            if (showCompactFallbackBar)
+                DrawCompactActionBar();
         }
 
         void DrawTopHud()
@@ -286,6 +298,46 @@ namespace GLD.SceneRuntime.CoreLoop
             }
         }
 
+        void DrawCompactActionBar()
+        {
+            var safeBottom = Mathf.Max(8f, Screen.height - Screen.safeArea.yMax + 8f);
+            var panel = new Rect(
+                10f,
+                Screen.height - CompactActionBarHeight - safeBottom,
+                Screen.width - 20f,
+                CompactActionBarHeight);
+            GUI.Box(panel, GUIContent.none, _panelStyle);
+
+            var gap = 6f;
+            var buttonY = panel.y + 14f;
+            var buttonWidth = (panel.width - 20f - gap * 5f) / 6f;
+            var x = panel.x + 10f;
+
+            if (GUI.Button(new Rect(x, buttonY, buttonWidth, 40f), "소환", _buttonStyle))
+            {
+                GameEvents.RaiseRequestSummon();
+                _lastMessage = "Summon requested.";
+            }
+
+            if (GUI.Button(new Rect(x + (buttonWidth + gap), buttonY, buttonWidth, 40f), "T2", _buttonStyle))
+                RequestGacha(2);
+            if (GUI.Button(new Rect(x + (buttonWidth + gap) * 2f, buttonY, buttonWidth, 40f), "T3", _buttonStyle))
+                RequestGacha(3);
+            if (GUI.Button(new Rect(x + (buttonWidth + gap) * 3f, buttonY, buttonWidth, 40f), "T4", _buttonStyle))
+                RequestGacha(4);
+            if (GUI.Button(new Rect(x + (buttonWidth + gap) * 4f, buttonY, buttonWidth, 40f), "합성", _buttonStyle))
+                BeginMergeMode();
+
+            var lastLabel = _mode != InteractionMode.None ? "취소" : "시작";
+            if (GUI.Button(new Rect(x + (buttonWidth + gap) * 5f, buttonY, buttonWidth, 40f), lastLabel, _buttonStyle))
+            {
+                if (_mode != InteractionMode.None)
+                    CancelPlacement();
+                else
+                    GameEvents.RaiseRequestStartRun();
+            }
+        }
+
         void DrawUpgradeChoices(Rect panel, float y, float gap)
         {
             var count = Mathf.Min(3, _upgradeChoices.Length);
@@ -329,9 +381,11 @@ namespace GLD.SceneRuntime.CoreLoop
             return Camera.main;
         }
 
-        static bool IsHudScreenPosition(Vector2 screenPosition)
+        static bool IsHudScreenPosition(Vector2 screenPosition, bool debugHudVisible)
         {
-            return screenPosition.y <= BottomHudHeight + 24f || screenPosition.y >= Screen.height - TopHudHeight - 24f;
+            var bottom = debugHudVisible ? BottomHudHeight + 24f : RuntimeBottomHudHitHeight;
+            var top = debugHudVisible ? TopHudHeight + 24f : RuntimeTopHudHitHeight;
+            return screenPosition.y <= bottom || screenPosition.y >= Screen.height - top;
         }
 
         void BindEvents()

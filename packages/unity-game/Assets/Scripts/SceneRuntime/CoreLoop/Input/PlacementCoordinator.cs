@@ -1,9 +1,10 @@
+using System;
 using GLD.Core;
 using GLD.Systems.Grid;
 
 namespace GLD.SceneRuntime.CoreLoop.Input
 {
-    public sealed class PlacementCoordinator
+    public sealed class PlacementCoordinator : IDisposable
     {
         readonly GameSceneController _controller;
         string _selectedTowerId;
@@ -11,6 +12,9 @@ namespace GLD.SceneRuntime.CoreLoop.Input
         public PlacementCoordinator(GameSceneController controller)
         {
             _controller = controller;
+            GameEvents.OnSummonOffered += HandleSummonOffered;
+            GameEvents.OnSummonCancelled += HandleSummonEnded;
+            GameEvents.OnSummonConfirmed += HandleSummonEnded;
         }
 
         public string SelectedTowerId => _selectedTowerId;
@@ -35,13 +39,20 @@ namespace GLD.SceneRuntime.CoreLoop.Input
                 return false;
 
             var towerId = _selectedTowerId;
-            var placed = _controller.PlaceTower(towerId, cell.Col, cell.Row);
-            if (placed)
-            {
-                _selectedTowerId = null;
-                GameEvents.RaiseSummonConfirmed(towerId);
-            }
-            return placed;
+            GameEvents.RaiseRequestPlaceTower(new TowerPlacementRequest(towerId, cell.Col, cell.Row));
+            return _controller.Towers.GetAt(cell) != null;
         }
+
+        public void Dispose()
+        {
+            GameEvents.OnSummonOffered -= HandleSummonOffered;
+            GameEvents.OnSummonCancelled -= HandleSummonEnded;
+            GameEvents.OnSummonConfirmed -= HandleSummonEnded;
+            _selectedTowerId = null;
+        }
+
+        void HandleSummonOffered(string towerId) => _selectedTowerId = towerId;
+
+        void HandleSummonEnded(string _) => _selectedTowerId = null;
     }
 }

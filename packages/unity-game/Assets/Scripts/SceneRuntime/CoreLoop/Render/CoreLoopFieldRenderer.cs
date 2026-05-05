@@ -5,12 +5,12 @@ using GLD.Systems.Grid;
 using GLD.Systems.Towers;
 using GLD.Systems.Units;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace GLD.SceneRuntime.CoreLoop.Render
 {
     public sealed class CoreLoopFieldRenderer : MonoBehaviour
     {
-        const float CellScale = 0.94f;
         const float TowerTargetWorldWidth = 1f;
         const float UnitTargetWorldWidth = 0.5f;
         const float BossTargetWorldWidth = 0.72f;
@@ -20,11 +20,13 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         [SerializeField] TowerSpriteCatalogSO towerSprites;
         [SerializeField] UnitSpriteCatalogSO unitSprites;
         [SerializeField] TileSpriteCatalogSO tileSprites;
+        [SerializeField] bool showMapTileLayers;
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> _towerViews = new Dictionary<string, GameObject>();
         readonly List<GameObject> _placementMarkers = new List<GameObject>();
         readonly Dictionary<int, Sprite> _firstFrameSprites = new Dictionary<int, Sprite>();
+        readonly Dictionary<Sprite, Tile> _runtimeTiles = new Dictionary<Sprite, Tile>();
 
         GameSceneController _controller;
         Sprite _squareSprite;
@@ -75,6 +77,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         void OnDestroy()
         {
             UnbindEvents();
+            ClearRuntimeTiles();
         }
 
         void LateUpdate()
@@ -154,29 +157,92 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         void DrawGrid(GridManager grid)
         {
-            if (TryDrawIllustratedBackground(grid))
-            {
-                RenderedCellCount = grid.Width * grid.Height;
-                return;
-            }
+            var hasIllustratedBackground = TryDrawIllustratedBackground(grid);
+            var tilemapGrid = CreateTilemapGrid(grid);
+            var terrain = CreateTilemapLayer(tilemapGrid.transform, "TerrainTilemap", -20);
+            var overlay = CreateTilemapLayer(tilemapGrid.transform, "BuildableOverlayTilemap", -18);
+            var shouldShowTileLayers = !hasIllustratedBackground || showMapTileLayers;
+            terrain.renderer.enabled = shouldShowTileLayers;
+            overlay.renderer.enabled = shouldShowTileLayers;
+            terrain.tilemap.color = hasIllustratedBackground
+                ? new Color(1f, 1f, 1f, 0.42f)
+                : Color.white;
+            overlay.tilemap.color = hasIllustratedBackground
+                ? new Color(1f, 1f, 1f, 0.26f)
+                : new Color(1f, 1f, 1f, 0.82f);
 
             for (var row = 0; row < grid.Height; row++)
             {
                 for (var col = 0; col < grid.Width; col++)
                 {
                     var cell = new GridCell(col, row);
-                    var tile = new GameObject($"Cell_{col}_{row}");
-                    tile.transform.SetParent(_gridRoot, false);
-                    tile.transform.position = grid.GridToWorld3(cell, 0f);
-                    tile.transform.localScale = new Vector3(CellScale, CellScale, 1f);
+                    var tilePos = ToTilemapCell(cell);
+                    var sprite = ResolveTileSprite(grid, cell);
+                    var target = hasIllustratedBackground && grid.IsBuildable(cell)
+                        ? overlay.tilemap
+                        : terrain.tilemap;
 
-                    var sr = tile.AddComponent<SpriteRenderer>();
-                    sr.sprite = ResolveTileSprite(grid, cell);
-                    sr.color = sr.sprite == _squareSprite ? ResolveCellColor(grid, cell) : Color.white;
-                    sr.sortingOrder = -20;
+                    target.SetTile(tilePos, GetOrCreateTile(sprite));
+                    target.SetTileFlags(tilePos, TileFlags.None);
+                    target.SetColor(tilePos, sprite == _squareSprite ? ResolveCellColor(grid, cell) : Color.white);
                     RenderedCellCount++;
                 }
             }
+        }
+
+        GameObject CreateTilemapGrid(GridManager grid)
+        {
+            var go = new GameObject("TilemapGrid");
+            go.transform.SetParent(_gridRoot, false);
+            go.transform.localPosition = new Vector3(
+                -grid.Width * grid.CellSize * 0.5f,
+                grid.Height * grid.CellSize * 0.5f,
+                0f);
+
+            var unityGrid = go.AddComponent<UnityEngine.Grid>();
+            unityGrid.cellSize = new Vector3(grid.CellSize, grid.CellSize, 1f);
+            unityGrid.cellGap = Vector3.zero;
+            return go;
+        }
+
+        (Tilemap tilemap, TilemapRenderer renderer) CreateTilemapLayer(Transform parent, string layerName, int sortingOrder)
+        {
+            var go = new GameObject(layerName);
+            go.transform.SetParent(parent, false);
+
+            var tilemap = go.AddComponent<Tilemap>();
+            tilemap.tileAnchor = new Vector3(0.5f, 0.5f, 0f);
+
+            var renderer = go.AddComponent<TilemapRenderer>();
+            renderer.sortingOrder = sortingOrder;
+            return (tilemap, renderer);
+        }
+
+        static Vector3Int ToTilemapCell(GridCell cell) => new Vector3Int(cell.Col, -cell.Row, 0);
+
+        TileBase GetOrCreateTile(Sprite sprite)
+        {
+            if (sprite == null)
+                sprite = _squareSprite;
+            if (_runtimeTiles.TryGetValue(sprite, out var cached))
+                return cached;
+
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            tile.sprite = sprite;
+            tile.color = Color.white;
+            tile.flags = TileFlags.None;
+            _runtimeTiles[sprite] = tile;
+            return tile;
+        }
+
+        void ClearRuntimeTiles()
+        {
+            foreach (var tile in _runtimeTiles.Values)
+            {
+                if (tile != null)
+                    Destroy(tile);
+            }
+            _runtimeTiles.Clear();
         }
 
         bool TryDrawIllustratedBackground(GridManager grid)

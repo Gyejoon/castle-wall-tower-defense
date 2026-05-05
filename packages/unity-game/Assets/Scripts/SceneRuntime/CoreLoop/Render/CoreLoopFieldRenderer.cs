@@ -14,6 +14,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         const float TowerTargetWorldWidth = 1f;
         const float UnitTargetWorldWidth = 0.5f;
         const float BossTargetWorldWidth = 0.72f;
+        const float AttackPulseDurationSeconds = 0.16f;
+        const float AttackLineDurationSeconds = 0.12f;
 
         [SerializeField] Camera gameplayCamera;
         [SerializeField] Transform renderRoot;
@@ -24,6 +26,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> _towerViews = new Dictionary<string, GameObject>();
+        readonly Dictionary<string, float> _towerPulseUntil = new Dictionary<string, float>();
+        readonly List<AttackLineFx> _attackLines = new List<AttackLineFx>();
         readonly List<GameObject> _placementMarkers = new List<GameObject>();
         readonly Dictionary<int, Sprite> _firstFrameSprites = new Dictionary<int, Sprite>();
         readonly Dictionary<Sprite, Tile> _runtimeTiles = new Dictionary<Sprite, Tile>();
@@ -34,8 +38,17 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         Transform _placementRoot;
         Transform _unitRoot;
         Transform _towerRoot;
+        Transform _attackFxRoot;
+        Material _attackLineMaterial;
         bool _placementMarkersVisible;
         string _placementTowerId;
+
+        sealed class AttackLineFx
+        {
+            public GameObject GameObject;
+            public LineRenderer Line;
+            public float AgeSeconds;
+        }
 
         public int RenderedCellCount { get; private set; }
         public int RenderedUnitCount => _unitViews.Count;
@@ -78,6 +91,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         {
             UnbindEvents();
             ClearRuntimeTiles();
+            if (_attackLineMaterial != null)
+                Destroy(_attackLineMaterial);
         }
 
         void LateUpdate()
@@ -87,6 +102,9 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             foreach (var unit in _controller.Units.Units)
                 CreateOrSyncUnit(unit);
+            foreach (var tower in _controller.Towers.Towers)
+                SyncTowerViewPose(tower);
+            TickAttackLines(Time.unscaledDeltaTime);
         }
 
         void BindEvents()
@@ -135,6 +153,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             _placementRoot = CreateRoot("PlacementMarkers");
             _unitRoot = CreateRoot("Units");
             _towerRoot = CreateRoot("Towers");
+            _attackFxRoot = CreateRoot("AttackFx");
         }
 
         Transform CreateRoot(string rootName)
@@ -151,6 +170,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             _unitViews.Clear();
             _towerViews.Clear();
+            _towerPulseUntil.Clear();
+            _attackLines.Clear();
             _placementMarkers.Clear();
             RenderedCellCount = 0;
         }
@@ -349,7 +370,9 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         void HandleTowerAttacked(TowerInstance tower, float _)
         {
             if (!_towerViews.TryGetValue(tower.InstanceId, out var view)) return;
-            view.transform.localScale = ResolveTowerScale(tower, view.GetComponent<SpriteRenderer>()) * 1.08f;
+            _towerPulseUntil[tower.InstanceId] = Time.unscaledTime + AttackPulseDurationSeconds;
+            SyncTowerViewPose(tower);
+            CreateAttackLine(tower.Position, tower.LastDamageWorldPosition);
         }
 
         void CreateOrSyncUnit(UnitInstance unit)
@@ -388,10 +411,24 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 _towerViews[tower.InstanceId] = view;
             }
 
-            view.transform.position = new Vector3(tower.Position.x, tower.Position.y, -0.2f);
-            view.transform.localScale = ResolveTowerScale(tower, view.GetComponent<SpriteRenderer>());
-            view.SetActive(true);
+            SyncTowerViewPose(tower);
             RefreshPlacementMarkers();
+        }
+
+        void SyncTowerViewPose(TowerInstance tower)
+        {
+            if (tower == null || !_towerViews.TryGetValue(tower.InstanceId, out var view))
+                return;
+
+            view.transform.position = new Vector3(tower.Position.x, tower.Position.y, -0.2f);
+            var baseScale = ResolveTowerScale(tower, view.GetComponent<SpriteRenderer>());
+            var pulseScale = _towerPulseUntil.TryGetValue(tower.InstanceId, out var until) && Time.unscaledTime < until
+                ? 1.18f
+                : 1f;
+            if (pulseScale <= 1f)
+                _towerPulseUntil.Remove(tower.InstanceId);
+            view.transform.localScale = baseScale * pulseScale;
+            view.SetActive(true);
         }
 
         GameObject CreateTowerView(TowerInstance tower)
@@ -406,6 +443,67 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             sr.sortingOrder = 20;
 
             return go;
+        }
+
+        void CreateAttackLine(Vector2 from, Vector2 to)
+        {
+            if (_attackFxRoot == null)
+                return;
+
+            var fx = new AttackLineFx
+            {
+                GameObject = new GameObject("AttackLine"),
+                AgeSeconds = 0f
+            };
+            fx.GameObject.transform.SetParent(_attackFxRoot, false);
+            fx.Line = fx.GameObject.AddComponent<LineRenderer>();
+            fx.Line.useWorldSpace = true;
+            fx.Line.positionCount = 2;
+            fx.Line.SetPosition(0, new Vector3(from.x, from.y, -0.35f));
+            fx.Line.SetPosition(1, new Vector3(to.x, to.y, -0.35f));
+            fx.Line.startWidth = 0.075f;
+            fx.Line.endWidth = 0.025f;
+            fx.Line.startColor = new Color(1f, 0.92f, 0.36f, 0.95f);
+            fx.Line.endColor = new Color(1f, 0.35f, 0.12f, 0.85f);
+            fx.Line.sortingOrder = 50;
+            fx.Line.material = GetAttackLineMaterial();
+            _attackLines.Add(fx);
+        }
+
+        void TickAttackLines(float unscaledDeltaSeconds)
+        {
+            for (var i = _attackLines.Count - 1; i >= 0; i--)
+            {
+                var fx = _attackLines[i];
+                if (fx == null || fx.GameObject == null || fx.Line == null)
+                {
+                    _attackLines.RemoveAt(i);
+                    continue;
+                }
+
+                fx.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
+                var t = Mathf.Clamp01(fx.AgeSeconds / AttackLineDurationSeconds);
+                fx.Line.startColor = new Color(1f, 0.92f, 0.36f, 1f - t);
+                fx.Line.endColor = new Color(1f, 0.35f, 0.12f, 0.85f - t * 0.85f);
+
+                if (fx.AgeSeconds < AttackLineDurationSeconds)
+                    continue;
+
+                Destroy(fx.GameObject);
+                _attackLines.RemoveAt(i);
+            }
+        }
+
+        Material GetAttackLineMaterial()
+        {
+            if (_attackLineMaterial != null)
+                return _attackLineMaterial;
+
+            var shader = Shader.Find("Sprites/Default");
+            if (shader == null)
+                shader = Shader.Find("Universal Render Pipeline/Unlit");
+            _attackLineMaterial = new Material(shader);
+            return _attackLineMaterial;
         }
 
         GameObject CreateUnitView(UnitInstance unit)

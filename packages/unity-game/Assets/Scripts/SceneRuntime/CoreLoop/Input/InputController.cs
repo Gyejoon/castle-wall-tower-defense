@@ -48,11 +48,18 @@ namespace GLD.SceneRuntime.CoreLoop.Input
                 return false;
 
             var world3 = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -camera.transform.position.z));
-            var cell = _controller.Grid.WorldToGrid(new Vector2(world3.x, world3.y));
+            var world = new Vector2(world3.x, world3.y);
+            var cell = _controller.Grid.WorldToPlacementGrid(world);
             if (_placement.IsPlacementMode)
                 return _placement.TryPlace(cell);
 
             var tower = _controller.Towers.GetAt(cell);
+            if (tower == null)
+            {
+                cell = _controller.Grid.WorldToGrid(world);
+                tower = _controller.Towers.GetAt(cell);
+            }
+
             if (tower == null)
             {
                 GameEvents.RaiseTowerDeselected();

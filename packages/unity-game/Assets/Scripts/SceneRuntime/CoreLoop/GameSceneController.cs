@@ -73,7 +73,7 @@ namespace GLD.SceneRuntime.CoreLoop
             Grid = new GridManager(database.map, mapId);
             Energy = new EnergySystem(database.energy);
             Units = new UnitSystem(Grid, Energy, database.units, database.boss);
-            Towers = new TowerSystem(Grid, Energy, Units);
+            Towers = new TowerSystem(Grid, Energy, Units, database.elementMatchup);
             Waves = new WaveSystem(database.waves, database.units, Units);
             RunState = new RunState();
             State = new GameStateManager(RunState);

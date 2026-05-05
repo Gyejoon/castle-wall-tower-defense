@@ -75,6 +75,8 @@ namespace GLD.SceneRuntime.CoreLoop
         {
             if (_controller == null || _mode == InteractionMode.None)
                 return;
+            if (!showDebugHud && !showCompactFallbackBar)
+                return;
 
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
                 TryInteractAtScreenPosition(Mouse.current.position.ReadValue());
@@ -125,7 +127,7 @@ namespace GLD.SceneRuntime.CoreLoop
             }
 
             var world3 = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -camera.transform.position.z));
-            var cell = _controller.Grid.WorldToGrid(new Vector2(world3.x, world3.y));
+            var cell = _controller.Grid.WorldToPlacementGrid(new Vector2(world3.x, world3.y));
             return TryInteractAtCell(cell);
         }
 

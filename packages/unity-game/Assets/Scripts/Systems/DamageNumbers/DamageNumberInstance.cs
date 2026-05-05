@@ -21,11 +21,12 @@ namespace GLD.Systems.DamageNumbers
             _text = _view.AddComponent<TextMesh>();
             _text.anchor = TextAnchor.MiddleCenter;
             _text.alignment = TextAlignment.Center;
-            _text.fontSize = 28;
-            _text.characterSize = 0.08f;
+            _text.fontSize = 42;
+            _text.characterSize = 0.07f;
             _renderer = _view.GetComponent<MeshRenderer>();
+            _renderer.sortingLayerName = "Default";
             _renderer.sortingOrder = 80;
-            _baseColor = new Color(1f, 0.86f, 0.42f, 1f);
+            _baseColor = new Color(1f, 0.92f, 0.24f, 1f);
             _text.color = _baseColor;
             _view.SetActive(false);
         }
@@ -38,7 +39,8 @@ namespace GLD.Systems.DamageNumbers
             _ageSeconds = 0f;
             _text.text = Mathf.CeilToInt(value).ToString();
             _text.color = _baseColor;
-            _view.transform.position = new Vector3(worldPosition.x, worldPosition.y + 0.35f, -0.5f);
+            _view.transform.position = new Vector3(worldPosition.x, worldPosition.y + 0.48f, -0.65f);
+            _view.transform.localScale = Vector3.one;
             _view.SetActive(true);
         }
 
@@ -49,7 +51,9 @@ namespace GLD.Systems.DamageNumbers
 
             _ageSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
             var t = Mathf.Clamp01(_ageSeconds / LifetimeSeconds);
-            _view.transform.position += new Vector3(0f, 0.8f * unscaledDeltaSeconds, 0f);
+            _view.transform.position += new Vector3(0f, 0.9f * unscaledDeltaSeconds, 0f);
+            var scale = Mathf.Lerp(1.15f, 0.9f, t);
+            _view.transform.localScale = new Vector3(scale, scale, 1f);
             _text.color = new Color(_baseColor.r, _baseColor.g, _baseColor.b, 1f - t);
 
             if (_ageSeconds >= LifetimeSeconds)

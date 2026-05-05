@@ -26,6 +26,17 @@ namespace GLD.Tests.EditMode.Systems
         }
 
         [Test]
+        public void GridPlacementHitTestUsesPlacementAnchorPosition()
+        {
+            var grid = new GridManager(CreateMapLayout());
+            var target = new GridCell(2, 6);
+            var markerWorld = grid.GridToPlacementWorld(target);
+
+            Assert.That(grid.WorldToGrid(markerWorld), Is.Not.EqualTo(target));
+            Assert.That(grid.WorldToPlacementGrid(markerWorld), Is.EqualTo(target));
+        }
+
+        [Test]
         public void PathfindingFindsGridPath()
         {
             var grid = new GridManager(CreateMapLayout());
@@ -141,6 +152,86 @@ namespace GLD.Tests.EditMode.Systems
             Assert.That(towerSystem.Towers.Count, Is.EqualTo(0));
         }
 
+        [Test]
+        public void TowerSystemAttacksFromLogicalCellWhenPlacementAnchorIsOffset()
+        {
+            var grid = new GridManager(CreateOffsetAnchorCombatMap());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy);
+            var towerSystem = new TowerSystem(grid, energy, units);
+            var towerDef = CreateTower("archer");
+            towerDef.stats.range = 1.25f;
+            units.Spawn(CreateUnit("scout", hp: 30, speed: 0f));
+
+            var cell = new GridCell(3, 3);
+            Assert.That(towerSystem.Place(towerDef, cell), Is.True);
+            var tower = towerSystem.Towers[0];
+            Assert.That(tower.Position, Is.EqualTo(grid.GridToPlacementWorld(cell)));
+            Assert.That(tower.CombatPosition, Is.EqualTo(grid.GridToWorld(cell)));
+
+            towerSystem.Tick(1f);
+
+            Assert.That(units.TotalDamage, Is.GreaterThan(0f));
+        }
+
+        [Test]
+        public void TowerSystemAppliesPhaserStyleSplashDamage()
+        {
+            var grid = new GridManager(CreateOffsetAnchorCombatMap());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy);
+            var towerSystem = new TowerSystem(grid, energy, units);
+            var primary = units.Spawn(CreateUnit("scout-a", hp: 100, speed: 0f));
+            var splash = units.Spawn(CreateUnit("scout-b", hp: 100, speed: 0f));
+            var towerDef = CreateTower("nova_cannon");
+            towerDef.stats.damage = 30;
+            towerDef.stats.special = "splash_1.2";
+
+            Assert.That(towerSystem.Place(towerDef, new GridCell(3, 3)), Is.True);
+            towerSystem.Tick(1f);
+
+            Assert.That(primary.Hp, Is.EqualTo(70f).Within(0.001f));
+            Assert.That(splash.Hp, Is.EqualTo(85f).Within(0.001f));
+            Assert.That(units.TotalDamage, Is.EqualTo(45f).Within(0.001f));
+        }
+
+        [Test]
+        public void TowerSystemAppliesPhaserStyleSlow()
+        {
+            var grid = new GridManager(CreateOffsetAnchorCombatMap());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy);
+            var towerSystem = new TowerSystem(grid, energy, units);
+            var unit = units.Spawn(CreateUnit("scout", hp: 100, speed: 1f));
+            var towerDef = CreateTower("emp");
+            towerDef.stats.damage = 8;
+            towerDef.stats.special = "slow_30%";
+
+            Assert.That(towerSystem.Place(towerDef, new GridCell(3, 3)), Is.True);
+            towerSystem.Tick(1f);
+
+            Assert.That(unit.Cc.ResolveSpeed(1f), Is.EqualTo(0.7f).Within(0.001f));
+        }
+
+        [Test]
+        public void TowerSystemAppliesPhaserStyleStun()
+        {
+            var grid = new GridManager(CreateOffsetAnchorCombatMap());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy);
+            var towerSystem = new TowerSystem(grid, energy, units);
+            var unit = units.Spawn(CreateUnit("scout", hp: 100, speed: 1f));
+            var towerDef = CreateTower("shield");
+            towerDef.stats.damage = 5;
+            towerDef.stats.special = "stun_300ms";
+
+            Assert.That(towerSystem.Place(towerDef, new GridCell(3, 3)), Is.True);
+            towerSystem.Tick(1f);
+
+            Assert.That(unit.Cc.IsStunned, Is.True);
+            Assert.That(unit.Cc.ResolveSpeed(1f), Is.EqualTo(0f).Within(0.001f));
+        }
+
         static MapLayoutSO CreateMapLayout()
         {
             var layout = ScriptableObject.CreateInstance<MapLayoutSO>();
@@ -151,6 +242,7 @@ namespace GLD.Tests.EditMode.Systems
                     id = "main_long",
                     width = 9,
                     height = 18,
+                    tileSize = 64,
                     spawnPoint = new GridPoint { x = 0, y = 0 },
                     exitPoint = new GridPoint { x = 2, y = 2 },
                     path = new[]
@@ -165,7 +257,43 @@ namespace GLD.Tests.EditMode.Systems
                     buildablePoints = new[]
                     {
                         new GridPoint { x = 3, y = 3 },
-                        new GridPoint { x = 5, y = 3 }
+                        new GridPoint { x = 5, y = 3 },
+                        new GridPoint { x = 2, y = 6 }
+                    },
+                    placementAnchors = new[]
+                    {
+                        new PlacementAnchor { x = 2, y = 6, worldX = 96, worldY = 475 }
+                    }
+                }
+            };
+            return layout;
+        }
+
+        static MapLayoutSO CreateOffsetAnchorCombatMap()
+        {
+            var layout = ScriptableObject.CreateInstance<MapLayoutSO>();
+            layout.maps = new[]
+            {
+                new MapDef
+                {
+                    id = "main_long",
+                    width = 9,
+                    height = 18,
+                    tileSize = 64,
+                    spawnPoint = new GridPoint { x = 3, y = 4 },
+                    exitPoint = new GridPoint { x = 3, y = 5 },
+                    path = new[]
+                    {
+                        new GridPoint { x = 3, y = 4 },
+                        new GridPoint { x = 3, y = 5 }
+                    },
+                    buildablePoints = new[]
+                    {
+                        new GridPoint { x = 3, y = 3 }
+                    },
+                    placementAnchors = new[]
+                    {
+                        new PlacementAnchor { x = 3, y = 3, worldX = (8 + 0.5f) * 64, worldY = (16 + 0.5f) * 64 }
                     }
                 }
             };
@@ -176,6 +304,7 @@ namespace GLD.Tests.EditMode.Systems
         {
             var unit = ScriptableObject.CreateInstance<UnitDefSO>();
             unit.id = id;
+            unit.element = Element.Neutral;
             unit.stats = new UnitStats { hp = hp, armor = 0, speed = speed };
             return unit;
         }
@@ -220,6 +349,8 @@ namespace GLD.Tests.EditMode.Systems
             var tower = ScriptableObject.CreateInstance<TowerDefSO>();
             tower.id = id;
             tower.cost = 10;
+            tower.element = Element.Neutral;
+            tower.family = TowerFamily.Archer;
             tower.stats = new TowerStats
             {
                 damage = 20,

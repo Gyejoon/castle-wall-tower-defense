@@ -13,6 +13,7 @@ namespace GLD.Systems.Towers
         readonly GridManager _grid;
         readonly EnergySystem _energy;
         readonly UnitSystem _units;
+        readonly ElementMatchupSO _elementMatchup;
         readonly Dictionary<GridCell, TowerInstance> _byCell = new Dictionary<GridCell, TowerInstance>();
         readonly List<TowerInstance> _towers = new List<TowerInstance>();
         int _nextTowerId;
@@ -28,11 +29,12 @@ namespace GLD.Systems.Towers
         public event Action<TowerInstance, GridCell, GridCell> TowerMoved;
         public event Action<TowerInstance, float> TowerAttacked;
 
-        public TowerSystem(GridManager grid, EnergySystem energy, UnitSystem units)
+        public TowerSystem(GridManager grid, EnergySystem energy, UnitSystem units, ElementMatchupSO elementMatchup = null)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _energy = energy;
             _units = units ?? throw new ArgumentNullException(nameof(units));
+            _elementMatchup = elementMatchup;
             _units.SetTowerSystem(this);
         }
 
@@ -53,7 +55,13 @@ namespace GLD.Systems.Towers
             if (spendEnergy && _energy != null && !_energy.Spend(cost))
                 return false;
 
-            var tower = new TowerInstance($"tower-{++_nextTowerId:000}", def, cell, _grid.GridToPlacementWorld(cell));
+            var tower = new TowerInstance(
+                $"tower-{++_nextTowerId:000}",
+                def,
+                cell,
+                _grid.GridToPlacementWorld(cell),
+                _grid.GridToWorld(cell),
+                _elementMatchup);
             tower.GlobalAtkPct = GlobalAtkPct;
             _byCell[cell] = tower;
             _towers.Add(tower);
@@ -82,7 +90,7 @@ namespace GLD.Systems.Towers
 
             var from = tower.Cell;
             _byCell.Remove(from);
-            tower.MoveTo(target, _grid.GridToPlacementWorld(target));
+            tower.MoveTo(target, _grid.GridToPlacementWorld(target), _grid.GridToWorld(target));
             _byCell[target] = tower;
             TowerMoved?.Invoke(tower, from, target);
             GameEvents.RaiseTowerMoved(tower.Def.id, from.Col, from.Row, target.Col, target.Row);

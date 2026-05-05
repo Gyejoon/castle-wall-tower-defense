@@ -112,10 +112,10 @@ namespace GLD.Systems.Units
             }
         }
 
-        public float ApplyDamage(UnitInstance unit, float rawDamage)
+        public float ApplyDamage(UnitInstance unit, float rawDamage, bool armorPierce = false)
         {
             if (unit == null) return 0f;
-            var applied = unit.ApplyDamage(rawDamage);
+            var applied = unit.ApplyDamage(rawDamage, armorPierce);
             TotalDamage += applied;
 
             if (applied > 0f && unit.Boss.IsBoss && unit.IsAlive)

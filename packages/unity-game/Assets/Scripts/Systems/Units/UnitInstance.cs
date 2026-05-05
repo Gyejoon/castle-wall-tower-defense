@@ -61,11 +61,12 @@ namespace GLD.Systems.Units
                 Escaped = true;
         }
 
-        public float ApplyDamage(float rawDamage)
+        public float ApplyDamage(float rawDamage, bool armorPierce = false)
         {
             if (!IsAlive || Escaped || Boss.IsInvulnerable || rawDamage <= 0f) return 0f;
 
-            var applied = Mathf.Min(Hp, Mathf.Max(1f, rawDamage - Armor));
+            var mitigatedDamage = armorPierce ? rawDamage : rawDamage - Armor;
+            var applied = Mathf.Min(Hp, Mathf.Max(1f, mitigatedDamage));
             Hp -= applied;
             if (Hp <= 0f)
                 IsAlive = false;

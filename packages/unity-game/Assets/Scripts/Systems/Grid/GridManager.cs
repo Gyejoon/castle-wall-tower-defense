@@ -88,6 +88,39 @@ namespace GLD.Systems.Grid
             return new GridCell(col, row);
         }
 
+        public GridCell WorldToPlacementGrid(Vector2 world, float hitRadiusMultiplier = 0.65f)
+        {
+            return TryWorldToPlacementGrid(world, out var cell, hitRadiusMultiplier)
+                ? cell
+                : WorldToGrid(world);
+        }
+
+        public bool TryWorldToPlacementGrid(Vector2 world, out GridCell cell, float hitRadiusMultiplier = 0.65f)
+        {
+            cell = default;
+            var radius = Mathf.Max(0.01f, CellSize * hitRadiusMultiplier);
+            var maxDistanceSq = radius * radius;
+            var bestDistanceSq = float.MaxValue;
+            var found = false;
+
+            foreach (var candidate in _buildable)
+            {
+                if (!IsBuildable(candidate))
+                    continue;
+
+                var anchor = GridToPlacementWorld(candidate);
+                var distanceSq = (world - anchor).sqrMagnitude;
+                if (distanceSq > maxDistanceSq || distanceSq >= bestDistanceSq)
+                    continue;
+
+                cell = candidate;
+                bestDistanceSq = distanceSq;
+                found = true;
+            }
+
+            return found;
+        }
+
         public bool IsInBounds(GridCell cell) =>
             cell.Col >= 0 && cell.Col < Width && cell.Row >= 0 && cell.Row < Height;
 

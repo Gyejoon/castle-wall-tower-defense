@@ -57,6 +57,19 @@ namespace GLD.Tests.EditMode.Editor
             Assert.That(anchor.worldY, Is.EqualTo((point.y + 0.5f) * map.tileSize));
         }
 
+        [Test]
+        public void PathPointRoundTripsThroughSceneCoordinates()
+        {
+            var map = CreateMap();
+            var point = new FloatGridPoint { x = 4.25f, y = 8.75f };
+
+            var scenePosition = MapPlacementAnchorEditorWindow.PathPointToScenePosition(map, point);
+            var result = MapPlacementAnchorEditorWindow.ScenePositionToPathPoint(map, scenePosition);
+
+            Assert.That(result.x, Is.EqualTo(point.x).Within(0.001f));
+            Assert.That(result.y, Is.EqualTo(point.y).Within(0.001f));
+        }
+
         static MapDef CreateMap()
         {
             return new MapDef

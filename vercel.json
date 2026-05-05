@@ -3,6 +3,9 @@
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && bun run scripts/vercel-install.ts",
   "framework": null,
+  "redirects": [
+    { "source": "/unity", "destination": "/unity/", "permanent": false }
+  ],
   "headers": [
     {
       "source": "/unity/Build/WebGL.data.br",
@@ -30,8 +33,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/unity", "destination": "/unity/index.html" },
-    { "source": "/unity/:path*", "destination": "/unity/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

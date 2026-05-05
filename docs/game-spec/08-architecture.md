@@ -392,4 +392,4 @@ End-to-end 시퀀스. 탭 선택 + 탭 배치 경로.
 | 2026-05-06 | §1 | **Unity 공격 피드백 강화**. `CoreLoopFieldRenderer`가 `TowerAttacked` 이벤트마다 타워 펄스와 짧은 발사 LineRenderer를 표시하고, `DamageNumberInstance`는 더 큰 TextMesh와 높은 sorting order로 데미지 숫자를 표시한다. |
 | 2026-05-06 | §1 | **Unity Phaser-style 타워 특성 적용**. `TowerInstance`가 Phaser `TowerSystem`/tower family 규칙에 맞춰 `special` 접두사 기반 splash/slow/stun, armor pierce, 원소 상성, splash half damage를 처리한다. 타워 렌더/피드백은 유지하되 피해와 CC 판정은 Unity combat system에서 직접 적용한다. |
 | 2026-05-06 | §1 | **tools-app 제거**. `packages/tools-app` 로컬 개발 도구와 root `dev:tools` 스크립트를 제거했다. Unity/Web preview는 기존 `dev:web`/`dev:unity-preview` 경로만 유지한다. |
-| 2026-05-06 | §1 | **Unity WebGL Vercel preview 활성화**. `packages/unity-game/Build/WebGL` snapshot을 커밋 가능한 예외 경로로 열고, Vercel ignore 예외와 Brotli header 설정을 추가해 preview deployment의 `/unity`에서 실제 Unity WebGL build를 확인할 수 있게 했다. |
+| 2026-05-06 | §1 | **Unity WebGL Vercel preview 활성화**. `packages/unity-game/Build/WebGL` snapshot을 커밋 가능한 예외 경로로 열고, Vercel ignore 예외와 Brotli header 설정을 추가해 preview deployment의 `/unity/`에서 실제 Unity WebGL build를 확인할 수 있게 했다. `/unity`는 `/unity/`로 redirect하고 Unity asset 요청은 SPA fallback으로 rewrite하지 않는다. |

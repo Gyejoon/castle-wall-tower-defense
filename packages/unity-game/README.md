@@ -54,8 +54,8 @@ Output goes to `Build/WebGL/` then `scripts/merge-build.ts` copies it to `packag
 
 ## Post-build routing
 
-`vercel.json` rewrites:
-- `/unity/:path*` → `/unity/index.html` (Unity handles deep links)
+`vercel.json` routing:
+- `/unity` → `/unity/` temporary redirect, so Unity template relative asset URLs resolve under `/unity/`.
 - `/(.*)` → `/index.html` (Phaser SPA fallback)
 
 Physical files (`/unity/Build/*.wasm`, etc.) bypass rewrites and are served directly. Brotli files are served with explicit Vercel headers:

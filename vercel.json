@@ -8,27 +8,21 @@
   ],
   "headers": [
     {
-      "source": "/unity/Build/WebGL.data.br",
+      "source": "/unity/Build/WebGL.data",
       "headers": [
-        { "key": "Content-Type", "value": "application/octet-stream" },
-        { "key": "Content-Encoding", "value": "br" },
-        { "key": "Vary", "value": "Accept-Encoding" }
+        { "key": "Content-Type", "value": "application/octet-stream" }
       ]
     },
     {
-      "source": "/unity/Build/WebGL.framework.js.br",
+      "source": "/unity/Build/WebGL.framework.js",
       "headers": [
-        { "key": "Content-Type", "value": "application/javascript" },
-        { "key": "Content-Encoding", "value": "br" },
-        { "key": "Vary", "value": "Accept-Encoding" }
+        { "key": "Content-Type", "value": "application/javascript" }
       ]
     },
     {
-      "source": "/unity/Build/WebGL.wasm.br",
+      "source": "/unity/Build/WebGL.wasm",
       "headers": [
-        { "key": "Content-Type", "value": "application/wasm" },
-        { "key": "Content-Encoding", "value": "br" },
-        { "key": "Vary", "value": "Accept-Encoding" }
+        { "key": "Content-Type", "value": "application/wasm" }
       ]
     }
   ],

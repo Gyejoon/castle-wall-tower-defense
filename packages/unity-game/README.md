@@ -58,8 +58,8 @@ Output goes to `Build/WebGL/` then `scripts/merge-build.ts` copies it to `packag
 - `/unity` → `/unity/` temporary redirect, so Unity template relative asset URLs resolve under `/unity/`.
 - `/(.*)` → `/index.html` (Phaser SPA fallback)
 
-Physical files (`/unity/Build/*.wasm`, etc.) bypass rewrites and are served directly. Brotli files are served with explicit Vercel headers:
+Physical files (`/unity/Build/*.wasm`, etc.) bypass rewrites and are served directly. The Vercel preview snapshot is intentionally uncompressed so Unity startup does not depend on CDN `Content-Encoding` handling:
 
-- `/unity/Build/WebGL.data.br` → `Content-Encoding: br`, `application/octet-stream`
-- `/unity/Build/WebGL.framework.js.br` → `Content-Encoding: br`, `application/javascript`
-- `/unity/Build/WebGL.wasm.br` → `Content-Encoding: br`, `application/wasm`
+- `/unity/Build/WebGL.data` → `application/octet-stream`
+- `/unity/Build/WebGL.framework.js` → `application/javascript`
+- `/unity/Build/WebGL.wasm` → `application/wasm`

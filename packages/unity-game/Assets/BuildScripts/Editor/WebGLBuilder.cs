@@ -46,7 +46,7 @@ namespace GLD.BuildScripts.Editor
             }
 
             PlayerSettings.WebGL.template = TemplateName;
-            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.memorySize = 256;

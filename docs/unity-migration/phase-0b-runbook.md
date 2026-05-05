@@ -56,7 +56,7 @@ In Unity Editor:
 1. **File → Build Profiles** (Unity 6 renamed Build Settings) → switch platform to **Web** (WebGL). Wait for IL2CPP switch (5–10 min).
 2. **Edit → Project Settings → Player → WebGL**: confirm
    - Template = `PROJECT:GLDMobilePortrait` (set automatically by `WebGLBuilder.cs` during build; just verify available in dropdown)
-   - Compression Format = `Brotli`
+   - Compression Format = `Disabled` for Vercel preview snapshots
    - Decompression Fallback = off
    - Memory Size = 256 MB
 3. **Edit → Project Settings → Quality**: disable all but one quality level, rename to "WebGL", disable v-sync.
@@ -66,7 +66,7 @@ Commit:
 
 ```bash
 git add packages/unity-game/ProjectSettings
-git commit -m "chore(unity-game): WebGL 타겟 + URP 2D + Brotli 256MB 기본값"
+git commit -m "chore(unity-game): WebGL 타겟 + URP 2D + 256MB 기본값"
 ```
 
 ---
@@ -142,14 +142,14 @@ First cached build: ~40 min. Subsequent: 15–20 min. On success, the `unity-web
 Push triggers Vercel preview deployment. Once the deploy finishes:
 
 1. Open the preview URL → `/` loads Phaser build (unchanged).
-2. Open `<preview>/unity/` → should serve the **placeholder** (Vercel doesn't run Unity; CI does). If Unity artifact bytes should ship to Vercel, set up Vercel Build Hooks that pull the latest GameCI artifact — **out of scope for Phase 0b**, tracked as an open question in the migration spec.
+2. Open `<preview>/unity/` → should serve the committed Unity WebGL preview snapshot. The preview snapshot uses uncompressed `WebGL.data` / `WebGL.framework.js` / `WebGL.wasm` files so browser startup does not depend on CDN `Content-Encoding` headers.
 
 For Phase 0b, the exit gate is satisfied by:
 - ✅ Local build produces `Unity Phase 0` label rendered in iOS Safari via `bun run dev:unity-preview`.
 - ✅ CI green on `unity-build.yml`.
-- ✅ Vercel preview still deploys (placeholder at `/unity/` is OK).
+- ✅ Vercel preview still deploys and `/unity/` starts the committed WebGL snapshot.
 
-Real Unity bytes served by Vercel lands in Phase 0c (out of this Phase spec) or is addressed by Phase 8 rollout planning.
+Automated artifact promotion from GameCI to Vercel is still a later rollout concern.
 
 ---
 

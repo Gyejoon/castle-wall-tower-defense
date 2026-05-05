@@ -181,17 +181,17 @@
 - `Tests/PlayMode/Integration/BossEncounterTest.cs`
 
 - [ ] **Step 1**: Update the 3 phase-4-dependent fixtures with expected metrics now that subsystems are live. Include boss phase-change timestamps in expected data for seed-003.
-- [ ] **Step 2**: `FullRunFixtureTest.cs` — PlayMode: load fixture, run full 50 waves under autostart + scripted builds (merge + gacha events scripted), assert final state matches Phaser reference within parity thresholds.
-- [ ] **Step 3**: `BossEncounterTest.cs` — force-spawn each of 4 bosses in isolation, verify full phase cycle + death event.
+- [x] **Step 2**: `FullRunFixtureTest.cs` — PlayMode: load fixture, run full 50 waves under autostart + scripted builds (merge + gacha events scripted), assert final state matches Phaser reference within parity thresholds.
+- [x] **Step 3**: `BossEncounterTest.cs` — force-spawn each of 4 bosses in isolation, verify full phase cycle + death event.
 - [ ] **Step 4**: Run `unity-parity-gate.yml` CI — all 10 fixtures green now.
 - [ ] **Step 5**: Commit `feat(unity-game): Phase 4 full-run integration + ungated 10-fixture parity gate`.
 
 ## Exit gate verification
 
 From spec Phase 4 row:
-- [ ] Phase-4-supported replay fixtures reproducible (Task 7 integration)
-- [ ] Gacha ±0.5%p over 10⁵ rolls (Task 3)
-- [ ] Boss phase transitions verified (Task 5 EditMode + Task 7 PlayMode)
+- [x] Phase-4-supported replay fixtures reproducible locally (Task 7 integration)
+- [x] Gacha ±0.5%p over 10⁵ rolls (Task 3)
+- [x] Boss phase transitions verified locally (Task 5 EditMode + Task 7 PlayMode)
 - [ ] Phase-4-supported replay fixtures green on CI; continue/tutorial fixtures remain skipped (Task 7 Step 4)
 
 ## Self-review

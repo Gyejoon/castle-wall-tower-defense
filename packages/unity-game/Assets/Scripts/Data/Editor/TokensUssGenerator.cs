@@ -195,10 +195,48 @@ namespace GLD.Data.Editor
             AppendMs(sb, "motion-duration-slow",      dur.slow);
             AppendMs(sb, "motion-duration-cinematic", dur.cinematic);
 
+            // ── Motion easing / presets ──────────────────────────────────────
+            var easing = so.motion.easing;
+            AppendStr(sb, "motion-easing-standard",   easing.standard);
+            AppendStr(sb, "motion-easing-emphatic",   easing.emphatic);
+            AppendStr(sb, "motion-easing-decelerate", easing.decelerate);
+            AppendStr(sb, "motion-easing-stepwise",   easing.stepwise);
+
+            var preset = so.motion.preset;
+            AppendStr(sb, "motion-preset-interactive", preset.interactive);
+            AppendStr(sb, "motion-preset-ui",          preset.ui);
+            AppendStr(sb, "motion-preset-overlay",     preset.overlay);
+            AppendStr(sb, "motion-preset-punch",       preset.punch);
+            AppendStr(sb, "motion-preset-cinematic",   preset.cinematic);
+
+            // ── Elevation ────────────────────────────────────────────────────
+            var elev = so.elevation;
+            AppendStr(sb, "elevation-0", elev.e0);
+            AppendStr(sb, "elevation-1", elev.e1);
+            AppendStr(sb, "elevation-2", elev.e2);
+            AppendStr(sb, "elevation-3", elev.e3);
+            AppendStr(sb, "elevation-4", elev.e4);
+
             // ── Font families ─────────────────────────────────────────────────
             var ff = so.fontFamily;
             AppendStr(sb, "font-family-display", ff.display);
             AppendStr(sb, "font-family-pixel",   ff.pixel);
+
+            // ── Typography ───────────────────────────────────────────────────
+            if (so.typography != null)
+            {
+                foreach (var type in so.typography)
+                {
+                    if (string.IsNullOrEmpty(type.key))
+                        continue;
+
+                    var key = ToCssKey(type.key);
+                    AppendStr(sb, $"type-{key}-family", type.family);
+                    AppendStr(sb, $"type-{key}-size", type.size);
+                    AppendFloat(sb, $"type-{key}-line-height", type.lineHeight);
+                    AppendInt(sb, $"type-{key}-weight", type.weight);
+                }
+            }
 
             sb.AppendLine("}");
             return sb.ToString();
@@ -227,10 +265,35 @@ namespace GLD.Data.Editor
             sb.AppendLine($"    --{key}: {value};");
         }
 
+        static void AppendFloat(StringBuilder sb, string key, float value)
+        {
+            sb.AppendLine($"    --{key}: {value.ToString(System.Globalization.CultureInfo.InvariantCulture)};");
+        }
+
         static void AppendStr(StringBuilder sb, string key, string value)
         {
             if (!string.IsNullOrEmpty(value))
                 sb.AppendLine($"    --{key}: {value};");
+        }
+
+        static string ToCssKey(string key)
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < key.Length; i++)
+            {
+                var c = key[i];
+                if (char.IsUpper(c))
+                {
+                    if (i > 0)
+                        sb.Append('-');
+                    sb.Append(char.ToLowerInvariant(c));
+                }
+                else if (char.IsLetterOrDigit(c))
+                    sb.Append(char.ToLowerInvariant(c));
+                else
+                    sb.Append('-');
+            }
+            return sb.ToString();
         }
     }
 }

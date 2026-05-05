@@ -1,0 +1,64 @@
+@import url("project://database/Assets/UI/Styles/tokens.uss");
+@import url("project://database/Assets/UI/Styles/primitives.uss");
+
+.tower-action-sheet {
+  align-self: stretch;
+  margin-left: 12px;
+  margin-right: 12px;
+  margin-bottom: 104px;
+}
+
+.tower-action-sheet__header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tower-action-sheet__header > Label {
+  color: var(--color-text-primary);
+  font-size: var(--type-body12-size);
+}
+
+.tower-action-sheet__header > #tower-action-position {
+  color: var(--color-text-secondary);
+  font-size: var(--type-caption10-size);
+}
+
+.tower-action-sheet__actions {
+  flex-direction: row;
+}
+
+.tower-action-sheet__actions > .gld-btn {
+  flex-grow: 1;
+  margin-left: 2px;
+  margin-right: 2px;
+  min-width: 0;
+}
+
+.summon-reveal {
+  position: absolute;
+  right: 12px;
+  top: 98px;
+  width: 244px;
+  min-height: 58px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summon-reveal__text {
+  flex-grow: 1;
+  margin-right: 8px;
+}
+
+.summon-reveal__text > #summon-reveal-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-body12-size);
+  -unity-font-style: bold;
+}
+
+.summon-reveal__text > #summon-reveal-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--type-caption10-size);
+}

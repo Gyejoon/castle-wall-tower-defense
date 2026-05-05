@@ -73,6 +73,8 @@ git commit -m "chore(unity-game): WebGL 타겟 + URP 2D + Brotli 256MB 기본값
 
 ## 4. Create Boot.unity + Root.unity + Phase0 label scene
 
+> Obsolete as of 2026-05-06: `Phase0Root` and the `phase0=1` sentinel path were removed after CoreLoop became the `/unity/` smoke path. Keep this section only as historical setup context for old migration notes.
+
 In Unity Editor:
 
 1. **File → New Scene → 2D (Built-in)** → Save As `Assets/_Project/Scenes/Boot.unity`. Leave empty (one Main Camera).

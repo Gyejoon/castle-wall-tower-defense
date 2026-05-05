@@ -1,5 +1,6 @@
 using GLD.Core;
 using GLD.Data;
+using GLD.SceneRuntime;
 using GLD.SceneRuntime.CoreLoop.Input;
 using GLD.Systems.Energy;
 using GLD.Systems.DamageNumbers;
@@ -10,7 +11,9 @@ using GLD.Systems.Units;
 using GLD.Systems.Waves;
 using GLD.SceneRuntime.CoreLoop.Render;
 using GLD.SceneRuntime.CoreLoop.Runtime;
+using GLD.SceneRuntime.CoreLoop.UI;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace GLD.SceneRuntime.CoreLoop
 {
@@ -25,6 +28,10 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] float speedMultiplier = 1f;
         [SerializeField] CoreLoopFieldRenderer fieldRenderer;
         [SerializeField] CoreLoopHudController hudController;
+        [SerializeField] GameHudController gameHudController;
+        [SerializeField] TowerActionSheetController towerActionSheetController;
+        [SerializeField] SummonRevealController summonRevealController;
+        [SerializeField] UIDocument gameHudDocument;
 
         public GridManager Grid { get; private set; }
         public EnergySystem Energy { get; private set; }
@@ -32,6 +39,7 @@ namespace GLD.SceneRuntime.CoreLoop
         public TowerSystem Towers { get; private set; }
         public WaveSystem Waves { get; private set; }
         public GameStateManager State { get; private set; }
+        public RunState RunState { get; private set; }
         public DamageNumberSystem DamageNumbers { get; private set; }
         public CoreOrchestrator Orchestrator { get; private set; }
         public PlacementCoordinator Placement { get; private set; }
@@ -56,12 +64,18 @@ namespace GLD.SceneRuntime.CoreLoop
             Units = new UnitSystem(Grid, Energy, database.units, database.boss);
             Towers = new TowerSystem(Grid, Energy, Units);
             Waves = new WaveSystem(database.waves, database.units, Units);
-            State = new GameStateManager();
+            RunState = new RunState();
+            State = new GameStateManager(RunState);
+            RunState.SetEnergy(Energy.Current, Energy.Max);
+            RunState.SetWave(Waves.CurrentWaveSlot, Waves.Phase);
             State.SetSpeedMultiplier(speedMultiplier);
             DamageNumbers = new DamageNumberSystem(transform);
             Orchestrator = new CoreOrchestrator(database, Towers, Waves, energy: Energy);
             Orchestrator.Enable();
+            BindRunStateEvents();
             GameEvents.OnRequestSetSpeed += SetSpeedMultiplier;
+            GameEvents.OnRequestPause += HandleRequestPause;
+            GameEvents.OnRequestResume += HandleRequestResume;
             _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers);
             _bossContextBuilder = new BossContextBuilder();
 
@@ -76,6 +90,8 @@ namespace GLD.SceneRuntime.CoreLoop
             if (hudController == null)
                 hudController = gameObject.AddComponent<CoreLoopHudController>();
             hudController.Bind(this, fieldRenderer);
+
+            WireGameHud();
 
             Placement = new PlacementCoordinator(this);
             _inputController = new InputController(this, fieldRenderer, Placement);
@@ -92,7 +108,10 @@ namespace GLD.SceneRuntime.CoreLoop
 
         void OnDestroy()
         {
+            UnbindRunStateEvents();
             GameEvents.OnRequestSetSpeed -= SetSpeedMultiplier;
+            GameEvents.OnRequestPause -= HandleRequestPause;
+            GameEvents.OnRequestResume -= HandleRequestResume;
             _inputController?.Dispose();
             _combatMediator?.Dispose();
             Orchestrator?.Dispose();
@@ -101,6 +120,7 @@ namespace GLD.SceneRuntime.CoreLoop
             _combatMediator = null;
             Orchestrator = null;
             DamageNumbers = null;
+            RunState = null;
             GameEvents.ClearRuntimeListeners();
             Time.timeScale = 1f;
         }
@@ -119,11 +139,107 @@ namespace GLD.SceneRuntime.CoreLoop
 
         public bool StartRun() => Waves != null && Waves.Start(1);
 
+        void WireGameHud()
+        {
+            if (gameHudDocument == null)
+                gameHudDocument = GetComponent<UIDocument>();
+            if (gameHudDocument == null)
+                gameHudDocument = gameObject.AddComponent<UIDocument>();
+
+            if (gameHudController == null)
+                gameHudController = GetComponent<GameHudController>();
+            if (gameHudController == null)
+                gameHudController = gameObject.AddComponent<GameHudController>();
+
+            gameHudController.Bind(RunState, gameHudDocument);
+
+            if (towerActionSheetController == null)
+                towerActionSheetController = GetComponent<TowerActionSheetController>();
+            if (towerActionSheetController == null)
+                towerActionSheetController = gameObject.AddComponent<TowerActionSheetController>();
+
+            towerActionSheetController.Bind(gameHudDocument);
+
+            if (summonRevealController == null)
+                summonRevealController = GetComponent<SummonRevealController>();
+            if (summonRevealController == null)
+                summonRevealController = gameObject.AddComponent<SummonRevealController>();
+
+            summonRevealController.Bind(this, gameHudDocument);
+        }
+
         public void SetSpeedMultiplier(float value)
         {
             speedMultiplier = value;
             State?.SetSpeedMultiplier(value);
         }
+
+        void BindRunStateEvents()
+        {
+            GameEvents.OnEnergyChanged += HandleEnergyChanged;
+            GameEvents.OnWaveStarted += HandleWaveStarted;
+            GameEvents.OnWavePrepStarted += HandleWavePrepStarted;
+            GameEvents.OnWavePrepTick += HandleWavePrepTick;
+            GameEvents.OnBossHpUpdated += HandleBossHpUpdated;
+            GameEvents.OnBossDefeated += HandleBossDefeated;
+            GameEvents.OnPlayerHpChanged += HandlePlayerHpChanged;
+            GameEvents.OnSpeedChanged += HandleSpeedChanged;
+            GameEvents.OnPauseChanged += HandlePauseChanged;
+            GameEvents.OnGameOver += HandleGameOver;
+        }
+
+        void UnbindRunStateEvents()
+        {
+            GameEvents.OnEnergyChanged -= HandleEnergyChanged;
+            GameEvents.OnWaveStarted -= HandleWaveStarted;
+            GameEvents.OnWavePrepStarted -= HandleWavePrepStarted;
+            GameEvents.OnWavePrepTick -= HandleWavePrepTick;
+            GameEvents.OnBossHpUpdated -= HandleBossHpUpdated;
+            GameEvents.OnBossDefeated -= HandleBossDefeated;
+            GameEvents.OnPlayerHpChanged -= HandlePlayerHpChanged;
+            GameEvents.OnSpeedChanged -= HandleSpeedChanged;
+            GameEvents.OnPauseChanged -= HandlePauseChanged;
+            GameEvents.OnGameOver -= HandleGameOver;
+        }
+
+        void HandleEnergyChanged(int current, int max) => RunState?.SetEnergy(current, max);
+
+        void HandleWaveStarted(int waveSlot)
+        {
+            RunState?.SetRunStatus(RunStatus.Running);
+            RunState?.SetWave(waveSlot, WavePhase.Running);
+            RunState?.SetCountdown(0f);
+        }
+
+        void HandleWavePrepStarted(int nextWaveSlot, float durationSeconds)
+        {
+            RunState?.SetWave(Mathf.Max(0, nextWaveSlot - 1), WavePhase.Interwave);
+            RunState?.SetCountdown(durationSeconds);
+        }
+
+        void HandleWavePrepTick(int nextWaveSlot, float remainingSeconds) => RunState?.SetCountdown(remainingSeconds);
+
+        void HandleBossHpUpdated(string unitId, string defId, int hp, int maxHp, int phase) =>
+            RunState?.SetBossHp(unitId, defId, hp, maxHp, phase);
+
+        void HandleBossDefeated(string unitId, int waveSlot) => RunState?.ClearBoss();
+
+        void HandlePlayerHpChanged(int playerHp) => RunState?.SetLives(playerHp);
+
+        void HandleSpeedChanged(float multiplier) => RunState?.SetSpeedMultiplier(multiplier);
+
+        void HandlePauseChanged(bool paused) => RunState?.SetPaused(paused);
+
+        void HandleGameOver(bool victory)
+        {
+            State?.SetGameOverStatus(victory);
+            if (victory && RunState != null)
+                RunState.SetWave(Waves != null ? Waves.CurrentWaveSlot : RunState.Wave, WavePhase.Victory);
+        }
+
+        void HandleRequestPause() => State?.SetPaused(true);
+
+        void HandleRequestResume() => State?.SetPaused(false);
 
         public bool PlaceTower(string towerId, int col, int row, bool spendEnergy = true)
         {

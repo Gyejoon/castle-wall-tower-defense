@@ -103,6 +103,7 @@ namespace GLD.Core
         public static event Action<string> OnTowerSold;
         public static event Action<string, int, int, int, int> OnTowerMoved;
         public static event Action<string, int, int> OnTowerSelected;
+        public static event Action OnTowerDeselected;
         public static event Action<string, float> OnTowerAttacked;
         public static event Action<string> OnUnitSpawned;
         public static event Action<string> OnUnitKilled;
@@ -156,7 +157,8 @@ namespace GLD.Core
         public static void RaiseTowerSold(string towerId) => OnTowerSold?.Invoke(towerId);
         public static void RaiseTowerMoved(string towerId, int fromCol, int fromRow, int toCol, int toRow) =>
             OnTowerMoved?.Invoke(towerId, fromCol, fromRow, toCol, toRow);
-        public static void RaiseTowerSelected(string towerId, int col, int row) => OnTowerSelected?.Invoke(towerId, col, row);
+        public static void RaiseTowerSelected(string instanceId, int col, int row) => OnTowerSelected?.Invoke(instanceId, col, row);
+        public static void RaiseTowerDeselected() => OnTowerDeselected?.Invoke();
         public static void RaiseTowerAttacked(string towerId, float appliedDamage) => OnTowerAttacked?.Invoke(towerId, appliedDamage);
         public static void RaiseUnitSpawned(string unitId) => OnUnitSpawned?.Invoke(unitId);
         public static void RaiseUnitKilled(string unitId) => OnUnitKilled?.Invoke(unitId);
@@ -209,6 +211,7 @@ namespace GLD.Core
             OnTowerSold = null;
             OnTowerMoved = null;
             OnTowerSelected = null;
+            OnTowerDeselected = null;
             OnTowerAttacked = null;
             OnUnitSpawned = null;
             OnUnitKilled = null;

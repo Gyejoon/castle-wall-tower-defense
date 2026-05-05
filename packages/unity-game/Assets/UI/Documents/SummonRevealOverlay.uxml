@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDPanel name="summon-reveal" variant="elevated" padding="md" class="summon-reveal">
+    <ui:VisualElement name="summon-reveal-text" class="summon-reveal__text">
+      <ui:Label name="summon-reveal-title" text="Tower" />
+      <ui:Label name="summon-reveal-subtitle" text="Tap a green tile to place" />
+    </ui:VisualElement>
+    <gld:GLDButton name="summon-reveal-cancel" text="Cancel" variant="ghost" size="sm" />
+  </gld:GLDPanel>
+</ui:UXML>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDSheet name="tower-action-sheet" anchor="bottom" variant="default" class="tower-action-sheet">
+    <ui:VisualElement name="tower-action-header" class="tower-action-sheet__header">
+      <ui:Label name="tower-action-title" text="Tower" />
+      <ui:Label name="tower-action-position" text="Cell 0,0" />
+    </ui:VisualElement>
+    <ui:VisualElement name="tower-action-actions" class="tower-action-sheet__actions">
+      <gld:GLDButton name="tower-action-merge" text="Merge" variant="secondary" />
+      <gld:GLDButton name="tower-action-move" text="Move" variant="secondary" />
+      <gld:GLDButton name="tower-action-sell" text="Sell" variant="danger" />
+      <gld:GLDButton name="tower-action-close" text="Close" variant="ghost" />
+    </ui:VisualElement>
+  </gld:GLDSheet>
+</ui:UXML>

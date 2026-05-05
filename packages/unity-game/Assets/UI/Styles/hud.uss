@@ -1,0 +1,40 @@
+@import url("project://database/Assets/UI/Styles/tokens.uss");
+@import url("project://database/Assets/UI/Styles/primitives.uss");
+@import url("project://database/Assets/UI/Styles/overlays.uss");
+
+.game-hud {
+  flex-grow: 1;
+  justify-content: space-between;
+  padding: 16px 12px 18px 12px;
+}
+
+.game-hud__top {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.game-hud__status {
+  align-self: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  background-color: var(--surface-alpha-panel70);
+  color: var(--color-text-secondary);
+  font-size: var(--type-caption10-size);
+  -unity-text-align: middle-center;
+}
+
+.game-hud__bottom {
+  align-self: stretch;
+}
+
+.game-hud__actions {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.game-hud__actions > .gld-btn {
+  flex-grow: 1;
+  margin-left: 2px;
+  margin-right: 2px;
+  min-width: 0;
+}

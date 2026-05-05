@@ -1,4 +1,5 @@
 using GLD.Core;
+using GLD.SceneRuntime;
 using System;
 using System.Reflection;
 using UnityEngine;
@@ -9,35 +10,43 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
     {
         const int DefaultPlayerHp = 20;
 
-        float _speedMultiplier = 1f;
+        readonly RunState _runState;
 
-        public int PlayerHp { get; private set; } = DefaultPlayerHp;
-        public float ElapsedSeconds { get; private set; }
-        public bool IsPaused { get; private set; }
-        public bool IsGameOver { get; private set; }
-        public float SpeedMultiplier => _speedMultiplier;
+        public RunState RunState => _runState;
+        public int PlayerHp => _runState.Lives;
+        public float ElapsedSeconds => _runState.ElapsedSeconds;
+        public bool IsPaused => _runState.IsPaused;
+        public bool IsGameOver => _runState.RunStatus == RunStatus.Victory || _runState.RunStatus == RunStatus.Defeat;
+        public float SpeedMultiplier => _runState.SpeedMultiplier;
+
+        public GameStateManager(RunState runState = null)
+        {
+            _runState = runState ?? new RunState();
+            _runState.SetLives(DefaultPlayerHp);
+            _runState.SetRunStatus(RunStatus.Building);
+        }
 
         public float Tick(float fixedDeltaSeconds)
         {
             if (fixedDeltaSeconds <= 0f || IsPaused || IsGameOver)
                 return 0f;
 
-            var scaledDelta = fixedDeltaSeconds * _speedMultiplier;
-            ElapsedSeconds += scaledDelta;
-            GameEvents.RaiseTimerTick(ElapsedSeconds);
+            var scaledDelta = fixedDeltaSeconds * _runState.SpeedMultiplier;
+            _runState.SetElapsedSeconds(_runState.ElapsedSeconds + scaledDelta);
+            GameEvents.RaiseTimerTick(_runState.ElapsedSeconds);
             return scaledDelta;
         }
 
         public void SetSpeedMultiplier(float value)
         {
-            _speedMultiplier = Mathf.Clamp(value, 0.25f, 3f);
-            TweenTimeScaleBridge.TrySetTimeScale(_speedMultiplier);
-            GameEvents.RaiseSpeedChanged(_speedMultiplier);
+            _runState.SetSpeedMultiplier(value);
+            TweenTimeScaleBridge.TrySetTimeScale(_runState.SpeedMultiplier);
+            GameEvents.RaiseSpeedChanged(_runState.SpeedMultiplier);
         }
 
         public void SetPaused(bool paused)
         {
-            IsPaused = paused;
+            _runState.SetPaused(paused);
             Time.timeScale = paused ? 0f : 1f;
             GameEvents.RaisePauseChanged(paused);
         }
@@ -47,9 +56,9 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
             if (IsGameOver || amount <= 0)
                 return;
 
-            PlayerHp = Mathf.Max(0, PlayerHp - amount);
-            GameEvents.RaisePlayerHpChanged(PlayerHp);
-            if (PlayerHp <= 0)
+            _runState.SetLives(Mathf.Max(0, _runState.Lives - amount));
+            GameEvents.RaisePlayerHpChanged(_runState.Lives);
+            if (_runState.Lives <= 0)
                 EndGame(false);
         }
 
@@ -58,8 +67,13 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
             if (IsGameOver)
                 return;
 
-            IsGameOver = true;
+            SetGameOverStatus(victory);
             GameEvents.RaiseGameOver(victory);
+        }
+
+        public void SetGameOverStatus(bool victory)
+        {
+            _runState.SetRunStatus(victory ? RunStatus.Victory : RunStatus.Defeat);
         }
 
         static class TweenTimeScaleBridge

@@ -1,4 +1,5 @@
 using System;
+using GLD.Core;
 using GLD.SceneRuntime.CoreLoop.Render;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,21 +21,21 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 
         public void Tick()
         {
-            if (_controller == null || _placement == null || !_placement.IsPlacementMode)
+            if (_controller == null || _placement == null)
                 return;
 
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-                TryPlaceAtScreenPosition(Mouse.current.position.ReadValue());
+                TryInteractAtScreenPosition(Mouse.current.position.ReadValue());
 
             if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
-                TryPlaceAtScreenPosition(Touchscreen.current.primaryTouch.position.ReadValue());
+                TryInteractAtScreenPosition(Touchscreen.current.primaryTouch.position.ReadValue());
         }
 
         public void Dispose()
         {
         }
 
-        bool TryPlaceAtScreenPosition(Vector2 screenPosition)
+        bool TryInteractAtScreenPosition(Vector2 screenPosition)
         {
             var camera = _renderer != null && _renderer.GameplayCamera != null ? _renderer.GameplayCamera : Camera.main;
             if (camera == null)
@@ -42,7 +43,20 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 
             var world3 = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -camera.transform.position.z));
             var cell = _controller.Grid.WorldToGrid(new Vector2(world3.x, world3.y));
-            return _placement.TryPlace(cell);
+            if (_placement.IsPlacementMode)
+                return _placement.TryPlace(cell);
+
+            var tower = _controller.Towers.GetAt(cell);
+            if (tower == null)
+            {
+                GameEvents.RaiseTowerDeselected();
+                return false;
+            }
+
+            GameEvents.RaiseTowerSelected(tower.InstanceId, cell.Col, cell.Row);
+            GameEvents.RaiseRequestSelectTower(tower.InstanceId);
+            return true;
         }
+
     }
 }

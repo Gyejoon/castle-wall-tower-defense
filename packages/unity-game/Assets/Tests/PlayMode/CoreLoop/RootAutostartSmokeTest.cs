@@ -65,6 +65,10 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var tutorial = controller.GetComponent<TutorialOverlayController>();
             Assert.That(tutorial, Is.Not.Null);
             Assert.That(tutorial.IsBound, Is.True);
+            var lobbyMeta = controller.GetComponent<LobbyMetaScreenController>();
+            Assert.That(lobbyMeta, Is.Not.Null);
+            Assert.That(lobbyMeta.IsBound, Is.True);
+            Assert.That(lobbyMeta.IsVisible, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
@@ -72,6 +76,7 @@ namespace GLD.Tests.PlayMode.CoreLoop
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.False);
             Assert.That(controller.StartRun(), Is.True);
+            Assert.That(lobbyMeta.IsVisible, Is.False);
             GameEvents.RaiseRequestSetSpeed(3f);
             Assert.That(controller.State.SpeedMultiplier, Is.EqualTo(3f));
             Assert.That(controller.PlaceTower("archer", 3, 3, spendEnergy: false), Is.True);

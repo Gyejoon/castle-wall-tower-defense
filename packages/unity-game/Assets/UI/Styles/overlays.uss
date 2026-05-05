@@ -262,3 +262,50 @@
   min-width: 0;
   margin-right: 4px;
 }
+
+.lobby-meta-screen {
+  padding: 18px;
+}
+
+.lobby-meta-shell {
+  width: 100%;
+  max-width: 360px;
+}
+
+.lobby-tabs {
+  flex-direction: row;
+  margin-bottom: 12px;
+}
+
+.lobby-tabs > .gld-btn {
+  flex-grow: 1;
+  min-width: 0;
+  margin-right: 4px;
+}
+
+.lobby-panel {
+  align-items: stretch;
+}
+
+#lobby-title,
+#lobby-meta-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-body14-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+#lobby-subtitle,
+#lobby-meta-atk,
+#lobby-meta-perks {
+  color: var(--color-text-secondary);
+  font-size: var(--type-body12-size);
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+#lobby-start,
+#lobby-meta-start {
+  margin-top: 8px;
+}

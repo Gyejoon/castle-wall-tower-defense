@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDOverlay name="lobby-meta-screen" dim="default" class="lobby-meta-screen">
+    <gld:GLDPanel name="lobby-meta-shell" variant="elevated" padding="lg" class="lobby-meta-shell">
+      <ui:VisualElement name="lobby-tabs" class="lobby-tabs">
+        <gld:GLDButton name="lobby-tab-home" text="Home" variant="secondary" />
+        <gld:GLDButton name="lobby-tab-meta" text="Meta" variant="secondary" />
+      </ui:VisualElement>
+      <ui:VisualElement name="lobby-home-panel" class="lobby-panel">
+        <ui:Label name="lobby-title" text="Grid Line Defense" />
+        <ui:Label name="lobby-subtitle" text="Wave 50 endless run" />
+        <gld:GLDButton name="lobby-start" text="Start Battle" variant="primary" />
+      </ui:VisualElement>
+      <ui:VisualElement name="lobby-meta-panel" class="lobby-panel">
+        <ui:Label name="lobby-meta-title" text="Meta Forge" />
+        <ui:Label name="lobby-meta-atk" text="Global ATK +0%" />
+        <ui:Label name="lobby-meta-perks" text="Family perks locked" />
+        <gld:GLDButton name="lobby-meta-start" text="Start Battle" variant="primary" />
+      </ui:VisualElement>
+    </gld:GLDPanel>
+  </gld:GLDOverlay>
+</ui:UXML>

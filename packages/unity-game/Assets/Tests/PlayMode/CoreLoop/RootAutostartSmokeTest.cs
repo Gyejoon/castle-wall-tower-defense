@@ -62,6 +62,9 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var toast = controller.GetComponent<ToastOverlayController>();
             Assert.That(toast, Is.Not.Null);
             Assert.That(toast.IsBound, Is.True);
+            var tutorial = controller.GetComponent<TutorialOverlayController>();
+            Assert.That(tutorial, Is.Not.Null);
+            Assert.That(tutorial.IsBound, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);

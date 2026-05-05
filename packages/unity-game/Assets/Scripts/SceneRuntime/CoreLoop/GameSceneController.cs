@@ -37,6 +37,7 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] BossWarningOverlayController bossWarningOverlayController;
         [SerializeField] GameOverOverlayController gameOverOverlayController;
         [SerializeField] ToastOverlayController toastOverlayController;
+        [SerializeField] TutorialOverlayController tutorialOverlayController;
         [SerializeField] UIDocument gameHudDocument;
 
         public GridManager Grid { get; private set; }
@@ -214,6 +215,13 @@ namespace GLD.SceneRuntime.CoreLoop
                 toastOverlayController = gameObject.AddComponent<ToastOverlayController>();
 
             toastOverlayController.Bind(gameHudDocument);
+
+            if (tutorialOverlayController == null)
+                tutorialOverlayController = GetComponent<TutorialOverlayController>();
+            if (tutorialOverlayController == null)
+                tutorialOverlayController = gameObject.AddComponent<TutorialOverlayController>();
+
+            tutorialOverlayController.Bind(RunState, gameHudDocument);
         }
 
         public void SetSpeedMultiplier(float value)

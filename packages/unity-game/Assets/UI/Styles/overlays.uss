@@ -231,3 +231,34 @@
   font-size: var(--type-caption10-size);
   white-space: normal;
 }
+
+.tutorial-overlay {
+  position: absolute;
+  left: 12px;
+  top: 150px;
+  width: 260px;
+}
+
+#tutorial-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-body12-size);
+  -unity-font-style: bold;
+  margin-bottom: 4px;
+}
+
+#tutorial-body {
+  color: var(--color-text-secondary);
+  font-size: var(--type-caption10-size);
+  white-space: normal;
+  margin-bottom: 8px;
+}
+
+.tutorial-actions {
+  flex-direction: row;
+}
+
+.tutorial-actions > .gld-btn {
+  flex-grow: 1;
+  min-width: 0;
+  margin-right: 4px;
+}

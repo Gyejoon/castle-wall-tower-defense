@@ -81,4 +81,7 @@ The current Phase 3 visible loop uses SpriteRenderer/IMGUI placeholders:
 - Replay fixtures now cover seed-001..010; Phase-4-dependent fixtures are explicitly skipped.
 - Local Unity batchmode checks pass for Phase 3 targeted EditMode tests and the root PlayMode autostart
   smoke test.
-- Remaining external exit checks: CI parity gate green status and Phase 3 balance drift baseline.
+- `bun run --filter @gld/shared replay:baseline` generates
+  `docs/unity-migration/phase-3-balance-drift-baseline.csv` with 50 seeds x waves 1-10 TS
+  reference metrics and tolerance bounds.
+- Remaining external exit check: CI parity gate green status.

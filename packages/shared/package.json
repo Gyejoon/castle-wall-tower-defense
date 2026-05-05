@@ -11,6 +11,7 @@
 		"lint": "biome check --write .",
 		"build:unity-json": "bun run ../../scripts/export-shared-to-json.ts",
 		"replay:record": "bun run src/testing/replay-runner.ts ../../artifacts/phase-3-replay-metrics.csv",
+		"replay:baseline": "bun run src/testing/replay-runner.ts --balance-baseline ../../docs/unity-migration/phase-3-balance-drift-baseline.csv",
 		"replay:soak": "bun run replay:record"
 	},
   "devDependencies": {

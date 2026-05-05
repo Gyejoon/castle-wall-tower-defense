@@ -10,6 +10,8 @@ import seed008 from '../replay-fixtures/seed-008-meta-global-atk.json';
 import seed009 from '../replay-fixtures/seed-009-3x-speed.json';
 import seed010 from '../replay-fixtures/seed-010-tutorial-completion.json';
 import {
+	balanceBaselineToCsv,
+	buildPhase3BalanceBaselineRows,
 	type ReplayFixture,
 	replayMetricsToCsv,
 	runReplay,
@@ -66,5 +68,26 @@ describe('slice2 replay runner', () => {
 			'fixture_id,seed,wave,ts_damage,ts_kills,ts_clear_ms,phase4_dependent',
 		);
 		expect(csv).toContain('seed-009-3x-speed,66666,1,150,5,3083,false');
+	});
+
+	it('builds the Phase 3 50-seed by 10-wave balance baseline', () => {
+		const rows = buildPhase3BalanceBaselineRows();
+		const csv = balanceBaselineToCsv(rows);
+
+		expect(rows).toHaveLength(500);
+		expect(new Set(rows.map((row) => row.seed)).size).toBe(50);
+		expect(new Set(rows.map((row) => row.wave))).toEqual(
+			new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+		);
+		expect(csv.split('\n')[0]).toBe(
+			'fixture_id,seed_index,seed,wave,ts_damage,ts_kills,ts_clear_ms,ts_energy_peak,damage_min,damage_max,clear_ms_min,clear_ms_max,energy_min,energy_max,damage_tolerance_pct,clear_ms_tolerance_pct,energy_tolerance_pct',
+		);
+		expect(rows.every((row) => row.damageTolerancePct === 5)).toBe(true);
+		expect(rows.every((row) => row.energyTolerancePct === 5)).toBe(true);
+		expect(
+			rows
+				.filter((row) => row.wave === 10)
+				.every((row) => row.clearMsTolerancePct === 5),
+		).toBe(true);
 	});
 });

@@ -1,3 +1,5 @@
+import { DeterministicRng } from '../random/deterministic-rng';
+
 export type ReplayPlacementEvent = {
 	tMs: number;
 	towerId: string;
@@ -10,6 +12,10 @@ export type ReplayFixture = {
 	seed: number;
 	durationMs: number;
 	tickMs: number;
+	waveSlot?: number;
+	unitCount?: number;
+	unitHp?: number;
+	unitSpeed?: number;
 	phase4_dependent?: boolean;
 	continueAfterWaveClear?: boolean;
 	speedMultiplier?: number;
@@ -38,6 +44,26 @@ export type ReplayWaveMetrics = {
 	tsKills: number;
 	tsClearMs: number;
 	phase4Dependent: boolean;
+};
+
+export type BalanceDriftBaselineRow = {
+	fixtureId: string;
+	seedIndex: number;
+	seed: number;
+	wave: number;
+	tsDamage: number;
+	tsKills: number;
+	tsClearMs: number;
+	tsEnergyPeak: number;
+	damageMin: number;
+	damageMax: number;
+	clearMsMin: number;
+	clearMsMax: number;
+	energyMin: number;
+	energyMax: number;
+	damageTolerancePct: number;
+	clearMsTolerancePct: number;
+	energyTolerancePct: number;
 };
 
 type Vec2 = { x: number; y: number };
@@ -140,10 +166,14 @@ export function runReplay(fixture: ReplayFixture): ReplayResult {
 	const tickMs = fixture.tickMs || 16.6667;
 	const durationMs = fixture.durationMs || 60_000;
 	const speedMultiplier = fixture.speedMultiplier || 1;
+	const waveSlot = fixture.waveSlot || 1;
+	const unitCount = fixture.unitCount || 5;
+	const unitHp = fixture.unitHp || 30;
+	const unitSpeed = fixture.unitSpeed || 3;
 	const placements = [...(fixture.placements ?? [])].sort(
 		(a, b) => a.tMs - b.tMs,
 	);
-	const events: string[] = [`seed:${fixture.seed}`, 'wave:1:start@0'];
+	const events: string[] = [`seed:${fixture.seed}`, `wave:${waveSlot}:start@0`];
 	const units: Unit[] = [];
 	const towers: Tower[] = [];
 	let energy = 40;
@@ -181,12 +211,12 @@ export function runReplay(fixture: ReplayFixture): ReplayResult {
 
 		const dt = (tickMs / 1000) * speedMultiplier;
 		spawnTimer -= dt;
-		while (spawned < 5 && spawnTimer <= 0) {
+		while (spawned < unitCount && spawnTimer <= 0) {
 			spawned++;
 			units.push({
 				id: `unit-${spawned}`,
-				hp: 30,
-				speed: 3,
+				hp: unitHp,
+				speed: unitSpeed,
 				position: { ...PATH[0] },
 				pathIndex: 0,
 				alive: true,
@@ -229,10 +259,14 @@ export function runReplay(fixture: ReplayFixture): ReplayResult {
 			tower.cooldown += 1 / tower.attackSpeed;
 		}
 
-		if (!waveCompleted && spawned >= 5 && units.every((unit) => !unit.alive)) {
+		if (
+			!waveCompleted &&
+			spawned >= unitCount &&
+			units.every((unit) => !unit.alive)
+		) {
 			waveCompleted = true;
 			waveClearMs = Math.round(elapsedMs);
-			events.push(`wave:1:complete@${waveClearMs}`);
+			events.push(`wave:${waveSlot}:complete@${waveClearMs}`);
 			if (fixture.continueAfterWaveClear !== true) break;
 		}
 
@@ -253,7 +287,7 @@ export function runReplay(fixture: ReplayFixture): ReplayResult {
 			{
 				fixtureId: fixture.fixtureId,
 				seed: fixture.seed,
-				wave: 1,
+				wave: waveSlot,
 				tsDamage: metrics.totalDamage,
 				tsKills: metrics.kills,
 				tsClearMs: metrics.waveClearMs,
@@ -261,6 +295,111 @@ export function runReplay(fixture: ReplayFixture): ReplayResult {
 			},
 		],
 	};
+}
+
+function round4(value: number): number {
+	return Number(value.toFixed(4));
+}
+
+function withPctBounds(value: number, tolerancePct: number): [number, number] {
+	const delta = value * (tolerancePct / 100);
+	return [round4(value - delta), round4(value + delta)];
+}
+
+function buildBaselineFixture(
+	seed: number,
+	seedIndex: number,
+	wave: number,
+): ReplayFixture {
+	const rng = new DeterministicRng((seed + wave * 2654435761) >>> 0);
+	const placementCells: Array<[number, number]> = [
+		[3, 14],
+		[5, 14],
+		[4, 13],
+		[2, 14],
+		[5, 11],
+		[4, 10],
+	];
+	const towerIds = ['archer', 'flame_tower', 'wind_spire', 'stone_cannon'];
+	const placements: ReplayPlacementEvent[] = [];
+	const used = new Set<number>();
+
+	while (placements.length < 4) {
+		const index = rng.nextInt(placementCells.length);
+		if (used.has(index)) continue;
+		used.add(index);
+		const [col, row] = placementCells[index];
+		placements.push({
+			tMs: placements.length * 250,
+			towerId: towerIds[placements.length % towerIds.length],
+			col,
+			row,
+		});
+	}
+
+	return {
+		fixtureId: `baseline-s${String(seedIndex + 1).padStart(2, '0')}-w${String(wave).padStart(2, '0')}`,
+		seed,
+		waveSlot: wave,
+		durationMs: 120_000,
+		tickMs: 16.6667,
+		unitCount: 5 + Math.floor(wave / 2),
+		unitHp: 30 + wave * 4,
+		unitSpeed: 2.2 + rng.nextRange(-0.1, 0.1),
+		placements,
+		expected: {
+			kills: 0,
+			totalDamage: 0,
+			energyPeak: 0,
+			waveClearMs: 0,
+		},
+	};
+}
+
+export function buildPhase3BalanceBaselineRows(
+	seedCount = 50,
+	waveCount = 10,
+): BalanceDriftBaselineRow[] {
+	const seedRng = new DeterministicRng(0x5033_0003);
+	const rows: BalanceDriftBaselineRow[] = [];
+
+	for (let seedIndex = 0; seedIndex < seedCount; seedIndex++) {
+		const seed = seedRng.nextUint32();
+		for (let wave = 1; wave <= waveCount; wave++) {
+			const fixture = buildBaselineFixture(seed, seedIndex, wave);
+			const result = runReplay(fixture);
+			const metrics = result.metrics;
+			const clearTolerancePct = wave % 10 === 0 ? 5 : 2;
+			const [damageMin, damageMax] = withPctBounds(metrics.totalDamage, 5);
+			const [clearMsMin, clearMsMax] = withPctBounds(
+				metrics.waveClearMs,
+				clearTolerancePct,
+			);
+			const [energyMin, energyMax] = withPctBounds(metrics.energyPeak, 5);
+
+			rows.push({
+				fixtureId: fixture.fixtureId,
+				seedIndex: seedIndex + 1,
+				seed,
+				wave,
+				tsDamage: round4(metrics.totalDamage),
+				tsKills: metrics.kills,
+				tsClearMs: metrics.waveClearMs,
+				tsEnergyPeak: round4(metrics.energyPeak),
+				damageMin,
+				damageMax,
+				clearMsMin,
+				clearMsMax,
+				energyMin,
+				energyMax,
+				damageTolerancePct: 5,
+				clearMsTolerancePct: clearTolerancePct,
+				energyTolerancePct: 5,
+			});
+		}
+	}
+
+	return rows;
 }
 
 export function replayMetricsToCsv(rows: ReplayWaveMetrics[]): string {
@@ -280,12 +419,54 @@ export function replayMetricsToCsv(rows: ReplayWaveMetrics[]): string {
 	return [header, ...body].join('\n');
 }
 
+export function balanceBaselineToCsv(rows: BalanceDriftBaselineRow[]): string {
+	const header =
+		'fixture_id,seed_index,seed,wave,ts_damage,ts_kills,ts_clear_ms,ts_energy_peak,damage_min,damage_max,clear_ms_min,clear_ms_max,energy_min,energy_max,damage_tolerance_pct,clear_ms_tolerance_pct,energy_tolerance_pct';
+	const body = rows.map((row) =>
+		[
+			row.fixtureId,
+			row.seedIndex,
+			row.seed,
+			row.wave,
+			row.tsDamage,
+			row.tsKills,
+			row.tsClearMs,
+			row.tsEnergyPeak,
+			row.damageMin,
+			row.damageMax,
+			row.clearMsMin,
+			row.clearMsMax,
+			row.energyMin,
+			row.energyMax,
+			row.damageTolerancePct,
+			row.clearMsTolerancePct,
+			row.energyTolerancePct,
+		].join(','),
+	);
+	return [header, ...body].join('\n');
+}
+
 async function runCli() {
 	const { mkdir, readdir, readFile, writeFile } = await import(
 		'node:fs/promises'
 	);
 	const { dirname } = await import('node:path');
-	const outPath = process.argv[2] ?? 'phase-3-replay-metrics.csv';
+	const mode = process.argv[2];
+	const isBaselineMode = mode === '--balance-baseline';
+	const outPath = isBaselineMode
+		? (process.argv[3] ??
+			'docs/unity-migration/phase-3-balance-drift-baseline.csv')
+		: (process.argv[2] ?? 'phase-3-replay-metrics.csv');
+
+	if (isBaselineMode) {
+		await mkdir(dirname(outPath), { recursive: true });
+		await writeFile(
+			outPath,
+			`${balanceBaselineToCsv(buildPhase3BalanceBaselineRows())}\n`,
+		);
+		return;
+	}
+
 	const fixturesDir = new URL('./replay-fixtures/', import.meta.url);
 	const names = (await readdir(fixturesDir))
 		.filter((name) => name.endsWith('.json'))

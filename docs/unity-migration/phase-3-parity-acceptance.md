@@ -49,6 +49,19 @@ and boss action cadence are not part of Phase 3 acceptance.
 The parity workflow must upload:
 
 - `phase-3-replay-metrics.csv`
+- `phase-3-balance-drift-baseline.csv`
 - `phase-3-diff.json`
 - Unity EditMode test log
 - Unity PlayMode test log
+
+## Balance Drift Baseline
+
+`docs/unity-migration/phase-3-balance-drift-baseline.csv` is generated from the shared replay
+reference with:
+
+```bash
+bun run --filter @gld/shared replay:baseline
+```
+
+It contains 50 deterministic seeds x waves 1-10. Each row stores TS reference damage, kill count,
+clear time, energy peak, and the Phase 3 tolerance bounds used by the Unity comparison.

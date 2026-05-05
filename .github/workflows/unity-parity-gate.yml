@@ -6,12 +6,14 @@ on:
     paths:
       - 'packages/shared/src/testing/**'
       - 'packages/unity-game/**'
+      - 'docs/unity-migration/phase-3-balance-drift-baseline.csv'
       - '.github/workflows/unity-parity-gate.yml'
   push:
     branches: [main]
     paths:
       - 'packages/shared/src/testing/**'
       - 'packages/unity-game/**'
+      - 'docs/unity-migration/phase-3-balance-drift-baseline.csv'
       - '.github/workflows/unity-parity-gate.yml'
   workflow_dispatch:
 
@@ -44,6 +46,9 @@ jobs:
 
       - name: Record TS replay ledger
         run: bun run --filter @gld/shared replay:record
+
+      - name: Record Phase 3 balance baseline
+        run: bun run --filter @gld/shared replay:baseline
 
       - name: Cache Unity Library
         if: env.HAS_UNITY_LICENSE == 'true'
@@ -87,6 +92,7 @@ jobs:
           name: unity-parity-${{ github.sha }}
           path: |
             artifacts/phase-3-replay-metrics.csv
+            docs/unity-migration/phase-3-balance-drift-baseline.csv
             artifacts/phase-3-diff.json
             artifacts/unity-parity
           retention-days: 30

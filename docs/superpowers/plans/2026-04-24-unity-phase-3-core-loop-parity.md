@@ -265,7 +265,7 @@
 
 - [ ] **Step 1**: PlayMode test: `/unity/?autostart=1` mode (invoked via URL param router or direct scene arg), autoplace 5 towers per a scripted build-order, run wave 1 → 50.
 - [ ] **Step 2**: Assert: no exceptions, wave 50 clears, no `Energy < 0`, no `Energy > 200`, damage-total within parity threshold of Phaser endless reference.
-- [ ] **Step 3**: Capture balance-drift CSV across 50 seeds × waves 1–10. Commit as `docs/unity-migration/phase-3-balance-drift-baseline.csv`.
+- [x] **Step 3**: Capture balance-drift CSV across 50 seeds × waves 1–10. Commit as `docs/unity-migration/phase-3-balance-drift-baseline.csv`.
 - [ ] **Step 4**: Confirm CI parity gate green, PlayMode suite green, bundle size still under budget.
 - [ ] **Step 5**: Commit `feat(unity-game): endless-run smoke test + Phase 3 balance drift baseline`.
 

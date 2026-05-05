@@ -9,8 +9,8 @@
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <gld:GLDOverlay name="boss-warning-overlay" dim="soft" class="boss-warning-overlay">
     <gld:GLDPanel name="boss-warning-panel" variant="elevated" padding="lg" class="boss-warning-panel">
-      <ui:Label name="boss-warning-title" text="Boss Wave" />
-      <ui:Label name="boss-warning-subtitle" text="Wave 0" />
+      <ui:Label name="boss-warning-title" text="보스 웨이브" />
+      <ui:Label name="boss-warning-subtitle" text="W 0" />
     </gld:GLDPanel>
   </gld:GLDOverlay>
 </ui:UXML>

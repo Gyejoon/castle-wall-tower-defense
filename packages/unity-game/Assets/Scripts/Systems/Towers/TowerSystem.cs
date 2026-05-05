@@ -53,7 +53,7 @@ namespace GLD.Systems.Towers
             if (spendEnergy && _energy != null && !_energy.Spend(cost))
                 return false;
 
-            var tower = new TowerInstance($"tower-{++_nextTowerId:000}", def, cell, _grid.GridToWorld(cell));
+            var tower = new TowerInstance($"tower-{++_nextTowerId:000}", def, cell, _grid.GridToPlacementWorld(cell));
             tower.GlobalAtkPct = GlobalAtkPct;
             _byCell[cell] = tower;
             _towers.Add(tower);
@@ -82,7 +82,7 @@ namespace GLD.Systems.Towers
 
             var from = tower.Cell;
             _byCell.Remove(from);
-            tower.MoveTo(target, _grid.GridToWorld(target));
+            tower.MoveTo(target, _grid.GridToPlacementWorld(target));
             _byCell[target] = tower;
             TowerMoved?.Invoke(tower, from, target);
             GameEvents.RaiseTowerMoved(tower.Def.id, from.Col, from.Row, target.Col, target.Row);

@@ -36,6 +36,7 @@ namespace GLD.Tests.EditMode.UI
                 Assert.That(controller.IsBound, Is.True);
                 Assert.That(controller.IsVisible, Is.True);
                 Assert.That(controller.IsMetaVisible, Is.False);
+                Assert.That(root.Q<VisualElement>("lobby-collection-grid").childCount, Is.GreaterThanOrEqualTo(6));
 
                 controller.ShowMeta();
                 Assert.That(controller.IsMetaVisible, Is.True);

@@ -10,19 +10,26 @@
   <gld:GLDOverlay name="lobby-meta-screen" dim="default" class="lobby-meta-screen">
     <gld:GLDPanel name="lobby-meta-shell" variant="elevated" padding="lg" class="lobby-meta-shell">
       <ui:VisualElement name="lobby-tabs" class="lobby-tabs">
-        <gld:GLDButton name="lobby-tab-home" text="Home" variant="secondary" />
-        <gld:GLDButton name="lobby-tab-meta" text="Meta" variant="secondary" />
+        <gld:GLDButton name="lobby-tab-home" text="전투" variant="secondary" />
+        <gld:GLDButton name="lobby-tab-meta" text="강화" variant="secondary" />
       </ui:VisualElement>
       <ui:VisualElement name="lobby-home-panel" class="lobby-panel">
         <ui:Label name="lobby-title" text="Grid Line Defense" />
-        <ui:Label name="lobby-subtitle" text="Wave 50 endless run" />
-        <gld:GLDButton name="lobby-start" text="Start Battle" variant="primary" />
+        <ui:Label name="lobby-subtitle" text="랜덤 소환과 합성으로 50 웨이브를 버텨라" />
+        <gld:GLDButton name="lobby-start" text="전투 시작" variant="primary" />
+        <ui:VisualElement name="lobby-profile-row" class="lobby-profile-row">
+          <ui:Label name="lobby-profile-level" text="지휘관 Lv. 1" />
+          <ui:Label name="lobby-profile-best-wave" text="최고 W 0" />
+        </ui:VisualElement>
+        <ui:Label name="lobby-collection-title" text="타워 컬렉션" />
+        <ui:VisualElement name="lobby-collection-grid" class="lobby-collection-grid" />
       </ui:VisualElement>
       <ui:VisualElement name="lobby-meta-panel" class="lobby-panel">
-        <ui:Label name="lobby-meta-title" text="Meta Forge" />
-        <ui:Label name="lobby-meta-atk" text="Global ATK +0%" />
-        <ui:Label name="lobby-meta-perks" text="Family perks locked" />
-        <gld:GLDButton name="lobby-meta-start" text="Start Battle" variant="primary" />
+        <ui:Label name="lobby-meta-title" text="전쟁 대장간" />
+        <ui:Label name="lobby-meta-atk" text="전역 공격력 +0%" />
+        <ui:Label name="lobby-meta-perks" text="가문 퍽 0 / 4" />
+        <ui:Label name="lobby-meta-note" text="영구 강화 저장은 후속 단계에서 연결" />
+        <gld:GLDButton name="lobby-meta-start" text="전투 시작" variant="primary" />
       </ui:VisualElement>
     </gld:GLDPanel>
   </gld:GLDOverlay>

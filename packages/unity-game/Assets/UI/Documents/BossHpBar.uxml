@@ -9,7 +9,7 @@
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <gld:GLDPanel name="boss-hp-bar" variant="elevated" padding="sm" class="boss-hp-bar">
     <ui:VisualElement name="boss-hp-header" class="boss-hp-header">
-      <ui:Label name="boss-hp-name" text="Boss" />
+      <ui:Label name="boss-hp-name" text="보스" />
       <ui:Label name="boss-hp-value" text="0/0" />
     </ui:VisualElement>
     <ui:VisualElement name="boss-hp-track" class="boss-hp-track">

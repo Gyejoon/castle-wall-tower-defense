@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99d8651e0df14e1b9d58b5245114f8d3, type: 3}
+  m_Name: TileSpriteCatalog
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.TileSpriteCatalogSO
+  mainLongBackground: {fileID: 21300000, guid: 1c57706acb160426db992df7cb49607e, type: 3}
+  ground: {fileID: 21300000, guid: 7b4598b04e9604413a80bb9f67b86e59, type: 3}
+  path: {fileID: 21300000, guid: f17953a5c3663442a8135a75a797bd5c, type: 3}
+  buildable: {fileID: 21300000, guid: fb875987ff64a4ecebe5ce583c4f9a98, type: 3}
+  blocked: {fileID: 21300000, guid: ed9d829955b014db4855f765419867ca, type: 3}
+  spawn: {fileID: 21300000, guid: d9657a472679f465cac87a7ec1b28e85, type: 3}
+  exit: {fileID: 21300000, guid: 4f90b331a00fc4078a93db74d2519a5b, type: 3}

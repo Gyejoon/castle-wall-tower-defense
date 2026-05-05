@@ -201,8 +201,8 @@ Camera:
   m_GameObject: {fileID: 1900725046}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.06, g: 0.07, b: 0.06, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -226,8 +226,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 9.55
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -252,7 +252,7 @@ Transform:
   m_GameObject: {fileID: 1900725046}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -274,7 +274,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &1900725527
 Light:
   m_ObjectHideFlags: 0
@@ -371,7 +371,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1943979821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,6 +388,20 @@ MonoBehaviour:
   mapId: main_long
   autostart: 0
   speedMultiplier: 1
+  fieldRenderer: {fileID: 0}
+  hudController: {fileID: 0}
+  gameHudController: {fileID: 0}
+  towerActionSheetController: {fileID: 0}
+  summonRevealController: {fileID: 0}
+  upgradePickOverlayController: {fileID: 0}
+  pauseModalController: {fileID: 0}
+  bossHpBarController: {fileID: 0}
+  bossWarningOverlayController: {fileID: 0}
+  gameOverOverlayController: {fileID: 0}
+  toastOverlayController: {fileID: 0}
+  tutorialOverlayController: {fileID: 0}
+  lobbyMetaScreenController: {fileID: 0}
+  gameHudDocument: {fileID: 0}
 --- !u!4 &1943979822
 Transform:
   m_ObjectHideFlags: 0

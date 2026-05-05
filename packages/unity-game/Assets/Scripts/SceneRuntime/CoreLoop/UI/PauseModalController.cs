@@ -116,9 +116,9 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             var panel = new GLDPanel { name = "pause-panel", Variant = "elevated", Padding = "lg" };
             panel.AddToClassList("pause-panel");
-            panel.Add(new Label("Paused") { name = "pause-title" });
-            panel.Add(new GLDButton("Resume") { name = "pause-resume", Variant = "primary" });
-            panel.Add(new GLDButton("Quit") { name = "pause-quit", Variant = "danger" });
+            panel.Add(new Label("일시정지") { name = "pause-title" });
+            panel.Add(new GLDButton("재개") { name = "pause-resume", Variant = "primary" });
+            panel.Add(new GLDButton("포기") { name = "pause-quit", Variant = "danger" });
             overlay.Add(panel);
             return overlay;
         }

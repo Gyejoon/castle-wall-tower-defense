@@ -9,9 +9,9 @@
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <gld:GLDPanel name="summon-reveal" variant="elevated" padding="md" class="summon-reveal">
     <ui:VisualElement name="summon-reveal-text" class="summon-reveal__text">
-      <ui:Label name="summon-reveal-title" text="Tower" />
-      <ui:Label name="summon-reveal-subtitle" text="Tap a green tile to place" />
+      <ui:Label name="summon-reveal-title" text="타워" />
+      <ui:Label name="summon-reveal-subtitle" text="초록 칸을 눌러 배치" />
     </ui:VisualElement>
-    <gld:GLDButton name="summon-reveal-cancel" text="Cancel" variant="ghost" size="sm" />
+    <gld:GLDButton name="summon-reveal-cancel" text="취소" variant="ghost" size="sm" />
   </gld:GLDPanel>
 </ui:UXML>

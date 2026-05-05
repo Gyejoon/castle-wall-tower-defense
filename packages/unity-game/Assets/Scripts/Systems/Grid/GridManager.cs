@@ -14,14 +14,18 @@ namespace GLD.Systems.Grid
         readonly HashSet<GridCell> _pathBlocked = new HashSet<GridCell>();
         readonly HashSet<GridCell> _buildable = new HashSet<GridCell>();
         readonly HashSet<GridCell> _pathCells = new HashSet<GridCell>();
+        readonly Dictionary<GridCell, Vector2> _placementAnchors = new Dictionary<GridCell, Vector2>();
         readonly List<Vector2> _path = new List<Vector2>();
+        readonly List<IReadOnlyList<Vector2>> _paths = new List<IReadOnlyList<Vector2>>();
 
         public int Width => _map.width;
         public int Height => _map.height;
+        public string MapId => _map.id;
         public float CellSize { get; }
         public GridCell SpawnCell => new GridCell(_map.spawnPoint.x, _map.spawnPoint.y);
         public GridCell ExitCell => new GridCell(_map.exitPoint.x, _map.exitPoint.y);
         public IReadOnlyList<Vector2> Path => _path;
+        public IReadOnlyList<IReadOnlyList<Vector2>> Paths => _paths;
 
         public GridManager(MapLayoutSO layout, string mapId = DefaultMapId, float cellSize = 1f)
             : this(ResolveMap(layout, mapId), cellSize)
@@ -39,12 +43,21 @@ namespace GLD.Systems.Grid
             AddPoints(_blockedPlacement, map.blockedPlacementPoints);
             AddPoints(_pathBlocked, map.obstacles);
             AddPoints(_buildable, map.buildablePoints);
+            AddPlacementAnchors(map.placementAnchors);
 
-            if (map.path == null) return;
-            foreach (var point in map.path)
+            foreach (var lane in ResolveLanes(map))
             {
-                _path.Add(GridToWorld(point.x, point.y));
-                _pathCells.Add(new GridCell(Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y)));
+                var path = new List<Vector2>();
+                foreach (var point in lane)
+                {
+                    path.Add(GridToWorld(point.x, point.y));
+                    _pathCells.Add(new GridCell(Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y)));
+                }
+
+                if (path.Count <= 0) continue;
+                _paths.Add(path);
+                if (_path.Count == 0)
+                    _path.AddRange(path);
             }
         }
 
@@ -61,6 +74,11 @@ namespace GLD.Systems.Grid
         {
             var p = GridToWorld(cell);
             return new Vector3(p.x, p.y, z);
+        }
+
+        public Vector2 GridToPlacementWorld(GridCell cell)
+        {
+            return _placementAnchors.TryGetValue(cell, out var anchor) ? anchor : GridToWorld(cell);
         }
 
         public GridCell WorldToGrid(Vector2 world)
@@ -104,6 +122,43 @@ namespace GLD.Systems.Grid
             if (points == null) return;
             foreach (var point in points)
                 target.Add(new GridCell(point.x, point.y));
+        }
+
+        void AddPlacementAnchors(PlacementAnchor[] anchors)
+        {
+            if (anchors == null) return;
+            foreach (var anchor in anchors)
+            {
+                var cell = new GridCell(anchor.x, anchor.y);
+                var col = anchor.worldX / Mathf.Max(1, _map.tileSize) - 0.5f;
+                var row = anchor.worldY / Mathf.Max(1, _map.tileSize) - 0.5f;
+                _placementAnchors[cell] = GridToWorld(col, row);
+            }
+        }
+
+        static IEnumerable<FloatGridPoint[]> ResolveLanes(MapDef map)
+        {
+            if (map.lanes != null && map.lanes.Length > 0)
+            {
+                foreach (var lane in map.lanes)
+                {
+                    if (lane.points != null && lane.points.Length > 0)
+                        yield return lane.points;
+                }
+                yield break;
+            }
+
+            if (map.waypoints != null && map.waypoints.Length > 0)
+            {
+                yield return map.waypoints;
+                yield break;
+            }
+
+            if (map.path == null) yield break;
+            var fallback = new FloatGridPoint[map.path.Length];
+            for (var i = 0; i < map.path.Length; i++)
+                fallback[i] = new FloatGridPoint { x = map.path[i].x, y = map.path[i].y };
+            yield return fallback;
         }
     }
 }

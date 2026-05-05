@@ -39,7 +39,7 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
             if (tower == null || appliedDamage <= 0f)
                 return;
 
-            _damageNumbers?.Show(tower.Position, appliedDamage);
+            _damageNumbers?.Show(tower.LastDamageWorldPosition, appliedDamage);
         }
     }
 }

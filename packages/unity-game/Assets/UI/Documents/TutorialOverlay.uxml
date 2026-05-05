@@ -8,11 +8,11 @@
   <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <gld:GLDPanel name="tutorial-overlay" variant="elevated" padding="sm" class="tutorial-overlay">
-    <ui:Label name="tutorial-title" text="Summon" />
-    <ui:Label name="tutorial-body" text="Use Summon or gacha to draw a tower." />
+    <ui:Label name="tutorial-title" text="소환" />
+    <ui:Label name="tutorial-body" text="소환 또는 가챠로 타워를 뽑습니다." />
     <ui:VisualElement name="tutorial-actions" class="tutorial-actions">
-      <gld:GLDButton name="tutorial-next" text="Next" variant="secondary" />
-      <gld:GLDButton name="tutorial-skip" text="Skip" variant="secondary" />
+      <gld:GLDButton name="tutorial-next" text="다음" variant="secondary" />
+      <gld:GLDButton name="tutorial-skip" text="건너뛰기" variant="secondary" />
     </ui:VisualElement>
   </gld:GLDPanel>
 </ui:UXML>

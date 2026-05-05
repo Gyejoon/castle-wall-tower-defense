@@ -8,6 +8,7 @@ namespace GLD.Systems.DamageNumbers
 
         readonly GameObject _view;
         readonly TextMesh _text;
+        readonly MeshRenderer _renderer;
         readonly Color _baseColor;
         float _ageSeconds;
 
@@ -22,6 +23,8 @@ namespace GLD.Systems.DamageNumbers
             _text.alignment = TextAlignment.Center;
             _text.fontSize = 28;
             _text.characterSize = 0.08f;
+            _renderer = _view.GetComponent<MeshRenderer>();
+            _renderer.sortingOrder = 80;
             _baseColor = new Color(1f, 0.86f, 0.42f, 1f);
             _text.color = _baseColor;
             _view.SetActive(false);

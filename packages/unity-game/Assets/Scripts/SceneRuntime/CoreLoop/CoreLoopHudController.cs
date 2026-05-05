@@ -85,6 +85,7 @@ namespace GLD.SceneRuntime.CoreLoop
             _mode = InteractionMode.Placement;
             var def = _controller != null ? _controller.FindTowerDef(towerId) : null;
             _lastMessage = $"{ResolveTowerLabel(def, towerId)} selected. Tap a green tile.";
+            fieldRenderer?.ShowPlacementMarkers(towerId);
         }
 
         public void CancelPlacement()
@@ -95,6 +96,7 @@ namespace GLD.SceneRuntime.CoreLoop
             _mergeFrom = null;
             _mode = InteractionMode.None;
             _lastMessage = "Placement cancelled.";
+            fieldRenderer?.HidePlacementMarkers();
         }
 
         public void BeginMergeMode()
@@ -146,6 +148,7 @@ namespace GLD.SceneRuntime.CoreLoop
                 _lastMessage = $"{label} placed at {cell.Col},{cell.Row}.";
                 _selectedTowerId = null;
                 _mode = InteractionMode.None;
+                fieldRenderer?.HidePlacementMarkers();
                 return true;
             }
 
@@ -378,6 +381,7 @@ namespace GLD.SceneRuntime.CoreLoop
             _selectedTowerId = null;
             _mode = InteractionMode.None;
             _lastMessage = $"Cancelled {towerId}.";
+            fieldRenderer?.HidePlacementMarkers();
         }
 
         void HandleSummonConfirmed(string towerId)
@@ -385,6 +389,7 @@ namespace GLD.SceneRuntime.CoreLoop
             _selectedTowerId = null;
             _mode = InteractionMode.None;
             _lastMessage = $"Placed {towerId}.";
+            fieldRenderer?.HidePlacementMarkers();
         }
 
         void HandleRequestRejected(string reason)

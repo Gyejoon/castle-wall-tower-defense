@@ -122,9 +122,9 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _selectedInstanceId = instanceId;
 
             if (_title != null)
-                _title.text = string.IsNullOrEmpty(instanceId) ? "Tower" : instanceId;
+                _title.text = string.IsNullOrEmpty(instanceId) ? "타워" : instanceId;
             if (_position != null)
-                _position.text = $"Cell {col},{row}";
+                _position.text = $"칸 {col},{row}";
 
             Show();
         }
@@ -155,15 +155,15 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             var header = new VisualElement { name = "tower-action-header" };
             header.AddToClassList("tower-action-sheet__header");
-            header.Add(new Label("Tower") { name = "tower-action-title" });
-            header.Add(new Label("Cell 0,0") { name = "tower-action-position" });
+            header.Add(new Label("타워") { name = "tower-action-title" });
+            header.Add(new Label("칸 0,0") { name = "tower-action-position" });
 
             var actions = new VisualElement { name = "tower-action-actions" };
             actions.AddToClassList("tower-action-sheet__actions");
-            actions.Add(new GLDButton("Merge") { name = "tower-action-merge", Variant = "secondary" });
-            actions.Add(new GLDButton("Move") { name = "tower-action-move", Variant = "secondary" });
-            actions.Add(new GLDButton("Sell") { name = "tower-action-sell", Variant = "danger" });
-            actions.Add(new GLDButton("Close") { name = "tower-action-close", Variant = "ghost" });
+            actions.Add(new GLDButton("합성") { name = "tower-action-merge", Variant = "secondary" });
+            actions.Add(new GLDButton("이동") { name = "tower-action-move", Variant = "secondary" });
+            actions.Add(new GLDButton("판매") { name = "tower-action-sell", Variant = "danger" });
+            actions.Add(new GLDButton("닫기") { name = "tower-action-close", Variant = "ghost" });
 
             sheet.Add(header);
             sheet.Add(actions);

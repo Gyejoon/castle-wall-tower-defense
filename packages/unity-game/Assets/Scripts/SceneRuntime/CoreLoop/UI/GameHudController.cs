@@ -16,6 +16,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         Button _gacha2Button;
         Button _gacha3Button;
         Button _gacha4Button;
+        Button _speedButton;
         Button _menuButton;
         RunState _runState;
 
@@ -87,6 +88,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _gacha2Button = root.Q<Button>("hud-gacha-t2");
             _gacha3Button = root.Q<Button>("hud-gacha-t3");
             _gacha4Button = root.Q<Button>("hud-gacha-t4");
+            _speedButton = root.Q<Button>("hud-speed");
             _menuButton = root.Q<Button>("hud-menu");
         }
 
@@ -96,6 +98,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _gacha2Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(2));
             _gacha3Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(3));
             _gacha4Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(4));
+            _speedButton?.RegisterCallback<ClickEvent>(_ => RequestToggleSpeed());
             _menuButton?.RegisterCallback<ClickEvent>(_ => RequestMenu());
         }
 
@@ -104,6 +107,12 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         public void RequestGacha(int tier) => GameEvents.RaiseRequestGacha(new GachaRequest(tier));
 
         public void RequestMenu() => GameEvents.RaiseRequestPause();
+
+        public void RequestToggleSpeed()
+        {
+            var current = _runState != null ? _runState.SpeedMultiplier : 1f;
+            GameEvents.RaiseRequestSetSpeed(current >= 3f ? 1f : 3f);
+        }
 
         void HandleRunStateChanged(RunState state)
         {
@@ -116,7 +125,9 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             if (_hpLabel != null)
                 _hpLabel.text = $"HP {state.Lives}";
             if (_statusLabel != null)
-                _statusLabel.text = state.IsPaused ? "Paused" : $"{state.RunStatus} x{state.SpeedMultiplier:0.##}";
+                _statusLabel.text = state.IsPaused ? "일시정지" : $"{ResolveStatusLabel(state.RunStatus)} x{state.SpeedMultiplier:0.##}";
+            if (_speedButton != null)
+                _speedButton.text = state.SpeedMultiplier >= 3f ? "x1" : "x3";
         }
 
         static VisualElement BuildFallbackHud()
@@ -130,24 +141,42 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             top.Add(new GLDBadge("W 0") { name = "hud-wave" });
             top.Add(new GLDBadge("HP 20") { name = "hud-hp", Variant = "danger" });
 
-            var status = new Label("Building x1") { name = "hud-status" };
+            var status = new Label("준비 x1") { name = "hud-status" };
             status.AddToClassList("game-hud__status");
 
             var bottom = new GLDSheet { name = "game-hud-bottom", Anchor = "bottom" };
             bottom.AddToClassList("game-hud__bottom");
             var row = new VisualElement { name = "game-hud-actions" };
             row.AddToClassList("game-hud__actions");
-            row.Add(new GLDButton("Summon") { name = "hud-summon", Variant = "primary" });
+            row.Add(new GLDButton("소환") { name = "hud-summon", Variant = "primary" });
             row.Add(new GLDButton("T2") { name = "hud-gacha-t2", Variant = "secondary", Tier = 2 });
             row.Add(new GLDButton("T3") { name = "hud-gacha-t3", Variant = "secondary", Tier = 3 });
             row.Add(new GLDButton("T4") { name = "hud-gacha-t4", Variant = "secondary", Tier = 4 });
-            row.Add(new GLDButton("Menu") { name = "hud-menu", Variant = "secondary" });
+            row.Add(new GLDButton("x3") { name = "hud-speed", Variant = "secondary" });
+            row.Add(new GLDButton("메뉴") { name = "hud-menu", Variant = "secondary" });
             bottom.Add(row);
 
             hud.Add(top);
             hud.Add(status);
             hud.Add(bottom);
             return hud;
+        }
+
+        static string ResolveStatusLabel(RunStatus status)
+        {
+            switch (status)
+            {
+                case RunStatus.Running:
+                    return "전투";
+                case RunStatus.Victory:
+                    return "승리";
+                case RunStatus.Defeat:
+                    return "패배";
+                case RunStatus.Lobby:
+                    return "로비";
+                default:
+                    return "준비";
+            }
         }
     }
 }

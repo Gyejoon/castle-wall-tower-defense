@@ -83,8 +83,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             var def = _sceneController != null ? _sceneController.FindTowerDef(_offeredTowerId) : null;
             GUI.Label(new Rect(rect.x + 12f, rect.y + 9f, rect.width - 92f, 22f), ResolveTowerLabel(def, _offeredTowerId), _titleStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 34f, rect.width - 92f, 20f), "Tap a green tile to place", _subtitleStyle);
-            if (GUI.Button(new Rect(rect.xMax - 76f, rect.y + 20f, 62f, 30f), "Cancel", _buttonStyle))
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 34f, rect.width - 92f, 20f), "초록 칸을 눌러 배치", _subtitleStyle);
+            if (GUI.Button(new Rect(rect.xMax - 76f, rect.y + 20f, 62f, 30f), "취소", _buttonStyle))
                 RequestCancel();
         }
 
@@ -170,7 +170,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             if (_title != null)
                 _title.text = ResolveTowerLabel(def, towerId);
             if (_subtitle != null)
-                _subtitle.text = "Tap a green tile to place";
+                _subtitle.text = "초록 칸을 눌러 배치";
 
             Show();
         }
@@ -234,7 +234,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         static string ResolveTowerLabel(TowerDefSO def, string fallback)
         {
             if (def == null)
-                return string.IsNullOrEmpty(fallback) ? "Tower" : fallback;
+                return string.IsNullOrEmpty(fallback) ? "타워" : fallback;
             return def.tier > 0 ? $"T{def.tier} {def.family}" : def.id;
         }
 
@@ -249,19 +249,19 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             text.style.flexGrow = 1f;
             text.style.marginRight = 8f;
 
-            var title = new Label("Tower") { name = "summon-reveal-title" };
+            var title = new Label("타워") { name = "summon-reveal-title" };
             title.style.color = new Color(0.96f, 0.9f, 0.78f);
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             title.style.fontSize = 13f;
 
-            var subtitle = new Label("Tap a green tile to place") { name = "summon-reveal-subtitle" };
+            var subtitle = new Label("초록 칸을 눌러 배치") { name = "summon-reveal-subtitle" };
             subtitle.style.color = new Color(0.78f, 0.72f, 0.62f);
             subtitle.style.fontSize = 10f;
             text.Add(title);
             text.Add(subtitle);
 
             reveal.Add(text);
-            var cancel = new GLDButton("Cancel") { name = "summon-reveal-cancel", Variant = "ghost", Size = "sm" };
+            var cancel = new GLDButton("취소") { name = "summon-reveal-cancel", Variant = "ghost", Size = "sm" };
             cancel.style.minWidth = 62f;
             cancel.style.height = 30f;
             cancel.style.color = new Color(0.96f, 0.9f, 0.78f);

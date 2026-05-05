@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using GLD.Core;
+using GLD.Data;
 using GLD.Systems.Grid;
 using GLD.Systems.Towers;
 using GLD.Systems.Units;
@@ -9,18 +11,29 @@ namespace GLD.SceneRuntime.CoreLoop.Render
     public sealed class CoreLoopFieldRenderer : MonoBehaviour
     {
         const float CellScale = 0.94f;
+        const float TowerTargetWorldWidth = 1f;
+        const float UnitTargetWorldWidth = 0.5f;
+        const float BossTargetWorldWidth = 0.72f;
 
         [SerializeField] Camera gameplayCamera;
         [SerializeField] Transform renderRoot;
+        [SerializeField] TowerSpriteCatalogSO towerSprites;
+        [SerializeField] UnitSpriteCatalogSO unitSprites;
+        [SerializeField] TileSpriteCatalogSO tileSprites;
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> _towerViews = new Dictionary<string, GameObject>();
+        readonly List<GameObject> _placementMarkers = new List<GameObject>();
+        readonly Dictionary<int, Sprite> _firstFrameSprites = new Dictionary<int, Sprite>();
 
         GameSceneController _controller;
         Sprite _squareSprite;
         Transform _gridRoot;
+        Transform _placementRoot;
         Transform _unitRoot;
         Transform _towerRoot;
+        bool _placementMarkersVisible;
+        string _placementTowerId;
 
         public int RenderedCellCount { get; private set; }
         public int RenderedUnitCount => _unitViews.Count;
@@ -39,6 +52,12 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             if (_squareSprite == null)
                 _squareSprite = CreateSquareSprite();
+            if (towerSprites == null)
+                towerSprites = Resources.Load<TowerSpriteCatalogSO>("Visuals/TowerSpriteCatalog");
+            if (unitSprites == null)
+                unitSprites = Resources.Load<UnitSpriteCatalogSO>("Visuals/UnitSpriteCatalog");
+            if (tileSprites == null)
+                tileSprites = Resources.Load<TileSpriteCatalogSO>("Visuals/TileSpriteCatalog");
             if (renderRoot == null)
                 renderRoot = transform;
 
@@ -77,6 +96,9 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             _controller.Towers.TowerMoved += HandleTowerMoved;
             _controller.Towers.TowerSold += HandleTowerSold;
             _controller.Towers.TowerAttacked += HandleTowerAttacked;
+            GameEvents.OnSummonOffered += HandleSummonOffered;
+            GameEvents.OnSummonCancelled += HandleSummonEnded;
+            GameEvents.OnSummonConfirmed += HandleSummonEnded;
         }
 
         void UnbindEvents()
@@ -96,6 +118,10 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 _controller.Towers.TowerSold -= HandleTowerSold;
                 _controller.Towers.TowerAttacked -= HandleTowerAttacked;
             }
+
+            GameEvents.OnSummonOffered -= HandleSummonOffered;
+            GameEvents.OnSummonCancelled -= HandleSummonEnded;
+            GameEvents.OnSummonConfirmed -= HandleSummonEnded;
         }
 
         void EnsureRoots()
@@ -103,6 +129,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             ClearRuntimeChildren();
 
             _gridRoot = CreateRoot("Grid");
+            _placementRoot = CreateRoot("PlacementMarkers");
             _unitRoot = CreateRoot("Units");
             _towerRoot = CreateRoot("Towers");
         }
@@ -121,11 +148,18 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             _unitViews.Clear();
             _towerViews.Clear();
+            _placementMarkers.Clear();
             RenderedCellCount = 0;
         }
 
         void DrawGrid(GridManager grid)
         {
+            if (TryDrawIllustratedBackground(grid))
+            {
+                RenderedCellCount = grid.Width * grid.Height;
+                return;
+            }
+
             for (var row = 0; row < grid.Height; row++)
             {
                 for (var col = 0; col < grid.Width; col++)
@@ -137,12 +171,55 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                     tile.transform.localScale = new Vector3(CellScale, CellScale, 1f);
 
                     var sr = tile.AddComponent<SpriteRenderer>();
-                    sr.sprite = _squareSprite;
-                    sr.color = ResolveCellColor(grid, cell);
+                    sr.sprite = ResolveTileSprite(grid, cell);
+                    sr.color = sr.sprite == _squareSprite ? ResolveCellColor(grid, cell) : Color.white;
                     sr.sortingOrder = -20;
                     RenderedCellCount++;
                 }
             }
+        }
+
+        bool TryDrawIllustratedBackground(GridManager grid)
+        {
+            if (grid.MapId != "main_long")
+                return false;
+            if (tileSprites == null || tileSprites.mainLongBackground == null)
+                return false;
+
+            var background = new GameObject("MainLongIllustratedBackground");
+            background.transform.SetParent(_gridRoot, false);
+            background.transform.position = Vector3.zero;
+
+            var sr = background.AddComponent<SpriteRenderer>();
+            sr.sprite = tileSprites.mainLongBackground;
+            sr.color = Color.white;
+            sr.sortingOrder = -40;
+
+            var bounds = sr.sprite.bounds.size;
+            var targetWidth = grid.Width * grid.CellSize;
+            var targetHeight = grid.Height * grid.CellSize;
+            background.transform.localScale = new Vector3(
+                targetWidth / Mathf.Max(0.01f, bounds.x),
+                targetHeight / Mathf.Max(0.01f, bounds.y),
+                1f);
+            return true;
+        }
+
+        Sprite ResolveTileSprite(GridManager grid, GridCell cell)
+        {
+            if (tileSprites == null)
+                return _squareSprite;
+            if (cell.Equals(grid.SpawnCell) && tileSprites.spawn != null)
+                return tileSprites.spawn;
+            if (cell.Equals(grid.ExitCell) && tileSprites.exit != null)
+                return tileSprites.exit;
+            if (grid.IsBlocked(cell) && tileSprites.blocked != null)
+                return tileSprites.blocked;
+            if (grid.IsPathCell(cell) && tileSprites.path != null)
+                return tileSprites.path;
+            if (grid.IsBuildable(cell) && tileSprites.buildable != null)
+                return tileSprites.buildable;
+            return tileSprites.ground != null ? tileSprites.ground : _squareSprite;
         }
 
         Color ResolveCellColor(GridManager grid, GridCell cell)
@@ -180,20 +257,33 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         void HandleUnitSpawned(UnitInstance unit) => CreateOrSyncUnit(unit);
         void HandleUnitChanged(UnitInstance unit) => CreateOrSyncUnit(unit);
-        void HandleTowerPlaced(TowerInstance tower) => CreateOrSyncTower(tower);
-        void HandleTowerMoved(TowerInstance tower, GridCell _, GridCell __) => CreateOrSyncTower(tower);
+        void HandleTowerPlaced(TowerInstance tower)
+        {
+            CreateOrSyncTower(tower);
+            RefreshPlacementMarkers();
+        }
+
+        void HandleTowerMoved(TowerInstance tower, GridCell _, GridCell __)
+        {
+            CreateOrSyncTower(tower);
+            RefreshPlacementMarkers();
+        }
 
         void HandleTowerSold(TowerInstance tower)
         {
             if (!_towerViews.TryGetValue(tower.InstanceId, out var view)) return;
             _towerViews.Remove(tower.InstanceId);
             Destroy(view);
+            RefreshPlacementMarkers();
         }
+
+        void HandleSummonOffered(string towerId) => ShowPlacementMarkers(towerId);
+        void HandleSummonEnded(string _) => HidePlacementMarkers();
 
         void HandleTowerAttacked(TowerInstance tower, float _)
         {
             if (!_towerViews.TryGetValue(tower.InstanceId, out var view)) return;
-            view.transform.localScale = new Vector3(0.86f, 0.86f, 1f);
+            view.transform.localScale = ResolveTowerScale(tower, view.GetComponent<SpriteRenderer>()) * 1.08f;
         }
 
         void CreateOrSyncUnit(UnitInstance unit)
@@ -207,11 +297,12 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             if (!_unitViews.TryGetValue(unit.InstanceId, out var view))
             {
-                view = CreateSquareView(unit.InstanceId, _unitRoot, new Color(0.82f, 0.24f, 0.18f, 1f), 0.5f, 10);
+                view = CreateUnitView(unit);
                 _unitViews[unit.InstanceId] = view;
             }
 
             view.transform.position = new Vector3(unit.Position.x, unit.Position.y, -0.1f);
+            view.transform.localScale = ResolveUnitScale(unit, view.GetComponent<SpriteRenderer>());
             view.SetActive(true);
         }
 
@@ -227,13 +318,124 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             if (tower == null) return;
             if (!_towerViews.TryGetValue(tower.InstanceId, out var view))
             {
-                view = CreateSquareView(tower.InstanceId, _towerRoot, ResolveTowerColor(tower), 0.72f, 20);
+                view = CreateTowerView(tower);
                 _towerViews[tower.InstanceId] = view;
             }
 
             view.transform.position = new Vector3(tower.Position.x, tower.Position.y, -0.2f);
-            view.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+            view.transform.localScale = ResolveTowerScale(tower, view.GetComponent<SpriteRenderer>());
             view.SetActive(true);
+            RefreshPlacementMarkers();
+        }
+
+        GameObject CreateTowerView(TowerInstance tower)
+        {
+            var go = new GameObject(tower.InstanceId);
+            go.transform.SetParent(_towerRoot, false);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            var sprite = towerSprites != null ? towerSprites.FindStatic(tower.Def.id) : null;
+            sr.sprite = sprite != null ? sprite : _squareSprite;
+            sr.color = sprite != null ? Color.white : ResolveTowerColor(tower);
+            sr.sortingOrder = 20;
+
+            return go;
+        }
+
+        GameObject CreateUnitView(UnitInstance unit)
+        {
+            var go = new GameObject(unit.InstanceId);
+            go.transform.SetParent(_unitRoot, false);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            var sheet = unitSprites != null ? unitSprites.FindWalk(unit.Def.id) : null;
+            var sprite = CreateFirstFrameSprite(sheet);
+            sr.sprite = sprite != null ? sprite : _squareSprite;
+            sr.color = sprite != null ? Color.white : new Color(0.82f, 0.24f, 0.18f, 1f);
+            sr.sortingOrder = unit.Boss.IsBoss ? 14 : 10;
+
+            return go;
+        }
+
+        public void ShowPlacementMarkers()
+        {
+            ShowPlacementMarkers(_placementTowerId);
+        }
+
+        public void ShowPlacementMarkers(string towerId)
+        {
+            _placementTowerId = towerId;
+            _placementMarkersVisible = true;
+            RefreshPlacementMarkers();
+        }
+
+        public void HidePlacementMarkers()
+        {
+            _placementMarkersVisible = false;
+            _placementTowerId = null;
+            for (var i = 0; i < _placementMarkers.Count; i++)
+                _placementMarkers[i].SetActive(false);
+        }
+
+        void RefreshPlacementMarkers()
+        {
+            if (!_placementMarkersVisible || _controller == null || _controller.Grid == null || _placementRoot == null)
+                return;
+
+            var index = 0;
+            foreach (var cell in _controller.Grid.GetBuildableCells())
+            {
+                if (!_controller.Grid.IsBuildable(cell) || _controller.Towers.GetAt(cell) != null)
+                    continue;
+
+                var marker = EnsurePlacementMarker(index++);
+                var pos = _controller.Grid.GridToPlacementWorld(cell);
+                marker.transform.position = new Vector3(pos.x, pos.y, -0.12f);
+                var sr = marker.GetComponent<SpriteRenderer>();
+                SyncPlacementMarkerSprite(sr);
+                marker.transform.localScale = ResolvePlacementMarkerScale(sr);
+                marker.SetActive(true);
+            }
+
+            for (var i = index; i < _placementMarkers.Count; i++)
+                _placementMarkers[i].SetActive(false);
+        }
+
+        GameObject EnsurePlacementMarker(int index)
+        {
+            while (_placementMarkers.Count <= index)
+            {
+                var marker = new GameObject($"PlacementMarker_{_placementMarkers.Count}");
+                marker.transform.SetParent(_placementRoot, false);
+                var sr = marker.AddComponent<SpriteRenderer>();
+                SyncPlacementMarkerSprite(sr);
+                sr.sortingOrder = 8;
+                _placementMarkers.Add(marker);
+            }
+
+            return _placementMarkers[index];
+        }
+
+        void SyncPlacementMarkerSprite(SpriteRenderer renderer)
+        {
+            if (renderer == null) return;
+            var sprite = !string.IsNullOrEmpty(_placementTowerId) && towerSprites != null
+                ? towerSprites.FindStatic(_placementTowerId)
+                : null;
+            renderer.sprite = sprite != null ? sprite : _squareSprite;
+            renderer.color = sprite != null
+                ? new Color(0.1f, 1f, 0.35f, 0.78f)
+                : new Color(0.18f, 1f, 0.45f, 0.62f);
+        }
+
+        Vector3 ResolvePlacementMarkerScale(SpriteRenderer renderer)
+        {
+            if (renderer == null || renderer.sprite == null || renderer.sprite == _squareSprite)
+                return new Vector3(0.86f, 0.86f, 1f);
+
+            var width = Mathf.Max(0.01f, renderer.sprite.bounds.size.x);
+            var scale = TowerTargetWorldWidth / width;
+            return new Vector3(scale, scale, 1f);
         }
 
         GameObject CreateSquareView(string instanceId, Transform parent, Color color, float scale, int sortingOrder)
@@ -263,6 +465,44 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 default:
                     return new Color(0.82f, 0.66f, 0.27f, 1f);
             }
+        }
+
+        Vector3 ResolveTowerScale(TowerInstance tower, SpriteRenderer renderer)
+        {
+            if (renderer == null || renderer.sprite == null || renderer.sprite == _squareSprite)
+                return new Vector3(0.72f, 0.72f, 1f);
+
+            var width = Mathf.Max(0.01f, renderer.sprite.bounds.size.x);
+            var scale = TowerTargetWorldWidth / width;
+            return new Vector3(scale, scale, 1f);
+        }
+
+        Vector3 ResolveUnitScale(UnitInstance unit, SpriteRenderer renderer)
+        {
+            if (renderer == null || renderer.sprite == null || renderer.sprite == _squareSprite)
+                return new Vector3(unit.Boss.IsBoss ? 0.72f : 0.5f, unit.Boss.IsBoss ? 0.72f : 0.5f, 1f);
+
+            var width = Mathf.Max(0.01f, renderer.sprite.bounds.size.x);
+            var targetWidth = unit.Boss.IsBoss ? BossTargetWorldWidth : UnitTargetWorldWidth;
+            var scale = targetWidth / width;
+            return new Vector3(scale, scale, 1f);
+        }
+
+        Sprite CreateFirstFrameSprite(Sprite sheet)
+        {
+            if (sheet == null || sheet.texture == null)
+                return null;
+
+            var key = sheet.GetInstanceID();
+            if (_firstFrameSprites.TryGetValue(key, out var cached))
+                return cached;
+
+            var rect = sheet.textureRect;
+            var frameSize = Mathf.Min(rect.height, rect.width);
+            var frameRect = new Rect(rect.x, rect.y, frameSize, rect.height);
+            var sprite = Sprite.Create(sheet.texture, frameRect, new Vector2(0.5f, 0.5f), sheet.pixelsPerUnit);
+            _firstFrameSprites[key] = sprite;
+            return sprite;
         }
 
         static Sprite CreateSquareSprite()

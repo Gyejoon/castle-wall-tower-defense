@@ -21,6 +21,7 @@ namespace GLD.Systems.Units
         TowerSystem _towerSystem;
         float _sceneTimeSeconds;
         int _nextUnitId;
+        int _nextLaneIndex;
 
         public event Action<UnitInstance> UnitSpawned;
         public event Action<UnitInstance> UnitKilled;
@@ -71,13 +72,14 @@ namespace GLD.Systems.Units
         {
             if (def == null)
                 throw new ArgumentNullException(nameof(def));
-            if (_grid.Path.Count == 0)
+            var path = NextPath();
+            if (path.Count == 0)
                 throw new InvalidOperationException("Cannot spawn without a path.");
 
             var unit = new UnitInstance(
                 $"unit-{++_nextUnitId:000}",
                 def,
-                new PathFollower(_grid.Path),
+                new PathFollower(path),
                 new CCStateManager(_minMoveSpeed, _stunImmunityWindowSec),
                 hpMultiplier,
                 _bossConfig,
@@ -141,6 +143,15 @@ namespace GLD.Systems.Units
             }
 
             return applied;
+        }
+
+        IReadOnlyList<UnityEngine.Vector2> NextPath()
+        {
+            if (_grid.Paths.Count == 0)
+                return _grid.Path;
+
+            var index = _nextLaneIndex++ % _grid.Paths.Count;
+            return _grid.Paths[index];
         }
 
         BossContext CreateBossContext(UnitInstance unit)

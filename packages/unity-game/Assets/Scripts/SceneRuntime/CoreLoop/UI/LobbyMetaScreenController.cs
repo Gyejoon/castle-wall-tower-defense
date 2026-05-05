@@ -1,4 +1,5 @@
 using GLD.Core;
+using GLD.Data;
 using GLD.SceneRuntime;
 using GLD.UI.Primitives;
 using UnityEngine;
@@ -16,6 +17,10 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         Button _metaTab;
         Button _startButton;
         Button _metaStartButton;
+        VisualElement _collectionGrid;
+        Label _metaAtkLabel;
+        Label _metaPerksLabel;
+        TowerSpriteCatalogSO _towerSprites;
         RunState _runState;
         bool _showingMeta;
 
@@ -37,6 +42,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             Unbind();
             _runState = runState;
             _showingMeta = false;
+            if (_towerSprites == null)
+                _towerSprites = Resources.Load<TowerSpriteCatalogSO>("Visuals/TowerSpriteCatalog");
             if (root == null)
                 return;
 
@@ -45,6 +52,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             ResolveElements(root);
             RegisterButtons();
+            PopulateCollection();
+            PopulateMetaSummary();
             if (_runState != null)
             {
                 _runState.OnChanged += HandleRunStateChanged;
@@ -79,6 +88,9 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _metaTab = root.Q<Button>("lobby-tab-meta");
             _startButton = root.Q<Button>("lobby-start");
             _metaStartButton = root.Q<Button>("lobby-meta-start");
+            _collectionGrid = root.Q<VisualElement>("lobby-collection-grid");
+            _metaAtkLabel = root.Q<Label>("lobby-meta-atk");
+            _metaPerksLabel = root.Q<Label>("lobby-meta-perks");
         }
 
         void RegisterButtons()
@@ -133,6 +145,50 @@ namespace GLD.SceneRuntime.CoreLoop.UI
                 _metaPanel.style.display = _showingMeta ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
+        void PopulateCollection()
+        {
+            if (_collectionGrid == null || _collectionGrid.childCount > 0)
+                return;
+
+            AddTowerCard("archer", "궁수탑", "T1");
+            AddTowerCard("nova_cannon", "투석기", "T1");
+            AddTowerCard("emp", "눈보라탑", "T1");
+            AddTowerCard("shield", "성기사제단", "T1");
+            AddTowerCard("hybrid_ab", "비전포성", "T5");
+            AddTowerCard("ultimate", "세계의 끝", "T6");
+        }
+
+        void AddTowerCard(string towerId, string label, string tier)
+        {
+            var card = new GLDCard { name = $"lobby-tower-card-{towerId}", Variant = "sunken" };
+            card.AddToClassList("lobby-tower-card");
+
+            var sprite = _towerSprites != null ? _towerSprites.FindStatic(towerId) : null;
+            var image = new Image { name = $"lobby-tower-image-{towerId}", scaleMode = ScaleMode.ScaleToFit };
+            image.AddToClassList("lobby-tower-image");
+            if (sprite != null)
+                image.image = sprite.texture;
+
+            var nameLabel = new Label(label) { name = $"lobby-tower-name-{towerId}" };
+            nameLabel.AddToClassList("lobby-tower-name");
+
+            var tierLabel = new Label(tier) { name = $"lobby-tower-tier-{towerId}" };
+            tierLabel.AddToClassList("lobby-tower-tier");
+
+            card.Add(image);
+            card.Add(nameLabel);
+            card.Add(tierLabel);
+            _collectionGrid.Add(card);
+        }
+
+        void PopulateMetaSummary()
+        {
+            if (_metaAtkLabel != null)
+                _metaAtkLabel.text = "전역 공격력 +0%";
+            if (_metaPerksLabel != null)
+                _metaPerksLabel.text = "가문 퍽 0 / 4";
+        }
+
         void Show()
         {
             RefreshPanels();
@@ -159,21 +215,33 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             var tabs = new VisualElement { name = "lobby-tabs" };
             tabs.AddToClassList("lobby-tabs");
-            tabs.Add(new GLDButton("Home") { name = "lobby-tab-home", Variant = "secondary" });
-            tabs.Add(new GLDButton("Meta") { name = "lobby-tab-meta", Variant = "secondary" });
+            tabs.Add(new GLDButton("전투") { name = "lobby-tab-home", Variant = "secondary" });
+            tabs.Add(new GLDButton("강화") { name = "lobby-tab-meta", Variant = "secondary" });
 
             var home = new VisualElement { name = "lobby-home-panel" };
             home.AddToClassList("lobby-panel");
             home.Add(new Label("Grid Line Defense") { name = "lobby-title" });
-            home.Add(new Label("Wave 50 endless run") { name = "lobby-subtitle" });
-            home.Add(new GLDButton("Start Battle") { name = "lobby-start", Variant = "primary" });
+            home.Add(new Label("랜덤 소환과 합성으로 50 웨이브를 버텨라") { name = "lobby-subtitle" });
+            home.Add(new GLDButton("전투 시작") { name = "lobby-start", Variant = "primary" });
+
+            var profile = new VisualElement { name = "lobby-profile-row" };
+            profile.AddToClassList("lobby-profile-row");
+            profile.Add(new Label("지휘관 Lv. 1") { name = "lobby-profile-level" });
+            profile.Add(new Label("최고 W 0") { name = "lobby-profile-best-wave" });
+            home.Add(profile);
+
+            home.Add(new Label("타워 컬렉션") { name = "lobby-collection-title" });
+            var collectionGrid = new VisualElement { name = "lobby-collection-grid" };
+            collectionGrid.AddToClassList("lobby-collection-grid");
+            home.Add(collectionGrid);
 
             var meta = new VisualElement { name = "lobby-meta-panel" };
             meta.AddToClassList("lobby-panel");
-            meta.Add(new Label("Meta Forge") { name = "lobby-meta-title" });
-            meta.Add(new Label("Global ATK +0%") { name = "lobby-meta-atk" });
-            meta.Add(new Label("Family perks locked") { name = "lobby-meta-perks" });
-            meta.Add(new GLDButton("Start Battle") { name = "lobby-meta-start", Variant = "primary" });
+            meta.Add(new Label("전쟁 대장간") { name = "lobby-meta-title" });
+            meta.Add(new Label("전역 공격력 +0%") { name = "lobby-meta-atk" });
+            meta.Add(new Label("가문 퍽 0 / 4") { name = "lobby-meta-perks" });
+            meta.Add(new Label("영구 강화 저장은 후속 단계에서 연결") { name = "lobby-meta-note" });
+            meta.Add(new GLDButton("전투 시작") { name = "lobby-meta-start", Variant = "primary" });
 
             panel.Add(tabs);
             panel.Add(home);

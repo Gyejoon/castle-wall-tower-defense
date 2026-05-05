@@ -17,6 +17,7 @@ namespace GLD.Systems.Towers
         public float RuntimeDamageMultiplier { get; set; } = 1f;
         public float RuntimeCritDamageBonus { get; set; }
         public float DisabledUntilSeconds { get; private set; }
+        public Vector2 LastDamageWorldPosition { get; private set; }
 
         public TowerInstance(string instanceId, TowerDefSO def, GridCell cell, Vector2 position)
         {
@@ -57,6 +58,7 @@ namespace GLD.Systems.Towers
                 runtimeMultiplier = 1f;
             var damage = Def.stats.damage * (1f + Mathf.Max(0f, GlobalAtkPct)) * runtimeMultiplier;
             var applied = units.ApplyDamage(target, damage);
+            LastDamageWorldPosition = target.Position;
             GameEvents.RaiseUnitDamaged(target.Def.id, applied);
             GameEvents.RaiseTowerAttacked(Def.id, applied);
             CooldownSeconds += 1f / Mathf.Max(0.01f, Def.stats.attackSpeed);

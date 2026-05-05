@@ -57,23 +57,28 @@ namespace GLD.Tests.EditMode.UI
                 var summon = 0;
                 var gachaTier = 0;
                 var pause = 0;
+                var speed = 0f;
                 GameEvents.OnRequestSummon += () => summon++;
                 GameEvents.OnRequestGacha += request => gachaTier = request.TargetTier;
                 GameEvents.OnRequestPause += () => pause++;
+                GameEvents.OnRequestSetSpeed += value => speed = value;
 
                 var controller = host.AddComponent<GameHudController>();
                 controller.Bind(new RunState("hud-test"), root);
 
                 Assert.That(root.Q<Button>("hud-summon"), Is.Not.Null);
                 Assert.That(root.Q<Button>("hud-gacha-t3"), Is.Not.Null);
+                Assert.That(root.Q<Button>("hud-speed"), Is.Not.Null);
                 Assert.That(root.Q<Button>("hud-menu"), Is.Not.Null);
 
                 controller.RequestSummon();
                 controller.RequestGacha(3);
+                controller.RequestToggleSpeed();
                 controller.RequestMenu();
 
                 Assert.That(summon, Is.EqualTo(1));
                 Assert.That(gachaTier, Is.EqualTo(3));
+                Assert.That(speed, Is.EqualTo(3f));
                 Assert.That(pause, Is.EqualTo(1));
             }
             finally

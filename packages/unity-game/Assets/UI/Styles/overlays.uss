@@ -218,3 +218,16 @@
 .game-over-panel > .gld-btn {
   align-self: stretch;
 }
+
+.toast-overlay {
+  position: absolute;
+  right: 12px;
+  top: 150px;
+  width: 260px;
+}
+
+#toast-message {
+  color: var(--color-text-primary);
+  font-size: var(--type-caption10-size);
+  white-space: normal;
+}

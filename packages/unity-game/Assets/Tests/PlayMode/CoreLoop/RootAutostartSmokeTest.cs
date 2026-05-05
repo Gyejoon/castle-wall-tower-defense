@@ -59,6 +59,9 @@ namespace GLD.Tests.PlayMode.CoreLoop
             var gameOver = controller.GetComponent<GameOverOverlayController>();
             Assert.That(gameOver, Is.Not.Null);
             Assert.That(gameOver.IsBound, Is.True);
+            var toast = controller.GetComponent<ToastOverlayController>();
+            Assert.That(toast, Is.Not.Null);
+            Assert.That(toast.IsBound, Is.True);
             GameEvents.RaiseSummonOffered("archer");
             yield return null;
             Assert.That(summonReveal.IsVisible, Is.True);
@@ -174,6 +177,11 @@ namespace GLD.Tests.PlayMode.CoreLoop
             GameEvents.RaiseBossDefeated("boss-1", 10);
             Assert.That(bossHpBar.IsVisible, Is.False);
             Assert.That(hud.LastMessage, Does.Contain("Boss defeated"));
+            GameEvents.RaiseRequestRejected("insufficient_energy");
+            var toast = controller.GetComponent<ToastOverlayController>();
+            Assert.That(toast, Is.Not.Null);
+            Assert.That(toast.IsVisible, Is.True);
+            Assert.That(toast.CurrentMessage, Is.EqualTo("Rejected: insufficient_energy"));
             GameEvents.RaiseGameOver(false);
             var gameOver = controller.GetComponent<GameOverOverlayController>();
             Assert.That(gameOver, Is.Not.Null);

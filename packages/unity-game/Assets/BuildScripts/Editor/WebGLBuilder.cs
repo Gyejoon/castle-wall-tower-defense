@@ -50,6 +50,8 @@ namespace GLD.BuildScripts.Editor
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.memorySize = 256;
+            PlayerSettings.bundleVersion = Environment.GetEnvironmentVariable("GLD_WEBGL_BUILD_VERSION")
+                ?? DateTime.UtcNow.ToString("yyyyMMddHHmmss");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.WebGL, ScriptingImplementation.IL2CPP);
 
             var options = new BuildPlayerOptions

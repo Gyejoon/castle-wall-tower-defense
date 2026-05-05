@@ -27,14 +27,16 @@
   <script>
     (function () {
       const buildUrl = "Build";
+      const buildVersion = "preview-20260506-0614";
+      const cacheBust = "?v=" + encodeURIComponent(buildVersion);
       const config = {
-        dataUrl: buildUrl + "/WebGL.data",
-        frameworkUrl: buildUrl + "/WebGL.framework.js",
-        codeUrl: buildUrl + "/WebGL.wasm",
+        dataUrl: buildUrl + "/WebGL.data" + cacheBust,
+        frameworkUrl: buildUrl + "/WebGL.framework.js" + cacheBust,
+        codeUrl: buildUrl + "/WebGL.wasm" + cacheBust,
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "unity-game",
-        productVersion: "1.0",
+        productVersion: buildVersion,
         showBanner: (msg, type) => {
           const warn = document.getElementById("unity-warning");
           if (!warn) return;

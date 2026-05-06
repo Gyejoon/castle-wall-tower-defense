@@ -60,7 +60,7 @@ v1은 “운영비 일부 보조”가 목표다.
 
 | KPI | 목적 |
 |-----|------|
-| Session Length | 5~7분 목표 확인 |
+| Session Length | 평균 6~8분 목표 확인 |
 | Retry Rate | “한 판 더” 확인 |
 | Continue Ad Opt-in | 이어하기 광고가 자연스러운지 확인 |
 | Reroll Ad Opt-in | 카드 리롤 광고가 자연스러운지 확인 |

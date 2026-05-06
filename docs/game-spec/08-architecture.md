@@ -161,7 +161,7 @@ prep -> spawning -> combat/boss -> waiting -> next wave
 | `waiting` | 다음 wave 전 짧은 대기 |
 | `ended` | 디버그/상한 처리 |
 
-v1 UX 기준은 wave 15 안쪽이다. 50 wave는 데이터 상한으로만 취급한다.
+v1 UX 기준은 wave 20까지다. 50 wave는 데이터 상한으로만 취급한다.
 
 ---
 

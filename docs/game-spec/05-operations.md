@@ -61,7 +61,7 @@ SDK 연동 전에는 QA 로그나 수동 기록으로도 충분하다.
 
 | 지표 | 목적 |
 |------|------|
-| Session Length | 5~7분 유지 |
+| Session Length | 평균 6~8분 유지 |
 | Final Wave | 난이도 튜닝 |
 | First Boss Reach | 초반 재미 도달 |
 | Retry Rate | 한 판 더 욕구 |

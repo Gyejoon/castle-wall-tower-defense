@@ -1,217 +1,135 @@
 # 데이터 Structure
 
-> **Last Updated:** 2026-04-11  
-> **Source:** Obsidian `ai/product/specs/일반모드 게임 설계 문서.md` §13  
-> 스키마가 변경될 때 이 문서를 먼저 업데이트한다.
+> **Last Updated:** 2026-05-06 (v4.0 — minimal local save)
+> **Scope:** v1은 localStorage 기반 단일 기기 저장을 기준으로 한다. 서버 동기화와 랭킹은 후속 검토다.
 
 ---
 
-## 1. Save Data 스키마
+## 1. Save Policy
 
-현재 저장 방식: `localStorage` (서버 동기화는 R3 트랙 후속 작업으로 이연, `06-milestone.md` 참조)
+| 항목 | 정책 |
+|------|------|
+| 저장 위치 | localStorage |
+| 서버 동기화 | v1 제외 |
+| 계정/로그인 | v1 제외 |
+| 마이그레이션 | 기존 save v8 읽기/정리 유지 |
+| 핵심 저장값 | 최고 wave, 플레이 횟수, 간단 메타, 설정 |
+
+기존 코드에 남은 legacy field는 마이그레이션 호환용으로 둘 수 있다. 새 v1 기능은 legacy field에 의존하지 않는다.
+
+---
+
+## 2. Active V1 Save Shape
 
 ```json
 {
+  "schemaVersion": 8,
   "profile": {
-    "player_id": "string",
-    "display_name": "string",
-    "level": 1,
-    "xp": 0,
-    "gold": 0,
-    "diamond": 0,
-    "created_at": "ISO8601",
-    "total_play_count": 0,
-    "total_clear_count": 0,
-    "highest_wave": 0
+    "playerId": "local",
+    "displayName": "Commander",
+    "totalPlayCount": 0,
+    "highestWave": 0,
+    "bestTierReached": 1,
+    "bestTimeSurvivedSec": 0
   },
-  "collection": {
-    "towers": {
-      "<tower_id>": {
-        "owned": true,
-        "level": 1,
-        "grade": "normal",
-        "is_hidden": false
-      }
-    },
-    "gacha_pity_count": 0
+  "meta": {
+    "globalAtkPct": 0,
+    "familyPerks": {
+      "archer": 0,
+      "siege": 0,
+      "frost": 0,
+      "stun": 0
+    }
   },
-  "progress": {
-    "stages": {
-      "<stage_id>": {
-        "cleared": false,
-        "best_time": null,
-        "best_hp_remaining": null,
-        "clear_count": 0
-      }
-    },
-    "tutorial_completed": false,
-    "daily_free_box_claimed_at": null,
-    "daily_ad_box_count": 0,
-    "daily_reset_at": "ISO8601"
+  "ads": {
+    "lastContinueRunAt": null,
+    "lastUpgradeRerollAt": null
   },
   "settings": {
-    "bgm_volume": 0.7,
-    "sfx_volume": 0.8,
-    "screen_shake": true,
-    "colorblind_mode": "off"
+    "bgmVolume": 0.7,
+    "sfxVolume": 0.8,
+    "screenShake": true,
+    "colorblindMode": "off"
+  },
+  "tutorial": {
+    "completed": false
   }
 }
 ```
 
-### SaveData v4 추가 필드
-
-**OwnedTower 확장:**
-- `awakening: 0|1|2|3` — 각성 단계 (기본 0)
-- `duplicateCount: number` — 중복 조각 수
-
-**ProgressData 확장:**
-- `stageStars: Record<string, 1|2|3>` — 맵별 최고 클리어 별
-- `achievements: { claimed: string[], progress: Record<string, number> }` — 업적 진행
-- `awakeningStones: number` — 각성석 보유량
-
-**ProfileData 확장:**
-- `combatPower: number` — 전투력 (계산 캐시)
-
-**마이그레이션:** v3→v4, 새 필드는 기본값(0, {}, [])으로 초기화
-
-### SaveData v5 추가 필드
-
-**MissionProgress 확장:**
-- `mapId?: string` — 맵 바인딩 미션용 (clear_map, defeat_boss_map)
-
-**MissionType 확장:**
-- `clear_map` — 특정 맵 클리어
-- `defeat_boss_map` — 특정 맵 보스 처치
-
-**AchievementCategory 확장:**
-- `map_progress` — 맵별 진행 업적 (9종: 3맵 × 3★)
-
-**마이그레이션:** v4→v5, stageStars 키를 mapId에서 stageId로 변환
+실제 코드가 snake_case를 유지하는 경우 기존 key를 보존한다. 이 문서는 활성 제품 스펙을 설명하며, 코드 변경 없이 key rename을 요구하지 않는다.
 
 ---
 
-## 2. 저장 시점
+## 3. Save Timing
 
 | 이벤트 | 저장 대상 |
-|--------|---------|
-| 전투 종료 (승/패) | profile (xp, gold, play_count), progress (stage clear) |
-| 타워 승급 시도 | collection (grade, gold 차감) |
-| 상자 오픈 | collection (tower 추가), profile (diamond 차감), gacha_pity |
-| 설정 변경 | settings |
-| 앱 백그라운드 전환 | 전체 스냅샷 |
+|--------|-----------|
+| 전투 종료 | play count, highest wave, best tier, survival time |
+| 메타 강화 변경 | `meta` |
+| 설정 변경 | `settings` |
+| 튜토리얼 완료 | `tutorial.completed` |
+| 앱 백그라운드 | 전체 snapshot flush |
 
 ---
 
-## 3. 타워 ID 목록
+## 4. Removed From Active Save
 
-> `<tower_id>` 유효값 (18종)
+아래 저장값은 v1 스펙에서 활성 기능이 아니다.
 
-```
-archer, plasma, emp, shield,
-twin_archer, disruptor, nova_cannon, fortress,
-stasis_field, flame_tower, wind_spire, earth_golem,
-holy_shrine, dragon_nest, arcane_spire, world_tree,
-celestial, divine_throne
-```
-
----
-
-## 4. 스테이지 ID 목록
-
-> `<stage_id>` 유효값
-
-| stage_id | 이름 | 해금 조건 |
-|---------|------|---------|
-| forest_gate | 숲의 성문 | 기본 제공 |
-| lava_fortress | 용암 요새 | 프로필 LV.3 |
-| storm_citadel | 폭풍 성채 | 프로필 LV.7 |
+| 필드/개념 | 처리 |
+|-----------|------|
+| diamond | 신규 획득/소비 없음 |
+| gacha pity | 외부 상자 가챠 제외 |
+| missions | 제외 |
+| stage clear records | 단일 endless 모드에서는 제외 |
+| stage stars | 제외 |
+| grade / awakening / duplicate count | 신규 v1 성장축에서 제외 |
+| selectedDeck | 덱 편성 제외 |
+| server user id | 서버 동기화 전까지 제외 |
 
 ---
 
-## 5. 열거형 (Enum)
+## 5. Runtime Events Worth Persisting
 
-### grade
+전투 중 모든 이벤트를 저장하지 않는다. 결과 요약만 저장한다.
 
-```typescript
-type TowerGrade = 'normal' | 'rare' | 'unique' | 'epic' | 'legendary';
-```
-
-### colorblind_mode
-
-```typescript
-type ColorblindMode = 'off' | 'protan' | 'deutan' | 'tritan';
-```
-
-### element
-
-```typescript
-type ElementType = 'fire' | 'water' | 'lightning' | 'neutral';
-```
-
-### StarRating
-
-```typescript
-type StarRating = 1 | 2 | 3;
-```
-
-### AchievementCategory
-
-```typescript
-type AchievementCategory = 'combat_power' | 'level' | 'tower' | 'progress' | 'map_progress';
-```
+| 값 | 이유 |
+|----|------|
+| `finalWave` | 최고 기록 |
+| `bestTierReached` | 합성 성취감 |
+| `timeSurvivedSec` | 세션 길이 |
+| `towersSummoned` | 경제 튜닝 참고 |
+| `bossesDefeated` | 보스 도달/처치 확인 |
 
 ---
 
-## 6. 텔레메트리 이벤트 맵
+## 6. Minimal Telemetry Contract
 
-> 텔레메트리 SDK 연동은 R3 트랙 후속 작업으로 이연. 코드 위치 TBD.
+텔레메트리는 v1 출시 후 필요 시 붙인다. 서버/SDK 없이도 로컬 QA 로그로 먼저 검증할 수 있어야 한다.
 
-| event_name | fire_when | parameters | primary_kpi |
-|------------|----------|-----------|------------|
-| game_start | run 시작 시 | stage_id, mode, run_id | DAU |
-| tower_placed | 타워 배치 시 | tower_id, x, y, wave_slot | core engagement |
-| energy_spent | 에너지 소비 배치 시 | tower_id, energy_cost, wave_slot | economy |
-| boss_warning | 보스 경고 시 | stage_id, slot_index | encounter reach |
-| game_over | 전투 종료 시 | result, reason, final_slot | clear rate |
-| stage_clear | 스테이지 클리어 시 | stage_id, time, hp_remaining | progression |
-| purchase_offer | 상품 구매 시 | sku_id, price | conversion |
-| ad_reward_claim | 광고 보상 수령 시 | placement_id, reward | ad monetization |
+| event_name | fire_when | params |
+|------------|-----------|--------|
+| `game_start` | 런 시작 | `run_id` |
+| `boss_reached` | 보스 스폰 | `wave` |
+| `upgrade_selected` | 카드 선택 | `upgrade_id`, `wave` |
+| `game_over` | 런 종료 | `final_wave`, `reason`, `time_sec` |
+| `ad_reward_claim` | 광고 보상 성공 | `placement_id` |
 
----
-
-## 7. React ↔ Phaser 설정 동기화
-
-게임 설정(`screenShake` 등)은 React Zustand store에서 관리하고, Phaser로 실시간 전파한다.
-
-```
-[React] gameStore.toggleScreenShake()
-    ↓ Zustand subscribe (PhaserGame.tsx)
-[Bridge] game.registry.set('screenShake', value)
-    ↓ Phaser DataManager changedata 이벤트
-[Phaser] Game.ts screenShake 반영
-```
-
-| 구간 | 구현 파일 | 메커니즘 |
-|------|---------|---------|
-| 초기값 전달 | `PhaserGame.tsx` | `game.registry.set()` at mount |
-| 런타임 동기화 | `PhaserGame.tsx` | `useGameStore.subscribe()` → `registry.set()` |
-| Phaser 수신 | `Game.ts` | `game.registry.events.on('changedata-KEY')` |
-| 정리 | `PhaserGame.tsx` | `unsubscribe()` at unmount |
+구매 이벤트, stage clear 이벤트, mission 이벤트는 v1에서 제외한다.
 
 ---
 
-## 8. 버전 관리 전략
+## 7. Unity Data Bridge
 
-- 스키마 변경 시 `localStorage`의 `schema_version` 필드를 업데이트한다.
-- 마이그레이션 로직은 `packages/web-shell/src/stores/` 내 별도 함수로 관리한다.
-- 서버 동기화 추가 시 conflict resolution 전략: last-write-wins (초기), 이후 merge 전략 검토.
+Unity 전환을 위해 게임 규칙 데이터는 가능한 한 engine-neutral 형태로 유지한다.
 
----
+| 데이터 | 원천 |
+|--------|------|
+| tower definitions | `@gld/shared` 또는 JSON export |
+| unit definitions | `@gld/shared` 또는 JSON export |
+| wave scaling | `@gld/shared` 또는 JSON export |
+| map anchors | `main_long` layout data |
+| save summary | localStorage schema와 동등한 JSON |
 
-## 9. 변경 이력
-
-| 날짜 | 항목 | 변경 내용 |
-|------|------|---------|
-| 2026-04-07 | 최초 작성 | GDD §13 기반 |
-| 2026-04-07 | §7 | React↔Phaser 설정 동기화 아키텍처 추가 |
-| 2026-04-11 | §1, §5 | SaveData v5: MissionProgress.mapId 필드, MissionType에 clear_map/defeat_boss_map 추가, AchievementCategory에 map_progress 추가 (9종 맵별 업적), SAVE_VERSION 4→5 |
+Unity PoC는 전체 save를 이식하기보다, 먼저 tower/unit/wave/map 데이터를 읽어 같은 최소 루프를 재현한다.

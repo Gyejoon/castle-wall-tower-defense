@@ -97,6 +97,7 @@ Grid Line Defense — 모바일 우선 랜덤 합성 타워디펜스. 소환 →
 | `packages/shared/` (`@gld/shared`) | TypeScript 타입, 상수, 이벤트 계약. 다른 패키지가 의존. |
 | `packages/phaser-game/` (`@gld/phaser-game`) | Phaser 3 게임 엔진. 그리드, 타워, 유닛, AI, 렌더링. |
 | `packages/web-shell/` | React 18 SPA. Phaser 임베드, 로비, HUD/Overlay 컴포넌트, Zustand 상태 관리. |
+| `packages/unity-game/` (`@gld/unity-game`) | Unity 2D WebGL 런타임. 로컬/CI 빌드 산출물은 `scripts/merge-build.ts`를 통해 `/unity/` 경로로 병합된다. |
 | `scripts/generate-assets/` | @napi-rs/canvas 기반 절차적 픽셀 아트 생성 파이프라인. |
 
 ## 핵심 런타임 흐름
@@ -196,13 +197,21 @@ Scene 서브패키지 (`packages/phaser-game/src/scenes/**`, Phase 4–6 분해)
 ```bash
 bun install                                        # 의존성 설치
 bun dev:web                                        # Vite 개발 서버 (port 3000)
+bun dev:unity-preview                              # build:all 후 병합 결과를 port 8080에서 미리보기
 bun build:web                                      # 프로덕션 빌드
+bun build:unity                                    # Unity WebGL 빌드 (Unity 설치 필요)
+bun build:all                                      # build:web + merge-build; Vercel/통합 프리뷰 기준 빌드
 bun test                                           # 전체 테스트
 bun test:shared                                    # @gld/shared 테스트
 bun test:phaser                                    # @gld/phaser-game 테스트
 bun test:web                                       # web-shell 테스트
+bun test:scripts                                   # scripts/*.test.ts 테스트 (merge-build 등)
+bun test:visual                                    # web-shell Playwright 시각 회귀 테스트
+bun test:visual:update                             # Playwright 스냅샷 갱신
 bun lint                                           # 전체 lint
 bun lint:check                                     # Biome check
+bun build:unity-json                               # shared 데이터를 Unity JSON으로 export
+bun copy:assets-to-unity                           # web-shell PNG 에셋을 Unity Sprites로 미러링
 bun generate:assets                                # 에셋 전체 생성
 ```
 
@@ -214,6 +223,7 @@ Node >= 22, bun 필수. 단일 테스트: `cd packages/<pkg> && bunx vitest run 
 - **로비 프로필/컬렉션 데이터는 현재 mock.** 이 영역을 수정할 때 실제 API가 없음을 인지할 것.
 - **에셋은 커밋된 산출물이다.** `packages/web-shell/public/assets/` 전체가 git에 트래킹되며 CI/Vercel 배포는 커밋된 파일을 그대로 사용한다. 에셋을 변경하려면 `scripts/generate-assets/`의 생성 스크립트를 수정한 뒤 `bun generate:assets`를 로컬에서 실행하고 산출물을 함께 커밋해야 한다. 생성 스크립트만 수정하고 산출물을 커밋하지 않으면 프로덕션에 반영되지 않는다.
 - **`bun generate:assets`는 유저가 명시적으로 요청할 때만 실행한다.** ComfyUI 기반 에셋(stage-thumb 등)은 AI 생성 고품질 이미지인데, ComfyUI가 없는 환경에서 실행하면 플레이스홀더로 대체되어 원본이 소실된다. 에셋 확인이 필요하면 파일을 직접 읽거나 git log로 확인할 것.
+- **`/unity/` 경로 검증은 `bun build:web`만으로 끝내지 말 것.** Unity 병합 결과 확인은 `bun run build:all` 또는 `bun run dev:unity-preview` 기준으로 수행한다.
 - **Phaser 씬 클린업 순서:** EventBus off → system destroy. shutdown 시 역순 정리 필수.
 - **runStatus 전이를 임의로 건너뛰지 말 것.** `lobby → building → running → victory|defeat` 순서를 따른다.
 

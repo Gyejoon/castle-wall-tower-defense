@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73fc9e18f5c6426da2451f5b25f23274, type: 3}
+  m_Name: UnitSpriteCatalog
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.UnitSpriteCatalogSO
+  entries:
+  - unitId: arcane_mage
+    walkSheet: {fileID: 21300000, guid: fab64eb321a1040018b6050bfdc3cd2e, type: 3}
+    idleSheet: {fileID: 21300000, guid: 510c8d9dff85c4556b62a6c014742a42, type: 3}
+    deathSheet: {fileID: 21300000, guid: 98e0b76f0935f4b4c9af7cefc8860ae6, type: 3}
+  - unitId: battle_robot
+    walkSheet: {fileID: 21300000, guid: ec4f9a08726514193aed4902dbbdb221, type: 3}
+    idleSheet: {fileID: 21300000, guid: a790f777357c24e4688a906f06d94a7a, type: 3}
+    deathSheet: {fileID: 21300000, guid: 3a62260992ec6469fb1acf96646eeb30, type: 3}
+  - unitId: corrupted_archmage
+    walkSheet: {fileID: 21300000, guid: 35455ebd1731a401a946a87bd217005b, type: 3}
+    idleSheet: {fileID: 21300000, guid: bb81529800bf04d30b771905427da6ea, type: 3}
+    deathSheet: {fileID: 21300000, guid: 165eff44889b04d32855b8443650a45d, type: 3}
+  - unitId: dragon
+    walkSheet: {fileID: 21300000, guid: 55afa9158d4c444d89b8fcf1b1348a5b, type: 3}
+    idleSheet: {fileID: 21300000, guid: b1b5d77e1a782452e9ed9367fb0cdc3f, type: 3}
+    deathSheet: {fileID: 21300000, guid: 9b72056fbe58d4a7aa31f51b83f668a4, type: 3}
+  - unitId: flame_imp
+    walkSheet: {fileID: 21300000, guid: 59af5fa67f1614109acce7bb48769186, type: 3}
+    idleSheet: {fileID: 21300000, guid: ed356e05f17e74ee5bb5ce36ee100b55, type: 3}
+    deathSheet: {fileID: 21300000, guid: fa50248722df24d838e53968e5235122, type: 3}
+  - unitId: forge_master
+    walkSheet: {fileID: 21300000, guid: b46e5d77bbb4140c2ac4432c2b994796, type: 3}
+    idleSheet: {fileID: 21300000, guid: cee970118d06d495181a77a8eee1c1bf, type: 3}
+    deathSheet: {fileID: 21300000, guid: 96c8c5c32bdc44d74b1b8f2f4b1f7b1c, type: 3}
+  - unitId: heavy_walker
+    walkSheet: {fileID: 21300000, guid: 498b75ca41ae84735a3a441db1431d2c, type: 3}
+    idleSheet: {fileID: 21300000, guid: a996fe3bf80c84f97be2899e13198c33, type: 3}
+    deathSheet: {fileID: 21300000, guid: 1e33432cfdc0641059d2a2d94f628a65, type: 3}
+  - unitId: lava_golem
+    walkSheet: {fileID: 21300000, guid: 736ca564c577041d6a8133c0ff72d2b7, type: 3}
+    idleSheet: {fileID: 21300000, guid: d0708830eea6e4ae3855510a96c4dd12, type: 3}
+    deathSheet: {fileID: 21300000, guid: 0cf91dc366e4b42dc81e74e08e0b42b8, type: 3}
+  - unitId: mana_shield
+    walkSheet: {fileID: 21300000, guid: 1f9a86887d29e4d0da48eb2a076a86da, type: 3}
+    idleSheet: {fileID: 21300000, guid: 01714064a5e7f4d5ea5a57e54bd5ac16, type: 3}
+    deathSheet: {fileID: 21300000, guid: b74780c4993134c83b90d687117950f1, type: 3}
+  - unitId: orc_warlord
+    walkSheet: {fileID: 21300000, guid: 6568b26effe7d423db98d9f3fd236e10, type: 3}
+    idleSheet: {fileID: 21300000, guid: 2ccc4e66941674243aee3cd720513ea2, type: 3}
+    deathSheet: {fileID: 21300000, guid: cdf7786d787c14ede8fac0b3c2cecebd, type: 3}
+  - unitId: scout_drone
+    walkSheet: {fileID: 21300000, guid: 8b041165928114149b84e8c45493b191, type: 3}
+    idleSheet: {fileID: 21300000, guid: 682a6716286724772b60b5bbe7434f03, type: 3}
+    deathSheet: {fileID: 21300000, guid: 9b8b03c5078ed4218946a0bd665cd7a0, type: 3}
+  - unitId: stealth_drone
+    walkSheet: {fileID: 21300000, guid: 9779a460dc2214bdbb3ff3a16f9683aa, type: 3}
+    idleSheet: {fileID: 21300000, guid: ec010d1abc8b34515ba589b3c4db453f, type: 3}
+    deathSheet: {fileID: 21300000, guid: 095d9949128b044bfb2690832261a608, type: 3}

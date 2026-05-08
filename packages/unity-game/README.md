@@ -4,7 +4,7 @@ Unity 6 LTS (URP 2D + UI Toolkit + Addressables) port of Grid Line Defense. Host
 
 ## Status
 
-**Phase 0a (scaffold)**: Directory, asmdefs, WebGLTemplate, build script, CI wiring all committed. No `.unity` scene, `ProjectSettings/`, or Unity build output yet — those are produced by opening the project in Unity Hub (see runbook).
+**Unity WebGL preview**: `Build/WebGL/` contains the committed preview snapshot used by Vercel. `scripts/merge-build.ts` copies it into `packages/web-shell/dist/unity/`, so every Vercel Preview deployment exposes the Unity runtime at `/unity`.
 
 **Phase 0b (user handoff)**: See [`docs/unity-migration/phase-0b-runbook.md`](../../docs/unity-migration/phase-0b-runbook.md) for local Unity install, `UNITY_LICENSE` secret setup, first scene authoring, and first GameCI build.
 
@@ -50,12 +50,16 @@ cd packages/unity-game
 Unity -batchmode -nographics -projectPath . -executeMethod BuildScripts.Editor.WebGLBuilder.Build -logFile -
 ```
 
-CI: `.github/workflows/unity-build.yml` (GameCI). Output goes to `Build/WebGL/` then `scripts/merge-build.ts` copies to `packages/web-shell/dist/unity/`.
+Output goes to `Build/WebGL/` then `scripts/merge-build.ts` copies it to `packages/web-shell/dist/unity/`.
 
 ## Post-build routing
 
-`vercel.json` rewrites:
-- `/unity/:path*` → `/unity/index.html` (Unity handles deep links)
+`vercel.json` routing:
+- `/unity` → `/unity/` temporary redirect, so Unity template relative asset URLs resolve under `/unity/`.
 - `/(.*)` → `/index.html` (Phaser SPA fallback)
 
-Physical files (`/unity/Build/*.wasm`, etc.) bypass rewrites and are served directly.
+Physical files (`/unity/Build/*.wasm`, etc.) bypass rewrites and are served directly. The Vercel preview snapshot is intentionally uncompressed so Unity startup does not depend on CDN `Content-Encoding` handling:
+
+- `/unity/Build/WebGL.data` → `application/octet-stream`
+- `/unity/Build/WebGL.framework.js` → `application/javascript`
+- `/unity/Build/WebGL.wasm` → `application/wasm`

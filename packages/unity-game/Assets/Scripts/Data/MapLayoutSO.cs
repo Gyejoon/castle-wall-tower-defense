@@ -17,6 +17,31 @@ namespace GLD.Data
         public int y;
     }
 
+    /// <summary>Float grid coordinate used by illustrated paths and placement anchors.</summary>
+    [Serializable]
+    public struct FloatGridPoint
+    {
+        public float x;
+        public float y;
+    }
+
+    /// <summary>One spawn-to-exit lane expressed in float grid coordinates.</summary>
+    [Serializable]
+    public struct MapPath
+    {
+        public FloatGridPoint[] points;
+    }
+
+    /// <summary>Visual placement anchor copied from shared main_long art coordinates.</summary>
+    [Serializable]
+    public struct PlacementAnchor
+    {
+        public int x;
+        public int y;
+        public float worldX;
+        public float worldY;
+    }
+
     /// <summary>Float-coordinate decoration placed on the map (tree, bush, rock).</summary>
     [Serializable]
     public struct MapDecoration
@@ -46,8 +71,11 @@ namespace GLD.Data
 
         [Header("Path")]
         public GridPoint exitPoint;
+        public MapPath[] lanes;
         public GridPoint[] obstacles;
         public GridPoint[] path;
+        public FloatGridPoint[] waypoints;
+        public PlacementAnchor[] placementAnchors;
         public GridPoint   spawnPoint;
 
         [Header("Map Metadata")]

@@ -2,6 +2,7 @@
   "name": "GLD.Tests.PlayMode",
   "rootNamespace": "GLD.Tests.PlayMode",
   "references": [
+    "GLD.Core",
     "GLD.Data",
     "GLD.SceneRuntime",
     "GLD.Systems",

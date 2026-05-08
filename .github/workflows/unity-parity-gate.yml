@@ -1,13 +1,20 @@
 name: Unity Parity Gate
 
-# Placeholder workflow. Phase 3 wires the deterministic TS↔C# replay harness
-# (packages/shared/src/testing/replay-runner.ts + Unity EditMode ReplayParityTests)
-# and this workflow becomes required. Until then, this job is informational and
-# always passes so PR status checks do not block Phase 0–2 work.
-
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'packages/shared/src/testing/**'
+      - 'packages/unity-game/**'
+      - 'docs/unity-migration/phase-3-balance-drift-baseline.csv'
+      - '.github/workflows/unity-parity-gate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/shared/src/testing/**'
+      - 'packages/unity-game/**'
+      - 'docs/unity-migration/phase-3-balance-drift-baseline.csv'
+      - '.github/workflows/unity-parity-gate.yml'
   workflow_dispatch:
 
 concurrency:
@@ -15,19 +22,78 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  parity-gate-stub:
-    name: Parity Gate (stub until Phase 3)
+  parity-gate:
+    name: Phase 3 Replay Parity
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
+    env:
+      HAS_UNITY_LICENSE: ${{ secrets.UNITY_LICENSE != '' || secrets.UNITY_SERIAL != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
-      - name: Announce placeholder status
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install repo deps
+        run: bun install
+
+      - name: Run shared replay tests
+        run: bun run --filter @gld/shared test src/testing
+
+      - name: Record TS replay ledger
+        run: bun run --filter @gld/shared replay:record
+
+      - name: Record Phase 3 balance baseline
+        run: bun run --filter @gld/shared replay:baseline
+
+      - name: Cache Unity Library
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: actions/cache@v4
+        with:
+          path: packages/unity-game/Library
+          key: Library-Parity-${{ hashFiles('packages/unity-game/Packages/manifest.json', 'packages/unity-game/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-Parity-
+
+      - name: Run Unity EditMode parity tests
+        if: env.HAS_UNITY_LICENSE == 'true'
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: packages/unity-game
+          testMode: EditMode
+          customParameters: -testFilter ReplayParityTests
+          artifactsPath: artifacts/unity-parity
+
+      - name: Note skipped Unity parity tests
+        if: env.HAS_UNITY_LICENSE != 'true'
         run: |
-          cat <<'EOF'
-          Unity Parity Gate is a Phase 0 placeholder.
-          It will become required when Phase 3 adds the TS↔C# replay harness under
-          packages/shared/src/testing/ and EditMode tests under
-          packages/unity-game/Assets/Tests/EditMode/ParityAcceptance/.
+          mkdir -p artifacts
+          cat > artifacts/phase-3-diff.json <<'EOF'
+          {
+            "unity_parity": "skipped",
+            "reason": "Unity license secrets are not configured"
+          }
           EOF
-          echo "Stub status: PASS"
+          echo "::notice::Unity license secrets are not configured; TS replay ledger was generated, Unity parity run skipped."
+
+      - name: Upload parity artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-parity-${{ github.sha }}
+          path: |
+            artifacts/phase-3-replay-metrics.csv
+            docs/unity-migration/phase-3-balance-drift-baseline.csv
+            artifacts/phase-3-diff.json
+            artifacts/unity-parity
+          retention-days: 30
+          if-no-files-found: ignore

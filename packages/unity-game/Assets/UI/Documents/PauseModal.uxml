@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDOverlay name="pause-modal" dim="default" class="pause-modal">
+    <gld:GLDPanel name="pause-panel" variant="elevated" padding="lg" class="pause-panel">
+      <ui:Label name="pause-title" text="일시정지" />
+      <ui:Label name="pause-subtitle" text="전투가 멈춰 있습니다." />
+      <gld:GLDButton name="pause-resume" text="재개" variant="primary" />
+      <gld:GLDButton name="pause-quit" text="포기" variant="danger" />
+    </gld:GLDPanel>
+  </gld:GLDOverlay>
+</ui:UXML>

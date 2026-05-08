@@ -4,7 +4,7 @@ initSentry();
 
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App, AssetReviewApp } from './App';
+import { App } from './App';
 import { requestWakeLock, setupWakeLockReacquire } from './lib/wakeLock';
 import './styles/global.css';
 
@@ -16,7 +16,6 @@ if (!rootElement) {
 
 const isDsGallery =
 	new URLSearchParams(window.location.search).get('ds') === '1';
-const isAssetReview = window.location.pathname.startsWith('/asset-review');
 
 const DesignSystemGallery = lazy(() =>
 	import('./components/ds/__demos__/DesignSystemGallery').then((m) => ({
@@ -26,9 +25,7 @@ const DesignSystemGallery = lazy(() =>
 
 createRoot(rootElement).render(
 	<StrictMode>
-		{isAssetReview ? (
-			<AssetReviewApp />
-		) : isDsGallery ? (
+		{isDsGallery ? (
 			<Suspense fallback={null}>
 				<DesignSystemGallery />
 			</Suspense>
@@ -39,7 +36,7 @@ createRoot(rootElement).render(
 );
 
 // 회전 고정/wake lock은 게임 화면에서만 적용.
-if (!isAssetReview && !isDsGallery) {
+if (!isDsGallery) {
 	(
 		screen.orientation as ScreenOrientation & {
 			lock?: (o: string) => Promise<void>;

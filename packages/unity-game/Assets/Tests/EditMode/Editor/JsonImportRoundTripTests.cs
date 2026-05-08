@@ -63,24 +63,32 @@ namespace GLD.Tests.EditMode.Editor
             Assert.IsNotNull(catalog, "TowerCatalog.asset must exist after import.");
             Assert.IsNotNull(catalog.towers, "towers array must not be null.");
 
-            var roundTripped = new JArray(catalog.towers.Select(t => new JObject
+            var roundTripped = new JArray(catalog.towers.Select(t =>
             {
-                ["color"]                   = t.color,
-                ["cost"]                    = t.cost,
-                ["element"]                 = t.element.ToString().ToLower(),
-                ["family"]                  = t.family.ToString().ToLower(),
-                ["id"]                      = t.id,
-                ["isPremium"]               = t.isPremium,
-                ["name"]                    = t.name,
-                ["shape"]                   = t.shape.ToString().ToLower(),
-                ["stats"]                   = new JObject
+                var stats = new JObject
                 {
-                    ["attackSpeed"]     = t.stats.attackSpeed,
-                    ["damage"]          = t.stats.damage,
-                    ["projectileSpeed"] = t.stats.projectileSpeed,
-                    ["range"]           = t.stats.range,
-                },
-                ["tier"]                    = t.tier,
+                    ["attackSpeed"] = t.stats.attackSpeed,
+                    ["damage"]      = t.stats.damage,
+                    ["range"]       = t.stats.range,
+                };
+                if (Math.Abs(t.stats.projectileSpeed) > 0.000001f)
+                    stats["projectileSpeed"] = t.stats.projectileSpeed;
+                if (!string.IsNullOrEmpty(t.stats.special))
+                    stats["special"] = t.stats.special;
+
+                return new JObject
+                {
+                    ["color"]     = t.color,
+                    ["cost"]      = t.cost,
+                    ["element"]   = t.element.ToString().ToLower(),
+                    ["family"]    = t.family.ToString().ToLower(),
+                    ["id"]        = t.id,
+                    ["isPremium"] = t.isPremium,
+                    ["name"]      = t.name,
+                    ["shape"]     = t.shape.ToString().ToLower(),
+                    ["stats"]     = stats,
+                    ["tier"]      = t.tier,
+                };
             }));
 
             AssertDeepEqualIgnoringMissingDefaults(original, roundTripped, "towers");
@@ -325,6 +333,13 @@ namespace GLD.Tests.EditMode.Editor
             }
             if (token is JArray arr)
                 return new JArray(arr.Select(NormalizeToken));
+            if (token is JValue value && (value.Type == JTokenType.Float || value.Type == JTokenType.Integer))
+            {
+                double n = value.Value<double>();
+                double rounded = Math.Round(n);
+                if (Math.Abs(n - rounded) < 0.000001d)
+                    return new JValue((long)rounded);
+            }
             return token.DeepClone();
         }
     }

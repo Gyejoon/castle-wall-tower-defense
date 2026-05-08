@@ -28,12 +28,6 @@ const ProfilePage = lazy(async () =>
 	import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 );
 
-const AssetReviewPage = lazy(async () =>
-	import('./asset-review/AssetReviewPage').then((m) => ({
-		default: m.AssetReviewPage,
-	})),
-);
-
 function LoadingScreen() {
 	return (
 		<div className="w-full h-full flex flex-col items-center bg-bg pt-[40dvh]">
@@ -59,14 +53,6 @@ const COLORBLIND_FILTERS: Record<string, string> = {
 	deutan: 'url(#deutan-filter)',
 	tritan: 'url(#tritan-filter)',
 };
-
-export function AssetReviewApp() {
-	return (
-		<Suspense fallback={<LoadingScreen />}>
-			<AssetReviewPage />
-		</Suspense>
-	);
-}
 
 export function App() {
 	const runStatus = useGameStore((s) => s.runStatus);

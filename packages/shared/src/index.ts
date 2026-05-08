@@ -171,6 +171,7 @@ export {
 	typography,
 	zIndex,
 } from './design/tokens';
+export { DeterministicRng } from './random/deterministic-rng';
 export type { AdPlacement, AdResult, AdService } from './services/AdService';
 export { MockAdService } from './services/AdService';
 // Phase 7 (v8): scenario-mode constants (stages/worlds/missions/achievements

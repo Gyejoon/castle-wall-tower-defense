@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDPanel name="tutorial-overlay" variant="elevated" padding="sm" class="tutorial-overlay">
+    <ui:Label name="tutorial-title" text="소환" />
+    <ui:Label name="tutorial-body" text="소환 또는 가챠로 타워를 뽑습니다." />
+    <ui:VisualElement name="tutorial-actions" class="tutorial-actions">
+      <gld:GLDButton name="tutorial-next" text="다음" variant="secondary" />
+      <gld:GLDButton name="tutorial-skip" text="건너뛰기" variant="secondary" />
+    </ui:VisualElement>
+  </gld:GLDPanel>
+</ui:UXML>

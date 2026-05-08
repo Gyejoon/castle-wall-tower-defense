@@ -1,6 +1,6 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-04-30 (v3.3 — 9×64 맵 해상도 + 타워 에셋 정렬)
+> **Last Updated:** 2026-05-06 (v3.4 — Unity Phase 5 코어 루프 UI·시각 parity)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 수치 변경은 [02-balance-sheet.md](./02-balance-sheet.md) 참조. BM은 [03-business-model.md](./03-business-model.md) 참조.
 >
@@ -9,6 +9,8 @@
 > **v3.1 노트 (2026-04-20)**: 정식 모드 안정화 4종 버그 픽스. (1) 소환/가챠 재요청 시 draw 캐시 (풀+가챠 양쪽). (2) 보스 HP HUD에 소수점 제거 (`Math.floor`, 생존 중 최소 1 clamp). (3) waves > 10 HP 스케일을 지수(×1.12)에서 선형(`HP_SLOPE=0.55`)으로 전환해 계단식 보스 HP 점프 제거. (4) Phaser 논리 해상도 고정 + 모바일 세로형 표준 레이아웃. 기기별 타워/몬스터 비율은 캔버스 내부 좌표계에서 보존. PR #175.
 >
 > **v3.3 노트 (2026-04-30)**: 현재 `main_long` 맵 기준을 **9×18×64px = 576×1152**로 정렬. 타워 정적/공격 스프라이트는 동일 display metric (`64×80`, y offset `0`)을 사용해 buildable 네모칸 안에 발을 고정한다. `hybrid_ab`, `hybrid_cd`, `ultimate`는 placeholder alias가 아니라 PR #193의 dedicated sprite를 사용한다.
+>
+> **v3.4 노트 (2026-05-06)**: Unity Phase 5는 Phase 6 브리지 이전에 코어 루프의 플레이 가능 시각 parity를 맞추는 단계로 확정한다. Unity 런타임은 실제 최신 타워/몬스터 스프라이트 카탈로그, `main_long` 단일 일러스트 배경, 소수점 waypoint 4-lane 경로, 6개 placement anchor, 소환 대기 중 형광 초록 타워 실루엣 marker, 한국어 HUD/오버레이/로비 copy, 로비 타워 컬렉션 preview, `x1`/`x3` 배속 토글, 피격 유닛 위치 데미지 넘버를 포함해야 한다.
 
 ---
 
@@ -65,6 +67,14 @@
   → 보스 웨이브 클리어 시 로그라이크 3카드 중 1 선택 (런 한정 스택) → 광고 보고 리롤 옵션
   → wave 무한 에스컬레이션 → 패배 시 "광고 보고 이어서 하기" (1회 한정, +5 HP) or 로비 복귀
 ```
+
+**Unity Phase 5 HUD parity**
+- 하단 액션바는 `소환`, T2/T3/T4 가챠, `x1`/`x3` 배속 토글, `메뉴`를 제공한다.
+- 상단 HUD는 에너지, wave/countdown, HP, 현재 run 상태와 배속을 표시한다.
+- 데미지 넘버는 공격 타워가 아니라 실제 피격 유닛 월드 위치에 표시한다.
+- 로비는 전투 시작, 메타 요약, 6종 이상 타워 컬렉션 preview를 같은 첫 화면에 제공한다.
+- `main_long`은 Unity에서도 개별 타일 반복 렌더가 아니라 `main-long-bg.png` 일러스트 배경을 우선 사용한다. 몬스터는 4개 lane의 소수점 waypoint를 따라 이동하고, 타워는 `placementAnchors`의 visual anchor에 발을 맞춘다.
+- 소환/가챠로 pending tower가 생기면 6개 배치 anchor 중 비어 있는 칸에 사각 overlay가 아니라 해당 타워 static sprite를 형광 초록 실루엣으로 표시한다. 배치 성공/취소 시 marker를 숨긴다.
 
 **Meta Loop (shell 수준, 영구 강화 퍽은 후속 단계)**
 ```

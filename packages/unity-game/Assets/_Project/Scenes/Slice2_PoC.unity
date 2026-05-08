@@ -147,7 +147,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac79d2ead570c495195b0219d5a044f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: GLD.SceneRuntime::GLD.SceneRuntime.Slice2.PlacementController
 --- !u!114 &630871295
 MonoBehaviour:
@@ -159,7 +159,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d578923c981484a7ea51606b4a854aa0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: GLD.SceneRuntime::GLD.SceneRuntime.Slice2.Slice2SceneController
   mapLayout: {fileID: 11400000, guid: 7173136c34e444d678b60a9a923e0608, type: 2}
   archerDef: {fileID: 11400000, guid: 9b7be320a35f94cf9ae54896267478bf, type: 2}
@@ -306,7 +306,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 035d91f23d8fd47d2a45366aec1f0ed3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: GLD.SceneRuntime::GLD.SceneRuntime.Slice2.Slice2HudController
 --- !u!114 &939995191
 MonoBehaviour:
@@ -318,9 +318,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
-  m_PanelSettings: {fileID: 11400000, guid: f78a6fc6237fb466bbf0d0f53d689cfa, type: 2}
+  m_PanelSettings: {fileID: 11400000, guid: 904c7b79fda543e6ae034bde47d9a9dd, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 361657d15a82c4234b660d77c32f943b, type: 3}
   m_SortingOrder: 0

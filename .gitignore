@@ -37,16 +37,31 @@ Thumbs.db
 .claude/.skip-gate
 .claude/quality-tracker.json
 .ralreview-state.json
+artifacts/
 
 # Asset forge staging (HITL review buffer — not committed)
 staging/
+
+# Accidental Unity project generated at repo root (actual project is packages/unity-game)
+/Assets/
+/Library/
+/Logs/
+/ProjectSettings/
+/UserSettings/
+/packages/manifest.json
+/packages/packages-lock.json
+/**/*.meta
+!/packages/unity-game/**/*.meta
 
 # Unity generated (under packages/unity-game/)
 packages/unity-game/Library/
 packages/unity-game/Temp/
 packages/unity-game/Logs/
 packages/unity-game/obj/
-packages/unity-game/Build/
+!packages/unity-game/Build/
+packages/unity-game/Build/*
+!packages/unity-game/Build/WebGL/
+!packages/unity-game/Build/WebGL/**
 packages/unity-game/Builds/
 packages/unity-game/UserSettings/
 packages/unity-game/MemoryCaptures/

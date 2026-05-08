@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-05-01 (v3.10 — 초기 imagegen lineup 기반 몬스터 시트 복구)
+> **Last Updated:** 2026-05-06 (v3.12 — Unity Phase 5 몬스터·타일맵·HUD 시각 연결)
 > **Source:** 최초 전환 계획 `docs/superpowers/plans/2026-04-17-phase-a-sole-mode.md` (historical)
 > 에셋 추가·변경 시 이 문서를 먼저 업데이트한다.
 >
@@ -25,6 +25,10 @@
 > **v3.9 변경 요약 (2026-04-30)**: 신규 `imagegen` 4×3 고퀄 몬스터 아틀라스(`imagegen-monster-atlas-v20260430-detail.png`)를 source로 사용한다. `imagegen-monsters`는 chroma-key 제거, connected-component cleanup, 64×64 리터칭/outline, layer split 기반 walk/idle, 피격/쓰러짐 death 시트를 생성한다. 런타임 표시 크기는 일반 **36×36**, 보스 **46×46**로 올려 디테일이 과도하게 죽지 않도록 한다.
 >
 > **v3.10 변경 요약 (2026-05-01)**: v3.9 아틀라스 기반 시트가 실제 게임 렌더에서 과도하게 어둡고 노이즈처럼 깨져 보여, 더 밝고 실루엣이 명확했던 초기 `imagegen` lineup 소스(`imagegen-monster-lineup-v20260430.png`, `imagegen-dragon-lineup-v20260430.png`) 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고, 런타임 표시 크기는 초기값인 일반 **32×32**, 보스 **42×42**로 되돌린다.
+>
+> **v3.11 변경 요약 (2026-05-06)**: Unity Phase 5 코어 루프 렌더링에서 색 사각형 placeholder 대신 실제 19종 타워 스프라이트를 사용한다. Unity는 `Assets/Resources/Visuals/TowerSpriteCatalog.asset`에 `Assets/Art/Sprites/towers/{id}.png`와 `{id}-fire.png`를 참조로 보관하고, `CoreLoopFieldRenderer`가 런타임에 이 카탈로그를 로드한다. Unity 쪽에 누락되어 있던 `hybrid_ab`, `hybrid_cd`, `ultimate` static/fire PNG를 Web 산출물에서 복사해 19종 전체를 맞춘다.
+>
+> **v3.12 변경 요약 (2026-05-06)**: Unity Phase 5 코어 루프 렌더링은 몬스터/보스와 `main_long` 실제 맵도 Phaser 기준에 맞춘다. Unity `Assets/Art/Sprites/towers`와 `units_*` PNG는 Web 최신 산출물과 동기화한다. `Assets/Resources/Visuals/UnitSpriteCatalog.asset`은 12종 유닛의 walk/idle/death 시트를 보관하고, 현재 필드 렌더러는 walk sheet의 첫 64×64 프레임을 월드 오브젝트 스프라이트로 표시한다. `TileSpriteCatalog.asset`은 `main-long-bg.png` 단일 일러스트 배경을 우선 참조하고, ground/path/buildable/blocked/spawn/exit 타일 PNG는 fallback/비일러스트 맵용으로 유지한다. `MapLayout.asset`은 `main_long`의 소수점 waypoint, 4개 lane, 6개 placement anchor를 보존한다. 소환 대기 중에는 placement anchor 위에 pending tower static sprite를 형광 초록 실루엣으로 표시한다. HUD에는 `x1`/`x3` 배속 토글 버튼을 배치하고, 데미지 넘버는 공격 타워 위치가 아니라 실제 피격 유닛 위치에 표시한다.
 
 ---
 
@@ -136,7 +140,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 **Note**: v2의 grade variant (rare/unique/epic PNG)는 호환 파일로만 유지한다. v3는 tier가 별개 타워 id이므로 신규 설계 기준은 `{id}.png`와 `{id}-fire.png`이다.
 
-**TinySwords field readability**: 타워 원본은 PR #193의 `imagegen` 산출물을 사용하고, `scripts/art-tools/harmonize-tower-assets.mjs`로 Web PNG/WebP만 정규화한다. 런타임에서는 `generate-runtime-tower-assets.mjs`가 만든 64×80 `tower-{id}-runtime` 텍스처를 사용해 Phaser 내부 축소 샘플링을 피한다. `getTowerDisplayMetrics(64)`도 64×80을 반환하므로 static/fire는 같은 앵커를 공유한다. Unity 복사는 현재 Phaser/Web 런타임 범위에서 제외한다.
+**TinySwords field readability**: 타워 원본은 PR #193의 `imagegen` 산출물을 사용하고, `scripts/art-tools/harmonize-tower-assets.mjs`로 Web PNG/WebP를 정규화한다. Phaser 런타임에서는 `generate-runtime-tower-assets.mjs`가 만든 64×80 `tower-{id}-runtime` 텍스처를 사용해 내부 축소 샘플링을 피한다. Unity 런타임은 `TowerSpriteCatalog.asset`이 참조하는 128×160 static PNG와 512×80 fire PNG를 사용하며, `CoreLoopFieldRenderer`에서 월드 폭 1칸 기준으로 스케일링한다. `getTowerDisplayMetrics(64)`도 64×80을 반환하므로 static/fire는 같은 앵커를 공유한다.
 
 ### 발사체 스타일
 
@@ -233,6 +237,7 @@ export function preloadImages(urls: string[]): Promise<undefined[]>;
 
 공통 스타일: imagegen 기반 중세 판타지 clean cartoon sprite, 64×64 고정 프레임, 밝고 읽히는 실루엣, 고정 feet baseline, TinySwords 톤 팔레트.
 모든 런타임 유닛은 개별 death 시트를 사용하며 공용 `unit-death.png`는 제거한다.
+Unity Phase 5 런타임은 `UnitSpriteCatalog.asset`을 통해 12종 유닛 시트를 참조한다. 현재 코어 루프 필드 렌더러는 Web/Phaser와 동일한 시트를 입력으로 사용하되, 애니메이션 재생 전 단계로 walk sheet의 첫 프레임을 잘라 필드 오브젝트에 표시한다.
 
 ### 애니메이션 상태 시스템
 
@@ -340,6 +345,8 @@ unit별 8프레임 워크 사이클:
 
 원본 소스는 `scripts/generate-assets/sources/main-long-reference.png`에 보관한다. 배경은 원본 비율을 유지한 cover-crop으로 432×960/864×1920에 맞춘다. 런타임은 576×1152 내부 좌표계로 표시하며, 432×960 원본 아트 좌표를 576×1152로 변환한 뒤 게임 판정용 9×18 논리 그리드에 매핑한다. 적 이동 경로는 이미지의 흙길 중심 픽셀을 `worldToMainLongGridPoint()`로 역변환한 소수점 waypoint를 사용한다. 타워 배치는 6개 `buildablePoints`만 허용하고, 각 칸은 `placementAnchors`의 이미지 좌표 중심으로 스냅한다. 중앙 성채와 스폰 문은 별도 런타임 에셋이 있더라도 배경과 중복되므로 `main_long`에서는 렌더링하지 않는다.
 
+Unity Phase 5 런타임은 `main_long`에서 `TileSpriteCatalog.asset`의 `mainLongBackground`를 우선 사용해 Phaser와 같은 단일 일러스트 배경을 렌더링한다. 논리 그리드 판정은 `GridManager`를 유지하되, `MapLayout.asset`에 소수점 waypoint와 4개 lane을 보존해 몬스터 이동 경로가 배경 이미지의 흙길을 따른다. 6개 타워 배치 위치는 `placementAnchors`의 runtime pixel 좌표를 Unity world 좌표로 변환해 사용한다. 개별 ground/path/buildable/spawn/exit 타일 PNG는 fallback/비일러스트 맵용이다.
+
 ---
 
 ## 10. 네이밍 규칙
@@ -400,3 +407,4 @@ icon-{category}-{id} # 아이콘
 | 2026-04-30 | 헤더, §5 | 몬스터/보스 64×64 시트에 내부 명암과 장비 디테일을 추가하고, death 시트를 피격/쓰러짐/잔해 6프레임 전용 모션으로 교체한다. |
 | 2026-04-30 | 헤더, §1, §5 | 신규 imagegen 4×3 몬스터 아틀라스를 source로 삼아 64×64 리터칭/outline/layer split walk/death 시트를 생성한다. 런타임 표시 크기를 일반 36×36, 보스 46×46으로 조정한다. |
 | 2026-05-01 | 헤더, §1, §5 | v3.9 아틀라스 기반 몬스터가 실제 게임 크기에서 어둡고 노이즈처럼 깨져 보여, 초기 `imagegen` lineup 기반 64×64 시트로 복구한다. walk/idle/death 프레임 수는 유지하고 런타임 표시 크기는 일반 32×32, 보스 42×42로 되돌린다. |
+| 2026-05-06 | 헤더, §3, §5, §9 | Unity Phase 5 렌더러가 실제 타워/몬스터/타일맵 스프라이트 카탈로그를 로드하도록 연결한다. HUD 배속 토글과 피격 위치 데미지 넘버 표시도 Phase 5 시각 완성 범위로 반영한다. |

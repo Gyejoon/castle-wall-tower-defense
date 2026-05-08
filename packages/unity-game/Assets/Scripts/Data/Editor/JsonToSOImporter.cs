@@ -346,6 +346,9 @@ namespace GLD.Data.Editor
                     spawnPoint             = ToGridPoint(dto.spawnPoint),
                     exitPoint              = ToGridPoint(dto.exitPoint),
                     path                   = ToGridPoints(dto.path),
+                    waypoints              = ToFloatGridPoints(dto.path),
+                    lanes                  = ToMapPaths(dto.paths),
+                    placementAnchors       = ToPlacementAnchors(dto.placementAnchors),
                     buildablePoints        = ToGridPoints(dto.buildablePoints),
                     blockedPlacementPoints = ToGridPoints(dto.blockedPlacementPoints),
                     obstacles              = ToGridPoints(dto.obstacles),
@@ -1018,8 +1021,8 @@ namespace GLD.Data.Editor
 
         class GridPointDTO
         {
-            public int x;
-            public int y;
+            public float x;
+            public float y;
         }
 
         class MapDecorationDTO
@@ -1045,6 +1048,8 @@ namespace GLD.Data.Editor
             public GridPointDTO   spawnPoint;
             public GridPointDTO   exitPoint;
             public GridPointDTO[] path;
+            public JArray         paths;
+            public JArray         placementAnchors;
             public GridPointDTO[] buildablePoints;
             public GridPointDTO[] blockedPlacementPoints;
             public GridPointDTO[] obstacles;
@@ -1132,13 +1137,53 @@ namespace GLD.Data.Editor
         static GridPoint ToGridPoint(GridPointDTO dto)
         {
             if (dto == null) return default;
-            return new GridPoint { x = dto.x, y = dto.y };
+            return new GridPoint { x = Mathf.RoundToInt(dto.x), y = Mathf.RoundToInt(dto.y) };
         }
 
         static GridPoint[] ToGridPoints(GridPointDTO[] arr)
         {
             if (arr == null) return Array.Empty<GridPoint>();
-            return arr.Select(p => new GridPoint { x = p.x, y = p.y }).ToArray();
+            return arr.Select(p => new GridPoint { x = Mathf.RoundToInt(p.x), y = Mathf.RoundToInt(p.y) }).ToArray();
+        }
+
+        static FloatGridPoint[] ToFloatGridPoints(GridPointDTO[] arr)
+        {
+            if (arr == null) return Array.Empty<FloatGridPoint>();
+            return arr.Select(p => new FloatGridPoint { x = p.x, y = p.y }).ToArray();
+        }
+
+        static MapPath[] ToMapPaths(JArray arr)
+        {
+            if (arr == null) return Array.Empty<MapPath>();
+            return arr
+                .OfType<JArray>()
+                .Select(path => new MapPath
+                {
+                    points = path
+                        .OfType<JObject>()
+                        .Select(point => new FloatGridPoint
+                        {
+                            x = point["x"]?.Value<float>() ?? 0f,
+                            y = point["y"]?.Value<float>() ?? 0f,
+                        })
+                        .ToArray(),
+                })
+                .ToArray();
+        }
+
+        static PlacementAnchor[] ToPlacementAnchors(JArray arr)
+        {
+            if (arr == null) return Array.Empty<PlacementAnchor>();
+            return arr
+                .OfType<JObject>()
+                .Select(anchor => new PlacementAnchor
+                {
+                    x = anchor["x"]?.Value<int>() ?? 0,
+                    y = anchor["y"]?.Value<int>() ?? 0,
+                    worldX = anchor["worldX"]?.Value<float>() ?? 0f,
+                    worldY = anchor["worldY"]?.Value<float>() ?? 0f,
+                })
+                .ToArray();
         }
 
         static MapDecoration[] ToDecorations(MapDecorationDTO[] arr)

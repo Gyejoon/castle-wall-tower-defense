@@ -1,0 +1,174 @@
+@import url("project://database/Assets/UI/Styles/tokens.uss");
+
+.gld-btn {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-width: 2px;
+  border-radius: var(--radius-sm);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  font-size: var(--type-label12-size);
+}
+
+.gld-btn--primary {
+  background-color: var(--color-accent);
+  border-color: var(--color-border);
+  color: var(--color-bg);
+}
+
+.gld-btn--secondary {
+  background-color: var(--surface-panel-elevated);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.gld-btn--danger {
+  background-color: var(--color-danger);
+  border-color: var(--surface-alpha-danger20);
+  color: var(--color-text);
+}
+
+.gld-btn--sm {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: var(--type-caption10-size);
+}
+
+.gld-btn--md {
+  min-height: 38px;
+}
+
+.gld-btn--lg {
+  min-height: 48px;
+  padding: 10px 16px;
+  font-size: var(--type-body14-size);
+}
+
+.gld-btn--tier-2,
+.gld-badge--tier-2,
+.gld-card--tier-2 {
+  border-color: var(--tier-2-primary);
+}
+
+.gld-btn--tier-3,
+.gld-badge--tier-3,
+.gld-card--tier-3 {
+  border-color: var(--tier-3-primary);
+}
+
+.gld-btn--tier-4,
+.gld-badge--tier-4,
+.gld-card--tier-4 {
+  border-color: var(--tier-4-primary);
+}
+
+.gld-card {
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--color-border);
+  background-color: var(--surface-panel);
+  padding: var(--space-md);
+}
+
+.gld-card--elevated {
+  background-color: var(--surface-panel-elevated);
+  border-bottom-width: 5px;
+}
+
+.gld-card--sunken {
+  background-color: var(--surface-panel-sunken);
+}
+
+.gld-card--selected {
+  border-color: var(--state-focus);
+}
+
+.gld-badge {
+  min-height: 24px;
+  padding: 4px 8px;
+  border-width: 1px;
+  border-radius: var(--radius-xs);
+  border-color: var(--color-border);
+  background-color: var(--surface-alpha-panel90);
+  color: var(--color-text);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  font-size: var(--type-caption10-size);
+}
+
+.gld-badge--accent {
+  color: var(--color-bg);
+  background-color: var(--color-accent);
+}
+
+.gld-badge--danger {
+  background-color: var(--color-danger);
+}
+
+.gld-panel {
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--color-border);
+  background-color: var(--surface-alpha-panel92);
+}
+
+.gld-panel--elevated {
+  background-color: var(--surface-panel-elevated);
+  border-bottom-width: 5px;
+}
+
+.gld-panel--pad-sm {
+  padding: var(--space-sm);
+}
+
+.gld-panel--pad-md {
+  padding: var(--space-md);
+}
+
+.gld-panel--pad-lg {
+  padding: var(--space-lg);
+}
+
+.gld-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--overlay-dim-default);
+}
+
+.gld-overlay--soft {
+  background-color: var(--overlay-dim-soft);
+}
+
+.gld-overlay--heavy {
+  background-color: var(--overlay-dim-heavy);
+}
+
+.gld-overlay--cinematic {
+  background-color: var(--overlay-dim-cinematic);
+}
+
+.gld-overlay--hidden {
+  display: none;
+}
+
+.gld-sheet {
+  border-width: 2px;
+  border-radius: var(--radius-lg);
+  border-color: var(--color-border);
+  background-color: var(--surface-alpha-panel96);
+  padding: var(--space-md);
+}
+
+.gld-sheet--bottom {
+  align-self: stretch;
+  margin: 0 var(--space-md) var(--space-md) var(--space-md);
+}
+
+.gld-sheet--floating {
+  width: 260px;
+}

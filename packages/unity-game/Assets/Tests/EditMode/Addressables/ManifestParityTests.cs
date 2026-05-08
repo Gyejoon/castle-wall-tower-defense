@@ -4,8 +4,8 @@
 // Phase 1 Task 6.
 //
 // Graceful degradation:
-//   - manifest.json missing          → Assert.Inconclusive (Phase 0b not yet done)
-//   - Addressables not initialized   → Assert.Inconclusive (groups not yet created)
+//   - manifest.json missing          → Assert.Ignore (Phase 0b not yet done)
+//   - Addressables not initialized   → Assert.Ignore (groups not yet created)
 //   - Individual entry missing/wrong → Assert.Fail with details
 
 using System;
@@ -44,7 +44,7 @@ namespace GLD.Tests.EditMode
         public void ManifestJson_FileExists()
         {
             if (!File.Exists(ManifestPath))
-                Assert.Inconclusive(
+                Assert.Ignore(
                     $"manifest.json not found at '{ManifestPath}'. " +
                     "This will exist after the manifest export follow-up is completed " +
                     "(Phase 1 Task 6 follow-up: author asset manifest data + extend exporter).");
@@ -56,7 +56,7 @@ namespace GLD.Tests.EditMode
         public void ManifestJson_Parseable()
         {
             if (!File.Exists(ManifestPath))
-                Assert.Inconclusive($"manifest.json not found at '{ManifestPath}'.");
+                Assert.Ignore($"manifest.json not found at '{ManifestPath}'.");
 
             string json = File.ReadAllText(ManifestPath);
             AssetManifestJson manifest = null;
@@ -72,7 +72,7 @@ namespace GLD.Tests.EditMode
         {
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
             if (settings == null)
-                Assert.Inconclusive(
+                Assert.Ignore(
                     "Addressables not initialized. " +
                     "Create groups via Window → Asset Management → Addressables → Groups (Phase 0b).");
 
@@ -85,16 +85,16 @@ namespace GLD.Tests.EditMode
         public void AllManifestEntries_HaveCorrectAddressableKey()
         {
             if (!File.Exists(ManifestPath))
-                Assert.Inconclusive($"manifest.json not found at '{ManifestPath}'.");
+                Assert.Ignore($"manifest.json not found at '{ManifestPath}'.");
 
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
             if (settings == null)
-                Assert.Inconclusive("Addressables not initialized.");
+                Assert.Ignore("Addressables not initialized.");
 
             string json = File.ReadAllText(ManifestPath);
             var manifest = JsonConvert.DeserializeObject<AssetManifestJson>(json);
             if (manifest?.assets == null || manifest.assets.Length == 0)
-                Assert.Inconclusive("manifest.json is empty — nothing to verify.");
+                Assert.Ignore("manifest.json is empty — nothing to verify.");
 
             var failures = new System.Collections.Generic.List<string>();
 
@@ -133,16 +133,16 @@ namespace GLD.Tests.EditMode
         public void AllManifestEntries_AssignedToCorrectGroup()
         {
             if (!File.Exists(ManifestPath))
-                Assert.Inconclusive($"manifest.json not found at '{ManifestPath}'.");
+                Assert.Ignore($"manifest.json not found at '{ManifestPath}'.");
 
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
             if (settings == null)
-                Assert.Inconclusive("Addressables not initialized.");
+                Assert.Ignore("Addressables not initialized.");
 
             string json = File.ReadAllText(ManifestPath);
             var manifest = JsonConvert.DeserializeObject<AssetManifestJson>(json);
             if (manifest?.assets == null || manifest.assets.Length == 0)
-                Assert.Inconclusive("manifest.json is empty — nothing to verify.");
+                Assert.Ignore("manifest.json is empty — nothing to verify.");
 
             var failures = new System.Collections.Generic.List<string>();
 
@@ -189,16 +189,16 @@ namespace GLD.Tests.EditMode
         public void NoOrphanedAddressableKeys_NotInManifest()
         {
             if (!File.Exists(ManifestPath))
-                Assert.Inconclusive($"manifest.json not found at '{ManifestPath}'.");
+                Assert.Ignore($"manifest.json not found at '{ManifestPath}'.");
 
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
             if (settings == null)
-                Assert.Inconclusive("Addressables not initialized.");
+                Assert.Ignore("Addressables not initialized.");
 
             string json = File.ReadAllText(ManifestPath);
             var manifest = JsonConvert.DeserializeObject<AssetManifestJson>(json);
             if (manifest?.assets == null)
-                Assert.Inconclusive("manifest.json is empty.");
+                Assert.Ignore("manifest.json is empty.");
 
             // Build manifest key set.
             var manifestKeys = new HashSet<string>();

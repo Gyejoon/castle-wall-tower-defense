@@ -27,10 +27,12 @@
   <script>
     (function () {
       const buildUrl = "Build";
+      const buildVersion = "{{{ PRODUCT_VERSION }}}";
+      const cacheBust = "?v=" + encodeURIComponent(buildVersion);
       const config = {
-        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
-        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
-        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}" + cacheBust,
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}" + cacheBust,
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}" + cacheBust,
 #if MEMORY_FILENAME
         memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
 #endif
@@ -40,7 +42,7 @@
         streamingAssetsUrl: "StreamingAssets",
         companyName: "{{{ COMPANY_NAME }}}",
         productName: "{{{ PRODUCT_NAME }}}",
-        productVersion: "{{{ PRODUCT_VERSION }}}",
+        productVersion: buildVersion,
         showBanner: (msg, type) => {
           const warn = document.getElementById("unity-warning");
           if (!warn) return;

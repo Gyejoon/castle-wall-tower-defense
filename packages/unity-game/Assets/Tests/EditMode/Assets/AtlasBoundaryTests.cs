@@ -12,7 +12,7 @@ namespace GLD.Tests.EditMode.Assets
             var guids = AssetDatabase.FindAssets("t:SpriteAtlas");
             if (guids.Length == 0)
             {
-                Assert.Inconclusive(
+                Assert.Ignore(
                     "No Sprite Atlas V2 assets present. Phase 0b user creates them via " +
                     "Assets → Create → 2D → Sprite Atlas V2. Test runs meaningfully once 10 " +
                     "atlases (Towers/Units_Core/Units_Boss/etc.) exist.");

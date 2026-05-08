@@ -1,0 +1,21 @@
+{
+  "durationMs": 60000,
+  "expected": {
+    "energyPeak": 44.1,
+    "kills": 5,
+    "totalDamage": 150,
+    "waveClearMs": 9083
+  },
+  "fixtureId": "seed-007-continue-run",
+  "phase4_dependent": true,
+  "placements": [
+    {
+      "col": 3,
+      "row": 14,
+      "tMs": 100,
+      "towerId": "archer"
+    }
+  ],
+  "seed": 44444,
+  "tickMs": 16.6667
+}

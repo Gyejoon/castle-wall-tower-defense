@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 import type { OutputBundle, Plugin as RollupPlugin } from 'rollup';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { assetReviewPlugin } from './plugins/asset-review-plugin';
 
 const NON_PHASER_CHUNK_BUDGET_KB = 500;
 const PHASER_CHUNK_WARNING_LIMIT_KB = 1600;
@@ -35,7 +34,6 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		react(),
-		assetReviewPlugin(),
 		createNonPhaserChunkBudgetWarning(),
 		VitePWA({
 			disable: isVercelBuild,

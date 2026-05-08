@@ -29,6 +29,9 @@ namespace GLD.SceneRuntime.Slice2
         public int seed;
         public int durationMs = 60000;
         public float tickMs = 16.6667f;
+        public bool phase4_dependent;
+        public bool continueAfterWaveClear;
+        public float speedMultiplier = 1f;
         public ReplayPlacementEvent[] placements;
         public ReplayExpectedMetrics expected;
     }
@@ -71,7 +74,7 @@ namespace GLD.SceneRuntime.Slice2
             var tickMs = fixture.tickMs > 0f ? fixture.tickMs : 16.6667f;
             var durationMs = fixture.durationMs > 0 ? fixture.durationMs : 60000;
 
-            while (_elapsedMs <= durationMs && !waves.IsCompleted)
+            while (_elapsedMs <= durationMs && (!waves.IsCompleted || fixture.continueAfterWaveClear))
             {
                 while (placementIndex < placements.Length && placements[placementIndex].tMs <= _elapsedMs)
                 {
@@ -79,11 +82,15 @@ namespace GLD.SceneRuntime.Slice2
                     towers.Place(p.towerId, 20f, 4f, 1f, new MinimalGridCell(p.col, p.row));
                 }
 
-                var dt = tickMs / 1000f;
+                var speedMultiplier = fixture.speedMultiplier > 0f ? fixture.speedMultiplier : 1f;
+                var dt = (tickMs / 1000f) * speedMultiplier;
                 energy.Tick(dt);
-                waves.Tick(dt);
-                units.Tick(dt);
-                towers.Tick(dt);
+                if (!waves.IsCompleted)
+                {
+                    waves.Tick(dt);
+                    units.Tick(dt);
+                    towers.Tick(dt);
+                }
                 _elapsedMs += tickMs;
             }
 

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <gld:GLDPanel name="debug-primitives-gallery" padding="lg">
+    <gld:GLDBadge name="gallery-title" text="DS PRIMITIVES" variant="accent" />
+    <ui:VisualElement style="height: 8px;" />
+    <ui:VisualElement style="flex-direction: row;">
+      <gld:GLDButton name="primary-button" text="Summon" variant="primary" size="lg" />
+      <gld:GLDButton name="secondary-button" text="Merge" variant="secondary" size="md" tier="3" />
+      <gld:GLDButton name="danger-button" text="Quit" variant="danger" size="sm" />
+    </ui:VisualElement>
+    <ui:VisualElement style="height: 8px;" />
+    <ui:VisualElement style="flex-direction: row;">
+      <gld:GLDBadge name="tier-badge" text="T4" tier="4" />
+      <gld:GLDBadge name="fire-badge" text="FIRE" element="fire" />
+    </ui:VisualElement>
+    <ui:VisualElement style="height: 8px;" />
+    <gld:GLDCard name="selected-card" variant="elevated" tier="2" selected="true">
+      <ui:Label text="Tower card" />
+    </gld:GLDCard>
+    <ui:VisualElement style="height: 8px;" />
+    <gld:GLDSheet name="floating-sheet" anchor="floating" variant="default">
+      <ui:Label text="Action sheet" />
+    </gld:GLDSheet>
+    <gld:GLDOverlay name="hidden-overlay" dim="soft" visible="false" />
+  </gld:GLDPanel>
+</ui:UXML>

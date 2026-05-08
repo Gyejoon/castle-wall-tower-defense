@@ -3,9 +3,30 @@
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && bun run scripts/vercel-install.ts",
   "framework": null,
+  "redirects": [
+    { "source": "/unity", "destination": "/unity/", "permanent": false }
+  ],
+  "headers": [
+    {
+      "source": "/unity/Build/WebGL.data",
+      "headers": [
+        { "key": "Content-Type", "value": "application/octet-stream" }
+      ]
+    },
+    {
+      "source": "/unity/Build/WebGL.framework.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "source": "/unity/Build/WebGL.wasm",
+      "headers": [
+        { "key": "Content-Type", "value": "application/wasm" }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/unity", "destination": "/unity/index.html" },
-    { "source": "/unity/:path*", "destination": "/unity/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

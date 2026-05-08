@@ -1,0 +1,21 @@
+{
+  "durationMs": 60000,
+  "expected": {
+    "energyPeak": 44.3,
+    "kills": 5,
+    "totalDamage": 150,
+    "waveClearMs": 3083
+  },
+  "fixtureId": "seed-009-3x-speed",
+  "placements": [
+    {
+      "col": 3,
+      "row": 14,
+      "tMs": 100,
+      "towerId": "archer"
+    }
+  ],
+  "seed": 66666,
+  "speedMultiplier": 3,
+  "tickMs": 16.6667
+}

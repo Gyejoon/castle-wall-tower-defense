@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDOverlay name="upgrade-pick-overlay" dim="default" class="upgrade-pick-overlay">
+    <gld:GLDPanel name="upgrade-pick-panel" variant="elevated" padding="lg" class="upgrade-pick-panel">
+      <ui:Label name="upgrade-pick-title" text="강화 선택" />
+      <ui:VisualElement name="upgrade-pick-cards" class="upgrade-pick-cards">
+        <gld:GLDCard name="upgrade-card-0" variant="default" class="upgrade-pick-card">
+          <ui:Label name="upgrade-card-0-title" text="-" />
+          <ui:Label name="upgrade-card-0-description" text="" />
+          <gld:GLDButton name="upgrade-card-0-pick" text="선택" variant="primary" />
+        </gld:GLDCard>
+        <gld:GLDCard name="upgrade-card-1" variant="default" class="upgrade-pick-card">
+          <ui:Label name="upgrade-card-1-title" text="-" />
+          <ui:Label name="upgrade-card-1-description" text="" />
+          <gld:GLDButton name="upgrade-card-1-pick" text="선택" variant="primary" />
+        </gld:GLDCard>
+        <gld:GLDCard name="upgrade-card-2" variant="default" class="upgrade-pick-card">
+          <ui:Label name="upgrade-card-2-title" text="-" />
+          <ui:Label name="upgrade-card-2-description" text="" />
+          <gld:GLDButton name="upgrade-card-2-pick" text="선택" variant="primary" />
+        </gld:GLDCard>
+      </ui:VisualElement>
+      <gld:GLDButton name="upgrade-pick-reroll" text="다시 뽑기" variant="secondary" />
+    </gld:GLDPanel>
+  </gld:GLDOverlay>
+</ui:UXML>

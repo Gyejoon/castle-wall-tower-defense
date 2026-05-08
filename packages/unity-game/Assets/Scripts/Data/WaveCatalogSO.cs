@@ -19,7 +19,17 @@ namespace GLD.Data
 
         void OnEnable()
         {
-            if (waves == null) return;
+            RebuildLookup();
+        }
+
+        void RebuildLookup()
+        {
+            if (waves == null)
+            {
+                _bySlot = null;
+                return;
+            }
+
             _bySlot = new Dictionary<int, WaveDefSO>(waves.Length);
             foreach (var w in waves)
             {
@@ -31,7 +41,10 @@ namespace GLD.Data
         /// <summary>Returns the WaveDefSO for the given 1-based slot index, or null if not found.</summary>
         public WaveDefSO FindBySlot(int slotIndex)
         {
-            if (_bySlot == null) OnEnable();
+            if (_bySlot == null || (waves != null && _bySlot.Count != waves.Length))
+                RebuildLookup();
+            if (_bySlot == null)
+                return null;
             _bySlot.TryGetValue(slotIndex, out var result);
             return result;
         }

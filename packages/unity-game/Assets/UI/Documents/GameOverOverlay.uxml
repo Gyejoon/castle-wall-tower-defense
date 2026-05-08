@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDOverlay name="game-over-overlay" dim="default" class="game-over-overlay">
+    <gld:GLDPanel name="game-over-panel" variant="elevated" padding="lg" class="game-over-panel">
+      <ui:Label name="game-over-title" text="패배" />
+      <ui:Label name="game-over-subtitle" text="성벽이 무너졌습니다" />
+      <ui:Label name="game-over-stats" text="Wave 0  HP 0  Time 00:00" />
+      <gld:GLDButton name="game-over-quit" text="로비" variant="primary" />
+    </gld:GLDPanel>
+  </gld:GLDOverlay>
+</ui:UXML>

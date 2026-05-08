@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDOverlay name="boss-warning-overlay" dim="soft" class="boss-warning-overlay">
+    <gld:GLDPanel name="boss-warning-panel" variant="elevated" padding="lg" class="boss-warning-panel">
+      <ui:Label name="boss-warning-title" text="보스 웨이브" />
+      <ui:Label name="boss-warning-subtitle" text="W 0" />
+    </gld:GLDPanel>
+  </gld:GLDOverlay>
+</ui:UXML>

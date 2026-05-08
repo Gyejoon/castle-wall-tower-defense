@@ -1,0 +1,14 @@
+{
+  "durationMs": 180000,
+  "expected": {
+    "energyPeak": 200,
+    "kills": 0,
+    "totalDamage": 0,
+    "waveClearMs": 11967
+  },
+  "fixtureId": "seed-006-energy-cap",
+  "continueAfterWaveClear": true,
+  "placements": [],
+  "seed": 33333,
+  "tickMs": 16.6667
+}

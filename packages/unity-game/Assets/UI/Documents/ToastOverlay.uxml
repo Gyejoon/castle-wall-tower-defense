@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
+  <gld:GLDPanel name="toast-overlay" variant="elevated" padding="sm" class="toast-overlay">
+    <ui:Label name="toast-message" text="" />
+  </gld:GLDPanel>
+</ui:UXML>

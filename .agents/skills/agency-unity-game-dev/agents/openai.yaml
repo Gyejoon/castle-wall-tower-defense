@@ -1,0 +1,8 @@
+interface:
+  display_name: "Agency Unity Game Dev"
+  short_description: "Use agency-agents Unity personas in Codex"
+  brand_color: "#3B82F6"
+  default_prompt: "Use $agency-unity-game-dev to review the Unity architecture under packages/unity-game."
+
+policy:
+  allow_implicit_invocation: true

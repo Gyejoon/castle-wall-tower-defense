@@ -1,4 +1,8 @@
 packages/unity-game/**
+!packages/unity-game/
+!packages/unity-game/Build/
+!packages/unity-game/Build/WebGL/
+!packages/unity-game/Build/WebGL/**
 docs/**
 .github/**
 .claude/**

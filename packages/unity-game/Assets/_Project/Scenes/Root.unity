@@ -146,11 +146,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 164cce402789c485e89b8183f609f3a1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: GLD.SceneRuntime::GLD.SceneRuntime.Slice2.UrlParamRouter
   pocSceneName: Slice2_PoC
   coreLoopRoot: {fileID: 1943979820}
-  editorUrlOverride: 
+  editorUrlOverride:
 --- !u!4 &343132085
 Transform:
   m_ObjectHideFlags: 0
@@ -382,7 +382,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32b8187205b14f7f8368c0f16275bd8f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: GLD.SceneRuntime::GLD.SceneRuntime.CoreLoop.GameSceneController
   database: {fileID: 11400000, guid: 0e3a526e1a6c8428fa365c094f8e070c, type: 2}
   mapId: main_long

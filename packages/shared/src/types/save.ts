@@ -26,6 +26,10 @@ export interface ProfileData {
 export interface ProgressData {
 	/** Highest wave reached in any 정식 모드 run. Scalar since Phase 7 (v8). */
 	highestWave: number;
+	highestActReached: number;
+	highestCheckpointWave: number;
+	bestWallHpRemaining: number;
+	bestTowerFamiliesBuilt: string[];
 	totalBattles: number;
 	tutorialCompleted: boolean;
 	gachaPityCount: number;

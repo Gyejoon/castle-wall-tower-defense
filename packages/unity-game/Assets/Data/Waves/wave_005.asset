@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2acb616c053ed41329f777698b3df9c4, type: 3}
   m_Name: wave_005
   m_EditorClassIdentifier: GLD.Data::GLD.Data.WaveDefSO
-  delayAfterClearSec: 3
+  delayAfterClearSec: 5
   groups:
-  - count: 23
+  - count: 1
     hpMultiplier: 1
-    unitId: scout_drone
-  - count: 7
+    unitId: orc_warlord
+  - count: 2
     hpMultiplier: 1
     unitId: battle_robot
-  kind: 1
+  kind: 0
   slotIndex: 5

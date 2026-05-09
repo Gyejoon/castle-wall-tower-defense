@@ -10,20 +10,58 @@
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <ui:VisualElement name="game-hud" class="game-hud">
     <ui:VisualElement name="game-hud-top" class="game-hud__top">
-      <gld:GLDBadge name="hud-energy" text="E 40/200" variant="accent" />
-      <gld:GLDBadge name="hud-wave" text="W 0" />
-      <gld:GLDBadge name="hud-hp" text="HP 20" variant="danger" />
-    </ui:VisualElement>
-    <ui:Label name="hud-status" text="준비 x1" class="game-hud__status" />
-    <gld:GLDSheet name="game-hud-bottom" anchor="bottom" class="game-hud__bottom">
-      <ui:VisualElement name="game-hud-actions" class="game-hud__actions">
-        <gld:GLDButton name="hud-summon" text="소환" variant="primary" />
-        <gld:GLDButton name="hud-gacha-t2" text="T2" variant="secondary" tier="2" />
-        <gld:GLDButton name="hud-gacha-t3" text="T3" variant="secondary" tier="3" />
-        <gld:GLDButton name="hud-gacha-t4" text="T4" variant="secondary" tier="4" />
-        <gld:GLDButton name="hud-speed" text="x3" variant="secondary" />
-        <gld:GLDButton name="hud-menu" text="메뉴" variant="secondary" />
+      <ui:VisualElement name="hud-energy-panel" class="game-hud__stat game-hud__stat--energy">
+        <ui:VisualElement class="game-hud__stat-medal">
+          <ui:Label text="⚡" class="game-hud__stat-icon" />
+        </ui:VisualElement>
+        <ui:Label name="hud-energy" text="46" class="game-hud__stat-value" />
       </ui:VisualElement>
-    </gld:GLDSheet>
+      <ui:VisualElement name="hud-wave-panel" class="game-hud__stat game-hud__stat--wave">
+        <ui:Label text="WAVE" class="game-hud__stat-title" />
+        <ui:Label name="hud-wave" text="1/20" class="game-hud__stat-value game-hud__stat-value--wave" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="game-hud-top-right" class="game-hud__top-right">
+      <ui:Button name="hud-menu" text="II" class="game-hud__round-control game-hud__round-control--pause" />
+      <ui:Button name="hud-speed" text="x3 ››" class="game-hud__round-control game-hud__round-control--speed" />
+    </ui:VisualElement>
+    <ui:VisualElement name="game-hud-left-stack" class="game-hud__left-stack">
+      <ui:VisualElement name="hud-progress-panel" class="game-hud__progress">
+        <ui:Label text="☠" class="game-hud__progress-icon" />
+        <ui:Label name="hud-progress-label" text="공격 W 0" />
+        <ui:VisualElement class="game-hud__progress-rail">
+          <ui:VisualElement class="game-hud__progress-dot game-hud__progress-dot--on" />
+          <ui:VisualElement class="game-hud__progress-dot game-hud__progress-dot--on" />
+          <ui:VisualElement class="game-hud__progress-dot game-hud__progress-dot--on" />
+          <ui:VisualElement class="game-hud__progress-dot" />
+          <ui:VisualElement class="game-hud__progress-dot" />
+          <ui:VisualElement class="game-hud__progress-dot" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+      <ui:VisualElement name="hud-card-preview" class="game-hud__card-preview">
+        <ui:Label name="hud-card-preview-icon" text="BOSS" />
+        <ui:Label name="hud-card-preview-count" text="0" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <gld:GLDOverlay name="hud-wall-repair" dim="soft" visible="false" class="wall-repair-overlay">
+      <gld:GLDPanel name="hud-wall-repair-panel" variant="elevated" padding="md" class="wall-repair-prompt">
+        <ui:Label name="hud-wall-repair-title" text="성벽 메뉴" />
+        <ui:Label name="hud-wall-repair-label" text="성벽 20/20 · E25" />
+        <gld:GLDButton name="hud-wall-repair-button" text="즉시 수리 x0" variant="primary" size="md" />
+        <gld:GLDButton name="hud-wall-damage-button" text="공격력 E45" variant="secondary" size="md" />
+        <gld:GLDButton name="hud-wall-speed-button" text="공격 속도 E50" variant="secondary" size="md" />
+        <gld:GLDButton name="hud-wall-range-button" text="공격 범위 E40" variant="secondary" size="md" />
+      </gld:GLDPanel>
+    </gld:GLDOverlay>
+    <ui:VisualElement name="game-hud-actions" class="game-hud__actions">
+      <ui:Button name="hud-gacha-t2" class="game-hud__skill-button game-hud__skill-button--push">
+        <ui:Label text="↯" class="game-hud__skill-icon" />
+        <ui:Label name="hud-gacha-t2-label" text="밀치기" class="game-hud__skill-label" />
+      </ui:Button>
+      <ui:Button name="hud-gacha-t3" class="game-hud__skill-button game-hud__skill-button--freeze">
+        <ui:Label text="❄" class="game-hud__skill-icon" />
+        <ui:Label name="hud-gacha-t3-label" text="정지" class="game-hud__skill-label" />
+      </ui:Button>
+    </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

@@ -38,7 +38,7 @@ namespace GLD.Tests.EditMode.UI
                 Assert.That(controller.IsVisible, Is.True);
                 Assert.That(controller.OfferedTowerId, Is.EqualTo("archer"));
                 Assert.That(root.Q<Label>("summon-reveal-title").text, Is.EqualTo("archer"));
-                Assert.That(root.Q<Label>("summon-reveal-subtitle").text, Is.EqualTo("Tap a green tile to place"));
+                Assert.That(root.Q<Label>("summon-reveal-subtitle").text, Is.EqualTo("초록 칸을 눌러 배치"));
 
                 GameEvents.RaiseSummonConfirmed("archer");
 

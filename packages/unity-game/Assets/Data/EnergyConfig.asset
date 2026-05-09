@@ -20,7 +20,7 @@ MonoBehaviour:
   energyPerBossKill: 20
   energyPerKill: 1
   energyPerSecond: 1
-  energyPerWaveClear: 20
+  energyPerWaveClear: 0
   fastClearThresholdMs: 30000
   ingameGacha:
   - cost: 40

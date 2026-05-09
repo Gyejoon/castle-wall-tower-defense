@@ -21,7 +21,7 @@
 | placement_id | 노출 위치 | 보상 | 제한 |
 |--------------|-----------|------|------|
 | `continue_run` | 패배 화면 | HP +5, 현재 런 1회 부활 | 런당 1회 |
-| `reroll_upgrade_cards` | 보스 카드 선택 화면 | 3카드 재추첨 | 카드 선택 1회당 1회 |
+| `reroll_checkpoint_rewards` | checkpoint reward 선택 화면 | 3개 reward 재추첨 | checkpoint 1회당 1회 |
 
 광고를 보지 않아도 게임의 기본 루프는 성립해야 한다. 광고는 “한 번 더 해보고 싶다”는 순간에만 붙인다.
 
@@ -63,7 +63,7 @@ v1은 “운영비 일부 보조”가 목표다.
 | Session Length | 평균 6~8분 목표 확인 |
 | Retry Rate | “한 판 더” 확인 |
 | Continue Ad Opt-in | 이어하기 광고가 자연스러운지 확인 |
-| Reroll Ad Opt-in | 카드 리롤 광고가 자연스러운지 확인 |
+| Reroll Ad Opt-in | checkpoint reward 리롤 광고가 자연스러운지 확인 |
 | First Boss Reach Rate | 초반 재미 도달 확인 |
 | Wave Reach Distribution | 난이도 튜닝 |
 

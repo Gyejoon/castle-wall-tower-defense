@@ -4,85 +4,321 @@
 
 .game-hud {
   flex-grow: 1;
-  justify-content: space-between;
-  padding: 16px 12px 18px 12px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 14px 12px 18px 12px;
 }
 
 .game-hud__top {
+  position: absolute;
+  left: 10px;
+  top: 10px;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
-#hud-energy,
-#hud-wave,
-#hud-hp {
-  min-width: 104px;
-  min-height: 52px;
-  padding: 8px 12px;
-  border-width: 0;
-  background-color: transparent;
-  color: #fff0c4;
+.game-hud__stat {
+  height: 48px;
+  min-height: 48px;
+  border-width: 3px;
+  border-bottom-width: 5px;
+  border-radius: var(--radius-md);
+  border-color: #7b5a27;
+  background-color: rgba(36, 25, 13, 0.92);
+  flex-direction: row;
+  align-items: center;
+  margin-right: 8px;
+  padding: 4px 10px 5px 6px;
+}
+
+.game-hud__stat--energy {
+  width: 108px;
+}
+
+.game-hud__stat--wave {
+  width: 104px;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.game-hud__stat-medal {
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+  border-radius: var(--radius-pill);
+  border-color: #f4cf5d;
+  background-color: #c99316;
+  align-items: center;
+  justify-content: center;
+  margin-right: 9px;
+}
+
+.game-hud__stat-icon {
+  color: #fff2a6;
+  font-size: 21px;
   -unity-font-style: bold;
   -unity-text-align: middle-center;
+}
+
+#hud-energy-panel,
+#hud-wave-panel {
+  border-width: 0;
+  background-color: rgba(0, 0, 0, 0);
   -unity-background-scale-mode: stretch-to-fill;
 }
 
-#hud-energy {
+#hud-energy-panel {
   background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_energy_panel.png");
 }
 
-#hud-wave,
-#hud-hp {
+#hud-wave-panel {
   background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_wave_panel.png");
 }
 
-.game-hud__status {
-  align-self: center;
-  padding: 4px 8px;
-  border-radius: var(--radius-xs);
-  background-color: var(--surface-alpha-panel70);
-  color: var(--color-text-secondary);
+.game-hud__stat-title {
+  color: #e8d5a4;
   font-size: var(--type-caption10-size);
+  -unity-font-style: bold;
   -unity-text-align: middle-center;
 }
 
-.game-hud__bottom {
-  align-self: stretch;
-}
-
-.game-hud__actions {
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.game-hud__actions > .gld-btn {
-  flex-grow: 1;
-  margin-left: 2px;
-  margin-right: 2px;
-  min-width: 0;
-  min-height: 58px;
-  border-width: 0;
-  background-color: transparent;
-  color: #fff0c4;
+.game-hud__stat-value {
+  color: var(--color-text);
+  font-size: 24px;
   -unity-font-style: bold;
-  -unity-text-align: lower-center;
+  -unity-text-align: middle-center;
+}
+
+.game-hud__stat-value--wave {
+  font-size: 20px;
+  margin-top: -2px;
+}
+
+.game-hud__top-right {
+  position: absolute;
+  right: 11px;
+  top: 10px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-hud__round-control {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  margin: 0 0 9px 0;
+  padding: 0;
+  border-width: 3px;
+  border-bottom-width: 5px;
+  border-radius: var(--radius-pill);
+  border-color: #d6a94d;
+  background-color: rgba(39, 27, 13, 0.96);
+  color: #f6e6b8;
+  font-size: 18px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
   -unity-background-scale-mode: scale-to-fit;
 }
 
-#hud-summon {
-  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_move.png");
-}
-
-#hud-gacha-t2,
-#hud-gacha-t3,
-#hud-gacha-t4 {
-  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_wave_panel.png");
+#hud-menu {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_pause_button.png");
 }
 
 #hud-speed {
   background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_speed_x3_button.png");
 }
 
-#hud-menu {
-  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_wall_menu.png");
+.game-hud__left-stack {
+  position: absolute;
+  left: 10px;
+  top: 72px;
+  width: 70px;
+  align-items: flex-start;
+}
+
+.game-hud__progress {
+  width: 70px;
+  height: 154px;
+  border-width: 3px;
+  border-bottom-width: 5px;
+  border-radius: var(--radius-md);
+  border-color: #8a672e;
+  background-color: rgba(35, 24, 12, 0.94);
+  padding: 5px;
+  align-items: center;
+}
+
+#hud-progress-label {
+  color: var(--color-text);
+  font-size: var(--type-caption10-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-top: 2px;
+}
+
+.game-hud__progress-icon {
+  color: #efe2c7;
+  font-size: 26px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 2px;
+}
+
+.game-hud__progress-rail {
+  margin-top: 8px;
+  align-items: center;
+}
+
+.game-hud__progress-dot {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-radius: var(--radius-pill);
+  border-color: #b89755;
+  background-color: rgba(8, 6, 3, 0.9);
+  margin-top: 3px;
+}
+
+.game-hud__progress-dot--on {
+  background-color: #f2c52f;
+  border-color: #fff0a2;
+}
+
+.game-hud__card-preview {
+  width: 70px;
+  height: 88px;
+  margin-top: 10px;
+  padding: 4px;
+  align-items: center;
+  justify-content: center;
+  border-width: 3px;
+  border-bottom-width: 5px;
+  border-radius: var(--radius-md);
+  border-color: #b263ca;
+  background-color: rgba(35, 20, 15, 0.96);
+}
+
+#hud-card-preview-icon {
+  color: #ff8a30;
+  font-size: var(--type-caption10-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+#hud-card-preview-count {
+  color: var(--color-text);
+  font-size: var(--type-caption10-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-top: 2px;
+}
+
+.game-hud__actions {
+  position: absolute;
+  left: 13px;
+  bottom: 14px;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.game-hud__skill-button {
+  width: 88px;
+  min-width: 88px;
+  max-width: 88px;
+  height: 104px;
+  min-height: 104px;
+  max-height: 104px;
+  margin: 0 9px 0 0;
+  padding: 0;
+  border-width: 0;
+  background-color: rgba(0, 0, 0, 0);
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.game-hud__skill-icon {
+  width: 76px;
+  height: 76px;
+  border-width: 4px;
+  border-bottom-width: 6px;
+  border-radius: var(--radius-pill);
+  border-color: #f2c760;
+  color: #fff5c9;
+  font-size: 34px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-hud__skill-button--push .game-hud__skill-icon {
+  background-color: #b74717;
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_move.png");
+}
+
+.game-hud__skill-button--freeze .game-hud__skill-icon {
+  background-color: #177cbd;
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_freeze.png");
+}
+
+.game-hud__skill-label {
+  width: 72px;
+  min-height: 24px;
+  margin-top: -4px;
+  border-width: 2px;
+  border-bottom-width: 4px;
+  border-radius: var(--radius-sm);
+  border-color: #d6a94d;
+  background-color: rgba(36, 25, 13, 0.98);
+  color: #f8ead0;
+  font-size: var(--type-label12-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+.wall-repair-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding-bottom: 112px;
+}
+
+.wall-repair-prompt {
+  align-self: center;
+  width: 304px;
+  border-color: var(--color-accent);
+}
+
+#hud-wall-repair-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-body14-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 6px;
+}
+
+#hud-wall-repair-label {
+  color: var(--color-text-primary);
+  font-size: var(--type-label12-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+.wall-repair-prompt > .gld-btn {
+  align-self: stretch;
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }

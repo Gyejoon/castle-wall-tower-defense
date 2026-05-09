@@ -154,8 +154,6 @@ const MAIN_LONG_BUILDABLE_POINTS: MapLayout['buildablePoints'] = [
 	{ x: 5, y: 3 },
 	{ x: 2, y: 6 },
 	{ x: 6, y: 6 },
-	{ x: 2, y: 11 },
-	{ x: 6, y: 11 },
 ];
 
 const MAIN_LONG_PLACEMENT_ANCHORS: MapLayout['placementAnchors'] = [
@@ -163,8 +161,6 @@ const MAIN_LONG_PLACEMENT_ANCHORS: MapLayout['placementAnchors'] = [
 	mainLongPlacementAnchor(5, 3, 284, 204),
 	mainLongPlacementAnchor(2, 6, 72, 396),
 	mainLongPlacementAnchor(6, 6, 360, 396),
-	mainLongPlacementAnchor(2, 11, 72, 626),
-	mainLongPlacementAnchor(6, 11, 360, 626),
 ];
 
 // Ambient decorations placed OFF the playfield (x<0 or x>=9, fractional

@@ -6,6 +6,7 @@
   margin-left: 12px;
   margin-right: 12px;
   margin-bottom: 104px;
+  border-color: var(--color-accent);
 }
 
 .tower-action-sheet__header {
@@ -34,6 +35,7 @@
   margin-left: 2px;
   margin-right: 2px;
   min-width: 0;
+  min-height: 42px;
 }
 
 .summon-reveal {
@@ -45,6 +47,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  border-color: var(--color-accent);
 }
 
 .summon-reveal__text {
@@ -70,15 +73,16 @@
 .upgrade-pick-panel {
   width: 100%;
   max-width: 420px;
+  border-color: var(--color-accent);
 }
 
 #upgrade-pick-title,
 #pause-title {
   color: var(--color-text-primary);
-  font-size: var(--type-body14-size);
+  font-size: var(--type-h2-size);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .upgrade-pick-cards {
@@ -87,16 +91,19 @@
 
 .upgrade-pick-card {
   margin-bottom: 8px;
+  border-color: var(--color-border);
 }
 
 .upgrade-pick-card > Label {
   color: var(--color-text-primary);
   font-size: var(--type-body12-size);
+  -unity-font-style: bold;
 }
 
 .upgrade-pick-card > Label + Label {
   color: var(--color-text-secondary);
   font-size: var(--type-caption10-size);
+  -unity-font-style: normal;
   white-space: normal;
   margin-top: 4px;
   margin-bottom: 8px;
@@ -108,6 +115,7 @@
 
 .pause-panel {
   width: 260px;
+  border-color: var(--color-accent);
 }
 
 #pause-subtitle {
@@ -127,6 +135,7 @@
   left: 50%;
   translate: -50% 0;
   width: 260px;
+  border-color: var(--color-danger);
 }
 
 .boss-hp-header {
@@ -168,11 +177,12 @@
 .boss-warning-panel {
   width: 240px;
   align-items: center;
+  border-color: var(--color-danger);
 }
 
 #boss-warning-title {
   color: var(--color-danger);
-  font-size: var(--type-body14-size);
+  font-size: var(--type-h2-size);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
 }
@@ -191,11 +201,12 @@
 .game-over-panel {
   width: 280px;
   align-items: center;
+  border-color: var(--color-accent);
 }
 
 #game-over-title {
   color: var(--color-text-primary);
-  font-size: var(--type-body14-size);
+  font-size: var(--type-h2-size);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
   margin-bottom: 8px;
@@ -224,6 +235,7 @@
   right: 12px;
   top: 150px;
   width: 260px;
+  border-color: var(--color-info);
 }
 
 #toast-message {
@@ -237,6 +249,7 @@
   left: 12px;
   top: 150px;
   width: 260px;
+  border-color: var(--color-info);
 }
 
 #tutorial-title {
@@ -273,6 +286,7 @@
   width: 100%;
   max-width: 430px;
   min-height: 100%;
+  border-color: var(--color-accent);
 }
 
 .lobby-tabs {
@@ -293,7 +307,7 @@
 
 #lobby-title {
   color: var(--color-text-primary);
-  font-size: 20px;
+  font-size: var(--type-h1-size);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
   margin-top: 8px;
@@ -313,7 +327,8 @@
   justify-content: space-between;
   padding: 8px 10px;
   margin-bottom: 12px;
-  border-width: 1px;
+  border-width: 2px;
+  border-bottom-width: 3px;
   border-radius: var(--radius-sm);
   border-color: var(--color-border);
   background-color: var(--surface-panel-sunken);
@@ -345,6 +360,7 @@
   align-items: center;
   margin-bottom: 8px;
   padding: 7px;
+  border-color: var(--color-border);
 }
 
 .lobby-tower-image {
@@ -377,7 +393,8 @@
   white-space: normal;
   padding: 8px 10px;
   margin-bottom: 8px;
-  border-width: 1px;
+  border-width: 2px;
+  border-bottom-width: 3px;
   border-radius: var(--radius-sm);
   border-color: var(--color-border);
   background-color: var(--surface-panel-sunken);

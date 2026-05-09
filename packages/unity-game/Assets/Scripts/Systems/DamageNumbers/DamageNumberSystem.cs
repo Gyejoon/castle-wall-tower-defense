@@ -21,6 +21,18 @@ namespace GLD.Systems.DamageNumbers
                 _pool[i] = new DamageNumberInstance(parent);
         }
 
+        public int ActiveCount
+        {
+            get
+            {
+                var count = 0;
+                foreach (var instance in _pool)
+                    if (instance.Active)
+                        count++;
+                return count;
+            }
+        }
+
         public void Show(Vector2 worldPosition, float value)
         {
             if (_disposed)

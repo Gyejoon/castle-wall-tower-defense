@@ -4,10 +4,12 @@
   min-height: 38px;
   padding: 8px 12px;
   border-width: 2px;
+  border-bottom-width: 4px;
   border-radius: var(--radius-sm);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
   font-size: var(--type-label12-size);
+  white-space: normal;
 }
 
 .gld-btn--primary {
@@ -20,6 +22,12 @@
   background-color: var(--surface-panel-elevated);
   border-color: var(--color-border);
   color: var(--color-text);
+}
+
+.gld-btn--ghost {
+  background-color: var(--surface-alpha-bg76);
+  border-color: var(--surface-alpha-panel70);
+  color: var(--color-text-secondary);
 }
 
 .gld-btn--danger {
@@ -44,6 +52,21 @@
   font-size: var(--type-body14-size);
 }
 
+.gld-btn:disabled {
+  background-color: var(--state-disabled-bg);
+  color: var(--state-disabled-fg);
+  border-color: var(--surface-alpha-panel70);
+}
+
+.gld-btn:hover {
+  border-color: var(--state-hover);
+}
+
+.gld-btn:active {
+  background-color: var(--state-pressed);
+  border-bottom-width: 2px;
+}
+
 .gld-btn--tier-2,
 .gld-badge--tier-2,
 .gld-card--tier-2 {
@@ -64,6 +87,7 @@
 
 .gld-card {
   border-width: 2px;
+  border-bottom-width: 4px;
   border-radius: var(--radius-md);
   border-color: var(--color-border);
   background-color: var(--surface-panel);
@@ -84,16 +108,17 @@
 }
 
 .gld-badge {
-  min-height: 24px;
-  padding: 4px 8px;
-  border-width: 1px;
-  border-radius: var(--radius-xs);
+  min-height: 30px;
+  padding: 5px 10px;
+  border-width: 2px;
+  border-bottom-width: 3px;
+  border-radius: var(--radius-sm);
   border-color: var(--color-border);
   background-color: var(--surface-alpha-panel90);
   color: var(--color-text);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
-  font-size: var(--type-caption10-size);
+  font-size: var(--type-label12-size);
 }
 
 .gld-badge--accent {
@@ -107,6 +132,7 @@
 
 .gld-panel {
   border-width: 2px;
+  border-bottom-width: 4px;
   border-radius: var(--radius-md);
   border-color: var(--color-border);
   background-color: var(--surface-alpha-panel92);
@@ -158,6 +184,7 @@
 
 .gld-sheet {
   border-width: 2px;
+  border-bottom-width: 5px;
   border-radius: var(--radius-lg);
   border-color: var(--color-border);
   background-color: var(--surface-alpha-panel96);
@@ -171,4 +198,28 @@
 
 .gld-sheet--floating {
   width: 260px;
+}
+
+.gld-btn--element-fire,
+.gld-badge--element-fire,
+.gld-card--element-fire {
+  border-color: var(--elem-fire-primary);
+}
+
+.gld-btn--element-water,
+.gld-badge--element-water,
+.gld-card--element-water {
+  border-color: var(--elem-water-primary);
+}
+
+.gld-btn--element-earth,
+.gld-badge--element-earth,
+.gld-card--element-earth {
+  border-color: var(--elem-earth-primary);
+}
+
+.gld-btn--element-lightning,
+.gld-badge--element-lightning,
+.gld-card--element-lightning {
+  border-color: var(--elem-lightning-primary);
 }

@@ -234,7 +234,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             var home = new VisualElement { name = "lobby-home-panel" };
             home.AddToClassList("lobby-panel");
             home.Add(new Label("Grid Line Defense") { name = "lobby-title" });
-            home.Add(new Label("랜덤 소환과 합성으로 50 웨이브를 버텨라") { name = "lobby-subtitle" });
+            home.Add(new Label("랜덤 소환과 합성으로 20 웨이브를 버텨라") { name = "lobby-subtitle" });
             home.Add(new GLDButton("전투 시작") { name = "lobby-start", Variant = "primary" });
 
             var profile = new VisualElement { name = "lobby-profile-row" };

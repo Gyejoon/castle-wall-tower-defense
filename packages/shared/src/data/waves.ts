@@ -1,15 +1,13 @@
 import type { WaveDef, WaveGroup } from '../constants/waves';
 
 /**
- * 정식 모드 보스 라인업 — 10 wave마다 새로운 실루엣을 보이도록 5종을 배치.
- * 각 슬롯의 `hpMultiplier`는 WAVE_SCALING 위에 누적되어, 원시 base HP만으로는
- * 만들 수 없는 보스 간 체감 격차를 보장한다.
+ * 정식 모드 보스 라인업 — v1 활성 아크는 wave 5/10/15/20 보스 체험을 기준으로 한다.
+ * 20 wave 이후 슬롯은 밸런스/디버그 확장용으로 유지한다.
  *
- *   Wave 10: orc_warlord        base 2000  → intro boss
- *   Wave 20: forge_master       base 5000  → fire tower-disable pressure
- *   Wave 30: corrupted_archmage base 25000 → arcane, clone spawns
- *   Wave 40: corrupted_archmage base 25000 × 2.5 → veteran arcane
- *   Wave 50: dragon             base 60000 → flying final
+ *   Wave 5:  orc_warlord        → intro boss
+ *   Wave 10: forge_master       → fire tower-disable pressure
+ *   Wave 15: corrupted_archmage → clone / CC pressure
+ *   Wave 20: corrupted_archmage ×1.8 → v1 final pressure
  */
 interface BossSlot {
 	readonly unitId:
@@ -23,13 +21,25 @@ interface BossSlot {
 }
 
 const BOSS_SLOTS: Record<number, BossSlot> = {
-	10: {
+	5: {
 		unitId: 'orc_warlord',
-		escorts: [{ unitId: 'battle_robot', count: 4 }],
+		escorts: [{ unitId: 'battle_robot', count: 2 }],
 	},
-	20: {
+	10: {
 		unitId: 'forge_master',
 		escorts: [{ unitId: 'battle_robot', count: 4 }],
+	},
+	15: {
+		unitId: 'corrupted_archmage',
+		escorts: [{ unitId: 'heavy_walker', count: 2 }],
+	},
+	20: {
+		unitId: 'corrupted_archmage',
+		hpMultiplier: 1.8,
+		escorts: [
+			{ unitId: 'heavy_walker', count: 3 },
+			{ unitId: 'stealth_drone', count: 2 },
+		],
 	},
 	30: {
 		unitId: 'corrupted_archmage',
@@ -50,7 +60,7 @@ const BOSS_SLOTS: Record<number, BossSlot> = {
 };
 
 /**
- * 정식 모드 무한 Wave 생성기. 10 wave마다 보스(고유 5종; `BOSS_SLOTS` 참조).
+ * 정식 모드 Wave 생성기. v1 활성 구간은 5/10/15/20 보스 슬롯을 사용한다.
  * 일반 wave는 슬롯 인덱스에 따라 구성이 다양해진다: scout_drone은 슬롯 4까지,
  * battle_robot은 슬롯 5부터, heavy_walker는 슬롯 10부터, stealth_drone은
  * 슬롯 20부터 등장.
@@ -63,14 +73,8 @@ export function generateWaves(count: number): WaveDef[] {
 	const UNITS_PER_WAVE = 30;
 	const waves: WaveDef[] = [];
 	for (let i = 1; i <= count; i++) {
-		const isBoss = i % 10 === 0;
-		if (isBoss) {
-			const slot = BOSS_SLOTS[i];
-			if (!slot) {
-				throw new Error(
-					`generateWaves: missing boss slot config for wave ${i}`,
-				);
-			}
+		const slot = BOSS_SLOTS[i];
+		if (slot) {
 			const groups: WaveGroup[] = [
 				{
 					unitId: slot.unitId,

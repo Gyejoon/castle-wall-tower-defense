@@ -19,7 +19,7 @@ namespace GLD.Tests.EditMode.UI
         }
 
         [Test]
-        public void TutorialOverlayAdvancesThroughCoreEvents()
+        public void TutorialOverlayStaysHiddenDuringRun()
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(OverlayPath);
             Assert.That(asset, Is.Not.Null, $"Missing TutorialOverlay UXML at {OverlayPath}");
@@ -33,23 +33,23 @@ namespace GLD.Tests.EditMode.UI
 
                 Assert.That(controller.IsBound, Is.True);
                 Assert.That(controller.IsVisible, Is.False);
-                Assert.That(controller.CurrentTitle, Is.EqualTo("Summon"));
+                Assert.That(controller.CurrentTitle, Is.EqualTo("소환"));
 
                 var runState = new RunState("tutorial-running");
                 controller.Bind(runState, root);
                 runState.SetRunStatus(RunStatus.Running);
 
-                Assert.That(controller.IsVisible, Is.True);
-                Assert.That(controller.CurrentTitle, Is.EqualTo("Summon"));
+                Assert.That(controller.IsVisible, Is.False);
+                Assert.That(controller.CurrentTitle, Is.EqualTo("소환"));
 
                 GameEvents.RaiseSummonOffered("archer");
-                Assert.That(controller.CurrentTitle, Is.EqualTo("Place"));
+                Assert.That(controller.IsVisible, Is.False);
 
                 GameEvents.RaiseSummonConfirmed("archer");
-                Assert.That(controller.CurrentTitle, Is.EqualTo("Merge"));
+                Assert.That(controller.IsVisible, Is.False);
 
                 GameEvents.RaiseTowersMerged(5, 3, "wind_spire", 2);
-                Assert.That(controller.CurrentTitle, Is.EqualTo("Upgrade"));
+                Assert.That(controller.IsVisible, Is.False);
 
                 GameEvents.RaiseUpgradeApplied("dmg_up", 1);
                 Assert.That(controller.IsVisible, Is.False);
@@ -72,9 +72,9 @@ namespace GLD.Tests.EditMode.UI
                 controller.Bind(runState, root);
                 runState.SetRunStatus(RunStatus.Running);
 
-                Assert.That(root.Q<Button>("tutorial-next"), Is.Not.Null);
-                Assert.That(root.Q<Button>("tutorial-skip"), Is.Not.Null);
-                Assert.That(controller.IsVisible, Is.True);
+                Assert.That(root.Q<Button>("tutorial-next"), Is.Null);
+                Assert.That(root.Q<Button>("tutorial-skip"), Is.Null);
+                Assert.That(controller.IsVisible, Is.False);
                 controller.Dismiss();
 
                 Assert.That(controller.IsVisible, Is.False);

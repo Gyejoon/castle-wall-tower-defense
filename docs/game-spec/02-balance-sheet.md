@@ -1,8 +1,8 @@
 # 밸런스 시트
 
-> **Last Updated:** 2026-05-06 (v4.0 — minimal launch balance)
-> **Scope:** v1 출시 밸런스는 평균 6~8분, 20 wave 콘텐츠 아크, 단일 맵, 단일 전투 재화, 선택형 광고 2곳만 다룬다.
-> **Out of Scope:** 다이아 경제, 외부 상자 가챠, 일일/주간 미션, 별 등급, grade 승급, 각성, 서버 기반 시즌 경제.
+> **Last Updated:** 2026-05-09 (v5.0 — central wall checkpoint balance)
+> **Scope:** v1 출시 밸런스는 평균 6~8분, 20 wave / Act 1~4, 중앙 성벽, 4속성 슬롯, checkpoint reward, 선택형 광고 2곳만 다룬다.
+> **Out of Scope:** 다이아 경제, 외부 상자 가챠, 일일/주간 미션, 별 등급, grade 승급, 각성, 서버 기반 시즌 경제, 랜덤 합성 active loop.
 
 ---
 
@@ -12,13 +12,13 @@
 |------|------|
 | 평균 세션 | 6~8분 |
 | 첫 보스 도달 | 2~3분 |
-| 초보 패배 | wave 10~12 |
-| 익숙한 유저 패배 | wave 16~20 |
-| v1 콘텐츠 완주 | wave 20 |
-| 소환 빈도 | 초반 10~20초마다 의사결정 발생 |
-| 핵심 보상 | 더 높은 tier 합성, 보스 카드 선택, 최고 wave 갱신 |
+| 초보 패배 | Act 2 |
+| 익숙한 유저 패배 | Act 3~4 |
+| v1 콘텐츠 완주 | Act 4 / wave 20 |
+| 의사결정 빈도 | 평시 수리/스킬, 보스 후 checkpoint reward |
+| 핵심 보상 | 슬롯 등장/승급, 성벽 강화, 스킬 강화, 전역 카드 |
 
-50 wave는 데이터 상한/디버그 구간으로 유지할 수 있지만, v1 밸런스 기준은 wave 20까지다.
+50 wave는 데이터 상한/디버그 구간으로 유지할 수 있지만, v1 밸런스 기준은 wave 20까지다. wave 5/10/15/20은 boss checkpoint다.
 
 ---
 
@@ -26,10 +26,10 @@
 
 | 항목 | 값 | 비고 |
 |------|-----|------|
-| `ENERGY_INITIAL` | 40 | 시작 즉시 2회 기본 소환 가능 |
+| `ENERGY_INITIAL` | 40 | 초반 수리/스킬 실수 완충 |
 | `ENERGY_PER_SECOND` | 1 | 기본 재생 |
-| `ENERGY_MAX` | 200 | T4 시도 비용 수용 |
-| `ENERGY_PER_KILL` | 1 | 처치가 소환 빈도와 연결됨 |
+| `ENERGY_MAX` | 200 | 수리/스킬과 checkpoint 보상 경제 수용 |
+| `ENERGY_PER_KILL` | 1 | 처치가 전술 사용 여유와 연결됨 |
 | `ENERGY_PER_BOSS_KILL` | 20 | 보스 처치 보상 |
 | `ENERGY_PER_BOSS_FAST_CLEAR` | 20 | 빠른 보스 처치 보상 |
 | `FAST_CLEAR_THRESHOLD_MS` | 30,000 | 보스 스폰 후 기준 |
@@ -49,11 +49,51 @@
 | 30초 생존 | +30 |
 | 보스 처치 | +20~40 |
 
-초반 wave에서 energy가 너무 빨리 쌓이면 버튼 판단이 사라진다. 너무 느리면 랜덤 합성 재미가 죽는다. v1 튜닝은 “플레이어가 항상 소환하고 싶지만 항상 충분하지는 않은 상태”를 목표로 한다.
+초반 wave에서 energy가 너무 빨리 쌓이면 성벽 수리 판단이 사라진다. 너무 느리면 스킬을 눌러볼 여지가 없다. v1 튜닝은 “플레이어가 수리/스킬을 항상 쓰고 싶지만 항상 충분하지는 않은 상태”를 목표로 한다.
 
 ---
 
-## 3. Summon and In-Run Gacha
+## 3. Active V1 Wall / Slot / Skill Economy
+
+### Wall
+
+| 값 | v1 기준 | 설명 |
+|----|---------|------|
+| `wall.maxHp` | 20 | 기존 HP HUD를 성벽 HP로 대체 |
+| `wall.instantRepairCharges` | 0 start, checkpoint/random reward로 +1 | 성벽 클릭 메뉴의 즉시 수리 자원 |
+| `wall.repairCost` | 25 energy | legacy/manual tuning guardrail. v1 메뉴에서는 즉시 수리권을 우선 사용 |
+| `wall.repairAmount` | 5 HP | legacy/manual tuning guardrail |
+| `wall.repairCooldownSec` | 12초 | legacy/manual tuning guardrail |
+| `wall.autoAttackDamage` | 75 | 타워가 비어 있어도 Act 1 boss까지 진행되게 하는 성벽 기본 화력 |
+| `wall.autoAttackIntervalSec` | 0.5초 | 자동 공격은 첫 checkpoint 전 기본 방어 수단 |
+| `wall.autoAttackRange` | 5.0 cells | 성벽 주변 압박 대응 범위 |
+| `wall.damageUpgradeCost` | 45 energy, 이후 +15 | 성벽 메뉴 공격력 강화 |
+| `wall.speedUpgradeCost` | 50 energy, 이후 +20 | 성벽 메뉴 공격 속도 강화 |
+| `wall.rangeUpgradeCost` | 40 energy, 이후 +15 | 성벽 메뉴 공격 범위 강화 |
+
+### Tower Slots
+
+| Slot | Family | 시작 상태 | 보상 적용 |
+|------|--------|-----------|-----------|
+| 1 | archer | locked | 등장 시 T1, 이후 같은 family 보상으로 tier/effect 강화 |
+| 2 | siege | locked | 등장 시 T1, 이후 같은 family 보상으로 tier/effect 강화 |
+| 3 | frost | locked | 등장 시 T1, 이후 같은 family 보상으로 tier/effect 강화 |
+| 4 | stun | locked | 등장 시 T1, 이후 같은 family 보상으로 tier/effect 강화 |
+
+각 슬롯은 family가 고정되어 중복 배치가 불가능하다. tower reward는 새 타워를 뽑는 소환이 아니라 슬롯 상태를 갱신하는 보상이다.
+
+### Player Tactics
+
+| Skill | 초기 상태 | v1 기준 |
+|-------|-----------|---------|
+| force move | locked | 해금 후 범위 내 적을 경로 뒤쪽으로 밀어냄 |
+| freeze | locked | 해금 후 범위 내 적을 정지/빙결 |
+
+boss에는 기존 `ccResistance`와 stun immunity window가 그대로 적용된다.
+
+---
+
+## 4. Legacy Summon and In-Run Gacha
 
 | 액션 | 비용 | 성공률 | 실패 |
 |------|------|--------|------|
@@ -68,7 +108,7 @@
 - 최대 10스택
 - 최종 성공률 상한 95%
 
-v1에서 이 확률은 BM이 아니라 런 안의 리스크/보상 버튼이다. 유료 재화와 연결하지 않는다.
+이 확률은 legacy/parking lot이다. v1 active balance 검증에는 사용하지 않는다.
 
 ---
 
@@ -178,7 +218,20 @@ CC 카드는 강해도 된다. 대신 보스가 멈춰서 게임이 끝나는 �
 
 ---
 
-## 8. Run Upgrade Cards
+## 8. Checkpoint Reward Pool
+
+보스 wave 5/10/15/20 클리어 후 3개 reward 중 1개를 고른다. 같은 화면 안에서 reward id는 중복되면 안 된다.
+
+| Reward group | 예시 | v1 정책 |
+|--------------|------|---------|
+| tower upgrade | archer/siege/frost/stun 슬롯 등장 또는 승급 | 유지 |
+| wall upgrade | 즉시 수리권, 이후 성벽 메뉴에서 energy로 공격력/속도/범위 강화 | 유지 |
+| skill upgrade | force move, freeze 해금/강화 | 유지 |
+| global card | damage/economy/effect amp | 유지 |
+
+---
+
+## 9. Legacy Run Upgrade Cards
 
 | ID | 효과 | v1 정책 |
 |----|------|---------|
@@ -193,7 +246,7 @@ CC 카드는 강해도 된다. 대신 보스가 멈춰서 게임이 끝나는 �
 
 ---
 
-## 9. Removed From Active Balance
+## 10. Removed From Active Balance
 
 아래 항목은 v1 밸런스 문서에서 활성 기준으로 다루지 않는다.
 
@@ -207,5 +260,9 @@ CC 카드는 강해도 된다. 대신 보스가 멈춰서 게임이 끝나는 �
 - 전투력 공식
 - 출전덱 합산
 - 속성 상성 기반 장기 메타
+- 기본 소환 중심 경제
+- tier gacha 중심 성장
+- 동일 타워 2개 합성
+- 6개 자유 배치칸
 
 필요하면 후속 시즌 또는 유료화 실험 문서로 새로 작성한다.

@@ -265,7 +265,7 @@ namespace GLD.Tests.EditMode
             Assert.Greater(mainLong.path.Length, 0, "main_long map path must not be empty.");
             Assert.That(mainLong.waypoints, Has.Length.EqualTo(mainLong.path.Length), "main_long must preserve float waypoints for illustrated map parity.");
             Assert.That(mainLong.lanes, Has.Length.EqualTo(4), "main_long must preserve the four Phaser lanes.");
-            Assert.That(mainLong.placementAnchors, Has.Length.EqualTo(6), "main_long must preserve visual placement anchors.");
+            Assert.That(mainLong.placementAnchors, Has.Length.EqualTo(4), "main_long active v1 uses four wall-adjacent tower slot anchors.");
             Assert.That(mainLong.placementAnchors[0].worldX, Is.EqualTo(197f).Within(0.001f));
             Assert.That(mainLong.placementAnchors[0].worldY, Is.EqualTo(245f).Within(0.001f));
         }

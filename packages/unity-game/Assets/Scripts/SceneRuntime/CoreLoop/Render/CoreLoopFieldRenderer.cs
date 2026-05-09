@@ -16,6 +16,12 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         const float BossTargetWorldWidth = 0.72f;
         const float AttackPulseDurationSeconds = 0.16f;
         const float AttackLineDurationSeconds = 0.12f;
+        const float ImpactPulseDurationSeconds = 0.24f;
+        const float UnitHpBarWidth = 0.54f;
+        const float BossHpBarWidth = 0.82f;
+        const float HpBarHeight = 0.065f;
+        const float WallHpBarWidth = 1.2f;
+        const float WallHpBarHeight = 0.09f;
 
         [SerializeField] Camera gameplayCamera;
         [SerializeField] Transform renderRoot;
@@ -25,9 +31,11 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         [SerializeField] bool showMapTileLayers;
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
+        readonly Dictionary<string, HealthBarView> _unitHpBars = new Dictionary<string, HealthBarView>();
         readonly Dictionary<string, GameObject> _towerViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, float> _towerPulseUntil = new Dictionary<string, float>();
         readonly List<AttackLineFx> _attackLines = new List<AttackLineFx>();
+        readonly List<ImpactPulseFx> _impactPulses = new List<ImpactPulseFx>();
         readonly List<GameObject> _placementMarkers = new List<GameObject>();
         readonly Dictionary<int, Sprite> _firstFrameSprites = new Dictionary<int, Sprite>();
         readonly Dictionary<Sprite, Tile> _runtimeTiles = new Dictionary<Sprite, Tile>();
@@ -39,6 +47,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         Transform _unitRoot;
         Transform _towerRoot;
         Transform _attackFxRoot;
+        Transform _healthRoot;
+        HealthBarView _wallHpBar;
         Material _attackLineMaterial;
         bool _placementMarkersVisible;
         string _placementTowerId;
@@ -48,11 +58,33 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             public GameObject GameObject;
             public LineRenderer Line;
             public float AgeSeconds;
+            public Color StartColor;
+            public Color EndColor;
+        }
+
+        sealed class ImpactPulseFx
+        {
+            public GameObject GameObject;
+            public SpriteRenderer Renderer;
+            public float AgeSeconds;
+        }
+
+        sealed class HealthBarView
+        {
+            public GameObject GameObject;
+            public SpriteRenderer Back;
+            public SpriteRenderer Fill;
+            public TextMesh Label;
+            public float Width;
+            public float Height;
         }
 
         public int RenderedCellCount { get; private set; }
         public int RenderedUnitCount => _unitViews.Count;
+        public int RenderedUnitHealthBarCount => _unitHpBars.Count;
+        public bool HasWallHealthBar => _wallHpBar != null && _wallHpBar.GameObject != null;
         public int RenderedTowerCount => _towerViews.Count;
+        public int ActiveAttackFxCount => _attackLines.Count + _impactPulses.Count;
         public Camera GameplayCamera => gameplayCamera;
 
         public void Bind(GameSceneController controller)
@@ -85,6 +117,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 CreateOrSyncTower(tower);
             foreach (var unit in _controller.Units.Units)
                 CreateOrSyncUnit(unit);
+            SyncWallHpBar();
         }
 
         void OnDestroy()
@@ -104,7 +137,9 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 CreateOrSyncUnit(unit);
             foreach (var tower in _controller.Towers.Towers)
                 SyncTowerViewPose(tower);
+            SyncWallHpBar();
             TickAttackLines(Time.unscaledDeltaTime);
+            TickImpactPulses(Time.unscaledDeltaTime);
         }
 
         void BindEvents()
@@ -120,6 +155,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             GameEvents.OnSummonOffered += HandleSummonOffered;
             GameEvents.OnSummonCancelled += HandleSummonEnded;
             GameEvents.OnSummonConfirmed += HandleSummonEnded;
+            GameEvents.OnWallAutoAttacked += HandleWallAutoAttacked;
         }
 
         void UnbindEvents()
@@ -143,6 +179,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             GameEvents.OnSummonOffered -= HandleSummonOffered;
             GameEvents.OnSummonCancelled -= HandleSummonEnded;
             GameEvents.OnSummonConfirmed -= HandleSummonEnded;
+            GameEvents.OnWallAutoAttacked -= HandleWallAutoAttacked;
         }
 
         void EnsureRoots()
@@ -154,6 +191,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             _unitRoot = CreateRoot("Units");
             _towerRoot = CreateRoot("Towers");
             _attackFxRoot = CreateRoot("AttackFx");
+            _healthRoot = CreateRoot("HealthBars");
         }
 
         Transform CreateRoot(string rootName)
@@ -169,10 +207,13 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 Destroy(renderRoot.GetChild(i).gameObject);
 
             _unitViews.Clear();
+            _unitHpBars.Clear();
             _towerViews.Clear();
             _towerPulseUntil.Clear();
             _attackLines.Clear();
+            _impactPulses.Clear();
             _placementMarkers.Clear();
+            _wallHpBar = null;
             RenderedCellCount = 0;
         }
 
@@ -375,6 +416,23 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             CreateAttackLine(tower.Position, tower.LastDamageWorldPosition);
         }
 
+        void HandleWallAutoAttacked(WallAttackEvent attackEvent)
+        {
+            if (_controller == null || _controller.Grid == null)
+                return;
+
+            var from = _controller.Grid.GridToWorld(_controller.Grid.ExitCell);
+            var to = new Vector2(attackEvent.TargetX, attackEvent.TargetY);
+            CreateAttackLine(
+                from,
+                to,
+                new Color(0.72f, 0.96f, 1f, 1f),
+                new Color(1f, 0.86f, 0.32f, 0.9f),
+                0.11f,
+                0.035f);
+            CreateImpactPulse(to);
+        }
+
         void CreateOrSyncUnit(UnitInstance unit)
         {
             if (unit == null) return;
@@ -393,6 +451,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             view.transform.position = new Vector3(unit.Position.x, unit.Position.y, -0.1f);
             view.transform.localScale = ResolveUnitScale(unit, view.GetComponent<SpriteRenderer>());
             view.SetActive(true);
+            SyncUnitHpBar(unit);
         }
 
         void RemoveUnitView(string instanceId)
@@ -400,6 +459,73 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             if (!_unitViews.TryGetValue(instanceId, out var view)) return;
             _unitViews.Remove(instanceId);
             Destroy(view);
+            RemoveUnitHpBar(instanceId);
+        }
+
+        void SyncUnitHpBar(UnitInstance unit)
+        {
+            if (unit == null || _healthRoot == null)
+                return;
+
+            if (!unit.IsAlive || unit.Escaped)
+            {
+                RemoveUnitHpBar(unit.InstanceId);
+                return;
+            }
+
+            if (!_unitHpBars.TryGetValue(unit.InstanceId, out var bar))
+            {
+                bar = CreateHealthBar(
+                    $"HpBar_{unit.InstanceId}",
+                    _healthRoot,
+                    unit.Boss.IsBoss ? BossHpBarWidth : UnitHpBarWidth,
+                    HpBarHeight,
+                    sortingOrder: 70,
+                    withLabel: false);
+                _unitHpBars[unit.InstanceId] = bar;
+            }
+
+            var yOffset = unit.Boss.IsBoss ? 0.58f : 0.42f;
+            SyncHealthBar(
+                bar,
+                new Vector3(unit.Position.x, unit.Position.y + yOffset, -0.55f),
+                unit.Hp,
+                unit.MaxHp,
+                showLabel: false);
+        }
+
+        void RemoveUnitHpBar(string instanceId)
+        {
+            if (!_unitHpBars.TryGetValue(instanceId, out var bar)) return;
+            _unitHpBars.Remove(instanceId);
+            if (bar.GameObject != null)
+                Destroy(bar.GameObject);
+        }
+
+        void SyncWallHpBar()
+        {
+            if (_controller == null || _controller.Grid == null || _controller.Wall == null || _healthRoot == null)
+                return;
+
+            if (_wallHpBar == null || _wallHpBar.GameObject == null)
+            {
+                _wallHpBar = CreateHealthBar(
+                    "WallHpBar",
+                    _healthRoot,
+                    WallHpBarWidth,
+                    WallHpBarHeight,
+                    sortingOrder: 72,
+                    withLabel: true);
+            }
+
+            var wall = _controller.Wall;
+            var basePos = _controller.Grid.GridToWorld(_controller.Grid.ExitCell);
+            SyncHealthBar(
+                _wallHpBar,
+                new Vector3(basePos.x, basePos.y + 0.78f, -0.56f),
+                wall.CurrentHp,
+                wall.MaxHp,
+                showLabel: true);
         }
 
         void CreateOrSyncTower(TowerInstance tower)
@@ -445,7 +571,102 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             return go;
         }
 
+        HealthBarView CreateHealthBar(string name, Transform parent, float width, float height, int sortingOrder, bool withLabel)
+        {
+            if (_squareSprite == null)
+                _squareSprite = CreateSquareSprite();
+
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+
+            var backGo = new GameObject("Back");
+            backGo.transform.SetParent(root.transform, false);
+            var back = backGo.AddComponent<SpriteRenderer>();
+            back.sprite = _squareSprite;
+            back.color = new Color(0.08f, 0.06f, 0.03f, 0.92f);
+            back.sortingOrder = sortingOrder;
+
+            var fillGo = new GameObject("Fill");
+            fillGo.transform.SetParent(root.transform, false);
+            var fill = fillGo.AddComponent<SpriteRenderer>();
+            fill.sprite = _squareSprite;
+            fill.color = new Color(0.46f, 0.75f, 0.28f, 0.96f);
+            fill.sortingOrder = sortingOrder + 1;
+
+            TextMesh label = null;
+            if (withLabel)
+            {
+                var labelGo = new GameObject("Label");
+                labelGo.transform.SetParent(root.transform, false);
+                labelGo.transform.localPosition = new Vector3(0f, height + 0.11f, 0f);
+                label = labelGo.AddComponent<TextMesh>();
+                label.anchor = TextAnchor.MiddleCenter;
+                label.alignment = TextAlignment.Center;
+                label.fontSize = 36;
+                label.characterSize = 0.028f;
+                label.color = new Color(1f, 0.92f, 0.62f, 1f);
+                var textRenderer = labelGo.GetComponent<MeshRenderer>();
+                if (textRenderer != null)
+                    textRenderer.sortingOrder = sortingOrder + 2;
+            }
+
+            return new HealthBarView
+            {
+                GameObject = root,
+                Back = back,
+                Fill = fill,
+                Label = label,
+                Width = width,
+                Height = height
+            };
+        }
+
+        void SyncHealthBar(HealthBarView bar, Vector3 position, float current, float max, bool showLabel)
+        {
+            if (bar == null || bar.GameObject == null || bar.Back == null || bar.Fill == null)
+                return;
+
+            var safeMax = Mathf.Max(1f, max);
+            var safeCurrent = Mathf.Clamp(current, 0f, safeMax);
+            var ratio = Mathf.Clamp01(safeCurrent / safeMax);
+            var fillWidth = Mathf.Max(0.001f, bar.Width * ratio);
+
+            bar.GameObject.transform.position = position;
+            bar.GameObject.SetActive(true);
+            bar.Back.transform.localScale = new Vector3(bar.Width, bar.Height, 1f);
+            bar.Fill.transform.localScale = new Vector3(fillWidth, bar.Height * 0.72f, 1f);
+            bar.Fill.transform.localPosition = new Vector3((fillWidth - bar.Width) * 0.5f, 0f, -0.01f);
+            bar.Fill.color = ResolveHpFillColor(ratio);
+
+            if (bar.Label != null)
+            {
+                bar.Label.gameObject.SetActive(showLabel);
+                if (showLabel)
+                    bar.Label.text = $"{Mathf.CeilToInt(safeCurrent)}/{Mathf.CeilToInt(safeMax)}";
+            }
+        }
+
+        static Color ResolveHpFillColor(float ratio)
+        {
+            if (ratio <= 0.3f)
+                return new Color(0.75f, 0.19f, 0.13f, 0.96f);
+            if (ratio <= 0.6f)
+                return new Color(0.78f, 0.55f, 0.25f, 0.96f);
+            return new Color(0.46f, 0.75f, 0.28f, 0.96f);
+        }
+
         void CreateAttackLine(Vector2 from, Vector2 to)
+        {
+            CreateAttackLine(
+                from,
+                to,
+                new Color(1f, 0.92f, 0.36f, 0.95f),
+                new Color(1f, 0.35f, 0.12f, 0.85f),
+                0.075f,
+                0.025f);
+        }
+
+        void CreateAttackLine(Vector2 from, Vector2 to, Color startColor, Color endColor, float startWidth, float endWidth)
         {
             if (_attackFxRoot == null)
                 return;
@@ -461,13 +682,38 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             fx.Line.positionCount = 2;
             fx.Line.SetPosition(0, new Vector3(from.x, from.y, -0.35f));
             fx.Line.SetPosition(1, new Vector3(to.x, to.y, -0.35f));
-            fx.Line.startWidth = 0.075f;
-            fx.Line.endWidth = 0.025f;
-            fx.Line.startColor = new Color(1f, 0.92f, 0.36f, 0.95f);
-            fx.Line.endColor = new Color(1f, 0.35f, 0.12f, 0.85f);
+            fx.Line.startWidth = startWidth;
+            fx.Line.endWidth = endWidth;
+            fx.StartColor = startColor;
+            fx.EndColor = endColor;
+            fx.Line.startColor = startColor;
+            fx.Line.endColor = endColor;
             fx.Line.sortingOrder = 50;
             fx.Line.material = GetAttackLineMaterial();
             _attackLines.Add(fx);
+        }
+
+        void CreateImpactPulse(Vector2 position)
+        {
+            if (_attackFxRoot == null)
+                return;
+
+            if (_squareSprite == null)
+                _squareSprite = CreateSquareSprite();
+
+            var pulse = new ImpactPulseFx
+            {
+                GameObject = new GameObject("WallImpactPulse"),
+                AgeSeconds = 0f
+            };
+            pulse.GameObject.transform.SetParent(_attackFxRoot, false);
+            pulse.GameObject.transform.position = new Vector3(position.x, position.y, -0.36f);
+            pulse.GameObject.transform.localScale = new Vector3(0.18f, 0.18f, 1f);
+            pulse.Renderer = pulse.GameObject.AddComponent<SpriteRenderer>();
+            pulse.Renderer.sprite = _squareSprite;
+            pulse.Renderer.color = new Color(0.72f, 0.96f, 1f, 0.86f);
+            pulse.Renderer.sortingOrder = 55;
+            _impactPulses.Add(pulse);
         }
 
         void TickAttackLines(float unscaledDeltaSeconds)
@@ -483,8 +729,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
                 fx.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
                 var t = Mathf.Clamp01(fx.AgeSeconds / AttackLineDurationSeconds);
-                fx.Line.startColor = new Color(1f, 0.92f, 0.36f, 1f - t);
-                fx.Line.endColor = new Color(1f, 0.35f, 0.12f, 0.85f - t * 0.85f);
+                fx.Line.startColor = Fade(fx.StartColor, 1f - t);
+                fx.Line.endColor = Fade(fx.EndColor, 1f - t);
 
                 if (fx.AgeSeconds < AttackLineDurationSeconds)
                     continue;
@@ -492,6 +738,37 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 Destroy(fx.GameObject);
                 _attackLines.RemoveAt(i);
             }
+        }
+
+        void TickImpactPulses(float unscaledDeltaSeconds)
+        {
+            for (var i = _impactPulses.Count - 1; i >= 0; i--)
+            {
+                var pulse = _impactPulses[i];
+                if (pulse == null || pulse.GameObject == null || pulse.Renderer == null)
+                {
+                    _impactPulses.RemoveAt(i);
+                    continue;
+                }
+
+                pulse.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
+                var t = Mathf.Clamp01(pulse.AgeSeconds / ImpactPulseDurationSeconds);
+                var scale = Mathf.Lerp(0.18f, 0.58f, t);
+                pulse.GameObject.transform.localScale = new Vector3(scale, scale, 1f);
+                pulse.Renderer.color = new Color(0.72f, 0.96f, 1f, 0.86f * (1f - t));
+
+                if (pulse.AgeSeconds < ImpactPulseDurationSeconds)
+                    continue;
+
+                Destroy(pulse.GameObject);
+                _impactPulses.RemoveAt(i);
+            }
+        }
+
+        static Color Fade(Color color, float alphaMultiplier)
+        {
+            color.a *= Mathf.Clamp01(alphaMultiplier);
+            return color;
         }
 
         Material GetAttackLineMaterial()

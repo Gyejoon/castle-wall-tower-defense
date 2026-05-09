@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-05-06 (v4.0 — asset freeze for minimal launch)
+> **Last Updated:** 2026-05-09 (v4.2 — Unity generated visual assets applied)
 > **Goal:** v1 출시는 현재 보유 에셋을 최대한 재사용한다. 신규 에셋 제작은 재미 검증 이후로 미룬다.
 
 ---
@@ -163,3 +163,16 @@ Unity 전환은 유지한다. 다만 Unity 이행 때문에 Phaser v1 에셋을 
 | VFX | Unity parity 전에는 신규 제작하지 않음 |
 
 Unity 쪽에서 필요한 에셋 변환은 전환 트랙 문서나 작업 PR에서 별도 관리한다.
+
+### Unity Visual Asset Catalog
+
+| 항목 | 파일 |
+|------|------|
+| unified catalog | `packages/unity-game/Assets/Resources/Visuals/VisualAssetCatalog.asset` |
+| catalog type | `packages/unity-game/Assets/Scripts/Data/VisualAssetCatalogSO.cs` |
+| generated sprite assets | `packages/unity-game/Assets/Art/Sprites/generated_forest_defense/` |
+| runtime tower binding | `packages/unity-game/Assets/Resources/Visuals/TowerSpriteCatalog.asset` |
+| runtime map binding | `packages/unity-game/Assets/Resources/Visuals/TileSpriteCatalog.asset` |
+| runtime HUD binding | `packages/unity-game/Assets/UI/Styles/hud.uss` |
+
+`VisualAssetCatalog.asset`은 기존 `TowerSpriteCatalog`, `UnitSpriteCatalog`, `TileSpriteCatalog`를 묶고, 성벽 3단계, 맵/타일, HUD, UI 스프라이트를 `key -> Sprite` 형태로 노출한다. `generated_forest_defense/`의 PNG는 첨부 이미지 기반으로 생성한 실제 raster asset이며, Unity CoreLoop 화면은 해당 타워 catalog, 맵 background/tile catalog, HUD USS background-image를 직접 참조한다.

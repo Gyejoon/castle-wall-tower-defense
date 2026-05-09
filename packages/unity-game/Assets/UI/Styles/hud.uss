@@ -66,6 +66,21 @@
   -unity-text-align: middle-center;
 }
 
+#hud-energy-panel,
+#hud-wave-panel {
+  border-width: 0;
+  background-color: rgba(0, 0, 0, 0);
+  -unity-background-scale-mode: stretch-to-fill;
+}
+
+#hud-energy-panel {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_energy_panel.png");
+}
+
+#hud-wave-panel {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_wave_panel.png");
+}
+
 .game-hud__stat-title {
   color: #e8d5a4;
   font-size: var(--type-caption10-size);
@@ -111,6 +126,15 @@
   font-size: 18px;
   -unity-font-style: bold;
   -unity-text-align: middle-center;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+#hud-menu {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_pause_button.png");
+}
+
+#hud-speed {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_speed_x3_button.png");
 }
 
 .game-hud__left-stack {
@@ -239,10 +263,12 @@
 
 .game-hud__skill-button--push .game-hud__skill-icon {
   background-color: #b74717;
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_move.png");
 }
 
 .game-hud__skill-button--freeze .game-hud__skill-icon {
   background-color: #177cbd;
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_freeze.png");
 }
 
 .game-hud__skill-label {

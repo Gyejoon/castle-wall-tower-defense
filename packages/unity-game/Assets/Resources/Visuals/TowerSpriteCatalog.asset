@@ -14,59 +14,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: GLD.Data::GLD.Data.TowerSpriteCatalogSO
   entries:
   - towerId: archer
-    staticSprite: {fileID: 21300000, guid: b697c1da8fa194e3988e4a617d3680a9, type: 3}
-    fireSprite: {fileID: 21300000, guid: b5e35f2c0698248f28631e698b805245, type: 3}
+    staticSprite: {fileID: 21300000, guid: f9d00fe45a8307c6e229c4b2f981a69b, type: 3}
+    fireSprite: {fileID: 21300000, guid: f9d00fe45a8307c6e229c4b2f981a69b, type: 3}
   - towerId: wind_spire
-    staticSprite: {fileID: 21300000, guid: acefef62a15734bafb250825d8a42e30, type: 3}
-    fireSprite: {fileID: 21300000, guid: 91c6c784eac534aa99834f66c2770239, type: 3}
+    staticSprite: {fileID: 21300000, guid: 1ec5a0a44979286e973e493f9b36ab17, type: 3}
+    fireSprite: {fileID: 21300000, guid: 1ec5a0a44979286e973e493f9b36ab17, type: 3}
   - towerId: flame_tower
-    staticSprite: {fileID: 21300000, guid: f8c60c5743f2c468a8630a51c86854a2, type: 3}
-    fireSprite: {fileID: 21300000, guid: a3d1816e21e67477cbcd483195cda54d, type: 3}
+    staticSprite: {fileID: 21300000, guid: c785c5e65fd26ad691a61031442df6ad, type: 3}
+    fireSprite: {fileID: 21300000, guid: c785c5e65fd26ad691a61031442df6ad, type: 3}
   - towerId: arcane_spire
-    staticSprite: {fileID: 21300000, guid: d0ac5185f663e4e80a8547fc2debcec0, type: 3}
-    fireSprite: {fileID: 21300000, guid: 6d7e1ec6473854d2fa41a1f3fd6daf06, type: 3}
+    staticSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
+    fireSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
   - towerId: nova_cannon
-    staticSprite: {fileID: 21300000, guid: 7975dd46ff5194a81812081755826687, type: 3}
-    fireSprite: {fileID: 21300000, guid: 8661545a9d8e34cd398d487093c46304, type: 3}
+    staticSprite: {fileID: 21300000, guid: 1518d2b4fbcd3dbe6671f98bd90166b0, type: 3}
+    fireSprite: {fileID: 21300000, guid: 1518d2b4fbcd3dbe6671f98bd90166b0, type: 3}
   - towerId: fortress
-    staticSprite: {fileID: 21300000, guid: 03052edf0d52c4a058a3f7bcd164b0a5, type: 3}
-    fireSprite: {fileID: 21300000, guid: f93ff30c8a53b41a0a86953be9a5894c, type: 3}
+    staticSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
+    fireSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
   - towerId: earth_golem
-    staticSprite: {fileID: 21300000, guid: bf27480300144413e8de1008e1e8724c, type: 3}
-    fireSprite: {fileID: 21300000, guid: b9d4ceb37abd74bdd98bc2c1832073d9, type: 3}
+    staticSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
+    fireSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
   - towerId: celestial
-    staticSprite: {fileID: 21300000, guid: 38f228061bffb4d729381f0a62f09eb4, type: 3}
-    fireSprite: {fileID: 21300000, guid: 34754146e9ace4b008d811f8efac6a1d, type: 3}
+    staticSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
+    fireSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
   - towerId: emp
-    staticSprite: {fileID: 21300000, guid: 0b56e2c5a1b2b4ad0a560b78ab8a499e, type: 3}
-    fireSprite: {fileID: 21300000, guid: 26d9194faa7d043618b30efd567bab16, type: 3}
+    staticSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
+    fireSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
   - towerId: stasis_field
-    staticSprite: {fileID: 21300000, guid: 7a531e68f918e4e53b01916d5bc8b150, type: 3}
-    fireSprite: {fileID: 21300000, guid: 944dff036b4f94aa88f265a40528db1e, type: 3}
+    staticSprite: {fileID: 21300000, guid: 1ec5a0a44979286e973e493f9b36ab17, type: 3}
+    fireSprite: {fileID: 21300000, guid: 1ec5a0a44979286e973e493f9b36ab17, type: 3}
   - towerId: disruptor
-    staticSprite: {fileID: 21300000, guid: b2135989f657447c4aab92d1daedd841, type: 3}
-    fireSprite: {fileID: 21300000, guid: 01b69b79c6689449cbbb25add049c44c, type: 3}
+    staticSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
+    fireSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
   - towerId: world_tree
-    staticSprite: {fileID: 21300000, guid: e84458786fdc7443588ec9efd4c79490, type: 3}
-    fireSprite: {fileID: 21300000, guid: 454c9c742435544f792705ba3fd18b50, type: 3}
+    staticSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
+    fireSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
   - towerId: shield
-    staticSprite: {fileID: 21300000, guid: 8ea608bf5bd474f949956aaf2467deaa, type: 3}
-    fireSprite: {fileID: 21300000, guid: d97a7c73532e6411e88173432b696763, type: 3}
+    staticSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
+    fireSprite: {fileID: 21300000, guid: 3e490acfa3de54a797bd0c91485adffe, type: 3}
   - towerId: twin_archer
-    staticSprite: {fileID: 21300000, guid: a137a14d91e0546caa5a5d7424c5d197, type: 3}
-    fireSprite: {fileID: 21300000, guid: fc4ca79501621411ba3c53ff09becaa2, type: 3}
+    staticSprite: {fileID: 21300000, guid: f9d00fe45a8307c6e229c4b2f981a69b, type: 3}
+    fireSprite: {fileID: 21300000, guid: f9d00fe45a8307c6e229c4b2f981a69b, type: 3}
   - towerId: holy_shrine
-    staticSprite: {fileID: 21300000, guid: d72534a16beec4ce2b14d4e81eab5e54, type: 3}
-    fireSprite: {fileID: 21300000, guid: b539f22ecd36843e890f1785500e040c, type: 3}
+    staticSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
+    fireSprite: {fileID: 21300000, guid: 4547209069f6712bbcf23cbaa7cb5675, type: 3}
   - towerId: divine_throne
-    staticSprite: {fileID: 21300000, guid: 9b2d2f81d1acb4ca985a64674cabbbbc, type: 3}
-    fireSprite: {fileID: 21300000, guid: 9c88dffe674804740a03c3c678f72372, type: 3}
+    staticSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}
+    fireSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}
   - towerId: hybrid_ab
-    staticSprite: {fileID: 21300000, guid: 9610b6b15bb2948b8b70b50e15dd89e6, type: 3}
-    fireSprite: {fileID: 21300000, guid: 8c82fa3a545ca487bb6ce6920ef86836, type: 3}
+    staticSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}
+    fireSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}
   - towerId: hybrid_cd
-    staticSprite: {fileID: 21300000, guid: 341e6762dd9bd45138dc04da11780ade, type: 3}
-    fireSprite: {fileID: 21300000, guid: 90143705572204517bd5b3ac738845b0, type: 3}
+    staticSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
+    fireSprite: {fileID: 21300000, guid: d05ef78053e7ad2f3b7ad3ae32011357, type: 3}
   - towerId: ultimate
-    staticSprite: {fileID: 21300000, guid: 967127357fec84ec5b5a3cb28ff477e0, type: 3}
-    fireSprite: {fileID: 21300000, guid: 334d8494cf29e46dd921672a3610e5da, type: 3}
+    staticSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}
+    fireSprite: {fileID: 21300000, guid: 9b8288580a134146853197a2c1a65647, type: 3}

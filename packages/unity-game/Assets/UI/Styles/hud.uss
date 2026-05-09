@@ -13,6 +13,29 @@
   justify-content: space-between;
 }
 
+#hud-energy,
+#hud-wave,
+#hud-hp {
+  min-width: 104px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-width: 0;
+  background-color: transparent;
+  color: #fff0c4;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  -unity-background-scale-mode: stretch-to-fill;
+}
+
+#hud-energy {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_energy_panel.png");
+}
+
+#hud-wave,
+#hud-hp {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_wave_panel.png");
+}
+
 .game-hud__status {
   align-self: center;
   padding: 4px 8px;
@@ -37,4 +60,29 @@
   margin-left: 2px;
   margin-right: 2px;
   min-width: 0;
+  min-height: 58px;
+  border-width: 0;
+  background-color: transparent;
+  color: #fff0c4;
+  -unity-font-style: bold;
+  -unity-text-align: lower-center;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+#hud-summon {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_move.png");
+}
+
+#hud-gacha-t2,
+#hud-gacha-t3,
+#hud-gacha-t4 {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_wave_panel.png");
+}
+
+#hud-speed {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_speed_x3_button.png");
+}
+
+#hud-menu {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_wall_menu.png");
 }

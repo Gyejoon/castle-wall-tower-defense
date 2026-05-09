@@ -52,6 +52,10 @@ Unity Root scene
 
 CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서는 신규 BM, 신규 메타, 신규 모드를 여기에 추가하지 않는다.
 
+### Unity HUD Layout Tuning
+
+Unity HUD는 상단 에너지, WAVE, 일시정지, x3 버튼만 노출한다. 하단 액션, 좌측 진행도, 성벽 메뉴 버튼은 v1 HUD surface에서 제거한다. 위치/크기/간격은 `Assets/Resources/UI/HudLayoutConfig.asset`의 `HudLayoutConfigSO`에서 조정하며, 레퍼런스 이미지 정렬 작업은 C# 하드코딩 대신 이 에셋의 Inspector 값을 우선 수정한다. Editor Play Mode에서는 `enableDragEditing`이 켜져 있으면 상단 좌측 묶음과 우측 버튼 묶음을 Game View에서 직접 드래그해 위치를 저장할 수 있고, `Ctrl/Cmd+Z`로 되돌릴 수 있다. `GameHudController`는 런타임에 해당 에셋을 `Resources.Load("UI/HudLayoutConfig")`로 읽고, 에셋이 없을 때만 내부 기본값으로 fallback한다.
+
 ---
 
 ## 3. Legacy Surface Policy

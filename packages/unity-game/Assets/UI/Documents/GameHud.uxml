@@ -8,9 +8,7 @@
   <ui:VisualElement name="game-hud" class="game-hud">
     <ui:VisualElement name="game-hud-top" class="game-hud__top">
       <ui:VisualElement name="hud-energy-panel" class="game-hud__stat game-hud__stat--energy">
-        <ui:VisualElement class="game-hud__stat-medal">
-          <ui:Label text="⚡" class="game-hud__stat-icon" />
-        </ui:VisualElement>
+        <ui:Label text="E" class="game-hud__stat-title game-hud__stat-title--energy" />
         <ui:Label name="hud-energy" text="46" class="game-hud__stat-value" />
       </ui:VisualElement>
       <ui:VisualElement name="hud-wave-panel" class="game-hud__stat game-hud__stat--wave">
@@ -19,8 +17,7 @@
       </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="game-hud-top-right" class="game-hud__top-right">
-      <ui:Button name="hud-menu" text="II" class="game-hud__round-control game-hud__round-control--pause" />
-      <ui:Button name="hud-speed" text="x3 ››" class="game-hud__round-control game-hud__round-control--speed" />
+      <ui:Button name="hud-menu" text="☰" class="game-hud__round-control game-hud__round-control--menu" />
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

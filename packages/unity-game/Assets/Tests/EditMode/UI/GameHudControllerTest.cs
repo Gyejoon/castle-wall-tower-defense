@@ -51,6 +51,9 @@ namespace GLD.Tests.EditMode.UI
 
                 Assert.That(root.Q<Label>("hud-energy").text, Is.EqualTo("77"));
                 Assert.That(root.Q<Label>("hud-wave").text, Is.EqualTo("3/20"));
+                Assert.That(root.Q<Label>(className: "game-hud__stat-title--energy"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>(className: "game-hud__stat-medal"), Is.Null);
+                Assert.That(root.Q<Label>(className: "game-hud__stat-icon"), Is.Null);
                 Assert.That(root.Q<Label>("hud-hp"), Is.Null);
                 Assert.That(root.Q<Label>("hud-progress-label"), Is.Null);
                 Assert.That(root.Q<VisualElement>("hud-card-preview"), Is.Null);
@@ -72,25 +75,22 @@ namespace GLD.Tests.EditMode.UI
             try
             {
                 var pause = 0;
-                var speed = 0f;
                 GameEvents.OnRequestPause += () => pause++;
-                GameEvents.OnRequestSetSpeed += value => speed = value;
 
                 var controller = host.AddComponent<GameHudController>();
                 controller.Bind(new RunState("hud-test"), root);
 
                 Assert.That(root.Q<VisualElement>("hud-energy-panel"), Is.Not.Null);
                 Assert.That(root.Q<VisualElement>("hud-wave-panel"), Is.Not.Null);
-                Assert.That(root.Q<Button>("hud-speed"), Is.Not.Null);
+                Assert.That(root.Q<Button>("hud-speed"), Is.Null);
                 Assert.That(root.Q<Button>("hud-menu"), Is.Not.Null);
+                Assert.That(root.Q<Button>("hud-menu").text, Is.EqualTo("☰"));
                 Assert.That(root.Q<Button>("hud-gacha-t2"), Is.Null);
                 Assert.That(root.Q<Button>("hud-gacha-t3"), Is.Null);
                 Assert.That(root.Q<Button>("hud-wall-menu"), Is.Null);
 
-                controller.RequestToggleSpeed();
                 controller.RequestMenu();
 
-                Assert.That(speed, Is.EqualTo(3f));
                 Assert.That(pause, Is.EqualTo(1));
             }
             finally

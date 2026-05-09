@@ -114,7 +114,7 @@
 }
 
 .pause-panel {
-  width: 260px;
+  width: 292px;
   border-color: var(--color-accent);
 }
 
@@ -127,6 +127,58 @@
 
 .pause-panel > .gld-btn {
   margin-top: 8px;
+}
+
+.pause-speed-row {
+  flex-direction: row;
+  margin-bottom: 10px;
+}
+
+.pause-speed-row > .gld-btn {
+  flex-grow: 1;
+  min-width: 0;
+  margin-left: 3px;
+  margin-right: 3px;
+}
+
+.pause-speed-row > .pause-speed--selected {
+  border-color: var(--color-accent);
+  background-color: var(--surface-panel-sunken);
+  color: var(--color-text-primary);
+}
+
+.wall-upgrade-overlay {
+  padding: 24px;
+}
+
+.wall-upgrade-panel {
+  width: 326px;
+  border-color: var(--color-accent);
+}
+
+#wall-upgrade-title {
+  color: var(--color-text-primary);
+  font-size: var(--type-h2-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-bottom: 8px;
+}
+
+#wall-upgrade-summary {
+  color: var(--color-text-secondary);
+  font-size: var(--type-caption10-size);
+  -unity-text-align: middle-center;
+  white-space: normal;
+  margin-bottom: 12px;
+}
+
+.wall-upgrade-actions {
+  flex-direction: column;
+}
+
+.wall-upgrade-actions > .gld-btn {
+  margin-top: 6px;
+  min-height: 44px;
 }
 
 .boss-hp-bar {

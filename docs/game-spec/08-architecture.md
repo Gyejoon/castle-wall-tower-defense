@@ -54,7 +54,7 @@ CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서�
 
 ### Unity HUD Layout Tuning
 
-Unity HUD는 상단 에너지, WAVE, 일시정지, x3 버튼만 노출한다. 하단 액션, 좌측 진행도, 성벽 메뉴 버튼은 v1 HUD surface에서 제거한다. 위치/크기/간격은 `Assets/Resources/UI/HudLayoutConfig.asset`의 `HudLayoutConfigSO`에서 조정하며, 레퍼런스 이미지 정렬 작업은 C# 하드코딩 대신 이 에셋의 Inspector 값을 우선 수정한다. Editor Play Mode에서는 `enableDragEditing`이 켜져 있으면 상단 좌측 묶음과 우측 버튼 묶음을 Game View에서 직접 드래그해 위치를 저장할 수 있고, `Ctrl/Cmd+Z`로 되돌릴 수 있다. `GameHudController`는 런타임에 해당 에셋을 `Resources.Load("UI/HudLayoutConfig")`로 읽고, 에셋이 없을 때만 내부 기본값으로 fallback한다.
+Unity HUD는 상단 에너지, WAVE, 햄버거 설정 버튼만 노출한다. 배속 `x1/x2/x3`, 재개, 포기는 햄버거 버튼이 여는 설정 overlay에서 처리한다. 하단 액션, 좌측 진행도, 성벽 메뉴 버튼은 v1 HUD surface에서 제거한다. 성벽 메뉴는 필드의 성벽 직접 클릭으로만 열리며, 즉시 수리권/공격력/공격 속도/공격 범위 강화를 제공하고 overlay 바깥 클릭 시 닫힌다. 위치/크기/간격은 `Assets/Resources/UI/HudLayoutConfig.asset`의 `HudLayoutConfigSO`에서 조정하며, 레퍼런스 이미지 정렬 작업은 C# 하드코딩 대신 이 에셋의 Inspector 값을 우선 수정한다. Editor Play Mode에서는 `enableDragEditing`이 켜져 있으면 상단 좌측 묶음과 우측 버튼 묶음을 Game View에서 직접 드래그해 위치를 저장할 수 있고, `Ctrl/Cmd+Z`로 되돌릴 수 있다. `GameHudController`는 런타임에 해당 에셋을 `Resources.Load("UI/HudLayoutConfig")`로 읽고, 에셋이 없을 때만 내부 기본값으로 fallback한다.
 
 ---
 

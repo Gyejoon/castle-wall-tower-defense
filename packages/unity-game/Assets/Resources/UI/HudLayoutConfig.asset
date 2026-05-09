@@ -15,9 +15,9 @@ MonoBehaviour:
   enableDragEditing: 1
   topLeftX: 8
   topY: 18
-  energyPanelWidth: 108
-  wavePanelWidth: 104
-  statPanelHeight: 48
+  energyPanelWidth: 96
+  wavePanelWidth: 124
+  statPanelHeight: 54
   statPanelGap: 8
   topRightX: 11
   topRightY: 14

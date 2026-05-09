@@ -35,6 +35,7 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] TowerActionSheetController towerActionSheetController;
         [SerializeField] SummonRevealController summonRevealController;
         [SerializeField] UpgradePickOverlayController upgradePickOverlayController;
+        [SerializeField] WallUpgradeOverlayController wallUpgradeOverlayController;
         [SerializeField] PauseModalController pauseModalController;
         [SerializeField] BossHpBarController bossHpBarController;
         [SerializeField] BossWarningOverlayController bossWarningOverlayController;
@@ -221,6 +222,13 @@ namespace GLD.SceneRuntime.CoreLoop
                 upgradePickOverlayController = gameObject.AddComponent<UpgradePickOverlayController>();
 
             upgradePickOverlayController.Bind(gameHudDocument);
+
+            if (wallUpgradeOverlayController == null)
+                wallUpgradeOverlayController = GetComponent<WallUpgradeOverlayController>();
+            if (wallUpgradeOverlayController == null)
+                wallUpgradeOverlayController = gameObject.AddComponent<WallUpgradeOverlayController>();
+
+            wallUpgradeOverlayController.Bind(gameHudDocument);
 
             if (pauseModalController == null)
                 pauseModalController = GetComponent<PauseModalController>();

@@ -13,7 +13,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
     {
         Label _energyLabel;
         Label _waveLabel;
-        Button _speedButton;
         Button _menuButton;
         RunState _runState;
         VisualAssetCatalogSO _visuals;
@@ -84,7 +83,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _layout = Resources.Load<HudLayoutConfigSO>("UI/HudLayoutConfig");
             _energyLabel = root.Q<Label>("hud-energy");
             _waveLabel = root.Q<Label>("hud-wave");
-            _speedButton = root.Q<Button>("hud-speed");
             _menuButton = root.Q<Button>("hud-menu");
             ApplyHudLayout(root, _visuals, _layout);
             ApplyHudButtonSizing(_layout);
@@ -93,17 +91,13 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void RegisterButtons()
         {
-            _speedButton?.RegisterCallback<ClickEvent>(_ => RequestToggleSpeed());
-            _menuButton?.RegisterCallback<ClickEvent>(_ => RequestMenu());
+            _menuButton?.UnregisterCallback<ClickEvent>(HandleMenuClicked);
+            _menuButton?.RegisterCallback<ClickEvent>(HandleMenuClicked);
         }
 
         public void RequestMenu() => GameEvents.RaiseRequestPause();
 
-        public void RequestToggleSpeed()
-        {
-            var current = _runState != null ? _runState.SpeedMultiplier : 1f;
-            GameEvents.RaiseRequestSetSpeed(current >= 3f ? 1f : 3f);
-        }
+        void HandleMenuClicked(ClickEvent evt) => RequestMenu();
 
         void HandleRunStateChanged(RunState state)
         {
@@ -111,8 +105,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
                 _energyLabel.text = state.Energy.ToString();
             if (_waveLabel != null)
                 _waveLabel.text = $"{state.Wave}/20";
-            if (_speedButton != null)
-                _speedButton.text = string.Empty;
         }
 
         static VisualElement BuildFallbackHud()
@@ -140,14 +132,10 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             topRight.pickingMode = PickingMode.Ignore;
             topRight.style.position = Position.Absolute;
             topRight.style.flexDirection = FlexDirection.Column;
-            var menu = new Button { name = "hud-menu" };
+            var menu = new Button { name = "hud-menu", text = "☰" };
             menu.AddToClassList("game-hud__round-control");
-            menu.AddToClassList("game-hud__round-control--pause");
-            var speed = new Button { name = "hud-speed" };
-            speed.AddToClassList("game-hud__round-control");
-            speed.AddToClassList("game-hud__round-control--speed");
+            menu.AddToClassList("game-hud__round-control--menu");
             topRight.Add(menu);
-            topRight.Add(speed);
 
             hud.Add(top);
             hud.Add(topRight);
@@ -159,14 +147,12 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             var panel = new VisualElement { name = "hud-energy-panel" };
             panel.AddToClassList("game-hud__stat");
             panel.AddToClassList("game-hud__stat--energy");
-            var medal = new VisualElement();
-            medal.AddToClassList("game-hud__stat-medal");
-            var icon = new Label("E");
-            icon.AddToClassList("game-hud__stat-icon");
-            medal.Add(icon);
+            var title = new Label("E");
+            title.AddToClassList("game-hud__stat-title");
+            title.AddToClassList("game-hud__stat-title--energy");
             var value = new Label("0") { name = "hud-energy" };
             value.AddToClassList("game-hud__stat-value");
-            panel.Add(medal);
+            panel.Add(title);
             panel.Add(value);
             return panel;
         }
@@ -215,32 +201,10 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             ApplyStatPanel(root.Q<VisualElement>("hud-energy-panel"), hudLayout.energyPanelWidth, hudLayout);
             ApplyStatPanel(root.Q<VisualElement>("hud-wave-panel"), hudLayout.wavePanelWidth, hudLayout);
-            ApplyHudSprite(root.Q<VisualElement>("hud-energy-panel"), visuals, "hud.energy_panel");
-            ApplyHudSprite(root.Q<VisualElement>("hud-wave-panel"), visuals, "hud.wave_panel");
 
-            var energyMedal = root.Q<VisualElement>(className: "game-hud__stat-medal");
-            if (energyMedal != null)
-            {
-                energyMedal.style.width = 34f;
-                energyMedal.style.height = 34f;
-                energyMedal.style.marginRight = 9f;
-                energyMedal.style.borderTopWidth = 0f;
-                energyMedal.style.borderRightWidth = 0f;
-                energyMedal.style.borderBottomWidth = 0f;
-                energyMedal.style.borderLeftWidth = 0f;
-                energyMedal.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
-                energyMedal.style.alignItems = Align.Center;
-                energyMedal.style.justifyContent = Justify.Center;
-            }
-
-            root.Query<Label>(className: "game-hud__stat-icon").ForEach(label =>
-            {
-                label.style.width = 34f;
-                label.style.height = 34f;
-                ApplyLabel(label, new Color32(255, 242, 166, 255), 20f);
-            });
-            root.Query<Label>(className: "game-hud__stat-title").ForEach(label => ApplyLabel(label, new Color32(232, 213, 164, 255), 10f));
-            root.Query<Label>(className: "game-hud__stat-value").ForEach(label => ApplyLabel(label, new Color32(240, 232, 216, 255), label.ClassListContains("game-hud__stat-value--wave") ? 20f : 24f));
+            root.Query<Label>(className: "game-hud__stat-title").ForEach(label => ApplyLabel(label, label.ClassListContains("game-hud__stat-title--energy") ? new Color32(240, 208, 96, 255) : new Color32(232, 213, 164, 255), 12f));
+            root.Query<Label>(className: "game-hud__stat-value").ForEach(label => ApplyLabel(label, new Color32(240, 232, 216, 255), label.ClassListContains("game-hud__stat-value--wave") ? 19f : 22f));
+            ApplyStatLabelLayout(root);
 
             var topRight = root.Q<VisualElement>("game-hud-top-right");
             if (topRight != null)
@@ -255,17 +219,15 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void ApplyHudButtonSizing(HudLayoutConfigSO layout)
         {
-            ApplyMiniButton(_speedButton, _visuals, layout);
-            ApplyMiniButton(_menuButton, _visuals, layout);
+            ApplyMiniButton(_menuButton, layout);
         }
 
-        static void ApplyMiniButton(Button button, VisualAssetCatalogSO visuals, HudLayoutConfigSO layout)
+        static void ApplyMiniButton(Button button, HudLayoutConfigSO layout)
         {
             if (button == null)
                 return;
 
             var hudLayout = ResolveLayout(layout);
-            button.text = string.Empty;
             button.style.width = hudLayout.topRightButtonSize;
             button.style.minWidth = hudLayout.topRightButtonSize;
             button.style.maxWidth = hudLayout.topRightButtonSize;
@@ -277,18 +239,28 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             button.style.paddingTop = 0f;
             button.style.paddingBottom = 0f;
             button.style.marginBottom = hudLayout.topRightButtonGap;
-            button.style.borderTopWidth = 0f;
-            button.style.borderRightWidth = 0f;
-            button.style.borderBottomWidth = 0f;
-            button.style.borderLeftWidth = 0f;
-            button.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            button.style.borderTopWidth = 2f;
+            button.style.borderRightWidth = 2f;
+            button.style.borderBottomWidth = 2f;
+            button.style.borderLeftWidth = 2f;
+            var radius = hudLayout.topRightButtonSize * 0.5f;
+            button.style.borderTopLeftRadius = radius;
+            button.style.borderTopRightRadius = radius;
+            button.style.borderBottomRightRadius = radius;
+            button.style.borderBottomLeftRadius = radius;
+            button.style.borderTopColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderRightColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderBottomColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderLeftColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.backgroundColor = new Color(0.165f, 0.125f, 0.063f, 1f);
+            button.style.color = new Color(0.965f, 0.902f, 0.722f, 1f);
+            button.style.fontSize = 22f;
+            button.style.unityFontStyleAndWeight = FontStyle.Bold;
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
-            button.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+            button.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
 
             if (button.name == "hud-menu")
-                ApplyHudSprite(button, visuals, "hud.pause_button", ScaleMode.ScaleToFit);
-            else if (button.name == "hud-speed")
-                ApplyHudSprite(button, visuals, "hud.speed_x3_button", ScaleMode.ScaleToFit);
+                button.text = "☰";
         }
 
         static void ApplyStatPanel(VisualElement panel, float width, HudLayoutConfigSO layout)
@@ -301,18 +273,53 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             panel.style.height = hudLayout.statPanelHeight;
             panel.style.minHeight = hudLayout.statPanelHeight;
             panel.style.marginRight = hudLayout.statPanelGap;
-            panel.style.paddingLeft = 6f;
-            panel.style.paddingRight = 10f;
+            panel.style.paddingLeft = 12f;
+            panel.style.paddingRight = 12f;
             panel.style.paddingTop = 0f;
             panel.style.paddingBottom = 0f;
-            panel.style.borderTopWidth = 0f;
-            panel.style.borderRightWidth = 0f;
-            panel.style.borderBottomWidth = 0f;
-            panel.style.borderLeftWidth = 0f;
-            panel.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
-            panel.style.flexDirection = panel.ClassListContains("game-hud__stat--wave") ? FlexDirection.Column : FlexDirection.Row;
+            panel.style.borderTopWidth = 2f;
+            panel.style.borderRightWidth = 2f;
+            panel.style.borderBottomWidth = 2f;
+            panel.style.borderLeftWidth = 2f;
+            var radius = hudLayout.statPanelHeight * 0.5f;
+            panel.style.borderTopLeftRadius = radius;
+            panel.style.borderTopRightRadius = radius;
+            panel.style.borderBottomRightRadius = radius;
+            panel.style.borderBottomLeftRadius = radius;
+            panel.style.borderTopColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderRightColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderBottomColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderLeftColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.backgroundColor = new Color(0.165f, 0.125f, 0.063f, 1f);
+            panel.style.flexDirection = FlexDirection.Row;
             panel.style.alignItems = Align.Center;
             panel.style.justifyContent = Justify.Center;
+        }
+
+        static void ApplyStatLabelLayout(VisualElement root)
+        {
+            var energy = root.Q<Label>("hud-energy");
+            if (energy != null)
+            {
+                energy.style.width = 50f;
+                energy.style.minWidth = 50f;
+                energy.style.maxWidth = 50f;
+            }
+
+            root.Query<Label>(className: "game-hud__stat-title").ForEach(label =>
+            {
+                label.style.marginRight = 6f;
+                label.style.marginTop = 0f;
+                label.style.marginBottom = 0f;
+            });
+            var wave = root.Q<Label>("hud-wave");
+            if (wave != null)
+            {
+                wave.style.width = 50f;
+                wave.style.minWidth = 50f;
+                wave.style.maxWidth = 50f;
+                wave.style.marginTop = 0f;
+            }
         }
 
         static void RegisterHudDragEditing(VisualElement root, VisualAssetCatalogSO visuals, HudLayoutConfigSO layout)

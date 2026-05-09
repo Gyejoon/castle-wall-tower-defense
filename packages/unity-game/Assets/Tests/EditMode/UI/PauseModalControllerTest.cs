@@ -57,18 +57,28 @@ namespace GLD.Tests.EditMode.UI
             {
                 var resume = 0;
                 var quit = 0;
+                var speed = 0f;
                 GameEvents.OnRequestResume += () => resume++;
                 GameEvents.OnRequestQuitToLobby += () => quit++;
+                GameEvents.OnRequestSetSpeed += value => speed = value;
 
                 var controller = host.AddComponent<PauseModalController>();
-                controller.Bind(new RunState("pause-test"), root);
+                var runState = new RunState("pause-test");
+                controller.Bind(runState, root);
 
                 Assert.That(root.Q<Button>("pause-resume"), Is.Not.Null);
                 Assert.That(root.Q<Button>("pause-quit"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-speed-x1"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-speed-x2"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-speed-x3"), Is.Not.Null);
 
+                runState.SetSpeedMultiplier(3f);
+                Assert.That(root.Q<Button>("pause-speed-x3").ClassListContains("pause-speed--selected"), Is.True);
+                controller.RequestSpeed(2f);
                 controller.RequestResume();
                 controller.RequestQuit();
 
+                Assert.That(speed, Is.EqualTo(2f));
                 Assert.That(resume, Is.EqualTo(1));
                 Assert.That(quit, Is.EqualTo(1));
             }

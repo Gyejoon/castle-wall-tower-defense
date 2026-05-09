@@ -11,9 +11,9 @@ namespace GLD.Data
         [Header("Top Left")]
         public float topLeftX = 10f;
         public float topY = 14f;
-        public float energyPanelWidth = 108f;
-        public float wavePanelWidth = 104f;
-        public float statPanelHeight = 48f;
+        public float energyPanelWidth = 96f;
+        public float wavePanelWidth = 124f;
+        public float statPanelHeight = 54f;
         public float statPanelGap = 8f;
 
         [Header("Top Right")]

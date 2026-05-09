@@ -1,8 +1,8 @@
 # Game Design Document (GDD)
 
-> **Last Updated:** 2026-05-06 (v4.0 — minimal launch scope)
-> **Decision:** Unity 전환은 유지한다. 다만 v1 출시는 Phaser 런타임을 기준으로 검증하고, Unity는 병행 이행 트랙으로 관리한다.
-> **Goal:** 리소스를 최소화하면서 지하철에서 6~8분 동안 하기 편한 캐주얼 랜덤 합성 타워디펜스를 출시한다.
+> **Last Updated:** 2026-05-09 (v5.0 — central wall checkpoint loop)
+> **Decision:** v1 핵심 루프를 중앙 성벽 방어 + 4속성 슬롯 + 5-wave Act checkpoint 구조로 재정의한다.
+> **Goal:** `main_long` 하나로, 성벽을 지키며 Act마다 보상을 고르는 6~8분짜리 모바일 방어 런을 검증한다.
 
 ---
 
@@ -11,22 +11,22 @@
 | 항목 | 내용 |
 |------|------|
 | Title | Grid Line Defense |
-| Genre | Mobile portrait random merge tower defense |
+| Genre | Mobile portrait central-wall tower defense |
 | Platform | Mobile Web / App In Toss |
 | Player Count | Single |
 | Session Length | 평균 6~8분, 20 wave 완주 시 8~10분 |
-| Core Fantasy | 랜덤으로 나온 4가문 타워를 합성해 한 판 안에서 강력한 최종 타워까지 키운다 |
-| Core Fun | 소환 도파민, 합성 도파민, 보스 후 3카드 선택, 최고 wave 갱신 |
+| Core Fantasy | 중앙 성벽을 지키는 지휘관이 되어 4속성 방어 슬롯과 전술 스킬로 적의 진입을 막는다 |
+| Core Fun | 성벽 HP 압박, Act 보스 돌파, 체크포인트 보상 선택, 4속성 슬롯 성장 |
 | Mode | 단일 정식 모드 |
-| Map | `main_long` 1종, 9x18 논리 그리드, 6개 고정 배치칸 |
-| Runtime | v1 운영은 Phaser, 향후 Unity WebGL 전환 유지 |
+| Map | `main_long` 1종, 9x18 논리 그리드, 중앙 성벽 + 성벽 주변 4속성 슬롯 |
+| Runtime | Unity WebGL 전환 트랙을 v1 검증 대상으로 승격한다 |
 
 ### Design Pillars
 
-1. **한 판 안에서 완결**: 메인 재미는 영구 성장보다 런 중 소환/합성/카드 선택에서 나온다.
+1. **성벽 방어가 목적**: 플레이어의 주 목표는 중앙 성벽 HP를 지키며 Act 4까지 버티는 것이다.
 2. **엄지 조작 우선**: 하단 버튼과 타워 탭만으로 핵심 플레이가 가능해야 한다.
-3. **낮은 운영비**: 시즌, 서버 경제, 복잡한 LiveOps 없이도 유지 가능해야 한다.
-4. **작은 콘텐츠로 반복성 확보**: 맵과 타워 수를 늘리기보다 랜덤 소환과 합성 경로로 변주를 만든다.
+3. **5-wave 호흡**: wave 5/10/15/20 보스 뒤 checkpoint reward로 선택 피로를 나눈다.
+4. **작은 콘텐츠로 반복성 확보**: 맵을 늘리지 않고 4속성 슬롯, 성벽, 스킬, roguelike 보상 조합으로 변주를 만든다.
 
 ---
 
@@ -35,9 +35,9 @@
 | 항목 | 내용 |
 |------|------|
 | 상황 | 출퇴근, 대기 시간, 짧은 휴식 |
-| 숙련도 | 캐주얼 중심, 랜덤 디펜스 경험자는 빠르게 이해 |
-| 첫 세션 목표 | 30초 안에 소환/배치 이해, 3분 안에 첫 보스 경험 |
-| 재방문 이유 | 최고 wave 갱신, 더 높은 tier 합성, 보스 카드 조합 실험 |
+| 숙련도 | 캐주얼 중심, 성벽 HP와 스킬 버튼을 빠르게 이해 |
+| 첫 세션 목표 | 30초 안에 성벽/4슬롯/스킬을 이해, 2~3분 안에 첫 checkpoint 경험 |
+| 재방문 이유 | 최고 Act 갱신, checkpoint 보상 조합, 성벽 HP 잔량 기록 |
 
 ---
 
@@ -49,14 +49,14 @@
 |------|---------|
 | 모드 | 단일 정식 모드 |
 | 맵 | `main_long` 1개 |
-| 타워 | 19종: 4 family x 4 tier + hybrid 2 + ultimate 1 |
+| 타워 | 4속성 슬롯: archer / siege / frost / stun. 각 슬롯은 보상으로 등장/승급 |
 | 적 | 현재 보유 몬스터 에셋 내에서 6~8종 사용 |
 | 보스 | 현재 보유 보스 중 2~3종 순환 |
 | 전투 재화 | energy |
-| 런 강화 | 보스 클리어 후 3카드 중 1장 선택 |
-| 광고 | 선택형 보상 광고 2곳: 이어하기, 카드 리롤 |
+| 런 강화 | 보스 클리어 후 checkpoint reward 3개 중 1개 선택 |
+| 광고 | 선택형 보상 광고 2곳: 이어하기, checkpoint reward 리롤 |
 | 저장 | localStorage 기반 최고 기록/설정/간단 메타 |
-| Unity | Phaser v1과 별도 트랙으로 PoC/전환 준비 유지 |
+| Unity | v1 core-loop 검증 대상 |
 
 ### Out of Scope for V1
 
@@ -68,7 +68,7 @@
 | 일일/주간 미션 | 반복 운영 부담이 큼 |
 | 출석 보상 / 시즌 / 이벤트 | 지속 운영 전제가 필요 |
 | 별 등급 / 스테이지 클리어 랭크 | 단일 endless 모드와 충돌 |
-| 덱 편성 / 월드맵 / 스테이지 선택 | 랜덤 소환 정식 모드와 충돌 |
+| 덱 편성 / 월드맵 / 스테이지 선택 | Act/Checkpoint가 한 런 안의 구간을 대체 |
 | grade 승급 / 각성 / 조각 | 메타 경제 복잡도가 큼 |
 | 서버 저장 / 랭킹 / PVP | 유지보수와 부정행위 대응 비용이 큼 |
 | 신규 맵 2~3종 | v1 재미 검증 전에는 제작하지 않음 |
@@ -79,12 +79,12 @@
 
 ```text
 로비 -> 전투 시작
-  -> 기본 소환 또는 tier 가챠 버튼으로 타워 획득
-  -> 6개 배치칸 중 하나에 배치
-  -> 같은 family/tier 타워를 합성
+  -> 중앙 성벽과 4속성 슬롯 확인
+  -> wave 자동 전투, 필요 시 수리/스킬 사용
   -> 웨이브 자동 전투
-  -> 보스 처치 시 3장 카드 중 1장 선택
-  -> 더 높은 wave와 더 높은 tier를 노림
+  -> wave 5/10/15/20 보스 처치 시 checkpoint reward 선택
+  -> 타워 슬롯/성벽/스킬/전역 카드 중 하나를 강화
+  -> 다음 Act로 진행
   -> 패배 시 기록 저장, 선택형 광고로 1회 이어하기 가능
 ```
 
@@ -92,53 +92,68 @@
 
 | 항목 | 목표 |
 |------|------|
-| 첫 보스 도달 | 2~3분 |
-| 일반 패배 지점 | 초보 wave 10~12, 익숙한 유저 wave 16~20 |
+| 첫 보스 도달 | 2~3분, wave 5 checkpoint |
+| 일반 패배 지점 | 초보 Act 2, 익숙한 유저 Act 3~4 |
 | 한 판 종료 | 평균 6~8분, 숙련 완주는 8~10분 |
 | 재시작 마찰 | 결과 화면에서 1탭 |
 
-v1의 활성 콘텐츠 아크는 20 wave다. 50 wave 데이터는 밸런스/디버그 상한으로 유지할 수 있지만, UX와 난이도 튜닝은 wave 20까지를 기준으로 한다.
+v1의 활성 콘텐츠 아크는 20 wave이며, `Act 1~4`가 각각 5 wave를 가진다. wave 5/10/15/20은 보스 checkpoint다. 50 wave 데이터는 밸런스/디버그 확장으로만 유지한다.
 
 ---
 
 ## 5. Core Systems
 
-### Tower Model
+### Tower Slot Model
 
-`grade`가 아니라 `family + tier`가 타워 정체성의 기준이다.
+v1 active spec은 기존 6칸 랜덤 합성을 사용하지 않는다. 성벽 주변 4개 고정 슬롯만 사용하며, 각 슬롯은 서로 다른 family 하나만 허용한다.
 
-| Family | 역할 | T1 | T2 | T3 | T4 |
-|--------|------|----|----|----|----|
-| archer | 단일 대상 빠른 공격 | archer | wind_spire | flame_tower | arcane_spire |
-| siege | 범위 피해 | nova_cannon | fortress | earth_golem | celestial |
-| frost | slow + 약한 데미지 | emp | stasis_field | disruptor | world_tree |
-| stun | stun + 약한 데미지 | shield | twin_archer | holy_shrine | divine_throne |
+| Slot | Family | 시작 역할 | 성장 방향 |
+|------|--------|-----------|-----------|
+| 1 | archer | 단일 대상 빠른 공격 | 공격 속도/치명/관통 |
+| 2 | siege | 단일 대상 강한 공격 | 폭발/범위 피해 |
+| 3 | frost | 단일 대상 약한 공격 | slow/빙결 보조 |
+| 4 | stun | 단일 대상 약한 공격 | stun/차단 보조 |
 
-추가 타워:
+타워는 중복 배치가 아니라 checkpoint reward로 등장/승급한다. 같은 family 보상을 다시 고르면 해당 슬롯의 tier 또는 특수 효과가 강화된다.
 
-| Tier | ID | 조건 |
-|------|----|------|
-| T5 | hybrid_ab | archer T4 + siege T4 |
-| T5 | hybrid_cd | frost T4 + stun T4 |
-| T6 | ultimate | hybrid_ab + hybrid_cd |
+### Act And Checkpoint
 
-### Merge Rule
+| Act | Wave | Checkpoint |
+|-----|------|------------|
+| Act 1 | 1~5 | wave 5 boss clear |
+| Act 2 | 6~10 | wave 10 boss clear |
+| Act 3 | 11~15 | wave 15 boss clear |
+| Act 4 | 16~20 | wave 20 boss clear / run result |
 
-- T1~T3: 같은 family, 같은 tier 2개 -> 다음 tier
-- T4: 지정된 cross-family 조합만 T5로 합성
-- T5: `hybrid_ab + hybrid_cd` -> T6
-- T6 이후 합성 없음
+checkpoint reward는 항상 3개 선택지를 제공한다. 선택지는 중복되지 않아야 하며, 아래 pool에서 나온다.
 
-### Summon and Energy
+| Reward group | 효과 |
+|--------------|------|
+| tower upgrade | 비어 있는 family 슬롯 등장 또는 기존 슬롯 tier/특수 효과 강화 |
+| wall upgrade | 성벽 max HP, 수리 효율, 자동 공격 강화 |
+| skill upgrade | 사용자 스킬 해금/강화 |
+| global roguelike card | run-scoped 전역 공격/경제/효과 증폭 |
 
-| 액션 | 비용 | 결과 |
-|------|------|------|
-| 기본 소환 | 20 energy | T1 4종 균등 랜덤 |
-| T2 시도 | 40 energy | 성공 시 T2, 실패 시 T1 |
-| T3 시도 | 80 energy | 성공 시 T3, 실패 시 T1 |
-| T4 시도 | 160 energy | 성공 시 T4, 실패 시 T1 |
+### Wall And Tactics
 
-소환 취소나 배치 실패는 리롤 기회가 아니어야 한다. 기존 `cancelledPoolDraw` / `cancelledGachaDraw` 정책을 유지한다.
+중앙 성벽은 player HP의 실제 표현이다. 적이 경로 끝에 도달하면 성벽 HP가 감소한다. 플레이어는 energy를 써서 수리할 수 있으나, 수리 비용과 쿨다운 때문에 무한 유지가 불가능해야 한다. 성벽 기본 자동 공격은 중세 방어 콘셉트에 맞는 화살 투사체로 시작하며, 발사 즉시가 아니라 화살이 몬스터에게 도착했을 때 데미지/피격/사망 판정이 적용된다.
+
+사용자 스킬 v1은 2종으로 시작한다.
+
+| Skill | 효과 | Guardrail |
+|-------|------|-----------|
+| force move | 지정 범위 적을 경로 뒤쪽으로 밀어냄 | boss `ccResistance`로 효과 감소 |
+| freeze | 지정 범위 적을 정지/빙결 | boss `ccResistance`와 stun immunity window를 우회하지 않음 |
+
+### Legacy Parking Lot
+
+아래는 v1 active loop가 아니다. 호환 코드가 남아 있더라도 신규 UX/검증 기준에서 제외한다.
+
+- 기본 소환
+- tier 가챠
+- 6개 배치칸
+- 동일 타워 합성
+- T5/T6 hybrid merge
 
 ### Run Upgrade Cards
 
@@ -202,9 +217,15 @@ v1 카드 수는 4~6개면 충분하다. 보스 처치 후 3장 중 1장 선택�
 
 | 영역 | v1 유지 |
 |------|---------|
-| 상단 | HP, energy, wave, countdown |
-| 하단 | summon, T2, T3, T4, menu |
+| 상단 좌측 | energy, wave, countdown. 전투 중 상단 HP 배지는 표시하지 않음 |
+| 상단 우측 | 햄버거 설정 버튼 1개만 표시. 설정 overlay에서 단일 배속 버튼을 누를 때마다 x1/x2/x3로 순환하며, 재개/포기를 선택한다. backdrop 클릭 시 설정 overlay를 닫는다. 전투 중간 상태 배지는 표시하지 않음 |
+| 좌측 전투 스택 | 공격/wave 진행 배지와 보스 보상 카드 preview |
+| 하단 좌측 | 원형 밀치기, 정지 전술 버튼. 풀폭 하단 액션바는 사용하지 않음 |
+| 하단 우측 | 성벽 메뉴 버튼 없음. 성벽 직접 클릭으로만 성벽 메뉴 진입 |
 | 타워 선택 | merge, move, sell, close |
+| 성벽 선택 | 중앙 성벽 메뉴 overlay. 즉시 수리권, 공격력 강화, 공격 속도 강화, 공격 범위 강화를 제공한다. overlay가 열린 동안 전투와 필드 입력을 잠시 중단하고, overlay 바깥 클릭 시 닫히며 하단 전술 버튼은 고정 위치 유지 |
+| 필드 표시 | 성벽 위 HP 수치/바, 모든 활성 몬스터 위 HP bar. 몬스터 피격 시 hit sprite frame, 사망 시 death sprite fade를 표시한다. 전역 보스 HP bar는 다른 HUD를 가리지 않는 compact 크기로 표시 |
+| 전투 SFX | 타워/성벽 공격, 몬스터 피격, 몬스터 사망 사운드를 즉시 재생한다. v1은 런타임 합성 clip을 사용하고, 정식 오디오 에셋은 후속 asset pass에서 교체한다 |
 | 보스 후 | 3카드 선택, 광고 리롤 |
 | 패배 후 | 다시 시작, 로비로, 광고 이어하기 |
 

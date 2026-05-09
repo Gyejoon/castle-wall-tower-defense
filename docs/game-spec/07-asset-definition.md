@@ -1,6 +1,6 @@
 # 에셋 정의
 
-> **Last Updated:** 2026-05-06 (v4.0 — asset freeze for minimal launch)
+> **Last Updated:** 2026-05-10 (v4.3 — Unity combat SFX and monster hit/death feedback)
 > **Goal:** v1 출시는 현재 보유 에셋을 최대한 재사용한다. 신규 에셋 제작은 재미 검증 이후로 미룬다.
 
 ---
@@ -77,7 +77,7 @@ grade variant는 v1 active asset이 아니다. 기존 호환 파일이 있더라
 | idle | 6 frames |
 | death | 6 frames |
 
-보스 death 전용 VFX가 없으면 기존 death sheet 또는 간단한 fade/flash로 처리한다. 신규 보스 death 에셋은 v1 필수가 아니다.
+Unity v1은 몬스터 피격 시 walk 첫 프레임에서 파생한 red tint hit sprite를 짧게 표시하고, 사망 시 death sheet 첫 프레임을 fade-out한다. 보스 death 전용 VFX가 없으면 기존 death sheet 또는 간단한 fade/flash로 처리한다. 신규 보스 death 에셋은 v1 필수가 아니다.
 
 ---
 
@@ -118,9 +118,19 @@ v1 맵은 `main_long` 하나다.
 - `stage-clear-fx`
 - `gacha-rarity-glow`
 
+## 7. Audio Assets
+
+v1은 별도 오디오 파일을 필수 에셋으로 추가하지 않는다. Unity CoreLoop는 아래 사운드를 `AudioClip.Create` 기반 런타임 합성 clip으로 재생하고, 이후 정식 오디오 pass에서 파일 에셋으로 교체할 수 있게 한다.
+
+| 상황 | v1 방식 |
+|------|---------|
+| 타워/성벽 공격 | 짧은 화살/타격 계열 attack clip |
+| 몬스터 피격 | 낮은 thump 계열 hit clip |
+| 몬스터 사망 | 짧은 fall/drop 계열 death clip |
+
 ---
 
-## 7. UI Assets
+## 8. UI Assets
 
 v1 UI는 DOM/CSS 중심으로 유지한다. 추가 이미지 에셋 요구를 만들지 않는다.
 
@@ -136,7 +146,7 @@ v1 UI는 DOM/CSS 중심으로 유지한다. 추가 이미지 에셋 요구를 �
 
 ---
 
-## 8. Generation Rules
+## 9. Generation Rules
 
 에셋을 변경할 때만 generator를 실행한다.
 
@@ -151,7 +161,7 @@ v1 UI는 DOM/CSS 중심으로 유지한다. 추가 이미지 에셋 요구를 �
 
 ---
 
-## 9. Unity Asset Notes
+## 10. Unity Asset Notes
 
 Unity 전환은 유지한다. 다만 Unity 이행 때문에 Phaser v1 에셋을 새로 늘리지 않는다.
 
@@ -163,3 +173,16 @@ Unity 전환은 유지한다. 다만 Unity 이행 때문에 Phaser v1 에셋을 
 | VFX | Unity parity 전에는 신규 제작하지 않음 |
 
 Unity 쪽에서 필요한 에셋 변환은 전환 트랙 문서나 작업 PR에서 별도 관리한다.
+
+### Unity Visual Asset Catalog
+
+| 항목 | 파일 |
+|------|------|
+| unified catalog | `packages/unity-game/Assets/Resources/Visuals/VisualAssetCatalog.asset` |
+| catalog type | `packages/unity-game/Assets/Scripts/Data/VisualAssetCatalogSO.cs` |
+| generated sprite assets | `packages/unity-game/Assets/Art/Sprites/generated_forest_defense/` |
+| runtime tower binding | `packages/unity-game/Assets/Resources/Visuals/TowerSpriteCatalog.asset` |
+| runtime map binding | `packages/unity-game/Assets/Resources/Visuals/TileSpriteCatalog.asset` |
+| runtime HUD binding | `packages/unity-game/Assets/UI/Styles/hud.uss` |
+
+`VisualAssetCatalog.asset`은 기존 `TowerSpriteCatalog`, `UnitSpriteCatalog`, `TileSpriteCatalog`를 묶고, 성벽 3단계, 맵/타일, HUD, UI 스프라이트를 `key -> Sprite` 형태로 노출한다. `generated_forest_defense/`의 PNG는 첨부 이미지 기반으로 생성한 실제 raster asset이며, Unity CoreLoop 화면은 해당 타워 catalog, 맵 background/tile catalog, HUD USS background-image를 직접 참조한다.

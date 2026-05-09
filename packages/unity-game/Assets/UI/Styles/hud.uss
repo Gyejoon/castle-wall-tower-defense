@@ -1,40 +1,102 @@
 @import url("project://database/Assets/UI/Styles/tokens.uss");
-@import url("project://database/Assets/UI/Styles/primitives.uss");
-@import url("project://database/Assets/UI/Styles/overlays.uss");
 
 .game-hud {
   flex-grow: 1;
-  justify-content: space-between;
-  padding: 16px 12px 18px 12px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 14px 12px 18px 12px;
 }
 
 .game-hud__top {
+  position: absolute;
+  left: 18px;
+  top: 14px;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
-.game-hud__status {
-  align-self: center;
-  padding: 4px 8px;
-  border-radius: var(--radius-xs);
-  background-color: var(--surface-alpha-panel70);
-  color: var(--color-text-secondary);
-  font-size: var(--type-caption10-size);
+.game-hud__stat {
+  height: 54px;
+  min-height: 54px;
+  border-width: 2px;
+  border-bottom-width: 2px;
+  border-top-left-radius: 27px;
+  border-top-right-radius: 27px;
+  border-bottom-right-radius: 27px;
+  border-bottom-left-radius: 27px;
+  border-color: #c89b3c;
+  background-color: #2a2010;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  padding: 0 12px;
+}
+
+.game-hud__stat--energy {
+  width: 96px;
+}
+
+.game-hud__stat--wave {
+  width: 124px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.game-hud__stat-title {
+  color: #e8d5a4;
+  font-size: var(--type-label12-size);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  margin-right: 6px;
+}
+
+.game-hud__stat-title--energy {
+  color: #f0d060;
+}
+
+.game-hud__stat-value {
+  color: var(--color-text);
+  font-size: 22px;
+  -unity-font-style: bold;
   -unity-text-align: middle-center;
 }
 
-.game-hud__bottom {
-  align-self: stretch;
+.game-hud__stat-value--wave {
+  font-size: 19px;
 }
 
-.game-hud__actions {
-  flex-direction: row;
-  justify-content: space-between;
+.game-hud__top-right {
+  position: absolute;
+  right: 11px;
+  top: 14px;
+  flex-direction: column;
+  align-items: center;
 }
 
-.game-hud__actions > .gld-btn {
-  flex-grow: 1;
-  margin-left: 2px;
-  margin-right: 2px;
-  min-width: 0;
+.game-hud__round-control {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  margin: 0 0 9px 0;
+  padding: 0;
+  border-width: 2px;
+  border-bottom-width: 2px;
+  border-top-left-radius: 27px;
+  border-top-right-radius: 27px;
+  border-bottom-right-radius: 27px;
+  border-bottom-left-radius: 27px;
+  border-color: #c89b3c;
+  background-color: #2a2010;
+  color: #f6e6b8;
+  font-size: 18px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
 }

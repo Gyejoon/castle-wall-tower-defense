@@ -57,20 +57,65 @@ namespace GLD.Tests.EditMode.UI
             {
                 var resume = 0;
                 var quit = 0;
+                var speed = 0f;
                 GameEvents.OnRequestResume += () => resume++;
                 GameEvents.OnRequestQuitToLobby += () => quit++;
+                GameEvents.OnRequestSetSpeed += value => speed = value;
+
+                var controller = host.AddComponent<PauseModalController>();
+                var runState = new RunState("pause-test");
+                controller.Bind(runState, root);
+
+                Assert.That(root.Q<Button>("pause-resume"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-quit"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-speed-toggle"), Is.Not.Null);
+                Assert.That(root.Q<Button>("pause-speed-x1"), Is.Null);
+                Assert.That(root.Q<Button>("pause-speed-x2"), Is.Null);
+                Assert.That(root.Q<Button>("pause-speed-x3"), Is.Null);
+
+                runState.SetSpeedMultiplier(3f);
+                Assert.That(root.Q<Button>("pause-speed-toggle").text, Is.EqualTo("x3"));
+                controller.RequestSpeed(2f);
+                controller.RequestResume();
+                controller.RequestQuit();
+
+                Assert.That(speed, Is.EqualTo(2f));
+                Assert.That(resume, Is.EqualTo(1));
+                Assert.That(quit, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void PauseModalBackdropClickRequestsResume()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ModalPath);
+            var root = asset.CloneTree();
+            var host = new GameObject("PauseModalBackdropTest");
+            try
+            {
+                var resume = 0;
+                GameEvents.OnRequestResume += () => resume++;
 
                 var controller = host.AddComponent<PauseModalController>();
                 controller.Bind(new RunState("pause-test"), root);
 
-                Assert.That(root.Q<Button>("pause-resume"), Is.Not.Null);
-                Assert.That(root.Q<Button>("pause-quit"), Is.Not.Null);
+                var backdrop = root.Q<VisualElement>("pause-modal");
+                var panel = root.Q<VisualElement>("pause-panel");
 
-                controller.RequestResume();
-                controller.RequestQuit();
+                Assert.That(backdrop.pickingMode, Is.EqualTo(PickingMode.Position));
+                Assert.That(panel.pickingMode, Is.EqualTo(PickingMode.Position));
 
+                using (var panelClick = ClickEvent.GetPooled())
+                    panel.SendEvent(panelClick);
+                Assert.That(resume, Is.EqualTo(0));
+
+                using (var backdropClick = ClickEvent.GetPooled())
+                    backdrop.SendEvent(backdropClick);
                 Assert.That(resume, Is.EqualTo(1));
-                Assert.That(quit, Is.EqualTo(1));
             }
             finally
             {

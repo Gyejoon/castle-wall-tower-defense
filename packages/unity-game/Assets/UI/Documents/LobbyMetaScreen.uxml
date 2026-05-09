@@ -15,7 +15,7 @@
       </ui:VisualElement>
       <ui:VisualElement name="lobby-home-panel" class="lobby-panel">
         <ui:Label name="lobby-title" text="Grid Line Defense" />
-        <ui:Label name="lobby-subtitle" text="랜덤 소환과 합성으로 50 웨이브를 버텨라" />
+        <ui:Label name="lobby-subtitle" text="랜덤 소환과 합성으로 20 웨이브를 버텨라" />
         <gld:GLDButton name="lobby-start" text="전투 시작" variant="primary" />
         <ui:VisualElement name="lobby-profile-row" class="lobby-profile-row">
           <ui:Label name="lobby-profile-level" text="지휘관 Lv. 1" />

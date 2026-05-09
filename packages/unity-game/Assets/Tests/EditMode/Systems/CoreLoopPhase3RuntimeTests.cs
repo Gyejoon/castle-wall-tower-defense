@@ -146,8 +146,13 @@ namespace GLD.Tests.EditMode.Systems
                     damageNumbers.Show(Vector2.zero, 10);
                     damageNumbers.Show(Vector2.one, 20);
                     damageNumbers.Show(Vector2.up, 30);
+                    Assert.That(damageNumbers.ActiveCount, Is.EqualTo(2));
+                    Object.DestroyImmediate(root.transform.GetChild(0).gameObject);
+                    Object.DestroyImmediate(root.transform.GetChild(0).gameObject);
+                    damageNumbers.Show(Vector2.right, 40);
+                    Assert.That(damageNumbers.ActiveCount, Is.EqualTo(1));
                     damageNumbers.TickUnscaled(0.4f);
-                    Assert.That(root.transform.childCount, Is.EqualTo(2));
+                    Assert.That(root.transform.childCount, Is.EqualTo(1));
                 }
             }
             finally

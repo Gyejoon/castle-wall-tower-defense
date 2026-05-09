@@ -1,7 +1,10 @@
 using GLD.Core;
-using GLD.UI.Primitives;
+using GLD.Data;
 using UnityEngine;
 using UnityEngine.UIElements;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace GLD.SceneRuntime.CoreLoop.UI
 {
@@ -10,15 +13,11 @@ namespace GLD.SceneRuntime.CoreLoop.UI
     {
         Label _energyLabel;
         Label _waveLabel;
-        Label _hpLabel;
-        Label _statusLabel;
-        Button _summonButton;
-        Button _gacha2Button;
-        Button _gacha3Button;
-        Button _gacha4Button;
-        Button _speedButton;
         Button _menuButton;
         RunState _runState;
+        VisualAssetCatalogSO _visuals;
+        HudLayoutConfigSO _layout;
+        static HudLayoutConfigSO s_DefaultLayout;
 
         public bool IsBound { get; private set; }
 
@@ -80,54 +79,32 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void ResolveElements(VisualElement root)
         {
+            _visuals = Resources.Load<VisualAssetCatalogSO>("Visuals/VisualAssetCatalog");
+            _layout = Resources.Load<HudLayoutConfigSO>("UI/HudLayoutConfig");
             _energyLabel = root.Q<Label>("hud-energy");
             _waveLabel = root.Q<Label>("hud-wave");
-            _hpLabel = root.Q<Label>("hud-hp");
-            _statusLabel = root.Q<Label>("hud-status");
-            _summonButton = root.Q<Button>("hud-summon");
-            _gacha2Button = root.Q<Button>("hud-gacha-t2");
-            _gacha3Button = root.Q<Button>("hud-gacha-t3");
-            _gacha4Button = root.Q<Button>("hud-gacha-t4");
-            _speedButton = root.Q<Button>("hud-speed");
             _menuButton = root.Q<Button>("hud-menu");
+            ApplyHudLayout(root, _visuals, _layout);
+            ApplyHudButtonSizing(_layout);
+            RegisterHudDragEditing(root, _visuals, _layout);
         }
 
         void RegisterButtons()
         {
-            _summonButton?.RegisterCallback<ClickEvent>(_ => RequestSummon());
-            _gacha2Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(2));
-            _gacha3Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(3));
-            _gacha4Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(4));
-            _speedButton?.RegisterCallback<ClickEvent>(_ => RequestToggleSpeed());
-            _menuButton?.RegisterCallback<ClickEvent>(_ => RequestMenu());
+            _menuButton?.UnregisterCallback<ClickEvent>(HandleMenuClicked);
+            _menuButton?.RegisterCallback<ClickEvent>(HandleMenuClicked);
         }
-
-        public void RequestSummon() => GameEvents.RaiseRequestSummon();
-
-        public void RequestGacha(int tier) => GameEvents.RaiseRequestGacha(new GachaRequest(tier));
 
         public void RequestMenu() => GameEvents.RaiseRequestPause();
 
-        public void RequestToggleSpeed()
-        {
-            var current = _runState != null ? _runState.SpeedMultiplier : 1f;
-            GameEvents.RaiseRequestSetSpeed(current >= 3f ? 1f : 3f);
-        }
+        void HandleMenuClicked(ClickEvent evt) => RequestMenu();
 
         void HandleRunStateChanged(RunState state)
         {
             if (_energyLabel != null)
-                _energyLabel.text = $"E {state.Energy}/{state.EnergyMax}";
+                _energyLabel.text = state.Energy.ToString();
             if (_waveLabel != null)
-                _waveLabel.text = state.WavePhase == GLD.Systems.Waves.WavePhase.Interwave
-                    ? $"W {state.Wave}  {Mathf.CeilToInt(state.Countdown)}s"
-                    : $"W {state.Wave}";
-            if (_hpLabel != null)
-                _hpLabel.text = $"HP {state.Lives}";
-            if (_statusLabel != null)
-                _statusLabel.text = ResolveStatusText(state);
-            if (_speedButton != null)
-                _speedButton.text = state.SpeedMultiplier >= 3f ? "x1" : "x3";
+                _waveLabel.text = $"{state.Wave}/20";
         }
 
         static VisualElement BuildFallbackHud()
@@ -140,119 +117,348 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             hud.style.right = 0;
             hud.style.top = 0;
             hud.style.bottom = 0;
-            hud.style.justifyContent = Justify.SpaceBetween;
-            hud.style.paddingLeft = 12;
-            hud.style.paddingRight = 12;
-            hud.style.paddingTop = 14;
-            hud.style.paddingBottom = 16;
 
             var top = new VisualElement { name = "game-hud-top" };
             top.AddToClassList("game-hud__top");
             top.pickingMode = PickingMode.Ignore;
             top.style.flexDirection = FlexDirection.Row;
-            top.style.justifyContent = Justify.SpaceBetween;
-            top.Add(CreateFallbackBadge("hud-energy", "E 0/0"));
-            top.Add(CreateFallbackBadge("hud-wave", "W 0"));
-            top.Add(CreateFallbackBadge("hud-hp", "HP 20"));
+            top.style.justifyContent = Justify.FlexStart;
+            top.style.position = Position.Absolute;
+            top.Add(BuildFallbackEnergyPanel());
+            top.Add(BuildFallbackWavePanel());
 
-            var status = new Label("준비 x1") { name = "hud-status" };
-            status.AddToClassList("game-hud__status");
-            status.pickingMode = PickingMode.Ignore;
-            status.style.alignSelf = Align.Center;
-            status.style.paddingLeft = 8;
-            status.style.paddingRight = 8;
-            status.style.paddingTop = 4;
-            status.style.paddingBottom = 4;
-            status.style.backgroundColor = new Color(0.12f, 0.09f, 0.04f, 0.72f);
-            status.style.color = new Color(0.90f, 0.82f, 0.62f, 1f);
-            status.style.unityTextAlign = TextAnchor.MiddleCenter;
-
-            var bottom = new GLDSheet { name = "game-hud-bottom", Anchor = "bottom" };
-            bottom.AddToClassList("game-hud__bottom");
-            bottom.pickingMode = PickingMode.Ignore;
-            bottom.style.alignSelf = Align.Stretch;
-            bottom.style.paddingLeft = 8;
-            bottom.style.paddingRight = 8;
-            bottom.style.paddingTop = 8;
-            bottom.style.paddingBottom = 8;
-            bottom.style.backgroundColor = new Color(0.10f, 0.08f, 0.04f, 0.88f);
-            var row = new VisualElement { name = "game-hud-actions" };
-            row.AddToClassList("game-hud__actions");
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.justifyContent = Justify.SpaceBetween;
-            row.Add(CreateFallbackButton("hud-summon", "소환", "primary"));
-            row.Add(CreateFallbackButton("hud-gacha-t2", "T2", "secondary"));
-            row.Add(CreateFallbackButton("hud-gacha-t3", "T3", "secondary"));
-            row.Add(CreateFallbackButton("hud-gacha-t4", "T4", "secondary"));
-            row.Add(CreateFallbackButton("hud-speed", "x3", "secondary"));
-            row.Add(CreateFallbackButton("hud-menu", "메뉴", "secondary"));
-            bottom.Add(row);
+            var topRight = new VisualElement { name = "game-hud-top-right" };
+            topRight.AddToClassList("game-hud__top-right");
+            topRight.pickingMode = PickingMode.Ignore;
+            topRight.style.position = Position.Absolute;
+            topRight.style.flexDirection = FlexDirection.Column;
+            var menu = new Button { name = "hud-menu", text = "☰" };
+            menu.AddToClassList("game-hud__round-control");
+            menu.AddToClassList("game-hud__round-control--menu");
+            topRight.Add(menu);
 
             hud.Add(top);
-            hud.Add(status);
-            hud.Add(bottom);
+            hud.Add(topRight);
             return hud;
         }
 
-        static Label CreateFallbackBadge(string name, string text)
+        static VisualElement BuildFallbackEnergyPanel()
         {
-            var badge = new Label(text) { name = name };
-            badge.style.minWidth = 76;
-            badge.style.paddingLeft = 8;
-            badge.style.paddingRight = 8;
-            badge.style.paddingTop = 5;
-            badge.style.paddingBottom = 5;
-            badge.style.backgroundColor = new Color(0.12f, 0.09f, 0.04f, 0.88f);
-            badge.style.color = new Color(0.94f, 0.86f, 0.66f, 1f);
-            badge.style.unityTextAlign = TextAnchor.MiddleCenter;
-            return badge;
+            var panel = new VisualElement { name = "hud-energy-panel" };
+            panel.AddToClassList("game-hud__stat");
+            panel.AddToClassList("game-hud__stat--energy");
+            var title = new Label("E");
+            title.AddToClassList("game-hud__stat-title");
+            title.AddToClassList("game-hud__stat-title--energy");
+            var value = new Label("0") { name = "hud-energy" };
+            value.AddToClassList("game-hud__stat-value");
+            panel.Add(title);
+            panel.Add(value);
+            return panel;
         }
 
-        static GLDButton CreateFallbackButton(string name, string text, string variant)
+        static VisualElement BuildFallbackWavePanel()
         {
-            var button = new GLDButton(text) { name = name, Variant = variant };
-            button.ApplyStyles();
-            button.style.flexGrow = 1;
-            button.style.height = 40;
-            button.style.minWidth = 0;
-            button.style.marginLeft = 2;
-            button.style.marginRight = 2;
-            button.style.backgroundColor = variant == "primary"
-                ? new Color(0.78f, 0.57f, 0.20f, 1f)
-                : new Color(0.18f, 0.14f, 0.07f, 1f);
-            button.style.color = new Color(0.98f, 0.91f, 0.70f, 1f);
-            button.style.borderTopColor = new Color(0.36f, 0.28f, 0.14f, 1f);
-            button.style.borderRightColor = new Color(0.36f, 0.28f, 0.14f, 1f);
-            button.style.borderBottomColor = new Color(0.36f, 0.28f, 0.14f, 1f);
-            button.style.borderLeftColor = new Color(0.36f, 0.28f, 0.14f, 1f);
-            button.style.unityTextAlign = TextAnchor.MiddleCenter;
-            return button;
+            var panel = new VisualElement { name = "hud-wave-panel" };
+            panel.AddToClassList("game-hud__stat");
+            panel.AddToClassList("game-hud__stat--wave");
+            var title = new Label("WAVE");
+            title.AddToClassList("game-hud__stat-title");
+            var value = new Label("0/20") { name = "hud-wave" };
+            value.AddToClassList("game-hud__stat-value");
+            value.AddToClassList("game-hud__stat-value--wave");
+            panel.Add(title);
+            panel.Add(value);
+            return panel;
         }
 
-        static string ResolveStatusLabel(RunStatus status)
+        static HudLayoutConfigSO ResolveLayout(HudLayoutConfigSO layout)
         {
-            switch (status)
+            if (layout != null)
+                return layout;
+
+            if (s_DefaultLayout == null)
             {
-                case RunStatus.Running:
-                    return "전투";
-                case RunStatus.Victory:
-                    return "승리";
-                case RunStatus.Defeat:
-                    return "패배";
-                case RunStatus.Lobby:
-                    return "로비";
-                default:
-                    return "준비";
+                s_DefaultLayout = ScriptableObject.CreateInstance<HudLayoutConfigSO>();
+                s_DefaultLayout.hideFlags = HideFlags.HideAndDontSave;
+            }
+
+            return s_DefaultLayout;
+        }
+
+        static void ApplyHudLayout(VisualElement root, VisualAssetCatalogSO visuals, HudLayoutConfigSO layout)
+        {
+            var hudLayout = ResolveLayout(layout);
+            var top = root.Q<VisualElement>("game-hud-top");
+            if (top != null)
+            {
+                top.style.position = Position.Absolute;
+                top.style.left = hudLayout.topLeftX;
+                top.style.top = hudLayout.topY;
+                top.style.flexDirection = FlexDirection.Row;
+                top.style.alignItems = Align.FlexStart;
+            }
+
+            ApplyStatPanel(root.Q<VisualElement>("hud-energy-panel"), hudLayout.energyPanelWidth, hudLayout);
+            ApplyStatPanel(root.Q<VisualElement>("hud-wave-panel"), hudLayout.wavePanelWidth, hudLayout);
+
+            root.Query<Label>(className: "game-hud__stat-title").ForEach(label => ApplyLabel(label, label.ClassListContains("game-hud__stat-title--energy") ? new Color32(240, 208, 96, 255) : new Color32(232, 213, 164, 255), 12f));
+            root.Query<Label>(className: "game-hud__stat-value").ForEach(label => ApplyLabel(label, new Color32(240, 232, 216, 255), label.ClassListContains("game-hud__stat-value--wave") ? 19f : 22f));
+            ApplyStatLabelLayout(root);
+
+            var topRight = root.Q<VisualElement>("game-hud-top-right");
+            if (topRight != null)
+            {
+                topRight.style.position = Position.Absolute;
+                topRight.style.right = hudLayout.topRightX;
+                topRight.style.top = hudLayout.topRightY;
+                topRight.style.flexDirection = FlexDirection.Column;
+                topRight.style.alignItems = Align.Center;
             }
         }
 
-        static string ResolveStatusText(RunState state)
+        void ApplyHudButtonSizing(HudLayoutConfigSO layout)
         {
-            if (state.IsPaused)
-                return "일시정지";
-            if (state.RunStatus == RunStatus.Building && state.Wave == 0 && state.Countdown > 0f)
-                return $"시작 {Mathf.CeilToInt(state.Countdown)}s";
-            return $"{ResolveStatusLabel(state.RunStatus)} x{state.SpeedMultiplier:0.##}";
+            ApplyMiniButton(_menuButton, layout);
+        }
+
+        static void ApplyMiniButton(Button button, HudLayoutConfigSO layout)
+        {
+            if (button == null)
+                return;
+
+            var hudLayout = ResolveLayout(layout);
+            button.style.width = hudLayout.topRightButtonSize;
+            button.style.minWidth = hudLayout.topRightButtonSize;
+            button.style.maxWidth = hudLayout.topRightButtonSize;
+            button.style.height = hudLayout.topRightButtonSize;
+            button.style.minHeight = hudLayout.topRightButtonSize;
+            button.style.maxHeight = hudLayout.topRightButtonSize;
+            button.style.paddingLeft = 0f;
+            button.style.paddingRight = 0f;
+            button.style.paddingTop = 0f;
+            button.style.paddingBottom = 0f;
+            button.style.marginBottom = hudLayout.topRightButtonGap;
+            button.style.borderTopWidth = 2f;
+            button.style.borderRightWidth = 2f;
+            button.style.borderBottomWidth = 2f;
+            button.style.borderLeftWidth = 2f;
+            var radius = hudLayout.topRightButtonSize * 0.5f;
+            button.style.borderTopLeftRadius = radius;
+            button.style.borderTopRightRadius = radius;
+            button.style.borderBottomRightRadius = radius;
+            button.style.borderBottomLeftRadius = radius;
+            button.style.borderTopColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderRightColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderBottomColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.borderLeftColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            button.style.backgroundColor = new Color(0.165f, 0.125f, 0.063f, 1f);
+            button.style.color = new Color(0.965f, 0.902f, 0.722f, 1f);
+            button.style.fontSize = 22f;
+            button.style.unityFontStyleAndWeight = FontStyle.Bold;
+            button.style.unityTextAlign = TextAnchor.MiddleCenter;
+            button.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+
+            if (button.name == "hud-menu")
+                button.text = "☰";
+        }
+
+        static void ApplyStatPanel(VisualElement panel, float width, HudLayoutConfigSO layout)
+        {
+            if (panel == null)
+                return;
+
+            var hudLayout = ResolveLayout(layout);
+            panel.style.width = width;
+            panel.style.height = hudLayout.statPanelHeight;
+            panel.style.minHeight = hudLayout.statPanelHeight;
+            panel.style.marginRight = hudLayout.statPanelGap;
+            panel.style.paddingLeft = 12f;
+            panel.style.paddingRight = 12f;
+            panel.style.paddingTop = 0f;
+            panel.style.paddingBottom = 0f;
+            panel.style.borderTopWidth = 2f;
+            panel.style.borderRightWidth = 2f;
+            panel.style.borderBottomWidth = 2f;
+            panel.style.borderLeftWidth = 2f;
+            var radius = hudLayout.statPanelHeight * 0.5f;
+            panel.style.borderTopLeftRadius = radius;
+            panel.style.borderTopRightRadius = radius;
+            panel.style.borderBottomRightRadius = radius;
+            panel.style.borderBottomLeftRadius = radius;
+            panel.style.borderTopColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderRightColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderBottomColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.borderLeftColor = new Color(0.784f, 0.608f, 0.235f, 1f);
+            panel.style.backgroundColor = new Color(0.165f, 0.125f, 0.063f, 1f);
+            panel.style.flexDirection = FlexDirection.Row;
+            panel.style.alignItems = Align.Center;
+            panel.style.justifyContent = Justify.Center;
+        }
+
+        static void ApplyStatLabelLayout(VisualElement root)
+        {
+            var energy = root.Q<Label>("hud-energy");
+            if (energy != null)
+            {
+                energy.style.width = 50f;
+                energy.style.minWidth = 50f;
+                energy.style.maxWidth = 50f;
+            }
+
+            root.Query<Label>(className: "game-hud__stat-title").ForEach(label =>
+            {
+                label.style.marginRight = 6f;
+                label.style.marginTop = 0f;
+                label.style.marginBottom = 0f;
+            });
+            var wave = root.Q<Label>("hud-wave");
+            if (wave != null)
+            {
+                wave.style.width = 50f;
+                wave.style.minWidth = 50f;
+                wave.style.maxWidth = 50f;
+                wave.style.marginTop = 0f;
+            }
+        }
+
+        static void RegisterHudDragEditing(VisualElement root, VisualAssetCatalogSO visuals, HudLayoutConfigSO layout)
+        {
+#if UNITY_EDITOR
+            if (root == null || layout == null || !layout.enableDragEditing)
+                return;
+
+            root.focusable = true;
+            root.RegisterCallback<KeyDownEvent>(evt => HandleHudEditKeyDown(evt, root, visuals, layout));
+            RegisterDragTarget(root.Q<VisualElement>("game-hud-top"), layout, HudDragTarget.TopLeft);
+            RegisterDragTarget(root.Q<VisualElement>("game-hud-top-right"), layout, HudDragTarget.TopRight);
+#endif
+        }
+
+#if UNITY_EDITOR
+        enum HudDragTarget
+        {
+            TopLeft,
+            TopRight
+        }
+
+        static void RegisterDragTarget(VisualElement element, HudLayoutConfigSO layout, HudDragTarget target)
+        {
+            if (element == null)
+                return;
+
+            element.pickingMode = PickingMode.Position;
+            element.focusable = true;
+
+            var startPointer = Vector2.zero;
+            var startPrimary = 0f;
+            var startSecondary = 0f;
+            const int InactivePointerId = -1;
+            var activePointerId = InactivePointerId;
+
+            element.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                activePointerId = evt.pointerId;
+                startPointer = (Vector2)evt.position;
+                ReadDragStart(layout, target, out startPrimary, out startSecondary);
+                Undo.RecordObject(layout, "Drag HUD Layout");
+                element.CapturePointer(activePointerId);
+                element.Focus();
+                evt.StopPropagation();
+            });
+
+            element.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (activePointerId != evt.pointerId || !element.HasPointerCapture(activePointerId))
+                    return;
+
+                ApplyDragDelta(element, layout, target, (Vector2)evt.position - startPointer, startPrimary, startSecondary);
+                evt.StopPropagation();
+            });
+
+            element.RegisterCallback<PointerUpEvent>(evt =>
+            {
+                if (activePointerId != evt.pointerId || !element.HasPointerCapture(activePointerId))
+                    return;
+
+                element.ReleasePointer(activePointerId);
+                activePointerId = InactivePointerId;
+                SaveHudLayout(layout);
+                evt.StopPropagation();
+            });
+        }
+
+        static void HandleHudEditKeyDown(KeyDownEvent evt, VisualElement root, VisualAssetCatalogSO visuals, HudLayoutConfigSO layout)
+        {
+            if (!evt.actionKey || evt.keyCode != KeyCode.Z)
+                return;
+
+            Undo.PerformUndo();
+            ApplyHudLayout(root, visuals, layout);
+            SaveHudLayout(layout);
+            evt.StopPropagation();
+        }
+
+        static void ReadDragStart(HudLayoutConfigSO layout, HudDragTarget target, out float primary, out float secondary)
+        {
+            primary = target == HudDragTarget.TopRight ? layout.topRightX : layout.topLeftX;
+            secondary = target == HudDragTarget.TopRight ? layout.topRightY : layout.topY;
+        }
+
+        static void ApplyDragDelta(VisualElement element, HudLayoutConfigSO layout, HudDragTarget target, Vector2 delta, float startPrimary, float startSecondary)
+        {
+            if (target == HudDragTarget.TopRight)
+            {
+                layout.topRightX = RoundPx(startPrimary - delta.x);
+                layout.topRightY = RoundPx(startSecondary + delta.y);
+                element.style.right = layout.topRightX;
+                element.style.top = layout.topRightY;
+                return;
+            }
+
+            layout.topLeftX = RoundPx(startPrimary + delta.x);
+            layout.topY = RoundPx(startSecondary + delta.y);
+            element.style.left = layout.topLeftX;
+            element.style.top = layout.topY;
+        }
+
+        static void SaveHudLayout(HudLayoutConfigSO layout)
+        {
+            EditorUtility.SetDirty(layout);
+            AssetDatabase.SaveAssetIfDirty(layout);
+        }
+
+        static float RoundPx(float value) => Mathf.Max(0f, Mathf.Round(value));
+#endif
+
+        static void ApplyLabel(Label label, Color color, float fontSize)
+        {
+            if (label == null)
+                return;
+
+            label.style.color = color;
+            label.style.fontSize = fontSize;
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            label.style.alignSelf = Align.Center;
+            label.style.marginLeft = 0f;
+            label.style.marginRight = 0f;
+            label.style.marginTop = 0f;
+            label.style.marginBottom = 0f;
+        }
+
+        static void ApplyHudSprite(VisualElement element, VisualAssetCatalogSO visuals, string key, ScaleMode scaleMode = ScaleMode.StretchToFill)
+        {
+            if (element == null || visuals == null)
+                return;
+
+            var sprite = visuals.Find(key);
+            if (sprite == null)
+                return;
+
+            element.style.backgroundImage = new StyleBackground(sprite);
+            element.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            element.style.unityBackgroundScaleMode = scaleMode;
         }
     }
 }

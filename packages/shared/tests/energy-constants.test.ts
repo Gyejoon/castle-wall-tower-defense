@@ -6,6 +6,7 @@ import {
 	ENERGY_PER_BOSS_KILL,
 	ENERGY_PER_KILL,
 	ENERGY_PER_SECOND,
+	ENERGY_PER_WAVE_CLEAR,
 	FAST_CLEAR_THRESHOLD_MS,
 	INGAME_GACHA,
 } from '../src/constants/energy';
@@ -21,6 +22,7 @@ describe('energy constants (정식 모드)', () => {
 		expect(ENERGY_PER_KILL).toBe(1);
 		expect(ENERGY_PER_BOSS_KILL).toBe(20);
 		expect(ENERGY_PER_BOSS_FAST_CLEAR).toBe(20);
+		expect(ENERGY_PER_WAVE_CLEAR).toBe(0);
 	});
 
 	it('fast-clear threshold is 30s', () => {

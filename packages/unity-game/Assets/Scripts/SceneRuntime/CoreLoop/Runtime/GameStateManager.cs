@@ -15,7 +15,7 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
         public RunState RunState => _runState;
         public int PlayerHp => _runState.Lives;
         public float ElapsedSeconds => _runState.ElapsedSeconds;
-        public bool IsPaused => _runState.IsPaused;
+        public bool IsPaused => _runState.IsPaused || _runState.IsOverlayPaused;
         public bool IsGameOver => _runState.RunStatus == RunStatus.Victory || _runState.RunStatus == RunStatus.Defeat;
         public float SpeedMultiplier => _runState.SpeedMultiplier;
 
@@ -49,6 +49,11 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
             _runState.SetPaused(paused);
             Time.timeScale = paused ? 0f : 1f;
             GameEvents.RaisePauseChanged(paused);
+        }
+
+        public void SetOverlayPaused(bool paused)
+        {
+            _runState.SetOverlayPaused(paused);
         }
 
         public void ApplyExitDamage(int amount = 1)

@@ -29,7 +29,10 @@
     "displayName": "Commander",
     "totalPlayCount": 0,
     "highestWave": 0,
-    "bestTierReached": 1,
+    "highestActReached": 0,
+    "highestCheckpointWave": 0,
+    "bestWallHpRemaining": 0,
+    "bestTowerFamiliesBuilt": [],
     "bestTimeSurvivedSec": 0
   },
   "meta": {
@@ -43,7 +46,7 @@
   },
   "ads": {
     "lastContinueRunAt": null,
-    "lastUpgradeRerollAt": null
+    "lastCheckpointRerollAt": null
   },
   "settings": {
     "bgmVolume": 0.7,
@@ -65,7 +68,7 @@
 
 | 이벤트 | 저장 대상 |
 |--------|-----------|
-| 전투 종료 | play count, highest wave, best tier, survival time |
+| 전투 종료 | play count, highest wave, highest act, best wall HP, built tower families, survival time |
 | 메타 강화 변경 | `meta` |
 | 설정 변경 | `settings` |
 | 튜토리얼 완료 | `tutorial.completed` |
@@ -87,6 +90,7 @@
 | grade / awakening / duplicate count | 신규 v1 성장축에서 제외 |
 | selectedDeck | 덱 편성 제외 |
 | server user id | 서버 동기화 전까지 제외 |
+| mid-run checkpoint snapshot | v1 checkpoint는 런 내부 보상/호흡 지점이며 영구 이어하기 지점이 아님 |
 
 ---
 
@@ -97,7 +101,10 @@
 | 값 | 이유 |
 |----|------|
 | `finalWave` | 최고 기록 |
-| `bestTierReached` | 합성 성취감 |
+| `highestActReached` | Act 진행도 |
+| `highestCheckpointWave` | checkpoint 도달 |
+| `bestWallHpRemaining` | 성벽 방어 품질 |
+| `bestTowerFamiliesBuilt` | 4속성 슬롯 성장 기록 |
 | `timeSurvivedSec` | 세션 길이 |
 | `towersSummoned` | 경제 튜닝 참고 |
 | `bossesDefeated` | 보스 도달/처치 확인 |
@@ -112,7 +119,7 @@
 |------------|-----------|--------|
 | `game_start` | 런 시작 | `run_id` |
 | `boss_reached` | 보스 스폰 | `wave` |
-| `upgrade_selected` | 카드 선택 | `upgrade_id`, `wave` |
+| `checkpoint_reward_selected` | checkpoint reward 선택 | `reward_id`, `reward_type`, `wave`, `act` |
 | `game_over` | 런 종료 | `final_wave`, `reason`, `time_sec` |
 | `ad_reward_claim` | 광고 보상 성공 | `placement_id` |
 

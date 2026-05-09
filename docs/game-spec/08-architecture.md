@@ -1,7 +1,7 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-05-06 (v4.0 — minimal launch architecture)
-> **Scope:** 현재 제품 런타임은 Phaser, 향후 Unity WebGL 전환은 유지한다. v1 스펙 감량은 아키텍처 확장을 줄이기 위한 기준이다.
+> **Last Updated:** 2026-05-09 (v5.0 — central wall checkpoint architecture)
+> **Scope:** v1 active loop는 Unity WebGL 기준으로 중앙 성벽, 4속성 슬롯, Act checkpoint를 검증한다. Phaser/랜덤 합성 루프는 legacy/parking lot로 내린다.
 
 ---
 
@@ -32,27 +32,29 @@
 v1 제품 기준 경로:
 
 ```text
-React web-shell
-  -> PhaserGame mount
-  -> Game scene
+Unity Root scene
   -> GridManager / PathfindingSystem
-  -> TowerSystem / UnitSystem / WaveSystem / EnergySystem
-  -> CoreOrchestrator
-  -> EventBus back to React HUD
+  -> WallSystem / TowerSlotSystem / PlayerTacticSystem
+  -> UnitSystem / WaveSystem / EnergySystem
+  -> CoreOrchestrator checkpoint reward flow
+  -> GameEvents -> Unity UI Toolkit HUD / CoreLoopFieldRenderer / CoreLoopSfxController
 ```
 
 ### CoreOrchestrator Responsibility
 
 | 책임 | 정책 |
 |------|------|
-| 기본 소환 | T1 draw |
-| tier 가챠 | T2/T3/T4 energy roll |
-| 합성 | family/tier validation |
-| 카드 적용 | run-scoped modifier |
-| 광고 hook | rewarded result 수신 |
-| 리롤 방지 | cancelled draw cache 유지 |
+| Act 시작 | wave 1/6/11/16 진입 이벤트 |
+| checkpoint | wave 5/10/15/20 boss clear 후 3개 reward 제공 |
+| reward 적용 | tower slot / wall / skill / global card 적용 후 다음 Act 진행 |
+| 광고 hook | checkpoint reward reroll 수신 |
+| legacy 보호 | summon/gacha/merge 이벤트는 active loop에서 사용하지 않음 |
 
 CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서는 신규 BM, 신규 메타, 신규 모드를 여기에 추가하지 않는다.
+
+### Unity HUD Layout Tuning
+
+Unity HUD는 상단 에너지, WAVE, 햄버거 설정 버튼만 노출한다. 배속은 햄버거 버튼이 여는 설정 overlay의 단일 버튼에서 `x1 -> x2 -> x3 -> x1`로 순환하고, 재개/포기도 같은 overlay에서 처리한다. 설정 overlay는 panel 내부 click을 소비하고 backdrop click은 resume request로 닫는다. 하단 액션, 좌측 진행도, 성벽 메뉴 버튼은 v1 HUD surface에서 제거한다. 성벽 메뉴는 필드의 성벽 직접 클릭으로만 열리며, 즉시 수리권/공격력/공격 속도/공격 범위 강화를 제공하고 overlay 바깥 클릭 시 닫힌다. 성벽 메뉴 overlay가 열린 동안에는 `RunState.IsOverlayPaused`로 전투 틱과 필드 입력을 중단하되, 햄버거 설정 modal은 열지 않는다. 위치/크기/간격은 `Assets/Resources/UI/HudLayoutConfig.asset`의 `HudLayoutConfigSO`에서 조정하며, 레퍼런스 이미지 정렬 작업은 C# 하드코딩 대신 이 에셋의 Inspector 값을 우선 수정한다. Editor Play Mode에서는 `enableDragEditing`이 켜져 있으면 상단 좌측 묶음과 우측 버튼 묶음을 Game View에서 직접 드래그해 위치를 저장할 수 있고, `Ctrl/Cmd+Z`로 되돌릴 수 있다. `GameHudController`는 런타임에 해당 에셋을 `Resources.Load("UI/HudLayoutConfig")`로 읽고, 에셋이 없을 때만 내부 기본값으로 fallback한다.
 
 ---
 
@@ -68,6 +70,7 @@ CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서�
 | Missions / Achievements | 제외 |
 | grade / awakening | 신규 성장축에서 제외 |
 | star rating | 제외 |
+| request-summon-tower / request-gacha-summon / request-merge-towers | legacy/parking lot |
 
 legacy 코드는 안전하게 제거할 수 있을 때 별도 PR에서 정리한다. 기능 확장 목적으로 재활성화하지 않는다.
 
@@ -91,8 +94,18 @@ React와 Phaser는 EventBus로만 실시간 통신한다.
 | `wave-completed` | wave 종료 |
 | `boss-warning` | 보스 진입 |
 | `boss-hp-update` | 보스 HP HUD |
+| `unit-damaged` | 몬스터 피격 사운드 및 hit sprite frame |
+| `unit-killed` | 몬스터 사망 사운드 및 death sprite fade |
 | `upgrade-choice-ready` | 3카드 선택 |
 | `upgrade-applied` | 카드 적용 |
+| `act-started` | Act 1~4 시작 |
+| `checkpoint-ready` | boss clear 후 reward 3택 표시 |
+| `checkpoint-applied` | reward 선택 적용 |
+| `wall-state-changed` | 성벽 HP/수리/자동 공격 상태 |
+| `wall-auto-attacked` | 성벽 자동 공격 화살 투사체 발사. 데미지는 아직 적용하지 않음 |
+| `wall-projectile-impacted` | 화살이 몬스터에게 닿은 후 데미지 숫자/충돌 FX 표시 |
+| `tactic-state-changed` | 사용자 스킬 해금/쿨다운/레벨 |
+| `tower-slot-upgraded` | 4속성 슬롯 등장/승급 |
 | `game-over` | 결과 화면 |
 
 ### React -> Game
@@ -107,10 +120,23 @@ React와 Phaser는 EventBus로만 실시간 통신한다.
 | `request-sell-tower` | 판매 |
 | `request-family-upgrade` | 패밀리 강화 |
 | `request-apply-upgrade` | 카드 선택 |
+| `request-apply-checkpoint-reward` | checkpoint reward 선택 |
+| `request-cast-tactic` | force move / freeze 사용 |
+| `request-repair-wall` | 성벽 수리 |
 | `request-set-speed` | 속도 변경 |
 | `request-reset-run` | 재시작 |
 
 이벤트를 추가할 때는 `packages/phaser-game/src/EventBus.ts`의 `GameEventMap`과 React 수신/발신 지점을 함께 갱신한다.
+
+Unity v1은 `GLD.Core.GameEvents`에 동등한 typed contract를 둔다.
+
+| Type | 역할 |
+|------|------|
+| `ActDef` | Act index, startWave, endWave |
+| `CheckpointReward` | reward id/type/title/target |
+| `TowerSlotState` | family, tier, unlocked, grid position |
+| `WallState` | maxHp/currentHp/repair cooldown/auto attack |
+| `PlayerTacticState` | force move/freeze unlock, level, cooldown |
 
 ---
 

@@ -9,8 +9,9 @@
   <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <gld:GLDOverlay name="pause-modal" dim="default" class="pause-modal">
     <gld:GLDPanel name="pause-panel" variant="elevated" padding="lg" class="pause-panel">
-      <ui:Label name="pause-title" text="일시정지" />
-      <ui:Label name="pause-subtitle" text="전투가 멈춰 있습니다." />
+      <ui:Label name="pause-title" text="설정" />
+      <ui:Label name="pause-subtitle" text="전투 속도와 일시정지를 조정합니다." />
+      <gld:GLDButton name="pause-speed-toggle" text="x1" variant="secondary" />
       <gld:GLDButton name="pause-resume" text="재개" variant="primary" />
       <gld:GLDButton name="pause-quit" text="포기" variant="danger" />
     </gld:GLDPanel>

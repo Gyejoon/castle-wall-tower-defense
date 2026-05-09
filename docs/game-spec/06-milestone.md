@@ -14,10 +14,11 @@
 완료된 핵심:
 
 - 단일 맵 `main_long`
-- 랜덤 소환
-- family/tier 합성
-- 인게임 tier 가챠
-- 보스 후 카드 선택
+- `main_long` 중앙 성벽 콘셉트
+- 20 wave / wave 5,10,15,20 boss arc
+- 성벽 HP를 player HP로 쓰는 방어 목표
+- 4속성 family 데이터
+- 보스 후 checkpoint reward 선택으로 전환 예정
 - 선택형 광고 stub
 - localStorage 메타 shell
 - Phaser 런타임
@@ -33,7 +34,11 @@
 |------|----------|------|
 | game-spec v4 최소 출시 스펙 정리 | P0 | 진행 |
 | 모바일 5분 플레이 Go/No-Go | P0 | 예정 |
-| wave 1~20 기준 난이도 튜닝 | P0 | 예정 |
+| Act 1~4 / wave 1~20 기준 난이도 튜닝 | P0 | 예정 |
+| 성벽 수리/자동 공격 검증 | P0 | 예정 |
+| 4속성 슬롯 등장/승급 검증 | P0 | 예정 |
+| 사용자 스킬 2종(force move/freeze) 검증 | P0 | 예정 |
+| checkpoint reward 3택/리롤 검증 | P0 | 예정 |
 | 첫 보스 2~3분 도달 튜닝 | P0 | 예정 |
 | 결과 화면 재시작 흐름 확인 | P1 | 예정 |
 | 광고 없이 정상 진행 확인 | P1 | 예정 |
@@ -75,9 +80,9 @@ Unity 전환은 별도 트랙으로 유지한다. Phaser v1 스펙보다 기능�
 |------|------|------|
 | Unity Phase 2 PoC | 1 archer + wave-1 units + placement + HUD | 완료 |
 | Shared data export 정리 | tower/unit/wave/map data를 Unity가 읽을 수 있게 유지 | 예정 |
-| Minimal loop parity | 소환, 배치, 웨이브, HP, energy 재현 | 예정 |
-| Merge parity | family/tier 합성 재현 | 예정 |
-| Boss card parity | 보스 후 3카드 선택 재현 | 예정 |
+| Minimal loop parity | 성벽, 4속성 슬롯, 웨이브, HP, energy 재현 | 진행 |
+| Act checkpoint parity | wave 5/10/15/20 checkpoint reward 재현 | 예정 |
+| Tactic parity | force move / freeze 스킬 재현 | 예정 |
 | Migration decision | Phaser 대비 성능/유지보수 판단 | 예정 |
 
 Unity 전환 중에도 신규 BM, 신규 맵, 신규 메타 시스템은 추가하지 않는다.

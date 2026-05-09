@@ -6,6 +6,7 @@ using GLD.Systems.Boss;
 using GLD.Systems.Energy;
 using GLD.Systems.Grid;
 using GLD.Systems.Towers;
+using UnityEngine;
 
 namespace GLD.Systems.Units
 {
@@ -24,6 +25,7 @@ namespace GLD.Systems.Units
         int _nextLaneIndex;
 
         public event Action<UnitInstance> UnitSpawned;
+        public event Action<UnitInstance, float> UnitDamaged;
         public event Action<UnitInstance> UnitKilled;
         public event Action<UnitInstance> UnitEscaped;
 
@@ -117,6 +119,8 @@ namespace GLD.Systems.Units
             if (unit == null) return 0f;
             var applied = unit.ApplyDamage(rawDamage, armorPierce);
             TotalDamage += applied;
+            if (applied > 0f)
+                UnitDamaged?.Invoke(unit, applied);
 
             if (applied > 0f && unit.Boss.IsBoss && unit.IsAlive)
             {
@@ -143,6 +147,49 @@ namespace GLD.Systems.Units
             }
 
             return applied;
+        }
+
+        public int ApplyForceMove(Vector2 center, float radius, float distance)
+        {
+            if (radius <= 0f || distance <= 0f)
+                return 0;
+
+            var affected = 0;
+            foreach (var unit in _units)
+            {
+                if (unit == null || !unit.IsAlive || unit.Escaped)
+                    continue;
+                if (Vector2.Distance(center, unit.Position) > radius)
+                    continue;
+
+                var resistance = unit.Boss.IsBoss ? unit.Boss.CcResistance : 0f;
+                var effectiveDistance = distance * (1f - Mathf.Clamp01(resistance));
+                if (effectiveDistance > 0f && unit.PathFollower.NudgeBackward(effectiveDistance))
+                    affected++;
+            }
+
+            return affected;
+        }
+
+        public int ApplyFreeze(Vector2 center, float radius, float durationSeconds)
+        {
+            if (radius <= 0f || durationSeconds <= 0f)
+                return 0;
+
+            var affected = 0;
+            foreach (var unit in _units)
+            {
+                if (unit == null || !unit.IsAlive || unit.Escaped)
+                    continue;
+                if (Vector2.Distance(center, unit.Position) > radius)
+                    continue;
+
+                var resistance = unit.Boss.IsBoss ? unit.Boss.CcResistance : 0f;
+                if (unit.Cc.TryApplyStun(durationSeconds, resistance))
+                    affected++;
+            }
+
+            return affected;
         }
 
         IReadOnlyList<UnityEngine.Vector2> NextPath()

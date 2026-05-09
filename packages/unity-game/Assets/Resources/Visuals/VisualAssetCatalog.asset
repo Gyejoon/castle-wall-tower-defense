@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9570e7e83a7645bb881a96cf2506e302, type: 3}
+  m_Name: VisualAssetCatalog
+  m_EditorClassIdentifier: GLD.Data::GLD.Data.VisualAssetCatalogSO
+  towers: {fileID: 11400000, guid: 6bd4ec61399a347a9a1abff8df80343e, type: 2}
+  units: {fileID: 11400000, guid: d892427f88713488ca1ef836a444dcb4, type: 2}
+  tiles: {fileID: 11400000, guid: 12e550a29230847d0acb6b92eacedc85, type: 2}
+  castleWall:
+    healthy: {fileID: 21300000, guid: 01a68323a1dcc020dcc28a15e1d8ad24, type: 3}
+    damaged: {fileID: 21300000, guid: 8b059f6d2c67b46fa41c9c4855c02de1, type: 3}
+    critical: {fileID: 21300000, guid: e4d14467569e78eac3e1952524a13331, type: 3}
+  mapSprites:
+  - key: map.main_long_bg
+    sprite: {fileID: 21300000, guid: d890bac7d9ecb4bb7f9308f575a7ab02, type: 3}
+  - key: map.grass_tile
+    sprite: {fileID: 21300000, guid: 5438afe692ff311b4915281759d91697, type: 3}
+  - key: map.path_tile
+    sprite: {fileID: 21300000, guid: 940da4d5369319bc42e1c14edec89ac6, type: 3}
+  - key: map.rock
+    sprite: {fileID: 21300000, guid: 363ca583f7a6383dc0d570938de32753, type: 3}
+  - key: map.stump
+    sprite: {fileID: 21300000, guid: 06abb9050ab261ca9986d610f435020e, type: 3}
+  - key: map.fence
+    sprite: {fileID: 21300000, guid: 44e4c222560e046f95f073c082f4d5cd, type: 3}
+  - key: map.camp_tent
+    sprite: {fileID: 21300000, guid: 362f37b90b7aeb3f6122c64439bb341e, type: 3}
+  hudSprites:
+  - key: hud.energy_panel
+    sprite: {fileID: 21300000, guid: 26dac6fb006380957b18d0fc665251ae, type: 3}
+  - key: hud.wave_panel
+    sprite: {fileID: 21300000, guid: c46a8ab43e231222a8340ad07e5ed975, type: 3}
+  - key: hud.left_wave_track
+    sprite: {fileID: 21300000, guid: 3f1543013e4c41b43ff10dfc00af97dd, type: 3}
+  - key: hud.pause_button
+    sprite: {fileID: 21300000, guid: bc348e1dbc530e9f2fddd29b25acc00c, type: 3}
+  - key: hud.speed_x3_button
+    sprite: {fileID: 21300000, guid: 5ea050717a3425e2caeef7c38b3d38b7, type: 3}
+  - key: hud.action_move
+    sprite: {fileID: 21300000, guid: 0a078551bf1aeb04ee9d063e1fa0d6cc, type: 3}
+  - key: hud.action_freeze
+    sprite: {fileID: 21300000, guid: 9bbed4b2ee890de5626db2439131ffcf, type: 3}
+  - key: hud.action_wall_menu
+    sprite: {fileID: 21300000, guid: 66a39ce54e1e90d10bfd5bf7c03ba94b, type: 3}
+  - key: hud.card_slot
+    sprite: {fileID: 21300000, guid: c46a8ab43e231222a8340ad07e5ed975, type: 3}
+  uiSprites:
+  - key: ui.icon_energy
+    sprite: {fileID: 21300000, guid: 26dac6fb006380957b18d0fc665251ae, type: 3}
+  - key: ui.tower_card_rare
+    sprite: {fileID: 21300000, guid: c46a8ab43e231222a8340ad07e5ed975, type: 3}
+  - key: ui.source_atlas
+    sprite: {fileID: 21300000, guid: b4a80267833aedf17bc63be6ab6407bb, type: 3}

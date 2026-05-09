@@ -28,7 +28,7 @@ import {
 } from '../packages/shared/src/constants/familyUpgrade';
 import { GACHA_COSTS, PITY_THRESHOLD } from '../packages/shared/src/constants/gacha';
 import { MAP_REGISTRY } from '../packages/shared/src/constants/maps';
-import { WAVE_SCALING } from '../packages/shared/src/constants/waves';
+import { ACTIVE_WAVE_COUNT, WAVE_SCALING } from '../packages/shared/src/constants/waves';
 import { TOWER_DEFS, MERGE_CHAIN } from '../packages/shared/src/constants/towers';
 import {
   UNITS,
@@ -65,7 +65,7 @@ function buildCatalogs(): Record<string, unknown> {
       minMoveSpeed: MIN_MOVE_SPEED,
       stunImmunityWindowMs: STUN_IMMUNITY_WINDOW_MS,
     },
-    waves: generateWaves(50),
+    waves: generateWaves(ACTIVE_WAVE_COUNT),
     upgradeCards: UPGRADE_CARDS,
     summonPools: createSummonPool(),
     gachaConfig: {

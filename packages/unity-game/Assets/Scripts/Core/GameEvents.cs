@@ -74,6 +74,219 @@ namespace GLD.Core
         }
     }
 
+    public enum CheckpointRewardType
+    {
+        TowerUpgrade,
+        WallUpgrade,
+        SkillUpgrade,
+        GlobalCard
+    }
+
+    public enum PlayerTacticKind
+    {
+        ForceMove,
+        Freeze
+    }
+
+    public readonly struct ActDef
+    {
+        public readonly int ActIndex;
+        public readonly int StartWave;
+        public readonly int EndWave;
+
+        public ActDef(int actIndex, int startWave, int endWave)
+        {
+            ActIndex = actIndex;
+            StartWave = startWave;
+            EndWave = endWave;
+        }
+    }
+
+    public readonly struct CheckpointReward
+    {
+        public readonly string Id;
+        public readonly CheckpointRewardType Type;
+        public readonly string Title;
+        public readonly string Description;
+        public readonly string Target;
+
+        public CheckpointReward(string id, CheckpointRewardType type, string title, string description, string target = null)
+        {
+            Id = id;
+            Type = type;
+            Title = title;
+            Description = description;
+            Target = target;
+        }
+    }
+
+    public readonly struct TowerSlotState
+    {
+        public readonly int SlotIndex;
+        public readonly string Family;
+        public readonly int Tier;
+        public readonly bool Unlocked;
+        public readonly int Col;
+        public readonly int Row;
+
+        public TowerSlotState(int slotIndex, string family, int tier, bool unlocked, int col, int row)
+        {
+            SlotIndex = slotIndex;
+            Family = family;
+            Tier = tier;
+            Unlocked = unlocked;
+            Col = col;
+            Row = row;
+        }
+    }
+
+    public readonly struct WallState
+    {
+        public readonly int CurrentHp;
+        public readonly int MaxHp;
+        public readonly int RepairCost;
+        public readonly int RepairAmount;
+        public readonly int InstantRepairCharges;
+        public readonly int DamageUpgradeCost;
+        public readonly int SpeedUpgradeCost;
+        public readonly int RangeUpgradeCost;
+        public readonly int DamageUpgradeLevel;
+        public readonly int SpeedUpgradeLevel;
+        public readonly int RangeUpgradeLevel;
+        public readonly float RepairCooldownSec;
+        public readonly float RepairCooldownRemainingSec;
+        public readonly float AutoAttackDamage;
+        public readonly float AutoAttackIntervalSec;
+        public readonly float AutoAttackRange;
+
+        public WallState(
+            int currentHp,
+            int maxHp,
+            int repairCost,
+            int repairAmount,
+            float repairCooldownSec,
+            float repairCooldownRemainingSec,
+            float autoAttackDamage,
+            float autoAttackIntervalSec)
+            : this(
+                currentHp,
+                maxHp,
+                repairCost,
+                repairAmount,
+                repairCooldownSec,
+                repairCooldownRemainingSec,
+                autoAttackDamage,
+                autoAttackIntervalSec,
+                autoAttackRange: 5f,
+                instantRepairCharges: 0,
+                damageUpgradeCost: 45,
+                speedUpgradeCost: 50,
+                rangeUpgradeCost: 40,
+                damageUpgradeLevel: 0,
+                speedUpgradeLevel: 0,
+                rangeUpgradeLevel: 0)
+        {
+        }
+
+        public WallState(
+            int currentHp,
+            int maxHp,
+            int repairCost,
+            int repairAmount,
+            float repairCooldownSec,
+            float repairCooldownRemainingSec,
+            float autoAttackDamage,
+            float autoAttackIntervalSec,
+            float autoAttackRange,
+            int instantRepairCharges,
+            int damageUpgradeCost,
+            int speedUpgradeCost,
+            int rangeUpgradeCost,
+            int damageUpgradeLevel,
+            int speedUpgradeLevel,
+            int rangeUpgradeLevel)
+        {
+            CurrentHp = currentHp;
+            MaxHp = maxHp;
+            RepairCost = repairCost;
+            RepairAmount = repairAmount;
+            InstantRepairCharges = instantRepairCharges;
+            DamageUpgradeCost = damageUpgradeCost;
+            SpeedUpgradeCost = speedUpgradeCost;
+            RangeUpgradeCost = rangeUpgradeCost;
+            DamageUpgradeLevel = damageUpgradeLevel;
+            SpeedUpgradeLevel = speedUpgradeLevel;
+            RangeUpgradeLevel = rangeUpgradeLevel;
+            RepairCooldownSec = repairCooldownSec;
+            RepairCooldownRemainingSec = repairCooldownRemainingSec;
+            AutoAttackDamage = autoAttackDamage;
+            AutoAttackIntervalSec = autoAttackIntervalSec;
+            AutoAttackRange = autoAttackRange;
+        }
+    }
+
+    public readonly struct WallAttackEvent
+    {
+        public readonly float TargetX;
+        public readonly float TargetY;
+        public readonly float Damage;
+
+        public WallAttackEvent(float targetX, float targetY, float damage)
+        {
+            TargetX = targetX;
+            TargetY = targetY;
+            Damage = damage;
+        }
+    }
+
+    public readonly struct WallProjectileImpactEvent
+    {
+        public readonly float TargetX;
+        public readonly float TargetY;
+        public readonly float Damage;
+
+        public WallProjectileImpactEvent(float targetX, float targetY, float damage)
+        {
+            TargetX = targetX;
+            TargetY = targetY;
+            Damage = damage;
+        }
+    }
+
+    public readonly struct PlayerTacticState
+    {
+        public readonly PlayerTacticKind Kind;
+        public readonly bool Unlocked;
+        public readonly int Level;
+        public readonly float CooldownSec;
+        public readonly float CooldownRemainingSec;
+
+        public PlayerTacticState(PlayerTacticKind kind, bool unlocked, int level, float cooldownSec, float cooldownRemainingSec)
+        {
+            Kind = kind;
+            Unlocked = unlocked;
+            Level = level;
+            CooldownSec = cooldownSec;
+            CooldownRemainingSec = cooldownRemainingSec;
+        }
+    }
+
+    public readonly struct TacticCastRequest
+    {
+        public readonly PlayerTacticKind Kind;
+        public readonly float X;
+        public readonly float Y;
+        public readonly float Radius;
+
+        public TacticCastRequest(PlayerTacticKind kind, float x, float y, float radius)
+        {
+            Kind = kind;
+            X = x;
+            Y = y;
+            Radius = radius;
+        }
+    }
+
     public static class GameEvents
     {
         public static event Action OnBootComplete;
@@ -92,6 +305,13 @@ namespace GLD.Core
         public static event Action<GachaRequest> OnRequestGacha;
         public static event Action<string> OnRequestUpgradePick;
         public static event Action OnRequestUpgradeReroll;
+        public static event Action<string> OnRequestApplyCheckpointReward;
+        public static event Action OnRequestRepairWall;
+        public static event Action OnRequestUpgradeWallDamage;
+        public static event Action OnRequestUpgradeWallSpeed;
+        public static event Action OnRequestUpgradeWallRange;
+        public static event Action<TacticCastRequest> OnRequestCastTactic;
+        public static event Action OnWallSelected;
         public static event Action<int, int> OnEnergyChanged;
         public static event Action<string> OnSummonOffered;
         public static event Action<string> OnSummonCancelled;
@@ -121,6 +341,14 @@ namespace GLD.Core
         public static event Action<string, int> OnBossDefeated;
         public static event Action<UpgradeChoice[]> OnUpgradeChoiceReady;
         public static event Action<string, int> OnUpgradeApplied;
+        public static event Action<ActDef> OnActStarted;
+        public static event Action<int, CheckpointReward[]> OnCheckpointReady;
+        public static event Action<CheckpointReward> OnCheckpointApplied;
+        public static event Action<WallState> OnWallStateChanged;
+        public static event Action<WallAttackEvent> OnWallAutoAttacked;
+        public static event Action<WallProjectileImpactEvent> OnWallProjectileImpacted;
+        public static event Action<PlayerTacticState> OnTacticStateChanged;
+        public static event Action<TowerSlotState> OnTowerSlotUpgraded;
         public static event Action<int> OnPlayerHpChanged;
         public static event Action<float> OnSpeedChanged;
         public static event Action<bool> OnPauseChanged;
@@ -144,6 +372,13 @@ namespace GLD.Core
         public static void RaiseRequestGacha(GachaRequest request) => OnRequestGacha?.Invoke(request);
         public static void RaiseRequestUpgradePick(string upgradeId) => OnRequestUpgradePick?.Invoke(upgradeId);
         public static void RaiseRequestUpgradeReroll() => OnRequestUpgradeReroll?.Invoke();
+        public static void RaiseRequestApplyCheckpointReward(string rewardId) => OnRequestApplyCheckpointReward?.Invoke(rewardId);
+        public static void RaiseRequestRepairWall() => OnRequestRepairWall?.Invoke();
+        public static void RaiseRequestUpgradeWallDamage() => OnRequestUpgradeWallDamage?.Invoke();
+        public static void RaiseRequestUpgradeWallSpeed() => OnRequestUpgradeWallSpeed?.Invoke();
+        public static void RaiseRequestUpgradeWallRange() => OnRequestUpgradeWallRange?.Invoke();
+        public static void RaiseRequestCastTactic(TacticCastRequest request) => OnRequestCastTactic?.Invoke(request);
+        public static void RaiseWallSelected() => OnWallSelected?.Invoke();
         public static void RaiseEnergyChanged(int current, int max) => OnEnergyChanged?.Invoke(current, max);
         public static void RaiseSummonOffered(string towerId) => OnSummonOffered?.Invoke(towerId);
         public static void RaiseSummonCancelled(string towerId) => OnSummonCancelled?.Invoke(towerId);
@@ -178,6 +413,15 @@ namespace GLD.Core
         public static void RaiseBossDefeated(string unitId, int waveSlot) => OnBossDefeated?.Invoke(unitId, waveSlot);
         public static void RaiseUpgradeChoiceReady(UpgradeChoice[] choices) => OnUpgradeChoiceReady?.Invoke(choices);
         public static void RaiseUpgradeApplied(string upgradeId, int totalStacks) => OnUpgradeApplied?.Invoke(upgradeId, totalStacks);
+        public static void RaiseActStarted(ActDef act) => OnActStarted?.Invoke(act);
+        public static void RaiseCheckpointReady(int waveSlot, CheckpointReward[] choices) => OnCheckpointReady?.Invoke(waveSlot, choices);
+        public static void RaiseCheckpointApplied(CheckpointReward reward) => OnCheckpointApplied?.Invoke(reward);
+        public static void RaiseWallStateChanged(WallState state) => OnWallStateChanged?.Invoke(state);
+        public static void RaiseWallAutoAttacked(WallAttackEvent attackEvent) => OnWallAutoAttacked?.Invoke(attackEvent);
+        public static void RaiseWallProjectileImpacted(WallProjectileImpactEvent impactEvent) =>
+            OnWallProjectileImpacted?.Invoke(impactEvent);
+        public static void RaiseTacticStateChanged(PlayerTacticState state) => OnTacticStateChanged?.Invoke(state);
+        public static void RaiseTowerSlotUpgraded(TowerSlotState state) => OnTowerSlotUpgraded?.Invoke(state);
         public static void RaisePlayerHpChanged(int playerHp) => OnPlayerHpChanged?.Invoke(playerHp);
         public static void RaiseSpeedChanged(float speedMultiplier) => OnSpeedChanged?.Invoke(speedMultiplier);
         public static void RaisePauseChanged(bool paused) => OnPauseChanged?.Invoke(paused);
@@ -202,6 +446,13 @@ namespace GLD.Core
             OnRequestGacha = null;
             OnRequestUpgradePick = null;
             OnRequestUpgradeReroll = null;
+            OnRequestApplyCheckpointReward = null;
+            OnRequestRepairWall = null;
+            OnRequestUpgradeWallDamage = null;
+            OnRequestUpgradeWallSpeed = null;
+            OnRequestUpgradeWallRange = null;
+            OnRequestCastTactic = null;
+            OnWallSelected = null;
             OnEnergyChanged = null;
             OnSummonOffered = null;
             OnSummonCancelled = null;
@@ -231,6 +482,14 @@ namespace GLD.Core
             OnBossDefeated = null;
             OnUpgradeChoiceReady = null;
             OnUpgradeApplied = null;
+            OnActStarted = null;
+            OnCheckpointReady = null;
+            OnCheckpointApplied = null;
+            OnWallStateChanged = null;
+            OnWallAutoAttacked = null;
+            OnWallProjectileImpacted = null;
+            OnTacticStateChanged = null;
+            OnTowerSlotUpgraded = null;
             OnPlayerHpChanged = null;
             OnSpeedChanged = null;
             OnPauseChanged = null;

@@ -7,6 +7,9 @@ namespace GLD.Systems.Energy
 {
     public sealed class EnergySystem
     {
+        const float SoftCapThreshold = 100f;
+        const float SoftCapPerSecond = 0.5f;
+
         readonly float _perSecond;
         readonly int _perKill;
         readonly int _perBossKill;
@@ -44,7 +47,19 @@ namespace GLD.Systems.Energy
         public void Tick(float deltaSeconds)
         {
             if (deltaSeconds <= 0f) return;
-            Add(deltaSeconds * _perSecond);
+
+            var remaining = deltaSeconds;
+            if (_current < SoftCapThreshold && _perSecond > 0f)
+            {
+                var toSoftCap = SoftCapThreshold - _current;
+                var secondsBeforeSoftCap = toSoftCap / _perSecond;
+                var preSoftCapSeconds = Mathf.Min(remaining, secondsBeforeSoftCap);
+                Add(preSoftCapSeconds * _perSecond);
+                remaining -= preSoftCapSeconds;
+            }
+
+            if (remaining > 0f)
+                Add(remaining * SoftCapPerSecond);
         }
 
         public bool CanAfford(int amount) => Current >= amount;

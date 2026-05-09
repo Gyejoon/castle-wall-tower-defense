@@ -21,8 +21,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         VisualElement _root;
         Label _title;
         Label _body;
-        Button _nextButton;
-        Button _skipButton;
         RunState _runState;
         TutorialStep _step;
         bool _eventsBound;
@@ -55,17 +53,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
                 root.Add(BuildFallbackOverlay());
 
             ResolveElements(root);
-            RegisterButtons();
-            BindEvents();
-            if (_runState != null)
-            {
-                _runState.OnChanged += HandleRunStateChanged;
-                HandleRunStateChanged(_runState);
-            }
-            else
-            {
-                Hide();
-            }
+            _dismissed = true;
+            Hide();
             IsBound = true;
         }
 
@@ -88,16 +77,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _root = root.Q<VisualElement>("tutorial-overlay");
             _title = root.Q<Label>("tutorial-title");
             _body = root.Q<Label>("tutorial-body");
-            _nextButton = root.Q<Button>("tutorial-next");
-            _skipButton = root.Q<Button>("tutorial-skip");
-        }
-
-        void RegisterButtons()
-        {
-            _nextButton?.UnregisterCallback<ClickEvent>(HandleNextClicked);
-            _nextButton?.RegisterCallback<ClickEvent>(HandleNextClicked);
-            _skipButton?.UnregisterCallback<ClickEvent>(HandleSkipClicked);
-            _skipButton?.RegisterCallback<ClickEvent>(HandleSkipClicked);
         }
 
         void BindEvents()
@@ -169,10 +148,6 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void HandleUpgradeApplied(string upgradeId, int stacks) => Dismiss();
 
-        void HandleNextClicked(ClickEvent evt) => Advance();
-
-        void HandleSkipClicked(ClickEvent evt) => Dismiss();
-
         void SetStep(TutorialStep step)
         {
             if (_dismissed || step <= _step)
@@ -195,20 +170,20 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             switch (_step)
             {
                 case TutorialStep.Summon:
-                    title = "Summon";
-                    body = "Use Summon or gacha to draw a tower.";
+                    title = "소환";
+                    body = "소환 또는 가챠로 타워를 뽑습니다.";
                     break;
                 case TutorialStep.Place:
-                    title = "Place";
-                    body = "Tap an open green tile to place the drawn tower.";
+                    title = "배치";
+                    body = "빈 초록 칸을 눌러 뽑은 타워를 배치합니다.";
                     break;
                 case TutorialStep.Merge:
-                    title = "Merge";
-                    body = "Put two matching towers together to raise tier.";
+                    title = "합성";
+                    body = "같은 타워 둘을 합쳐 더 높은 tier로 올립니다.";
                     break;
                 case TutorialStep.Upgrade:
-                    title = "Upgrade";
-                    body = "After a boss wave, choose one run upgrade card.";
+                    title = "강화";
+                    body = "보스 후 카드 하나를 골라 이번 런을 강화합니다.";
                     break;
             }
 
@@ -238,14 +213,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         {
             var panel = new GLDPanel { name = "tutorial-overlay", Variant = "elevated", Padding = "sm" };
             panel.AddToClassList("tutorial-overlay");
-            panel.Add(new Label("Summon") { name = "tutorial-title" });
-            panel.Add(new Label("Use Summon or gacha to draw a tower.") { name = "tutorial-body" });
-
-            var actions = new VisualElement { name = "tutorial-actions" };
-            actions.AddToClassList("tutorial-actions");
-            actions.Add(new GLDButton("Next") { name = "tutorial-next", Variant = "secondary" });
-            actions.Add(new GLDButton("Skip") { name = "tutorial-skip", Variant = "secondary" });
-            panel.Add(actions);
+            panel.Add(new Label("소환") { name = "tutorial-title" });
+            panel.Add(new Label("소환 또는 가챠로 타워를 뽑습니다.") { name = "tutorial-body" });
             return panel;
         }
     }

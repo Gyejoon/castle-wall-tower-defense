@@ -1,29 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ui:UXML xmlns:ui="UnityEngine.UIElements"
-         xmlns:gld="GLD.UI.Primitives"
          xsi="http://www.w3.org/2001/XMLSchema-instance"
          engine="UnityEngine.UIElements"
          noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
   <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
-  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
   <ui:Style src="project://database/Assets/UI/Styles/hud.uss" />
-  <ui:Style src="project://database/Assets/UI/Styles/overlays.uss" />
   <ui:VisualElement name="game-hud" class="game-hud">
     <ui:VisualElement name="game-hud-top" class="game-hud__top">
-      <gld:GLDBadge name="hud-energy" text="E 40/200" variant="accent" />
-      <gld:GLDBadge name="hud-wave" text="W 0" />
-      <gld:GLDBadge name="hud-hp" text="HP 20" variant="danger" />
-    </ui:VisualElement>
-    <ui:Label name="hud-status" text="준비 x1" class="game-hud__status" />
-    <gld:GLDSheet name="game-hud-bottom" anchor="bottom" class="game-hud__bottom">
-      <ui:VisualElement name="game-hud-actions" class="game-hud__actions">
-        <gld:GLDButton name="hud-summon" text="소환" variant="primary" />
-        <gld:GLDButton name="hud-gacha-t2" text="T2" variant="secondary" tier="2" />
-        <gld:GLDButton name="hud-gacha-t3" text="T3" variant="secondary" tier="3" />
-        <gld:GLDButton name="hud-gacha-t4" text="T4" variant="secondary" tier="4" />
-        <gld:GLDButton name="hud-speed" text="x3" variant="secondary" />
-        <gld:GLDButton name="hud-menu" text="메뉴" variant="secondary" />
+      <ui:VisualElement name="hud-energy-panel" class="game-hud__stat game-hud__stat--energy">
+        <ui:Label text="E" class="game-hud__stat-title game-hud__stat-title--energy" />
+        <ui:Label name="hud-energy" text="46" class="game-hud__stat-value" />
       </ui:VisualElement>
-    </gld:GLDSheet>
+      <ui:VisualElement name="hud-wave-panel" class="game-hud__stat game-hud__stat--wave">
+        <ui:Label text="WAVE" class="game-hud__stat-title" />
+        <ui:Label name="hud-wave" text="1/20" class="game-hud__stat-value game-hud__stat-value--wave" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="game-hud-top-right" class="game-hud__top-right">
+      <ui:Button name="hud-menu" text="☰" class="game-hud__round-control game-hud__round-control--menu" />
+    </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

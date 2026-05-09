@@ -94,6 +94,10 @@ export function createDefaultSave(): SaveData {
 		})),
 		progress: {
 			highestWave: 0,
+			highestActReached: 0,
+			highestCheckpointWave: 0,
+			bestWallHpRemaining: 0,
+			bestTowerFamiliesBuilt: [],
 			totalBattles: 0,
 			tutorialCompleted: false,
 			gachaPityCount: 0,

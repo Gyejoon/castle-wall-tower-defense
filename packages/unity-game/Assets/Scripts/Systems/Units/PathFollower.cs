@@ -9,6 +9,7 @@ namespace GLD.Systems.Units
 
         public int PathIndex { get; private set; }
         public Vector2 Position { get; private set; }
+        public Vector2 ExitPosition => _path != null && _path.Count > 0 ? _path[_path.Count - 1] : Position;
         public bool ReachedExit { get; private set; }
 
         public PathFollower(IReadOnlyList<Vector2> path)
@@ -53,6 +54,49 @@ namespace GLD.Systems.Units
                     remaining = 0f;
                 }
             }
+        }
+
+        public bool NudgeBackward(float distance)
+        {
+            if (ReachedExit || _path == null || _path.Count == 0 || distance <= 0f)
+                return false;
+
+            var remaining = distance;
+            var changed = false;
+            while (remaining > 0f)
+            {
+                var previousIndex = Mathf.Max(0, PathIndex - 1);
+                var previous = _path[previousIndex];
+                var toPrevious = previous - Position;
+                var stepDistance = toPrevious.magnitude;
+                if (stepDistance <= 0.0001f)
+                {
+                    if (PathIndex <= 0)
+                        break;
+                    PathIndex = previousIndex;
+                    changed = true;
+                    continue;
+                }
+
+                if (remaining >= stepDistance)
+                {
+                    Position = previous;
+                    PathIndex = previousIndex;
+                    remaining -= stepDistance;
+                    changed = true;
+                    if (PathIndex <= 0)
+                        break;
+                }
+                else
+                {
+                    Position += toPrevious / stepDistance * remaining;
+                    remaining = 0f;
+                    changed = true;
+                }
+            }
+
+            ReachedExit = false;
+            return changed;
         }
     }
 }

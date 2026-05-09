@@ -4,7 +4,11 @@ import {
 	getTotalWavesForMap,
 	getWaveScaling,
 	getWavesForMap,
+	ACTS,
+	CHECKPOINT_WAVES,
 	HP_SLOPE,
+	getActForWave,
+	isCheckpointWave,
 } from '../src/constants/waves';
 import { generateWaves } from '../src/data/waves';
 
@@ -24,8 +28,8 @@ describe('getWavesForMap (정식 모드 wave set)', () => {
 		expect(getWavesForMap('main_long')).toEqual(getWavesForMap('anything'));
 	});
 
-	it('wave set is 50 waves long', () => {
-		expect(getTotalWavesForMap('main_long')).toBe(50);
+	it('active v1 wave set is 20 waves long', () => {
+		expect(getTotalWavesForMap('main_long')).toBe(20);
 	});
 
 	it('every wave uses only known unit ids with positive counts', () => {
@@ -43,10 +47,10 @@ describe('getWavesForMap (정식 모드 wave set)', () => {
 });
 
 describe('generateWaves', () => {
-	const waveSet = generateWaves(50);
+	const waveSet = generateWaves(20);
 
 	it('generates exactly the requested number of waves', () => {
-		expect(waveSet).toHaveLength(50);
+		expect(waveSet).toHaveLength(20);
 	});
 
 	it('slotIndex is sequential 1..n', () => {
@@ -55,9 +59,10 @@ describe('generateWaves', () => {
 		});
 	});
 
-	it('every 10th wave is a boss, others are normal', () => {
+	it('GDD v1 boss slots are waves 5, 10, 15, and 20', () => {
+		const bossSlots = new Set(CHECKPOINT_WAVES);
 		for (const w of waveSet) {
-			if (w.slotIndex % 10 === 0) {
+			if (bossSlots.has(w.slotIndex)) {
 				expect(w.kind).toBe('boss');
 			} else {
 				expect(w.kind).toBe('normal');
@@ -65,34 +70,39 @@ describe('generateWaves', () => {
 		}
 	});
 
-	it('5 고유 보스 라인업 (orc → forge → archmage → archmage+hp×2.5 → dragon)', () => {
+	it('maps active waves into four 5-wave Acts and checkpoint waves', () => {
+		expect(ACTS).toEqual([
+			{ actIndex: 1, startWave: 1, endWave: 5 },
+			{ actIndex: 2, startWave: 6, endWave: 10 },
+			{ actIndex: 3, startWave: 11, endWave: 15 },
+			{ actIndex: 4, startWave: 16, endWave: 20 },
+		]);
+		expect(getActForWave(1).actIndex).toBe(1);
+		expect(getActForWave(6).actIndex).toBe(2);
+		expect(getActForWave(20).actIndex).toBe(4);
+		expect([5, 10, 15, 20].every(isCheckpointWave)).toBe(true);
+		expect(isCheckpointWave(11)).toBe(false);
+	});
+
+	it('v1 uses a compact 2-3 boss lineup across the active 20 waves', () => {
 		const bossWaves = waveSet.filter((w) => w.kind === 'boss');
-		expect(bossWaves).toHaveLength(5);
-		const expectedBosses = [
-			'orc_warlord',
-			'forge_master',
-			'corrupted_archmage',
-			'corrupted_archmage',
-			'dragon',
-		];
-		bossWaves.forEach((w, i) => {
-			expect(w.groups[0].unitId).toBe(expectedBosses[i]);
+		expect(bossWaves).toHaveLength(4);
+		const uniqueBosses = new Set(bossWaves.map((w) => w.groups[0].unitId));
+		expect(uniqueBosses.size).toBeGreaterThanOrEqual(2);
+		expect(uniqueBosses.size).toBeLessThanOrEqual(3);
+		bossWaves.forEach((w) => {
 			expect(w.groups[0].count).toBe(1);
 		});
 	});
 
-	it('wave 40 archmage에 hpMultiplier 2.5 붙어 wave 30 archmage보다 확실히 세다', () => {
-		const wave30 = waveSet.find((w) => w.slotIndex === 30);
-		const wave40 = waveSet.find((w) => w.slotIndex === 40);
-		expect(wave30?.groups[0].hpMultiplier).toBeUndefined();
-		expect(wave40?.groups[0].hpMultiplier).toBe(2.5);
-	});
-
-	it('wave 50 dragon은 기본 escort로 flame_imp 6마리 동반', () => {
-		const wave50 = waveSet.find((w) => w.slotIndex === 50);
-		expect(wave50?.groups[0].unitId).toBe('dragon');
-		const flameImps = wave50?.groups.find((g) => g.unitId === 'flame_imp');
-		expect(flameImps?.count).toBe(6);
+	it('wave 20 is the active v1 final boss pressure point', () => {
+		const wave15 = waveSet.find((w) => w.slotIndex === 15);
+		const wave20 = waveSet.find((w) => w.slotIndex === 20);
+		expect(wave15?.kind).toBe('boss');
+		expect(wave20?.kind).toBe('boss');
+		expect(wave20?.groups[0].hpMultiplier ?? 1).toBeGreaterThan(
+			wave15?.groups[0].hpMultiplier ?? 1,
+		);
 	});
 
 	it('normal waves carry 30 units', () => {
@@ -105,9 +115,9 @@ describe('generateWaves', () => {
 
 	it('unit composition diversifies as slot index grows', () => {
 		const w1 = waveSet[0];
-		const w21 = waveSet[20];
+		const w16 = waveSet[15];
 		expect(w1.groups).toEqual([{ unitId: 'scout_drone', count: 30 }]);
-		expect(w21.groups.length).toBeGreaterThan(1);
+		expect(w16.groups.length).toBeGreaterThan(1);
 	});
 
 	it('wave 1 starts with the basic scout pack', () => {
@@ -115,8 +125,9 @@ describe('generateWaves', () => {
 		expect(w1.groups).toEqual([{ unitId: 'scout_drone', count: 30 }]);
 	});
 
-	it('stealth_drone appears in regular late waves', () => {
-		const stealthWaves = waveSet.filter((w) =>
+	it('stealth_drone remains available in debug waves beyond the v1 active arc', () => {
+		const debugWaves = generateWaves(50);
+		const stealthWaves = debugWaves.filter((w) =>
 			w.groups.some((g) => g.unitId === 'stealth_drone'),
 		);
 		expect(stealthWaves.length).toBeGreaterThan(0);

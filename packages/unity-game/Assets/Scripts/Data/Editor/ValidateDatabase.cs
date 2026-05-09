@@ -7,7 +7,7 @@
 //   2. MergeChainSO.rules inputA, inputB, output all resolve in TowerCatalogSO.
 //   3. SummonPoolSO.towerIds all resolve in TowerCatalogSO.
 //   4. WaveDefSO.groups[i].unitId all resolve in UnitCatalogSO.
-//   5. WaveDefSO at boss slotIndex (10,20,30,40,50) have kind == WaveKind.Boss.
+//   5. WaveDefSO at GDD v1 boss slotIndex (5,10,15,20) have kind == WaveKind.Boss.
 
 using System;
 using System.Collections.Generic;
@@ -148,10 +148,10 @@ namespace GLD.Data.Editor
                 }
             }
 
-            // 5. Boss wave kind check: slotIndex 10,20,30,40,50 should be Boss kind.
+            // 5. Boss wave kind check: slotIndex 5,10,15,20 should be Boss kind.
             if (waveCatalog != null && waveCatalog.waves != null)
             {
-                var bossSlots = new HashSet<int> { 10, 20, 30, 40, 50 };
+                var bossSlots = new HashSet<int> { 5, 10, 15, 20 };
                 foreach (var wave in waveCatalog.waves)
                 {
                     if (wave == null) continue;

@@ -1,4 +1,5 @@
 using GLD.Core;
+using GLD.Data;
 using GLD.SceneRuntime;
 using GLD.SceneRuntime.CoreLoop.UI;
 using NUnit.Framework;
@@ -11,6 +12,7 @@ namespace GLD.Tests.EditMode.UI
     public sealed class GameHudControllerTest
     {
         const string HudPath = "Assets/UI/Documents/GameHud.uxml";
+        const string HudLayoutPath = "Assets/Resources/UI/HudLayoutConfig.asset";
 
         [TearDown]
         public void TearDown()
@@ -19,7 +21,19 @@ namespace GLD.Tests.EditMode.UI
         }
 
         [Test]
-        public void GameHudUxmlBindsRunStateLabels()
+        public void GameHudLayoutConfigIsEditableAsset()
+        {
+            var layout = AssetDatabase.LoadAssetAtPath<HudLayoutConfigSO>(HudLayoutPath);
+
+            Assert.That(layout, Is.Not.Null, $"Missing editable HUD layout config at {HudLayoutPath}");
+            Assert.That(layout.enableDragEditing, Is.True);
+            Assert.That(layout.energyPanelWidth, Is.GreaterThan(0f));
+            Assert.That(layout.wavePanelWidth, Is.GreaterThan(0f));
+            Assert.That(layout.topRightButtonSize, Is.GreaterThan(0f));
+        }
+
+        [Test]
+        public void GameHudUxmlBindsTopLabelsOnly()
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(HudPath);
             Assert.That(asset, Is.Not.Null, $"Missing GameHud UXML at {HudPath}");
@@ -33,12 +47,18 @@ namespace GLD.Tests.EditMode.UI
                 controller.Bind(runState, root);
 
                 runState.SetEnergy(77, 200);
-                runState.SetLives(18);
                 runState.SetWave(3, GLD.Systems.Waves.WavePhase.Running);
 
-                Assert.That(root.Q<Label>("hud-energy").text, Is.EqualTo("E 77/200"));
-                Assert.That(root.Q<Label>("hud-hp").text, Is.EqualTo("HP 18"));
-                Assert.That(root.Q<Label>("hud-wave").text, Is.EqualTo("W 3"));
+                Assert.That(root.Q<Label>("hud-energy").text, Is.EqualTo("77"));
+                Assert.That(root.Q<Label>("hud-wave").text, Is.EqualTo("3/20"));
+                Assert.That(root.Q<Label>(className: "game-hud__stat-title--energy"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>(className: "game-hud__stat-medal"), Is.Null);
+                Assert.That(root.Q<Label>(className: "game-hud__stat-icon"), Is.Null);
+                Assert.That(root.Q<Label>("hud-hp"), Is.Null);
+                Assert.That(root.Q<Label>("hud-progress-label"), Is.Null);
+                Assert.That(root.Q<VisualElement>("hud-card-preview"), Is.Null);
+                Assert.That(root.Q<VisualElement>("hud-wall-repair"), Is.Null);
+                Assert.That(root.Q<VisualElement>("game-hud-actions"), Is.Null);
             }
             finally
             {
@@ -47,38 +67,30 @@ namespace GLD.Tests.EditMode.UI
         }
 
         [Test]
-        public void GameHudButtonsRaiseRequests()
+        public void GameHudTopButtonsRaiseRequests()
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(HudPath);
             var root = asset.CloneTree();
             var host = new GameObject("GameHudControllerTest");
             try
             {
-                var summon = 0;
-                var gachaTier = 0;
                 var pause = 0;
-                var speed = 0f;
-                GameEvents.OnRequestSummon += () => summon++;
-                GameEvents.OnRequestGacha += request => gachaTier = request.TargetTier;
                 GameEvents.OnRequestPause += () => pause++;
-                GameEvents.OnRequestSetSpeed += value => speed = value;
 
                 var controller = host.AddComponent<GameHudController>();
                 controller.Bind(new RunState("hud-test"), root);
 
-                Assert.That(root.Q<Button>("hud-summon"), Is.Not.Null);
-                Assert.That(root.Q<Button>("hud-gacha-t3"), Is.Not.Null);
-                Assert.That(root.Q<Button>("hud-speed"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("hud-energy-panel"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("hud-wave-panel"), Is.Not.Null);
+                Assert.That(root.Q<Button>("hud-speed"), Is.Null);
                 Assert.That(root.Q<Button>("hud-menu"), Is.Not.Null);
+                Assert.That(root.Q<Button>("hud-menu").text, Is.EqualTo("☰"));
+                Assert.That(root.Q<Button>("hud-gacha-t2"), Is.Null);
+                Assert.That(root.Q<Button>("hud-gacha-t3"), Is.Null);
+                Assert.That(root.Q<Button>("hud-wall-menu"), Is.Null);
 
-                controller.RequestSummon();
-                controller.RequestGacha(3);
-                controller.RequestToggleSpeed();
                 controller.RequestMenu();
 
-                Assert.That(summon, Is.EqualTo(1));
-                Assert.That(gachaTier, Is.EqualTo(3));
-                Assert.That(speed, Is.EqualTo(3f));
                 Assert.That(pause, Is.EqualTo(1));
             }
             finally

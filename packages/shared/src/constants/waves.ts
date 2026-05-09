@@ -31,6 +31,38 @@ export interface WaveDef {
  * without the pathological late-game explosion (W50 would hit ×354 of W10).
  */
 export const HP_SLOPE = 0.55;
+export const ACTIVE_WAVE_COUNT = 20;
+export const ACT_WAVE_COUNT = 5;
+export const ACTIVE_ACT_COUNT = ACTIVE_WAVE_COUNT / ACT_WAVE_COUNT;
+export const CHECKPOINT_WAVES = [5, 10, 15, 20] as const;
+
+export interface ActDef {
+	readonly actIndex: number;
+	readonly startWave: number;
+	readonly endWave: number;
+}
+
+export const ACTS: readonly ActDef[] = Array.from(
+	{ length: ACTIVE_ACT_COUNT },
+	(_, index) => {
+		const actIndex = index + 1;
+		const startWave = index * ACT_WAVE_COUNT + 1;
+		return {
+			actIndex,
+			startWave,
+			endWave: startWave + ACT_WAVE_COUNT - 1,
+		};
+	},
+);
+
+export function getActForWave(waveSlot: number): ActDef {
+	const safeWave = Math.max(1, Math.min(ACTIVE_WAVE_COUNT, waveSlot));
+	return ACTS[Math.floor((safeWave - 1) / ACT_WAVE_COUNT)];
+}
+
+export function isCheckpointWave(waveSlot: number): boolean {
+	return CHECKPOINT_WAVES.includes(waveSlot as (typeof CHECKPOINT_WAVES)[number]);
+}
 
 export const WAVE_SCALING: readonly { hp: number; speed: number }[] = [
 	{ hp: 1.0, speed: 1.0 }, // Wave 1  — 성공 경험
@@ -65,10 +97,10 @@ export function getWaveScaling(slot: number): { hp: number; speed: number } {
 }
 
 /**
- * 정식 모드 무한 Wave 세트. 모듈 로드 시 50 wave로 한 번 생성되고,
- * 슬롯 10 이후는 getWaveScaling의 선형 HP 램프가 이어받는다.
+ * 정식 모드 v1 활성 Wave 세트. 50 wave 생성기는 디버그/확장용으로 유지하되,
+ * 제품 루프와 Unity export는 20 wave 완주를 기준으로 한다.
  */
-const WAVES: WaveDef[] = generateWaves(50);
+const WAVES: WaveDef[] = generateWaves(ACTIVE_WAVE_COUNT);
 
 export function getWavesForMap(_mapId: string): WaveDef[] {
 	return WAVES;

@@ -11,6 +11,7 @@ namespace GLD.Systems.Waves
         Idle,
         Running,
         Interwave,
+        Checkpoint,
         Victory
     }
 
@@ -67,6 +68,8 @@ namespace GLD.Systems.Waves
             Phase = WavePhase.Running;
             WaveStarted?.Invoke(CurrentWaveSlot);
             GameEvents.RaiseWaveStarted(CurrentWaveSlot);
+            if (IsActStart(CurrentWaveSlot))
+                GameEvents.RaiseActStarted(CreateAct(CurrentWaveSlot));
             if (_currentWave.kind == WaveKind.Boss)
                 GameEvents.RaiseBossWaveStarted(CurrentWaveSlot);
             return true;
@@ -130,17 +133,24 @@ namespace GLD.Systems.Waves
         {
             if (_currentWave == null || _currentWave.kind == WaveKind.Boss)
                 return false;
-            if (CurrentWaveSlot >= 50 || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
+            if (CurrentWaveSlot >= _waves.ActiveWaveLimit || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
                 return false;
             return _waveElapsedSeconds >= MaxNormalWaveDurationSeconds;
         }
 
         void CompleteCurrentWave(bool skipDelay)
         {
+            var entersCheckpoint = _currentWave != null && _currentWave.kind == WaveKind.Boss && IsCheckpointWave(CurrentWaveSlot);
+            if (entersCheckpoint)
+                Phase = WavePhase.Checkpoint;
+
             WaveCompleted?.Invoke(CurrentWaveSlot);
             GameEvents.RaiseWaveCompleted(CurrentWaveSlot);
 
-            if (CurrentWaveSlot >= 50 || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
+            if (entersCheckpoint)
+                return;
+
+            if (CurrentWaveSlot >= _waves.ActiveWaveLimit || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
             {
                 Phase = WavePhase.Victory;
                 GameEvents.RaiseGameOver(true);
@@ -156,6 +166,32 @@ namespace GLD.Systems.Waves
             Phase = WavePhase.Interwave;
             _interwaveTimer = Mathf.Max(0f, _currentWave.delayAfterClearSec);
             GameEvents.RaiseWavePrepStarted(CurrentWaveSlot + 1, _interwaveTimer);
+        }
+
+        public bool ContinueFromCheckpoint()
+        {
+            if (Phase != WavePhase.Checkpoint)
+                return false;
+
+            if (CurrentWaveSlot >= _waves.ActiveWaveLimit || _waves.FindBySlot(CurrentWaveSlot + 1) == null)
+            {
+                Phase = WavePhase.Victory;
+                GameEvents.RaiseGameOver(true);
+                return true;
+            }
+
+            return BeginWave(CurrentWaveSlot + 1);
+        }
+
+        static bool IsCheckpointWave(int waveSlot) => waveSlot > 0 && waveSlot % 5 == 0;
+
+        static bool IsActStart(int waveSlot) => waveSlot == 1 || waveSlot == 6 || waveSlot == 11 || waveSlot == 16;
+
+        static ActDef CreateAct(int waveSlot)
+        {
+            var actIndex = Mathf.Clamp(((waveSlot - 1) / 5) + 1, 1, 4);
+            var startWave = ((actIndex - 1) * 5) + 1;
+            return new ActDef(actIndex, startWave, startWave + 4);
         }
     }
 }

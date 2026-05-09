@@ -278,6 +278,7 @@ namespace GLD.Data.Editor
             }
 
             catalog.waves = list.ToArray();
+            catalog.activeWaveLimit = list.Count;
             SOImportUtil.RecordAndDirty(catalog);
             return catalog;
         }

@@ -1,4 +1,6 @@
 using GLD.Data;
+using GLD.Core;
+using GLD.Systems.Act;
 using GLD.Systems.Energy;
 using GLD.Systems.Grid;
 using GLD.Systems.Pathfinding;
@@ -12,6 +14,12 @@ namespace GLD.Tests.EditMode.Systems
 {
     public sealed class CoreLoopSystemTests
     {
+        [TearDown]
+        public void TearDown()
+        {
+            GameEvents.ClearRuntimeListeners();
+        }
+
         [Test]
         public void GridRoundTripsAndBuildableCells()
         {
@@ -65,6 +73,16 @@ namespace GLD.Tests.EditMode.Systems
 
             Assert.That(energy.Current, Is.EqualTo(200));
             Assert.That(energy.Spend(201), Is.False);
+        }
+
+        [Test]
+        public void EnergyRegenUsesSoftCapAfterOneHundred()
+        {
+            var energy = new EnergySystem(initial: 99, max: 200, perSecond: 1f);
+
+            energy.Tick(4f);
+
+            Assert.That(energy.Current, Is.EqualTo(101));
         }
 
         [Test]
@@ -232,6 +250,84 @@ namespace GLD.Tests.EditMode.Systems
             Assert.That(unit.Cc.ResolveSpeed(1f), Is.EqualTo(0f).Within(0.001f));
         }
 
+        [Test]
+        public void WallSystemClampsRepairsAndAutoAttacks()
+        {
+            var grid = new GridManager(CreateMapLayout());
+            var energy = new EnergySystem(initial: 100);
+            var units = new UnitSystem(grid, energy);
+            var unit = units.Spawn(CreateUnit("scout", hp: 50, speed: 0f));
+            var wall = new WallSystem(energy, units);
+            var wallAttackCount = 0;
+            var wallAttackDamage = 0f;
+            var unitDamageCount = 0;
+            GameEvents.OnWallAutoAttacked += attackEvent =>
+            {
+                wallAttackCount++;
+                wallAttackDamage = attackEvent.Damage;
+            };
+            units.UnitDamaged += (damagedUnit, appliedDamage) =>
+            {
+                if (damagedUnit == unit && appliedDamage > 0f)
+                    unitDamageCount++;
+            };
+
+            wall.Tick(0.02f);
+            Assert.That(unit.Hp, Is.EqualTo(unit.MaxHp), "wall projectile should not apply damage before it reaches the monster");
+            Assert.That(wallAttackCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(wallAttackDamage, Is.GreaterThan(0f));
+            Assert.That(unitDamageCount, Is.EqualTo(0));
+            Assert.That(wall.PendingProjectileCount, Is.EqualTo(1));
+
+            wall.Tick(0.23f);
+            Assert.That(unit.Hp, Is.LessThan(unit.MaxHp));
+            Assert.That(unitDamageCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(wall.PendingProjectileCount, Is.EqualTo(0));
+
+            wall.TakeDamage(10);
+            Assert.That(wall.CurrentHp, Is.EqualTo(10));
+            var beforeRepair = energy.Current;
+            Assert.That(wall.Repair(), Is.True);
+            Assert.That(wall.CurrentHp, Is.EqualTo(15));
+            Assert.That(energy.Current, Is.EqualTo(beforeRepair - wall.RepairCost));
+            Assert.That(wall.Repair(), Is.False);
+            wall.GrantInstantRepairCharge();
+            Assert.That(wall.InstantRepairCharges, Is.EqualTo(1));
+            Assert.That(wall.InstantRepair(), Is.True);
+            Assert.That(wall.CurrentHp, Is.EqualTo(wall.MaxHp));
+            Assert.That(wall.InstantRepairCharges, Is.EqualTo(0));
+
+            var beforeDamageUpgrade = wall.AutoAttackDamage;
+            var beforeSpeedUpgrade = wall.AutoAttackIntervalSec;
+            var beforeRangeUpgrade = wall.AutoAttackRange;
+            energy.Add(200);
+            Assert.That(wall.UpgradeDamage(), Is.True);
+            Assert.That(wall.AutoAttackDamage, Is.GreaterThan(beforeDamageUpgrade));
+            Assert.That(wall.UpgradeSpeed(), Is.True);
+            Assert.That(wall.AutoAttackIntervalSec, Is.LessThan(beforeSpeedUpgrade));
+            Assert.That(wall.UpgradeRange(), Is.True);
+            Assert.That(wall.AutoAttackRange, Is.GreaterThan(beforeRangeUpgrade));
+
+            wall.TakeDamage(999);
+            Assert.That(wall.CurrentHp, Is.EqualTo(0));
+            Assert.That(wall.IsDestroyed, Is.True);
+        }
+
+        [Test]
+        public void PlayerTacticsRespectBossCcResistance()
+        {
+            var grid = new GridManager(CreateMapLayout());
+            var energy = new EnergySystem(initial: 100);
+            var bossCatalog = CreateUnitCatalog(CreateBoss("boss", hp: 100, speed: 1f, ccResistance: 1f));
+            var units = new UnitSystem(grid, energy, bossCatalog);
+            var boss = units.Spawn(bossCatalog.FindById("boss"));
+            var tactics = new PlayerTacticSystem(units);
+
+            tactics.Upgrade(PlayerTacticKind.Freeze);
+            Assert.That(tactics.Cast(new TacticCastRequest(PlayerTacticKind.Freeze, boss.Position.x, boss.Position.y, 2f)), Is.False);
+            Assert.That(boss.Cc.IsStunned, Is.False);
+        }
+
         static MapLayoutSO CreateMapLayout()
         {
             var layout = ScriptableObject.CreateInstance<MapLayoutSO>();
@@ -258,7 +354,8 @@ namespace GLD.Tests.EditMode.Systems
                     {
                         new GridPoint { x = 3, y = 3 },
                         new GridPoint { x = 5, y = 3 },
-                        new GridPoint { x = 2, y = 6 }
+                        new GridPoint { x = 2, y = 6 },
+                        new GridPoint { x = 6, y = 6 }
                     },
                     placementAnchors = new[]
                     {
@@ -306,6 +403,14 @@ namespace GLD.Tests.EditMode.Systems
             unit.id = id;
             unit.element = Element.Neutral;
             unit.stats = new UnitStats { hp = hp, armor = 0, speed = speed };
+            return unit;
+        }
+
+        static UnitDefSO CreateBoss(string id, int hp, float speed, float ccResistance)
+        {
+            var unit = CreateUnit(id, hp, speed);
+            unit.bossBehaviorId = "orc_warlord";
+            unit.bossCcResist = ccResistance;
             return unit;
         }
 

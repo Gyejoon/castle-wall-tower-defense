@@ -15,7 +15,7 @@
 .game-hud__top {
   position: absolute;
   left: 10px;
-  top: 10px;
+  top: 14px;
   flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
@@ -103,7 +103,7 @@
 .game-hud__top-right {
   position: absolute;
   right: 11px;
-  top: 10px;
+  top: 14px;
   flex-direction: column;
   align-items: center;
 }
@@ -140,14 +140,14 @@
 .game-hud__left-stack {
   position: absolute;
   left: 10px;
-  top: 72px;
-  width: 70px;
+  top: 88px;
+  width: 78px;
   align-items: flex-start;
 }
 
 .game-hud__progress {
-  width: 70px;
-  height: 154px;
+  width: 78px;
+  height: 168px;
   border-width: 3px;
   border-bottom-width: 5px;
   border-radius: var(--radius-md);
@@ -194,9 +194,9 @@
 }
 
 .game-hud__card-preview {
-  width: 70px;
-  height: 88px;
-  margin-top: 10px;
+  width: 78px;
+  height: 96px;
+  margin-top: 18px;
   padding: 4px;
   align-items: center;
   justify-content: center;
@@ -224,21 +224,21 @@
 
 .game-hud__actions {
   position: absolute;
-  left: 13px;
-  bottom: 14px;
+  left: 10px;
+  bottom: 20px;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
 }
 
 .game-hud__skill-button {
-  width: 88px;
-  min-width: 88px;
-  max-width: 88px;
-  height: 104px;
-  min-height: 104px;
-  max-height: 104px;
-  margin: 0 9px 0 0;
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+  height: 132px;
+  min-height: 132px;
+  max-height: 132px;
+  margin: 0 8px 0 0;
   padding: 0;
   border-width: 0;
   background-color: rgba(0, 0, 0, 0);
@@ -247,10 +247,10 @@
 }
 
 .game-hud__skill-icon {
-  width: 76px;
-  height: 76px;
-  border-width: 4px;
-  border-bottom-width: 6px;
+  width: 88px;
+  height: 88px;
+  border-width: 0;
+  border-bottom-width: 0;
   border-radius: var(--radius-pill);
   border-color: #f2c760;
   color: #fff5c9;
@@ -272,9 +272,9 @@
 }
 
 .game-hud__skill-label {
-  width: 72px;
-  min-height: 24px;
-  margin-top: -4px;
+  width: 86px;
+  min-height: 28px;
+  margin-top: 16px;
   border-width: 2px;
   border-bottom-width: 4px;
   border-radius: var(--radius-sm);
@@ -284,6 +284,21 @@
   font-size: var(--type-label12-size);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
+}
+
+.game-hud__wall-action {
+  position: absolute;
+  right: 18px;
+  bottom: 20px;
+  align-items: center;
+}
+
+.game-hud__skill-button--wall {
+  margin-right: 0;
+}
+
+.game-hud__skill-button--wall .game-hud__skill-icon {
+  background-image: url("project://database/Assets/Art/Sprites/generated_forest_defense/ui_hud/hud_action_wall_menu.png");
 }
 
 .wall-repair-overlay {

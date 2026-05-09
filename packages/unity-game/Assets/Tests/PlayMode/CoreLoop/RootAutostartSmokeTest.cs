@@ -100,7 +100,7 @@ namespace GLD.Tests.PlayMode.CoreLoop
             Assert.That(actions, Is.Not.Null);
             Assert.That(speedButton, Is.Not.Null);
             Assert.That(menuButton, Is.Not.Null);
-            Assert.That(uiDocument.rootVisualElement.Q<Button>("hud-wall-menu"), Is.Null);
+            Assert.That(uiDocument.rootVisualElement.Q<Button>("hud-wall-menu"), Is.Not.Null);
             Assert.That(speedButton.parent.name, Is.EqualTo("game-hud-top-right"));
             Assert.That(menuButton.parent.name, Is.EqualTo("game-hud-top-right"));
             Assert.That(speedButton.ClassListContains("game-hud__round-control"), Is.True);
@@ -120,10 +120,10 @@ namespace GLD.Tests.PlayMode.CoreLoop
                 Assert.That(actions[i].style.height.value.value, Is.EqualTo(actions[0].style.height.value.value).Within(1.5f), "tactic buttons should keep equal heights");
             }
             Assert.That(actions[0].style.height.value.value, Is.GreaterThan(actions[0].style.width.value.value), "tactic buttons should include a round icon plus label plate");
-            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-gacha-t2-label").text, Is.EqualTo("밀치기"));
-            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-gacha-t3-label").text, Is.EqualTo("정지"));
+            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-gacha-t2-label").text, Is.EqualTo("이동"));
+            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-gacha-t3-label").text, Is.EqualTo("빙결"));
             Assert.That(Mathf.Abs(menuButton.resolvedStyle.height - speedButton.resolvedStyle.height), Is.LessThan(1.5f), "top-right pause and speed buttons should share height");
-            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-wall-menu-label"), Is.Null);
+            Assert.That(uiDocument.rootVisualElement.Q<Label>("hud-wall-menu-label"), Is.Not.Null);
             Assert.That(repairPrompt.ClassListContains("wall-repair-overlay"), Is.True);
             Assert.That(repairPrompt.parent.IndexOf(repairPrompt), Is.LessThan(repairPrompt.parent.IndexOf(actions)));
             Assert.That(repairPrompt.style.display.value, Is.EqualTo(DisplayStyle.None));

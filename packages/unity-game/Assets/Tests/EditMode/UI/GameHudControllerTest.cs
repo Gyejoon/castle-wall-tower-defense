@@ -78,11 +78,11 @@ namespace GLD.Tests.EditMode.UI
                 Assert.That(root.Q<Button>("hud-summon"), Is.Null);
                 Assert.That(root.Q<Button>("hud-gacha-t2"), Is.Not.Null);
                 Assert.That(root.Q<Button>("hud-gacha-t3"), Is.Not.Null);
-                Assert.That(root.Q<Label>("hud-gacha-t2-label").text, Is.EqualTo("밀치기"));
-                Assert.That(root.Q<Label>("hud-gacha-t3-label").text, Is.EqualTo("정지"));
+                Assert.That(root.Q<Label>("hud-gacha-t2-label").text, Is.EqualTo("이동"));
+                Assert.That(root.Q<Label>("hud-gacha-t3-label").text, Is.EqualTo("빙결"));
                 Assert.That(root.Q<Button>("hud-speed"), Is.Not.Null);
                 Assert.That(root.Q<Button>("hud-menu"), Is.Not.Null);
-                Assert.That(root.Q<Button>("hud-wall-menu"), Is.Null);
+                Assert.That(root.Q<Button>("hud-wall-menu"), Is.Not.Null);
                 Assert.That(root.Q<Button>("hud-gacha-t4"), Is.Null);
                 Assert.That(root.Q<Label>("hud-status"), Is.Null);
                 Assert.That(root.Q<Label>("hud-hp"), Is.Null);
@@ -104,7 +104,7 @@ namespace GLD.Tests.EditMode.UI
                 Assert.That(menuButton.ClassListContains("game-hud__round-control"), Is.True);
                 Assert.That(root.Q<Button>("hud-gacha-t2").ClassListContains("game-hud__skill-button"), Is.True);
                 Assert.That(root.Q<Button>("hud-gacha-t3").ClassListContains("game-hud__skill-button"), Is.True);
-                Assert.That(root.Q<Label>("hud-wall-menu-label"), Is.Null);
+                Assert.That(root.Q<Label>("hud-wall-menu-label"), Is.Not.Null);
                 Assert.That(root.Q<VisualElement>("hud-energy-panel"), Is.Not.Null);
                 Assert.That(root.Q<VisualElement>("hud-wave-panel"), Is.Not.Null);
                 Assert.That(root.Q<Label>("hud-progress-label"), Is.Not.Null);

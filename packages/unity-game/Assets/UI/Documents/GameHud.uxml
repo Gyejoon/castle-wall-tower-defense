@@ -55,12 +55,18 @@
     </gld:GLDOverlay>
     <ui:VisualElement name="game-hud-actions" class="game-hud__actions">
       <ui:Button name="hud-gacha-t2" class="game-hud__skill-button game-hud__skill-button--push">
-        <ui:Label text="↯" class="game-hud__skill-icon" />
-        <ui:Label name="hud-gacha-t2-label" text="밀치기" class="game-hud__skill-label" />
+        <ui:Label text="" class="game-hud__skill-icon" />
+        <ui:Label name="hud-gacha-t2-label" text="이동" class="game-hud__skill-label" />
       </ui:Button>
       <ui:Button name="hud-gacha-t3" class="game-hud__skill-button game-hud__skill-button--freeze">
-        <ui:Label text="❄" class="game-hud__skill-icon" />
-        <ui:Label name="hud-gacha-t3-label" text="정지" class="game-hud__skill-label" />
+        <ui:Label text="" class="game-hud__skill-icon" />
+        <ui:Label name="hud-gacha-t3-label" text="빙결" class="game-hud__skill-label" />
+      </ui:Button>
+    </ui:VisualElement>
+    <ui:VisualElement name="game-hud-wall-action" class="game-hud__wall-action">
+      <ui:Button name="hud-wall-menu" class="game-hud__skill-button game-hud__skill-button--wall">
+        <ui:Label text="" class="game-hud__skill-icon" />
+        <ui:Label name="hud-wall-menu-label" text="성벽 메뉴" class="game-hud__skill-label" />
       </ui:Button>
     </ui:VisualElement>
   </ui:VisualElement>

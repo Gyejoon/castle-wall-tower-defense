@@ -1,4 +1,5 @@
 using GLD.Core;
+using GLD.Data;
 using GLD.UI.Primitives;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,6 +17,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         Button _gacha4Button;
         Button _speedButton;
         Button _menuButton;
+        Button _wallMenuButton;
         VisualElement _wallRepairPrompt;
         Label _wallRepairLabel;
         Button _wallRepairButton;
@@ -24,6 +26,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         Button _wallRangeButton;
         RunState _runState;
         WallState _wallState;
+        VisualAssetCatalogSO _visuals;
 
         public bool IsBound { get; private set; }
 
@@ -89,6 +92,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
         void ResolveElements(VisualElement root)
         {
+            _visuals = Resources.Load<VisualAssetCatalogSO>("Visuals/VisualAssetCatalog");
             _energyLabel = root.Q<Label>("hud-energy");
             _waveLabel = root.Q<Label>("hud-wave");
             _progressLabel = root.Q<Label>("hud-progress-label");
@@ -97,13 +101,14 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _gacha4Button = root.Q<Button>("hud-gacha-t4");
             _speedButton = root.Q<Button>("hud-speed");
             _menuButton = root.Q<Button>("hud-menu");
+            _wallMenuButton = root.Q<Button>("hud-wall-menu");
             _wallRepairPrompt = root.Q<VisualElement>("hud-wall-repair");
             _wallRepairLabel = root.Q<Label>("hud-wall-repair-label");
             _wallRepairButton = root.Q<Button>("hud-wall-repair-button");
             _wallDamageButton = root.Q<Button>("hud-wall-damage-button");
             _wallSpeedButton = root.Q<Button>("hud-wall-speed-button");
             _wallRangeButton = root.Q<Button>("hud-wall-range-button");
-            ApplyHudLayout(root);
+            ApplyHudLayout(root, _visuals);
             ApplyHudButtonSizing();
             HideWallRepairPrompt();
         }
@@ -115,6 +120,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _gacha4Button?.RegisterCallback<ClickEvent>(_ => RequestGacha(4));
             _speedButton?.RegisterCallback<ClickEvent>(_ => RequestToggleSpeed());
             _menuButton?.RegisterCallback<ClickEvent>(_ => RequestMenu());
+            _wallMenuButton?.RegisterCallback<ClickEvent>(_ => ShowWallMenu());
             _wallRepairPrompt?.RegisterCallback<PointerDownEvent>(HandleWallRepairOverlayPointerDown);
             _wallRepairButton?.RegisterCallback<ClickEvent>(_ => RequestWallRepair());
             _wallDamageButton?.RegisterCallback<ClickEvent>(_ => RequestWallDamageUpgrade());
@@ -137,6 +143,17 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         }
 
         public void DismissWallMenu() => HideWallRepairPrompt();
+
+        public void ShowWallMenu()
+        {
+            UpdateWallRepairLabel();
+            if (_wallRepairPrompt == null)
+                return;
+
+            if (_wallRepairPrompt is GLDOverlay overlay)
+                overlay.Visible = true;
+            _wallRepairPrompt.style.display = DisplayStyle.Flex;
+        }
 
         public void RequestWallDamageUpgrade()
         {
@@ -183,19 +200,10 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             if (_progressLabel != null)
                 _progressLabel.text = $"공격 {state.Wave}/13";
             if (_speedButton != null)
-                _speedButton.text = state.SpeedMultiplier >= 3f ? "x1" : "x3 ››";
+                _speedButton.text = string.Empty;
         }
 
-        void HandleWallSelected()
-        {
-            UpdateWallRepairLabel();
-            if (_wallRepairPrompt != null)
-            {
-                if (_wallRepairPrompt is GLDOverlay overlay)
-                    overlay.Visible = true;
-                _wallRepairPrompt.style.display = DisplayStyle.Flex;
-            }
-        }
+        void HandleWallSelected() => ShowWallMenu();
 
         void HandleWallStateChanged(WallState state)
         {
@@ -293,14 +301,23 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             row.style.bottom = 14;
             row.style.flexDirection = FlexDirection.Row;
             row.style.justifyContent = Justify.FlexStart;
-            row.Add(CreateFallbackSkillButton("hud-gacha-t2", "↯", "밀치기", "game-hud__skill-button--push"));
-            row.Add(CreateFallbackSkillButton("hud-gacha-t3", "❄", "정지", "game-hud__skill-button--freeze"));
+            row.Add(CreateFallbackSkillButton("hud-gacha-t2", string.Empty, "이동", "game-hud__skill-button--push"));
+            row.Add(CreateFallbackSkillButton("hud-gacha-t3", string.Empty, "빙결", "game-hud__skill-button--freeze"));
+
+            var wallAction = new VisualElement { name = "game-hud-wall-action" };
+            wallAction.AddToClassList("game-hud__wall-action");
+            wallAction.pickingMode = PickingMode.Ignore;
+            wallAction.style.position = Position.Absolute;
+            wallAction.style.right = 28f;
+            wallAction.style.bottom = 28f;
+            wallAction.Add(CreateFallbackSkillButton("hud-wall-menu", string.Empty, "성벽 메뉴", "game-hud__skill-button--wall"));
 
             hud.Add(top);
             hud.Add(topRight);
             hud.Add(BuildFallbackLeftStack());
             hud.Add(BuildFallbackWallRepairPrompt());
             hud.Add(row);
+            hud.Add(wallAction);
             return hud;
         }
 
@@ -412,27 +429,21 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             return button;
         }
 
-        void ApplyHudButtonSizing()
-        {
-            ApplyMiniButton(_speedButton);
-            ApplyMiniButton(_menuButton);
-            ApplySkillButton(_gacha2Button);
-            ApplySkillButton(_gacha3Button);
-        }
-
-        static void ApplyHudLayout(VisualElement root)
+        static void ApplyHudLayout(VisualElement root, VisualAssetCatalogSO visuals)
         {
             var top = root.Q<VisualElement>("game-hud-top");
             if (top != null)
             {
                 top.style.position = Position.Absolute;
                 top.style.left = 10f;
-                top.style.top = 10f;
+                top.style.top = 14f;
                 top.style.flexDirection = FlexDirection.Row;
             }
 
             ApplyStatPanel(root.Q<VisualElement>("hud-energy-panel"), 108f);
             ApplyStatPanel(root.Q<VisualElement>("hud-wave-panel"), 104f);
+            ApplyHudSprite(root.Q<VisualElement>("hud-energy-panel"), visuals, "hud.energy_panel");
+            ApplyHudSprite(root.Q<VisualElement>("hud-wave-panel"), visuals, "hud.wave_panel");
             var energyMedal = root.Q<VisualElement>(className: "game-hud__stat-medal");
             if (energyMedal != null)
             {
@@ -450,7 +461,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             {
                 topRight.style.position = Position.Absolute;
                 topRight.style.right = 11f;
-                topRight.style.top = 10f;
+                topRight.style.top = 14f;
                 topRight.style.flexDirection = FlexDirection.Column;
             }
 
@@ -459,9 +470,9 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             {
                 leftStack.style.position = Position.Absolute;
                 leftStack.style.left = 10f;
-                leftStack.style.top = 72f;
-                leftStack.style.width = 70f;
-                leftStack.style.maxWidth = 70f;
+                leftStack.style.top = 88f;
+                leftStack.style.width = 78f;
+                leftStack.style.maxWidth = 78f;
                 leftStack.style.flexDirection = FlexDirection.Column;
                 leftStack.style.alignItems = Align.FlexStart;
             }
@@ -469,16 +480,17 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             var progress = root.Q<VisualElement>("hud-progress-panel");
             if (progress != null)
             {
-                progress.style.width = 70f;
-                progress.style.maxWidth = 70f;
-                progress.style.height = 154f;
-                progress.style.maxHeight = 154f;
+                progress.style.width = 78f;
+                progress.style.maxWidth = 78f;
+                progress.style.height = 168f;
+                progress.style.maxHeight = 168f;
                 progress.style.paddingLeft = 5f;
                 progress.style.paddingRight = 5f;
                 progress.style.paddingTop = 5f;
                 progress.style.paddingBottom = 5f;
                 progress.style.alignItems = Align.Center;
                 ApplyFrame(progress, new Color32(35, 24, 12, 240), new Color32(138, 103, 46, 255), 3f, 5f, 6f);
+                ApplyHudSprite(progress, visuals, "hud.left_wave_track");
             }
             root.Query<Label>(className: "game-hud__progress-icon").ForEach(label => ApplyLabel(label, new Color32(239, 226, 199, 255), 26f));
             root.Query<Label>(className: "game-hud__progress-dot").ForEach(_ => { });
@@ -495,11 +507,11 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             var card = root.Q<VisualElement>("hud-card-preview");
             if (card != null)
             {
-                card.style.width = 70f;
-                card.style.maxWidth = 70f;
-                card.style.height = 88f;
-                card.style.maxHeight = 88f;
-                card.style.marginTop = 10f;
+                card.style.width = 78f;
+                card.style.maxWidth = 78f;
+                card.style.height = 96f;
+                card.style.maxHeight = 96f;
+                card.style.marginTop = 18f;
                 card.style.paddingLeft = 4f;
                 card.style.paddingRight = 4f;
                 card.style.paddingTop = 4f;
@@ -507,6 +519,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
                 card.style.alignItems = Align.Center;
                 card.style.justifyContent = Justify.Center;
                 ApplyFrame(card, new Color32(35, 20, 15, 245), new Color32(178, 99, 202, 255), 3f, 5f, 6f);
+                ApplyHudSprite(card, visuals, "hud.card_slot");
             }
             if (root.Q<Label>("hud-card-preview-icon") != null)
                 ApplyLabel(root.Q<Label>("hud-card-preview-icon"), new Color32(255, 138, 48, 255), 10f);
@@ -517,23 +530,36 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             if (actions != null)
             {
                 actions.style.position = Position.Absolute;
-                actions.style.left = 13f;
-                actions.style.bottom = 14f;
+                actions.style.left = 10f;
+                actions.style.bottom = 20f;
                 actions.style.flexDirection = FlexDirection.Row;
                 actions.style.alignItems = Align.Center;
             }
+            var wallAction = root.Q<VisualElement>("game-hud-wall-action");
+            if (wallAction != null)
+            {
+                wallAction.style.position = Position.Absolute;
+                wallAction.style.right = 18f;
+                wallAction.style.bottom = 20f;
+                wallAction.style.alignItems = Align.Center;
+            }
             root.Query<Label>(className: "game-hud__skill-icon").ForEach(label =>
             {
-                label.style.width = 76f;
-                label.style.height = 76f;
-                ApplyFrame(label, label.text == "❄" ? new Color32(23, 124, 189, 255) : new Color32(183, 71, 23, 255), new Color32(242, 199, 96, 255), 4f, 6f, 38f);
-                ApplyLabel(label, new Color32(255, 245, 201, 255), 34f);
+                label.style.width = 88f;
+                label.style.height = 88f;
+                label.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
+                label.style.borderTopWidth = 0f;
+                label.style.borderRightWidth = 0f;
+                label.style.borderBottomWidth = 0f;
+                label.style.borderLeftWidth = 0f;
+                ApplyHudSprite(label, visuals, ResolveSkillSpriteKey(label));
+                label.text = string.Empty;
             });
             root.Query<Label>(className: "game-hud__skill-label").ForEach(label =>
             {
-                label.style.width = 72f;
-                label.style.minHeight = 24f;
-                label.style.marginTop = -4f;
+                label.style.width = 86f;
+                label.style.minHeight = 28f;
+                label.style.marginTop = 16f;
                 ApplyFrame(label, new Color32(36, 25, 13, 250), new Color32(214, 169, 77, 255), 2f, 4f, 4f);
                 ApplyLabel(label, new Color32(248, 234, 208, 255), 12f);
             });
@@ -566,22 +592,44 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
         }
 
+        void ApplyHudButtonSizing()
+        {
+            ApplyMiniButton(_speedButton, _visuals);
+            ApplyMiniButton(_menuButton, _visuals);
+            ApplySkillButton(_gacha2Button);
+            ApplySkillButton(_gacha3Button);
+            ApplySkillButton(_wallMenuButton);
+        }
+
+        static void ApplyMiniButton(Button button, VisualAssetCatalogSO visuals)
+        {
+            ApplyMiniButton(button);
+            if (button == null)
+                return;
+
+            button.text = string.Empty;
+            if (button.name == "hud-menu")
+                ApplyHudSprite(button, visuals, "hud.pause_button");
+            else if (button.name == "hud-speed")
+                ApplyHudSprite(button, visuals, "hud.speed_x3_button");
+        }
+
         static void ApplySkillButton(Button button)
         {
             if (button == null)
                 return;
 
-            button.style.width = 88f;
-            button.style.minWidth = 88f;
-            button.style.maxWidth = 88f;
-            button.style.height = 104f;
-            button.style.minHeight = 104f;
-            button.style.maxHeight = 104f;
+            button.style.width = 96f;
+            button.style.minWidth = 96f;
+            button.style.maxWidth = 96f;
+            button.style.height = 132f;
+            button.style.minHeight = 132f;
+            button.style.maxHeight = 132f;
             button.style.paddingLeft = 0f;
             button.style.paddingRight = 0f;
             button.style.paddingTop = 0f;
             button.style.paddingBottom = 0f;
-            button.style.marginRight = 9f;
+            button.style.marginRight = button.name == "hud-wall-menu" ? 0f : 8f;
             button.style.alignItems = Align.Center;
             button.style.justifyContent = Justify.FlexStart;
             button.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
@@ -639,6 +687,31 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             element.style.borderTopRightRadius = radius;
             element.style.borderBottomLeftRadius = radius;
             element.style.borderBottomRightRadius = radius;
+        }
+
+        static void ApplyHudSprite(VisualElement element, VisualAssetCatalogSO visuals, string key)
+        {
+            if (element == null || visuals == null)
+                return;
+
+            var sprite = visuals.Find(key);
+            if (sprite == null)
+                return;
+
+            element.style.backgroundImage = new StyleBackground(sprite);
+            element.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            element.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+        }
+
+        static string ResolveSkillSpriteKey(VisualElement icon)
+        {
+            if (icon == null || icon.parent == null)
+                return "hud.action_move";
+            if (icon.parent.name == "hud-gacha-t3" || icon.parent.ClassListContains("game-hud__skill-button--freeze"))
+                return "hud.action_freeze";
+            if (icon.parent.name == "hud-wall-menu" || icon.parent.ClassListContains("game-hud__skill-button--wall"))
+                return "hud.action_wall_menu";
+            return "hud.action_move";
         }
     }
 }

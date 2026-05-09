@@ -28,6 +28,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         [SerializeField] TowerSpriteCatalogSO towerSprites;
         [SerializeField] UnitSpriteCatalogSO unitSprites;
         [SerializeField] TileSpriteCatalogSO tileSprites;
+        [SerializeField] bool useIllustratedBackground = true;
         [SerializeField] bool showMapTileLayers;
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
@@ -309,6 +310,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         bool TryDrawIllustratedBackground(GridManager grid)
         {
+            if (!useIllustratedBackground)
+                return false;
             if (grid.MapId != "main_long")
                 return false;
             if (tileSprites == null || tileSprites.mainLongBackground == null)
@@ -378,9 +381,11 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             gameplayCamera.clearFlags = CameraClearFlags.SolidColor;
 
             var aspect = Mathf.Max(0.01f, (float)Screen.width / Mathf.Max(1, Screen.height));
-            var halfHeight = grid.Height * grid.CellSize * 0.5f + 0.55f;
-            var halfWidthFit = grid.Width * grid.CellSize * 0.5f / aspect + 0.55f;
-            gameplayCamera.orthographicSize = Mathf.Max(halfHeight, halfWidthFit);
+            var halfHeight = grid.Height * grid.CellSize * 0.5f;
+            var halfWidthFit = grid.Width * grid.CellSize * 0.5f / aspect;
+            gameplayCamera.orthographicSize = aspect <= 0.75f
+                ? halfWidthFit
+                : Mathf.Max(halfHeight, halfWidthFit);
         }
 
         void HandleUnitSpawned(UnitInstance unit) => CreateOrSyncUnit(unit);

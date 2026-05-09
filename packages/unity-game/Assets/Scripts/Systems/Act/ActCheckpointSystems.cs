@@ -12,8 +12,18 @@ namespace GLD.Systems.Act
 {
     public sealed class WallSystem
     {
+        const float AutoAttackProjectileTravelSec = 0.22f;
+
+        sealed class PendingProjectile
+        {
+            public UnitInstance Target;
+            public float Damage;
+            public float TravelRemainingSec;
+        }
+
         readonly EnergySystem _energy;
         readonly UnitSystem _units;
+        readonly List<PendingProjectile> _pendingProjectiles = new List<PendingProjectile>();
         float _repairCooldownRemaining;
         float _autoAttackTimer;
         int _instantRepairCharges;
@@ -29,6 +39,7 @@ namespace GLD.Systems.Act
         public float AutoAttackDamage { get; private set; } = 75f;
         public float AutoAttackIntervalSec { get; private set; } = 0.5f;
         public float AutoAttackRange { get; private set; } = 5f;
+        public int PendingProjectileCount => _pendingProjectiles.Count;
         public int InstantRepairCharges => _instantRepairCharges;
         public int DamageUpgradeCost => 45 + _damageUpgradeLevel * 15;
         public int SpeedUpgradeCost => 50 + _speedUpgradeLevel * 20;
@@ -49,6 +60,8 @@ namespace GLD.Systems.Act
 
             if (_repairCooldownRemaining > 0f)
                 _repairCooldownRemaining = Mathf.Max(0f, _repairCooldownRemaining - deltaSeconds);
+
+            TickProjectiles(deltaSeconds);
 
             _autoAttackTimer -= deltaSeconds;
             if (_autoAttackTimer <= 0f)
@@ -147,9 +160,39 @@ namespace GLD.Systems.Act
             if (target == null)
                 return;
 
-            var applied = _units.ApplyDamage(target, AutoAttackDamage, armorPierce: true);
-            if (applied > 0f)
-                GameEvents.RaiseWallAutoAttacked(new WallAttackEvent(target.Position.x, target.Position.y, applied));
+            _pendingProjectiles.Add(new PendingProjectile
+            {
+                Target = target,
+                Damage = AutoAttackDamage,
+                TravelRemainingSec = AutoAttackProjectileTravelSec
+            });
+            GameEvents.RaiseWallAutoAttacked(new WallAttackEvent(target.Position.x, target.Position.y, AutoAttackDamage));
+        }
+
+        void TickProjectiles(float deltaSeconds)
+        {
+            for (var i = _pendingProjectiles.Count - 1; i >= 0; i--)
+            {
+                var projectile = _pendingProjectiles[i];
+                if (projectile == null || projectile.Target == null || projectile.Target.Escaped)
+                {
+                    _pendingProjectiles.RemoveAt(i);
+                    continue;
+                }
+
+                projectile.TravelRemainingSec -= deltaSeconds;
+                if (projectile.TravelRemainingSec > 0f)
+                    continue;
+
+                _pendingProjectiles.RemoveAt(i);
+                if (!projectile.Target.IsAlive)
+                    continue;
+
+                var impactPosition = projectile.Target.Position;
+                var applied = _units.ApplyDamage(projectile.Target, projectile.Damage, armorPierce: true);
+                if (applied > 0f)
+                    GameEvents.RaiseWallProjectileImpacted(new WallProjectileImpactEvent(impactPosition.x, impactPosition.y, applied));
+            }
         }
 
         UnitInstance FirstActiveUnit()

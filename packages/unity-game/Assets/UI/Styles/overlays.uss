@@ -129,19 +129,7 @@
   margin-top: 8px;
 }
 
-.pause-speed-row {
-  flex-direction: row;
-  margin-bottom: 10px;
-}
-
-.pause-speed-row > .gld-btn {
-  flex-grow: 1;
-  min-width: 0;
-  margin-left: 3px;
-  margin-right: 3px;
-}
-
-.pause-speed-row > .pause-speed--selected {
+#pause-speed-toggle {
   border-color: var(--color-accent);
   background-color: var(--surface-panel-sunken);
   color: var(--color-text-primary);
@@ -183,10 +171,15 @@
 
 .boss-hp-bar {
   position: absolute;
-  top: 48px;
+  top: 76px;
   left: 50%;
   translate: -50% 0;
-  width: 260px;
+  width: 176px;
+  min-height: 28px;
+  padding-top: 5px;
+  padding-right: 8px;
+  padding-bottom: 6px;
+  padding-left: 8px;
   border-color: var(--color-danger);
 }
 
@@ -194,12 +187,12 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .boss-hp-header > Label {
   color: var(--color-text-primary);
-  font-size: var(--type-caption10-size);
+  font-size: 8px;
   -unity-font-style: bold;
 }
 
@@ -208,7 +201,7 @@
 }
 
 .boss-hp-track {
-  height: 8px;
+  height: 5px;
   border-width: 1px;
   border-radius: var(--radius-xs);
   border-color: var(--color-border);

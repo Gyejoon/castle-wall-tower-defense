@@ -16,24 +16,27 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         Button _damageButton;
         Button _speedButton;
         Button _rangeButton;
+        RunState _runState;
         WallState _state;
         bool _hasState;
+        bool _overlayPaused;
 
         public bool IsBound { get; private set; }
         public bool IsVisible => _root != null && _root.style.display.value != DisplayStyle.None;
 
-        public void Bind(UIDocument document)
+        public void Bind(RunState runState, UIDocument document)
         {
             if (document == null)
                 return;
 
             RuntimeUiDocument.EnsurePanelSettings(document);
-            Bind(document.rootVisualElement);
+            Bind(runState, document.rootVisualElement);
         }
 
-        public void Bind(VisualElement root)
+        public void Bind(RunState runState, VisualElement root)
         {
             Unbind();
+            _runState = runState;
             if (root == null)
                 return;
 
@@ -64,6 +67,8 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             GameEvents.OnTowerDeselected -= Hide;
             GameEvents.OnRequestRejected -= HandleRequestRejected;
             IsBound = false;
+            SetOverlayPaused(false);
+            _runState = null;
         }
 
         void ResolveElements(VisualElement root)
@@ -75,12 +80,20 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _damageButton = root.Q<Button>("wall-upgrade-damage");
             _speedButton = root.Q<Button>("wall-upgrade-speed");
             _rangeButton = root.Q<Button>("wall-upgrade-range");
+            if (_root != null)
+                _root.pickingMode = PickingMode.Position;
+            if (_panel != null)
+                _panel.pickingMode = PickingMode.Position;
         }
 
         void RegisterButtons()
         {
+            _root?.UnregisterCallback<PointerDownEvent>(HandleOverlayPointerDown);
+            _root?.RegisterCallback<PointerDownEvent>(HandleOverlayPointerDown);
             _root?.UnregisterCallback<ClickEvent>(HandleOverlayClicked);
             _root?.RegisterCallback<ClickEvent>(HandleOverlayClicked);
+            _panel?.UnregisterCallback<PointerDownEvent>(HandlePanelPointerDown);
+            _panel?.RegisterCallback<PointerDownEvent>(HandlePanelPointerDown);
             _panel?.UnregisterCallback<ClickEvent>(HandlePanelClicked);
             _panel?.RegisterCallback<ClickEvent>(HandlePanelClicked);
             _repairButton?.UnregisterCallback<ClickEvent>(HandleRepairClicked);
@@ -93,11 +106,15 @@ namespace GLD.SceneRuntime.CoreLoop.UI
             _rangeButton?.RegisterCallback<ClickEvent>(HandleRangeClicked);
         }
 
+        void HandleOverlayPointerDown(PointerDownEvent evt) => evt.StopPropagation();
+
         void HandleOverlayClicked(ClickEvent evt)
         {
             Hide();
             evt.StopPropagation();
         }
+
+        void HandlePanelPointerDown(PointerDownEvent evt) => evt.StopPropagation();
 
         void HandlePanelClicked(ClickEvent evt) => evt.StopPropagation();
 
@@ -133,6 +150,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             SyncState();
             _root.style.display = DisplayStyle.Flex;
+            SetOverlayPaused(true);
             _root.BringToFront();
         }
 
@@ -140,6 +158,7 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         {
             if (_root != null)
                 _root.style.display = DisplayStyle.None;
+            SetOverlayPaused(false);
         }
 
         public void RequestRepair() => GameEvents.RaiseRequestRepairWall();
@@ -179,9 +198,11 @@ namespace GLD.SceneRuntime.CoreLoop.UI
         {
             var overlay = new GLDOverlay { name = "wall-upgrade-overlay", Dim = "soft" };
             overlay.AddToClassList("wall-upgrade-overlay");
+            overlay.pickingMode = PickingMode.Position;
 
             var panel = new GLDPanel { name = "wall-upgrade-panel", Variant = "elevated", Padding = "lg" };
             panel.AddToClassList("wall-upgrade-panel");
+            panel.pickingMode = PickingMode.Position;
             panel.Add(new Label("성벽 메뉴") { name = "wall-upgrade-title" });
             panel.Add(new Label("HP -/-") { name = "wall-upgrade-summary" });
 
@@ -195,6 +216,15 @@ namespace GLD.SceneRuntime.CoreLoop.UI
 
             overlay.Add(panel);
             return overlay;
+        }
+
+        void SetOverlayPaused(bool paused)
+        {
+            if (_overlayPaused == paused)
+                return;
+
+            _overlayPaused = paused;
+            _runState?.SetOverlayPaused(paused);
         }
     }
 }

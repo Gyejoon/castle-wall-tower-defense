@@ -1,4 +1,5 @@
 using GLD.Core;
+using GLD.SceneRuntime;
 using GLD.SceneRuntime.CoreLoop.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -30,11 +31,13 @@ namespace GLD.Tests.EditMode.UI
                 GameEvents.OnRequestUpgradeWallSpeed += () => speed++;
                 GameEvents.OnRequestUpgradeWallRange += () => range++;
 
+                var runState = new RunState("wall-overlay-test");
                 var controller = host.AddComponent<WallUpgradeOverlayController>();
-                controller.Bind(root);
+                controller.Bind(runState, root);
 
                 Assert.That(controller.IsBound, Is.True);
                 Assert.That(controller.IsVisible, Is.False);
+                Assert.That(runState.IsOverlayPaused, Is.False);
 
                 GameEvents.RaiseWallStateChanged(new WallState(
                     currentHp: 12,
@@ -56,6 +59,9 @@ namespace GLD.Tests.EditMode.UI
                 GameEvents.RaiseWallSelected();
 
                 Assert.That(controller.IsVisible, Is.True);
+                Assert.That(runState.IsPaused, Is.False);
+                Assert.That(runState.IsOverlayPaused, Is.True);
+                Assert.That(root.Q<VisualElement>("wall-upgrade-overlay").pickingMode, Is.EqualTo(PickingMode.Position));
                 Assert.That(root.Q<Label>("wall-upgrade-summary").text, Does.Contain("HP 12/20"));
                 Assert.That(root.Q<Button>("wall-upgrade-repair").text, Does.Contain("1"));
                 Assert.That(root.Q<Button>("wall-upgrade-damage").text, Does.Contain("45"));
@@ -72,6 +78,7 @@ namespace GLD.Tests.EditMode.UI
 
                 GameEvents.RaiseTowerSelected("tower-1", 1, 1);
                 Assert.That(controller.IsVisible, Is.False);
+                Assert.That(runState.IsOverlayPaused, Is.False);
             }
             finally
             {

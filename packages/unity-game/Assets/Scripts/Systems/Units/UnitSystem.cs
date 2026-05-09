@@ -25,6 +25,7 @@ namespace GLD.Systems.Units
         int _nextLaneIndex;
 
         public event Action<UnitInstance> UnitSpawned;
+        public event Action<UnitInstance, float> UnitDamaged;
         public event Action<UnitInstance> UnitKilled;
         public event Action<UnitInstance> UnitEscaped;
 
@@ -118,6 +119,8 @@ namespace GLD.Systems.Units
             if (unit == null) return 0f;
             var applied = unit.ApplyDamage(rawDamage, armorPierce);
             TotalDamage += applied;
+            if (applied > 0f)
+                UnitDamaged?.Invoke(unit, applied);
 
             if (applied > 0f && unit.Boss.IsBoss && unit.IsAlive)
             {

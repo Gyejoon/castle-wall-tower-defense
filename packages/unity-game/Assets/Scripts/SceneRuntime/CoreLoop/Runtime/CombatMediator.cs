@@ -25,14 +25,14 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
 
             _units.UnitEscaped += HandleUnitEscaped;
             _towers.TowerAttacked += HandleTowerAttacked;
-            GameEvents.OnWallAutoAttacked += HandleWallAutoAttacked;
+            GameEvents.OnWallProjectileImpacted += HandleWallProjectileImpacted;
         }
 
         public void Dispose()
         {
             _units.UnitEscaped -= HandleUnitEscaped;
             _towers.TowerAttacked -= HandleTowerAttacked;
-            GameEvents.OnWallAutoAttacked -= HandleWallAutoAttacked;
+            GameEvents.OnWallProjectileImpacted -= HandleWallProjectileImpacted;
         }
 
         void HandleUnitEscaped(UnitInstance _)
@@ -56,12 +56,12 @@ namespace GLD.SceneRuntime.CoreLoop.Runtime
             _damageNumbers?.Show(tower.LastDamageWorldPosition, appliedDamage);
         }
 
-        void HandleWallAutoAttacked(WallAttackEvent attackEvent)
+        void HandleWallProjectileImpacted(WallProjectileImpactEvent impactEvent)
         {
-            if (attackEvent.Damage <= 0f)
+            if (impactEvent.Damage <= 0f)
                 return;
 
-            _damageNumbers?.Show(new UnityEngine.Vector2(attackEvent.TargetX, attackEvent.TargetY), attackEvent.Damage);
+            _damageNumbers?.Show(new UnityEngine.Vector2(impactEvent.TargetX, impactEvent.TargetY), impactEvent.Damage);
         }
     }
 }

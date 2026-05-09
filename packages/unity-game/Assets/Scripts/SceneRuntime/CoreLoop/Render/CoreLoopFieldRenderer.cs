@@ -16,7 +16,10 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         const float BossTargetWorldWidth = 0.72f;
         const float AttackPulseDurationSeconds = 0.16f;
         const float AttackLineDurationSeconds = 0.12f;
+        const float WallArrowDurationSeconds = 0.22f;
         const float ImpactPulseDurationSeconds = 0.24f;
+        const float UnitHitSpriteDurationSeconds = 0.12f;
+        const float UnitDeathSpriteDurationSeconds = 0.42f;
         const float UnitHpBarWidth = 0.54f;
         const float BossHpBarWidth = 0.82f;
         const float HpBarHeight = 0.065f;
@@ -33,16 +36,22 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         readonly Dictionary<string, GameObject> _unitViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, HealthBarView> _unitHpBars = new Dictionary<string, HealthBarView>();
+        readonly Dictionary<string, Sprite> _unitBaseSprites = new Dictionary<string, Sprite>();
+        readonly Dictionary<string, float> _unitHitUntil = new Dictionary<string, float>();
         readonly Dictionary<string, GameObject> _towerViews = new Dictionary<string, GameObject>();
         readonly Dictionary<string, float> _towerPulseUntil = new Dictionary<string, float>();
         readonly List<AttackLineFx> _attackLines = new List<AttackLineFx>();
+        readonly List<WallArrowFx> _wallArrows = new List<WallArrowFx>();
         readonly List<ImpactPulseFx> _impactPulses = new List<ImpactPulseFx>();
+        readonly List<UnitDeathFx> _unitDeathFx = new List<UnitDeathFx>();
         readonly List<GameObject> _placementMarkers = new List<GameObject>();
-        readonly Dictionary<int, Sprite> _firstFrameSprites = new Dictionary<int, Sprite>();
+        readonly Dictionary<Sprite, Sprite> _firstFrameSprites = new Dictionary<Sprite, Sprite>();
+        readonly Dictionary<Sprite, Sprite> _hitFrameSprites = new Dictionary<Sprite, Sprite>();
         readonly Dictionary<Sprite, Tile> _runtimeTiles = new Dictionary<Sprite, Tile>();
 
         GameSceneController _controller;
         Sprite _squareSprite;
+        Sprite _wallArrowSprite;
         Transform _gridRoot;
         Transform _placementRoot;
         Transform _unitRoot;
@@ -70,6 +79,23 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             public float AgeSeconds;
         }
 
+        sealed class WallArrowFx
+        {
+            public GameObject GameObject;
+            public SpriteRenderer Renderer;
+            public Vector2 From;
+            public Vector2 To;
+            public float AgeSeconds;
+        }
+
+        sealed class UnitDeathFx
+        {
+            public GameObject GameObject;
+            public SpriteRenderer Renderer;
+            public Vector3 BaseScale;
+            public float AgeSeconds;
+        }
+
         sealed class HealthBarView
         {
             public GameObject GameObject;
@@ -85,7 +111,23 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         public int RenderedUnitHealthBarCount => _unitHpBars.Count;
         public bool HasWallHealthBar => _wallHpBar != null && _wallHpBar.GameObject != null;
         public int RenderedTowerCount => _towerViews.Count;
-        public int ActiveAttackFxCount => _attackLines.Count + _impactPulses.Count;
+        public int ActiveAttackFxCount => _attackLines.Count + _wallArrows.Count + _impactPulses.Count;
+        public int ActiveWallArrowFxCount => _wallArrows.Count;
+        public int ActiveUnitHitSpriteCount
+        {
+            get
+            {
+                var count = 0;
+                foreach (var hitUntil in _unitHitUntil.Values)
+                {
+                    if (Time.unscaledTime <= hitUntil)
+                        count++;
+                }
+
+                return count;
+            }
+        }
+        public int ActiveUnitDeathFxCount => _unitDeathFx.Count;
         public Camera GameplayCamera => gameplayCamera;
 
         public void Bind(GameSceneController controller)
@@ -140,14 +182,17 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 SyncTowerViewPose(tower);
             SyncWallHpBar();
             TickAttackLines(Time.unscaledDeltaTime);
+            TickWallArrows(Time.unscaledDeltaTime);
             TickImpactPulses(Time.unscaledDeltaTime);
+            TickUnitDeathFx(Time.unscaledDeltaTime);
         }
 
         void BindEvents()
         {
             if (_controller == null) return;
             _controller.Units.UnitSpawned += HandleUnitSpawned;
-            _controller.Units.UnitKilled += HandleUnitChanged;
+            _controller.Units.UnitDamaged += HandleUnitDamaged;
+            _controller.Units.UnitKilled += HandleUnitKilled;
             _controller.Units.UnitEscaped += HandleUnitChanged;
             _controller.Towers.TowerPlaced += HandleTowerPlaced;
             _controller.Towers.TowerMoved += HandleTowerMoved;
@@ -157,6 +202,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             GameEvents.OnSummonCancelled += HandleSummonEnded;
             GameEvents.OnSummonConfirmed += HandleSummonEnded;
             GameEvents.OnWallAutoAttacked += HandleWallAutoAttacked;
+            GameEvents.OnWallProjectileImpacted += HandleWallProjectileImpacted;
         }
 
         void UnbindEvents()
@@ -165,7 +211,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             if (_controller.Units != null)
             {
                 _controller.Units.UnitSpawned -= HandleUnitSpawned;
-                _controller.Units.UnitKilled -= HandleUnitChanged;
+                _controller.Units.UnitDamaged -= HandleUnitDamaged;
+                _controller.Units.UnitKilled -= HandleUnitKilled;
                 _controller.Units.UnitEscaped -= HandleUnitChanged;
             }
 
@@ -181,6 +228,7 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             GameEvents.OnSummonCancelled -= HandleSummonEnded;
             GameEvents.OnSummonConfirmed -= HandleSummonEnded;
             GameEvents.OnWallAutoAttacked -= HandleWallAutoAttacked;
+            GameEvents.OnWallProjectileImpacted -= HandleWallProjectileImpacted;
         }
 
         void EnsureRoots()
@@ -209,10 +257,14 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
             _unitViews.Clear();
             _unitHpBars.Clear();
+            _unitBaseSprites.Clear();
+            _unitHitUntil.Clear();
             _towerViews.Clear();
             _towerPulseUntil.Clear();
             _attackLines.Clear();
+            _wallArrows.Clear();
             _impactPulses.Clear();
+            _unitDeathFx.Clear();
             _placementMarkers.Clear();
             _wallHpBar = null;
             RenderedCellCount = 0;
@@ -390,6 +442,24 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
         void HandleUnitSpawned(UnitInstance unit) => CreateOrSyncUnit(unit);
         void HandleUnitChanged(UnitInstance unit) => CreateOrSyncUnit(unit);
+        void HandleUnitDamaged(UnitInstance unit, float appliedDamage)
+        {
+            if (unit == null || appliedDamage <= 0f || !unit.IsAlive)
+                return;
+
+            _unitHitUntil[unit.InstanceId] = Time.unscaledTime + UnitHitSpriteDurationSeconds;
+            CreateOrSyncUnit(unit);
+        }
+
+        void HandleUnitKilled(UnitInstance unit)
+        {
+            if (unit == null)
+                return;
+
+            CreateUnitDeathFx(unit);
+            RemoveUnitView(unit.InstanceId);
+        }
+
         void HandleTowerPlaced(TowerInstance tower)
         {
             CreateOrSyncTower(tower);
@@ -426,16 +496,17 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             if (_controller == null || _controller.Grid == null)
                 return;
 
-            var from = _controller.Grid.GridToWorld(_controller.Grid.ExitCell);
+            var from = _controller.Grid.GridToWorld(_controller.Grid.ExitCell) + new Vector2(0f, 0.42f);
             var to = new Vector2(attackEvent.TargetX, attackEvent.TargetY);
-            CreateAttackLine(
-                from,
-                to,
-                new Color(0.72f, 0.96f, 1f, 1f),
-                new Color(1f, 0.86f, 0.32f, 0.9f),
-                0.11f,
-                0.035f);
-            CreateImpactPulse(to);
+            CreateWallArrow(from, to);
+        }
+
+        void HandleWallProjectileImpacted(WallProjectileImpactEvent impactEvent)
+        {
+            if (impactEvent.Damage <= 0f)
+                return;
+
+            CreateImpactPulse(new Vector2(impactEvent.TargetX, impactEvent.TargetY));
         }
 
         void CreateOrSyncUnit(UnitInstance unit)
@@ -453,8 +524,10 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 _unitViews[unit.InstanceId] = view;
             }
 
+            var spriteRenderer = view.GetComponent<SpriteRenderer>();
+            SyncUnitRendererSprite(unit, spriteRenderer);
             view.transform.position = new Vector3(unit.Position.x, unit.Position.y, -0.1f);
-            view.transform.localScale = ResolveUnitScale(unit, view.GetComponent<SpriteRenderer>());
+            view.transform.localScale = ResolveUnitScale(unit, spriteRenderer);
             view.SetActive(true);
             SyncUnitHpBar(unit);
         }
@@ -463,6 +536,8 @@ namespace GLD.SceneRuntime.CoreLoop.Render
         {
             if (!_unitViews.TryGetValue(instanceId, out var view)) return;
             _unitViews.Remove(instanceId);
+            _unitBaseSprites.Remove(instanceId);
+            _unitHitUntil.Remove(instanceId);
             Destroy(view);
             RemoveUnitHpBar(instanceId);
         }
@@ -716,9 +791,34 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             pulse.GameObject.transform.localScale = new Vector3(0.18f, 0.18f, 1f);
             pulse.Renderer = pulse.GameObject.AddComponent<SpriteRenderer>();
             pulse.Renderer.sprite = _squareSprite;
-            pulse.Renderer.color = new Color(0.72f, 0.96f, 1f, 0.86f);
+            pulse.Renderer.color = new Color(0.63f, 0.42f, 0.22f, 0.72f);
             pulse.Renderer.sortingOrder = 55;
             _impactPulses.Add(pulse);
+        }
+
+        void CreateWallArrow(Vector2 from, Vector2 to)
+        {
+            if (_attackFxRoot == null)
+                return;
+
+            if (_wallArrowSprite == null)
+                _wallArrowSprite = CreateWallArrowSprite();
+
+            var arrow = new WallArrowFx
+            {
+                GameObject = new GameObject("WallArrowProjectile"),
+                From = from,
+                To = to,
+                AgeSeconds = 0f
+            };
+            arrow.GameObject.transform.SetParent(_attackFxRoot, false);
+            arrow.GameObject.transform.position = new Vector3(from.x, from.y, -0.34f);
+            arrow.Renderer = arrow.GameObject.AddComponent<SpriteRenderer>();
+            arrow.Renderer.sprite = _wallArrowSprite;
+            arrow.Renderer.sortingOrder = 56;
+            arrow.Renderer.color = Color.white;
+            SyncWallArrowPose(arrow, 0f);
+            _wallArrows.Add(arrow);
         }
 
         void TickAttackLines(float unscaledDeltaSeconds)
@@ -758,9 +858,9 @@ namespace GLD.SceneRuntime.CoreLoop.Render
 
                 pulse.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
                 var t = Mathf.Clamp01(pulse.AgeSeconds / ImpactPulseDurationSeconds);
-                var scale = Mathf.Lerp(0.18f, 0.58f, t);
-                pulse.GameObject.transform.localScale = new Vector3(scale, scale, 1f);
-                pulse.Renderer.color = new Color(0.72f, 0.96f, 1f, 0.86f * (1f - t));
+                var scale = Mathf.Lerp(0.14f, 0.42f, t);
+                pulse.GameObject.transform.localScale = new Vector3(scale, scale * 0.68f, 1f);
+                pulse.Renderer.color = new Color(0.63f, 0.42f, 0.22f, 0.72f * (1f - t));
 
                 if (pulse.AgeSeconds < ImpactPulseDurationSeconds)
                     continue;
@@ -768,6 +868,43 @@ namespace GLD.SceneRuntime.CoreLoop.Render
                 Destroy(pulse.GameObject);
                 _impactPulses.RemoveAt(i);
             }
+        }
+
+        void TickWallArrows(float unscaledDeltaSeconds)
+        {
+            for (var i = _wallArrows.Count - 1; i >= 0; i--)
+            {
+                var arrow = _wallArrows[i];
+                if (arrow == null || arrow.GameObject == null || arrow.Renderer == null)
+                {
+                    _wallArrows.RemoveAt(i);
+                    continue;
+                }
+
+                arrow.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
+                var t = Mathf.Clamp01(arrow.AgeSeconds / WallArrowDurationSeconds);
+                SyncWallArrowPose(arrow, t);
+                arrow.Renderer.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0.35f, t));
+
+                if (arrow.AgeSeconds < WallArrowDurationSeconds)
+                    continue;
+
+                Destroy(arrow.GameObject);
+                _wallArrows.RemoveAt(i);
+            }
+        }
+
+        static void SyncWallArrowPose(WallArrowFx arrow, float ratio)
+        {
+            var eased = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(ratio));
+            var position = Vector2.Lerp(arrow.From, arrow.To, eased);
+            arrow.GameObject.transform.position = new Vector3(position.x, position.y, -0.34f);
+            var delta = arrow.To - arrow.From;
+            if (delta.sqrMagnitude <= 0.0001f)
+                return;
+
+            var angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            arrow.GameObject.transform.rotation = Quaternion.Euler(0f, 0f, angle);
         }
 
         static Color Fade(Color color, float alphaMultiplier)
@@ -788,17 +925,139 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             return _attackLineMaterial;
         }
 
+        Sprite CreateWallArrowSprite()
+        {
+            var texture = new Texture2D(32, 8, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var clear = new Color(0f, 0f, 0f, 0f);
+            for (var y = 0; y < texture.height; y++)
+            for (var x = 0; x < texture.width; x++)
+                texture.SetPixel(x, y, clear);
+
+            var shaft = new Color(0.46f, 0.28f, 0.12f, 1f);
+            var shaftLight = new Color(0.72f, 0.48f, 0.22f, 1f);
+            for (var x = 5; x <= 24; x++)
+            {
+                texture.SetPixel(x, 3, shaft);
+                texture.SetPixel(x, 4, shaftLight);
+            }
+
+            var metal = new Color(0.82f, 0.78f, 0.66f, 1f);
+            var metalDark = new Color(0.38f, 0.36f, 0.32f, 1f);
+            texture.SetPixel(25, 2, metalDark);
+            texture.SetPixel(25, 5, metalDark);
+            for (var x = 26; x <= 30; x++)
+            {
+                texture.SetPixel(x, 3, metal);
+                texture.SetPixel(x, 4, metal);
+            }
+            texture.SetPixel(31, 4, metal);
+
+            var feather = new Color(0.62f, 0.12f, 0.1f, 1f);
+            var featherLight = new Color(0.86f, 0.72f, 0.45f, 1f);
+            for (var x = 0; x <= 5; x++)
+            {
+                texture.SetPixel(x, 2, feather);
+                texture.SetPixel(x, 5, featherLight);
+            }
+            texture.SetPixel(2, 1, feather);
+            texture.SetPixel(2, 6, featherLight);
+            texture.Apply();
+
+            return Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                pixelsPerUnit: 64f);
+        }
+
+        void SyncUnitRendererSprite(UnitInstance unit, SpriteRenderer renderer)
+        {
+            if (unit == null || renderer == null)
+                return;
+
+            if (!_unitBaseSprites.TryGetValue(unit.InstanceId, out var baseSprite))
+            {
+                var sheet = unitSprites != null ? unitSprites.FindWalk(unit.Def.id) : null;
+                baseSprite = CreateFirstFrameSprite(sheet) ?? _squareSprite;
+                _unitBaseSprites[unit.InstanceId] = baseSprite;
+            }
+
+            var useHit = _unitHitUntil.TryGetValue(unit.InstanceId, out var hitUntil) && Time.unscaledTime <= hitUntil;
+            var renderedSprite = useHit ? CreateHitFrameSprite(baseSprite) : baseSprite;
+            renderer.sprite = renderedSprite;
+            renderer.color = renderer.sprite != null && renderer.sprite != _squareSprite
+                ? useHit && renderedSprite == baseSprite ? new Color(1f, 0.56f, 0.48f, 1f) : Color.white
+                : useHit ? new Color(1f, 0.48f, 0.38f, 1f) : new Color(0.82f, 0.24f, 0.18f, 1f);
+        }
+
+        void CreateUnitDeathFx(UnitInstance unit)
+        {
+            if (unit == null || _attackFxRoot == null)
+                return;
+
+            var deathSheet = unitSprites != null ? unitSprites.FindDeath(unit.Def.id) : null;
+            var sprite = CreateFirstFrameSprite(deathSheet);
+            if (sprite == null && _unitBaseSprites.TryGetValue(unit.InstanceId, out var baseSprite))
+                sprite = CreateHitFrameSprite(baseSprite);
+            if (sprite == null)
+                sprite = _squareSprite;
+
+            var go = new GameObject($"DeathSprite_{unit.InstanceId}");
+            go.transform.SetParent(_attackFxRoot, false);
+            go.transform.position = new Vector3(unit.Position.x, unit.Position.y, -0.31f);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = sprite != _squareSprite ? Color.white : new Color(0.38f, 0.14f, 0.1f, 1f);
+            renderer.sortingOrder = unit.Boss.IsBoss ? 15 : 11;
+            var baseScale = ResolveUnitScale(unit, renderer);
+            go.transform.localScale = baseScale;
+            _unitDeathFx.Add(new UnitDeathFx
+            {
+                GameObject = go,
+                Renderer = renderer,
+                BaseScale = baseScale,
+                AgeSeconds = 0f
+            });
+        }
+
+        void TickUnitDeathFx(float unscaledDeltaSeconds)
+        {
+            for (var i = _unitDeathFx.Count - 1; i >= 0; i--)
+            {
+                var fx = _unitDeathFx[i];
+                if (fx == null || fx.GameObject == null || fx.Renderer == null)
+                {
+                    _unitDeathFx.RemoveAt(i);
+                    continue;
+                }
+
+                fx.AgeSeconds += Mathf.Max(0f, unscaledDeltaSeconds);
+                var t = Mathf.Clamp01(fx.AgeSeconds / UnitDeathSpriteDurationSeconds);
+                fx.GameObject.transform.localScale = fx.BaseScale * Mathf.Lerp(1f, 0.78f, t);
+                var color = fx.Renderer.color;
+                color.a = 1f - t;
+                fx.Renderer.color = color;
+
+                if (fx.AgeSeconds < UnitDeathSpriteDurationSeconds)
+                    continue;
+
+                Destroy(fx.GameObject);
+                _unitDeathFx.RemoveAt(i);
+            }
+        }
+
         GameObject CreateUnitView(UnitInstance unit)
         {
             var go = new GameObject(unit.InstanceId);
             go.transform.SetParent(_unitRoot, false);
 
             var sr = go.AddComponent<SpriteRenderer>();
-            var sheet = unitSprites != null ? unitSprites.FindWalk(unit.Def.id) : null;
-            var sprite = CreateFirstFrameSprite(sheet);
-            sr.sprite = sprite != null ? sprite : _squareSprite;
-            sr.color = sprite != null ? Color.white : new Color(0.82f, 0.24f, 0.18f, 1f);
             sr.sortingOrder = unit.Boss.IsBoss ? 14 : 10;
+            SyncUnitRendererSprite(unit, sr);
 
             return go;
         }
@@ -939,16 +1198,67 @@ namespace GLD.SceneRuntime.CoreLoop.Render
             if (sheet == null || sheet.texture == null)
                 return null;
 
-            var key = sheet.GetInstanceID();
-            if (_firstFrameSprites.TryGetValue(key, out var cached))
+            if (_firstFrameSprites.TryGetValue(sheet, out var cached))
                 return cached;
 
             var rect = sheet.textureRect;
             var frameSize = Mathf.Min(rect.height, rect.width);
             var frameRect = new Rect(rect.x, rect.y, frameSize, rect.height);
             var sprite = Sprite.Create(sheet.texture, frameRect, new Vector2(0.5f, 0.5f), sheet.pixelsPerUnit);
-            _firstFrameSprites[key] = sprite;
+            _firstFrameSprites[sheet] = sprite;
             return sprite;
+        }
+
+        Sprite CreateHitFrameSprite(Sprite baseSprite)
+        {
+            if (baseSprite == null || baseSprite.texture == null)
+                return _squareSprite;
+
+            if (_hitFrameSprites.TryGetValue(baseSprite, out var cached))
+                return cached;
+
+            try
+            {
+                var rect = baseSprite.textureRect;
+                var width = Mathf.Max(1, Mathf.RoundToInt(rect.width));
+                var height = Mathf.Max(1, Mathf.RoundToInt(rect.height));
+                var pixels = baseSprite.texture.GetPixels(
+                    Mathf.RoundToInt(rect.x),
+                    Mathf.RoundToInt(rect.y),
+                    width,
+                    height);
+                for (var i = 0; i < pixels.Length; i++)
+                {
+                    if (pixels[i].a <= 0f)
+                        continue;
+                    pixels[i] = Color.Lerp(pixels[i], new Color(1f, 0.22f, 0.16f, pixels[i].a), 0.55f);
+                }
+
+                var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+                {
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                texture.SetPixels(pixels);
+                texture.Apply();
+
+                cached = Sprite.Create(
+                    texture,
+                    new Rect(0f, 0f, width, height),
+                    new Vector2(0.5f, 0.5f),
+                    baseSprite.pixelsPerUnit);
+            }
+            catch (System.ArgumentException)
+            {
+                cached = baseSprite;
+            }
+            catch (UnityException)
+            {
+                cached = baseSprite;
+            }
+
+            _hitFrameSprites[baseSprite] = cached;
+            return cached;
         }
 
         static Sprite CreateSquareSprite()

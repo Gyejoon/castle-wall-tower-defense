@@ -55,11 +55,15 @@ namespace GLD.Tests.EditMode.SceneRuntime
 
             manager.SetSpeedMultiplier(3f);
             manager.Tick(0.02f);
+            manager.SetOverlayPaused(true);
+            var blockedDelta = manager.Tick(0.02f);
+            manager.SetOverlayPaused(false);
             manager.ApplyExitDamage(3);
 
-            Assert.That(changed, Is.EqualTo(3));
+            Assert.That(changed, Is.EqualTo(5));
             Assert.That(runState.SpeedMultiplier, Is.EqualTo(3f).Within(0.0001f));
             Assert.That(runState.ElapsedSeconds, Is.EqualTo(0.06f).Within(0.0001f));
+            Assert.That(blockedDelta, Is.EqualTo(0f));
             Assert.That(runState.Lives, Is.EqualTo(17));
         }
     }

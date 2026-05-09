@@ -30,6 +30,7 @@ namespace GLD.SceneRuntime.CoreLoop
         [SerializeField] bool autoStartAfterDelay = true;
         [SerializeField] float autoStartDelaySeconds = 5f;
         [SerializeField] CoreLoopFieldRenderer fieldRenderer;
+        [SerializeField] CoreLoopSfxController sfxController;
         [SerializeField] CoreLoopHudController hudController;
         [SerializeField] GameHudController gameHudController;
         [SerializeField] TowerActionSheetController towerActionSheetController;
@@ -100,6 +101,12 @@ namespace GLD.SceneRuntime.CoreLoop
             _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers, Wall);
             _bossContextBuilder = new BossContextBuilder();
 
+            if (sfxController == null)
+                sfxController = GetComponent<CoreLoopSfxController>();
+            if (sfxController == null)
+                sfxController = gameObject.AddComponent<CoreLoopSfxController>();
+            sfxController.Bind(this);
+
             if (fieldRenderer == null)
                 fieldRenderer = GetComponent<CoreLoopFieldRenderer>();
             if (fieldRenderer == null)
@@ -123,7 +130,8 @@ namespace GLD.SceneRuntime.CoreLoop
 
         void Update()
         {
-            _inputController?.Tick();
+            if (State == null || !State.IsPaused)
+                _inputController?.Tick();
             DamageNumbers?.TickUnscaled(Time.unscaledDeltaTime);
         }
 
@@ -228,7 +236,7 @@ namespace GLD.SceneRuntime.CoreLoop
             if (wallUpgradeOverlayController == null)
                 wallUpgradeOverlayController = gameObject.AddComponent<WallUpgradeOverlayController>();
 
-            wallUpgradeOverlayController.Bind(gameHudDocument);
+            wallUpgradeOverlayController.Bind(RunState, gameHudDocument);
 
             if (pauseModalController == null)
                 pauseModalController = GetComponent<PauseModalController>();

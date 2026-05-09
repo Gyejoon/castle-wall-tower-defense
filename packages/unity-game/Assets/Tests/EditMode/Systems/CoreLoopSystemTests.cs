@@ -260,16 +260,29 @@ namespace GLD.Tests.EditMode.Systems
             var wall = new WallSystem(energy, units);
             var wallAttackCount = 0;
             var wallAttackDamage = 0f;
+            var unitDamageCount = 0;
             GameEvents.OnWallAutoAttacked += attackEvent =>
             {
                 wallAttackCount++;
                 wallAttackDamage = attackEvent.Damage;
             };
+            units.UnitDamaged += (damagedUnit, appliedDamage) =>
+            {
+                if (damagedUnit == unit && appliedDamage > 0f)
+                    unitDamageCount++;
+            };
 
-            wall.Tick(2f);
-            Assert.That(unit.Hp, Is.LessThan(unit.MaxHp));
+            wall.Tick(0.02f);
+            Assert.That(unit.Hp, Is.EqualTo(unit.MaxHp), "wall projectile should not apply damage before it reaches the monster");
             Assert.That(wallAttackCount, Is.GreaterThanOrEqualTo(1));
             Assert.That(wallAttackDamage, Is.GreaterThan(0f));
+            Assert.That(unitDamageCount, Is.EqualTo(0));
+            Assert.That(wall.PendingProjectileCount, Is.EqualTo(1));
+
+            wall.Tick(0.23f);
+            Assert.That(unit.Hp, Is.LessThan(unit.MaxHp));
+            Assert.That(unitDamageCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(wall.PendingProjectileCount, Is.EqualTo(0));
 
             wall.TakeDamage(10);
             Assert.That(wall.CurrentHp, Is.EqualTo(10));

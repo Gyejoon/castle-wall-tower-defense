@@ -239,6 +239,20 @@ namespace GLD.Core
         }
     }
 
+    public readonly struct WallProjectileImpactEvent
+    {
+        public readonly float TargetX;
+        public readonly float TargetY;
+        public readonly float Damage;
+
+        public WallProjectileImpactEvent(float targetX, float targetY, float damage)
+        {
+            TargetX = targetX;
+            TargetY = targetY;
+            Damage = damage;
+        }
+    }
+
     public readonly struct PlayerTacticState
     {
         public readonly PlayerTacticKind Kind;
@@ -332,6 +346,7 @@ namespace GLD.Core
         public static event Action<CheckpointReward> OnCheckpointApplied;
         public static event Action<WallState> OnWallStateChanged;
         public static event Action<WallAttackEvent> OnWallAutoAttacked;
+        public static event Action<WallProjectileImpactEvent> OnWallProjectileImpacted;
         public static event Action<PlayerTacticState> OnTacticStateChanged;
         public static event Action<TowerSlotState> OnTowerSlotUpgraded;
         public static event Action<int> OnPlayerHpChanged;
@@ -403,6 +418,8 @@ namespace GLD.Core
         public static void RaiseCheckpointApplied(CheckpointReward reward) => OnCheckpointApplied?.Invoke(reward);
         public static void RaiseWallStateChanged(WallState state) => OnWallStateChanged?.Invoke(state);
         public static void RaiseWallAutoAttacked(WallAttackEvent attackEvent) => OnWallAutoAttacked?.Invoke(attackEvent);
+        public static void RaiseWallProjectileImpacted(WallProjectileImpactEvent impactEvent) =>
+            OnWallProjectileImpacted?.Invoke(impactEvent);
         public static void RaiseTacticStateChanged(PlayerTacticState state) => OnTacticStateChanged?.Invoke(state);
         public static void RaiseTowerSlotUpgraded(TowerSlotState state) => OnTowerSlotUpgraded?.Invoke(state);
         public static void RaisePlayerHpChanged(int playerHp) => OnPlayerHpChanged?.Invoke(playerHp);
@@ -470,6 +487,7 @@ namespace GLD.Core
             OnCheckpointApplied = null;
             OnWallStateChanged = null;
             OnWallAutoAttacked = null;
+            OnWallProjectileImpacted = null;
             OnTacticStateChanged = null;
             OnTowerSlotUpgraded = null;
             OnPlayerHpChanged = null;

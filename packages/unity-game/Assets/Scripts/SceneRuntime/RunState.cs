@@ -35,6 +35,7 @@ namespace GLD.SceneRuntime
         public string BossDefId { get; private set; }
         public float ElapsedSeconds { get; private set; }
         public bool IsPaused { get; private set; }
+        public bool IsOverlayPaused { get; private set; }
 
         public RunState(string runId = null)
         {
@@ -160,6 +161,15 @@ namespace GLD.SceneRuntime
                 return;
 
             IsPaused = paused;
+            InvokeChanged();
+        }
+
+        public void SetOverlayPaused(bool paused)
+        {
+            if (IsOverlayPaused == paused)
+                return;
+
+            IsOverlayPaused = paused;
             InvokeChanged();
         }
 

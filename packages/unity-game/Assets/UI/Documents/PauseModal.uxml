@@ -11,11 +11,7 @@
     <gld:GLDPanel name="pause-panel" variant="elevated" padding="lg" class="pause-panel">
       <ui:Label name="pause-title" text="설정" />
       <ui:Label name="pause-subtitle" text="전투 속도와 일시정지를 조정합니다." />
-      <ui:VisualElement name="pause-speed-row" class="pause-speed-row">
-        <gld:GLDButton name="pause-speed-x1" text="x1" variant="secondary" />
-        <gld:GLDButton name="pause-speed-x2" text="x2" variant="secondary" />
-        <gld:GLDButton name="pause-speed-x3" text="x3" variant="secondary" />
-      </ui:VisualElement>
+      <gld:GLDButton name="pause-speed-toggle" text="x1" variant="secondary" />
       <gld:GLDButton name="pause-resume" text="재개" variant="primary" />
       <gld:GLDButton name="pause-quit" text="포기" variant="danger" />
     </gld:GLDPanel>

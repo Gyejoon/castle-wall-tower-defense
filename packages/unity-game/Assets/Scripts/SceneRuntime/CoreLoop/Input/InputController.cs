@@ -49,6 +49,9 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 
             var world3 = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -camera.transform.position.z));
             var world = new Vector2(world3.x, world3.y);
+            if (TrySelectWall(world))
+                return true;
+
             var cell = _controller.Grid.WorldToPlacementGrid(world);
             if (_placement.IsPlacementMode)
                 return _placement.TryPlace(cell);
@@ -68,6 +71,20 @@ namespace GLD.SceneRuntime.CoreLoop.Input
 
             GameEvents.RaiseTowerSelected(tower.InstanceId, cell.Col, cell.Row);
             GameEvents.RaiseRequestSelectTower(tower.InstanceId);
+            return true;
+        }
+
+        bool TrySelectWall(Vector2 world)
+        {
+            if (_controller == null || _controller.Grid == null)
+                return false;
+
+            var wallCenter = _controller.Grid.GridToWorld(_controller.Grid.ExitCell);
+            if (Vector2.Distance(world, wallCenter) > _controller.Grid.CellSize * 1.75f)
+                return false;
+
+            GameEvents.RaiseTowerDeselected();
+            GameEvents.RaiseWallSelected();
             return true;
         }
 

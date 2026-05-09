@@ -189,6 +189,15 @@ export type {
 	SubmitRunPayload,
 } from './types/ranking';
 export type {
+	ActDef,
+	CheckpointReward,
+	CheckpointRewardType,
+	PlayerTacticId,
+	PlayerTacticState,
+	TowerSlotState,
+	WallState,
+} from './types/run-v1';
+export type {
 	OwnedTower,
 	ProfileData,
 	ProgressData,

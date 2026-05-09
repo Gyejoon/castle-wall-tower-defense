@@ -6,18 +6,26 @@ namespace GLD.Systems.DamageNumbers
     {
         const float LifetimeSeconds = 0.8f;
 
-        readonly GameObject _view;
-        readonly TextMesh _text;
-        readonly MeshRenderer _renderer;
+        readonly Transform _parent;
         readonly Color _baseColor;
+        GameObject _view;
+        TextMesh _text;
+        MeshRenderer _renderer;
         float _ageSeconds;
 
         public bool Active => _view != null && _view.activeSelf;
 
         public DamageNumberInstance(Transform parent)
         {
+            _parent = parent;
+            _baseColor = new Color(1f, 0.92f, 0.24f, 1f);
+            CreateView();
+        }
+
+        void CreateView()
+        {
             _view = new GameObject("DamageNumber");
-            _view.transform.SetParent(parent, false);
+            _view.transform.SetParent(_parent, false);
             _text = _view.AddComponent<TextMesh>();
             _text.anchor = TextAnchor.MiddleCenter;
             _text.alignment = TextAlignment.Center;
@@ -26,7 +34,6 @@ namespace GLD.Systems.DamageNumbers
             _renderer = _view.GetComponent<MeshRenderer>();
             _renderer.sortingLayerName = "Default";
             _renderer.sortingOrder = 80;
-            _baseColor = new Color(1f, 0.92f, 0.24f, 1f);
             _text.color = _baseColor;
             _view.SetActive(false);
         }
@@ -34,7 +41,7 @@ namespace GLD.Systems.DamageNumbers
         public void Show(Vector2 worldPosition, float value)
         {
             if (_view == null)
-                return;
+                CreateView();
 
             _ageSeconds = 0f;
             _text.text = Mathf.CeilToInt(value).ToString();

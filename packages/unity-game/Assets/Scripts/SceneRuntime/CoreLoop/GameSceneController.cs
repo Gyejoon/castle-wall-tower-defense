@@ -3,6 +3,7 @@ using GLD.Data;
 using GLD.SceneRuntime;
 using GLD.SceneRuntime.CoreLoop.Input;
 using GLD.Systems.Energy;
+using GLD.Systems.Act;
 using GLD.Systems.DamageNumbers;
 using GLD.Systems.Grid;
 using GLD.Systems.Orchestrator;
@@ -48,6 +49,9 @@ namespace GLD.SceneRuntime.CoreLoop
         public UnitSystem Units { get; private set; }
         public TowerSystem Towers { get; private set; }
         public WaveSystem Waves { get; private set; }
+        public WallSystem Wall { get; private set; }
+        public TowerSlotSystem TowerSlots { get; private set; }
+        public PlayerTacticSystem Tactics { get; private set; }
         public GameStateManager State { get; private set; }
         public RunState RunState { get; private set; }
         public DamageNumberSystem DamageNumbers { get; private set; }
@@ -75,6 +79,9 @@ namespace GLD.SceneRuntime.CoreLoop
             Units = new UnitSystem(Grid, Energy, database.units, database.boss);
             Towers = new TowerSystem(Grid, Energy, Units, database.elementMatchup);
             Waves = new WaveSystem(database.waves, database.units, Units);
+            Wall = new WallSystem(Energy, Units);
+            TowerSlots = new TowerSlotSystem(database, Towers, Grid);
+            Tactics = new PlayerTacticSystem(Units);
             RunState = new RunState();
             State = new GameStateManager(RunState);
             RunState.SetEnergy(Energy.Current, Energy.Max);
@@ -83,13 +90,13 @@ namespace GLD.SceneRuntime.CoreLoop
             RunState.SetCountdown(_autoStartRemainingSeconds);
             State.SetSpeedMultiplier(speedMultiplier);
             DamageNumbers = new DamageNumberSystem(transform);
-            Orchestrator = new CoreOrchestrator(database, Towers, Waves, energy: Energy);
+            Orchestrator = new CoreOrchestrator(database, Towers, Waves, energy: Energy, towerSlots: TowerSlots, wall: Wall, tactics: Tactics);
             Orchestrator.Enable();
             BindRunStateEvents();
             GameEvents.OnRequestSetSpeed += SetSpeedMultiplier;
             GameEvents.OnRequestPause += HandleRequestPause;
             GameEvents.OnRequestResume += HandleRequestResume;
-            _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers);
+            _combatMediator = new CombatMediator(Units, Towers, State, DamageNumbers, Wall);
             _bossContextBuilder = new BossContextBuilder();
 
             if (fieldRenderer == null)
@@ -151,6 +158,8 @@ namespace GLD.SceneRuntime.CoreLoop
             var scaledDelta = State.Tick(Time.fixedDeltaTime);
             if (scaledDelta <= 0f) return;
             Energy.Tick(scaledDelta);
+            Wall?.Tick(scaledDelta);
+            Tactics?.Tick(scaledDelta);
             Waves.Tick(scaledDelta);
             Units.Tick(scaledDelta);
             Towers.Tick(scaledDelta);
@@ -261,6 +270,7 @@ namespace GLD.SceneRuntime.CoreLoop
                 lobbyMetaScreenController = gameObject.AddComponent<LobbyMetaScreenController>();
 
             lobbyMetaScreenController.Bind(RunState, gameHudDocument);
+            Wall?.EmitState();
         }
 
         public void SetSpeedMultiplier(float value)
@@ -275,6 +285,7 @@ namespace GLD.SceneRuntime.CoreLoop
             GameEvents.OnWaveStarted += HandleWaveStarted;
             GameEvents.OnWavePrepStarted += HandleWavePrepStarted;
             GameEvents.OnWavePrepTick += HandleWavePrepTick;
+            GameEvents.OnCheckpointReady += HandleCheckpointReady;
             GameEvents.OnBossHpUpdated += HandleBossHpUpdated;
             GameEvents.OnBossDefeated += HandleBossDefeated;
             GameEvents.OnPlayerHpChanged += HandlePlayerHpChanged;
@@ -289,6 +300,7 @@ namespace GLD.SceneRuntime.CoreLoop
             GameEvents.OnWaveStarted -= HandleWaveStarted;
             GameEvents.OnWavePrepStarted -= HandleWavePrepStarted;
             GameEvents.OnWavePrepTick -= HandleWavePrepTick;
+            GameEvents.OnCheckpointReady -= HandleCheckpointReady;
             GameEvents.OnBossHpUpdated -= HandleBossHpUpdated;
             GameEvents.OnBossDefeated -= HandleBossDefeated;
             GameEvents.OnPlayerHpChanged -= HandlePlayerHpChanged;
@@ -313,6 +325,9 @@ namespace GLD.SceneRuntime.CoreLoop
         }
 
         void HandleWavePrepTick(int nextWaveSlot, float remainingSeconds) => RunState?.SetCountdown(remainingSeconds);
+
+        void HandleCheckpointReady(int waveSlot, CheckpointReward[] _) =>
+            RunState?.SetWave(waveSlot, WavePhase.Checkpoint);
 
         void HandleBossHpUpdated(string unitId, string defId, int hp, int maxHp, int phase) =>
             RunState?.SetBossHp(unitId, defId, hp, maxHp, phase);

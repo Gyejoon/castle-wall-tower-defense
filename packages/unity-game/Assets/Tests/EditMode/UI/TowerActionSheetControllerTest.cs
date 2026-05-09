@@ -38,7 +38,7 @@ namespace GLD.Tests.EditMode.UI
                 Assert.That(controller.IsVisible, Is.True);
                 Assert.That(controller.SelectedInstanceId, Is.EqualTo("tower-007"));
                 Assert.That(root.Q<Label>("tower-action-title").text, Is.EqualTo("tower-007"));
-                Assert.That(root.Q<Label>("tower-action-position").text, Is.EqualTo("Cell 3,4"));
+                Assert.That(root.Q<Label>("tower-action-position").text, Is.EqualTo("칸 3,4"));
                 Assert.That(root.Q<Button>("tower-action-merge").enabledSelf, Is.False);
                 Assert.That(root.Q<Button>("tower-action-move").enabledSelf, Is.False);
             }

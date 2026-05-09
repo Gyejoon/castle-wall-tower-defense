@@ -1,7 +1,7 @@
 # 08 — 코드 아키텍처 레퍼런스
 
-> **Last Updated:** 2026-05-06 (v4.0 — minimal launch architecture)
-> **Scope:** 현재 제품 런타임은 Phaser, 향후 Unity WebGL 전환은 유지한다. v1 스펙 감량은 아키텍처 확장을 줄이기 위한 기준이다.
+> **Last Updated:** 2026-05-09 (v5.0 — central wall checkpoint architecture)
+> **Scope:** v1 active loop는 Unity WebGL 기준으로 중앙 성벽, 4속성 슬롯, Act checkpoint를 검증한다. Phaser/랜덤 합성 루프는 legacy/parking lot로 내린다.
 
 ---
 
@@ -32,25 +32,23 @@
 v1 제품 기준 경로:
 
 ```text
-React web-shell
-  -> PhaserGame mount
-  -> Game scene
+Unity Root scene
   -> GridManager / PathfindingSystem
-  -> TowerSystem / UnitSystem / WaveSystem / EnergySystem
-  -> CoreOrchestrator
-  -> EventBus back to React HUD
+  -> WallSystem / TowerSlotSystem / PlayerTacticSystem
+  -> UnitSystem / WaveSystem / EnergySystem
+  -> CoreOrchestrator checkpoint reward flow
+  -> GameEvents -> Unity UI Toolkit HUD
 ```
 
 ### CoreOrchestrator Responsibility
 
 | 책임 | 정책 |
 |------|------|
-| 기본 소환 | T1 draw |
-| tier 가챠 | T2/T3/T4 energy roll |
-| 합성 | family/tier validation |
-| 카드 적용 | run-scoped modifier |
-| 광고 hook | rewarded result 수신 |
-| 리롤 방지 | cancelled draw cache 유지 |
+| Act 시작 | wave 1/6/11/16 진입 이벤트 |
+| checkpoint | wave 5/10/15/20 boss clear 후 3개 reward 제공 |
+| reward 적용 | tower slot / wall / skill / global card 적용 후 다음 Act 진행 |
+| 광고 hook | checkpoint reward reroll 수신 |
+| legacy 보호 | summon/gacha/merge 이벤트는 active loop에서 사용하지 않음 |
 
 CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서는 신규 BM, 신규 메타, 신규 모드를 여기에 추가하지 않는다.
 
@@ -68,6 +66,7 @@ CoreOrchestrator가 커질수록 유지보수 비용이 늘어난다. v1에서�
 | Missions / Achievements | 제외 |
 | grade / awakening | 신규 성장축에서 제외 |
 | star rating | 제외 |
+| request-summon-tower / request-gacha-summon / request-merge-towers | legacy/parking lot |
 
 legacy 코드는 안전하게 제거할 수 있을 때 별도 PR에서 정리한다. 기능 확장 목적으로 재활성화하지 않는다.
 
@@ -93,6 +92,13 @@ React와 Phaser는 EventBus로만 실시간 통신한다.
 | `boss-hp-update` | 보스 HP HUD |
 | `upgrade-choice-ready` | 3카드 선택 |
 | `upgrade-applied` | 카드 적용 |
+| `act-started` | Act 1~4 시작 |
+| `checkpoint-ready` | boss clear 후 reward 3택 표시 |
+| `checkpoint-applied` | reward 선택 적용 |
+| `wall-state-changed` | 성벽 HP/수리/자동 공격 상태 |
+| `wall-auto-attacked` | 성벽 자동 공격 발사/피격 FX |
+| `tactic-state-changed` | 사용자 스킬 해금/쿨다운/레벨 |
+| `tower-slot-upgraded` | 4속성 슬롯 등장/승급 |
 | `game-over` | 결과 화면 |
 
 ### React -> Game
@@ -107,10 +113,23 @@ React와 Phaser는 EventBus로만 실시간 통신한다.
 | `request-sell-tower` | 판매 |
 | `request-family-upgrade` | 패밀리 강화 |
 | `request-apply-upgrade` | 카드 선택 |
+| `request-apply-checkpoint-reward` | checkpoint reward 선택 |
+| `request-cast-tactic` | force move / freeze 사용 |
+| `request-repair-wall` | 성벽 수리 |
 | `request-set-speed` | 속도 변경 |
 | `request-reset-run` | 재시작 |
 
 이벤트를 추가할 때는 `packages/phaser-game/src/EventBus.ts`의 `GameEventMap`과 React 수신/발신 지점을 함께 갱신한다.
+
+Unity v1은 `GLD.Core.GameEvents`에 동등한 typed contract를 둔다.
+
+| Type | 역할 |
+|------|------|
+| `ActDef` | Act index, startWave, endWave |
+| `CheckpointReward` | reward id/type/title/target |
+| `TowerSlotState` | family, tier, unlocked, grid position |
+| `WallState` | maxHp/currentHp/repair cooldown/auto attack |
+| `PlayerTacticState` | force move/freeze unlock, level, cooldown |
 
 ---
 

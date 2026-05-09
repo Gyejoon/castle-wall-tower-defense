@@ -1,11 +1,18 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-  <Style src="../Styles/Slice2Hud.uss" />
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:gld="GLD.UI.Primitives"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+  <ui:Style src="project://database/Assets/UI/Styles/tokens.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/primitives.uss" />
+  <ui:Style src="project://database/Assets/UI/Styles/Slice2Hud.uss" />
   <ui:VisualElement name="slice2-hud" class="slice2-hud">
     <ui:VisualElement class="top-row">
-      <ui:Label name="energy-label" class="hud-pill" text="E 40/200" />
-      <ui:Label name="wave-label" class="hud-pill" text="W 0/50" />
-      <ui:Label name="hp-label" class="hud-pill" text="HP 20" />
+      <gld:GLDBadge name="energy-label" class="hud-pill" text="E 40/200" variant="accent" />
+      <gld:GLDBadge name="wave-label" class="hud-pill" text="W 0/50" />
+      <gld:GLDBadge name="hp-label" class="hud-pill" text="HP 20" variant="danger" />
     </ui:VisualElement>
-    <ui:Button name="place-archer-button" class="place-button" text="Place Archer (E10)" />
+    <gld:GLDButton name="place-archer-button" class="place-button" text="궁수 배치 E10" variant="primary" size="lg" />
   </ui:VisualElement>
 </ui:UXML>

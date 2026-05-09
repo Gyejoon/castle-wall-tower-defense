@@ -50,7 +50,7 @@ import { GACHA_COSTS, PITY_THRESHOLD } from '../gacha';
 import { MAP_REGISTRY } from '../maps';
 import { MERGE_CHAIN, TOWER_DEFS } from '../towers';
 import { MIN_MOVE_SPEED, STUN_IMMUNITY_WINDOW_MS, UNITS } from '../units';
-import { WAVE_SCALING } from '../waves';
+import { ACTIVE_WAVE_COUNT, WAVE_SCALING } from '../waves';
 
 // ── assembled catalog objects (must match exporter's buildCatalogs() shape) ──
 
@@ -93,7 +93,7 @@ const UNITS_CATALOG = {
 };
 
 const SUMMON_POOLS = createSummonPool();
-const WAVES = generateWaves(50);
+const WAVES = generateWaves(ACTIVE_WAVE_COUNT);
 const MAPS = MAP_REGISTRY;
 const DESIGN_TOKENS = tokens;
 
@@ -119,8 +119,8 @@ describe('stableStringify round-trip parity', () => {
 		expect(parsed).toEqual(UNITS_CATALOG);
 	});
 
-	it('WAVES (50 entries) round-trips losslessly', () => {
-		expect(WAVES).toHaveLength(50);
+	it('WAVES (active v1 entries) round-trips losslessly', () => {
+		expect(WAVES).toHaveLength(20);
 		const json = stableStringify(WAVES);
 		const parsed = JSON.parse(json);
 		expect(parsed).toEqual(WAVES);

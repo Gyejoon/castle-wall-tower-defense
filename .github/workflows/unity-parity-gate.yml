@@ -17,6 +17,11 @@ on:
       - '.github/workflows/unity-parity-gate.yml'
   workflow_dispatch:
 
+# Least privilege for GITHUB_TOKEN — see ci.yml. Also handles Unity licence
+# secrets, so keep the token read-only.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

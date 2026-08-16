@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { AVATAR_PRESETS } from '../../../data/avatarPresets';
-import { useAuthStore } from '../../../stores/authStore';
 import { useRankingStore } from '../../../stores/rankingStore';
 
 const AVATAR_LABEL_BY_KEY = new Map(
@@ -11,7 +10,6 @@ export function LeaderboardTab() {
 	const rows = useRankingStore((s) => s.leaderboard);
 	const err = useRankingStore((s) => s.leaderboardError);
 	const fetchLeaderboard = useRankingStore((s) => s.fetchLeaderboard);
-	const userId = useAuthStore((s) => s.userId);
 
 	useEffect(() => {
 		// Always refresh on mount. Submit-side invalidate() already nulls the
@@ -47,12 +45,15 @@ export function LeaderboardTab() {
 				<ul className="flex flex-col gap-2">
 					{rows.map((r) => {
 						const highlight = r.rank <= 3;
-						const isMe = r.userId === userId;
+						const isMe = r.isMe;
 						const avatarLabel =
 							AVATAR_LABEL_BY_KEY.get(r.avatarKey) ?? r.nickname.slice(0, 2);
 						return (
+							// rank is row_number() over the whole board, so it is unique
+							// and stable within a fetch — the natural key now that
+							// user_id is no longer published.
 							<li
-								key={r.userId}
+								key={r.rank}
 								className={`h-12 flex items-center gap-3 px-3 border ${
 									highlight ? 'border-gold' : 'border-border'
 								} ${isMe ? 'bg-panel/90' : 'bg-panel'} transition-colors duration-150`}

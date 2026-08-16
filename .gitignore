@@ -14,6 +14,8 @@ build/
 *.tsbuildinfo
 *.d.ts.map
 test-results/
+# `ait build` drops a ~22MB bundle next to the package it built
+*.ait
 
 # IDE
 .idea/

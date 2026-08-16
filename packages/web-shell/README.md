@@ -42,6 +42,9 @@ Supabase 로컬 스택을 띄워 계정/리더보드를 테스트한다. Docker 
 - `VITE_SUPABASE_ANON_KEY` — Supabase anon key
 - Preview / Production 환경 각각 주입, Encrypted 로 저장.
 - RLS 정책이 service_role 없이 동작하도록 설계되어 있으므로 anon key 만 클라이언트에 노출한다.
+- anon key 로 읽을 수 있는 것은 `v_leaderboard` 뿐이다. `runs` / `profiles` 는 본인 행만
+  SELECT 되고, 점수 INSERT 는 `submit_run()` RPC 를 통해서만 가능하다. 상세는
+  [05-operations.md](../../docs/game-spec/05-operations.md) 8장 참고.
 
 ## 관련 경로
 

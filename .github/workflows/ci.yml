@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege for GITHUB_TOKEN. Without this block the token inherits the
+# repository/organisation default, which can be read-write on every scope.
+# These jobs only check out code and upload artifacts — neither needs write
+# access to repository contents.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test

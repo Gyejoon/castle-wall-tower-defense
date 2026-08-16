@@ -7,7 +7,6 @@ const hoisted = vi.hoisted(() => ({
 		leaderboard: null as unknown[] | null,
 		leaderboardError: null as string | null,
 		fetchLeaderboard: vi.fn(),
-		authUserId: null as string | null,
 	},
 }));
 
@@ -17,18 +16,15 @@ vi.mock('../../../../stores/rankingStore', () => {
 	return { useRankingStore };
 });
 
-vi.mock('../../../../stores/authStore', () => {
-	const useAuthStore = <T,>(sel: (s: { userId: string | null }) => T) =>
-		sel({ userId: hoisted.state.authUserId });
-	return { useAuthStore };
-});
+// No authStore mock: the tab no longer reads the local userId. Ownership of a
+// row comes from the server-computed `isMe` on the leaderboard view, so the
+// component has no auth dependency left to stub.
 
 import { LeaderboardTab } from '../LeaderboardTab';
 
 beforeEach(() => {
 	hoisted.state.leaderboard = null;
 	hoisted.state.leaderboardError = null;
-	hoisted.state.authUserId = null;
 	hoisted.state.fetchLeaderboard = vi.fn();
 });
 
@@ -52,7 +48,7 @@ describe('LeaderboardTab', () => {
 	it('renders populated rows', () => {
 		hoisted.state.leaderboard = [
 			{
-				userId: 'u1',
+				isMe: false,
 				nickname: 'alice',
 				avatarKey: 'tower/archer',
 				waveReached: 42,
@@ -68,11 +64,10 @@ describe('LeaderboardTab', () => {
 		expect(screen.getByText(/HP15/)).toBeInTheDocument();
 	});
 
-	it('marks current user row with (나)', () => {
-		hoisted.state.authUserId = 'u1';
+	it('marks the row the server flagged as mine with (나)', () => {
 		hoisted.state.leaderboard = [
 			{
-				userId: 'u1',
+				isMe: true,
 				nickname: 'alice',
 				avatarKey: 'tower/archer',
 				waveReached: 10,

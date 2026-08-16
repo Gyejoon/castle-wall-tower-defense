@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface RawLeaderboardRow {
-	user_id: string;
+	is_me: boolean;
 	nickname: string;
 	avatar_key: string;
 	wave_reached: number;
@@ -28,7 +28,9 @@ interface RawRun {
 
 function toRow(d: RawLeaderboardRow): LeaderboardRow {
 	return {
-		userId: d.user_id,
+		// `??` not `!!`: an older view that predates the is_me column would
+		// yield undefined, and silently highlighting nothing beats crashing.
+		isMe: d.is_me ?? false,
 		nickname: d.nickname,
 		avatarKey: d.avatar_key,
 		waveReached: d.wave_reached,

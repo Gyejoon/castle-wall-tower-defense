@@ -15,6 +15,12 @@ on:
       - '.github/workflows/unity-build.yml'
   workflow_dispatch:
 
+# Least privilege for GITHUB_TOKEN — see ci.yml. This workflow handles Unity
+# licence secrets, so an over-scoped token is exactly what an injected step
+# would want; keep it read-only.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

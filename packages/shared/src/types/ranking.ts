@@ -14,7 +14,10 @@ export interface RunRecord {
 }
 
 export interface LeaderboardRow {
-	userId: string;
+	/** Server-computed "this row belongs to the caller". v_leaderboard no
+	 *  longer publishes user_id, so identity comparison happens in Postgres
+	 *  instead of handing every client every player's auth UUID. */
+	isMe: boolean;
 	nickname: string;
 	avatarKey: string;
 	waveReached: number;

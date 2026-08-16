@@ -11,6 +11,7 @@ import {
 	type WavePhase,
 } from '@gld/shared';
 import { create } from 'zustand';
+import { useAuthStore } from './authStore';
 import { useMetaStore } from './metaStore';
 
 export type RunStatus =
@@ -227,6 +228,12 @@ export const useGameStore = create<GameStoreState>()((set) => ({
 			...createRunState(),
 		}));
 		EventBus.emit('request-set-speed', { multiplier: 1 });
+		// Open the server-side run session now, at the one point a run truly
+		// begins (enterLobby/resetRun also bump runId but are not run starts).
+		// submit_run() measures elapsed wall-clock from this moment, so it has
+		// to happen here rather than at game-over. Fire-and-forget: a failure
+		// only costs this run its ranking, never its playability.
+		void useAuthStore.getState().startRunSession();
 	},
 	enterMetaForge: () => {
 		// Phase 9.3: navigate to the dedicated MetaForge page. Run state

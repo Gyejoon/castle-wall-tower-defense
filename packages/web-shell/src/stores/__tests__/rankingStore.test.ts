@@ -45,7 +45,7 @@ describe('rankingStore.fetchLeaderboard', () => {
 		mockSelectOrderLimit({
 			data: [
 				{
-					user_id: 'u1',
+					is_me: true,
 					nickname: 'alice',
 					avatar_key: 'tower/archer',
 					wave_reached: 20,
@@ -62,7 +62,9 @@ describe('rankingStore.fetchLeaderboard', () => {
 		const rows = useRankingStore.getState().leaderboard;
 		expect(rows).toHaveLength(1);
 		expect(rows?.[0]).toMatchObject({
-			userId: 'u1',
+			// user_id is no longer published by v_leaderboard — the server sends
+			// a precomputed is_me instead.
+			isMe: true,
 			avatarKey: 'tower/archer',
 			waveReached: 20,
 			remainingHp: 12,
@@ -119,7 +121,7 @@ describe('rankingStore.invalidate', () => {
 		mockSelectOrderLimit({
 			data: [
 				{
-					user_id: 'u1',
+					is_me: true,
 					nickname: 'alice',
 					avatar_key: 'tower/archer',
 					wave_reached: 20,

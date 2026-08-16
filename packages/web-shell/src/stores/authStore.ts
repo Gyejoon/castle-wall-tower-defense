@@ -17,6 +17,10 @@ export type CreateProfileResult =
 
 interface PendingRunEnvelope {
 	userId: string;
+	/** The run session this payload was produced under. Carried through the
+	 *  offline queue because submit_run() will only accept the score against
+	 *  the session that was open when the run actually started. */
+	sessionId: string;
 	payload: SubmitRunPayload;
 }
 
@@ -27,6 +31,10 @@ interface AuthState {
 	authModalOpen: boolean;
 	profileSetupOpen: boolean;
 	submitInFlight: boolean;
+	/** Server-issued, single-use handle for the run currently in progress.
+	 *  Null when no run is open, when the player is signed out, or when
+	 *  start_run() failed — in all three cases the run simply is not ranked. */
+	runSessionId: string | null;
 
 	hydrate: () => Promise<void>;
 	signIn: (
@@ -43,7 +51,11 @@ interface AuthState {
 		nickname: string,
 		avatarKey: string,
 	) => Promise<CreateProfileResult>;
-	submitRun: (payload: SubmitRunPayload) => Promise<SubmitResult>;
+	startRunSession: () => Promise<void>;
+	submitRun: (
+		payload: SubmitRunPayload,
+		sessionIdOverride?: string,
+	) => Promise<SubmitResult>;
 	openAuthModal: (open: boolean) => void;
 	openProfileSetup: (open: boolean) => void;
 	flushPendingRun: () => Promise<void>;
@@ -81,6 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	authModalOpen: false,
 	profileSetupOpen: false,
 	submitInFlight: false,
+	runSessionId: null,
 
 	async hydrate() {
 		if (get().ready) return; // idempotent — StrictMode/HMR safe
@@ -142,7 +155,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 	async signOut() {
 		await supabase.auth.signOut();
-		set({ userId: null, profile: null });
+		// Drop the run session too — it is bound to the outgoing auth.uid() and
+		// submit_run() would reject it for whoever signs in next anyway.
+		set({ userId: null, profile: null, runSessionId: null });
 	},
 
 	setProfile(p) {
@@ -197,30 +212,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		set({ profileSetupOpen: open });
 	},
 
-	async submitRun(payload) {
+	async startRunSession() {
+		if (!supabaseConfigured) return;
+		if (!get().userId) {
+			set({ runSessionId: null });
+			return;
+		}
+		const { data, error } = await supabase.rpc('start_run');
+		if (error || typeof data !== 'string') {
+			// Non-fatal: the run is playable, it just won't be rankable because
+			// submit_run() has no session to claim. Better than blocking play on
+			// a ranking-server hiccup.
+			console.warn(
+				'[GLD] start_run failed — this run will not be ranked',
+				error?.message,
+			);
+			set({ runSessionId: null });
+			return;
+		}
+		set({ runSessionId: data });
+	},
+
+	async submitRun(payload, sessionIdOverride) {
 		if (!supabaseConfigured) return { kind: 'disabled' };
 		const { userId, submitInFlight } = get();
 		if (!userId) return { kind: 'unauthenticated' };
+		// Scores are only accepted against a session opened when the run began.
+		// No session means the run started signed-out or start_run() failed, so
+		// there is nothing the server can validate against — drop it rather
+		// than queue a payload that can never succeed.
+		const sessionId = sessionIdOverride ?? get().runSessionId;
+		if (!sessionId) return { kind: 'invalid', reason: 'no_run_session' };
 		// Coalesce: if another submit is already pending, drop this one instead
 		// of racing the pending_run key. Caller sees 'queued' semantics.
 		if (submitInFlight) {
-			writePending({ userId, payload });
+			writePending({ userId, sessionId, payload });
 			return { kind: 'queued' };
 		}
 		set({ submitInFlight: true });
 		try {
-			const { error } = await supabase.from('runs').insert({
-				user_id: userId,
-				wave_reached: payload.waveReached,
-				remaining_hp: payload.remainingHp,
-				initial_hp: payload.initialHp,
-				result: payload.result,
-				towers_placed: payload.towersPlaced,
-				duration_sec: payload.durationSec,
-				gold_earned: payload.goldEarned,
+			const { error } = await supabase.rpc('submit_run', {
+				p_session_id: sessionId,
+				p_wave_reached: payload.waveReached,
+				p_remaining_hp: payload.remainingHp,
+				p_initial_hp: payload.initialHp,
+				p_result: payload.result,
+				p_towers_placed: payload.towersPlaced,
+				p_duration_sec: payload.durationSec,
+				p_gold_earned: payload.goldEarned,
 			});
 			if (error) {
-				if (error.message.startsWith('rate_limit')) {
+				if (error.message.includes('rate_limit')) {
 					return { kind: 'rejected', reason: 'rate_limit' };
 				}
 				// Distinguish permanent validation failures (RLS, CHECK, PK
@@ -230,10 +272,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 				if (isPermanentErrorCode(code)) {
 					return { kind: 'invalid', reason: code || error.message };
 				}
-				writePending({ userId, payload });
+				writePending({ userId, sessionId, payload });
 				return { kind: 'queued' };
 			}
 			clearPending();
+			// The server consumed the session on success — it is single-use, so
+			// clear it rather than leave a spent id that would come back as
+			// invalid_session on any stray re-submit.
+			if (!sessionIdOverride) set({ runSessionId: null });
 			// New personal record may have landed — nuke cached leaderboard/
 			// myRuns so the next tab mount re-fetches. Cheap and correct beats
 			// optimistic merge for MVP.
@@ -262,7 +308,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		// it up. If submit fails transiently, submitRun re-queues via its own
 		// error path.
 		clearPending();
-		await get().submitRun(envelope.payload);
+		// Replay against the session the run was actually played under, not
+		// whatever session happens to be open now. run_session_ttl() (24h) is
+		// what bounds how long a queued run stays redeemable.
+		await get().submitRun(envelope.payload, envelope.sessionId);
 	},
 }));
 
@@ -307,13 +356,15 @@ function readPending(): PendingRunEnvelope | null {
 				parsed &&
 				typeof parsed === 'object' &&
 				typeof parsed.userId === 'string' &&
+				typeof parsed.sessionId === 'string' &&
 				parsed.payload &&
 				typeof parsed.payload === 'object'
 			) {
 				return parsed as PendingRunEnvelope;
 			}
-			// Legacy raw payload from earlier shape — discard; the new envelope
-			// format is required for cross-tenant safety.
+			// Legacy envelope from an earlier shape — discard. Pre-sessionId
+			// payloads can never be submitted now (submit_run needs a session to
+			// claim), and the userId binding is required for cross-tenant safety.
 			clearPending();
 		} catch {
 			clearPending();
@@ -342,5 +393,9 @@ function isPermanentErrorCode(code: string): boolean {
 	if (code.startsWith('23')) return true; // check_violation, unique_violation, fk_violation, not_null
 	if (code.startsWith('42')) return true; // undefined_table, insufficient_privilege
 	if (code === 'PGRST301' || code === '42501') return true; // RLS denial
+	// submit_run() rejections: 22023 = invalid_session / implausible_run,
+	// 28000 = unauthenticated. Both are verdicts on the payload itself, so
+	// retrying the identical submit can only fail the same way.
+	if (code === '22023' || code === '28000') return true;
 	return false;
 }
